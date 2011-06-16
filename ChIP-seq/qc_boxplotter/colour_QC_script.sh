@@ -1,0 +1,61 @@
+#! /bin/bash
+# Ian Donaldson 3 August 2010
+
+if [ $# != 1 ]; then
+        echo "-----"
+	echo "USAGE: ./colour_QC_script.sh *.qual"
+	echo "This SHELL script will run two scripts to produce a boxplot of"	
+	echo "SOLiD colorcall quality values from a .qual file." 
+	echo "The first Perl script will split the .qual file columns in to"
+        echo "separate files."
+	echo "The second R script will plot the boxplot."	
+        echo "By default all scripts need to be in the current directory."
+        echo "DO NOT RUN IN PARALLEL IN SAME DIRECTORY!!!"
+        echo "-----"
+	exit
+fi
+
+# Input file and check it is present in directory
+iFileN=$1
+
+if test ! -s $iFileN ; then
+	echo "$iFileN dosen't exist is empty!" 
+    exit 
+fi
+
+# Check Perl script is present
+# could add path to script
+if test ! -s /fs/san/home/mqbssid3/ChIP-seq/qc_boxplotter/qual2Rinput_file_per_posn.pl ; then
+        echo "qual2Rinput_file_per_posn.pl is missing from this directory!" 
+    exit 
+fi
+
+# Check R script is present
+# could add path to script
+if test ! -s /fs/san/home/mqbssid3/ChIP-seq/qc_boxplotter/SOLiD_qual_boxplot.R ; then
+        echo "SOLiD_qual_boxplot.R is missing from this directory!" 
+    exit
+fi
+
+# Run file splitting command line
+perl /fs/san/home/mqbssid3/ChIP-seq/qc_boxplotter/qual2Rinput_file_per_posn.pl $iFileN $iFileN
+
+# Run R script on split files
+R --no-save $iFileN < /fs/san/home/mqbssid3/ChIP-seq/qc_boxplotter/SOLiD_qual_boxplot.R
+
+# Convert PS to PDF
+ps2pdfwr $iFileN\_seq-order_boxplot.ps $iFileN\_seq-order_boxplot.pdf
+ps2pdfwr $iFileN\_primer-order_boxplot.ps $iFileN\_primer-order_boxplot.pdf
+
+# Rename output files based on $iFileN
+#mv colour_quality_seq-order.ps $iFileN\_seq-order.ps
+#mv colour_quality_primer-order.ps $iFileN\_primer-order.ps
+
+# Remove files
+rm $iFileN\_posn*
+rm $iFileN\_pposn*
+
+# Done
+echo Finished!
+
+exit
