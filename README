@@ -7,3 +7,9 @@ Scripts are organised into the following directories:
 
 * RNA-seq: contains LZ's scripts (qc_pipeline)
 
+Dependencies
+------------
+
+* R
+* perl Statistics::Descriptive module
+
