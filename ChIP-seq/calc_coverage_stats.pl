@@ -5,7 +5,7 @@
 #Output mean and median for all positions inc. 0 count positions
 #Ian Donaldson 16 June 2011
 #
-# Usage: perl calc_coverage <coverage_file>
+# Usage: perl calc_coverage <nucleotide_coverage_file>
 #
 # Note: this script requires Statistics::Descriptive module
 # To install on Fedora, do "yum install perl-Statistics-Descriptive"
@@ -16,9 +16,9 @@ use strict;
 # New stats instance
 my $stat = Statistics::Descriptive::Full->new(); 
 
-# Usage
-unless(@ARGV == 1) {
-   die"USAGE: $0 | Input coverage file\n\n";
+# USAGE:
+unless(@ARGV==1) {
+   die("USAGE: $0 | nucleotide coverage file (format: chr TAB position TAB count\n\n");
 }
 
 # Read thru lines of coverage file and put score into list
