@@ -7,9 +7,11 @@ Scripts are organised into the following directories:
 
 * RNA-seq: contains LZ's scripts (qc_pipeline)
 
+* NGS-general: contains scripts not specific to either ChIP-seq
+  or RNA-seq
+
 Dependencies
 ------------
 
 * R
 * perl Statistics::Descriptive module
-
