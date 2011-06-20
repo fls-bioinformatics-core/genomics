@@ -2,3 +2,6 @@ NGS-general
 ===========
 
 General NGS scripts that are used for both ChIP-seq and RNA-seq.
+
+cd_set_umask_ngsdata.sh: script to set and revert umask appropriately when moving in and
+out of the NGS data directory.
