@@ -20,6 +20,16 @@ Genome Index Utilities
   Color space indexes are <genome_name>_c.*.ebwt
   Index files are created in the directory the script is run in.
 
+- srma_build_indexes.sh <genome_fasta_file>
+
+  Creates the .fai and .dict files required by SRMA. Both files are
+  created in the same directory as the reference FASTA file, which is
+  where SRMA requires them to be; the script itself can be run from
+  anywhere.
+
+  (NOTE: that the path to the picard tools dir is hardcoded depending
+  on the machine the script is being run on.)
+
 Note on preparing reference genome files
 ----------------------------------------
 
