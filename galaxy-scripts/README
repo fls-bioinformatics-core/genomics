@@ -1,0 +1,35 @@
+galaxy-scripts
+==============
+
+Some utility scripts for setting up Galaxy.
+
+Genome Index Utilities
+----------------------
+
+- bfast_build_indexes.sh <genome_fasta_file>
+
+  Builds the bfast color space indexes from the reference FASTA file.
+  Indexes are .bif files created in the directory the script
+  is run in.
+
+- bfast_build_indexes.sh <genome_fasta_file>
+
+  Builds the bowtie color and nucleotide space indexes from the reference
+  FASTA file.
+  Nucleotide indexes are <genome_name>.*.ebwt
+  Color space indexes are <genome_name>_c.*.ebwt
+  Index files are created in the directory the script is run in.
+
+Note on preparing reference genome files
+----------------------------------------
+
+Where the reference genome is a collection of FASTA files for each
+chromosome, it's necessary to prepare a single file for the bfast and
+bowtie index generation by concatenating them together, e.g.:
+
+cat chr* > hg18_random_chrM.fa
+
+The individual chromosome FASTA files can then be archived, e.g.:
+
+tar -cvf hg18_random_chrM.tar chr*
+gzip hg18_random_chrM.tar
