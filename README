@@ -3,7 +3,7 @@ bioinf-scripts: repository for in-house bioinformatics scripts
 
 Scripts are organised into the following directories:
 
-* ChiP-seq: contains IJD's scripts (boxplotter etc)
+* ChIP-seq: contains IJD's scripts (boxplotter etc)
 
 * RNA-seq: contains LZ's scripts (qc_pipeline)
 
