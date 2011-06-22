@@ -16,7 +16,12 @@ Genome Index Utilities
   NOTE: "bfast index" is run with options -d 1 (specifying depth of
   splitting) and -w 14 (specifying the hash width). This may not be
   the optimal values for all genomes. Edit the BFAST_INDEX_OPTIONS
-  variable to change these values.
+  variable to change these values, e.g. SpR6 uses
+  BFAST_INDEX_OPTIONS="-w 14"
+
+  NOTE: if .brg and/or .bif files already exist then bfast index
+  may not run correctly. It's recommended to remove any old files
+  before rerunning the build script.
 
 - bowtie_build_indexes.sh <genome_fasta_file>
 
