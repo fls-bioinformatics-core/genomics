@@ -3,7 +3,8 @@
 # bfast_build_indexes.sh
 #
 # Create reference genome and indexes for bfast (color space
-# only i.e. -A 1 option of bfast)
+# only i.e. -A 1 option of bfast) plus the .brg files (both
+# color and base space).
 #
 # Takes a FASTA file as input.
 #
@@ -21,6 +22,9 @@ if [ "$BFAST" == "" ] ; then
     echo Check that bfast is on your PATH and rerun
     exit 1
 fi
+#
+# Bfast index options
+BFAST_INDEX_OPTIONS="-w 14 -d 1"
 #
 run_date=`date`
 machine=`uname -n`
@@ -74,6 +78,7 @@ Run directory   : $run_dir
 Input fasta file: $FASTA_GENOME
 bfast exe       : $BFAST
 bfast version   : $BFAST_VERSION
+bfast index opts: $BFAST_INDEX_OPTIONS
 bfast temp dir  : $BFAST_TEMP_DIR
 qsub queue      : $USE_QUEUE
 EOF
@@ -148,7 +153,7 @@ masks="1111111111111111111111
 # ${input}.cs.${index}.1.bif
 indx=1
 for mask in $masks ; do
-    bfast_index_cmd="$BFAST index -f $LN_FASTA_GENOME -m $mask -w 14 -i $indx -A 1"
+    bfast_index_cmd="$BFAST index -f $LN_FASTA_GENOME $BFAST_TEMP_DIR $BFAST_INDEX_OPTIONS -m $mask -i $indx -A 1"
     ##echo qsub $USE_QUEUE -hold_jid bfast_fasta2brg_cs -cwd -V -N bfast_index -b y \'$bfast_index_cmd\'
     ##qsub $USE_QUEUE -hold_jid bfast_fasta2brg_cs -cwd -V -N bfast_index -b y $bfast_index_cmd
     echo $bfast_index_cmd

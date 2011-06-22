@@ -11,8 +11,14 @@ Genome Index Utilities
   Builds the bfast color space indexes from the reference FASTA file.
   Indexes are .bif files created in the directory the script
   is run in.
+  It also creates the .brg files for base and color space.
 
-- bfast_build_indexes.sh <genome_fasta_file>
+  NOTE: "bfast index" is run with options -d 1 (specifying depth of
+  splitting) and -w 14 (specifying the hash width). This may not be
+  the optimal values for all genomes. Edit the BFAST_INDEX_OPTIONS
+  variable to change these values.
+
+- bowtie_build_indexes.sh <genome_fasta_file>
 
   Builds the bowtie color and nucleotide space indexes from the reference
   FASTA file.
