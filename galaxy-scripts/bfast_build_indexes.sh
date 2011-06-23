@@ -6,6 +6,11 @@
 # only i.e. -A 1 option of bfast) plus the .brg files (both
 # color and base space).
 #
+# Options
+#   -d <depth>      [default 1]
+#   -w <hash_width> [default 14]
+#   --dry-run       [print commands but don't execute them]
+#
 # Inputs
 #   FASTA file containing the reference genome
 #
@@ -16,7 +21,7 @@
 #
 script_name=`basename $0`
 SCRIPT_NAME=`echo ${script_name%.*} | tr [:lower:] [:upper:]`
-usage="$script_name <genome_fasta_file>"
+usage="$script_name [-d <depth>] [-w <hash_width>] [--dry-run] <genome_fasta_file>"
 #
 # Initialisations
 BFAST=`which bfast 2>&1 | grep -v which`
@@ -26,27 +31,57 @@ if [ "$BFAST" == "" ] ; then
     exit 1
 fi
 #
-# Bfast index options
-BFAST_INDEX_OPTIONS="-w 14 -d 1"
-#
+# Current environment
 run_date=`date`
 machine=`uname -n`
 user=`whoami`
 run_dir=`pwd`
 #
-# Command line arguments
-# Input fasta file for reference genome
-if [ "$1" == "" ] ; then
-    echo Fatal: no input fasta file specified
-    echo $usage
-    exit 1
-fi
-FASTA_GENOME=$1
+# Bfast settings
+FASTA_GENOME=
+SPLITTING_DEPTH=1
+HASH_WIDTH=14
 #
 # Dry run
 # If set to anything other than an empty value then only print
 # the commands, don't run them
 DRY_RUN=
+#
+# Command line arguments
+while [ "$1" != "" ] ; do
+    case $1 in
+	-d)
+	    # -d <depth>
+	    shift
+	    SPLITTING_DEPTH=$1
+	    ;;
+	-w)
+	    # -w <hash_width>
+	    shift
+	    HASH_WIDTH=$1
+	    ;;
+	--dry-run)
+	    # Dry run mode
+	    DRY_RUN=yes
+	    ;;
+	*)
+	    # Assume unrecognised argument
+	    # is the input FASTA file
+	    FASTA_GENOME=$1
+	    ;;
+    esac
+    # Next argument
+    shift
+done
+# Input fasta file for reference genome
+if [ "$FASTA_GENOME" == "" ] ; then
+    echo Fatal: no input fasta file specified
+    echo $usage
+    exit 1
+fi
+#
+# Bfast index options
+BFAST_INDEX_OPTIONS="-w $HASH_WIDTH -d $SPLITTING_DEPTH"
 #
 # Check input file exists
 if [ ! -f "$FASTA_GENOME" ] ; then
