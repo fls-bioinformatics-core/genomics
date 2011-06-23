@@ -6,10 +6,13 @@
 # only i.e. -A 1 option of bfast) plus the .brg files (both
 # color and base space).
 #
-# Takes a FASTA file as input.
+# Inputs
+#   FASTA file containing the reference genome
 #
-# Note that bfast creates the index files (*.bif) in the same
-# directory as the FASTA file.
+# Outputs
+#   In the current directory: creates *.cs.brg and *.nt.brg files
+#   plus color space index files *.cs.x.y.bif
+#   Also creates a symbolic link to the input FASTA file
 #
 script_name=`basename $0`
 SCRIPT_NAME=`echo ${script_name%.*} | tr [:lower:] [:upper:]`
@@ -93,15 +96,11 @@ if [ ! -f $LN_FASTA_GENOME ] ; then
     if [ -z $DRY_RUN ] ; then
 	ln -s $FASTA_GENOME $LN_FASTA_GENOME
     fi
-    # Clean up link at the end
-    cleanup_ln=yes
 else
     echo $LN_FASTA_GENOME: already exists
     if [ -h $LN_FASTA_GENOME ] ; then
 	echo $LN_FASTA_GENOME is a link
     fi
-    # Don't clean up link at the end
-    cleanup_ln=
 fi
 #
 # Nucleotide space
@@ -162,14 +161,6 @@ for mask in $masks ; do
     fi
     indx=$((indx+1))
 done
-#
-# Do cleanup
-if [ -n $cleanup_link ] ; then
-    echo Removing link to $LN_FASTA_GENOME
-    if [ -z $DRY_RUN ] ; then
-	/bin/rm $LN_FASTA_GENOME
-    fi
-fi
 #
 echo ===================================================
 echo $SCRIPT_NAME: FINISHED
