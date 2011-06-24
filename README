@@ -10,6 +10,9 @@ Scripts are organised into the following directories:
 * NGS-general: contains scripts not specific to either ChIP-seq
   or RNA-seq
 
+* galaxy-scripts: contains scripts for setting up and running
+  Galaxy instances (e.g. building genome indexes)
+
 Dependencies
 ------------
 
