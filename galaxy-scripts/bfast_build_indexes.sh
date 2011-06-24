@@ -2,34 +2,36 @@
 #
 # bfast_build_indexes.sh
 #
-# Create reference genome and indexes for bfast (color space
-# only i.e. -A 1 option of bfast) plus the .brg files (both
-# color and base space).
-#
-# Options
-#   -d <depth>      [default 1]
-#   -w <hash_width> [default 14]
-#   --dry-run       [print commands but don't execute them]
-#
-# Inputs
-#   FASTA file containing the reference genome
-#
-# Outputs
-#   In the current directory: creates *.cs.brg and *.nt.brg files
-#   plus color space index files *.cs.x.y.bif
-#   Also creates a symbolic link to the input FASTA file
-#
-script_name=`basename $0`
-SCRIPT_NAME=`echo ${script_name%.*} | tr [:lower:] [:upper:]`
-usage="$script_name [-d <depth>] [-w <hash_width>] [--dry-run] <genome_fasta_file>"
+function usage() {
+    # Print usage information
+    cat <<EOF
+
+Run BFAST to create .bif (color-space only) and .brg (color- and
+nucleotide-space) index files suitable for mapping.
+
+Usage
+   $script_name [OPTIONS] <genome_fasta_file>
+
+Options
+   -d <depth>      Bfast depth-of-splitting [default $SPLITTING_DEPTH]
+   -w <hash_width> Bfast hash width [default $HASH_WIDTH]
+   --dry-run       Print commands but don't execute them
+   -h              Print this help text
+
+Inputs
+   <genome_fasta_file> FASTA file containing the reference genome
+
+Outputs
+   In the current directory: creates *.cs.brg and *.nt.brg files
+   plus color space index files *.cs.x.y.bif
+   Also creates a symbolic link to the input FASTA file
+EOF
+}
 #
 # Initialisations
-BFAST=`which bfast 2>&1 | grep -v which`
-if [ "$BFAST" == "" ] ; then
-    echo Fatal: bfast program not found
-    echo Check that bfast is on your PATH and rerun
-    exit 1
-fi
+script_name=`basename $0`
+SCRIPT_NAME=`echo ${script_name%.*} | tr [:lower:] [:upper:]`
+#usage="$script_name [-d <depth>] [-w <hash_width>] [--dry-run] <genome_fasta_file>"
 #
 # Current environment
 run_date=`date`
@@ -50,6 +52,11 @@ DRY_RUN=
 # Command line arguments
 while [ "$1" != "" ] ; do
     case $1 in
+	-h)
+	    # Print usage information and exit
+	    usage
+	    exit 0
+	    ;;
 	-d)
 	    # -d <depth>
 	    shift
@@ -73,10 +80,19 @@ while [ "$1" != "" ] ; do
     # Next argument
     shift
 done
+#
 # Input fasta file for reference genome
 if [ "$FASTA_GENOME" == "" ] ; then
     echo Fatal: no input fasta file specified
-    echo $usage
+    usage
+    exit 1
+fi
+#
+# Check for bfast program
+BFAST=`which bfast 2>&1 | grep -v which`
+if [ "$BFAST" == "" ] ; then
+    echo Fatal: bfast program not found
+    echo Check that bfast is on your PATH and rerun
     exit 1
 fi
 #
@@ -86,7 +102,7 @@ BFAST_INDEX_OPTIONS="-w $HASH_WIDTH -d $SPLITTING_DEPTH"
 # Check input file exists
 if [ ! -f "$FASTA_GENOME" ] ; then
     echo Fatal: input fasta file not found
-    echo $usage
+    usage
     exit 1
 fi
 #

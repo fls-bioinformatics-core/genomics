@@ -13,6 +13,8 @@ Genome Index Utilities
   is run in. It also creates the .brg files for base and color space,
   and makes a symbolic link to the reference FASTA file.
 
+  Run with -h option to print full usage information.
+
   NOTE: by default "bfast index" is run with options -d 1 and -w 14
   (specifying the hash width and depth of splitting respectively).
   These options can be changed by specifying -d and/or -w when
