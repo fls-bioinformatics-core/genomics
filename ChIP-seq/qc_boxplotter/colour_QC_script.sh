@@ -51,8 +51,16 @@ perl ${QC_BOXPLOTTER_DIR}/qual2Rinput_file_per_posn.pl $iFileN $iFileN
 R --no-save $iFileN < ${QC_BOXPLOTTER_DIR}/SOLiD_qual_boxplot.R
 
 # Convert PS to PDF
-ps2pdfwr $iFileN\_seq-order_boxplot.ps $iFileN\_seq-order_boxplot.pdf
-ps2pdfwr $iFileN\_primer-order_boxplot.ps $iFileN\_primer-order_boxplot.pdf
+if [ -e $iFileN\_seq-order_boxplot.ps ] ; then
+    ps2pdfwr $iFileN\_seq-order_boxplot.ps $iFileN\_seq-order_boxplot.pdf
+else
+    echo Warning $iFileN\_seq-order_boxplot.ps not found
+fi
+if [ -e $iFileN\_primer-order_boxplot.ps ] ; then
+    ps2pdfwr $iFileN\_primer-order_boxplot.ps $iFileN\_primer-order_boxplot.pdf
+else
+    echo Warning $iFileN\_primer-order_boxplot.ps
+fi
 
 # Rename output files based on $iFileN
 #mv colour_quality_seq-order.ps $iFileN\_seq-order.ps
