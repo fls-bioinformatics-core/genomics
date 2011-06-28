@@ -3,18 +3,21 @@ bioinf-scripts: repository for in-house bioinformatics scripts
 
 Scripts are organised into the following directories:
 
-* ChIP-seq: contains IJD's scripts (boxplotter etc)
+* ChIP-seq: contains ChIP-seq-specific scripts
 
-* RNA-seq: contains LZ's scripts (qc_pipeline)
+* RNA-seq: contains RNA-seq-specific scripts
 
-* NGS-general: contains scripts not specific to either ChIP-seq
-  or RNA-seq
+* NGS-general: contains general NGS scripts not specific to a
+  particular type of experiment
 
 * galaxy-scripts: contains scripts for setting up and running
   Galaxy instances (e.g. building genome indexes)
+
+* utils: non-NGS utility scripts
 
 Dependencies
 ------------
 
 * R
 * perl Statistics::Descriptive module
+* java
