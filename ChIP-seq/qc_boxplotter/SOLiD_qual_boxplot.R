@@ -21,10 +21,10 @@ so_filename = paste(fileName, "seq-order_boxplot.ps", sep="_");
 postscript(so_filename, paper = "a4", horizontal = TRUE)
 
 # put all files in list
-so_pattern = paste(fileName, "posn*", sep="_")
+so_pattern = paste(basename(fileName), "posn*", sep="_")
 
 #files <- list.files(pattern="qual_posn*")
-files <- list.files(pattern=so_pattern)
+files <- list.files(path=dirname(fileName),pattern=so_pattern,full.names=TRUE)
 
 # counter for current file
 s=0
@@ -77,10 +77,10 @@ po_filename = paste(fileName, "primer-order_boxplot.ps", sep="_");
 postscript(po_filename, paper = "a4", horizontal = TRUE)
 
 # put all files in list
-po_pattern = paste(fileName, "pposn*", sep="_")
+po_pattern = paste(basename(fileName), "pposn*", sep="_")
 
 #files <- list.files(pattern="qual_pposn*")
-files <- list.files(pattern=po_pattern)
+files <- list.files(path=dirname(fileName),pattern=po_pattern,full.names=TRUE)
 
 # counter for current file
 s=0
