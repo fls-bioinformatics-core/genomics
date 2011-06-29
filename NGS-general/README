@@ -3,8 +3,16 @@ NGS-general
 
 General NGS scripts that are used for both ChIP-seq and RNA-seq.
 
-cd_set_umask_ngsdata.sh: script to set and revert umask appropriately
-when moving in and out of the NGS data directory.
+explain_sam_flag.sh
+-------------------
+Convert a decimal bitwise SAM flag value to binary representation and
+interpret each bit.
 
-explain_sam_flag.sh: convert a decimal bitwise SAM flag value to binary
-representation and interpret each bit.
+qc_boxplotter
+-------------
+Generate a QC boxplot from SOLiD .qual file.
+
+SamStats
+--------
+Counts how many reads are uniquely mapped onto each chromosome or
+contig in a SAM file.
