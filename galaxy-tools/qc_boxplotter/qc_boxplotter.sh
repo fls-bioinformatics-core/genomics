@@ -6,7 +6,6 @@
 echo QC Boxplotter: generate QC boxplot
 #
 # Run qc_boxplotter
-## NB collect output from stdout and stderr otherwise job will fail
 colour_QC_script.sh $1
 #
 # Outputs are <qual_in>_seq-order_boxplot.pdf and
@@ -28,12 +27,10 @@ fi
 #
 # There are also corresponding .ps files that we'll delete
 if [ -f "${1}_seq-order_boxplot.ps" ] ; then
-    ##/bin/rm -f ${1}_seq-order_boxplot.ps
-    echo dummy line
+    /bin/rm -f ${1}_seq-order_boxplot.ps
 fi
 if [ -f "${1}_primer-order_boxplot.ps" ] ; then
-    ##/bin/rm -f ${1}_primer-order_boxplot.ps
-    echo dummy line
+    /bin/rm -f ${1}_primer-order_boxplot.ps
 fi
 #
 # Done
