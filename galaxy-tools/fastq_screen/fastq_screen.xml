@@ -1,0 +1,30 @@
+<tool id="fastq_screen" name="Run FastQ Screen" version="0.0.1">
+  <description>to check for contaminants in your sample</description>
+  <command interpreter="bash">fastq_screen.sh $input $screen_txt $screen_png</command>
+  <inputs>
+    <param format="fastq" name="input" type="data" label="FASTQ file" />
+  </inputs>
+  <outputs>
+    <data format="txt" name="screen_txt" label="${tool.name} on ${on_string}: report" />
+    <data format="png" name="screen_png" label="${tool.name} on ${on_string}: plot" />
+  </outputs>
+  <tests>
+    <test>
+      <param name="input" value="fastq_screen_in.fastq" />
+      <output name="screen_txt" file="fastq_screen_out.txt" />
+      <output name="screen_png" file="fastq_screen_out.png" compare="sim_size" />
+    </test>
+  </tests>
+  <help>
+Run Fastq Screen as part of a QC pipeline.
+
+It allows you to take a sequence dataset and search it
+against a set of bowtie databases. It will then generate
+both a text and a graphical summary of the results to see if
+the sequence dataset contains the kind of sequences you expect
+or not.
+
+Note that this tool assumes that you're using color space
+bowtie indexes.
+  </help>
+</tool>
