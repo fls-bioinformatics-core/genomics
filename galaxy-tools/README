@@ -15,6 +15,9 @@ Galaxy:
 
 You will also need to restart Galaxy for the changes to take effect.
 
+(Note that tests are available for each tool, but the test data is not
+currently in this repository.)
+
 fastq_screen
 ------------
 XML and wrapper script for fastq_screen program. Assumes that
