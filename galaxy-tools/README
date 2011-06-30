@@ -24,3 +24,12 @@ setup.
 
 To add to Galaxy put this somewhere in tool_conf.xml:
 <tool file="fastq_screen/fastq_screen.xml" />
+
+qc_boxplotter
+-------------
+XML and wrapper script for the FLS SOLiD QC boxplotter. Assumes that
+colour_QC_script.sh (the driver for the boxplotter) is on the Galaxy
+user's path (currently it's in ).
+
+To add to Galaxy put this somewhere in tool_conf.xml:
+<tool file="qc_boxplotter/qc_boxplotter.xml" />

@@ -1,0 +1,22 @@
+<tool id="qc_boxplotter" name="Run QC Boxplotter" version="0.0.1">
+  <description>to get quality boxplot for SOLiD data</description>
+  <command interpreter="bash">qc_boxplotter.sh $input $seq_order_boxplot_pdf $primer_order_boxplot_pdf</command>
+  <inputs>
+    <param format="qualsolid" name="input" type="data" label="Generate boxplot plot from SOLiD qual file" />
+  </inputs>
+  <outputs>
+    <data format="pdf" name="seq_order_boxplot_pdf" label="Nucleotide order boxplot for ${on_string}" />
+    <data format="pdf" name="primer_order_boxplot_pdf" label="Primer order boxplot for ${on_string}" />
+  </outputs>
+  <tests>
+    <test>
+      <param name="input" value="solid_qc_boxplotter_in.qual" />
+      <output name="seq_order_boxplot_pdf" file="solid_qc_boxplotter_out_seq.pdf" compare="sim_size" delta="500" />
+      <output name="primer_order_boxplot_pdf" file="solid_qc_boxplotter_out_primer.pdf" compare="sim_size" delta="500" />
+    </test>
+  </tests>
+  <help>
+This tool runs the FLS QC boxplotter program to assess the quality
+of a SOLiD read sequence by base.
+  </help>
+</tool>
