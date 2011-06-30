@@ -6,8 +6,11 @@ Tools and tool-wrappers for Galaxy.
 Tools are organised into subdirectories; to add these to your local
 Galaxy:
 
-1. Copy the subdirectory into the .../galaxy-dist/tools/
-   directory
+1. Either:
+   Copy the subdirectory into your .../galaxy-dist/tools/ directory
+   or:
+   Make a soft link in .../galaxy-dist/tools/ to the tool subdirectory
+   
 2. Add an entry for the tool in .../galaxy-dist/tool_conf.xml
 
 You will also need to restart Galaxy for the changes to take effect.
