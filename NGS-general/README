@@ -16,3 +16,10 @@ SamStats
 --------
 Counts how many reads are uniquely mapped onto each chromosome or
 contig in a SAM file.
+
+SolidDataExtractor
+------------------
+Python module with classes for extracting data about a SOLiD run from
+the data in the run directory. Can also be run as a stand-alone program:
+
+python SolidDataExtractor.py /path/to/solid/run/directory
