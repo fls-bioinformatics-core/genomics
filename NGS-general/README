@@ -15,7 +15,11 @@ Generate a QC boxplot from SOLiD .qual file.
 SamStats
 --------
 Counts how many reads are uniquely mapped onto each chromosome or
-contig in a SAM file.
+contig in a SAM file. To run:
+
+java -classpath <dir_with_Samtools.class> SamStats <sam_file>
+
+Output is a text file "SamStats_maponly_<sam_file>.stats"
 
 SolidDataExtractor
 ------------------
