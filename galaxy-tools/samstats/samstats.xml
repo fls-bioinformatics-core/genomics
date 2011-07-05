@@ -1,0 +1,24 @@
+<tool id="samstats" name="Count uniquely mapped reads" version="0.0.1">
+  <description>for each chromosome or contig in a SAM file</description>
+  <command interpreter="bash">samstats.sh -j ${GALAXY_DATA_INDEX_DIR}/shared/jars/SamStats.jar $input $output_report</command>
+  <inputs>
+    <param format="sam" name="input" type="data" label="Input SAM file" />
+  </inputs>
+  <outputs>
+    <data format="txt" name="output_report" label="Count uniquely mapped reads for ${on_string}" />
+  </outputs>
+  <tests>
+    <test>
+      <param name="input" value="bowtie_samstats_sam.in" />
+      <output name="output_report" file="samstats_out.txt" />
+    </test>
+  </tests>
+  <help>
+This tool runs the FLS SamStats program to count how many reads are
+uniquely mapped onto each chromosome or contig in a SAM file. The
+program counts any reads which have been assigned a genomic coordinate.
+
+Amongst other things this can provide an early warning when there is a
+problem mapping to a genome where manipulations have taken place.
+  </help>
+</tool>
