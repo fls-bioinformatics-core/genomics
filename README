@@ -15,6 +15,9 @@ Scripts are organised into the following directories:
 
 * utils: non-NGS utility scripts
 
+* shoebox: a place for scrappy or one-off utility scripts which
+  may or may not be useful in future.
+
 Dependencies
 ------------
 
