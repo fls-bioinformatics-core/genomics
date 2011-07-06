@@ -3,6 +3,41 @@ import sys
 # Fetch classes for analysing SOLiD directories
 import SolidDataExtractor
 
+class SolidProject:
+    """Hold information about a SOLiD 'project'
+
+    A SolidProject object holds a collection of libraries which
+    together constitute a 'project'.
+
+    The definition of a 'project' is quite loose in this context:
+    essentially it's a grouping of libraries within a sample.
+    Typically the grouping is by the initial letters of the library
+    name e.g. DR for DR1, EP for EP_NCYC2669 - but this determination
+    is made at the application level.
+
+    Libraries are added to the project via the addLibrary method.
+    Data about the project can be accessed via the following
+    properties:
+
+    name: the project name (supplied on object creation)
+    libraries: a list of libraries in the project
+    """
+
+    def __init__(self,name):
+        """Create a new SolidProject object.
+
+        name: the name of the project.
+        """
+        self.name = name
+        self.libraries = []
+
+    def addLibrary(self,library):
+        """Add a library to the project.
+
+        library: the name of the library to add.
+        """
+        self.libraries.append(library)
+
 def extract_initials(library):
     """Given a library name, extract the experimenter's initials.
 
@@ -117,23 +152,21 @@ if __name__ == "__main__":
         # library
         for sample in run.samples:
             projects = []
-            libraries_in_project = {}
             for library in run.libraries[sample]:
-                project = extract_initials(library)
-                if not project in projects:
+                project_name = extract_initials(library)
+                if not project_name in [p.name for p in projects]:
+                    project = SolidProject(project_name)
                     projects.append(project)
-                    libraries_in_project[project] = []
-                libraries_in_project[project].append(library)
+                project.addLibrary(library)
             # Report
             for project in projects:
                 ##print "\t%s" % ', '.join(libraries_in_project[project])
-                libraries = \
-                    pretty_print_libraries(libraries_in_project[project])
+                libraries = pretty_print_libraries(project.libraries)
                 print "\nSample %s: (project %s): %s" % (sample,
-                                                       project,
-                                                       libraries)
+                                                         project.name,
+                                                         libraries)
                 if run.run_info.is_barcoded_sample:
-                    print "B/C samples: %d" % len(libraries_in_project[project])
+                    print "B/C samples: %d" % len(libraries)
                 total_reads = 'not available'
                 if run.barcode_stats[sample]:
                     try:
