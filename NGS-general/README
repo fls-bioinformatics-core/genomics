@@ -42,3 +42,5 @@ the run directory.
   and report the layout, samples etc for a SOLiD run:
 
   python analyse_solid_run.py /path/to/solid/run/directory
+
+- Spreadsheet.py: utility class to generate basic spreadsheet.
