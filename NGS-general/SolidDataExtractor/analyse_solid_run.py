@@ -142,7 +142,7 @@ if __name__ == "__main__":
         else:
             slide_layout = "Undefined layout"
         print "\nFC%s (%s)" % (str(run.run_info.flow_cell),
-                                        str(slide_layout))
+                               str(slide_layout))
         print "Date: %s" % (run.run_info.date)
         print "I.D.: %s" % (run.run_info.name)
         #
@@ -174,4 +174,6 @@ if __name__ == "__main__":
                             getDataByName("All Beads")[-1]
                     except IndexError:
                         pass
+                # FIXME need to check that this total read info is
+                # actually correct
                 print "Total reads: %s *UNVERIFIED*" % str(total_reads)
