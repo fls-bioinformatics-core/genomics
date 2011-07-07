@@ -60,9 +60,9 @@ def pretty_print_libraries(libraries):
     """
     # Split each library name into prefix and numeric suffix
     s = []
-    for lib in libraries:
+    for lib in [l.name for l in libraries]:
         prefix = lib
-        suffix = '' 
+        suffix = ''
         is_suffix = True
         while is_suffix and prefix:
             if prefix[-1].isdigit():
@@ -125,6 +125,9 @@ if __name__ == "__main__":
     solid_dir_fc2 = sys.argv[1]+"_2"
     solid_dirs = (solid_dir_fc1,solid_dir_fc2)
     #
+    # Keep a list of the solid runs
+    solid_runs = []
+    #
     # Get the run information
     for solid_dir in solid_dirs:
         run = SolidDataExtractor.SolidRun(solid_dir)
@@ -152,7 +155,7 @@ if __name__ == "__main__":
         # library
         for sample in run.samples:
             projects = []
-            for library in run.libraries[sample]:
+            for library in sample.libraries:
                 project_name = extract_initials(library)
                 if not project_name in [p.name for p in projects]:
                     project = SolidProject(project_name)
@@ -160,17 +163,16 @@ if __name__ == "__main__":
                 project.addLibrary(library)
             # Report
             for project in projects:
-                ##print "\t%s" % ', '.join(libraries_in_project[project])
                 libraries = pretty_print_libraries(project.libraries)
                 print "\nSample %s: (project %s): %s" % (sample,
                                                          project.name,
                                                          libraries)
                 if run.run_info.is_barcoded_sample:
-                    print "B/C samples: %d" % len(libraries)
+                    print "B/C samples: %d" % len(project.libraries)
                 total_reads = 'not available'
-                if run.barcode_stats[sample]:
+                if sample.barcode_stats:
                     try:
-                        total_reads = run.barcode_stats[sample].\
+                        total_reads = sample.barcode_stats.\
                             getDataByName("All Beads")[-1]
                     except IndexError:
                         pass
