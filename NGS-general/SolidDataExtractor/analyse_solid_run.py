@@ -1,9 +1,34 @@
+#     analyse_solid_run.py: analyse and report on SOLiD sequencer runs
+#     Copyright (C) University of Manchester 2011 Peter Briggs
+#
+########################################################################
+#
+# analyse_solid_run.py
+#
+#########################################################################
+
+"""analyse_solid_run.py
+
+Provides functionality for analysing a SOLiD run, to report slide layout
+etc, and suggest a layout for the analysis directories.
+
+To do this it looks at grouping 'projects' (which are groups of libraries)
+into 'experiments'. The heuristics for this are rather convoluted as
+they are based on the names of the libraries.
+"""
+
+#######################################################################
+# Import modules that this module depends on
+#######################################################################
+
 import sys
 import os
 import string
-
-# Fetch classes for analysing SOLiD directories
 import SolidDataExtractor
+
+#######################################################################
+# Class definitions
+#######################################################################
 
 class SolidExperiment:
     """Class describing an experiment from a SOLiD run.
@@ -109,6 +134,10 @@ class SolidExperiment:
             analysis_filen = os.path.split(analysis_filen)[0]+\
                 '_rpt'+os.path.split(analysis_filen)[1]
         return analysis_filen
+
+#######################################################################
+# Module Functions
+#######################################################################
 
 def replace_string(filen,replace_str,with_str='_'):
     try:
@@ -265,6 +294,10 @@ def pretty_print_libraries(libraries):
             out.append(group[0].name+"-"+group[-1].index_as_string)
     # Concatenate and return
     return ', '.join(out)
+
+#######################################################################
+# Main program
+#######################################################################
 
 if __name__ == "__main__":
     # Get solid directories
