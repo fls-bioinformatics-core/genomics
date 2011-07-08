@@ -3,55 +3,6 @@ import sys
 # Fetch classes for analysing SOLiD directories
 import SolidDataExtractor
 
-class SolidProject:
-    """Hold information about a SOLiD 'project'
-
-    A SolidProject object holds a collection of libraries which
-    together constitute a 'project'.
-
-    The definition of a 'project' is quite loose in this context:
-    essentially it's a grouping of libraries within a sample.
-    Typically the grouping is by the initial letters of the library
-    name e.g. DR for DR1, EP for EP_NCYC2669 - but this determination
-    is made at the application level.
-
-    Libraries are added to the project via the addLibrary method.
-    Data about the project can be accessed via the following
-    properties:
-
-    name: the project name (supplied on object creation)
-    libraries: a list of libraries in the project
-    """
-
-    def __init__(self,name):
-        """Create a new SolidProject object.
-
-        name: the name of the project.
-        """
-        self.name = name
-        self.libraries = []
-
-    def addLibrary(self,library):
-        """Add a library to the project.
-
-        library: the name of the library to add.
-        """
-        self.libraries.append(library)
-
-def extract_initials(library):
-    """Given a library name, extract the experimenter's initials.
-
-    The initials are normally the first letters at the start of the
-    library name e.g. DR1, EP_NCYC2669, CW_TI etc
-    """
-    initials = []
-    for c in str(library):
-        if c.isalpha():
-            initials.append(c)
-        else:
-            break
-    return ''.join(initials)
-
 def pretty_print_libraries(libraries):
     """Given a list of libraries, format for pretty printing.
 
@@ -125,16 +76,21 @@ if __name__ == "__main__":
     solid_dir_fc1 = sys.argv[1]
     solid_dir_fc2 = sys.argv[1]+"_2"
     solid_dirs = (solid_dir_fc1,solid_dir_fc2)
-    #
-    # Keep a list of the solid runs
-    solid_runs = []
-    #
+
     # Get the run information
+    solid_runs = []
     for solid_dir in solid_dirs:
         run = SolidDataExtractor.SolidRun(solid_dir)
         if not run:
             print "Error extracting run data for %s" % solid_dir
-            sys.exit(1)
+        else:
+            solid_runs.append(run)
+
+    # Store the project info for each run
+    ##solid_projects = []
+
+    # Report the data for each run
+    for run in solid_runs:
         # Report overall slide layout
         slide_layout = ''
         if len(run.samples) == 1:
@@ -150,20 +106,9 @@ if __name__ == "__main__":
         print "Date: %s" % (run.run_info.date)
         print "I.D.: %s" % (run.run_info.name)
         #
-        # Identify specific samples and experiments
-        # within the slide
-        # This is done by identifying leading initials for each
-        # library
+        # Report projects for each sample
         for sample in run.samples:
-            projects = []
-            for library in sample.libraries:
-                project_name = extract_initials(library)
-                if not project_name in [p.name for p in projects]:
-                    project = SolidProject(project_name)
-                    projects.append(project)
-                project.addLibrary(library)
-            # Report
-            for project in projects:
+            for project in sample.projects:
                 libraries = pretty_print_libraries(project.libraries)
                 print "\nSample %s: (project %s): %s" % (sample,
                                                          project.name,
@@ -180,3 +125,4 @@ if __name__ == "__main__":
                 # FIXME need to check that this total read info is
                 # actually correct
                 print "Total reads: %s *UNVERIFIED*" % str(total_reads)
+
