@@ -1,7 +1,25 @@
 import sys
+import os
+import string
 
 # Fetch classes for analysing SOLiD directories
 import SolidDataExtractor
+        
+def extract_prefix(library):
+    """Given a library name, extract the prefix.
+
+    The prefix is the library name with any trailing numbers
+    removed."""
+    return str(library).rstrip(string.digits)
+
+def replace_string(filen,replace_str,with_str='_'):
+    try:
+        i = filen.index(replace_str)
+        slen = len(replace_str)
+        filen1 = filen[0:i].strip('_')+str(with_str)+filen[i+slen:].strip('_')
+    except ValueError:
+        filen1 = filen
+    return filen1
 
 def pretty_print_libraries(libraries):
     """Given a list of libraries, format for pretty printing.
@@ -125,4 +143,85 @@ if __name__ == "__main__":
                 # FIXME need to check that this total read info is
                 # actually correct
                 print "Total reads: %s *UNVERIFIED*" % str(total_reads)
+    #
+    # Suggest an analysis directory scheme
+    print "Constructing suggested analysis directory scheme..."
+    #
+    experiments = []
+    for run in solid_runs:
+        for sample in run.samples:
+            for project in sample.projects:
+                # Get project prefixes
+                prefixes = []
+                for library in project.libraries:
+                    prefix = extract_prefix(library)
+                    if not prefix in prefixes:
+                        prefixes.append(prefix)
+                prefixes.sort()
+                # Data structure for experiment
+                expt = {'prefixes': prefixes,
+                        'projects': [{ 'project': project,
+                                       'sample': sample,
+                                       'run': run }]}
+                # Have we seen something similar before?
+                match_previous_expt = False
+                for i in range(0,len(experiments)):
+                    prev_expt = experiments[i]
+                    # Look for matching prefix list
+                    if prefixes == prev_expt['prefixes']:
+                        # Combine these experiments
+                        projects = prev_expt['projects']
+                        projects.append(expt['projects'][0])
+                        experiments[i] = { 'prefixes': prefixes,
+                                           'projects': projects }
+                        match_previous_expt = True
+                        break
+                # No match
+                if not match_previous_expt:
+                    experiments.append(expt)
+    # Report
+    for expt in experiments:
+        print str(expt)
+    #
+    # Now unpack the analysis scheme
+    names = []
+    for expt in experiments:
+        # Directory and name
+        if len(expt['prefixes']) > 1:
+            # Multiple prefixes, use the experimenter's name
+            name = expt['projects'][0]['project'].name+'_expt'
+        else:
+            # Single prefix, use that
+            name = expt['prefixes'][0].strip("_")+'_expt'
+        # Check this name not already used
+        if name in names:
+            name += "_2"
+        names.append(name)
+        dirn = os.path.join(expt['projects'][0]['run'].run_dir+'_analysis',
+                            name)
+        print "\n"+dirn
+        # Data
+        files = []
+        for sub_expt in expt['projects']:
+            for library in sub_expt['project'].libraries:
+                # Construct new name by removing the sample name
+                csfasta = os.path.basename(library.csfasta)
+                qual = os.path.basename(library.qual)
+                sample_name = sub_expt['sample'].name
+                ln_csfasta = replace_string(csfasta,sample_name)
+                ln_qual = replace_string(qual,sample_name)
+                # If sample name contains "rpt" then transfer
+                # this to the new file name
+                if sample_name.find('_rpt') > -1:
+                    ln_csfasta = replace_string(ln_csfasta,library.name,
+                                                '_'+library.name+'_rpt')
+                    ln_qual = replace_string(ln_qual,library.name,
+                                             '_'+library.name+'_rpt')
+                print "* %s: %s" % (library,ln_csfasta)
+                print "* %s: %s" % (library,ln_qual)
+                if ln_csfasta in files or ln_qual in files:
+                    print "*** WARNING duplicated file name! ***"
+                files.append(ln_csfasta)
+                files.append(ln_qual)
+                            
 
