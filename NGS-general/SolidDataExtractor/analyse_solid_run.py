@@ -4,13 +4,6 @@ import string
 
 # Fetch classes for analysing SOLiD directories
 import SolidDataExtractor
-        
-def extract_prefix(library):
-    """Given a library name, extract the prefix.
-
-    The prefix is the library name with any trailing numbers
-    removed."""
-    return str(library).rstrip(string.digits)
 
 def replace_string(filen,replace_str,with_str='_'):
     try:
@@ -29,37 +22,19 @@ def pretty_print_libraries(libraries):
     """
     # Split each library name into prefix and numeric suffix
     ##print "pretty_print: input = "+str(libraries)
-    s = []
-    for lib in [l.name for l in libraries]:
-        prefix = lib
-        suffix = ''
-        is_suffix = True
-        while is_suffix and prefix:
-            if prefix[-1].isdigit():
-                suffix = prefix[-1]+suffix
-                prefix = prefix[0:-1]
-            else:
-                is_suffix = False
-        if suffix == '':
-            index = None
-        else:
-            index = int(suffix.lstrip('0'))
-        s.append([lib,prefix,suffix,index])
-    # Sort this list on the index (i.e. last element)
-    s = sorted(s, key=lambda s: (s[1],s[-1]))
-    ##print "pretty_print: analysed & sorted = "+str(s)
+    libs = sorted(libraries, key=lambda l: (l.prefix,l.index))
+    ##print str(libs)
     # Go through and group
     groups = []
     group = []
     last_index = None
-    for lib in s:
+    for lib in libs:
         # Check if this is next in sequence
-        this_index = lib[-1]
         try:
-            if this_index == last_index+1:
+            if lib.index == last_index+1:
                 # Next in sequence
                 group.append(lib)
-                last_index = this_index
+                last_index = lib.index
                 continue
         except TypeError:
             # One or both of the indexes was None
@@ -69,7 +44,7 @@ def pretty_print_libraries(libraries):
         if group:
             groups.append(group)
         group = [lib]
-        last_index = this_index
+        last_index = lib.index
     # Capture last group
     if group:
         groups.append(group)
@@ -79,10 +54,10 @@ def pretty_print_libraries(libraries):
     for group in groups:
         if len(group) == 1:
             # "group" of one
-            out.append(group[0][0])
+            out.append(group[0].name)
         else:
             # Group with at least two members
-            out.append(group[0][0]+"-"+group[-1][2])
+            out.append(group[0].name+"-"+group[-1].index_as_string)
     # Concatenate and return
     return ', '.join(out)
 
@@ -103,9 +78,6 @@ if __name__ == "__main__":
             print "Error extracting run data for %s" % solid_dir
         else:
             solid_runs.append(run)
-
-    # Store the project info for each run
-    ##solid_projects = []
 
     # Report the data for each run
     for run in solid_runs:
@@ -154,9 +126,8 @@ if __name__ == "__main__":
                 # Get project prefixes
                 prefixes = []
                 for library in project.libraries:
-                    prefix = extract_prefix(library)
-                    if not prefix in prefixes:
-                        prefixes.append(prefix)
+                    if not library.prefix in prefixes:
+                        prefixes.append(library.prefix)
                 prefixes.sort()
                 # Data structure for experiment
                 expt = {'prefixes': prefixes,
