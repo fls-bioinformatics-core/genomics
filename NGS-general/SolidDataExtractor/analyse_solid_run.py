@@ -59,6 +59,7 @@ def pretty_print_libraries(libraries):
     ['DR1', 'DR2', 'DR3', DR4'] -> 'DR1-4'
     """
     # Split each library name into prefix and numeric suffix
+    ##print "pretty_print: input = "+str(libraries)
     s = []
     for lib in [l.name for l in libraries]:
         prefix = lib
@@ -76,8 +77,8 @@ def pretty_print_libraries(libraries):
             index = int(suffix.lstrip('0'))
         s.append([lib,prefix,suffix,index])
     # Sort this list on the index (i.e. last element)
-    s = sorted(s, key=lambda s: s[-1])
-    ##print str(s)
+    s = sorted(s, key=lambda s: (s[1],s[-1]))
+    ##print "pretty_print: analysed & sorted = "+str(s)
     # Go through and group
     groups = []
     group = []
