@@ -32,6 +32,7 @@ https://github.com/dln/pycassa/blob/90736f8146c1cac8287f66e8c8b64cb80e011513/pyc
 import xlwt, xlrd
 import xlutils, xlutils.copy
 from xlwt.Utils import rowcol_to_cell
+from xlwt import easyxf
 
 import os
 
@@ -62,7 +63,7 @@ class Spreadsheet:
             self.sheet = self.workbook.add_sheet(title)
             self.current_row = 0
         else:
-            # Already exists
+            # Already exists - convert into an xlwt workbook
             rb = xlrd.open_workbook(self.name,formatting_info=True)
             rs = rb.sheet_by_index(0)
             self.workbook = xlutils.copy.copy(rb)
@@ -71,6 +72,9 @@ class Spreadsheet:
 
     def addTitleRow(self,headers):
         """Add a title row to the spreadsheet.
+
+        The title row will have the font style set to bold for all
+        cells.
 
         Arguments:
           headers: list of titles to be added.
@@ -81,7 +85,8 @@ class Spreadsheet:
         self.headers = headers
         self.current_row += 1
         cindex = 0
-        return self.addRow(headers)
+        # Add the header row in bold font
+        return self.addRow(headers,easyxf('font: bold True;'))
 
     def addEmptyRow(self):
         """Add an empty row to the spreadsheet.
@@ -95,15 +100,21 @@ class Spreadsheet:
         self.current_row += 1
         return self.current_row
 
-    def addRow(self,data):
+    def addRow(self,data,style=None):
         """Add a row of data to the spreadsheet.
 
         Arguments:
           data: list of data items to be added.
+          style: (optional) an xlwt.easyxf() style object that
+          is used to set the style for the cells in the row.
 
         Returns:
           Integer index of row just written
         """
+        if not style:
+            xf_style = easyxf()
+        else:
+            xf_style = style
         self.current_row += 1
         cindex = 0
         for item in data:
@@ -115,10 +126,10 @@ class Spreadsheet:
                 #sheet.write(2,3,xlwt.Formula('%s/%s*100' %
                 #                  (rowcol_to_cell(2,2),rowcol_to_cell(2,1))))
                 #
-                self.sheet.write(self.current_row,cindex_item)
+                self.sheet.write(self.current_row,cindex_item,xf_style)
             else:
                 # Data
-                self.sheet.write(self.current_row,cindex,item)
+                self.sheet.write(self.current_row,cindex,item,xf_style)
             cindex += 1
         return self.current_row
 
