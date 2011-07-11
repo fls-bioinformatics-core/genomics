@@ -154,15 +154,7 @@ def report_run(solid_runs):
     # Report the data for each run
     for run in solid_runs:
         # Report overall slide layout
-        slide_layout = ''
-        if len(run.samples) == 1:
-            slide_layout = "Whole slide"
-        elif len(run.samples) == 4:
-            slide_layout = "Quads"
-        elif len(run.samples) == 8:
-            slide_layout = "Octets"
-        else:
-            slide_layout = "Undefined layout"
+        slide_layout = get_slide_layout(run)
         print "\nFC%s (%s)" % (str(run.run_info.flow_cell),
                                str(slide_layout))
         print "Date: %s" % (run.run_info.date)
@@ -294,6 +286,22 @@ def pretty_print_libraries(libraries):
             out.append(group[0].name+"-"+group[-1].index_as_string)
     # Concatenate and return
     return ', '.join(out)
+
+def get_slide_layout(solid_run):
+    """Return description of slide layout for a SOLiD run.
+
+    Given a SolidRun object 'solid_run', return the slide layout
+    description (e.g. "whole slide", "quads" etc) as a string, based
+    on the number of samples in the run.
+    """
+    if len(solid_run.samples) == 1:
+        return "Whole slide"
+    elif len(solid_run.samples) == 4:
+        return "Quads"
+    elif len(solid_run.samples) == 8:
+        return "Octets"
+    else:
+        return "Undefined layout"
 
 #######################################################################
 # Main program
