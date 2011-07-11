@@ -7,7 +7,7 @@ try:
 except ImportError:
     print "Unable to import xlwt module (ignored)"
 
-class SpreadSheet:
+class Spreadsheet:
     """Class for creating and writing a spreadsheet.
 
     This creates a very simple single-sheet workbook.
@@ -73,7 +73,7 @@ class SpreadSheet:
 
 if __name__ == "__main__":
     # Example writing spreadsheet
-    wb = SpreadSheet('test.xls','test')
+    wb = Spreadsheet('test.xls','test')
     wb.addTitleRow(['File','Total reads','Unmapped reads'])
     wb.addEmptyRow()
     wb.addRow(['DR_1',875897,713425])
