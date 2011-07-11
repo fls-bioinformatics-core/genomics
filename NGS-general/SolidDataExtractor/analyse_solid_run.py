@@ -141,6 +141,8 @@ class SolidExperiment:
 #######################################################################
 
 def replace_string(filen,replace_str,with_str='_'):
+    """
+    """
     try:
         i = filen.rindex(replace_str)
         slen = len(replace_str)
@@ -401,7 +403,7 @@ if __name__ == "__main__":
         print "Options:"
         print "  --report: print a report of the SOLiD run"
         print "  --layout: suggest layout for analysis directories"
-        print "  --spreadsheet: write report to Excel spreadsheet"
+        print "  --spreadsheet[=<file>.xls]: write report to Excel spreadsheet"
         sys.exit()
 
     # Solid run directories
@@ -419,8 +421,15 @@ if __name__ == "__main__":
         do_suggest_layout = True
 
     do_spreadsheet = False
-    if "--spreadsheet" in sys.argv[1:-1]:
-        do_spreadsheet = True
+    for arg in sys.argv[1:-1]:
+        if arg.startswith("--spreadsheet"):
+            do_spreadsheet = True
+            try:
+                i = arg.index("=")
+                spreadsheet = arg[i+1:]
+            except IndexError:
+                spreadsheet = solid_dir_fc1+".xls"
+    print "Writing spreadsheet %s" % spreadsheet
 
     # Get the run information
     solid_runs = []
@@ -437,7 +446,7 @@ if __name__ == "__main__":
 
     # Report the runs to a spreadsheet
     if do_spreadsheet:
-        write_spreadsheet(solid_runs,solid_dir_fc1+".xls")
+        write_spreadsheet(solid_runs,spreadsheet)
 
     # Suggest a layout
     if do_suggest_layout:
