@@ -12,14 +12,28 @@
 Provides a Spreadsheet class for writing data to an Excel spreadsheet,
 using the xlrd, xlwt and xlutils modules.
 
+These can be found at:
+http://pypi.python.org/pypi/xlwt/0.7.2
+http://pypi.python.org/pypi/xlrd/0.7.1
+http://pypi.python.org/pypi/xlutils/1.4.1
+
+xlutils also needs functools:
+http://pypi.python.org/pypi/functools
+
+but if you're using Python<2.5 then you need a backported version of
+functools, try:
+https://github.com/dln/pycassa/blob/90736f8146c1cac8287f66e8c8b64cb80e011513/pycassa/py25_functools.py
 """
 
 #######################################################################
 # Import modules that this module depends on
 #######################################################################
 
-import xlwt
+import xlwt, xlrd
+import xlutils, xlutils.copy
 from xlwt.Utils import rowcol_to_cell
+
+import os
 
 #######################################################################
 # Class definitions
@@ -32,15 +46,28 @@ class Spreadsheet:
     """
 
     def __init__(self,name,title):
-        """Create a new SpreadSheet instance.
+        """Create a new Spreadsheet instance.
 
-        name: name of the XLS format spreadsheet to be created. 
-        title: title for the new sheet.
+        If the named spreadsheet already exists then any new
+        data is appended to the it.
+
+        Arguments:
+          name: name of the XLS format spreadsheet to be created. 
+          title: title for the new sheet.
         """
         self.workbook = xlwt.Workbook()
         self.name = name
-        self.sheet = self.workbook.add_sheet(title)
-        self.current_row = 0
+        if not os.path.exists(self.name):
+            # New spreadsheet
+            self.sheet = self.workbook.add_sheet(title)
+            self.current_row = 0
+        else:
+            # Already exists
+            rb = xlrd.open_workbook(self.name,formatting_info=True)
+            rs = rb.sheet_by_index(0)
+            self.workbook = xlutils.copy.copy(rb)
+            self.sheet = self.workbook.get_sheet(0)
+            self.current_row = rs.nrows
 
     def addTitleRow(self,headers):
         """Add a title row to the spreadsheet.
