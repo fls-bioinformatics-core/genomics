@@ -38,6 +38,10 @@ class SamStats
 	{
 		fileNameIn = fileNameIn;
 	
+		// Get output file name - strip leading directory from input name
+		File inFile = new File(fileNameIn);
+		String fileNameOut = "SamStats_maponly_"+inFile.getName()+".stats";
+
 		try
 		{
 			//make things to read file count chromosomes			
@@ -55,7 +59,7 @@ class SamStats
 			}
 						
 			//make things to read file, count things and to write 1 file.
-			FileWriter fw = new FileWriter ("SamStats_maponly_"+fileNameIn+".stats");
+			FileWriter fw = new FileWriter (fileNameOut);
 	      	BufferedWriter bw = new BufferedWriter (fw);
 			PrintWriter outFile = new PrintWriter (bw);
 			String chrS = "Chr-";
