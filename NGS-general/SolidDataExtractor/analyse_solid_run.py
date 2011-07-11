@@ -25,6 +25,7 @@ import sys
 import os
 import string
 import SolidDataExtractor
+import Spreadsheet
 
 #######################################################################
 # Class definitions
@@ -180,6 +181,92 @@ def report_run(solid_runs):
                 # actually correct
                 print "Total reads: %s *UNVERIFIED*" % str(total_reads)
 
+
+def write_spreadsheet(solid_runs,spreadsheet):
+    """
+    """
+    # Check whether spreadsheet file already exists
+    if os.path.exists(spreadsheet):
+        write_header = False
+    else:
+        write_header = True
+
+    # Open spreadsheet
+    wb = Spreadsheet.Spreadsheet(spreadsheet,'Sheet 1')
+
+    # Header row
+    if write_header:
+        wb.addTitleRow(['Ref No',
+                        'Project Description',
+                        'P.I.',
+                        'Date',
+                        'Library type',
+                        'Sample & Layout Description',
+                        'B/C samples',
+                        'Total reads',
+                        'I.D.',
+                        'Cost'])
+    
+    # Spacer row
+    wb.addEmptyRow()
+
+    # Report the data for each run
+    for run in solid_runs:
+        # First line: date, flow cell layout, and id
+        slide_layout = get_slide_layout(run)
+        description = "FC"+str(run.run_info.flow_cell)+" ("+slide_layout+")"
+        total_reads = ''
+        if len(run.samples) == 1:
+            description += ": "+str(run.samples[0].name)
+            try:
+                total_reads = run.samples[0].barcode_stats.\
+                    getDataByName("All Beads")[-1]
+            except AttributeError:
+                total_reads = "?"
+        run_date = run.run_info.date
+        run_id = run.run_info.name
+        wb.addRow(['',
+                   '',
+                   '',
+                   run_date,
+                   '',
+                   description,
+                   '',
+                   total_reads,
+                   run_id])
+        # Add one line per project in each sample
+        for sample in run.samples:
+            for project in sample.projects:
+                libraries = pretty_print_libraries(project.libraries)
+                if len(run.samples) > 1:
+                    description = sample.name+": "
+                    total_reads = '?'
+                    if sample.barcode_stats:
+                        try:
+                            total_reads = sample.barcode_stats.\
+                                getDataByName("All Beads")[-1]
+                        except IndexError:
+                            pass
+                else:
+                    description = ''
+                    total_reads = ''
+                description += str(len(project.libraries))+" samples "+\
+                    libraries
+                # FIXME need to check that this total read info is
+                # actually correct
+                wb.addRow(['',
+                           '',
+                           '',
+                           '',
+                           '',
+                           description,
+                           len(project.libraries),
+                           total_reads])
+                wb.addEmptyRow()
+                
+    # Write the spreadsheet
+    wb.write()
+
 def get_experiments(solid_runs):
     """
     """
@@ -314,6 +401,7 @@ if __name__ == "__main__":
         print "Options:"
         print "  --report: print a report of the SOLiD run"
         print "  --layout: suggest layout for analysis directories"
+        print "  --spreadsheet: write report to Excel spreadsheet"
         sys.exit()
 
     # Solid run directories
@@ -330,6 +418,10 @@ if __name__ == "__main__":
     if "--layout" in sys.argv[1:-1]:
         do_suggest_layout = True
 
+    do_spreadsheet = False
+    if "--spreadsheet" in sys.argv[1:-1]:
+        do_spreadsheet = True
+
     # Get the run information
     solid_runs = []
     for solid_dir in solid_dirs:
@@ -342,6 +434,10 @@ if __name__ == "__main__":
     # Report the runs
     if do_report_run:
         report_run(solid_runs)
+
+    # Report the runs to a spreadsheet
+    if do_spreadsheet:
+        write_spreadsheet(solid_runs,solid_dir_fc1+".xls")
 
     # Suggest a layout
     if do_suggest_layout:
