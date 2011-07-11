@@ -1,11 +1,29 @@
-# Example code for generating a spreadsheet in XLS format
-# Currently unused
+#     Spreadsheet.py: write simple Excel spreadsheets
+#     Copyright (C) University of Manchester 2011 Peter Briggs
+#
+########################################################################
+#
+# Spreadsheet.py
+#
+#########################################################################
 
-try:
-    import xlwt
-    from xlwt.Utils import rowcol_to_cell
-except ImportError:
-    print "Unable to import xlwt module (ignored)"
+"""Spreadsheet
+
+Provides a Spreadsheet class for writing data to an Excel spreadsheet,
+using the xlrd, xlwt and xlutils modules.
+
+"""
+
+#######################################################################
+# Import modules that this module depends on
+#######################################################################
+
+import xlwt
+from xlwt.Utils import rowcol_to_cell
+
+#######################################################################
+# Class definitions
+#######################################################################
 
 class Spreadsheet:
     """Class for creating and writing a spreadsheet.
@@ -22,33 +40,44 @@ class Spreadsheet:
         self.workbook = xlwt.Workbook()
         self.name = name
         self.sheet = self.workbook.add_sheet(title)
-        self.current_row = 1
+        self.current_row = 0
 
     def addTitleRow(self,headers):
         """Add a title row to the spreadsheet.
 
-        headers: list of titles to be added.
+        Arguments:
+          headers: list of titles to be added.
+
+        Returns:
+          Integer index of row just written
         """
         self.headers = headers
-        cindex = 0
-        for item in headers:
-            self.sheet.write(self.current_row,cindex,item)
-            cindex += 1
         self.current_row += 1
+        cindex = 0
+        return self.addRow(headers)
 
     def addEmptyRow(self):
         """Add an empty row to the spreadsheet.
 
         This just advances the row index by one, effectively
         appending an empty row.
+
+        Returns:
+          Integer index of (empty) row just written
         """
         self.current_row += 1
+        return self.current_row
 
     def addRow(self,data):
         """Add a row of data to the spreadsheet.
 
-        data: list of data items to be added.
+        Arguments:
+          data: list of data items to be added.
+
+        Returns:
+          Integer index of row just written
         """
+        self.current_row += 1
         cindex = 0
         for item in data:
             if str(item).startswith('='):
@@ -64,12 +93,16 @@ class Spreadsheet:
                 # Data
                 self.sheet.write(self.current_row,cindex,item)
             cindex += 1
-        self.current_row += 1
+        return self.current_row
 
     def write(self):
         """Write the spreadsheet to file.
         """
         self.workbook.save(self.name)
+
+#######################################################################
+# Main program
+#######################################################################
 
 if __name__ == "__main__":
     # Example writing spreadsheet
