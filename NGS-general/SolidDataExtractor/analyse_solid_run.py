@@ -193,6 +193,9 @@ def write_spreadsheet(solid_runs,spreadsheet):
     else:
         write_header = True
 
+    # Only write date once
+    write_date = True
+
     # Open spreadsheet
     wb = Spreadsheet.Spreadsheet(spreadsheet,'Sheet 1')
 
@@ -225,7 +228,11 @@ def write_spreadsheet(solid_runs,spreadsheet):
                     getDataByName("All Beads")[-1]
             except AttributeError:
                 total_reads = "?"
-        run_date = run.run_info.date
+        if write_date:
+            run_date = run.run_info.date
+            write_date = False # Don't write date again
+        else:
+            run_date = ''
         run_id = run.run_info.name
         wb.addRow(['',
                    '',
@@ -237,6 +244,7 @@ def write_spreadsheet(solid_runs,spreadsheet):
                    total_reads,
                    run_id])
         # Add one line per project in each sample
+        index = 0
         for sample in run.samples:
             for project in sample.projects:
                 libraries = pretty_print_libraries(project.libraries)
@@ -254,11 +262,16 @@ def write_spreadsheet(solid_runs,spreadsheet):
                     total_reads = ''
                 description += str(len(project.libraries))+" samples "+\
                     libraries
+                # Project description field
+                # Essentially a placeholder
+                project_description = "%s) [project description]" % \
+                    string.lowercase[index]
+                index += 1
                 # FIXME need to check that this total read info is
                 # actually correct
                 wb.addRow(['',
-                           '',
-                           '',
+                           project_description,
+                           '[P.I.]',
                            '',
                            '',
                            description,
