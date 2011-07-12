@@ -210,7 +210,7 @@ def write_spreadsheet(solid_runs,spreadsheet):
                         'Cost'])
     
     # Spacer row
-    wb.addEmptyRow()
+    wb.addEmptyRow(color='gray25')
 
     # Report the data for each run
     for run in solid_runs:
