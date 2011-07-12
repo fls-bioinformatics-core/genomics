@@ -58,17 +58,26 @@ class Spreadsheet:
         """
         self.workbook = xlwt.Workbook()
         self.name = name
+        self.headers = []
         if not os.path.exists(self.name):
             # New spreadsheet
             self.sheet = self.workbook.add_sheet(title)
-            self.current_row = 0
+            self.current_row = -1
         else:
             # Already exists - convert into an xlwt workbook
             rb = xlrd.open_workbook(self.name,formatting_info=True)
             rs = rb.sheet_by_index(0)
             self.workbook = xlutils.copy.copy(rb)
             self.sheet = self.workbook.get_sheet(0)
+            # Get some info on the sheet
             self.current_row = rs.nrows
+            # Assume that the first row with data is the header
+            # and collect the titles
+            for rindex in range(rs.nrows):
+                if str(rs.cell(rindex,0).value) != '':
+                    for cindex in range(rs.ncols):
+                        self.headers.append(rs.cell(rindex,cindex).value)
+                    break
 
     def addTitleRow(self,headers):
         """Add a title row to the spreadsheet.
@@ -86,19 +95,30 @@ class Spreadsheet:
         self.current_row += 1
         cindex = 0
         # Add the header row in bold font
-        return self.addRow(headers,easyxf('font: bold True;'))
+        return self.addRow(self.headers,style=easyxf('font: bold True;'))
 
-    def addEmptyRow(self):
+    def addEmptyRow(self,color=None):
         """Add an empty row to the spreadsheet.
 
-        This just advances the row index by one, effectively
-        appending an empty row.
+        Inserts an empty row into the next position in the
+        spreadsheet.
+
+        Arguments:
+          color: optional background color for the empty row
 
         Returns:
           Integer index of (empty) row just written
         """
-        self.current_row += 1
-        return self.current_row
+        if not color:
+            self.current_row += 1
+            return self.current_row
+        else:
+            row = []
+            for item in self.headers:
+                row.append('')
+            return self.addRow(row,
+                               style=easyxf(
+                    'pattern: pattern solid, fore_colour %s;' % color))
 
     def addRow(self,data,style=None):
         """Add a row of data to the spreadsheet.
