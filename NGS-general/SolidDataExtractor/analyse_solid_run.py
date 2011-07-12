@@ -429,7 +429,7 @@ if __name__ == "__main__":
                 spreadsheet = arg[i+1:]
             except IndexError:
                 spreadsheet = solid_dir_fc1+".xls"
-    print "Writing spreadsheet %s" % spreadsheet
+            print "Writing spreadsheet %s" % spreadsheet
 
     # Get the run information
     solid_runs = []
