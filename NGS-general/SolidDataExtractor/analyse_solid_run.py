@@ -129,7 +129,7 @@ class SolidExperiment:
         sample_name = ''
         if self.projects:
             sample_name = self.projects[0].getSample().name
-        analysis_filen = replace_string(filen,sample_name)
+        analysis_filen = replace_string(filen,sample_name+'_')
         # If sample name contains "rpt" then append to the new file name
         if sample_name.find('_rpt') > -1:
             analysis_filen = os.path.split(analysis_filen)[0]+\
@@ -140,16 +140,25 @@ class SolidExperiment:
 # Module Functions
 #######################################################################
 
-def replace_string(filen,replace_str,with_str='_'):
+def replace_string(s,replace_substr,with_str=''):
+    """Do query/replace on a string
+
+    Arguments:
+      s: original string
+      replace_substr: substring in s to be replaced
+      with_str: (optional) string to substitute replace_substring by
+
+    Returns:
+      Modified string
     """
-    """
-    try:
-        i = filen.rindex(replace_str)
-        slen = len(replace_str)
-        filen1 = filen[0:i].strip('_')+str(with_str)+filen[i+slen:].strip('_')
-    except ValueError:
-        filen1 = filen
-    return filen1
+    s1 = s
+    slen = len(replace_substr)
+    while True:
+        try:
+            i = s1.rindex(replace_substr)
+            s1 = s1[0:i]+str(with_str)+s1[i+slen:]
+        except ValueError:
+            return s1
 
 def report_run(solid_runs):
     """
