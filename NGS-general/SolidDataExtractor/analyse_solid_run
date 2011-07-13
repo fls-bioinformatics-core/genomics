@@ -1,0 +1,13 @@
+#!/bin/sh
+#
+# Bash wrapper for analyse_solid_run.py
+# Arguments to this script are passed to analyse_solid_run.py
+#
+# Get the location for these scripts
+BIN_DIR=`dirname $0`
+#
+# Ensure that the locally installed modules are available
+export PYTHONPATH=$HOME/lib/python
+#
+# Execute the python
+python ${BIN_DIR}/analyse_solid_run.py $@
