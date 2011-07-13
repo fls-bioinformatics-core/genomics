@@ -114,7 +114,7 @@ class SolidExperiment:
         else:
             return ''
 
-    def getAnalysisFileName(self,filen):
+    def getAnalysisFileName(self,filen,sample_name):
         """Return the 'analysis' file name based on a source file name.
 
         Source file names are typically of the form:
@@ -124,11 +124,19 @@ class SolidExperiment:
         1. The <sample> name is removed, and
         2. If the <sample> name includes "_rpt" then append this
            to the filename.
+
+        Note that the sample name must be explicitly provided
+        as a single SolidExperiment may be made up of multiple
+        projects with libraries from different projects.
+
+        Arguments:
+          filen: name of the source file
+          sample_name: sample name that the source file comes from
+
+        Returns:
+          Name for the analysis file.
         """
         # Construct new name by removing the sample name
-        sample_name = ''
-        if self.projects:
-            sample_name = self.projects[0].getSample().name
         analysis_filen = replace_string(filen,sample_name+'_')
         # If sample name contains "rpt" then append to the new file name
         if sample_name.find('_rpt') > -1:
@@ -341,9 +349,11 @@ def suggest_analysis_layout(experiments):
         for project in expt.projects:
             for library in project.libraries:
                 ln_csfasta = expt.\
-                    getAnalysisFileName(os.path.basename(library.csfasta))
+                    getAnalysisFileName(os.path.basename(library.csfasta),
+                                        library.parent_sample.name)
                 ln_qual = expt.\
-                    getAnalysisFileName(os.path.basename(library.qual))
+                    getAnalysisFileName(os.path.basename(library.qual),
+                                        library.parent_sample.name)
                 print "* %s: %s" % (library,ln_csfasta)
                 print "* %s: %s" % (library,ln_qual)
                 if ln_csfasta in files or ln_qual in files:
@@ -431,7 +441,10 @@ if __name__ == "__main__":
     # Solid run directories
     solid_dir_fc1 = sys.argv[-1]
     solid_dir_fc2 = sys.argv[-1]+"_2"
-    solid_dirs = (solid_dir_fc1,solid_dir_fc2)
+    if os.path.isdir(solid_dir_fc2):
+        solid_dirs = (solid_dir_fc1,solid_dir_fc2)
+    else:
+        solid_dirs = (solid_dir_fc1,)
 
     # Other options
     do_report_run = False
