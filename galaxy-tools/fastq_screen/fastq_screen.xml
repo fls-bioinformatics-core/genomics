@@ -1,4 +1,4 @@
-<tool id="fastq_screen" name="Run FastQ Screen" version="0.0.1">
+<tool id="fls_fastq_screen" name="Run FastQ Screen" version="0.0.1">
   <description>to check for contaminants in your sample</description>
   <command interpreter="bash">fastq_screen.sh $input $screen_txt $screen_png</command>
   <inputs>

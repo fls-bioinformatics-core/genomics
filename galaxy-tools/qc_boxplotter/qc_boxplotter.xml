@@ -1,4 +1,4 @@
-<tool id="qc_boxplotter" name="Run QC Boxplotter" version="0.0.1">
+<tool id="fls_qc_boxplotter" name="Run QC Boxplotter" version="0.0.1">
   <description>to get quality boxplot for SOLiD data</description>
   <command interpreter="bash">qc_boxplotter.sh $input $seq_order_boxplot_pdf $primer_order_boxplot_pdf</command>
   <inputs>

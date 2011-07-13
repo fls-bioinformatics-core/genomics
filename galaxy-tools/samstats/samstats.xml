@@ -1,4 +1,4 @@
-<tool id="samstats" name="Count uniquely mapped reads" version="0.0.1">
+<tool id="fls_samstats" name="Count uniquely mapped reads" version="0.0.1">
   <description>for each chromosome or contig in a SAM file</description>
   <command interpreter="bash">samstats.sh -j ${GALAXY_DATA_INDEX_DIR}/shared/jars/SamStats.jar $input $output_report</command>
   <inputs>
