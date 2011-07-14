@@ -95,7 +95,9 @@ class Spreadsheet:
         self.current_row += 1
         cindex = 0
         # Add the header row in bold font
-        return self.addRow(self.headers,style=easyxf('font: bold True;'))
+        return self.addRow(self.headers,
+                           style=easyxf('font: bold True;'),
+                           set_widths=True)
 
     def addEmptyRow(self,color=None):
         """Add an empty row to the spreadsheet.
@@ -120,13 +122,16 @@ class Spreadsheet:
                                style=easyxf(
                     'pattern: pattern solid, fore_colour %s;' % color))
 
-    def addRow(self,data,style=None):
+    def addRow(self,data,style=None,set_widths=False):
         """Add a row of data to the spreadsheet.
 
         Arguments:
           data: list of data items to be added.
           style: (optional) an xlwt.easyxf() style object that
           is used to set the style for the cells in the row.
+          set_widths: (optional) Boolean; if True then set the column
+            width to the length of the cell contents for each cell
+            in the new row
 
         Returns:
           Integer index of row just written
@@ -150,6 +155,9 @@ class Spreadsheet:
             else:
                 # Data
                 self.sheet.write(self.current_row,cindex,item,xf_style)
+            if set_widths:
+                # Set the column width to match the cell contents
+                self.sheet.col(cindex).width = 256*(len(item)+5)
             cindex += 1
         return self.current_row
 
