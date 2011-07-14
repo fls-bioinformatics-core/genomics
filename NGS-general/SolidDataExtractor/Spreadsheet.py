@@ -96,7 +96,7 @@ class Spreadsheet:
         cindex = 0
         # Add the header row in bold font
         return self.addRow(self.headers,
-                           style=easyxf('font: bold True;'),
+                           bold=True,
                            set_widths=True)
 
     def addEmptyRow(self,color=None):
@@ -118,28 +118,47 @@ class Spreadsheet:
             row = []
             for item in self.headers:
                 row.append('')
-            return self.addRow(row,
-                               style=easyxf(
-                    'pattern: pattern solid, fore_colour %s;' % color))
+            return self.addRow(row,bg_color=color)
 
-    def addRow(self,data,style=None,set_widths=False):
+    def addRow(self,data,set_widths=False,bold=False,wrap=False,bg_color=''):
         """Add a row of data to the spreadsheet.
 
         Arguments:
           data: list of data items to be added.
-          style: (optional) an xlwt.easyxf() style object that
-          is used to set the style for the cells in the row.
+
           set_widths: (optional) Boolean; if True then set the column
             width to the length of the cell contents for each cell
             in the new row
 
+          bold: (optional) use bold font for cells
+
+          wrap: (optional) wrap the cell content
+
+          bg_color: (optional) set the background color for the cell
+
         Returns:
           Integer index of row just written
         """
-        if not style:
-            xf_style = easyxf()
-        else:
-            xf_style = style
+        # Set up style attributes
+        style = {'font': [],
+                 'alignment': [],
+                 'pattern': []}
+        if bold:
+            style['font'].append('bold True');
+        if wrap:
+            style['alignment'].append('wrap True')
+        if bg_color:
+            style['pattern'].append('pattern solid')
+            style['pattern'].append('fore_color %s' % bg_color)
+        # Build easyfx object to apply styles
+        easyxf_style = ''
+        for key in style.keys():
+            if style[key]:
+                easyxf_style += '%s: ' % key
+                easyxf_style += ', '.join(style[key])
+                easyxf_style += '; '
+        xf_style = easyxf(easyxf_style)
+        # Write the row
         self.current_row += 1
         cindex = 0
         for item in data:
