@@ -214,7 +214,7 @@ def write_spreadsheet(solid_runs,spreadsheet):
     write_date = True
 
     # Open spreadsheet
-    wb = Spreadsheet.Spreadsheet(spreadsheet,'Sheet 1')
+    wb = Spreadsheet.Spreadsheet(spreadsheet,'SOLiD Runs')
 
     # Header row
     if write_header:
@@ -237,14 +237,33 @@ def write_spreadsheet(solid_runs,spreadsheet):
         # First line: date, flow cell layout, and id
         slide_layout = get_slide_layout(run)
         description = "FC"+str(run.run_info.flow_cell)+" ("+slide_layout+")"
+        # Barcoding status
+        # Assumes all samples/libraries in the project have the same
+        # barcoding status
+        try:
+            is_barcoded = run.samples[0].projects[0].isBarcoded()
+        except IndexError:
+            is_barcoded = False
+        # Run with only one sample
         total_reads = ''
         if len(run.samples) == 1:
             description += ": "+str(run.samples[0].name)
             try:
-                total_reads = run.samples[0].barcode_stats.\
-                    getDataByName("All Beads")[-1]
-            except AttributeError:
-                total_reads = "?"
+                if run.samples[0].projects[0].isBarcoded():
+                    # Barcoded sample, get stats
+                    try:
+                        total_reads = run.samples[0].barcode_stats.\
+                            getDataByName("All Beads")[-1]
+                    except AttributeError:
+                        # Potential problem
+                        total_reads = "NOT_FOUND"
+                else:
+                    # Not a barcoded sample
+                    total_reads = "NEEDS_LOOKUP"
+            except IndexError:
+                # Some problem looking up barcode status
+                total_reads = "NO_INFO"
+        # Deal with date string
         if write_date:
             run_date = run.run_info.date
             write_date = False # Don't write date again
@@ -265,18 +284,35 @@ def write_spreadsheet(solid_runs,spreadsheet):
         for sample in run.samples:
             for project in sample.projects:
                 libraries = pretty_print_libraries(project.libraries)
+                # Get initial description and total reads
                 if len(run.samples) > 1:
+                    # Multiple samples in one project
                     description = sample.name+": "
-                    total_reads = '?'
-                    if sample.barcode_stats:
-                        try:
-                            total_reads = sample.barcode_stats.\
-                                getDataByName("All Beads")[-1]
-                        except IndexError:
-                            pass
+                    # Total reads
+                    # For barcoded samples we should be able to extract
+                    # thos from the barcode statistics data
+                    if project.isBarcoded():
+                        total_reads = ''
+                        if sample.barcode_stats:
+                            try:
+                                total_reads = sample.barcode_stats.\
+                                    getDataByName("All Beads")[-1]
+                            except IndexError:
+                                pass
+                    else:
+                        # Not a barcoded sample, manual lookup
+                        total_reads = "NEEDS_LOOKUP"
                 else:
+                    # All libraries belong to the same sample
                     description = ''
+                    # Total reads already written once
                     total_reads = ''
+                # Library type
+                if project.isBarcoded():
+                    library_type = "bar-coding"
+                else:
+                    library_type = ''
+                # Add samples to the libraries
                 description += str(len(project.libraries))+" samples "+\
                     libraries
                 # Project description field
@@ -290,7 +326,7 @@ def write_spreadsheet(solid_runs,spreadsheet):
                            project_description,
                            '[P.I.]',
                            '',
-                           '',
+                           library_type,
                            description,
                            len(project.libraries),
                            total_reads])
@@ -341,7 +377,6 @@ def suggest_analysis_layout(experiments):
     # Suggest an analysis directory and file naming scheme
     for expt in experiments:
         # Analysis directory
-        index = 1
         dirn = expt.getAnalysisDir()
         print "\n"+dirn
         # Primary data files
@@ -354,6 +389,53 @@ def suggest_analysis_layout(experiments):
                 ln_qual = expt.\
                     getAnalysisFileName(os.path.basename(library.qual),
                                         library.parent_sample.name)
+                print "* %s: %s" % (library,ln_csfasta)
+                print "* %s: %s" % (library,ln_qual)
+                if ln_csfasta in files or ln_qual in files:
+                    print "*** WARNING duplicated file name! ***"
+                files.append(ln_csfasta)
+                files.append(ln_qual)
+
+def build_analysis_dir(experiments):
+    """Build analysis directories for the supplied experiments
+    """
+    # Suggest an analysis directory and file naming scheme
+    print "#!/bin/sh"
+    print "# BUILD AND POPULATE ANALYSIS DIRECTORY"
+    print "# AUTOGENERATED SCRIPT"
+    for expt in experiments:
+        # Analysis directory
+        dirn = expt.getAnalysisDir()
+        print "ANALYSIS_DIR=%s" % dirn
+        print "mkdir ${ANALYSIS_DIR}"
+        print "#"
+        # Primary data files
+        #
+        # All data files linked from one place
+        print "# Make directory with links to all data files"
+        print "mkdir ${ANALYSIS_DIR}/data"
+        for project in expt.projects:
+            for library in project.libraries:
+                ln_csfasta = expt.\
+                    getAnalysisFileName(os.path.basename(library.csfasta),\
+                                            library.parent_sample.name)
+                print "ln -s %s ${ANALYSIS_DIR}/data/%s" % \
+                    (library.csfasta,ln_csfasta)
+                ln_qual = expt.\
+                    getAnalysisFileName(os.path.basename(library.csfasta),\
+                                            library.parent_sample.name)
+                print "ln -s %s ${ANALYSIS_DIR}/data/%s" % \
+                    (library.qual,ln_qual)        
+        # Directories for each experiment
+        files = []
+        for project in expt.projects:
+            for library in project.libraries:
+                ln_csfasta = expt.\
+                    getAnalysisFileName(os.path.basename(library.csfasta),\
+                                            library.parent_sample.name)
+                ln_qual = expt.\
+                    getAnalysisFileName(os.path.basename(library.qual),\
+                                            library.parent_sample.name)
                 print "* %s: %s" % (library,ln_csfasta)
                 print "* %s: %s" % (library,ln_qual)
                 if ln_csfasta in files or ln_qual in files:
@@ -466,6 +548,10 @@ if __name__ == "__main__":
                 spreadsheet = solid_dir_fc1+".xls"
             print "Writing spreadsheet %s" % spreadsheet
 
+    do_build_layout = False
+    if "--build-layout" in sys.argv[1:-1]:
+        do_build_layout = True
+
     # Get the run information
     solid_runs = []
     for solid_dir in solid_dirs:
@@ -483,10 +569,14 @@ if __name__ == "__main__":
     if do_spreadsheet:
         write_spreadsheet(solid_runs,spreadsheet)
 
-    # Suggest a layout
-    if do_suggest_layout:
+    # Determine experiments
+    if do_suggest_layout or do_build_layout:
         experiments = get_experiments(solid_runs)
-        suggest_analysis_layout(experiments)
-
-                            
+        # Suggest a layout
+        if do_suggest_layout:
+            suggest_analysis_layout(experiments)
+        # Build the layout
+        if do_build_layout:
+            build_analysis_dir(experiments)
+        
 
