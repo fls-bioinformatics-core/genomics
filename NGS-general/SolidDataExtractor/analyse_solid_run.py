@@ -145,11 +145,13 @@ class SolidExperiment:
         return analysis_filen
 
 #######################################################################
-# Module Functions
+# Module Functions: utilities
 #######################################################################
 
 def banner(title):
-    """Write a banner for a section of output"""
+    """Write a banner for a section of output
+
+    Given some text as 'title", print this framed by '='s."""
 
     decoration = ''.join(['=' for i in range(len(title))])
     print "%s" % decoration
@@ -176,8 +178,135 @@ def replace_string(s,replace_substr,with_str=''):
         except ValueError:
             return s1
 
-def report_run(solid_runs):
+#######################################################################
+# Module Functions: SOLiD data utilities
+#######################################################################
+
+def get_experiments(solid_runs):
+    """Organise SolidProjects into SolidExperiments.
+
+    Given a set of solid runs, organises the 'project' data into
+    'experiments' by associating projects together. The organisation
+    is done by looking at the names.
+
+    This is necessary if a single experiment was split across two flow
+    cells.
+
+    Arguments:
+      solid_runs: a list or tuple of SolidRun objects to report.
+
+    Returns:
+      List of SolidExperiment objects.
     """
+    # Organise projects into experiments
+    experiments = []
+    for run in solid_runs:
+        for sample in run.samples:
+            for project in sample.projects:
+                # Create experiment for this project
+                expt = SolidExperiment(project)
+                # Have we seen something similar before?
+                match_previous_expt = False
+                for prev_expt in experiments:
+                    if expt.prefixes() == prev_expt.prefixes():
+                        # Combine these experiments
+                        prev_expt.addProject(project)
+                        match_previous_expt = True
+                        break
+                # No match
+                if not match_previous_expt:
+                    experiments.append(expt)
+
+    # Set analysis directory names
+    analysis_dirs = []
+    for expt in experiments:
+        # Analysis directory
+        index = 1
+        dirn = expt.getAnalysisDir()
+        while os.path.basename(dirn) in analysis_dirs:
+            index += 1
+            dirn = expt.getAnalysisDir("_%s" % index)
+        analysis_dirs.append(os.path.basename(dirn))
+
+    # Finished
+    return experiments
+
+def pretty_print_libraries(libraries):
+    """Given a list of libraries, format for pretty printing.
+
+    Examples:
+    ['DR1', 'DR2', 'DR3', DR4'] -> 'DR1-4'
+    """
+    # Split each library name into prefix and numeric suffix
+    ##print "pretty_print: input = "+str(libraries)
+    libs = sorted(libraries, key=lambda l: (l.prefix,l.index))
+    ##print str(libs)
+    # Go through and group
+    groups = []
+    group = []
+    last_index = None
+    for lib in libs:
+        # Check if this is next in sequence
+        try:
+            if lib.index == last_index+1:
+                # Next in sequence
+                group.append(lib)
+                last_index = lib.index
+                continue
+        except TypeError:
+            # One or both of the indexes was None
+            pass
+        # Current lib is not next in previous sequence
+        # Tidy up and start new group
+        if group:
+            groups.append(group)
+        group = [lib]
+        last_index = lib.index
+    # Capture last group
+    if group:
+        groups.append(group)
+    ##print str(groups)
+    # Pretty print
+    out = []
+    for group in groups:
+        if len(group) == 1:
+            # "group" of one
+            out.append(group[0].name)
+        else:
+            # Group with at least two members
+            out.append(group[0].name+"-"+group[-1].index_as_string)
+    # Concatenate and return
+    return ', '.join(out)
+
+def get_slide_layout(solid_run):
+    """Return description of slide layout for a SOLiD run.
+
+    Given a SolidRun object 'solid_run', return the slide layout
+    description (e.g. "whole slide", "quads" etc) as a string, based
+    on the number of samples in the run.
+    """
+    if len(solid_run.samples) == 1:
+        return "Whole slide"
+    elif len(solid_run.samples) == 4:
+        return "Quads"
+    elif len(solid_run.samples) == 8:
+        return "Octets"
+    else:
+        return "Undefined layout"
+
+#######################################################################
+# Module Functions: program functions
+#######################################################################
+
+def report_run(solid_runs):
+    """Print a brief report about SOLiD runs.
+
+    This generates a brief screen report about the content of the
+    supplied SOLiD runs e.g. flow cells, layout, number of samples
+    etc.
+
+    Arguments:
+      solid_runs: a list or tuple of SolidRun objects to report.
     """
     # Report the data for each run
     banner("REPORT RUNS")
@@ -208,11 +337,23 @@ def report_run(solid_runs):
                 # FIXME need to check that this total read info is
                 # actually correct
                 print "Total reads: %s" % str(total_reads)
-
+    # Done
+    print ""
 
 def write_spreadsheet(solid_runs,spreadsheet):
+    """Generate or append run data to an XLS-format spreadsheet
+
+    Creates a new spreadsheet or appends to an existing one, writing
+    new rows to summarise the data about the solid runs supplied as
+    input.
+
+    Arguments:
+      solid_runs: a list or tuple of SolidRun objects to report.
+      spreadsheet: the name of the XLS-format spreadsheet to write
+        the data
     """
-    """
+    banner("WRITE SPREADSHEET")
+
     # Check whether spreadsheet file already exists
     if os.path.exists(spreadsheet):
         write_header = False
@@ -344,45 +485,19 @@ def write_spreadsheet(solid_runs,spreadsheet):
                 
     # Write the spreadsheet
     wb.write()
-
-def get_experiments(solid_runs):
-    """
-    """
-    # Organise projects into experiments
-    experiments = []
-    for run in solid_runs:
-        for sample in run.samples:
-            for project in sample.projects:
-                # Create experiment for this project
-                expt = SolidExperiment(project)
-                # Have we seen something similar before?
-                match_previous_expt = False
-                for prev_expt in experiments:
-                    if expt.prefixes() == prev_expt.prefixes():
-                        # Combine these experiments
-                        prev_expt.addProject(project)
-                        match_previous_expt = True
-                        break
-                # No match
-                if not match_previous_expt:
-                    experiments.append(expt)
-
-    # Set analysis directory names
-    analysis_dirs = []
-    for expt in experiments:
-        # Analysis directory
-        index = 1
-        dirn = expt.getAnalysisDir()
-        while os.path.basename(dirn) in analysis_dirs:
-            index += 1
-            dirn = expt.getAnalysisDir("_%s" % index)
-        analysis_dirs.append(os.path.basename(dirn))
-
-    # Finished
-    return experiments
+    # Done
+    print ""
 
 def suggest_analysis_layout(experiments):
-    """
+    """Print a suggested analysis directory scheme
+
+    Given a set of SolidExperiments, print a suggested layout scheme
+    for the analysis directory including names and partitioning of
+    primary data (i.e. which data files should be associated with which
+    subdirectory).
+
+    Arguments:
+      experiments: a list of SolidExperiment objects.
     """
     # Suggest an analysis directory and file naming scheme
     banner("SUGGESTED ANALYSIS LAYOUT SCHEME")
@@ -407,9 +522,11 @@ def suggest_analysis_layout(experiments):
                 files.append(ln_csfasta)
                 files.append(ln_qual)
             print ""
+    # Done
+    print ""
 
 def build_analysis_dir(experiments):
-    """Build analysis directories for the supplied experiments
+    """Build analysis directories for the supplied experiments.
     """
     # Suggest an analysis directory and file naming scheme
     print "#!/bin/sh"
@@ -454,69 +571,6 @@ def build_analysis_dir(experiments):
                     print "*** WARNING duplicated file name! ***"
                 files.append(ln_csfasta)
                 files.append(ln_qual)
-
-def pretty_print_libraries(libraries):
-    """Given a list of libraries, format for pretty printing.
-
-    Examples:
-    ['DR1', 'DR2', 'DR3', DR4'] -> 'DR1-4'
-    """
-    # Split each library name into prefix and numeric suffix
-    ##print "pretty_print: input = "+str(libraries)
-    libs = sorted(libraries, key=lambda l: (l.prefix,l.index))
-    ##print str(libs)
-    # Go through and group
-    groups = []
-    group = []
-    last_index = None
-    for lib in libs:
-        # Check if this is next in sequence
-        try:
-            if lib.index == last_index+1:
-                # Next in sequence
-                group.append(lib)
-                last_index = lib.index
-                continue
-        except TypeError:
-            # One or both of the indexes was None
-            pass
-        # Current lib is not next in previous sequence
-        # Tidy up and start new group
-        if group:
-            groups.append(group)
-        group = [lib]
-        last_index = lib.index
-    # Capture last group
-    if group:
-        groups.append(group)
-    ##print str(groups)
-    # Pretty print
-    out = []
-    for group in groups:
-        if len(group) == 1:
-            # "group" of one
-            out.append(group[0].name)
-        else:
-            # Group with at least two members
-            out.append(group[0].name+"-"+group[-1].index_as_string)
-    # Concatenate and return
-    return ', '.join(out)
-
-def get_slide_layout(solid_run):
-    """Return description of slide layout for a SOLiD run.
-
-    Given a SolidRun object 'solid_run', return the slide layout
-    description (e.g. "whole slide", "quads" etc) as a string, based
-    on the number of samples in the run.
-    """
-    if len(solid_run.samples) == 1:
-        return "Whole slide"
-    elif len(solid_run.samples) == 4:
-        return "Quads"
-    elif len(solid_run.samples) == 8:
-        return "Octets"
-    else:
-        return "Undefined layout"
 
 #######################################################################
 # Main program
