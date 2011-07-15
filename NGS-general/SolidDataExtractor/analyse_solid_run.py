@@ -148,6 +148,14 @@ class SolidExperiment:
 # Module Functions
 #######################################################################
 
+def banner(title):
+    """Write a banner for a section of output"""
+
+    decoration = ''.join(['=' for i in range(len(title))])
+    print "%s" % decoration
+    print "%s" % title
+    print "%s\n" % decoration
+
 def replace_string(s,replace_substr,with_str=''):
     """Do query/replace on a string
 
@@ -172,10 +180,11 @@ def report_run(solid_runs):
     """
     """
     # Report the data for each run
+    banner("REPORT RUNS")
     for run in solid_runs:
         # Report overall slide layout
         slide_layout = get_slide_layout(run)
-        print "\nFC%s (%s)" % (str(run.run_info.flow_cell),
+        print "FC%s (%s)" % (str(run.run_info.flow_cell),
                                str(slide_layout))
         print "Date: %s" % (run.run_info.date)
         print "I.D.: %s" % (run.run_info.name)
@@ -376,10 +385,11 @@ def suggest_analysis_layout(experiments):
     """
     """
     # Suggest an analysis directory and file naming scheme
+    banner("SUGGESTED ANALYSIS LAYOUT SCHEME")
     for expt in experiments:
         # Analysis directory
         dirn = expt.getAnalysisDir()
-        print "\n"+dirn
+        print dirn
         # Primary data files
         files = []
         for project in expt.projects:
@@ -396,6 +406,7 @@ def suggest_analysis_layout(experiments):
                     print "*** WARNING duplicated file name! ***"
                 files.append(ln_csfasta)
                 files.append(ln_qual)
+            print ""
 
 def build_analysis_dir(experiments):
     """Build analysis directories for the supplied experiments
