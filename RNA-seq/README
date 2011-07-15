@@ -2,8 +2,3 @@ RNA-seq
 =======
 
 Scripts and tools for RNA-seq specific tasks.
-
-QC_bash_script.sh
-------------------
-Template pipeline script to do basic QC steps at start of RNA-seq
-analysis.
