@@ -284,6 +284,7 @@ def write_spreadsheet(solid_runs,spreadsheet):
         for sample in run.samples:
             for project in sample.projects:
                 libraries = pretty_print_libraries(project.libraries)
+                experimenters_initials = project.libraries[0].initials
                 # Get initial description and total reads
                 if len(run.samples) > 1:
                     # Multiple samples in one project
@@ -316,9 +317,9 @@ def write_spreadsheet(solid_runs,spreadsheet):
                 description += str(len(project.libraries))+" samples "+\
                     libraries
                 # Project description field
-                # Essentially a placeholder
-                project_description = "%s) [project description]" % \
-                    string.lowercase[index]
+                # Essentially a placeholder with experimenter's initials
+                project_description = "%s) %s [project description]" % \
+                    (string.lowercase[index],experimenters_initials)
                 index += 1
                 # FIXME need to check that this total read info is
                 # actually correct
