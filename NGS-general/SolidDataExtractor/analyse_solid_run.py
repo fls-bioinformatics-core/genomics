@@ -198,7 +198,7 @@ def report_run(solid_runs):
                         pass
                 # FIXME need to check that this total read info is
                 # actually correct
-                print "Total reads: %s *UNVERIFIED*" % str(total_reads)
+                print "Total reads: %s" % str(total_reads)
 
 
 def write_spreadsheet(solid_runs,spreadsheet):
@@ -259,7 +259,7 @@ def write_spreadsheet(solid_runs,spreadsheet):
                         total_reads = "NOT_FOUND"
                 else:
                     # Not a barcoded sample
-                    total_reads = "NEEDS_LOOKUP"
+                    total_reads = "MANUAL_LOOKUP"
             except IndexError:
                 # Some problem looking up barcode status
                 total_reads = "NO_INFO"
@@ -302,7 +302,7 @@ def write_spreadsheet(solid_runs,spreadsheet):
                                 pass
                     else:
                         # Not a barcoded sample, manual lookup
-                        total_reads = "NEEDS_LOOKUP"
+                        total_reads = "MANUAL_LOOKUP"
                 else:
                     # All libraries belong to the same sample
                     description = ''
