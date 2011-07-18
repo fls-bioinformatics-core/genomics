@@ -3,10 +3,10 @@ utils
 
 Place to put general utility scripts/tools.
 
-cd_set_umask_ngsdata.sh
------------------------
-Script to set an alias which sets and reverts user's umask appropriately
-when moving in and out of the NGS data directory.
+cd_set_umask.sh
+---------------
+Script to set and reverts a user's umask appropriately when moving in and out of q
+particular directory (or one of its subdirectories).
 
 do.sh
 -----
