@@ -11,6 +11,17 @@ Format of the input is: chr position count
 
 Outputs mean and median for all positions including 0 count positions
 
+convertFastq2Fasta.pl
+---------------------
+Convert fastq formatted consensus from `samtools pileup` to fasta
+
+*Note that this will be redundant as mpileup (the successor to pileup) has its own way of
+doing this. However it may be required for legacy projects.
+
+Usage:
+
+`perl ~/ChIP_seq/convertFastq2Fasta.pl in.pileup.fq > out.fa`
+
 mean_coverage.pl
 ----------------
 Mean depth of read coverage: calculates the average coverage of all the captured bases in a
