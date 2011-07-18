@@ -7,7 +7,7 @@ Scripts are organised into the following directories:
 * [RNA-seq](RNA-seq): contains RNA-seq-specific scripts
 * [NGS-general](NGS-general): contains general NGS scripts not specific to a
   particular type of experiment
-* [build-indexes](build-instances): contains scripts for building genome
+* [build-indexes](build-indexes): contains scripts for building genome
   indexes for various programs
 * [utils](utils): non-NGS utility scripts
 * [shoebox](shoebox): a place for scrappy or one-off utility scripts which
