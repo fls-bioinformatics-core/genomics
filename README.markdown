@@ -9,7 +9,6 @@ Scripts are organised into the following directories:
   particular type of experiment
 * [galaxy-scripts](galaxy-scripts): contains scripts for setting up and running
   Galaxy instances (e.g. building genome indexes)
-* [galaxy-tools](galaxy-tools): tool files for Galaxy
 * [utils](utils): non-NGS utility scripts
 * [shoebox](shoebox): a place for scrappy or one-off utility scripts which
   may or may not be useful in future.
