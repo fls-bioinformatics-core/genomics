@@ -22,6 +22,14 @@ Usage:
 
 `perl ~/ChIP_seq/convertFastq2Fasta.pl in.pileup.fq > out.fa`
 
+CreateChIPalignFileFromBed.pl
+-----------------------------
+Convert csfasta->BED format file to ChIPalign format for GLITR peak caller.
+
+Usage:
+
+`CreateChIPalignFileFromBed.pl in.bed out.align`
+
 getRandomTags_index.pl/getRandomTags_index_fastq.pl
 ---------------------------------------------------
 Extract random subset of records from fasta and fastq sequence files.
