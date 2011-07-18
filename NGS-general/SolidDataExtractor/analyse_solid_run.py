@@ -316,13 +316,13 @@ def report_run(solid_runs):
         print "FC%s (%s)" % (str(run.run_info.flow_cell),
                                str(slide_layout))
         print "Date: %s" % (run.run_info.date)
-        print "I.D.: %s\n" % (run.run_info.name)
+        print "I.D.: %s" % (run.run_info.name)
         #
         # Report projects for each sample
         for sample in run.samples:
             for project in sample.projects:
                 libraries = pretty_print_libraries(project.libraries)
-                print "Sample %s: (project %s): %s" % (sample,
+                print "\nSample %s: (project %s): %s" % (sample,
                                                          project.name,
                                                          libraries)
                 if run.run_info.is_barcoded_sample:
@@ -336,7 +336,9 @@ def report_run(solid_runs):
                         pass
                 # FIXME need to check that this total read info is
                 # actually correct
-                print "Total reads: %s\n" % str(total_reads)
+                print "Total reads: %s" % str(total_reads)
+    # Done
+    print ""
 
 def write_spreadsheet(solid_runs,spreadsheet):
     """Generate or append run data to an XLS-format spreadsheet
@@ -483,6 +485,8 @@ def write_spreadsheet(solid_runs,spreadsheet):
                 
     # Write the spreadsheet
     wb.write()
+    # Done
+    print ""
 
 def suggest_analysis_layout(experiments):
     """Print a suggested analysis directory scheme
@@ -518,6 +522,8 @@ def suggest_analysis_layout(experiments):
                 files.append(ln_csfasta)
                 files.append(ln_qual)
             print ""
+    # Done
+    print ""
 
 def build_analysis_dir(experiments):
     """Build analysis directories for the supplied experiments.
