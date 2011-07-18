@@ -16,7 +16,7 @@ convertFastq2Fasta.pl
 Convert fastq formatted consensus from `samtools pileup` to fasta
 
 *Note that this will be redundant as mpileup (the successor to pileup) has its own way of
-doing this. However it may be required for legacy projects.
+doing this. However it may be required for legacy projects.*
 
 Usage:
 
