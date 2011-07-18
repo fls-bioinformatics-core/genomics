@@ -28,15 +28,15 @@ Extract random subset of records from fasta and fastq sequence files.
 
 ### getRandomTags_index.pl ###
 
-Extract <N> random records from ChIP align fasta files (2-line records):
+Extract N random records from ChIP align fasta files (2-line records):
 
-Usage: `getRandomTags_index.pl in.fasta <n> out.fast`
+Usage: `getRandomTags_index.pl in.fasta N out.fast`
 
 ### getRandomTags_index_fastq.pl ###
 
-Extract <N> random records from fastq file (4-line records):
+Extract N random records from fastq file (4-line records):
 
-Usage: `getRandomTags_index_fastq.pl in.fastq <n> out.fastq`
+Usage: `getRandomTags_index_fastq.pl in.fastq N out.fastq`
 
 mean_coverage.pl
 ----------------
