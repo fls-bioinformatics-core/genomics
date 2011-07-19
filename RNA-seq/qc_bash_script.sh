@@ -14,7 +14,8 @@
 # <bowtie_genome_index>: full path to bowtie genome index
 #
 # Outputs:
-#  
+# Creates a "qc" subdirectory in <analysis_dir> which contains the
+# fastq_screen and boxplotter output files.
 #
 # qsub options:
 #$ -j y
