@@ -324,13 +324,13 @@ def report_run(solid_runs):
         print "FC%s (%s)" % (str(run.run_info.flow_cell),
                                str(slide_layout))
         print "Date: %s" % (run.run_info.date)
-        print "I.D.: %s" % (run.run_info.name)
+        print "I.D.: %s\n" % (run.run_info.name)
         #
         # Report projects for each sample
         for sample in run.samples:
             for project in sample.projects:
                 libraries = pretty_print_libraries(project.libraries)
-                print "\nSample %s: (project %s): %s" % (sample,
+                print "Sample %s: (project %s): %s" % (sample,
                                                          project.name,
                                                          libraries)
                 if run.run_info.is_barcoded_sample:
@@ -344,9 +344,7 @@ def report_run(solid_runs):
                         pass
                 # FIXME need to check that this total read info is
                 # actually correct
-                print "Total reads: %s" % str(total_reads)
-    # Done
-    print ""
+                print "Total reads: %s\n" % str(total_reads)
 
 def write_spreadsheet(solid_runs,spreadsheet):
     """Generate or append run data to an XLS-format spreadsheet
@@ -493,8 +491,6 @@ def write_spreadsheet(solid_runs,spreadsheet):
                 
     # Write the spreadsheet
     wb.write()
-    # Done
-    print ""
 
 def suggest_analysis_layout(experiments):
     """Print a suggested analysis directory scheme
@@ -588,6 +584,11 @@ if __name__ == "__main__":
     # Get solid directories
     if len(sys.argv) < 2:
         print "Usage: python %s [OPTIONS] <solid_run_dir>" % sys.argv[0]
+        print ""
+        print "Various operations on a SOLiD run directory. Note that if"
+        print "<solid_run_dir>_2 also exists then this is automatically"
+        print "detected and included in the processing."
+        print ""
         print "Options:"
         print "  --report: print a report of the SOLiD run"
         print "  --layout: suggest layout for analysis directories"
