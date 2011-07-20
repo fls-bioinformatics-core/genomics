@@ -37,17 +37,24 @@ class SolidExperiment:
     An experiment in this context is a collection of libraries
     which might come from one or more samples, but which will
     be grouped together in a common analysis directory.
+
+    Data about the experiment can be accessed via the object's
+    properties, specifically:
+        
+    projects: a list of SolidProject objects
+    solid_run: the associated SolidRun object (or None)
+
+    Other data can be accessed via the object's methods.
     """
 
     def __init__(self,project=None,run=None):
         """Create a new SolidExperiment instance
 
-        Data about the experiment can be accessed via the object's
-        properties, specifically:
-        
-        projects: a list of SolidProject objects
-        
-        Other data can be accessed via the object's methods.
+        Arguments:
+          project: (optional) a SolidProject object to add to
+            the experiment
+          run: (optional) a SolidRun to associate with the
+            experiment
         """
         self.projects = []
         if project:
