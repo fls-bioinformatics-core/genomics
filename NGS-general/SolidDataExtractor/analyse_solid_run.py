@@ -39,7 +39,7 @@ class SolidExperiment:
     be grouped together in a common analysis directory.
     """
 
-    def __init__(self,project=None):
+    def __init__(self,project=None,run=None):
         """Create a new SolidExperiment instance
 
         Data about the experiment can be accessed via the object's
@@ -53,6 +53,7 @@ class SolidExperiment:
         if project:
             self.addProject(project)
         self.analysis_dir = ""
+        self.solid_run = run
 
     def addProject(self,project):
         """Add a project to the experiment.
@@ -204,7 +205,7 @@ def get_experiments(solid_runs):
         for sample in run.samples:
             for project in sample.projects:
                 # Create experiment for this project
-                expt = SolidExperiment(project)
+                expt = SolidExperiment(project,run=run)
                 # Have we seen something similar before?
                 match_previous_expt = False
                 for prev_expt in experiments:
