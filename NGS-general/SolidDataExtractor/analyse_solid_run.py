@@ -148,8 +148,8 @@ class SolidExperiment:
         analysis_filen = replace_string(filen,sample_name+'_')
         # If sample name contains "rpt" then append to the new file name
         if sample_name.find('_rpt') > -1:
-            analysis_filen = os.path.split(analysis_filen)[0]+\
-                '_rpt'+os.path.split(analysis_filen)[1]
+            analysis_filen = os.path.splitext(analysis_filen)[0]+\
+                '_rpt'+os.path.splitext(analysis_filen)[1]
         return analysis_filen
 
 #######################################################################
