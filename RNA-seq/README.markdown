@@ -47,3 +47,33 @@ Outputs:
 
 Creates a `qc` subdirectory in `analysis_dir` which contains the fastq_screen
 and boxplotter output files.
+
+Split
+-----
+Takes in two SAM files from bowtie where the same sample has been mapped to
+two genomes ("genomeS" and "genomeB"), and filters the reads to isolate those
+which map only to genomeS, only to genomeB, and to both genomes (see "Output",
+below).
+
+Compilation:
+
+    javac Split.java
+    jar cf Split.jar Split.class
+
+Usage:
+
+    java -cp /path/to/Split.jar Split <map_to_genomeS>.sam <map_to_genomeB>.sam
+
+Arguments:
+
+* `map_to_genomeS.sam`: SAM file from Bowtie with reads mapped to genomeS
+* `map_to_genomeB.sam`: SAM file from Bowtie with reads mapped to genomeS
+
+Output:
+
+4 SAM files:
+
+1. Reads that map to genomeS only
+2. Reads that map to genomeB only
+3. Reads that map to genomeS and genomeB keeping the genomeS genome coordinates
+4, Reads that map to genomeS and genomeB keeping the genomeB genome coordinates
