@@ -1,5 +1,5 @@
-bioinf-scripts: repository for FLS in-house bioinformatics software
-===================================================================
+genomics: repository for FLS in-house genomics-related software
+===============================================================
 
 Scripts are organised into the following directories:
 
