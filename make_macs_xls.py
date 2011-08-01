@@ -143,7 +143,8 @@ if __name__ == "__main__":
     ##data = insert_column_into_data(data,3,insert_item=formula,title="Diff")
 
     # Notes text example
-    notes = """Here is some example text for Ian
+    # NB put tabs into the text to create new columns within a single line
+    notes = """Here is some example text for\tIan
 
 Edit this as you wish and it will be added to the "notes" page
 of the spreadsheet, preserving the line breaks etc
