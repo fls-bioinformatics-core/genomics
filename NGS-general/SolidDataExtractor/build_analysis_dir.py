@@ -83,6 +83,26 @@ def mklink(target,link_name):
     os.symlink(target,link_name)
 
 if __name__ == "__main__":
+    print """ build_analysis_dir.py [--dry-run]
+                --name=<user> [--type=<expt_type>] --source=<sample>/<library>
+                [--source=...]
+                [--name=<user> ... ]
+                <solid_run_dir>
+
+Build analysis directory structure and populate with links to primary data.
+
+<name> is an identifier (typically the user's initials) e.g. 'PB'
+<expt_type> is e.g. 'reseq', 'ChIP-seq', 'RNAseq', 'miRNA'...
+
+The links will be written in a directory '<name>_<expt_type>' e.g.
+'PB_ChIP-seq'. (If no <expt_type> is supplied then just the name is used.)
+
+<sample>/<library> specify the names for primary data files e.g.
+'PB_JB_pool/PB*'
+
+Both <sample> and <library> can include a trailing wildcard character (i.e. *)
+to match multiple names. */* will match all primary data files
+"""
     # List of experiment definitions
     expts = []
     # Dry run flag
