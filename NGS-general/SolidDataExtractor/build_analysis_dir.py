@@ -8,6 +8,19 @@ class Experiment:
         self.sample = None
         self.library = None
 
+def match(pattern,word):
+    """Check if word matches pattern"""
+    if not pattern or pattern == '*':
+        # No pattern/wildcard, matches everything
+        return True
+    # Only simple patterns considered now
+    if pattern.endswith('*'):
+        # Match the start
+        return word.startswith(pattern[:-1])
+    else:
+        # Match the whole word exactly
+        return (word == pattern)
+
 def getLinkName(filen,sample_name):
     """Return the 'analysis' file name based on a source file name.
     
@@ -99,17 +112,21 @@ if __name__ == "__main__":
             except IndexError:
                 print "No experiment defined for --source!"
                 sys.exit(1)
-            if not expt.sample:
-                source = arg.split('=')[1]
-                try:
-                    i = source.index('/')
-                    expt.sample = source.split('/')[0]
-                    expt.library = source.split('/')[1]
-                except ValueError:
-                    expt.sample = source
-            else:
-                print "Source already defined for experiment!"
-                sys.exit(1)
+            if expt.sample:
+                # Duplicate the previous experiment
+                expts.append(Experiment())
+                expt_copy = expts[-1]
+                expt_copy.name = expt.name
+                expt_copy.type = expt.type
+                expt = expt_copy
+            # Extract sample and library
+            source = arg.split('=')[1]
+            try:
+                i = source.index('/')
+                expt.sample = source.split('/')[0]
+                expt.library = source.split('/')[1]
+            except ValueError:
+                expt.sample = source
         elif arg == '--dry-run':
             dry_run = True
         else:
@@ -137,17 +154,20 @@ if __name__ == "__main__":
 
     # For each experiment, make a directory
     for expt in expts:
-        expt_dir = '_'.join((expt.name,expt.type))
+        if expt.type:
+            expt_dir = '_'.join((expt.name,expt.type))
+        else:
+            expt_dir = expt.name
         print "Dir %s" % expt_dir
         if not dry_run:
             mkdir(expt_dir)
         # Locate the primary data
         for run in solid_runs:
             for sample in run.samples:
-                if expt.sample == sample.name:
+                if match(expt.sample,sample.name):
                     # Found the sample
                     for library in sample.libraries:
-                        if library.name.startswith(expt.library):
+                        if match(expt.library,library.name):
                             # Found a matching library
                             print "Located sample and library: %s" % library.name
                             # Look up primary data
