@@ -192,20 +192,17 @@ to match multiple names. */* will match all primary data files
                             print "Located sample and library: %s" % library.name
                             # Look up primary data
                             print "Primary data:"
-                            print "\t%s" % getLinkName(library.csfasta,
-                                                       sample.name)
-                            print "\t%s" % getLinkName(library.qual,
-                                                       sample.name)
-                            # Make symbolic links
+                            ln_csfasta = getLinkName(library.csfasta,
+                                                     sample.name)
+                            ln_qual = getLinkName(library.qual,
+                                                  sample.name)
+                            print "\t%s" % ln_csfasta
+                            print "\t%s" % ln_qual
                             if not dry_run:
+                                # Make symbolic links
                                 mklink(library.csfasta,
-                                       os.path.join(expt_dir,
-                                                    getLinkName(library.csfasta,
-                                                                sample.name)))
+                                       os.path.join(expt_dir,ln_csfasta))
                                 mklink(library.qual,
-                                       os.path.join(expt_dir,
-                                                    getLinkName(library.qual,
-                                                                sample.name)))
-        
+                                       os.path.join(expt_dir,ln_qual))
         
         
