@@ -21,34 +21,34 @@ def match(pattern,word):
         # Match the whole word exactly
         return (word == pattern)
 
-def getLinkName(filen,sample_name):
+def getLinkName(filen,sample,library):
     """Return the 'analysis' file name based on a source file name.
     
-    Source file names are typically of the form:
-    solid0127_20110419_FRAG_BC_<sample>_F3_<library>.csfasta
-    
-    The analysis file will be the same except:
-    1. The <sample> name is removed, and
-    2. If the <sample> name includes "_rpt" then append this
-       to the filename.
+    The analysis file name is constructed as
 
-    Note that the sample name must be explicitly provided
-    as a single SolidExperiment may be made up of multiple
-    projects with libraries from different projects.
+    <instrument>_<datestamp>_<sample>_<library>.csfasta
+
+    or
+
+    <instrument>_<datestamp>_<sample>_QV_<library>.qual
     
     Arguments:
       filen: name of the source file
-      sample_name: sample name that the source file comes from
+      sample: SolidSample object representing the parent sample
+      library: SolidLibrary object representing the parent library
 
     Returns:
     Name for the analysis file.
     """
-    # Construct new name by removing the sample name
-    link_filen = replace_string(os.path.basename(filen),sample_name+'_')
-    # If sample name contains "rpt" then append to the new file name
-    if sample_name.find('_rpt') > -1:
-        link_filen = os.path.splitext(link_filen)[0]+\
-            '_rpt'+os.path.splitext(link_filen)[1]
+    # Construct new name
+    link_filen_elements = [sample.parent_run.run_info.instrument,
+                           sample.parent_run.run_info.datestamp,
+                           sample.name]
+    ext = os.path.splitext(filen)[1]
+    if ext == ".qual":
+        link_filen_elements.append("QV")
+    link_filen_elements.append(library.name)
+    link_filen = '_'.join(link_filen_elements) + ext
     return link_filen
 
 def replace_string(s,replace_substr,with_str=''):
@@ -195,9 +195,9 @@ to match multiple names. */* will match all primary data files
                             # Look up primary data
                             print "Primary data:"
                             ln_csfasta = getLinkName(library.csfasta,
-                                                     sample.name)
+                                                     sample,library)
                             ln_qual = getLinkName(library.qual,
-                                                  sample.name)
+                                                  sample,library)
                             print "\t%s" % ln_csfasta
                             print "\t%s" % ln_qual
                             if not dry_run:
