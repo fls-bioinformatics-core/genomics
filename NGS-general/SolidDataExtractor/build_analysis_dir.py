@@ -167,10 +167,12 @@ to match multiple names. */* will match all primary data files
     for solid_dir in (solid_run_dir,solid_run_dir+"_2"):
         run = SolidDataExtractor.SolidRun(solid_dir)
         if not run:
-            print "Error extracting run data for %s" % solid_dir
-            sys.exit(1)
+            print "Unable to get run data for %s" % solid_dir
         else:
             solid_runs.append(run)
+    if not len(solid_runs):
+        print "No run data found!"
+        sys.exit(1)
 
     # For each experiment, make a directory
     for expt in expts:
