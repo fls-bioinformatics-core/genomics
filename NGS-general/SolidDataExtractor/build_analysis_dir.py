@@ -90,7 +90,7 @@ to match multiple names. */* will match all primary data files
     # Process command line
     solid_run_dir = sys.argv[-1]
     for arg in sys.argv[1:-1]:
-        print str(arg)
+        ##print str(arg)
         if arg.startswith('--name='):
             expts.append(Experiment())
             expt = expts[-1]
@@ -135,21 +135,25 @@ to match multiple names. */* will match all primary data files
             sys.exit(1)
             
     # Report
-    print "%d experiments" % len(expts)
+    print "%d experiments defined:" % len(expts)
     for expt in expts:
-        print "Name   : %s" % expt.name
-        print "Type   : %s" % expt.type
-        print "Sample : %s" % expt.sample
-        print "Library: %s" % expt.library
+        print "\tName   : %s" % expt.name
+        print "\tType   : %s" % expt.type
+        print "\tSample : %s" % expt.sample
+        print "\tLibrary: %s" % expt.library
+        print ""
 
-    # # Get the run information
+    # Get the run information
+    print "Acquiring run information:"
     solid_runs = []
     for solid_dir in (solid_run_dir,solid_run_dir+"_2"):
+        print "\t%s..." % solid_dir,
         run = SolidDataExtractor.SolidRun(solid_dir)
         if not run:
-            print "Unable to get run data for %s" % solid_dir
+            print "FAILED: unable to get run data for %s" % solid_dir
         else:
             solid_runs.append(run)
+            print "ok"
     if not len(solid_runs):
         print "No run data found!"
         sys.exit(1)
@@ -160,7 +164,7 @@ to match multiple names. */* will match all primary data files
             expt_dir = '_'.join((expt.name,expt.type))
         else:
             expt_dir = expt.name
-        print "Dir %s" % expt_dir
+        print "\nExperiment: %s" % expt_dir
         if not dry_run:
             mkdir(expt_dir)
         # Locate the primary data
@@ -186,5 +190,10 @@ to match multiple names. */* will match all primary data files
                                        os.path.join(expt_dir,ln_csfasta))
                                 mklink(library.qual,
                                        os.path.join(expt_dir,ln_qual))
-        
-        
+                        else:
+                            # Library didn't match
+                            print "%s/%s: library didn't match pattern" % \
+                                (sample.name,library.name)
+                else:
+                    # Sample didn't match
+                    print "%s: ignoring sample" % sample.name
