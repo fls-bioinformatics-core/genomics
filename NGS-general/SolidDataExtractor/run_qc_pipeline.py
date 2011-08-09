@@ -83,7 +83,7 @@ if __name__ == "__main__":
                                        root[:i]+root[i+3:]+".csfasta")
                 qual = os.path.join(data_dir,filen)
                 if os.path.exists(csfasta):
-                    run_data.append((csfasta,filen))
+                    run_data.append((csfasta,qual))
             except IndexError:
                 print "Unable to process qual file %" % filen
             
