@@ -64,3 +64,19 @@ It can also be used for genomic regions:
 
 Note that this assumes every base is covered at least once (because samtools pileup doesn't
 report bases with zero coverage).
+
+run_DESEQ.R
+-----------
+Usage:
+
+`runDESeq.R [input file] [generic figure label] [output file]`
+
+Run DESeq in R using a tab delimited file [input file] that has a column of
+chr_start_end called 'regions' and four columns of read counts for:
+
+`timeA_rep1 timeA_rep2 timeB_rep1 timeB_rep2`
+
+('conds' order hard-wired).
+
+A [generic figure label] adds specificity to the output diagrams (hard-wired).
+The final [output file] is created.
