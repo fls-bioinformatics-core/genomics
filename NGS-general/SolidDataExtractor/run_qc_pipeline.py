@@ -13,16 +13,22 @@ def RunScript(script,csfasta,qual):
 
 def QsubScript(name,script,*args):
     # Submits a command to the cluster
-    cmd = [script]
-    cmd.extend(args)
-    ##cmd=' '.join((script,csfasta,qual))
-    cmd = ' '.join(cmd)
+    cmd_args = [script]
+    cmd_args.extend(args)
+    cmd = ' '.join(cmd_args)
     qsub=('qsub','-b','y','-cwd','-V','-N',name,cmd)
     cwd=os.path.dirname(csfasta)
-    p = subprocess.Popen(qsub,cwd=cwd)
-    print "Running..."
+    p = subprocess.Popen(qsub,cwd=cwd,stdout=subprocess.PIPE)
+    print "Submitting..."
     p.wait()
-    print "Finished"
+    # Capture the job id from the output
+    job_id = None
+    for line in p.stdout:
+        if line.startswith('Your job'):
+            job_id = line.split()[2]
+    print "Done - job id = %s" % job_id
+    # Return the job id
+    return job_id
 
 def Qstat(user=None):
     # Get the results of qstat (assume current user if None)
@@ -36,14 +42,10 @@ def Qstat(user=None):
     # Run the qstat
     p = subprocess.Popen(cmd,stdout=subprocess.PIPE)
     p.wait()
-    # Process the output
-    ##print ">> Output from qstat:"
+    # Process the output: count lines
     nlines = 0
     for line in p.stdout:
-        ##print str(line).strip()
         nlines += 1
-    ##print ">> Output ends"
-    ##print "Number of lines = %d" % i
     # Typical output is:
     # job-ID  prior   name       user         ...<snipped>...
     # ----------------------------------------...<snipped>...
@@ -64,6 +66,7 @@ if __name__ == "__main__":
 
     # Gather data files from data_dir
     all_files = os.listdir(data_dir)
+    all_files.sort()
     run_data = []
 
     # Look for csfasta and matching qual files
@@ -85,19 +88,14 @@ if __name__ == "__main__":
                 print "Unable to process qual file %" % filen
             
     # For each pair of files, run the qc
-    ##count = 0
     for data in run_data:
         # Check if queue is "full"
         while Qstat() >= 4:
             # Wait for 30 seconds
-            print "Waiting for queue"
+            print "Waiting for free space in queue..."
             time.sleep(30)
         # Submit
         print "Submitting job: '%s %s %s'" % (script,data[0],data[1])
         QsubScript('qc',script,data[0],data[1])
-        ##count += 1
-        # Don't submit everything
-        ##if count == 4:
-        ##    sys.exit()
         
     
