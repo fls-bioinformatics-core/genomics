@@ -303,21 +303,6 @@ def get_slide_layout(solid_run):
         return "Undefined layout"
 
 #######################################################################
-# Module Functions: filesystem wrappers
-#######################################################################
-
-def mkdir(dirn):
-    """Make a directory"""
-    print "Making %s" % dirn
-    if not os.path.isdir(dirn):
-        os.mkdir(dirn)
-
-def mklink(target,link_name):
-    """Make a symbolic link"""
-    print "Linking to %s from %s" % (target,link_name)
-    os.symlink(target,link_name)
-
-#######################################################################
 # Module Functions: program functions
 #######################################################################
 
@@ -528,89 +513,29 @@ def suggest_analysis_layout(experiments):
         files = []
         for project in expt.projects:
             for library in project.libraries:
-                ln_csfasta = expt.\
-                    getAnalysisFileName(os.path.basename(library.csfasta),
-                                        library.parent_sample.name)
-                ln_qual = expt.\
-                    getAnalysisFileName(os.path.basename(library.qual),
-                                        library.parent_sample.name)
-                print "* %s: %s" % (library,ln_csfasta)
-                print "* %s: %s" % (library,ln_qual)
-                if ln_csfasta in files or ln_qual in files:
-                    print "*** WARNING duplicated file name! ***"
-                files.append(ln_csfasta)
-                files.append(ln_qual)
+                if library.csfasta:
+                    ln_csfasta = expt.\
+                        getAnalysisFileName(os.path.basename(library.csfasta),\
+                                            library.parent_sample.name)
+                    print "* %s: %s" % (library,ln_csfasta)
+                    if ln_csfasta in files:
+                        print "*** WARNING duplicated file name! ***"
+                    else:
+                        files.append(ln_csfasta)
+                else:
+                    print "*** WARNING csfasta not found ***"
+                if library.qual:
+                    ln_qual = expt.\
+                        getAnalysisFileName(os.path.basename(library.qual),\
+                                            library.parent_sample.name)
+                    print "* %s: %s" % (library,ln_qual)
+                    if ln_qual in files:
+                        print "*** WARNING duplicated file name! ***"
+                    else:
+                        files.append(ln_qual)
+                else:
+                    print "*** WARNING qual not found ***"
             print ""
-
-def build_analysis_dir(experiments):
-    """Build analysis directories for the supplied experiments.
-
-    This performs the following operations:
-
-    1. Make the top level analysis directory for each run directory
-    2. Create a "data" subdirectory with links to all primary data
-    3. Create subdirectories for each experiment
-    4. Within each subdirectory create "data" subdirectory with links
-       to the primary data files for that experiment
-
-    Arguments:
-      experiments: list of SolidExperiments.
-    """
-    # Suggest an analysis directory and file naming scheme
-    banner("BUILD ANALYSIS DIRECTORY")
-    # Top-level analysis directory
-    analysis_dir = experiments[0].solid_run.run_dir+"_analysis_test"
-    if os.path.exists(analysis_dir):
-        print "Analysis directory already exists, build aborted"
-        return
-    mkdir(analysis_dir)
-    # Top-level data directory
-    all_data_dir = os.path.join(analysis_dir,"data")
-    mkdir(all_data_dir)
-    # Link to all primary data files from a single directory
-    for expt in experiments:
-        for project in expt.projects:
-            for library in project.libraries:
-                ln_csfasta = os.path.join(
-                    all_data_dir,
-                    expt.getAnalysisFileName(os.path.basename(library.csfasta),
-                                             library.parent_sample.name))
-                mklink(library.csfasta,ln_csfasta)
-                ln_qual = os.path.join(
-                    all_data_dir,
-                    expt.getAnalysisFileName(os.path.basename(library.qual),
-                                             library.parent_sample.name))
-                mklink(library.qual,ln_qual)
-    # Directories for each experiment
-    for expt in experiments:
-        # Make an analysis directory for this experiment
-        expt_dir = os.path.join(analysis_dir,expt.getExperimentName())
-        mkdir(expt_dir)
-        files = []
-        duplicated_files = []
-        # Make links to primary data
-        for project in expt.projects:
-            for library in project.libraries:
-                ln_csfasta = os.path.join(expt_dir,
-                                          os.path.basename(library.csfasta))
-                ln_qual = os.path.join(expt_dir,
-                                       os.path.basename(library.qual))
-                mklink(library.csfasta,ln_csfasta)
-                mklink(library.qual,ln_qual)
-                # Check for duplicated names
-                # This is an error
-                if ln_csfasta in files:
-                    print "*** WARNING duplicated file name! ***"
-                    duplicated_files.append(ln_csfasta)
-                else:
-                    files.append(ln_csfasta)
-                if ln_qual in files:
-                    print "*** WARNING duplicated file name! ***"
-                    duplicated_files.append(ln_csfasta)
-                else:
-                    files.append(ln_qual)
-    # Done
-    return
 
 #######################################################################
 # Main program
@@ -629,7 +554,6 @@ if __name__ == "__main__":
         print "  --report: print a report of the SOLiD run"
         print "  --layout: suggest layout for analysis directories"
         print "  --spreadsheet[=<file>.xls]: write report to Excel spreadsheet"
-        print "  --build-layout: construct analysis directories for the run"
         sys.exit()
 
     # Solid run directories
@@ -660,10 +584,6 @@ if __name__ == "__main__":
                 spreadsheet = solid_dir_fc1+".xls"
             print "Writing spreadsheet %s" % spreadsheet
 
-    do_build_layout = False
-    if "--build-layout" in sys.argv[1:-1]:
-        do_build_layout = True
-
     # Get the run information
     solid_runs = []
     for solid_dir in solid_dirs:
@@ -682,13 +602,9 @@ if __name__ == "__main__":
         write_spreadsheet(solid_runs,spreadsheet)
 
     # Determine experiments
-    if do_suggest_layout or do_build_layout:
+    if do_suggest_layout:
         experiments = get_experiments(solid_runs)
         # Suggest a layout
-        if do_suggest_layout:
-            suggest_analysis_layout(experiments)
-        # Build the layout
-        if do_build_layout:
-            build_analysis_dir(experiments)
-        
+        suggest_analysis_layout(experiments)
+
 
