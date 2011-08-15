@@ -1,19 +1,47 @@
+#     build_analysis_dir.py: build directory with links to primary data
+#     Copyright (C) University of Manchester 2011 Peter Briggs
+#
+########################################################################
+#
+# build_analysis_dir.py
+#
+#########################################################################
+
+"""build_analysis_dir.py
+"""
+
+#######################################################################
+# Import modules that this module depends on
+#######################################################################
+
 import sys,os
 import SolidDataExtractor
 
+#######################################################################
+# Class definitions
+#######################################################################
+
 class Experiment:
+    """Class to define an experiment from a SOLiD run.
+    """
     def __init__(self):
+        """Create a new Experiment instance.
+        """
         self.name = None
         self.type = None
         self.sample = None
         self.library = None
+
+#######################################################################
+# Module functions
+#######################################################################
 
 def match(pattern,word):
     """Check if word matches pattern"""
     if not pattern or pattern == '*':
         # No pattern/wildcard, matches everything
         return True
-    # Only simple patterns considered now
+    # Only simple patterns considered for now
     if pattern.endswith('*'):
         # Match the start
         return word.startswith(pattern[:-1])
@@ -61,6 +89,10 @@ def mklink(target,link_name):
     """Make a symbolic link"""
     ##print "Linking to %s from %s" % (target,link_name)
     os.symlink(target,link_name)
+
+#######################################################################
+# Main program
+#######################################################################
 
 if __name__ == "__main__":
     print """ build_analysis_dir.py [--dry-run]
