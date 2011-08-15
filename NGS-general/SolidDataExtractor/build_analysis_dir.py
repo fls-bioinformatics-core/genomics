@@ -15,6 +15,7 @@
 #######################################################################
 
 import sys,os
+import logging
 import SolidDataExtractor
 
 #######################################################################
@@ -195,6 +196,8 @@ to match multiple names. */* will match all primary data files
                 expt.sample = source
         elif arg == '--dry-run':
             dry_run = True
+        elif arg == '--debug':
+            logging.getLogger().setLevel(logging.DEBUG)
         else:
             # Unrecognised argument
             print "Unrecognised argument: %s" % arg
@@ -244,7 +247,8 @@ to match multiple names. */* will match all primary data files
                     for library in sample.libraries:
                         if match(expt.library,library.name):
                             # Found a matching library
-                            print "Located sample and library: %s" % library.name
+                            print "Located sample and library: %s/%s" % \
+                                (sample.name,library.name)
                             # Look up primary data
                             print "Primary data:"
                             ln_csfasta = getLinkName(library.csfasta,
@@ -261,8 +265,8 @@ to match multiple names. */* will match all primary data files
                                        os.path.join(expt_dir,ln_qual))
                         else:
                             # Library didn't match
-                            print "%s/%s: library didn't match pattern" % \
-                                (sample.name,library.name)
+                            logging.debug("%s/%s: library didn't match pattern" %
+                                          (sample.name,library.name))
                 else:
                     # Sample didn't match
-                    print "%s: ignoring sample" % sample.name
+                    logging.debug("%s: ignoring sample" % sample.name)
