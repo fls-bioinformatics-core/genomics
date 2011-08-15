@@ -58,7 +58,6 @@ def QsubScript(name,script,*args):
     cmd_args.extend(args)
     cmd = ' '.join(cmd_args)
     qsub=('qsub','-b','y','-cwd','-V','-N',name,cmd)
-    ##cwd=os.path.dirname(csfasta)
     cwd = os.getcwd()
     p = subprocess.Popen(qsub,cwd=cwd,stdout=subprocess.PIPE)
     p.wait()
@@ -181,9 +180,6 @@ if __name__ == "__main__":
             # Match csfasta names which don't have "_QV" in them
             try:
                 i = root.rindex('_QV')
-                ##csfasta = os.path.join(data_dir,
-                ##                       root[:i]+root[i+3:]+".csfasta")
-                ##qual = os.path.join(data_dir,filen)
                 csfasta = root[:i]+root[i+3:]+".csfasta"
                 qual = filen
                 if os.path.exists(csfasta):
