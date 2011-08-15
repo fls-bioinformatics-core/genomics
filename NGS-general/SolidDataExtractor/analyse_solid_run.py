@@ -25,132 +25,14 @@ import sys
 import os
 import string
 import SolidDataExtractor
+import build_analysis_dir
 import Spreadsheet
 
 #######################################################################
 # Class definitions
 #######################################################################
 
-class SolidExperiment:
-    """Class describing an experiment from a SOLiD run.
-
-    An experiment in this context is a collection of libraries
-    which might come from one or more samples, but which will
-    be grouped together in a common analysis directory.
-
-    Data about the experiment can be accessed via the object's
-    properties, specifically:
-        
-    projects: a list of SolidProject objects
-    solid_run: the associated SolidRun object (or None)
-
-    Other data can be accessed via the object's methods.
-    """
-
-    def __init__(self,project=None,run=None):
-        """Create a new SolidExperiment instance
-
-        Arguments:
-          project: (optional) a SolidProject object to add to
-            the experiment
-          run: (optional) a SolidRun to associate with the
-            experiment
-        """
-        self.projects = []
-        if project:
-            self.addProject(project)
-        self.analysis_dir = ""
-        self.solid_run = run
-
-    def addProject(self,project):
-        """Add a project to the experiment.
-
-        project is a populated SolidProject object.
-        """
-        self.projects.append(project)
-
-    def prefixes(self):
-        """Return a list of prefixes from all libraries in the experiment.
-        """
-        prefixes = []
-        for project in self.projects:
-            for lib in project.libraries:
-                if not lib.prefix in prefixes:
-                    prefixes.append(lib.prefix)
-        prefixes.sort()
-        return prefixes
-
-    def getExperimentName(self):
-        """Return the name for the experiment.
-
-        If all libraries in the experiment share a common prefix
-        then the experiment name will be '<prefix>_expt'. Otherwise
-        the initials of the experimenter are used: <initials>_expt.
-        """
-        if len(self.prefixes()) > 1:
-            # Multiple prefixes, use the experimenter's name
-            return self.projects[0].name+'_expt'
-        elif len(self.prefixes()) == 1:
-            # Single prefix, use that
-            return self.prefixes()[0].strip("_")+'_expt'
-        else:
-            # No prefixes
-            return "UNKNOWN_expt"
-
-    def getAnalysisDir(self,suffix=''):
-        """Return the name of the analysis directory for the experiment.
-
-        The analysis directory name will be the name of the SOLiD run
-        directory with '_analysis' appended. If a suffix is supplied then
-        this will also be appended.
-
-        If a suffix is not supplied then the last constructed directory
-        name is returned.
-        """
-        # If an analysis directory was already set and
-        # no suffix was specified then return it
-        if self.analysis_dir and not suffix:
-            return self.analysis_dir
-        # Otherwise construct the name from scratch
-        if self.projects:
-            self.analysis_dir = os.path.join(self.projects[0].\
-                                                 getRun().run_dir+'_analysis_test',
-                                             self.getExperimentName())
-            if suffix:
-                self.analysis_dir += str(suffix)
-            return self.analysis_dir
-        else:
-            return ''
-
-    def getAnalysisFileName(self,filen,sample_name):
-        """Return the 'analysis' file name based on a source file name.
-
-        Source file names are typically of the form:
-        solid0127_20110419_FRAG_BC_<sample>_F3_<library>.csfasta
-
-        The analysis file will be the same except:
-        1. The <sample> name is removed, and
-        2. If the <sample> name includes "_rpt" then append this
-           to the filename.
-
-        Note that the sample name must be explicitly provided
-        as a single SolidExperiment may be made up of multiple
-        projects with libraries from different projects.
-
-        Arguments:
-          filen: name of the source file
-          sample_name: sample name that the source file comes from
-
-        Returns:
-          Name for the analysis file.
-        """
-        # Construct new name by removing the sample name
-        analysis_filen = replace_string(filen,sample_name+'_')
-        # If sample name contains "rpt" then append to the new file name
-        if sample_name.find('_rpt') > -1:
-            analysis_filen = os.path.splitext(analysis_filen)[0]+\
-                '_rpt'+os.path.splitext(analysis_filen)[1]
-        return analysis_filen
+# No classes defined
 
 #######################################################################
 # Module Functions: utilities
@@ -179,55 +61,6 @@ def replace_string(s,replace_substr,with_str=''):
 #######################################################################
 # Module Functions: SOLiD data utilities
 #######################################################################
-
-def get_experiments(solid_runs):
-    """Organise SolidProjects into SolidExperiments.
-
-    Given a set of solid runs, organises the 'project' data into
-    'experiments' by associating projects together. The organisation
-    is done by looking at the names.
-
-    This is necessary if a single experiment was split across two flow
-    cells.
-
-    Arguments:
-      solid_runs: a list or tuple of SolidRun objects to report.
-
-    Returns:
-      List of SolidExperiment objects.
-    """
-    # Organise projects into experiments
-    experiments = []
-    for run in solid_runs:
-        for sample in run.samples:
-            for project in sample.projects:
-                # Create experiment for this project
-                expt = SolidExperiment(project,run=run)
-                # Have we seen something similar before?
-                match_previous_expt = False
-                for prev_expt in experiments:
-                    if expt.prefixes() == prev_expt.prefixes():
-                        # Combine these experiments
-                        prev_expt.addProject(project)
-                        match_previous_expt = True
-                        break
-                # No match
-                if not match_previous_expt:
-                    experiments.append(expt)
-
-    # Set analysis directory names
-    analysis_dirs = []
-    for expt in experiments:
-        # Analysis directory
-        index = 1
-        dirn = expt.getAnalysisDir()
-        while os.path.basename(dirn) in analysis_dirs:
-            index += 1
-            dirn = expt.getAnalysisDir("_%s" % index)
-        analysis_dirs.append(os.path.basename(dirn))
-
-    # Finished
-    return experiments
 
 def pretty_print_libraries(libraries):
     """Given a list of libraries, format for pretty printing.
@@ -479,50 +312,32 @@ def write_spreadsheet(solid_runs,spreadsheet):
     # Write the spreadsheet
     wb.write()
 
-def suggest_analysis_layout(experiments):
+def suggest_analysis_layout(solid_runs):
     """Print a suggested analysis directory scheme
 
-    Given a set of SolidExperiments, print a suggested layout scheme
-    for the analysis directory including names and partitioning of
-    primary data (i.e. which data files should be associated with which
-    subdirectory).
+    Given a set of SolidRuns, print a suggested layout scheme for the
+    analysis directory including names and partitioning of primary data
+    (i.e. which data files should be associated with which subdirectory).
+
+    Output is in the form of proposed arguments to the build_analysis_dir.py
+    program.
 
     Arguments:
-      experiments: a list of SolidExperiment objects.
+      experiments: a list of SolidRun objects.
     """
-    # Suggest an analysis directory and file naming scheme
-    print "Suggesting analysis layout..."
-    for expt in experiments:
-        # Analysis directory
-        dirn = expt.getAnalysisDir()
-        print dirn
-        # Primary data files
-        files = []
-        for project in expt.projects:
-            for library in project.libraries:
-                if library.csfasta:
-                    ln_csfasta = expt.\
-                        getAnalysisFileName(os.path.basename(library.csfasta),\
-                                            library.parent_sample.name)
-                    print "* %s: %s" % (library,ln_csfasta)
-                    if ln_csfasta in files:
-                        print "*** WARNING duplicated file name! ***"
-                    else:
-                        files.append(ln_csfasta)
-                else:
-                    print "*** WARNING csfasta not found ***"
-                if library.qual:
-                    ln_qual = expt.\
-                        getAnalysisFileName(os.path.basename(library.qual),\
-                                            library.parent_sample.name)
-                    print "* %s: %s" % (library,ln_qual)
-                    if ln_qual in files:
-                        print "*** WARNING duplicated file name! ***"
-                    else:
-                        files.append(ln_qual)
-                else:
-                    print "*** WARNING qual not found ***"
-            print ""
+    print "Analysis directory layout:"
+    for run in solid_runs:
+        print "\n%s_analysis" % run.run_name
+        for sample in run.samples:
+            for project in sample.projects:
+                # Create one experiment per project
+                expt = build_analysis_dir.Experiment()
+                expt.name = project.getProjectName()
+                expt.type = "expt"
+                expt.sample = project.getSample().name
+                expt.library = project.getLibraryNamePattern()
+                # Print the arguments for the layout
+                print "%s " % expt.describe()
 
 #######################################################################
 # Main program
@@ -588,10 +403,8 @@ if __name__ == "__main__":
     if do_spreadsheet:
         write_spreadsheet(solid_runs,spreadsheet)
 
-    # Determine experiments
-    if do_suggest_layout:
-        experiments = get_experiments(solid_runs)
-        # Suggest a layout
-        suggest_analysis_layout(experiments)
+    # Suggest a layout for analysis
+    if do_suggest_layout:    
+        suggest_analysis_layout(solid_runs)
 
 

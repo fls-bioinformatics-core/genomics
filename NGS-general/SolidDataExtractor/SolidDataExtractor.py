@@ -451,6 +451,46 @@ class SolidProject:
         # Will be True as long as there's at least one library
         return len(self.libraries) > 0
 
+    def getLibraryNamePattern(self):
+        """Return wildcard pattern matching all library names in the project.
+
+        Find the longest pattern which matches all the library names in
+        the project. For example if the project contains four libraries
+        PB1, PB2, PB3 and PB4 then return 'PB*'.
+
+        If the project only contains one library then the pattern will be
+        the single name without wildcard characters.
+        """
+        pattern = None
+        for library in self.libraries:
+            if pattern is None:
+                pattern = library.name
+            else:
+                new_pattern = []
+                for i in range(min(len(pattern),len(library.name))):
+                    if pattern[i] != library.name[i]:
+                        if len(new_pattern) < len(library.name):
+                            new_pattern.append('*')
+                        pattern = ''.join(new_pattern)
+                        break
+                    else:
+                        new_pattern.append(pattern[i])
+        return pattern
+
+    def getProjectName(self):
+        """Return a name for the project.
+
+        Typically this is the same as the project name assigned when
+        the project was created, unless the project essentially maps
+        to an entire sample (i.e. all the libraries in the parent
+        sample are also in the project) - then the project name is
+        the sample name.
+        """
+        if len(self.getSample().libraries) == len(self.libraries):
+            return self.getSample().name
+        else:
+            return self.name
+
 class SolidRunInfo:
     """Extract data about a run from the run name
         
