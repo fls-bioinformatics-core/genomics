@@ -156,16 +156,6 @@ class SolidExperiment:
 # Module Functions: utilities
 #######################################################################
 
-def banner(title):
-    """Write a banner for a section of output
-
-    Given some text as 'title", print this framed by '='s."""
-
-    decoration = ''.join(['=' for i in range(len(title))])
-    print "%s" % decoration
-    print "%s" % title
-    print "%s\n" % decoration
-
 def replace_string(s,replace_substr,with_str=''):
     """Do query/replace on a string
 
@@ -317,7 +307,6 @@ def report_run(solid_runs):
       solid_runs: a list or tuple of SolidRun objects to report.
     """
     # Report the data for each run
-    banner("REPORT RUNS")
     for run in solid_runs:
         # Report overall slide layout
         slide_layout = get_slide_layout(run)
@@ -358,8 +347,6 @@ def write_spreadsheet(solid_runs,spreadsheet):
       spreadsheet: the name of the XLS-format spreadsheet to write
         the data
     """
-    banner("WRITE SPREADSHEET")
-
     # Check whether spreadsheet file already exists
     if os.path.exists(spreadsheet):
         write_header = False
@@ -504,7 +491,7 @@ def suggest_analysis_layout(experiments):
       experiments: a list of SolidExperiment objects.
     """
     # Suggest an analysis directory and file naming scheme
-    banner("SUGGESTED ANALYSIS LAYOUT SCHEME")
+    print "Suggesting analysis layout..."
     for expt in experiments:
         # Analysis directory
         dirn = expt.getAnalysisDir()
