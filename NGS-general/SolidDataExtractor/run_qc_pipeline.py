@@ -97,6 +97,34 @@ def QstatJobs(user=None):
     # i.e. 2 header lines then one line per job
     return nlines - 2
 
+# RunPipeline: execute script for multiple sets of files
+def RunPipeline(script,run_data,max_concurrent_jobs=4):
+    """Execute script for multiple sets of files
+
+    Given a script and a list of input file sets, script will be
+    submitted to the cluster once for each set of files. No more
+    than max_concurrent_jobs will be running for the user at any
+    time.
+
+    Arguments:
+      script: name (including path) for pipeline script.
+      run_data: a list consisting of tuples of files which will be
+        supplied to the script as arguments.
+      max_concurrent_jobs: the maximum number of jobs that the runner
+        will submit to the cluster at any particular time (optional).
+    """
+    # For each pair of files, run the pipeline script
+    for data in run_data:
+        # Check if queue is "full"
+        while QstatJobs() >= max_concurrent_jobs:
+            # Wait a while before checking again
+            logging.debug("Waiting for free space in queue...")
+            time.sleep(poll_interval)
+        # Submit
+        logging.info("Submitting job: '%s %s %s'" % (script,data[0],data[1]))
+        job_id = QsubScript('qc',script,data[0],data[1])
+        logging.info("Job id = %s" % job_id)
+
 #######################################################################
 # Main program
 #######################################################################
@@ -167,17 +195,9 @@ if __name__ == "__main__":
     # submitted
     if max_total_jobs > 0:
         run_data = run_data[:max_total_jobs]
-            
-    # For each pair of files, run the pipeline script
-    for data in run_data:
-        # Check if queue is "full"
-        while QstatJobs() >= max_concurrent_jobs:
-            # Wait a while before checking again
-            logging.debug("Waiting for free space in queue...")
-            time.sleep(poll_interval)
-        # Submit
-        logging.info("Submitting job: '%s %s %s'" % (script,data[0],data[1]))
-        job_id = QsubScript('qc',script,data[0],data[1])
-        logging.info("Job id = %s" % job_id)
+
+    # Run the pipeline
+    RunPipeline(script,run_data,max_concurrent_jobs)
+
         
     
