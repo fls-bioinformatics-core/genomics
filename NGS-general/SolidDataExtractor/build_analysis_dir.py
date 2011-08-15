@@ -32,6 +32,35 @@ class Experiment:
         self.sample = None
         self.library = None
 
+    def dirname(self):
+        """Return directory name for experiment
+
+        The directory name is the supplied name plus the experiment
+        type joined by an underscore, unless no type was specified (in
+        which case it is just the experiment name).
+        """
+        if self.type:
+            return '_'.join((self.name,self.type))
+        else:
+            return self.name
+
+    def describe(self):
+        """Describe the experiment as a set of command line options
+        """
+        options = ["--name=%s" % self.name]
+        if self.type:
+            options.append("--type=%s" % self.type)
+        if self.sample:
+            sample = self.sample
+        else:
+            sample = '*'
+        if self.library:
+            library = self.library
+        else:
+            library = '*'
+        options.append("--source=%s/%s" % (sample,library))
+        return ' '.join(options)
+
 #######################################################################
 # Module functions
 #######################################################################
@@ -79,6 +108,8 @@ def getLinkName(filen,sample,library):
     link_filen = '_'.join(link_filen_elements) + ext
     return link_filen
 
+# Filesystem wrappers
+
 def mkdir(dirn):
     """Make a directory"""
     ##print "Making %s" % dirn
@@ -120,6 +151,9 @@ to match multiple names. */* will match all primary data files
     # Dry run flag
     dry_run = False
     # Process command line
+    if len(sys.argv) < 2:
+        # Insuffient arguments
+        sys.exit(1)
     solid_run_dir = sys.argv[-1]
     for arg in sys.argv[1:-1]:
         ##print str(arg)
@@ -163,9 +197,14 @@ to match multiple names. */* will match all primary data files
             dry_run = True
         else:
             # Unrecognised argument
-            print "Unrecognised argument"
+            print "Unrecognised argument: %s" % arg
             sys.exit(1)
             
+    # Check there's something to do
+    if not len(expts):
+        print "No experiments defined, nothing to do"
+        sys.exit(1)
+    
     # Report
     print "%d experiments defined:" % len(expts)
     for expt in expts:
@@ -173,6 +212,7 @@ to match multiple names. */* will match all primary data files
         print "\tType   : %s" % expt.type
         print "\tSample : %s" % expt.sample
         print "\tLibrary: %s" % expt.library
+        print "\tOptions: %s" % expt.describe()
         print ""
 
     # Get the run information
@@ -192,10 +232,7 @@ to match multiple names. */* will match all primary data files
 
     # For each experiment, make a directory
     for expt in expts:
-        if expt.type:
-            expt_dir = '_'.join((expt.name,expt.type))
-        else:
-            expt_dir = expt.name
+        expt_dir = expt.dirname()
         print "\nExperiment: %s" % expt_dir
         if not dry_run:
             mkdir(expt_dir)
