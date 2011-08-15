@@ -12,7 +12,7 @@
 Implements a program to run a pipeline script or command on the
 set of files in a specific directory.
 
-Usage: python run_pipeline.py <script> <data_dir>
+Usage: python run_pipeline.py [OPTIONS] <script> <data_dir>
 
 <script> must accept two arguments (a csfasta file and a qual file)
 <data_dir> must contain pairs of .csfasta and .qual files
@@ -105,19 +105,37 @@ if __name__ == "__main__":
     # Initialise
     max_concurrent_jobs = 4
     poll_interval = 30
+    max_total_jobs = 0
+    logging_level = logging.INFO
 
     # Deal with command line
-    if len(sys.argv) != 3:
-        print "Usage: %s <script> <dir>" % sys.argv[0]
+    if len(sys.argv) < 3:
+        print "Usage: %s [OPTIONS] <script> <dir>" % sys.argv[0]
+        print ""
+        print "Options:"
+        print "  --test=<n> : submit no more than <n> jobs in total"
         sys.exit()
-    else:
-        script = sys.argv[1]
-        data_dir = os.path.abspath(sys.argv[2])
+    script = sys.argv[-2]
+    data_dir = os.path.abspath(sys.argv[-1])
     print "Running %s on data in %s" % (script,data_dir)
+
+    # Collect command line options
+    for arg in sys.argv[1:-2]:
+        if arg == "--debug":
+            # Set logging level to output debugging info
+            logging_level = logging.DEBUG
+        elif arg.startswith("--test="):
+            # Run in test mode: limit the number of jobs
+            # submitted
+            max_total_jobs = int(arg.split('=')[1])
+        else:
+            # Unrecognised argument
+            print "Unrecognised argument: %s" % arg
+            sys.exit(1)
 
     # Set logging format and level
     logging.basicConfig(format='%(levelname)8s %(message)s')
-    logging.getLogger().setLevel(logging.INFO)
+    logging.getLogger().setLevel(logging_level)
 
     # Gather data files from data_dir
     all_files = os.listdir(data_dir)
@@ -143,6 +161,11 @@ if __name__ == "__main__":
                     run_data.append((csfasta,qual))
             except IndexError:
                 logging.critical("Unable to process qual file %s" % filen)
+
+    # Test mode: limit the total number of jobs that will be
+    # submitted
+    if max_total_jobs > 0:
+        run_data = run_data[:max_total_jobs]
             
     # For each pair of files, run the pipeline script
     for data in run_data:
