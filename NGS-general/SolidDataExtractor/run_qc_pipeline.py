@@ -114,6 +114,7 @@ if __name__ == "__main__":
         print ""
         print "Options:"
         print "  --test=<n> : submit no more than <n> jobs in total"
+        print "  --debug    : print debugging output while running"
         sys.exit()
     script = sys.argv[-2]
     data_dir = os.path.abspath(sys.argv[-1])
