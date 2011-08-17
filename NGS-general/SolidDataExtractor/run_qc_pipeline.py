@@ -124,6 +124,32 @@ def RunPipeline(script,run_data,max_concurrent_jobs=4):
         job_id = QsubScript('qc',script,data[0],data[1])
         logging.info("Job id = %s" % job_id)
 
+def GetSolidDataFiles(dirn):
+    """
+    """
+    # Gather data files
+    data_files = []
+    all_files = os.listdir(data_dir)
+    all_files.sort()
+
+    # Look for csfasta and matching qual files
+    for filen in all_files:
+        logging.debug("Examining file %s" % filen)
+        root = os.path.splitext(filen)[0]
+        ext = os.path.splitext(filen)[1]
+        if ext == ".qual":
+            # Match csfasta names which don't have "_QV" in them
+            try:
+                i = root.rindex('_QV')
+                csfasta = root[:i]+root[i+3:]+".csfasta"
+                qual = filen
+                if os.path.exists(os.path.join(data_dir,csfasta)):
+                    data_files.append((csfasta,qual))
+            except IndexError:
+                logging.critical("Unable to process qual file %s" % filen)
+    # Done - return file pairs
+    return data_files
+
 #######################################################################
 # Main program
 #######################################################################
@@ -134,21 +160,26 @@ if __name__ == "__main__":
     poll_interval = 30
     max_total_jobs = 0
     logging_level = logging.INFO
+    script = None
+    data_dirs = []
 
     # Deal with command line
     if len(sys.argv) < 3:
-        print "Usage: %s [OPTIONS] <script> <dir>" % sys.argv[0]
+        print "Usage: %s [OPTIONS] <script> <dir> [<dir> ...]" % sys.argv[0]
+        print ""
+        print "<script> : pipeline script file to execute"
+        print "<dir>    : one or more directories holding SOLiD data"
+        print "           <script> will be executed for each csfasta/qual"
+        print "           file pair in dir, using:"
+        print "           <script> <csfasta> <qual>"
         print ""
         print "Options:"
         print "  --test=<n> : submit no more than <n> jobs in total"
         print "  --debug    : print debugging output while running"
         sys.exit()
-    script = os.path.abspath(sys.argv[-2])
-    data_dir = os.path.abspath(sys.argv[-1])
-    print "Running %s on data in %s" % (script,data_dir)
 
     # Collect command line options
-    for arg in sys.argv[1:-2]:
+    for arg in sys.argv[1:]:
         if arg == "--debug":
             # Set logging level to output debugging info
             logging_level = logging.DEBUG
@@ -156,52 +187,54 @@ if __name__ == "__main__":
             # Run in test mode: limit the number of jobs
             # submitted
             max_total_jobs = int(arg.split('=')[1])
-        else:
-            # Unrecognised argument
-            print "Unrecognised argument: %s" % arg
+        elif arg.startswith("--") and len(data_dirs) > 0:
+            # Some option appeared after we started collecting
+            # directories
+            logging.error("Unexpected argument encountered: %s" % arg)
             sys.exit(1)
+        else:
+            if script is None:
+                # Script name
+                print "Script: %s" %arg
+                script = os.path.abspath(arg)
+                if not os.path.isfile(script):
+                    logging.error("Script file not found: %s" % script)
+                    sys.exit(1)
+            else:
+                # Data directory
+                print "Directory: %s" % arg
+                dirn = os.path.abspath(arg)
+                if not os.path.isdir(dirn):
+                    logging.error("Not a directory: %s" % dirn)
+                    sys.exit(1)
+                data_dirs.append(dirn)
 
     # Set logging format and level
     logging.basicConfig(format='%(levelname)8s %(message)s')
     logging.getLogger().setLevel(logging_level)
 
-    # Gather data files from data_dir
-    all_files = os.listdir(data_dir)
-    all_files.sort()
-    run_data = []
+    # Iterate over data directories
+    for data_dir in data_dirs:
 
-    # Look for csfasta and matching qual files
-    for filen in all_files:
+        print "Running %s on data in %s" % (script,data_dir)
+        run_data = GetSolidDataFiles(data_dir)
 
-        print "%s" % filen
+        # Check there's something to run on
+        if len(run_data) == 0:
+            logging.error("No data files collected for %d" % data_dir)
+            continue
 
-        root = os.path.splitext(filen)[0]
-        ext = os.path.splitext(filen)[1]
-        
-        if ext == ".qual":
-            # Match csfasta names which don't have "_QV" in them
-            try:
-                i = root.rindex('_QV')
-                csfasta = root[:i]+root[i+3:]+".csfasta"
-                qual = filen
-                if os.path.exists(os.path.join(data_dir,csfasta)):
-                    run_data.append((csfasta,qual))
-            except IndexError:
-                logging.critical("Unable to process qual file %s" % filen)
+        # Test mode: limit the total number of jobs that will be
+        # submitted
+        if max_total_jobs > 0:
+            run_data = run_data[:max_total_jobs]
 
-    # Check there's something to run on
-    if len(run_data) == 0:
-        print "No data files collected!"
-        sys.exit(1)
+        # Relocate to the data dir
+        os.chdir(data_dir)
 
-    # Test mode: limit the total number of jobs that will be
-    # submitted
-    if max_total_jobs > 0:
-        run_data = run_data[:max_total_jobs]
+        # Run the pipeline
+        RunPipeline(script,run_data,max_concurrent_jobs)
 
-    # Relocate to the data dir
-    os.chdir(data_dir)
-
-    # Run the pipeline
-    RunPipeline(script,run_data,max_concurrent_jobs)
+    # Finished
+    print "All pipelines finished"
 
