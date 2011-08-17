@@ -143,7 +143,7 @@ if __name__ == "__main__":
         print "  --test=<n> : submit no more than <n> jobs in total"
         print "  --debug    : print debugging output while running"
         sys.exit()
-    script = sys.argv[-2]
+    script = os.path.abspath(sys.argv[-2])
     data_dir = os.path.abspath(sys.argv[-1])
     print "Running %s on data in %s" % (script,data_dir)
 
@@ -173,6 +173,8 @@ if __name__ == "__main__":
     # Look for csfasta and matching qual files
     for filen in all_files:
 
+        print "%s" % filen
+
         root = os.path.splitext(filen)[0]
         ext = os.path.splitext(filen)[1]
         
@@ -182,18 +184,24 @@ if __name__ == "__main__":
                 i = root.rindex('_QV')
                 csfasta = root[:i]+root[i+3:]+".csfasta"
                 qual = filen
-                if os.path.exists(csfasta):
+                if os.path.exists(os.path.join(data_dir,csfasta)):
                     run_data.append((csfasta,qual))
             except IndexError:
                 logging.critical("Unable to process qual file %s" % filen)
+
+    # Check there's something to run on
+    if len(run_data) == 0:
+        print "No data files collected!"
+        sys.exit(1)
 
     # Test mode: limit the total number of jobs that will be
     # submitted
     if max_total_jobs > 0:
         run_data = run_data[:max_total_jobs]
 
+    # Relocate to the data dir
+    os.chdir(data_dir)
+
     # Run the pipeline
     RunPipeline(script,run_data,max_concurrent_jobs)
 
-        
-    
