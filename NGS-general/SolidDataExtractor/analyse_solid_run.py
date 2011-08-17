@@ -35,30 +35,6 @@ import Spreadsheet
 # No classes defined
 
 #######################################################################
-# Module Functions: utilities
-#######################################################################
-
-def replace_string(s,replace_substr,with_str=''):
-    """Do query/replace on a string
-
-    Arguments:
-      s: original string
-      replace_substr: substring in s to be replaced
-      with_str: (optional) string to substitute replace_substring by
-
-    Returns:
-      Modified string
-    """
-    s1 = s
-    slen = len(replace_substr)
-    while True:
-        try:
-            i = s1.rindex(replace_substr)
-            s1 = s1[0:i]+str(with_str)+s1[i+slen:]
-        except ValueError:
-            return s1
-
-#######################################################################
 # Module Functions: SOLiD data utilities
 #######################################################################
 
