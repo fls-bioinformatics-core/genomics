@@ -1,0 +1,19 @@
+#!/bin/sh
+#
+# Set up environment for QC pipeline script
+#
+# Edit this as appropriate for your local setup
+#
+# Programs
+#
+# (Leave blank for programs already on standard PATH)
+export FASTQ_SCREEN=/path/to/fastq_screen
+export SOLID2FASTQ=/path/to/solid2fastq
+export QC_BOXPLOTTER=/path/to/genomics/NGS-general/qc_boxplotter/colour_QC_script.sh
+#
+# Data files
+#
+# Location of fastq_screen configuration file
+# (leave blank for default)
+export FASTQ_SCREEN_CONF=/path/to/fastq_screen.conf
+#
