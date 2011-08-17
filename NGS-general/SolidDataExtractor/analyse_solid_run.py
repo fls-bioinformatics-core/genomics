@@ -26,7 +26,13 @@ import os
 import string
 import SolidDataExtractor
 import build_analysis_dir
-import Spreadsheet
+# Spreadsheet functionality
+try:
+    import Spreadsheet
+    SPREADSHEET_IMPORTED = True
+except ImportError,ex:
+    print "Failed to import Spreadsheet module: %s" % ex
+    SPREADSHEET_IMPORTED = False
 
 #######################################################################
 # Class definitions
@@ -354,13 +360,16 @@ if __name__ == "__main__":
     do_spreadsheet = False
     for arg in sys.argv[1:-1]:
         if arg.startswith("--spreadsheet"):
-            do_spreadsheet = True
-            try:
-                i = arg.index("=")
-                spreadsheet = arg[i+1:]
-            except IndexError:
-                spreadsheet = solid_dir_fc1+".xls"
-            print "Writing spreadsheet %s" % spreadsheet
+            if not SPREADSHEET_IMPORTED:
+                print "Spreadsheet functionality not available"
+            else:
+                do_spreadsheet = True
+                try:
+                    i = arg.index("=")
+                    spreadsheet = arg[i+1:]
+                except IndexError:
+                    spreadsheet = solid_dir_fc1+".xls"
+                print "Writing spreadsheet %s" % spreadsheet
 
     # Get the run information
     solid_runs = []
