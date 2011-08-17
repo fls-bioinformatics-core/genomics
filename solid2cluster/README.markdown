@@ -6,11 +6,11 @@ instrument to a destination machine.
 
 Usage:
 
-rsync_solid_to_cluster.sh <local_dir> <user>@<remote_host>:<remote_dir>
+    rsync_solid_to_cluster.sh <local_dir> <user>@<remote_host>:<remote_dir>
 
-<local_dir> is the directory to be copied; <user> is an account on the
-destination machine <remote_host> and <remote_dir> is the parent directory
-there where a copy of <local_dir> will be made.
+`<local_dir>` is the directory to be copied; `<user>` is an account on the
+destination machine `<remote_host>` and `<remote_dir>` is the parent directory
+there where a copy of `<local_dir>` will be made.
 
 The script operates interactively and prompts the user at each step to
 confirm each action:
