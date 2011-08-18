@@ -1,9 +1,36 @@
-# Convert MACS output file to XLS spreadsheet
+#!/bin/env python
 #
+#     macs_to_XLS.py: Convert MACS output file to XLS spreadsheet
+#     Copyright (C) University of Manchester 2011 Peter Briggs
+#
+########################################################################
+#
+# macs_to_XLS.py
+#
+#########################################################################
+
+"""macs_to_XLS.py
+
+Convert MACS output file to XLS spreadsheet"""
+
+#######################################################################
+# Import modules that this module depends on
+#######################################################################
+
 import sys
 import os
 import string
 import xlwt
+
+#######################################################################
+# Class definitions
+#######################################################################
+
+# No classes defined
+
+#######################################################################
+# Functions
+#######################################################################
 
 def write_data_to_sheet(worksheet,data):
     """Write a list of data to an xlwt sheet
@@ -87,6 +114,10 @@ def insert_column_into_data(data,position,title='',insert_item=''):
             new_items.append(items[i])
         new_data.append('\t'.join(new_items))
     return new_data
+
+#######################################################################
+# Main program
+#######################################################################
 
 if __name__ == "__main__":
     # Get input file name
