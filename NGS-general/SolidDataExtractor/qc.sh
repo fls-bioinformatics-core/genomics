@@ -84,22 +84,12 @@ else
     echo "--------------------------------------------------------"
     echo Executing fastq_screen
     echo "--------------------------------------------------------"
-    # Make a link to the input fastq file
-    if [ ! -f "${fastq}" ] ; then
-	echo Making symbolic link to fastq file
-	/bin/ln -s ../${fastq} ${fastq}
-    fi
     if [ ! -z $FASTQ_SCREEN_CONF ] && [ -f $FASTQ_SCREEN_CONF ] ; then
 	conf_file="--conf $FASTQ_SCREEN_CONF"
     fi
-    cmd="${FASTQ_SCREEN} --color --subset 1000000 --outdir . ${conf_file} ../${fastq}"
+    cmd="${FASTQ_SCREEN} --color --subset 1000000 --outdir . ${conf_file} ${datadir}/${fastq}"
     echo $cmd
     $cmd
-    # Clean up
-    if [ -L "${fastq}" ] ; then
-	echo Removing symbolic link to fastq file
-	/bin/rm -f ${fastq}
-    fi
 fi
 #
 # QC_boxplotter
