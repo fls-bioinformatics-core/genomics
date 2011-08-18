@@ -12,7 +12,7 @@
 Implements a program to run a pipeline script or command on the
 set of files in a specific directory.
 
-Usage: python run_pipeline.py [OPTIONS] <script> <data_dir>
+Usage: python run_pipeline.py [OPTIONS] <script> <data_dir> [ <data_dir> ... ]
 
 <script> must accept two arguments (a csfasta file and a qual file)
 <data_dir> must contain pairs of .csfasta and .qual files
