@@ -305,7 +305,7 @@ def suggest_analysis_layout(solid_runs):
     program.
 
     Arguments:
-      experiments: a list of SolidRun objects.
+      solid_runs: a list of SolidRun objects.
     """
     print "Analysis directory layout:"
     for run in solid_runs:
@@ -320,6 +320,74 @@ def suggest_analysis_layout(solid_runs):
                 expt.library = project.getLibraryNamePattern()
                 # Print the arguments for the layout
                 print "%s " % expt.describe()
+
+def verify_runs(solid_runs):
+    """Do basic verification checks on SOLiD run data
+
+    For each run described by a SolidRun object, check that there is
+    run_definition file, samples and libraries, and that primary data
+    files (csfasta and qual) have been assigned and exist.
+
+    Returns a UNIX-like status code: 0 indicates that the checks passed,
+    1 indicates that they failed.
+
+    Arguments:
+      solid_runs: a list of SolidRun objects.
+    """
+    print "Performing verification"
+    status = 0
+    for run in solid_runs:
+        print "\nExamining %s:" % run.run_name
+        run_status = 0
+        # Check that run_definition file loaded
+        if not run.run_definition:
+            print "Error with run_definition"
+            run_status = 1
+        else:
+            # Check basic parameters: should have non-zero numbers of
+            # samples and libraries
+            if len(run.samples) == 0:
+                print "No sample data"
+                run_status = 1
+            for sample in run.samples:
+                if len(sample.libraries) == 0:
+                    print "No libraries for sample %s" % sample.name
+                    run_status = 1
+                for library in sample.libraries:
+                    # Check csfasta was found
+                    if not library.csfasta:
+                        print "No csfasta for %s/%s" % \
+                            (sample.name,library.name)
+                        run_status = 1
+                    else:
+                        if not os.path.exists(library.csfasta):
+                            print "Missing csfasta for %s/%s" % \
+                                (sample.name,library.name)
+                            run_status = 1
+                    # Check qual was found
+                    if not library.qual:
+                        print "No qual for %s/%s" % \
+                            (sample.name,library.name)
+                        run_status = 1
+                    else:
+                        if not os.path.exists(library.qual):
+                            print "Missing qual for %s/%s" % \
+                                (sample.name,library.name)
+                            run_status = 1
+        # Completed checks for run
+        print "%s:" % run.run_name,
+        if run_status == 0:
+            print " [PASSED]"
+        else:
+            print " [FAILED]"
+            status = 1
+    # Completed
+    print "\nOverall status:",
+    if status == 0:
+        print " [PASSED]"
+    else:
+        print " [FAILED]"
+    return status
 
 #######################################################################
 # Main program
@@ -336,6 +404,7 @@ if __name__ == "__main__":
         print ""
         print "Options:"
         print "  --report: print a report of the SOLiD run"
+        print "  --verify: do verification checks on SOLiD run directories"
         print "  --layout: suggest layout for analysis directories"
         print "  --spreadsheet[=<file>.xls]: write report to Excel spreadsheet"
         sys.exit()
@@ -352,6 +421,10 @@ if __name__ == "__main__":
     do_report_run = False
     if "--report" in sys.argv[1:-1]:
         do_report_run = True
+
+    do_checks = False
+    if "--verify" in sys.argv[1:-1]:
+        do_checks = True
 
     do_suggest_layout = False
     if "--layout" in sys.argv[1:-1]:
@@ -370,6 +443,13 @@ if __name__ == "__main__":
                 except IndexError:
                     spreadsheet = solid_dir_fc1+".xls"
                 print "Writing spreadsheet %s" % spreadsheet
+
+    # Check there's at least one thing to do
+    if not (do_report_run or 
+            do_suggest_layout or 
+            do_spreadsheet or 
+            do_checks):
+        do_report_run = True
 
     # Get the run information
     solid_runs = []
@@ -392,4 +472,9 @@ if __name__ == "__main__":
     if do_suggest_layout:    
         suggest_analysis_layout(solid_runs)
 
-
+    # Do verification
+    # Nb this should always be the last step
+    # Use the verification return code as the exit status
+    if do_checks:
+        status = verify_runs(solid_runs)
+        sys.exit(status)
