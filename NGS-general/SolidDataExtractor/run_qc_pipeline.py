@@ -174,13 +174,18 @@ if __name__ == "__main__":
         print "           <script> <csfasta> <qual>"
         print ""
         print "Options:"
+        print "  --limit=<n>: queue no more than <n> jobs at one time"
+        print "               (default %s)" % max_concurrent_jobs
         print "  --test=<n> : submit no more than <n> jobs in total"
         print "  --debug    : print debugging output while running"
         sys.exit()
 
     # Collect command line options
     for arg in sys.argv[1:]:
-        if arg == "--debug":
+        if arg.startswith("--limit="):
+            # Set maximum number of jobs to queue at one time
+            max_concurrent_jobs = int(arg.split('=')[1])
+        elif arg.startswith("--debug"):
             # Set logging level to output debugging info
             logging_level = logging.DEBUG
         elif arg.startswith("--test="):
