@@ -156,9 +156,15 @@ to match multiple names. */* will match all primary data files
     if len(sys.argv) < 2:
         # Insuffient arguments
         sys.exit(1)
-    solid_run_dir = sys.argv[-1]
-    for arg in sys.argv[1:-1]:
-        ##print str(arg)
+    solid_run_dir = None
+    for arg in sys.argv[1:]:
+        # Check
+        if solid_run_dir is not None:
+            # Still processing arguments after directory
+            # name was read
+            print "ERROR: additional argument after SOLiD run directory"
+            sys.exit(1)
+        # Process command line arguments
         if arg.startswith('--name='):
             expts.append(Experiment())
             expt = expts[-1]
@@ -199,12 +205,20 @@ to match multiple names. */* will match all primary data files
             dry_run = True
         elif arg == '--debug':
             logging.getLogger().setLevel(logging.DEBUG)
+        elif not arg.startswith('--'):
+            # Assume this is the last argument (source directory)
+            solid_run_dir = arg
         else:
             # Unrecognised argument
             print "Unrecognised argument: %s" % arg
             sys.exit(1)
             
     # Check there's something to do
+    if not solid_run_dir:
+        print "No SOLiD run directory specified, nothing to do"
+        sys.exit(1)
+    if not os.path.isdir(solid_run_dir):
+        print "ERROR directory '%s' not found" % solid_run_dir
     if not len(expts):
         print "No experiments defined, nothing to do"
         sys.exit(1)
