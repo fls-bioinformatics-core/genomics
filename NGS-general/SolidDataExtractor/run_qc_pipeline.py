@@ -167,7 +167,8 @@ if __name__ == "__main__":
 
     # Deal with command line
     if len(sys.argv) < 3:
-        print "Usage: %s [OPTIONS] <script> <dir> [<dir> ...]" % sys.argv[0]
+        print "Usage: %s [OPTIONS] <script> <dir> [<dir> ...]" % \
+            os.path.basename(sys.argv[0])
         print ""
         print "<script> : pipeline script file to execute"
         print "<dir>    : one or more directories holding SOLiD data"
