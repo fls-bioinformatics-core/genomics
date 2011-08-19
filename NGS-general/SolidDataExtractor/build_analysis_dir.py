@@ -128,26 +128,42 @@ def mklink(target,link_name):
 #######################################################################
 
 if __name__ == "__main__":
-    print """ build_analysis_dir.py [--dry-run]
-                --name=<user> [--type=<expt_type>] --source=<sample>/<library>
-                [--source=...]
-                [--name=<user> ... ]
-                <solid_run_dir>
+    print "%s [--dry-run] EXPERIMENT [EXPERIMENT ...] <solid_run_dir>" % \
+        os.path.basename(sys.argv[0])
+    print ""
+    print "Build analysis directory structure for one or more 'experiments'"
+    print "and populate with links to the primary data in <solid_run_dir>."
+    print ""
+    print "Options:"
+    print "    --dry-run: report the operations that would be performed"
+    print ""
+    print "Defining experiments:"
+    print ""
+    print "Each experiment is defined with a group of options (must be supplied"
+    print "in this order for each):"
+    print ""
+    print "    --name=<name> [--type=<expt_type>] --source=<sample>/<library>"
+    print "                                      [--source=... ]"
+    print ""
+    print "    <name> is an identifier (typically the user's initials) used"
+    print "        for the analysis directory e.g. 'PB'"
+    print "    <expt_type> is e.g. 'reseq', 'ChIP-seq', 'RNAseq', 'miRNA'..."
+    print "    <sample>/<library> specify the names for primary data files"
+    print "        e.g. 'PB_JB_pool/PB*'"
+    print ""
+    print "    Example:"
+    print "        --name=PB --type=ChIP-seq --source=PB_JB_pool/PB"
+    print ""
+    print "    Both <sample> and <library> can include a trailing wildcard"
+    print "    character (i.e. *) to match multiple names. */* will match all"
+    print "    primary data files. Multiple --sources can be declared for"
+    print "    each experiment."
+    print ""
+    print "For each experiment defined on the command line, a subdirectory"
+    print "called '<name>_<expt_type>' (e.g. 'PB_ChIP-seq' - if no <expt_type>"
+    print "was supplied then just the name is used) will be made, and links to"
+    print "each of the primary data files."
 
-Build analysis directory structure and populate with links to primary data.
-
-<name> is an identifier (typically the user's initials) e.g. 'PB'
-<expt_type> is e.g. 'reseq', 'ChIP-seq', 'RNAseq', 'miRNA'...
-
-The links will be written in a directory '<name>_<expt_type>' e.g.
-'PB_ChIP-seq'. (If no <expt_type> is supplied then just the name is used.)
-
-<sample>/<library> specify the names for primary data files e.g.
-'PB_JB_pool/PB*'
-
-Both <sample> and <library> can include a trailing wildcard character (i.e. *)
-to match multiple names. */* will match all primary data files
-"""
     # List of experiment definitions
     expts = []
     # Dry run flag

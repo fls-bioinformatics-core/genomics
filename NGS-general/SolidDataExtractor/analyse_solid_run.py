@@ -394,7 +394,8 @@ def verify_runs(solid_runs):
 if __name__ == "__main__":
     # Get solid directories
     if len(sys.argv) < 2:
-        print "Usage: python %s [OPTIONS] <solid_run_dir>" % sys.argv[0]
+        print "Usage: %s [OPTIONS] <solid_run_dir>" % \
+            os.path.basename(sys.argv[0])
         print ""
         print "Various operations on a SOLiD run directory. Note that if"
         print "<solid_run_dir>_2 also exists then this is automatically"
