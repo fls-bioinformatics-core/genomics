@@ -90,7 +90,7 @@ def getLinkName(filen,sample,library):
 
     or
 
-    <instrument>_<datestamp>_<sample>_QV_<library>.qual
+    <instrument>_<datestamp>_<sample>_<library>_QV.qual
     
     Arguments:
       filen: name of the source file
@@ -103,11 +103,10 @@ def getLinkName(filen,sample,library):
     # Construct new name
     link_filen_elements = [sample.parent_run.run_info.instrument,
                            sample.parent_run.run_info.datestamp,
-                           sample.name]
+                           sample.name,library.name]
     ext = os.path.splitext(filen)[1]
     if ext == ".qual":
         link_filen_elements.append("QV")
-    link_filen_elements.append(library.name)
     link_filen = '_'.join(link_filen_elements) + ext
     return link_filen
 
