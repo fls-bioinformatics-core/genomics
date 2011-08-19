@@ -152,7 +152,7 @@ if __name__ == "__main__":
     print "        e.g. 'PB_JB_pool/PB*'"
     print ""
     print "    Example:"
-    print "        --name=PB --type=ChIP-seq --source=PB_JB_pool/PB"
+    print "        --name=PB --type=ChIP-seq --source=PB_JB_pool/PB*"
     print ""
     print "    Both <sample> and <library> can include a trailing wildcard"
     print "    character (i.e. *) to match multiple names. */* will match all"
