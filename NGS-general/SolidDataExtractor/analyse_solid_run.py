@@ -11,12 +11,8 @@
 
 """analyse_solid_run.py
 
-Provides functionality for analysing a SOLiD run, to report slide layout
-etc, and suggest a layout for the analysis directories.
-
-To do this it looks at grouping 'projects' (which are groups of libraries)
-into 'experiments'. The heuristics for this are rather convoluted as
-they are based on the names of the libraries.
+Provides functionality for analysing a SOLiD run, to verify and report data
+about the run, and suggest a layout scheme for the analysis directories.
 """
 
 #######################################################################
