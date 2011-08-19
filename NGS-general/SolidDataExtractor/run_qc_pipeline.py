@@ -1,3 +1,5 @@
+#!/bin/env python
+#
 #     run_pipeline.py: run pipeline script on file sets
 #     Copyright (C) University of Manchester 2011 Peter Briggs
 #

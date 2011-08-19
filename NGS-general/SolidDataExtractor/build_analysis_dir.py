@@ -1,3 +1,5 @@
+#!/bin/env python
+#
 #     build_analysis_dir.py: build directory with links to primary data
 #     Copyright (C) University of Manchester 2011 Peter Briggs
 #
