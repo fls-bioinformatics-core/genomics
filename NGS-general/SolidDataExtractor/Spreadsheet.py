@@ -111,6 +111,13 @@ class Workbook:
 
     def save(self,xls_name):
         """Finish adding data and write the spreadsheet to disk.
+
+        Note that for a spreadsheet based on an existing XLS file, this
+        doesn't have to be the same name.
+
+        Arguments:
+          xls_name: the file name to write the spreadsheet to. Note that if a
+            file already exists with this name then it will be overwritten.
         """
         # Write data for each sheet
         for s in self.sheets:
@@ -124,10 +131,44 @@ class Worksheet:
     """Class for writing to a sheet in an XLS spreadsheet.
 
     A Worksheet object represents a sheet in an XLS spreadsheet.
+
+    Once created, data can be appended to the worksheet in a variety of
+    ways:
+
+    * addTabData: a Python list of tab-delimited lines; each line forms a
+      line in the output XLS, with each field forming a column.
+
+    * addText: a string representing arbitrary text, with newlines delimiting
+      lines and tabs (if any) in each line delimiting fields.
+
+    Each can be called multiple times in any order on the same spreadsheet
+    before it is saved, and the data will be appended.
+
+    For new Worksheet objects (i.e. those which weren't read from a
+    pre-existing XLS file), it is also possible to insert new columns:
+
+    * insertColumn: if a single value is specified then all columns are filled
+      with that value; alternatively a list of values can be supplied which
+      are written one-per-row.
+
+    Formulae can also be added in a simple row-wise format: items of the form
+    e.g.
+
+      =A+B
+
+    will be converted to add the row index (e.g. =A1+B1, =A2+B2) etc.
     """
 
     def __init__(self,workbook,title,xlrd_index=None,xlrd_sheet=None):
         """Create a new Worksheet instance.
+
+        Arguments:
+          workbook: 'parent' xlwt.workbook instance
+          title: title text for the sheet
+          xlrd_index: (optional, but must accompany xlrd_sheet if supplied)
+            index for the sheet in the parent workbook
+          xlrd_sheet: (optional, but must accompany xlrd_sheet if supplied)
+            xlrd.worksheet instance
         """
         self.title = title
         self.workbook = workbook
