@@ -188,11 +188,13 @@ class Worksheet:
             self.is_new = True
             self.worksheet = self.workbook.add_sheet(title)
             self.current_row = -1
+            self.ncols = 0
         else:
             # Existing worksheet
             self.is_new = False
             self.worksheet = self.workbook.get_sheet(xlrd_index)
             self.current_row = xlrd_sheet.nrows - 1
+            self.ncols = xlrd_sheet.ncols
         self.data = []
         # Regular expressions for format tags
         self.re_style = re.compile(r"^<style +([^>]*)>(.*)</style>$")
@@ -213,6 +215,7 @@ class Worksheet:
         """
         for row in rows:
             self.data.append(row)
+            self.ncols = max(self.ncols,len(row))
 
     def addText(self,text):
         """Write text to the sheet.
@@ -357,7 +360,7 @@ class Styles:
     def __init__(self):
         self.styles = {}
 
-    def getXfStyle(self,bold=False,wrap=False,bg_color=None,width=None):
+    def getXfStyle(self,bold=False,wrap=False,bg_color=None):
         """Return EasyXf object to apply styles to spreadsheet cells.
 
         Arguments:
@@ -455,7 +458,13 @@ class Spreadsheet:
         Returns:
           Integer index of (empty) row just written
         """
-        self.sheet.addText("")
+        if not color:
+            self.sheet.addText("")
+        else:
+            empty_row = []
+            for i in range(self.sheet.ncols):
+                empty_row.append("<style bgcolor=%s> </style>" % color)
+            self.sheet.addText('\t'.join(empty_row))
 
     def addRow(self,data,set_widths=False,bold=False,wrap=False,bg_color=''):
         """Add a row of data to the spreadsheet.
