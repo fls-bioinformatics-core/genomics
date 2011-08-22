@@ -35,6 +35,7 @@ from xlwt.Utils import rowcol_to_cell
 from xlwt import easyxf
 
 import os
+import re
 import logging
 
 #######################################################################
@@ -157,6 +158,16 @@ class Worksheet:
       =A+B
 
     will be converted to add the row index (e.g. =A1+B1, =A2+B2) etc.
+
+    Individual items can have basic styles applied to them by wrapping them
+    in <style ...>...</style> tags. Within the leading style tag the following
+    attributes can be specified:
+    
+    font=bold (sets bold face)
+    bgcolor=<color> (sets the background colour)
+    wrap (specifies that text should wrap)
+
+    For example <style font=bold bgcolor=gray25>...</style>
     """
 
     def __init__(self,workbook,title,xlrd_index=None,xlrd_sheet=None):
@@ -183,6 +194,8 @@ class Worksheet:
             self.worksheet = self.workbook.get_sheet(xlrd_index)
             self.current_row = xlrd_sheet.nrows - 1
         self.data = []
+        # Regular expressions for format tags
+        self.re_style = re.compile(r"^<style +([^>]*)>(.*)</style>$")
 
     def addTabData(self,rows):
         """Write a list of tab-delimited data rows to the sheet.
@@ -226,7 +239,7 @@ class Worksheet:
             formula.
         """
         if not self.is_new:
-            logging.error("ERROR cannot insert data into pre-existing worksheet")
+            logging.error("Cannot insert data into pre-existing worksheet")
             return False
         insert_title = True
         # Loop over rows
@@ -296,7 +309,26 @@ class Worksheet:
                                          xlwt.Formula(formula))
                 else:
                     # Data item
-                    self.worksheet.write(self.current_row,cindex,item)
+                    #
+                    # Extract formatting data for individual items
+                    bold = False
+                    bg_color = None
+                    wrap = False
+                    style_match = self.re_style.match(item)
+                    if style_match:
+                        item = style_match.group(2)
+                        styles = style_match.group(1)
+                        for style in styles.split(' '):
+                            if style.strip().startswith('bgcolor='):
+                                bg_color = style.split('=')[1].strip()
+                            elif style.strip() == 'font=bold':
+                                bold = True
+                            elif style.strip() == 'wrap':
+                                wrap = True
+                    # Get the easy_xf object for the styling
+                    style = get_xf_style(bold=bold,bg_color=bg_color,wrap=wrap)
+                    #
+                    self.worksheet.write(self.current_row,cindex,item,style)
                 cindex += 1
         # Update/reset the sheet properties etc
         self.data = []
@@ -450,6 +482,43 @@ class Spreadsheet:
         self.workbook.save(self.name)
 
 #######################################################################
+# Functions
+#######################################################################
+
+def get_xf_style(bold=False,wrap=False,bg_color=None):
+    """Create easyxf object to apply styles to spreadsheet cells.
+
+    Arguments:
+      bold: indicate whether font should be bold face
+      wrap: indicate whether text should wrap in the cell
+      bg_color: set colo(u)r for cell background. Must be a valid
+        color name as recognised by xlwt.
+    """
+    # Set up style attributes
+    style = {'font': [],
+             'alignment': [],
+             'pattern': []}
+    if bold:
+        style['font'].append('bold True');
+    if wrap:
+        style['alignment'].append('wrap True')
+    if bg_color:
+        style['pattern'].append('pattern solid')
+        style['pattern'].append('fore_color %s' % bg_color)
+    # Build and return easyfx object to apply styles
+    easyxf_style = ''
+    for key in style.keys():
+        if style[key]:
+            easyxf_style += '%s: ' % key
+            easyxf_style += ', '.join(style[key])
+            easyxf_style += '; '
+    try:
+        return easyxf(easyxf_style)
+    except xlwt.Style.EasyXFCallerError, ex:
+        logging.warning("Unable to get style: '%s'" % ex)
+        return easyxf()
+
+#######################################################################
 # Main program
 #######################################################################
 
@@ -470,6 +539,6 @@ if __name__ == "__main__":
     ws = wb.getSheet('test1')
     ws.addText("Some more data for you")
     ws = wb.addSheet('test2')
-    ws.addText("Hahahah")
+    ws.addText("<style font=bold bgcolor=gray25>Hahahah</style>")
     wb.save('test3.xls')
 
