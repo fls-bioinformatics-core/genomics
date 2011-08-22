@@ -198,6 +198,8 @@ class Worksheet:
         self.re_style = re.compile(r"^<style +([^>]*)>(.*)</style>$")
         # Generate and store styles
         self.styles = Styles()
+        # Maximum column widths
+        self.max_col_width = []
 
     def addTabData(self,rows):
         """Write a list of tab-delimited data rows to the sheet.
@@ -331,6 +333,14 @@ class Worksheet:
                     style = self.styles.getXfStyle(bold=bold,bg_color=bg_color,
                                                    wrap=wrap)
                     self.worksheet.write(self.current_row,cindex,item,style)
+                    # Set the column widths
+                    try:
+                        if len(item) > self.max_col_width[cindex]:
+                            self.max_col_width[cindex] = len(item)
+                    except IndexError:
+                        self.max_col_width.append(len(item))
+                    self.worksheet.col(cindex).width = \
+                        256*(self.max_col_width[cindex] + 5)
                 cindex += 1
         # Update/reset the sheet properties etc
         self.data = []
@@ -347,7 +357,7 @@ class Styles:
     def __init__(self):
         self.styles = {}
 
-    def getXfStyle(self,bold=False,wrap=False,bg_color=None):
+    def getXfStyle(self,bold=False,wrap=False,bg_color=None,width=None):
         """Return EasyXf object to apply styles to spreadsheet cells.
 
         Arguments:
@@ -408,28 +418,13 @@ class Spreadsheet:
           name: name of the XLS format spreadsheet to be created. 
           title: title for the new sheet.
         """
-        self.workbook = xlwt.Workbook()
+        self.workbook = Workbook(name)
         self.name = name
         self.headers = []
-        if not os.path.exists(self.name):
-            # New spreadsheet
-            self.sheet = self.workbook.add_sheet(title)
-            self.current_row = -1
-        else:
-            # Already exists - convert into an xlwt workbook
-            rb = xlrd.open_workbook(self.name,formatting_info=True)
-            rs = rb.sheet_by_index(0)
-            self.workbook = xlutils.copy.copy(rb)
-            self.sheet = self.workbook.get_sheet(0)
-            # Get some info on the sheet
-            self.current_row = rs.nrows
-            # Assume that the first row with data is the header
-            # and collect the titles
-            for rindex in range(rs.nrows):
-                if str(rs.cell(rindex,0).value) != '':
-                    for cindex in range(rs.ncols):
-                        self.headers.append(rs.cell(rindex,cindex).value)
-                    break
+        try:
+            self.sheet = self.workbook.getSheet(title)
+        except KeyError:
+            self.sheet = self.workbook.addSheet(title)
 
     def addTitleRow(self,headers):
         """Add a title row to the spreadsheet.
@@ -443,13 +438,10 @@ class Spreadsheet:
         Returns:
           Integer index of row just written
         """
-        self.headers = headers
-        self.current_row += 1
-        cindex = 0
-        # Add the header row in bold font
-        return self.addRow(self.headers,
-                           bold=True,
-                           set_widths=True)
+        header_line = []
+        for item in headers:
+            header_line.append("<style font=bold>%s</style>" % item)
+        self.sheet.addText('\t'.join(header_line))
 
     def addEmptyRow(self,color=None):
         """Add an empty row to the spreadsheet.
@@ -463,14 +455,7 @@ class Spreadsheet:
         Returns:
           Integer index of (empty) row just written
         """
-        if not color:
-            self.current_row += 1
-            return self.current_row
-        else:
-            row = []
-            for item in self.headers:
-                row.append('')
-            return self.addRow(row,bg_color=color)
+        self.sheet.addText("")
 
     def addRow(self,data,set_widths=False,bold=False,wrap=False,bg_color=''):
         """Add a row of data to the spreadsheet.
@@ -492,45 +477,22 @@ class Spreadsheet:
           Integer index of row just written
         """
         # Set up style attributes
-        style = {'font': [],
-                 'alignment': [],
-                 'pattern': []}
+        style_str = []
         if bold:
-            style['font'].append('bold True');
+            style_str.append('font=bold')
         if wrap:
-            style['alignment'].append('wrap True')
+            style_str.append('wrap')
         if bg_color:
-            style['pattern'].append('pattern solid')
-            style['pattern'].append('fore_color %s' % bg_color)
-        # Build easyfx object to apply styles
-        easyxf_style = ''
-        for key in style.keys():
-            if style[key]:
-                easyxf_style += '%s: ' % key
-                easyxf_style += ', '.join(style[key])
-                easyxf_style += '; '
-        xf_style = easyxf(easyxf_style)
-        # Write the row
-        self.current_row += 1
-        cindex = 0
+            style_str.append('bg_color=%' % bg_color)
+        style_str = ' '.join(style_str)
+        # Create line
+        items = []
         for item in data:
-            if str(item).startswith('='):
-                # Formula
-                print "Formulae not implemented"
-                # Formula example code
-                #
-                #sheet.write(2,3,xlwt.Formula('%s/%s*100' %
-                #                  (rowcol_to_cell(2,2),rowcol_to_cell(2,1))))
-                #
-                self.sheet.write(self.current_row,cindex_item,xf_style)
+            if style_str:
+                items.append("<style %s>%s</style>" % (style_str,item))
             else:
-                # Data
-                self.sheet.write(self.current_row,cindex,item,xf_style)
-            if set_widths:
-                # Set the column width to match the cell contents
-                self.sheet.col(cindex).width = 256*(len(item)+5)
-            cindex += 1
-        return self.current_row
+                items.append(str(item))
+        self.sheet.addText('\t'.join(items))
 
     def write(self):
         """Write the spreadsheet to file.
@@ -549,6 +511,8 @@ class Spreadsheet:
 
 if __name__ == "__main__":
     # Example writing XLS with Spreadsheet class
+    if os.path.exists('test.xls'):
+        os.remove('test.xls')
     wb = Spreadsheet('test.xls','test')
     wb.addTitleRow(['File','Total reads','Unmapped reads'])
     wb.addEmptyRow()
