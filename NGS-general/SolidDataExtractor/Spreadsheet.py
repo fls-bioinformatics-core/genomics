@@ -9,8 +9,8 @@
 
 """Spreadsheet
 
-Provides a Spreadsheet class for writing data to an Excel spreadsheet,
-using the xlrd, xlwt and xlutils modules.
+Provides a Workbook class for writing data to an Excel spreadsheet, using
+the xlrd, xlwt and xlutils modules.
 
 These can be found at:
 http://pypi.python.org/pypi/xlwt/0.7.2
@@ -196,6 +196,8 @@ class Worksheet:
         self.data = []
         # Regular expressions for format tags
         self.re_style = re.compile(r"^<style +([^>]*)>(.*)</style>$")
+        # Generate and store styles
+        self.styles = Styles()
 
     def addTabData(self,rows):
         """Write a list of tab-delimited data rows to the sheet.
@@ -326,8 +328,8 @@ class Worksheet:
                             elif style.strip() == 'wrap':
                                 wrap = True
                     # Get the easy_xf object for the styling
-                    style = get_xf_style(bold=bold,bg_color=bg_color,wrap=wrap)
-                    #
+                    style = self.styles.getXfStyle(bold=bold,bg_color=bg_color,
+                                                   wrap=wrap)
                     self.worksheet.write(self.current_row,cindex,item,style)
                 cindex += 1
         # Update/reset the sheet properties etc
@@ -335,6 +337,60 @@ class Worksheet:
         self.is_new = False
         # Finished
         return
+
+class Styles:
+    """Class for creating and caching EasyXfStyle objects.
+
+    XLS files have a limit of 4,000 styles, so cache and reuse EasyXfStyle
+    objects to avoid exceeding this limit.
+    """
+    def __init__(self):
+        self.styles = {}
+
+    def getXfStyle(self,bold=False,wrap=False,bg_color=None):
+        """Return EasyXf object to apply styles to spreadsheet cells.
+
+        Arguments:
+          bold: indicate whether font should be bold face
+          wrap: indicate whether text should wrap in the cell
+          bg_color: set colo(u)r for cell background. Must be a valid
+           color name as recognised by xlwt.
+        """
+        # Make a key to represent the style
+        style_key = "%s:%s:%s" % (bold,wrap,bg_color)
+
+        # Check whether we already have an EasyXf object for this
+        try:
+            return self.styles[style_key]
+        except KeyError:
+            # Style not found
+            pass
+        # Create the style
+        style = {'font': [],
+                 'alignment': [],
+                 'pattern': []}
+        if bold:
+            style['font'].append('bold True');
+        if wrap:
+            style['alignment'].append('wrap True')
+        if bg_color:
+            style['pattern'].append('pattern solid')
+            style['pattern'].append('fore_color %s' % bg_color)
+        # Build easyfx object to apply styles
+        easyxf_style = ''
+        for key in style.keys():
+            if style[key]:
+                easyxf_style += '%s: ' % key
+                easyxf_style += ', '.join(style[key])
+                easyxf_style += '; '
+        try:
+            xf_style = easyxf(easyxf_style)
+        except xlwt.Style.EasyXFCallerError, ex:
+            logging.warning("Unable to get style: '%s'" % ex)
+            xf_style = easyxf()
+        # Store and return
+        self.styles[style_key] = xf_style
+        return xf_style
 
 class Spreadsheet:
     """Class for creating and writing a spreadsheet.
@@ -485,38 +541,7 @@ class Spreadsheet:
 # Functions
 #######################################################################
 
-def get_xf_style(bold=False,wrap=False,bg_color=None):
-    """Create easyxf object to apply styles to spreadsheet cells.
-
-    Arguments:
-      bold: indicate whether font should be bold face
-      wrap: indicate whether text should wrap in the cell
-      bg_color: set colo(u)r for cell background. Must be a valid
-        color name as recognised by xlwt.
-    """
-    # Set up style attributes
-    style = {'font': [],
-             'alignment': [],
-             'pattern': []}
-    if bold:
-        style['font'].append('bold True');
-    if wrap:
-        style['alignment'].append('wrap True')
-    if bg_color:
-        style['pattern'].append('pattern solid')
-        style['pattern'].append('fore_color %s' % bg_color)
-    # Build and return easyfx object to apply styles
-    easyxf_style = ''
-    for key in style.keys():
-        if style[key]:
-            easyxf_style += '%s: ' % key
-            easyxf_style += ', '.join(style[key])
-            easyxf_style += '; '
-    try:
-        return easyxf(easyxf_style)
-    except xlwt.Style.EasyXFCallerError, ex:
-        logging.warning("Unable to get style: '%s'" % ex)
-        return easyxf()
+# No functions defined
 
 #######################################################################
 # Main program
