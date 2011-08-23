@@ -1057,10 +1057,121 @@ def pretty_print_libraries(libraries):
     return ', '.join(out)
 
 #######################################################################
+# Tests
+#######################################################################
+import unittest
+
+class TestSolidRunInfo(unittest.TestCase):
+    """Unit tests for SolidRunInfo class.
+    """
+    def test_flow_cell_one(self):
+        instrument = 'solid0123'
+        datestamp  = '20130426'
+        fragment   = 'FRAG'
+        barcode    =  'BC'
+        run_name   = instrument+'_'+datestamp+'_'+fragment+'_'+barcode
+        info = SolidRunInfo(run_name)
+        self.assertEqual(run_name,info.name)
+        self.assertEqual(run_name,info.id)
+        self.assertEqual(instrument,info.instrument)
+        self.assertEqual(datestamp,info.datestamp)
+        self.assertEqual(1,info.flow_cell)
+        self.assertTrue(info.is_fragment_library)
+        self.assertTrue(info.is_barcoded_sample)
+        self.assertEqual('26/04/13',info.date)
+
+    def test_flow_cell_two(self):
+        instrument = 'solid0123'
+        datestamp  = '20130426'
+        fragment   = 'FRAG'
+        barcode    =  'BC'
+        run_id     =  instrument+'_'+datestamp+'_'+fragment+'_'+barcode
+        run_name   =  run_id+'_2'
+        info = SolidRunInfo(run_name)
+        self.assertEqual(run_name,info.name)
+        self.assertEqual(run_id,info.id)
+        self.assertEqual(instrument,info.instrument)
+        self.assertEqual(datestamp,info.datestamp)
+        self.assertEqual(2,info.flow_cell)
+        self.assertTrue(info.is_fragment_library)
+        self.assertTrue(info.is_barcoded_sample)
+        self.assertEqual('26/04/13',info.date)
+
+class TestSolidLibrary(unittest.TestCase):
+    """Unit tests for SolidLibrary class.
+    """
+    def test_solid_library(self):
+        sample_name = 'PJB_pool'
+        library_name = 'PJB_NY17'
+        sample = SolidSample(sample_name)
+        library = SolidLibrary(library_name,sample)
+        self.assertEqual(library_name,library.name)
+        self.assertEqual('PJB',library.initials)
+        self.assertEqual('PJB_NY',library.prefix)
+        self.assertEqual('17',library.index_as_string)
+        self.assertEqual(17,library.index)
+        self.assertFalse(library.is_barcoded)
+        self.assertEqual(None,library.csfasta)
+        self.assertEqual(None,library.qual)
+        self.assertEqual(sample,library.parent_sample)
+
+    def test_solid_library_with_files(self):
+        sample_name = 'PJB_pool'
+        library_name = 'PJB_NY17'
+        sample = SolidSample(sample_name)
+        library = SolidLibrary(library_name,sample)
+        library.csfasta = '/path/to/solid_PJB.csfasta'
+        library.qual = '/path/to/solid_PJB_QV.qual'
+        self.assertEqual('/path/to/solid_PJB.csfasta',library.csfasta)
+        self.assertEqual('/path/to/solid_PJB_QV.qual',library.qual)
+
+    def test_solid_library_with_no_sample(self):
+        library_name = 'PJB_NY17'
+        library = SolidLibrary(library_name)
+        self.assertEqual(None,library.parent_sample)
+
+    def test_solid_library_indexes(self):
+        # No index
+        library_name = 'PJB_NY'
+        library = SolidLibrary(library_name)
+        self.assertEqual('',library.index_as_string)
+        self.assertEqual(None,library.index)
+        # Leading zero
+        library_name = 'PJB_NY_01'
+        library = SolidLibrary(library_name)
+        self.assertEqual('01',library.index_as_string)
+        self.assertEqual(1,library.index)
+        # Trailing zero
+        library_name = 'PJB_NY_10'
+        library = SolidLibrary(library_name)
+        self.assertEqual('10',library.index_as_string)
+        self.assertEqual(10,library.index)
+
+class TestFunctions(unittest.TestCase):
+    """Unit tests for module functions.
+    """
+    def test_extract_initials(self):
+        self.assertEqual('DR',extract_initials('DR1'))
+        self.assertEqual('EP',extract_initials('EP_NCYC2669'))
+        self.assertEqual('CW',extract_initials('CW_TI'))
+
+    def test_extract_prefix(self):
+        self.assertEqual('LD_C',extract_prefix('LD_C1'))
+
+    def test_extract_index(self):
+        self.assertEqual('1',extract_index('LD_C1'))
+        self.assertEqual('07',extract_index('DR07'))
+
+#######################################################################
 # Main program
 #######################################################################
 
 if __name__ == "__main__":
+
+    # Run tests
+    if len(sys.argv) == 1:
+        unittest.main()
+        sys.exit()
 
     if len(sys.argv) != 2:
         # Example input /home/pjb/SOLiD_meta_data/solid0123_20130426_FRAG_BC
