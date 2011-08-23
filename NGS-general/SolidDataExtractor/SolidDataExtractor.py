@@ -1147,6 +1147,53 @@ class TestSolidLibrary(unittest.TestCase):
         self.assertEqual('10',library.index_as_string)
         self.assertEqual(10,library.index)
 
+class TestSolidSample(unittest.TestCase):
+    """Unit tests for SolidSample class.
+    """
+    def test_solid_sample(self):
+        sample_name = 'PJB_pool'
+        sample = SolidSample(sample_name)
+        self.assertEqual(sample_name,sample.name)
+        self.assertEqual(None,sample.parent_run)
+        self.assertEqual(None,sample.barcode_stats)
+        self.assertEqual(None,sample.libraries_dir)
+        self.assertEqual(0,len(sample.libraries))
+        self.assertEqual(0,len(sample.projects))
+
+    def test_solid_sample_add_library(self):
+        sample_name = 'PJB_pool'
+        sample = SolidSample(sample_name)
+        self.assertEqual(0,len(sample.libraries))
+        # Add first library
+        library = sample.addLibrary('PJB_NY_17')
+        self.assertTrue(isinstance(library,SolidLibrary))
+        self.assertEqual(1,len(sample.libraries))
+        self.assertEqual(library,sample.getLibrary('PJB_NY_17'))
+        # Add second library
+        library2 = sample.addLibrary('PJB_NY_18')
+        self.assertTrue(isinstance(library2,SolidLibrary))
+        self.assertEqual(2,len(sample.libraries))
+        self.assertEqual(library2,sample.getLibrary('PJB_NY_18'))
+        # Add same library again
+        self.assertEqual(library2,sample.addLibrary('PJB_NY_18'))
+        self.assertEqual(2,len(sample.libraries))
+        # Fetch non-existent library
+        self.assertEqual(None,sample.getLibrary('PJB_NY_19'))
+
+    def test_solid_sample_get_project(self):
+        sample_name = 'PJB_pool'
+        sample = SolidSample(sample_name)
+        self.assertEqual(0,len(sample.projects))
+        # Add libraries
+        library = sample.addLibrary('PJB_NY_17')
+        library = sample.addLibrary('PJB_NY_18')
+        # Fetch project
+        self.assertEqual(1,len(sample.projects))
+        project = sample.getProject('PJB')
+        self.assertTrue(isinstance(project,SolidProject))
+        # Fetch non-existant project
+        self.assertEqual(None,sample.getProject('BJP'))
+
 class TestFunctions(unittest.TestCase):
     """Unit tests for module functions.
     """
