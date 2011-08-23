@@ -4,6 +4,9 @@
 #
 # Usage: qc.sh <csfasta> <qual>
 #
+# Set umask to allow group read-write on all new files etc
+umask 0002
+#
 # Get the input files
 csfasta=`basename $1`
 qual=`basename $2`
