@@ -353,7 +353,6 @@ class SolidLibrary:
           parent_sample: (optional) parent SolidSample object
         """
         # Name
-        self.name = name
         self.name = str(name)
         # Name-based information
         self.initials = extract_initials(self.name)
