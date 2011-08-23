@@ -1194,6 +1194,77 @@ class TestSolidSample(unittest.TestCase):
         # Fetch non-existant project
         self.assertEqual(None,sample.getProject('BJP'))
 
+class TestSolidRunDefinition(unittest.TestCase):
+    """Unit tests for SolidRunDefinition class.
+    """
+
+    def setUp(self):
+        run_definition_text = \
+"""version	userId	runType	isMultiplexing	runName	runDesc	mask	protocol
+v0.0	user	FRAGMENT	TRUE	solid0123_20130426_FRAG_BC_2		1_spot_mask_sf	SOLiD4 Multiplex
+primerSet	baseLength
+BC	5
+F3	50
+sampleName	sampleDesc	spotAssignments	primarySetting	library	application	secondaryAnalysis	multiplexingSeries	barcodes
+AB_CD_EF_pool		1	default primary	CD_UV5	SingleTag	mm9	BC Kit Module 1-16	"7"
+AB_CD_EF_pool		1	default primary	CD_PQ5	SingleTag	mm9	BC Kit Module 1-16	"6"
+AB_CD_EF_pool		1	default primary	CD_ST4	SingleTag	mm9	BC Kit Module 1-16	"5"
+AB_CD_EF_pool		1	default primary	EF11	SingleTag	dm5	BC Kit Module 1-16	"8"
+AB_CD_EF_pool		1	default primary	EF12	SingleTag	dm5	BC Kit Module 1-16	"9"
+AB_CD_EF_pool		1	default primary	EF13	SingleTag	dm5	BC Kit Module 1-16	"10"
+AB_CD_EF_pool		1	default primary	EF14	SingleTag	dm5	BC Kit Module 1-16	"11"
+AB_CD_EF_pool		1	default primary	EF15	SingleTag	dm5	BC Kit Module 1-16	"12"
+AB_CD_EF_pool		1	default primary	AB_A1M1	SingleTag	hg18	BC Kit Module 1-16	"3"
+AB_CD_EF_pool		1	default primary	AB_A1M2	SingleTag	hg18	BC Kit Module 1-16	"4"
+AB_CD_EF_pool		1	default primary	AB_A1M1_input	SingleTag	hg18	BC Kit Module 1-16	"1"
+AB_CD_EF_pool		1	default primary	AB_A1M1_input	SingleTag	hg18	BC Kit Module 1-16	"2"
+"""
+        fp = open('test_run_definition.txt','w')
+        fp.write(run_definition_text)
+        fp.close()
+        self.run_defn = SolidRunDefinition('test_run_definition.txt')
+
+    def tearDown(self):
+        os.remove('test_run_definition.txt')
+
+    def test_solid_run_definition(self):
+        self.assertTrue(isinstance(self.run_defn,SolidRunDefinition))
+        self.assertTrue(self.run_defn)
+
+    def test_nsamples(self):
+        self.assertEqual(12,self.run_defn.nSamples())
+
+    def test_fields(self):
+        self.assertEqual(['sampleName',
+                          'sampleDesc',
+                          'spotAssignments',
+                          'primarySetting',
+                          'library',
+                          'application',
+                          'secondaryAnalysis',
+                          'multiplexingSeries',
+                          'barcodes'],
+                         self.run_defn.fields())
+
+    def test_get_data_item(self):
+        # Check first line
+        self.assertEqual('AB_CD_EF_pool',
+                         self.run_defn.getDataItem('sampleName',0))
+        self.assertEqual('CD_UV5',self.
+                         run_defn.getDataItem('library',0))
+        self.assertEqual('mm9',
+                         self.run_defn.getDataItem('secondaryAnalysis',0))
+        # Check line in middle
+        self.assertEqual('AB_CD_EF_pool',
+                         self.run_defn.getDataItem('sampleName',4))
+        self.assertEqual('EF12',
+                         self.run_defn.getDataItem('library',4))
+        self.assertEqual('dm5',
+                         self.run_defn.getDataItem('secondaryAnalysis',4))
+        # Check non-existent line
+        self.assertRaises(IndexError,
+                          self.run_defn.getDataItem,'sampleName',12)
+
 class TestFunctions(unittest.TestCase):
     """Unit tests for module functions.
     """
