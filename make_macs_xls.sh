@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Wrapper for running make_macs_xls.sh
+# Wrapper for running make_macs_xls.py
 #
 # Get the location for these scripts
 BIN_DIR=`dirname $0`
