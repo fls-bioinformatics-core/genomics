@@ -20,7 +20,6 @@ Convert MACS output file to XLS spreadsheet"""
 import sys
 import os
 import string
-import xlwt
 import Spreadsheet
 
 #######################################################################
