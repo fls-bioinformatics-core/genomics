@@ -76,7 +76,7 @@ if __name__ == "__main__":
 
     # Notes text example
     # NB put tabs into the text to create new columns within a single line
-    notes = """Here is some example text for\tIan
+    notes = """Here is some example text for\t<style font=bold bgcolor=red>Ian</style>
 
 Edit this as you wish and it will be added to the "notes" page
 of the spreadsheet, preserving the line breaks etc
