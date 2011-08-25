@@ -1066,8 +1066,13 @@ import shutil
 class TestUtils:
     """Utilities to help with setting up/running tests etc
     """
-    def make_run_definition_file(self,filename):
-        """Create run definition file with the specified name.
+    def make_run_definition_file(self,filename=None):
+        """Create example run definition file.
+
+        If a name is explicitly specified then the file will be created
+        with that name; otherwise a temporary file name will be generated.
+
+        Returns the name for the run definition file.
         """
         run_definition_text = \
 """version	userId	runType	isMultiplexing	runName	runDesc	mask	protocol
@@ -1088,13 +1093,23 @@ AB_CD_EF_pool		1	default primary	AB_A1M1	SingleTag	hg18	BC Kit Module 1-16	"3"
 AB_CD_EF_pool		1	default primary	AB_A1M2	SingleTag	hg18	BC Kit Module 1-16	"4"
 AB_CD_EF_pool		1	default primary	AB_A1M1_input	SingleTag	hg18	BC Kit Module 1-16	"1"
 AB_CD_EF_pool		1	default primary	AB_A1M2_input	SingleTag	hg18	BC Kit Module 1-16	"2"
-"""
+"""       
+        if filename is None:
+            # mkstemp returns a tuple
+            tmpfile = tempfile.mkstemp()
+            filename = tmpfile[1]
         fp = open(filename,'w')
         fp.write(run_definition_text)
         fp.close()
+        return filename
 
-    def make_barcode_statistics_file(self,filename):
-        """Create barcode statistics file with the specified name.
+    def make_barcode_statistics_file(self,filename=None):
+        """Create example barcode statistics file.
+
+        If a name is explicitly specified then the file will be created
+        with that name; otherwise a temporary file name will be generated.
+
+        Returns the name for the barcode statistics file.
         """
         barcode_statistics_text = \
 """#? missing-barcode-reads=0
@@ -1132,9 +1147,14 @@ unassigned	unresolved	NA	NA	8162042
 unassigned	Subtotals	127858	2983283	11273183
 All Beads	Totals	409927600	39452331	457541973
 """
+        if filename is None:
+            # mkstemp returns a tuple
+            tmpfile = tempfile.mkstemp()
+            filename = tmpfile[1]
         fp = open(filename,'w')
         fp.write(barcode_statistics_text)
         fp.close()
+        return filename
 
     def make_solid_dir(self,solid_run_name):
         """Create a mock SOLiD run directory structure.
@@ -1355,11 +1375,11 @@ class TestSolidRunDefinition(unittest.TestCase):
     """
 
     def setUp(self):
-        TestUtils().make_run_definition_file('test_run_definition.txt')
-        self.run_defn = SolidRunDefinition('test_run_definition.txt')
+        self.tmp_defn_file = TestUtils().make_run_definition_file()
+        self.run_defn = SolidRunDefinition(self.tmp_defn_file)
 
     def tearDown(self):
-        os.remove('test_run_definition.txt')
+        os.remove(self.tmp_defn_file)
 
     def test_solid_run_definition(self):
         self.assertTrue(isinstance(self.run_defn,SolidRunDefinition))
@@ -1404,11 +1424,11 @@ class TestSolidBarcodeStatistics(unittest.TestCase):
     """
 
     def setUp(self):
-        TestUtils().make_barcode_statistics_file('test_barcodestatistics.txt')
-        self.stats = SolidBarcodeStatistics('test_barcodestatistics.txt')
+        self.tmp_stats_file = TestUtils().make_barcode_statistics_file()
+        self.stats = SolidBarcodeStatistics(self.tmp_stats_file)
 
     def tearDown(self):
-        os.remove('test_barcodestatistics.txt')
+        os.remove(self.tmp_stats_file)
 
     def test_solid_barcode_statistics(self):
         self.assertTrue(isinstance(self.stats,SolidBarcodeStatistics))
