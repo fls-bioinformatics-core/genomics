@@ -1060,6 +1060,7 @@ def pretty_print_libraries(libraries):
 # Tests
 #######################################################################
 import unittest
+import tempfile
 import shutil
 
 class TestUtils:
@@ -1135,13 +1136,21 @@ All Beads	Totals	409927600	39452331	457541973
         fp.write(barcode_statistics_text)
         fp.close()
 
-    def make_solid_dir(self,dirname):
+    def make_solid_dir(self,solid_run_name):
         """Create a mock SOLiD run directory structure.
+
+        Creates a temporary directory and builds a mock SOLiD run directory
+        called 'solid_run_name' inside that.
+        
+        Returns the full path to the mock SOLiD run directory.
         """
         
+        # Put everything in a temporary directory
+        top_level = tempfile.mkdtemp()
         # Top-level
+        dirname = os.path.join(top_level,solid_run_name)
         os.mkdir(dirname)
-        self.make_run_definition_file(dirname+'/'+dirname+'_run_definition.txt')
+        self.make_run_definition_file(dirname+'/'+solid_run_name+'_run_definition.txt')
         #
         # Subdirectories:
         #
@@ -1192,13 +1201,15 @@ All Beads	Totals	409927600	39452331	457541973
             # solidXXX/AB_CD_EF_pool/results.F1B1/libraries/X/primary.x/reads/
             self.touch(dirname+'/AB_CD_EF_pool/results.F1B1/libraries/'+d+
                         '/primary.201312345678901/reads/'+
-                       dirname+'_AB_CD_EF_pool_F3_'+d+'.csfasta')
+                       solid_run_name+'_AB_CD_EF_pool_F3_'+d+'.csfasta')
             self.touch(dirname+'/AB_CD_EF_pool/results.F1B1/libraries/'+d+
                         '/primary.201312345678901/reads/'+
-                       dirname+'_AB_CD_EF_pool_F3_QV_'+d+'.qual')
+                       solid_run_name+'_AB_CD_EF_pool_F3_QV_'+d+'.qual')
             self.touch(dirname+'/AB_CD_EF_pool/results.F1B1/libraries/'+d+
                         '/primary.201312345678901/reads/'+
-                       dirname+'_AB_CD_EF_pool_F3.stats')
+                       solid_run_name+'_AB_CD_EF_pool_F3.stats')
+        # Return the temporary directory with the mock SOLiD run 
+        return dirname
 
     def touch(self,filename):
         """Make a new (empty) file
@@ -1430,8 +1441,8 @@ class TestSolidRun(unittest.TestCase):
     """
     def setUp(self):
         # Set up a mock SOLiD directory structure
-        self.solid_test_dir = 'solid0123_20130426_FRAG_BC'
-        TestUtils().make_solid_dir(self.solid_test_dir)
+        self.solid_test_dir = \
+            TestUtils().make_solid_dir('solid0123_20130426_FRAG_BC')
         # Create a SolidRun object for tests
         self.solid_run = SolidRun(self.solid_test_dir)
 
