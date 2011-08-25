@@ -1060,6 +1060,151 @@ def pretty_print_libraries(libraries):
 # Tests
 #######################################################################
 import unittest
+import shutil
+
+class TestUtils:
+    """Utilities to help with setting up/running tests etc
+    """
+    def make_run_definition_file(self,filename):
+        """Create run definition file with the specified name.
+        """
+        run_definition_text = \
+"""version	userId	runType	isMultiplexing	runName	runDesc	mask	protocol
+v0.0	user	FRAGMENT	TRUE	solid0123_20130426_FRAG_BC_2		1_spot_mask_sf	SOLiD4 Multiplex
+primerSet	baseLength
+BC	5
+F3	50
+sampleName	sampleDesc	spotAssignments	primarySetting	library	application	secondaryAnalysis	multiplexingSeries	barcodes
+AB_CD_EF_pool		1	default primary	CD_UV5	SingleTag	mm9	BC Kit Module 1-16	"7"
+AB_CD_EF_pool		1	default primary	CD_PQ5	SingleTag	mm9	BC Kit Module 1-16	"6"
+AB_CD_EF_pool		1	default primary	CD_ST4	SingleTag	mm9	BC Kit Module 1-16	"5"
+AB_CD_EF_pool		1	default primary	EF11	SingleTag	dm5	BC Kit Module 1-16	"8"
+AB_CD_EF_pool		1	default primary	EF12	SingleTag	dm5	BC Kit Module 1-16	"9"
+AB_CD_EF_pool		1	default primary	EF13	SingleTag	dm5	BC Kit Module 1-16	"10"
+AB_CD_EF_pool		1	default primary	EF14	SingleTag	dm5	BC Kit Module 1-16	"11"
+AB_CD_EF_pool		1	default primary	EF15	SingleTag	dm5	BC Kit Module 1-16	"12"
+AB_CD_EF_pool		1	default primary	AB_A1M1	SingleTag	hg18	BC Kit Module 1-16	"3"
+AB_CD_EF_pool		1	default primary	AB_A1M2	SingleTag	hg18	BC Kit Module 1-16	"4"
+AB_CD_EF_pool		1	default primary	AB_A1M1_input	SingleTag	hg18	BC Kit Module 1-16	"1"
+AB_CD_EF_pool		1	default primary	AB_A1M2_input	SingleTag	hg18	BC Kit Module 1-16	"2"
+"""
+        fp = open(filename,'w')
+        fp.write(run_definition_text)
+        fp.close()
+
+    def make_barcode_statistics_file(self,filename):
+        """Create barcode statistics file with the specified name.
+        """
+        barcode_statistics_text = \
+"""#? missing-barcode-reads=0
+#? missing-F3-reads=0
+##Library	Barcode	0 Mismatches	1 Mismatch	Total
+AB_A1M1	3	32034098	3010512	35044610
+AB_A1M1	Subtotals	32034098	3010512	35044610
+EF14	11	33802784	2697225	36500009
+EF14	Subtotals	33802784	2697225	36500009
+CD_UV5	7	34132646	2304212	36436858
+CD_UV5	Subtotals	34132646	2304212	36436858
+EF12	9	35492369	2789254	38281623
+EF12	Subtotals	35492369	2789254	38281623
+EF13	10	30460845	2818591	33279436
+EF13	Subtotals	30460845	2818591	33279436
+EF15	12	36824658	2939962	39764620
+EF15	Subtotals	36824658	2939962	39764620
+AB_A1M2	4	35897351	2904080	38801431
+AB_A1M2	Subtotals	35897351	2904080	38801431
+EF11	8	24853173	2186475	27039648
+EF11	Subtotals	24853173	2186475	27039648
+CD_ST4	5	44673850	4675548	49349398
+CD_ST4	Subtotals	44673850	4675548	49349398
+CD_PQ5	6	40817315	4882499	45699814
+CD_PQ5	Subtotals	40817315	4882499	45699814
+AB_A1M1_input	2	33385249	2446268	35831517
+AB_A1M1_input	Subtotals	33385249	2446268	35831517
+AB_A1M2_input	1	27425404	2814422	30239826
+AB_A1M2_input	Subtotals	27425404	2814422	30239826
+unassigned	03020	98926	1021138	1120064
+unassigned	12213	10872	611071	621943
+unassigned	20131	9880	696765	706645
+unassigned	31302	8180	654309	662489
+unassigned	unresolved	NA	NA	8162042
+unassigned	Subtotals	127858	2983283	11273183
+All Beads	Totals	409927600	39452331	457541973
+"""
+        fp = open(filename,'w')
+        fp.write(barcode_statistics_text)
+        fp.close()
+
+    def make_solid_dir(self,dirname):
+        """Create a mock SOLiD run directory structure.
+        """
+        
+        # Top-level
+        os.mkdir(dirname)
+        self.make_run_definition_file(dirname+'/'+dirname+'_run_definition.txt')
+        #
+        # Subdirectories:
+        #
+        ### solidXXX/plots
+        os.makedirs(dirname+'/plots')
+        #
+        ### solidXXX/AB_CD_EF_pool
+        os.makedirs(dirname+'/AB_CD_EF_pool/results.F1B1')
+        os.symlink('results.F1B1',dirname+'/AB_CD_EF_pool/results')
+        #
+        ### solidXXX/AB_CD_EF_pool/results.F1B1/
+        os.makedirs(dirname+'/AB_CD_EF_pool/results.F1B1/libraries')
+        os.makedirs(dirname+
+                    '/AB_CD_EF_pool/results.F1B1/primary.20131234567890')
+        os.makedirs(dirname+
+                    '/AB_CD_EF_pool/results.F1B1/primary.20132345678901')
+        #
+        ## solidXXX/AB_CD_EF_pool/results.F1B1/libraries/
+        self.make_barcode_statistics_file(
+            dirname+
+            '/AB_CD_EF_pool/results.F1B1/libraries/'+
+            'BarcodeStatistics.20130123456789012.txt')
+        for d in ('CD_UV5','CD_PQ5','CD_ST4',
+                  'EF11','EF12','EF13','EF14','EF15',
+                  'AB_A1M1','AB_A1M2','AB_A1M1_input','AB_A1M2_input'):
+            os.makedirs(dirname+'/AB_CD_EF_pool/results.F1B1/libraries/'+d)
+            os.makedirs(dirname+'/AB_CD_EF_pool/results.F1B1/libraries/'+d+
+                        '/intermediate')
+            os.makedirs(dirname+'/AB_CD_EF_pool/results.F1B1/libraries/'+d+
+                        '/primary.201301234567890')
+            os.makedirs(dirname+'/AB_CD_EF_pool/results.F1B1/libraries/'+d+
+                        '/primary.201301234567890/reads')
+            os.makedirs(dirname+'/AB_CD_EF_pool/results.F1B1/libraries/'+d+
+                        '/primary.201301234567890/reports')
+            os.makedirs(dirname+'/AB_CD_EF_pool/results.F1B1/libraries/'+d+
+                        '/primary.201312345678901')
+            os.makedirs(dirname+'/AB_CD_EF_pool/results.F1B1/libraries/'+d+
+                        '/primary.201312345678901/reads')
+            os.makedirs(dirname+'/AB_CD_EF_pool/results.F1B1/libraries/'+d+
+                        '/primary.201312345678901/reject')
+            os.makedirs(dirname+'/AB_CD_EF_pool/results.F1B1/libraries/'+d+
+                        '/primary.201312345678901/reports')
+            os.makedirs(dirname+'/AB_CD_EF_pool/results.F1B1/libraries/'+d+
+                        '/secondary.F3.20130012345678')
+            os.makedirs(dirname+'/AB_CD_EF_pool/results.F1B1/libraries/'+d+
+                        '/temp')
+            #
+            # solidXXX/AB_CD_EF_pool/results.F1B1/libraries/X/primary.x/reads/
+            self.touch(dirname+'/AB_CD_EF_pool/results.F1B1/libraries/'+d+
+                        '/primary.201312345678901/reads/'+
+                       dirname+'_AB_CD_EF_pool_F3_'+d+'.csfasta')
+            self.touch(dirname+'/AB_CD_EF_pool/results.F1B1/libraries/'+d+
+                        '/primary.201312345678901/reads/'+
+                       dirname+'_AB_CD_EF_pool_F3_QV_'+d+'.qual')
+            self.touch(dirname+'/AB_CD_EF_pool/results.F1B1/libraries/'+d+
+                        '/primary.201312345678901/reads/'+
+                       dirname+'_AB_CD_EF_pool_F3.stats')
+
+    def touch(self,filename):
+        """Make a new (empty) file
+        """
+        if not os.path.exists(filename):
+            open(filename, 'w').close()
 
 class TestSolidRunInfo(unittest.TestCase):
     """Unit tests for SolidRunInfo class.
@@ -1068,7 +1213,7 @@ class TestSolidRunInfo(unittest.TestCase):
         instrument = 'solid0123'
         datestamp  = '20130426'
         fragment   = 'FRAG'
-        barcode    =  'BC'
+        barcode    = 'BC'
         run_name   = instrument+'_'+datestamp+'_'+fragment+'_'+barcode
         info = SolidRunInfo(run_name)
         self.assertEqual(run_name,info.name)
@@ -1199,29 +1344,7 @@ class TestSolidRunDefinition(unittest.TestCase):
     """
 
     def setUp(self):
-        run_definition_text = \
-"""version	userId	runType	isMultiplexing	runName	runDesc	mask	protocol
-v0.0	user	FRAGMENT	TRUE	solid0123_20130426_FRAG_BC_2		1_spot_mask_sf	SOLiD4 Multiplex
-primerSet	baseLength
-BC	5
-F3	50
-sampleName	sampleDesc	spotAssignments	primarySetting	library	application	secondaryAnalysis	multiplexingSeries	barcodes
-AB_CD_EF_pool		1	default primary	CD_UV5	SingleTag	mm9	BC Kit Module 1-16	"7"
-AB_CD_EF_pool		1	default primary	CD_PQ5	SingleTag	mm9	BC Kit Module 1-16	"6"
-AB_CD_EF_pool		1	default primary	CD_ST4	SingleTag	mm9	BC Kit Module 1-16	"5"
-AB_CD_EF_pool		1	default primary	EF11	SingleTag	dm5	BC Kit Module 1-16	"8"
-AB_CD_EF_pool		1	default primary	EF12	SingleTag	dm5	BC Kit Module 1-16	"9"
-AB_CD_EF_pool		1	default primary	EF13	SingleTag	dm5	BC Kit Module 1-16	"10"
-AB_CD_EF_pool		1	default primary	EF14	SingleTag	dm5	BC Kit Module 1-16	"11"
-AB_CD_EF_pool		1	default primary	EF15	SingleTag	dm5	BC Kit Module 1-16	"12"
-AB_CD_EF_pool		1	default primary	AB_A1M1	SingleTag	hg18	BC Kit Module 1-16	"3"
-AB_CD_EF_pool		1	default primary	AB_A1M2	SingleTag	hg18	BC Kit Module 1-16	"4"
-AB_CD_EF_pool		1	default primary	AB_A1M1_input	SingleTag	hg18	BC Kit Module 1-16	"1"
-AB_CD_EF_pool		1	default primary	AB_A1M1_input	SingleTag	hg18	BC Kit Module 1-16	"2"
-"""
-        fp = open('test_run_definition.txt','w')
-        fp.write(run_definition_text)
-        fp.close()
+        TestUtils().make_run_definition_file('test_run_definition.txt')
         self.run_defn = SolidRunDefinition('test_run_definition.txt')
 
     def tearDown(self):
@@ -1264,6 +1387,59 @@ AB_CD_EF_pool		1	default primary	AB_A1M1_input	SingleTag	hg18	BC Kit Module 1-16
         # Check non-existent line
         self.assertRaises(IndexError,
                           self.run_defn.getDataItem,'sampleName',12)
+
+class TestSolidBarcodeStatistics(unittest.TestCase):
+    """Unit tests for SolidBarcodeStatistics class.
+    """
+
+    def setUp(self):
+        TestUtils().make_barcode_statistics_file('test_barcodestatistics.txt')
+        self.stats = SolidBarcodeStatistics('test_barcodestatistics.txt')
+
+    def tearDown(self):
+        os.remove('test_barcodestatistics.txt')
+
+    def test_solid_barcode_statistics(self):
+        self.assertTrue(isinstance(self.stats,SolidBarcodeStatistics))
+        self.assertTrue(self.stats)
+
+    def test_nRows(self):
+        self.assertEqual(31,self.stats.nRows())
+
+    def test_header(self):
+        self.assertEqual(['Library',
+                          'Barcode',
+                          '0 Mismatches',
+                          '1 Mismatch',
+                          'Total'],
+                         self.stats.header)
+
+    def test_get_data_by_name(self):
+        # Check "All Beads" line
+        self.assertEqual(['All Beads',
+                          'Totals',
+                          '409927600',
+                          '39452331',
+                          '457541973'],
+                         self.stats.getDataByName('All Beads'))
+        # Check non-existent line
+        self.assertEqual(None,self.stats.getDataByName('All beads'))
+
+class TestSolidRun(unittest.TestCase):
+    """Unit tests for SolidRun class.
+    """
+    def setUp(self):
+        # Set up a mock SOLiD directory structure
+        self.solid_test_dir = 'solid0123_20130426_FRAG_BC'
+        TestUtils().make_solid_dir(self.solid_test_dir)
+        # Create a SolidRun object for tests
+        self.solid_run = SolidRun(self.solid_test_dir)
+
+    def tearDown(self):
+        shutil.rmtree(self.solid_test_dir)
+
+    def test_solid_run(self):
+        self.assertTrue(self.solid_run)
 
 class TestFunctions(unittest.TestCase):
     """Unit tests for module functions.
