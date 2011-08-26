@@ -46,6 +46,17 @@ Extract N random records from fastq file (4-line records):
 
 Usage: `getRandomTags_index_fastq.pl in.fastq N out.fastq`
 
+make_macs_xls.py
+----------------
+Convert a MACS tab-delimited output file into an Excel (XLS) spreadsheet.
+
+Usage: `make_macs_xls.py <macs_output_file>.xls`
+
+Creates an XLS spreadsheet called `<macs_output_file>_XLS.xls`
+
+Note that this requires the `Spreadsheet` Python module (in `share`) and the
+`xlwt`, `xlrd` and `xlutils` Python libraries.
+
 mean_coverage.pl
 ----------------
 Mean depth of read coverage: calculates the average coverage of all the captured bases in a
