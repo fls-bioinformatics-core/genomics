@@ -80,21 +80,48 @@ cd qc
 #
 # fastq_screen
 #
-# Check if screen files already exist
-if [ -f "${fastq_base}_screen.txt" ] && [ -f "${fastq_base}_screen.png" ] ; then
-    echo Screen files already exist, skipping fastq_screen
-else
-    echo "--------------------------------------------------------"
-    echo Executing fastq_screen
-    echo "--------------------------------------------------------"
-    fastq_screen_conf=${FASTQ_SCREEN_CONF_DIR}/fastq_screen.conf
-    if [ -f $fastq_screen_conf ] ; then
-	conf_file="--conf $fastq_screen_conf"
+# Run multiple screens:
+# - Model organisms
+# - Other organisms
+# - rRNA
+#
+SCREENS="model_organisms other_organisms rRNA"
+#
+for screen in $SCREENS ; do
+    # Check if screen files already exist
+    screen_base=${fastq_base}_${screen}_screen
+    if [ -f "${screen_base}.txt" ] && [ -f "${screen_base}.png" ] ; then
+	echo Screen files already exist for ${screen}, skipping fastq_screen
+    else
+	echo "--------------------------------------------------------"
+	echo Executing fastq_screen for ${screen}
+	echo "--------------------------------------------------------"
+	fastq_screen_conf=${FASTQ_SCREEN_CONF_DIR}/fastq_screen_${screen}.conf
+	if [ ! -f $fastq_screen_conf ] ; then
+	    # Conf file not found
+	    echo WARNING conf file $fastq_screen_conf not found, skipped
+	else
+	    # Run the screen
+	    cmd="${FASTQ_SCREEN} --color --subset 1000000 --outdir . --conf ${fastq_screen_conf} ${datadir}/${fastq}"
+	    echo $cmd
+	    $cmd
+	    # Move the screen files
+	    if [ -f "${fastq_base}_screen.txt" ] ; then
+		/bin/mv ${fastq_base}_screen.txt ${screen_base}.txt
+		echo Output .txt: ${screen_base}.txt
+	    else
+		echo WARNING failed to generate ${screen_base}.txt
+	    fi
+	    if [ -f "${fastq_base}_screen.png" ] ; then
+		/bin/mv ${fastq_base}_screen.png ${screen_base}.png
+		echo Output .png: ${screen_base}.png
+	    else
+		echo WARNING failed to generate ${screen_base}.png
+	    fi
+	fi
+	# End of screen
     fi
-    cmd="${FASTQ_SCREEN} --color --subset 1000000 --outdir . ${conf_file} ${datadir}/${fastq}"
-    echo $cmd
-    $cmd
-fi
+done
 #
 # QC_boxplotter
 #

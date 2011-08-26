@@ -34,3 +34,13 @@ The QC script also has an associated setup file called `qc.setup`, which
 will be read automatically if it exists. Make a site-specific version by
 copying `qc.setup.sample` and editing it as appropriate to specify
 locations for the programs and data files.
+
+Note that the QC script runs three screens, and expects to find the following
+fastq_screen `.conf` files:
+
+ * `fastq_screen_model_organisms.conf`
+ * `fastq_screen_other_organisms.conf`
+ * `fastq_screen_rRNA.conf`
+
+The location of the `.conf` files is set by the `FASTQ_SCREEN_CONF_DIR`
+variable in `qc.setup`.
