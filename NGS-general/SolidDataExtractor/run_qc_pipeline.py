@@ -140,15 +140,18 @@ def GetSolidDataFiles(dirn):
         root = os.path.splitext(filen)[0]
         ext = os.path.splitext(filen)[1]
         if ext == ".qual":
+            qual = filen
             # Match csfasta names which don't have "_QV" in them
             try:
                 i = root.rindex('_QV')
                 csfasta = root[:i]+root[i+3:]+".csfasta"
-                qual = filen
-                if os.path.exists(os.path.join(data_dir,csfasta)):
-                    data_files.append((csfasta,qual))
             except IndexError:
-                logging.critical("Unable to process qual file %s" % filen)
+                # QV not in name, try to match whole name
+                csfasta = root+".csfasta"
+            if os.path.exists(os.path.join(data_dir,csfasta)):
+                data_files.append((csfasta,qual))
+            else:
+                logging.critical("Unable to get csfasta for %s" % filen)
     # Done - return file pairs
     return data_files
 
