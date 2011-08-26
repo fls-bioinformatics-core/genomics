@@ -26,6 +26,7 @@ datadir=$csfastadir
 echo ========================================================
 echo QC pipeline
 echo ========================================================
+echo Started   : `date`
 echo Running in: `pwd`
 echo data dir  : $datadir
 echo csfasta   : $csfasta
@@ -145,4 +146,7 @@ else
 	/bin/rm -f ${qual}
     fi
 fi
+#
+echo QC pipeline completed: `date`
+exit
 #
