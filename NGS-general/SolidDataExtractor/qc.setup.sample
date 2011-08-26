@@ -13,7 +13,7 @@ export QC_BOXPLOTTER=/path/to/genomics/NGS-general/qc_boxplotter/colour_QC_scrip
 #
 # Data files
 #
-# Location of fastq_screen configuration file
+# Location of fastq_screen configuration files
 # (leave blank for default)
-export FASTQ_SCREEN_CONF=/path/to/fastq_screen.conf
+export FASTQ_SCREEN_CONF_DIR=/path/to/conf_file_dir
 #

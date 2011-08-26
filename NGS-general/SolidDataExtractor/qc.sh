@@ -43,7 +43,7 @@ fi
 # Set the programs
 # Override these defaults by setting them in qc.setup
 : ${FASTQ_SCREEN:=fastq_screen}
-: ${FASTQ_SCREEN_CONF:=}
+: ${FASTQ_SCREEN_CONF_DIR:=}
 : ${SOLID2FASTQ:=solid2fastq}
 : ${QC_BOXPLOTTER:=colour_QC_script.sh}
 #
@@ -87,8 +87,9 @@ else
     echo "--------------------------------------------------------"
     echo Executing fastq_screen
     echo "--------------------------------------------------------"
-    if [ ! -z $FASTQ_SCREEN_CONF ] && [ -f $FASTQ_SCREEN_CONF ] ; then
-	conf_file="--conf $FASTQ_SCREEN_CONF"
+    fastq_screen_conf=${FASTQ_SCREEN_CONF_DIR}/fastq_screen.conf
+    if [ -f $fastq_screen_conf ] ; then
+	conf_file="--conf $fastq_screen_conf"
     fi
     cmd="${FASTQ_SCREEN} --color --subset 1000000 --outdir . ${conf_file} ${datadir}/${fastq}"
     echo $cmd
