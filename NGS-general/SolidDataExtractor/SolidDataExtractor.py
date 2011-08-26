@@ -1472,6 +1472,30 @@ class TestSolidRun(unittest.TestCase):
     def test_solid_run(self):
         self.assertTrue(self.solid_run)
 
+    def test_libraries_are_assigned(self):
+        for sample in self.solid_run.samples:
+            for library in sample.libraries:
+                # Check names were assigned to data files
+                self.assertNotEqual(None,library.csfasta)
+                self.assertTrue(os.path.isfile(library.csfasta))
+                self.assertNotEqual(None,library.qual)
+                self.assertTrue(os.path.isfile(library.qual))
+
+    def test_library_files_in_same_location(self):
+        for sample in self.solid_run.samples:
+            for library in sample.libraries:
+                # Check they're in the same location as each other
+                self.assertEqual(os.path.dirname(library.csfasta),
+                                 os.path.dirname(library.qual))
+
+    def test_library_parent_dir_has_reject(self):
+        for sample in self.solid_run.samples:
+            for library in sample.libraries:
+                # Check that the parent dir also has "reject" dir
+                self.assertTrue(os.path.isdir(
+                        os.path.join(os.path.dirname(library.csfasta),
+                                     '..','reject')))
+
 class TestFunctions(unittest.TestCase):
     """Unit tests for module functions.
     """
