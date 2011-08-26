@@ -206,11 +206,26 @@ if __name__ == "__main__":
         else:
             if script is None:
                 # Script name
-                print "Script: %s" %arg
-                script = os.path.abspath(arg)
-                if not os.path.isfile(script):
+                print "Script: %s" % arg
+                if os.path.isabs(arg):
+                    # Absolute path
+                    if os.path.isfile(arg):
+                        script = arg
+                    else:
+                        script = None
+                else:
+                    # Try relative to pwd
+                    script = os.path.normpath(os.path.join(os.getcwd(),arg))
+                    if not os.path.isfile(script):
+                        # Try relative to directory for script
+                        script = os.path.abspath(os.path.normpath(
+                                os.path.join(os.path.dirname(sys.argv[0]),arg)))
+                        if not os.path.isfile(script):
+                            script = None
+                if script is None:
                     logging.error("Script file not found: %s" % script)
                     sys.exit(1)
+                print "Full path for script: %s" % script
             else:
                 # Data directory
                 print "Directory: %s" % arg
