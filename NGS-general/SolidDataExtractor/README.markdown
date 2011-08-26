@@ -25,22 +25,34 @@ built around some additional Python modules:
     XLS spreadsheets. NB requires the `xlwt`, `xlrb` and `xlutils` Python
     libraries.
 
-There is also a bash script to perform the QC:
+There are bash scripts to perform the QC:
 
 *   `qc.sh`: given a csfasta and qual file pair, runs the QC pipeline
     (solid2fastq, fastq_screen and qc_boxplotter) on them.
 
-The QC script also has an associated setup file called `qc.setup`, which
+*   `fastq_screen.sh`: given a fastq file, runs `fastq_screen` against
+    three sets of genome indexes, specified by the following `.conf` files:
+
+     * `fastq_screen_model_organisms.conf`
+     * `fastq_screen_other_organisms.conf`
+     * `fastq_screen_rRNA.conf`
+
+    The location of the `.conf` files is set by the `FASTQ_SCREEN_CONF_DIR`
+    variable in `qc.setup` (see below). This script is used by the main
+    QC script to run the screens.
+
+The QC scripts have an associated setup file called `qc.setup`, which
 will be read automatically if it exists. Make a site-specific version by
 copying `qc.setup.sample` and editing it as appropriate to specify
 locations for the programs and data files.
 
-Note that the QC script runs three screens, and expects to find the following
-fastq_screen `.conf` files:
+Pipeline recipes
+----------------
 
- * `fastq_screen_model_organisms.conf`
- * `fastq_screen_other_organisms.conf`
- * `fastq_screen_rRNA.conf`
+*   Run the full QC pipeline on a set of directories:
 
-The location of the `.conf` files is set by the `FASTQ_SCREEN_CONF_DIR`
-variable in `qc.setup`.
+    `.../run_qc_pipeline.py qc.sh <dir1> <dir2> ...`
+
+*   Run the fastq_screen steps only on a set of directories:
+
+    `.../run_qc_pipeline.py --input=fastq fastq_screen.sh <dir1> <dir2> ...`
