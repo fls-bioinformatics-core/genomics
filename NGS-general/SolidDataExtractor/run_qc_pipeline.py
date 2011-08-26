@@ -16,8 +16,9 @@ set of files in a specific directory.
 
 Usage: python run_pipeline.py [OPTIONS] <script> <data_dir> [ <data_dir> ... ]
 
-<script> must accept two arguments (a csfasta file and a qual file)
-<data_dir> must contain pairs of .csfasta and .qual files
+<script> must accept arguments based on the --input option, but defaults to
+         a csfasta/qual file pair.
+<data_dir> contains the input data for the script.
 """
 
 #######################################################################
@@ -122,14 +123,15 @@ def RunPipeline(script,run_data,max_concurrent_jobs=4):
             logging.debug("Waiting for free space in queue...")
             time.sleep(poll_interval)
         # Submit
-        logging.info("Submitting job: '%s %s %s'" % (script,data[0],data[1]))
-        job_id = QsubScript('qc',script,data[0],data[1])
+        logging.info("Submitting job: '%s %s'" % (script,data))
+        job_id = QsubScript('qc',script,*data)
         logging.info("Job id = %s" % job_id)
 
 def GetSolidDataFiles(dirn):
-    """
+    """Return list of csfasta/qual file pairs in target directory
     """
     # Gather data files
+    logging.debug("Collecting csfasta/qual file pairs in %s" % dirn)
     data_files = []
     all_files = os.listdir(data_dir)
     all_files.sort()
@@ -155,6 +157,24 @@ def GetSolidDataFiles(dirn):
     # Done - return file pairs
     return data_files
 
+def GetFastqFiles(dirn):
+    """Return list of fastq files in target directory
+    """
+    # Gather data files
+    logging.debug("Collecting fastq files in %s" % dirn)
+    data_files = []
+    all_files = os.listdir(data_dir)
+    all_files.sort()
+
+    # Look for csfasta and matching qual files
+    for filen in all_files:
+        logging.debug("Examining file %s" % filen)
+        root = os.path.splitext(filen)[0]
+        ext = os.path.splitext(filen)[1]
+        if ext == ".fastq": data_files.append((filen,))
+    # Done - return file list
+    return data_files
+
 #######################################################################
 # Main program
 #######################################################################
@@ -167,6 +187,7 @@ if __name__ == "__main__":
     logging_level = logging.INFO
     script = None
     data_dirs = []
+    input_type = "solid"
 
     # Deal with command line
     if len(sys.argv) < 3:
@@ -175,15 +196,22 @@ if __name__ == "__main__":
         print ""
         print "<script> : pipeline script file to execute"
         print "<dir>    : one or more directories holding SOLiD data"
-        print "           <script> will be executed for each csfasta/qual"
-        print "           file pair in dir, using:"
-        print "           <script> <csfasta> <qual>"
+        print "           By default, <script> will be executed for each"
+        print "           csfasta/qual file pair in dir, using:"
+        print "             <script> <csfasta> <qual>"
+        print "           Use --input option to run e.g."
+        print "             <script> <fastq> etc"
         print ""
         print "Options:"
         print "  --limit=<n>: queue no more than <n> jobs at one time"
         print "               (default %s)" % max_concurrent_jobs
         print "  --test=<n> : submit no more than <n> jobs in total"
         print "  --debug    : print debugging output while running"
+        print "  --input=<type> : specify type of input for script"
+        print "               Can be one of:"
+        print "               solid = csfasta/qual file pair (default)"
+        print "               fastq = fastq file"
+        print
         sys.exit()
 
     # Collect command line options
@@ -198,6 +226,9 @@ if __name__ == "__main__":
             # Run in test mode: limit the number of jobs
             # submitted
             max_total_jobs = int(arg.split('=')[1])
+        elif arg.startswith("--input="):
+            # Specify input type
+            input_type = arg.split('=')[1]
         elif arg.startswith("--") and len(data_dirs) > 0:
             # Some option appeared after we started collecting
             # directories
@@ -243,7 +274,10 @@ if __name__ == "__main__":
     for data_dir in data_dirs:
 
         print "Running %s on data in %s" % (script,data_dir)
-        run_data = GetSolidDataFiles(data_dir)
+        if input_type == "solid":
+            run_data = GetSolidDataFiles(data_dir)
+        elif input_type == "fastq":
+            run_data = GetFastqFiles(data_dir)
 
         # Check there's something to run on
         if len(run_data) == 0:
