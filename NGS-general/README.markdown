@@ -27,6 +27,17 @@ java -cp /path/to/SamStats.jar SamStats <sam_file>
 
 Output is a text file "SamStats_maponly_<sam_file>.stats"
 
+splitBarcodes.pl
+----------------
+Split csfasta and qual files containing multiple barcodes into separate sets.
+
+Usage:
+
+    ./splitBarcodes.pl <barcode.csfasta> <read.csfasta> <read.qual>
+
+Expects BC.csfasta, F3.csfasta and F3.qual files containing multiple barcodes.
+Currently set up for 'BC Kit Module 1-16'.
+
 SolidDataExtractor
 ------------------
 Python modules for extracting data about a SOLiD run from the data in
