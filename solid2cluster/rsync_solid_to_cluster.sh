@@ -177,6 +177,28 @@ function compare_sizes() {
     fi
 }
 #
+# send_email_notification()
+#
+# Usage: email_notification <solid_run_dir>
+#
+# Prompts user for an email address and sends the rsync log file to it
+#
+# NB uses mutt
+function send_email_notification() {
+    echo -n "Email address for log file: "
+    read addr
+    if [ -z "$addr" ] ; then
+	echo "No address supplied, no email sent"
+    else
+	echo "Sending log to $addr"
+	mutt -s "SOLiD rsync completed: $1" -a $RSYNC_LOG -- $addr <<EOF
+rsync of solid data completed for $1
+
+Log file of rsync is attached
+EOF
+    fi
+}
+#
 #####################################################################
 # Main script
 #####################################################################
@@ -263,6 +285,12 @@ fi
 ssh_chmod_cmd="ssh ${REMOTE_USER}@${REMOTE_HOST} 'chmod -R g-w ${REMOTE_DATADIR}/$solid_run'"
 prompt_user "Remove write permission from remote data?" "$ssh_chmod_cmd"
 echo "Done"
+#
+# Send email notification
+prompt_user "Send email notification?" "send_email_notification $solid_run"
+#
+# Done
+echo "Finished"
 exit 0
 ##
 #
