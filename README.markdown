@@ -20,5 +20,7 @@ Dependencies
 
 * R
 * perl Statistics::Descriptive module
+* BioPerl
 * java
-* python
+* python (2.4+)
+* python xlwt, xlrd, xlutils libraries
