@@ -11,6 +11,8 @@ Format of the input is: `chr position count`
 
 Outputs mean and median for all positions including 0 count positions
 
+NB requires perl `Statistics::Descriptive` module
+
 convertFastq2Fasta.pl
 ---------------------
 Convert fastq formatted consensus from `samtools pileup` to fasta
@@ -76,7 +78,7 @@ It can also be used for genomic regions:
 Note that this assumes every base is covered at least once (because samtools pileup doesn't
 report bases with zero coverage).
 
-run_DESEQ.R
+run_DESeq.R
 -----------
 Usage:
 
