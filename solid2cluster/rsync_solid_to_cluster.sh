@@ -144,7 +144,7 @@ function do_rsync() {
 	rsync_cmd="rsync $opts $solid_run $remote"
 	echo Executing $rsync_cmd
 	echo Writing output to $RSYNC_LOG
-	$rsync_cmd > $RSYNC_LOG 2>&1
+	$rsync_cmd 2>&1 | tee $RSYNC_LOG 
 	# Return the output status of the rsync command
 	return $?
     fi
