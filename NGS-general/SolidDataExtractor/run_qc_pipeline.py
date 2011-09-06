@@ -35,7 +35,53 @@ import logging
 # Class definitions
 #######################################################################
 
-# No classes defined
+# Qstat: helper class for getting information from qstat
+class Qstat:
+    """Utility class for getting information from the qstat command.
+
+    Provides basic functionality for getting information on running jobs
+    from the GE 'qstat' command.
+    """
+    def __init__(self):
+        pass
+
+    def list(self,user=None):
+        """Get list of job ids in the queue.
+        """
+        cmd = ['qstat']
+        if user:
+            cmd.extend(('-u',user))
+        else:
+            # Get current user name
+            cmd.extend(('-u',os.getlogin()))
+        # Run the qstat
+        p = subprocess.Popen(cmd,stdout=subprocess.PIPE)
+        p.wait()
+        # Process the output: get job ids
+        job_ids = []
+        # Typical output is:
+        # job-ID  prior   name       user         ...<snipped>...
+        # ----------------------------------------...<snipped>...
+        # 620848 -499.50000 qc       myname       ...<snipped>...
+        # ...
+        # i.e. 2 header lines then one line per job
+        for line in p.stdout:
+            try:
+                if line.split()[0].isdigit():
+                    job_ids.append(line.split()[0])
+            except IndexError:
+                pass
+        return job_ids
+
+    def njobs(self,user=None):
+        """Return the number of jobs in the queue.
+        """
+        return len(self.list(user=user))
+
+    def hasJob(self,job_id):
+        """Check if the specified job id is in the queue.
+        """
+        return (job_id in self.list())
 
 #######################################################################
 # Module Functions
@@ -77,27 +123,7 @@ def QsubScript(name,script,*args):
 def QstatJobs(user=None):
     """Get the number of jobs a user has in the queue
     """
-    # Get the results of qstat -u (assume current user if None)
-    cmd = ['qstat']
-    if user:
-        cmd.extend(('-u',user))
-    else:
-        # Get current user name
-        cmd.extend(('-u',os.getlogin()))
-    # Run the qstat
-    p = subprocess.Popen(cmd,stdout=subprocess.PIPE)
-    p.wait()
-    # Process the output: count lines
-    nlines = 0
-    for line in p.stdout:
-        nlines += 1
-    # Typical output is:
-    # job-ID  prior   name       user         ...<snipped>...
-    # ----------------------------------------...<snipped>...
-    # 620848 -499.50000 qc       myname       ...<snipped>...
-    # ...
-    # i.e. 2 header lines then one line per job
-    return nlines - 2
+    return Qstat().njobs()
 
 # RunPipeline: execute script for multiple sets of files
 def RunPipeline(script,run_data,max_concurrent_jobs=4):
