@@ -83,6 +83,70 @@ class Qstat:
         """
         return (job_id in self.list())
 
+# QsubJob: container for a script run
+class QsubJob:
+    """Wrapper class for setting up, submitting and monitoring qsub scripts
+
+    Create an instance of QsubJob
+    """
+    def __init__(self,name,script,*args):
+        self.name = name
+        self.script = script
+        self.args = args
+        self.job_id = None
+        self.log = None
+        self.submitted = False
+        self.terminated = False
+        self.finished = False
+        self.qstat = Qstat()
+
+    def start(self):
+        """Submit the job to the GE queue
+        """
+        if not self.submitted and not self.finished:
+            self.job_id = QsubScript(self.name,self.script,*self.args)
+            self.submitted = True
+            self.log = self.name+'.o'+self.job_id
+            # Wait for evidence that the job has started
+            logging.debug("Waiting for job to start")
+            while not self.qstat.hasJob(self.job_id) and not os.path.exists(self.log):
+                time.sleep(5)
+        logging.debug("Job %s started (%s)" % (self.job_id,time.asctime()))
+        return self.job_id
+
+    def terminate(self):
+        """Terminate (qdel) a running job
+        """
+        if not self.isRunning():
+            Qdeljob(self.job_id)
+            self.terminated = True
+
+    def resubmit(self):
+        """Resubmit the job
+
+        Terminates the job (if still running) and restarts"""
+        # Terminate running job
+        if self.isRunning():
+            self.terminate()
+            while self.isRunning():
+                time.sleep(5)
+        # Reset flags
+        self.submitted = False
+        self.terminated = False
+        self.finished = False
+        # Resubmit
+        return self.start()
+
+    def isRunning(self):
+        """Check if job is still running
+        """
+        if not self.submitted:
+            return False
+        if not self.finished:
+            if not self.qstat.hasJob(self.job_id):
+                self.finished = True
+        return not self.finished
+
 #######################################################################
 # Module Functions
 #######################################################################
@@ -119,6 +183,15 @@ def QsubScript(name,script,*args):
     # Return the job id
     return job_id
 
+# QdelJob: delete a job from the queue
+def QdelJob(job_id):
+    """Remove a job from the GE queue using 'qdel'
+    """
+    logging.debug("QdelJob: deleting job")
+    qdel=('qdel',job_id)
+    p = subprocess.Popen(qdel)
+    p.wait()
+
 # QstatJobs: get number of jobs user has already in queue
 def QstatJobs(user=None):
     """Get the number of jobs a user has in the queue
@@ -140,20 +213,52 @@ def RunPipeline(script,run_data,max_concurrent_jobs=4):
         supplied to the script as arguments.
       max_concurrent_jobs: the maximum number of jobs that the runner
         will submit to the cluster at any particular time (optional).
-    """
+    """ 
     # Setup job name
     job_name = os.path.splitext(os.path.basename(script))[0]
-    # For each pair of files, run the pipeline script
+    # Queue monitoring helper
+    qstat = Qstat()
+    # For each set of files, run the pipeline script
+    running_jobs = []
     for data in run_data:
+        # Update running jobs
+        running_jobs = UpdateRunningJobs(running_jobs)
         # Check if queue is "full"
-        while QstatJobs() >= max_concurrent_jobs:
+        while qstat.njobs() >= max_concurrent_jobs:
             # Wait a while before checking again
             logging.debug("Waiting for free space in queue...")
             time.sleep(poll_interval)
-        # Submit
+        # Submit more jobs
         logging.info("Submitting job: '%s %s'" % (script,data))
-        job_id = QsubScript(job_name,script,*data)
-        logging.info("Job id = %s" % job_id)
+        job = QsubJob(job_name,script,*data)
+        job_id = job.start()
+        logging.info("Job id = %s" % job.job_id)
+        logging.info("Log file = %s" % job.log)
+        running_jobs.append(job)
+    # All jobs submitted - wait for running jobs to finish
+    logging.debug("All jobs submitted, waiting for running jobs to complete...")
+    while len(running_jobs) > 0:
+        running_jobs = UpdateRunningJobs(running_jobs)
+        time.sleep(poll_interval)
+    # Running jobs also completed
+    return
+
+def UpdateRunningJobs(running_jobs):
+    """Return updated list of job ids which are still running in the queue
+
+    Takes a list of job ids and returns a list of those which are still
+    running on the cluster.
+    """
+    # Check if any jobs have finished
+    unfinished_jobs = []
+    for job in running_jobs:
+        if not job.isRunning():
+            # Job no longer in the queue
+            logging.info("Job %s has completed (%s)" % (job.job_id,time.asctime()))
+        else:
+            # Still running
+            unfinished_jobs.append(job)
+    return unfinished_jobs
 
 def GetSolidDataFiles(dirn):
     """Return list of csfasta/qual file pairs in target directory
@@ -309,7 +414,7 @@ if __name__ == "__main__":
 
         # Check there's something to run on
         if len(run_data) == 0:
-            logging.error("No data files collected for %d" % data_dir)
+            logging.error("No data files collected for %s" % data_dir)
             continue
 
         # Test mode: limit the total number of jobs that will be
