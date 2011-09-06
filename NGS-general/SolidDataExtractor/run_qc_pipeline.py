@@ -115,6 +115,8 @@ def RunPipeline(script,run_data,max_concurrent_jobs=4):
       max_concurrent_jobs: the maximum number of jobs that the runner
         will submit to the cluster at any particular time (optional).
     """
+    # Setup job name
+    job_name = os.path.splitext(os.path.basename(script))[0]
     # For each pair of files, run the pipeline script
     for data in run_data:
         # Check if queue is "full"
@@ -124,7 +126,7 @@ def RunPipeline(script,run_data,max_concurrent_jobs=4):
             time.sleep(poll_interval)
         # Submit
         logging.info("Submitting job: '%s %s'" % (script,data))
-        job_id = QsubScript('qc',script,*data)
+        job_id = QsubScript(job_name,script,*data)
         logging.info("Job id = %s" % job_id)
 
 def GetSolidDataFiles(dirn):
