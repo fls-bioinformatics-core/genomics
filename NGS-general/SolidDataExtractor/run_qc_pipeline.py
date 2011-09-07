@@ -255,17 +255,18 @@ def RunPipeline(script,run_data,working_dir=None,max_concurrent_jobs=4):
             logging.debug("Waiting for free space in queue...")
             time.sleep(poll_interval)
         # Submit more jobs
-        logging.info("Submitting job: %s %s %s" % (script,data,working_dir))
+        logging.debug("Submitting job: %s %s %s" % (script,data,working_dir))
         job = QsubJob(job_name,working_dir,script,*data)
         job_id = job.start()
-        logging.info("Job id = %s" % job.job_id)
-        logging.info("Log file = %s" % job.log)
+        logging.debug("Job id = %s" % job.job_id)
+        logging.debug("Log file = %s" % job.log)
+        logging.info("Job %s started (%s)" % (job.job_id,time.asctime()))
         running_jobs.append(job)
     # All jobs submitted - wait for running jobs to finish
     logging.debug("All jobs submitted, waiting for running jobs to complete...")
     while len(running_jobs) > 0:
-        running_jobs = UpdateRunningJobs(running_jobs)
         time.sleep(poll_interval)
+        running_jobs = UpdateRunningJobs(running_jobs)
     # Running jobs also completed
     return
 
@@ -280,7 +281,7 @@ def UpdateRunningJobs(running_jobs):
     for job in running_jobs:
         if not job.isRunning():
             # Job no longer in the queue
-            logging.info("Job %s has completed (%s)" % (job.job_id,time.asctime()))
+            logging.info("Job %s finished (%s)" % (job.job_id,time.asctime()))
         else:
             # Still running
             unfinished_jobs.append(job)
