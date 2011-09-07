@@ -87,10 +87,19 @@ class Qstat:
 class QsubJob:
     """Wrapper class for setting up, submitting and monitoring qsub scripts
 
-    Create an instance of QsubJob
     """
-    def __init__(self,name,script,*args):
+    def __init__(self,name,dirn,script,*args):
+        """Create an instance of QsubJob.
+
+        Arguments:
+          name: name to give the running job (i.e. qsub -N)
+          dirn: directory to run the script in (i.e. qsub -wd)
+          script: script file to submit, either a full path, relative path to dirn, or
+            must be on the user's PATH in the environment where GE jobs are executed
+          args: arbitrary arguments to supply to the script when it is submitted via qsub
+        """
         self.name = name
+        self.working_dir = dirn
         self.script = script
         self.args = args
         self.job_id = None
@@ -98,13 +107,14 @@ class QsubJob:
         self.submitted = False
         self.terminated = False
         self.finished = False
+        self.home_dir = os.getcwd()
         self.qstat = Qstat()
 
     def start(self):
         """Submit the job to the GE queue
         """
         if not self.submitted and not self.finished:
-            self.job_id = QsubScript(self.name,self.script,*self.args)
+            self.job_id = QsubScript(self.name,self.working_dir,self.script,*self.args)
             self.submitted = True
             self.log = self.name+'.o'+self.job_id
             # Wait for evidence that the job has started
@@ -162,16 +172,31 @@ def RunScript(script,csfasta,qual):
     print "Finished"
 
 # QsubScript: submit a command to the cluster
-def QsubScript(name,script,*args):
+def QsubScript(name,working_dir,script,*args):
     """Submit a script or command to the cluster via 'qsub'
     """
     # 
     logging.debug("QsubScript: submitting job")
+    logging.debug("QsubScript: name       :%s" % name)
+    logging.debug("QsubScript: working_dir: %s" % working_dir)
+    logging.debug("QsubScript: script     : %s" % script)
+    logging.debug("QsubScript: args       : %s" % str(args))
+    # Build command to be submitted
     cmd_args = [script]
     cmd_args.extend(args)
     cmd = ' '.join(cmd_args)
-    qsub=('qsub','-b','y','-cwd','-V','-N',name,cmd)
+    # Build qsub command to submit it
+    qsub = ['qsub','-b','y','-V','-N',name]
+    if not working_dir:
+        qsub.append('-cwd')
+    else:
+        qsub.extend(('-wd',working_dir))
+    qsub.append(cmd)
+    logging.debug("QsubScript: qsub command: %s" % qsub)
+    # Run the qsub job in the current directory
+    # This shouldn't be significant
     cwd = os.getcwd()
+    logging.debug("QsubScript: executing in %s" % cwd)
     p = subprocess.Popen(qsub,cwd=cwd,stdout=subprocess.PIPE)
     p.wait()
     # Capture the job id from the output
@@ -199,7 +224,7 @@ def QstatJobs(user=None):
     return Qstat().njobs()
 
 # RunPipeline: execute script for multiple sets of files
-def RunPipeline(script,run_data,max_concurrent_jobs=4):
+def RunPipeline(script,run_data,working_dir=None,max_concurrent_jobs=4):
     """Execute script for multiple sets of files
 
     Given a script and a list of input file sets, script will be
@@ -211,6 +236,7 @@ def RunPipeline(script,run_data,max_concurrent_jobs=4):
       script: name (including path) for pipeline script.
       run_data: a list consisting of tuples of files which will be
         supplied to the script as arguments.
+      working_dir: specific directory to run the jobs in (optional).
       max_concurrent_jobs: the maximum number of jobs that the runner
         will submit to the cluster at any particular time (optional).
     """ 
@@ -229,8 +255,8 @@ def RunPipeline(script,run_data,max_concurrent_jobs=4):
             logging.debug("Waiting for free space in queue...")
             time.sleep(poll_interval)
         # Submit more jobs
-        logging.info("Submitting job: '%s %s'" % (script,data))
-        job = QsubJob(job_name,script,*data)
+        logging.info("Submitting job: %s %s %s" % (script,data,working_dir))
+        job = QsubJob(job_name,working_dir,script,*data)
         job_id = job.start()
         logging.info("Job id = %s" % job.job_id)
         logging.info("Log file = %s" % job.log)
@@ -422,11 +448,9 @@ if __name__ == "__main__":
         if max_total_jobs > 0:
             run_data = run_data[:max_total_jobs]
 
-        # Relocate to the data dir
-        os.chdir(data_dir)
-
         # Run the pipeline
-        RunPipeline(script,run_data,max_concurrent_jobs)
+        RunPipeline(script,run_data,working_dir=data_dir,
+                    max_concurrent_jobs=max_concurrent_jobs)
 
     # Finished
     print "All pipelines finished"
