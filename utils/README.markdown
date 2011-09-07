@@ -5,7 +5,7 @@ Place to put general utility scripts/tools.
 
 cd_set_umask.sh
 ---------------
-Script to set and reverts a user's umask appropriately when moving in and out of q
+Script to set and revert a user's umask appropriately when moving in and out of a
 particular directory (or one of its subdirectories).
 
 do.sh
@@ -13,7 +13,7 @@ do.sh
 Execute a command multiple times, substituting a range of integer index
 values for each execution. For example:
 
-do.sh 1 43 ln -s /blah/blah#/myfile#.ext ./myfile#.ext
+    do.sh 1 43 ln -s /blah/blah#/myfile#.ext ./myfile#.ext
 
 will execute:
 
