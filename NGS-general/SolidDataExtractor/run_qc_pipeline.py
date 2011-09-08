@@ -273,12 +273,6 @@ def QdelJob(job_id):
     p = subprocess.Popen(qdel)
     p.wait()
 
-# QstatJobs: get number of jobs user has already in queue
-def QstatJobs(user=None):
-    """Get the number of jobs a user has in the queue
-    """
-    return Qstat().njobs()
-
 # RunPipeline: execute script for multiple sets of files
 def RunPipeline(script,run_data,working_dir=None,max_concurrent_jobs=4):
     """Execute script for multiple sets of files
