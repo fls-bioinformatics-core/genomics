@@ -160,7 +160,28 @@ class QsubJob:
 
 # PipelineRunner: class to set up and run multiple jobs
 class PipelineRunner:
+    """Class to run and manage multiple GE jobs.
+
+    PipelineRunner enables multiple jobs to be queued via the 'queueJob' method. The
+    pipeline is then started using the 'run' method - this submits each job in turn (while
+    limiting the number in the GE queue to a specified maximum) and monitors when they
+    finish:
+
+    p = PipelineRunner()
+    p.queueJob('/home/foo','foo.sh','bar.in')
+    ...
+    p.run()
+
+    Currently it runs in 'blocking' mode, i.e. 'run' doesn't return until all jobs have been
+    submitted and have completed.
+    """
     def __init__(self,max_concurrent_jobs=4,poll_interval=30):
+        """Create new PipelineRunner instance.
+
+        Arguments:
+          max_concurrent_jobs: maximum number of GE jobs that the script will allow
+          poll_interval: time interval (in seconds) between checks on the queue status
+        """
         # Parameters
         self.max_concurrent_jobs = max_concurrent_jobs
         self.poll_interval = poll_interval
@@ -172,19 +193,39 @@ class PipelineRunner:
         self.qstat = Qstat()
 
     def queueJob(self,working_dir,script,*args):
+        """Add a job to the pipeline.
+
+        The job will be queued and executed once the pipeline's 'run' method has been
+        executed.
+
+        Arguments:
+          working_dir: directory to run the job in
+          script: script file to run
+          args: arguments to be supplied to the script at run time
+        """
         job_name = os.path.splitext(os.path.basename(script))[0]
         self.jobs.put(QsubJob(job_name,working_dir,script,*args))
         logging.debug("Added job: now %d jobs in pipeline" % self.jobs.qsize())
 
     def nQueued(self):
-        # Number of jobs queued i.e. still to be submitted
+        """Return the number of jobs still to be submitted to the GE queue
+        """
         return self.jobs.qsize()
 
     def nRunning(self):
-        # Number of jobs currently running in the GE queue
+        """Return the number of jobs currently running in the GE queue
+        """
         return len(self.running)
 
     def run(self):
+        """Execute the jobs in the pipeline
+
+        Each job previously added to the pipeline by 'queueJob' will be submitted to the
+        GE queue and checked for termination.
+
+        'run' operates in 'blocking' mode, so it doesn't return until all jobs have been
+        submitted and have finished executing.
+        """
         logging.debug("PipelineRunner: started")
         while not self.jobs.empty() or self.nRunning() > 0:
             # Submit new jobs to GE queue
