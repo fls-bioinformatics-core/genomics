@@ -29,6 +29,7 @@ import sys
 import os
 import time
 import subprocess
+import Queue
 import logging
 
 #######################################################################
@@ -156,6 +157,61 @@ class QsubJob:
             if not self.qstat.hasJob(self.job_id):
                 self.finished = True
         return not self.finished
+
+# PipelineRunner: class to set up and run multiple jobs
+class PipelineRunner:
+    def __init__(self,max_concurrent_jobs=4,poll_interval=30):
+        # Parameters
+        self.max_concurrent_jobs = max_concurrent_jobs
+        self.poll_interval = poll_interval
+        # Queue of jobs to run
+        self.jobs = Queue.Queue()
+        # Subset that are currently running
+        self.running = []
+        # Local qstat instance for monitoring
+        self.qstat = Qstat()
+
+    def queueJob(self,working_dir,script,*args):
+        job_name = os.path.splitext(os.path.basename(script))[0]
+        self.jobs.put(QsubJob(job_name,working_dir,script,*args))
+        logging.debug("Added job: now %d jobs in pipeline" % self.jobs.qsize())
+
+    def nQueued(self):
+        # Number of jobs queued i.e. still to be submitted
+        return self.jobs.qsize()
+
+    def nRunning(self):
+        # Number of jobs currently running in the GE queue
+        return len(self.running)
+
+    def run(self):
+        logging.debug("PipelineRunner: started")
+        while not self.jobs.empty() or self.nRunning() > 0:
+            # Submit new jobs to GE queue
+            while not self.jobs.empty() and self.qstat.njobs() < self.max_concurrent_jobs:
+                next_job = self.jobs.get()
+                next_job.start()
+                print "Job has started: %s: %s %s (%s)" % (next_job.job_id,
+                                                           next_job.name,
+                                                           os.path.basename(next_job.working_dir),
+                                                           time.asctime())
+                self.running.append(next_job)
+                if self.jobs.empty():
+                    logging.debug("PipelineRunner: all jobs now submitted")
+            # Look for running jobs that have completed
+            for job in self.running[::-1]:
+                if not job.isRunning():
+                    # Job has completed
+                    print "Job has completed: %s (%s)" % (job.job_id,time.asctime())
+                    self.running.remove(job)
+            # If there are still running jobs then wait
+            if self.nRunning() > 0:
+                logging.debug("PipelineRunner: %d jobs waiting, %d running" %
+                              (self.nQueued(),self.nRunning()))
+                time.sleep(self.poll_interval)
+        # Pipeline has finished
+        print "Pipeline completed"
+        return
 
 #######################################################################
 # Module Functions
@@ -430,29 +486,23 @@ if __name__ == "__main__":
     logging.basicConfig(format='%(levelname)8s %(message)s')
     logging.getLogger().setLevel(logging_level)
 
-    # Iterate over data directories
+    # Set up and run pipeline
+    pipeline = PipelineRunner(max_concurrent_jobs=max_concurrent_jobs)
     for data_dir in data_dirs:
-
-        print "Running %s on data in %s" % (script,data_dir)
+        # Get for this directory
+        print "Collecting data from %s" % data_dir
         if input_type == "solid":
             run_data = GetSolidDataFiles(data_dir)
         elif input_type == "fastq":
             run_data = GetFastqFiles(data_dir)
-
-        # Check there's something to run on
-        if len(run_data) == 0:
-            logging.error("No data files collected for %s" % data_dir)
-            continue
-
-        # Test mode: limit the total number of jobs that will be
-        # submitted
-        if max_total_jobs > 0:
-            run_data = run_data[:max_total_jobs]
-
-        # Run the pipeline
-        RunPipeline(script,run_data,working_dir=data_dir,
-                    max_concurrent_jobs=max_concurrent_jobs)
+        # Add jobs to pipeline runner (up to limit of max_total_jobs)
+        for data in run_data:
+            pipeline.queueJob(data_dir,script,*data)
+            if max_total_jobs > 0 and pipeline.nQueued() == max_total_jobs:
+                print "Maximum number of jobs queued (%d)" % max_total_jobs
+                break
+    # Run the pipeline
+    pipeline.run()
 
     # Finished
-    print "All pipelines finished"
-
+    print "Finished"
