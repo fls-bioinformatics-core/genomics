@@ -110,6 +110,8 @@ class QsubJob:
         self.finished = False
         self.home_dir = os.getcwd()
         self.qstat = Qstat()
+        self.start_time = None
+        self.end_time = None
 
     def start(self):
         """Submit the job to the GE queue
@@ -117,12 +119,14 @@ class QsubJob:
         if not self.submitted and not self.finished:
             self.job_id = QsubScript(self.name,self.working_dir,self.script,*self.args)
             self.submitted = True
+            self.start_time = time.time()
             self.log = self.name+'.o'+self.job_id
             # Wait for evidence that the job has started
             logging.debug("Waiting for job to start")
             while not self.qstat.hasJob(self.job_id) and not os.path.exists(self.log):
                 time.sleep(5)
-        logging.debug("Job %s started (%s)" % (self.job_id,time.asctime()))
+        logging.debug("Job %s started (%s)" % (self.job_id,
+                                               time.asctime(time.localtime(self.start_time))))
         return self.job_id
 
     def terminate(self):
@@ -131,6 +135,7 @@ class QsubJob:
         if not self.isRunning():
             Qdeljob(self.job_id)
             self.terminated = True
+            self.end_time = time.time()
 
     def resubmit(self):
         """Resubmit the job
@@ -145,6 +150,8 @@ class QsubJob:
         self.submitted = False
         self.terminated = False
         self.finished = False
+        self.start_time = None
+        self.end_time = None
         # Resubmit
         return self.start()
 
@@ -156,6 +163,7 @@ class QsubJob:
         if not self.finished:
             if not self.qstat.hasJob(self.job_id):
                 self.finished = True
+                self.end_time = time.time()
         return not self.finished
 
 # PipelineRunner: class to set up and run multiple jobs
@@ -236,20 +244,22 @@ class PipelineRunner:
                     # Job has completed
                     self.running.remove(job)
                     updated_status = True
-                    print "Job has completed: %s: %s %s (%s)" % (job.job_id,
-                                                                 job.name,
-                                                                 os.path.basename(job.working_dir),
-                                                                 time.asctime())
+                    print "Job has completed: %s: %s %s (%s)" % (
+                        job.job_id,
+                        job.name,
+                        os.path.basename(job.working_dir),
+                        time.asctime(time.localtime(job.end_time)))
             # Submit new jobs to GE queue
             while not self.jobs.empty() and self.qstat.njobs() < self.max_concurrent_jobs:
                 next_job = self.jobs.get()
                 next_job.start()
                 self.running.append(next_job)
                 updated_status = True
-                print "Job has started: %s: %s %s (%s)" % (next_job.job_id,
-                                                           next_job.name,
-                                                           os.path.basename(next_job.working_dir),
-                                                           time.asctime())
+                print "Job has started: %s: %s %s (%s)" % (
+                    next_job.job_id,
+                    next_job.name,
+                    os.path.basename(next_job.working_dir),
+                    time.asctime(time.localtime(next_job.start_time)))
                 if self.jobs.empty():
                     logging.debug("PipelineRunner: all jobs now submitted")
             # Report
