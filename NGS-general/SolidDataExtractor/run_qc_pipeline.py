@@ -88,6 +88,28 @@ class Qstat:
 class QsubJob:
     """Wrapper class for setting up, submitting and monitoring qsub scripts
 
+    Set up a job by creating a QsubJob instance specifying the name, working directory,
+    script file to execute, and arguments to be supplied to the script.
+
+    The job is started by invoking QsubJob's 'start' method; its status can be checked
+    with the 'isRunning' method, and terminated and resubmitted using the 'terminate' and
+    'resubmit' methods respectively.
+
+    Information about the job can also be accessed via its properties. The following
+    properties record the original parameters supplied on instantiation:
+
+      name
+      working_dir
+      script
+      args
+
+    Additional information is set once the job has started or stopped running:
+
+      job_id      The id number for the running job set by GE
+      log         The log file for the job (relative to working_dir)
+      start_time  The start time (seconds since the epoch)
+      end_time    The end time (seconds since the epoch)
+
     """
     def __init__(self,name,dirn,script,*args):
         """Create an instance of QsubJob.
