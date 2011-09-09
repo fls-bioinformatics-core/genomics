@@ -257,6 +257,8 @@ class PipelineRunner:
                         job.name,
                         os.path.basename(job.working_dir),
                         time.asctime(time.localtime(job.end_time)))
+                    # Set the permissions on the output log file to rw-rw-r--
+                    os.chmod(os.path.join(job.working_dir,job.log),0664)
             # Submit new jobs to GE queue
             while not self.jobs.empty() and self.qstat.njobs() < self.max_concurrent_jobs:
                 next_job = self.jobs.get()
