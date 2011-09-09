@@ -197,6 +197,8 @@ class PipelineRunner:
         self.jobs = Queue.Queue()
         # Subset that are currently running
         self.running = []
+        # Subset that have completed
+        self.completed = []
         # Local qstat instance for monitoring
         self.qstat = Qstat()
 
@@ -225,6 +227,11 @@ class PipelineRunner:
         """
         return len(self.running)
 
+    def nCompleted(self):
+        """Return the number of jobs that have completed
+        """
+        return len(self.completed)
+
     def run(self):
         """Execute the jobs in the pipeline
 
@@ -243,6 +250,7 @@ class PipelineRunner:
                 if not job.isRunning():
                     # Job has completed
                     self.running.remove(job)
+                    self.completed.append(job)
                     updated_status = True
                     print "Job has completed: %s: %s %s (%s)" % (
                         job.job_id,
@@ -264,7 +272,8 @@ class PipelineRunner:
                     logging.debug("PipelineRunner: all jobs now submitted")
             # Report
             if updated_status:
-                print "Currently %d jobs waiting, %d running" % (self.nQueued(),self.nRunning())
+                print "Currently %d jobs waiting, %d running, %d finished" % \
+                    (self.nQueued(),self.nRunning(),self.nCompleted())
             # If there are still running jobs then wait
             if self.nRunning() > 0:
                 time.sleep(self.poll_interval)
