@@ -107,23 +107,23 @@ class QsubJob:
         self.log = None
         self.submitted = False
         self.terminated = False
-        self.finished = False
-        self.home_dir = os.getcwd()
-        self.qstat = Qstat()
         self.start_time = None
         self.end_time = None
+        self.home_dir = os.getcwd()
+        self.__finished = False
+        self.__qstat = Qstat()
 
     def start(self):
         """Submit the job to the GE queue
         """
-        if not self.submitted and not self.finished:
+        if not self.submitted and not self.__finished:
             self.job_id = QsubScript(self.name,self.working_dir,self.script,*self.args)
             self.submitted = True
             self.start_time = time.time()
             self.log = self.name+'.o'+self.job_id
             # Wait for evidence that the job has started
             logging.debug("Waiting for job to start")
-            while not self.qstat.hasJob(self.job_id) and not os.path.exists(self.log):
+            while not self.__qstat.hasJob(self.job_id) and not os.path.exists(self.log):
                 time.sleep(5)
         logging.debug("Job %s started (%s)" % (self.job_id,
                                                time.asctime(time.localtime(self.start_time))))
@@ -147,9 +147,9 @@ class QsubJob:
             while self.isRunning():
                 time.sleep(5)
         # Reset flags
+        self.__finished = False
         self.submitted = False
         self.terminated = False
-        self.finished = False
         self.start_time = None
         self.end_time = None
         # Resubmit
@@ -160,11 +160,11 @@ class QsubJob:
         """
         if not self.submitted:
             return False
-        if not self.finished:
-            if not self.qstat.hasJob(self.job_id):
-                self.finished = True
+        if not self.__finished:
+            if not self.__qstat.hasJob(self.job_id):
                 self.end_time = time.time()
-        return not self.finished
+                self.__finished = True
+        return not self.__finished
 
 # PipelineRunner: class to set up and run multiple jobs
 class PipelineRunner:
