@@ -365,6 +365,17 @@ def QdelJob(job_id):
     p = subprocess.Popen(qdel)
     p.wait()
 
+# SendEmail: send an email message via mutt
+def SendEmail(subject,recipient,message):
+    """Send an email message via the 'mutt' client
+    """
+    p = subprocess.Popen(('mutt','-s',subject,recipient),
+                         stdin=subprocess.PIPE)
+    p.stdin.write(message)
+    p.stdin.close()
+    p.wait()
+    return
+
 def GetSolidDataFiles(dirn):
     """Return list of csfasta/qual file pairs in target directory
     """
@@ -426,6 +437,7 @@ if __name__ == "__main__":
     script = None
     data_dirs = []
     input_type = "solid"
+    email_addr = None
 
     # Deal with command line
     if len(sys.argv) < 3:
@@ -449,6 +461,8 @@ if __name__ == "__main__":
         print "               Can be one of:"
         print "               solid = csfasta/qual file pair (default)"
         print "               fastq = fastq file"
+        print "  --email=<address>: send an email to <address> when the"
+        print "               pipeline has completed."
         print
         sys.exit()
 
@@ -467,6 +481,8 @@ if __name__ == "__main__":
         elif arg.startswith("--input="):
             # Specify input type
             input_type = arg.split('=')[1]
+        elif arg.startswith("--email="):
+            email_addr = arg.split('=')[1]
         elif arg.startswith("--") and len(data_dirs) > 0:
             # Some option appeared after we started collecting
             # directories
@@ -527,4 +543,17 @@ if __name__ == "__main__":
     pipeline.run()
 
     # Finished
+    if email_addr is not None:
+        print "Sending email notification to %s" % email_addr
+        subject = "QC pipeline completed"
+        message = "Pipeline finished at %s\n\n" % time.asctime()
+        for data_dir in data_dirs:
+            message += "\t%s\n" % data_dir
+        message += "\nRan %d jobs:\n\n" % pipeline.nCompleted()
+        for job in pipeline.completed:
+            message += "\t%s\t%s\t%s\t%.1fs\n" % (job.job_id,
+                                              job.name,
+                                              job.working_dir,
+                                              (job.end_time - job.start_time))
+        SendEmail(subject,email_addr,message)
     print "Finished"
