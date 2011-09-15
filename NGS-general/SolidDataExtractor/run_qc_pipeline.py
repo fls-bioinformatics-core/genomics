@@ -383,7 +383,7 @@ def GetSolidDataFiles(dirn):
     # Gather data files
     logging.debug("Collecting csfasta/qual file pairs in %s" % dirn)
     data_files = []
-    all_files = os.listdir(data_dir)
+    all_files = os.listdir(dirn)
     all_files.sort()
 
     # Look for csfasta and matching qual files
@@ -400,7 +400,7 @@ def GetSolidDataFiles(dirn):
             except IndexError:
                 # QV not in name, try to match whole name
                 csfasta = root+".csfasta"
-            if os.path.exists(os.path.join(data_dir,csfasta)):
+            if os.path.exists(os.path.join(dirn,csfasta)):
                 data_files.append((csfasta,qual))
             else:
                 logging.critical("Unable to get csfasta for %s" % filen)
@@ -413,7 +413,7 @@ def GetFastqFiles(dirn):
     # Gather data files
     logging.debug("Collecting fastq files in %s" % dirn)
     data_files = []
-    all_files = os.listdir(data_dir)
+    all_files = os.listdir(dirn)
     all_files.sort()
 
     # Look for csfasta and matching qual files
