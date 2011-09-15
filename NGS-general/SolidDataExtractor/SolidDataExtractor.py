@@ -241,7 +241,24 @@ class SolidRun:
                                                                    self.run_dir))
         # Finished
         return matching_libraries
-        
+
+    def slideLayout(self):
+        """Return description of the slide layout
+
+        Return a string describing the slide layout for the run based on
+        the number of samples in the run, e.g. "Whole slide", "Quads",
+        "Octets" etc.
+        """
+        nsamples = len(self.samples)
+        if nsamples == 1:
+            return "Whole slide"
+        elif nsamples == 4:
+            return "Quads"
+        elif nsamples == 8:
+            return "Octets"
+        else:
+            logging.warning("Undefined layout for %s samples" % len(self.samples))
+            return "Undefined layout"
 
     def __nonzero__(self):
         """Implement nonzero built-in

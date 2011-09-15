@@ -89,22 +89,6 @@ def pretty_print_libraries(libraries):
     # Concatenate and return
     return ', '.join(out)
 
-def get_slide_layout(solid_run):
-    """Return description of slide layout for a SOLiD run.
-
-    Given a SolidRun object 'solid_run', return the slide layout
-    description (e.g. "whole slide", "quads" etc) as a string, based
-    on the number of samples in the run.
-    """
-    if len(solid_run.samples) == 1:
-        return "Whole slide"
-    elif len(solid_run.samples) == 4:
-        return "Quads"
-    elif len(solid_run.samples) == 8:
-        return "Octets"
-    else:
-        return "Undefined layout"
-
 #######################################################################
 # Module Functions: program functions
 #######################################################################
@@ -122,7 +106,7 @@ def report_run(solid_runs):
     # Report the data for each run
     for run in solid_runs:
         # Report overall slide layout
-        slide_layout = get_slide_layout(run)
+        slide_layout = run.slideLayout()
         print "FC%s (%s)" % (str(run.run_info.flow_cell),
                                str(slide_layout))
         print "Date: %s" % (run.run_info.date)
@@ -191,7 +175,7 @@ def write_spreadsheet(solid_runs,spreadsheet):
     # Report the data for each run
     for run in solid_runs:
         # First line: date, flow cell layout, and id
-        slide_layout = get_slide_layout(run)
+        slide_layout = run.slideLayout()
         description = "FC"+str(run.run_info.flow_cell)+" ("+slide_layout+")"
         # Barcoding status
         # Assumes all samples/libraries in the project have the same
