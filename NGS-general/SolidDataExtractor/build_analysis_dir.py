@@ -268,11 +268,13 @@ def mkdir(dirn):
     ##print "Making %s" % dirn
     if not os.path.isdir(dirn):
         os.mkdir(dirn)
+        os.chmod(dirn,0775)
 
 def mklink(target,link_name):
     """Make a symbolic link"""
     ##print "Linking to %s from %s" % (target,link_name)
     os.symlink(target,link_name)
+    os.chmod(link_name,0664)
 
 #######################################################################
 # Main program
