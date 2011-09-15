@@ -104,19 +104,35 @@ class ExperimentList:
         except IndexError:
             return None
 
-    def buildAnalysisDirs(self,dry_run=False):
+    def buildAnalysisDirs(self,top_dir=None,dry_run=False):
         """Construct and populate analysis directories for the experiments
 
         For each defined experiment, create the required analysis directories
         and populate with links to the primary data files.
 
         Arguments:
+          top_dir: if set then create the analysis directories as
+            subdirs of the specified directory; otherwise operate in cwd
           dry_run: if True then only report the mkdir, ln etc operations that
             would be performed. Default is False (do perform the operations).
         """
+        # Deal with top_dir
+        if top_dir:
+            if os.path.exists(top_dir):
+                logging.warning("Top directory %s already exists" % top_dir)
+            else:
+                if not dry_run:
+                    # Create top directory
+                    mkdir(top_dir)
+                else:
+                    # Report what would have been done
+                    print "mkdir %s" % top_dir
         # For each experiment, make and populate directory
         for expt in self.experiments:
-            expt_dir = expt.dirname()
+            if top_dir:
+                expt_dir = os.path.join(top_dir,expt.dirname())
+            else:
+                expt_dir = expt.dirname()
             logging.debug("Experiment dir: %s" % expt_dir)
             # Make directory
             if os.path.exists(expt_dir):
@@ -281,7 +297,7 @@ def mklink(target,link_name):
 #######################################################################
 
 if __name__ == "__main__":
-    print "%s [--dry-run] EXPERIMENT [EXPERIMENT ...] <solid_run_dir>" % \
+    print "%s [OPTIONS] EXPERIMENT [EXPERIMENT ...] <solid_run_dir>" % \
         os.path.basename(sys.argv[0])
     print ""
     print "Build analysis directory structure for one or more 'experiments'"
@@ -290,6 +306,8 @@ if __name__ == "__main__":
     print "Options:"
     print "    --dry-run: report the operations that would be performed"
     print "    --debug: turn on debugging output"
+    print "    --top-dir=<dir>: create analysis directories as subdirs of <dir>;"
+    print "      otherwise create them in cwd."
     print ""
     print "Defining experiments:"
     print ""
@@ -321,6 +339,7 @@ if __name__ == "__main__":
     # Initialise
     logging.basicConfig(format="%(levelname)s %(message)s")
     dry_run = False
+    top_dir = None
 
     # Process command line
     if len(sys.argv) < 2:
@@ -372,6 +391,8 @@ if __name__ == "__main__":
             dry_run = True
         elif arg == '--debug':
             logging.getLogger().setLevel(logging.DEBUG)
+        elif arg.startswith('--top-dir='):
+            top_dir = arg.split('=')[1]
         else:
             # Unrecognised argument
             print "Unrecognised argument: %s" % arg
@@ -401,5 +422,5 @@ if __name__ == "__main__":
         sys.exit(1)
 
     # Build the analysis directory structure
-    expts.buildAnalysisDirs(dry_run=dry_run)
+    expts.buildAnalysisDirs(top_dir=top_dir,dry_run=dry_run)
             
