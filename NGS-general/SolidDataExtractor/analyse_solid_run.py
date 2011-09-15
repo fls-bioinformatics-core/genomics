@@ -177,13 +177,6 @@ def write_spreadsheet(solid_runs,spreadsheet):
         # First line: date, flow cell layout, and id
         slide_layout = run.slideLayout()
         description = "FC"+str(run.run_info.flow_cell)+" ("+slide_layout+")"
-        # Barcoding status
-        # Assumes all samples/libraries in the project have the same
-        # barcoding status
-        try:
-            is_barcoded = run.samples[0].projects[0].isBarcoded()
-        except IndexError:
-            is_barcoded = False
         # Run with only one sample
         total_reads = ''
         if len(run.samples) == 1:
