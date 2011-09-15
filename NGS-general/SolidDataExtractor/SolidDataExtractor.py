@@ -18,6 +18,7 @@ structure, data files and naming conventions."""
 
 import sys,os
 import string
+import logging
 
 #######################################################################
 # Class definitions
@@ -216,6 +217,31 @@ class SolidRun:
             elif ambiguity_error:
                 print "WARNING ambigiuous location for primary data for %s" % \
                     library
+
+    def fetchLibraries(self,sample_name='*',library_name='*'):
+        """Retrieve libraries based on sample and library names
+
+        Supplied names can be exact matches or simple patterns (using trailing
+        '*'s as wildcards). '*' matches all names.
+
+        Returns a list of matching SolidLibrary objects.
+        """
+        matching_libraries = []
+        for sample in self.samples:
+            if match(sample_name,sample.name):
+                # Found a matching sample
+                for library in sample.libraries:
+                    if match(library_name,library.name):
+                        # Found a matching library
+                        logging.debug("Located sample and library: %s/%s" %
+                                      (sample.name,library.name))
+                        matching_libraries.append(library)
+        if len(matching_libraries) == 0:
+            logging.debug("No libraries matched to %s/%s in %s" % (sample_name,library_name,
+                                                                   self.run_dir))
+        # Finished
+        return matching_libraries
+        
 
     def __nonzero__(self):
         """Implement nonzero built-in
@@ -749,6 +775,22 @@ def extract_index(library):
             break
     index.reverse()
     return ''.join(index)
+
+def match(pattern,word):
+    """Check if word matches pattern
+
+    patterns can be simple glob-like strings (i.e. using trailing '*' to
+    indicate wildcard) or exact words."""
+    if not pattern or pattern == '*':
+        # No pattern/wildcard, matches everything
+        return True
+    # Only simple patterns considered for now
+    if pattern.endswith('*'):
+        # Match the start
+        return word.startswith(pattern[:-1])
+    else:
+        # Match the whole word exactly
+        return (word == pattern)
 
 #######################################################################
 # Main program
