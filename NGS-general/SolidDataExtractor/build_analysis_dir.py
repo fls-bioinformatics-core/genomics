@@ -317,6 +317,7 @@ if __name__ == "__main__":
     print "each of the primary data files."
 
     # Initialise
+    logging.basicConfig(format="%(levelname)s %(message)s")
     dry_run = False
 
     # Process command line
