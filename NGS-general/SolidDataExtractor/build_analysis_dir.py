@@ -129,10 +129,7 @@ class ExperimentList:
                     print "mkdir %s" % top_dir
         # For each experiment, make and populate directory
         for expt in self.experiments:
-            if top_dir:
-                expt_dir = os.path.join(top_dir,expt.dirname())
-            else:
-                expt_dir = expt.dirname()
+            expt_dir = expt.dirname(top_dir)
             logging.debug("Experiment dir: %s" % expt_dir)
             # Make directory
             if os.path.exists(expt_dir):
@@ -204,17 +201,24 @@ class Experiment:
         self.sample = None
         self.library = None
 
-    def dirname(self):
+    def dirname(self,top_dir=None):
         """Return directory name for experiment
 
         The directory name is the supplied name plus the experiment
         type joined by an underscore, unless no type was specified (in
         which case it is just the experiment name).
+
+        If top_dir is also supplied then this will be prepended to the
+        returned directory name.
         """
         if self.type:
-            return '_'.join((self.name,self.type))
+            dirname = '_'.join((self.name,self.type))
         else:
-            return self.name
+            dirname = self.name
+        if top_dir:
+            return os.path.join(top_dir,dirname)
+        else:
+            return dirname
 
     def describe(self):
         """Describe the experiment as a set of command line options
