@@ -231,19 +231,6 @@ class Experiment:
 # Module functions
 #######################################################################
 
-def match(pattern,word):
-    """Check if word matches pattern"""
-    if not pattern or pattern == '*':
-        # No pattern/wildcard, matches everything
-        return True
-    # Only simple patterns considered for now
-    if pattern.endswith('*'):
-        # Match the start
-        return word.startswith(pattern[:-1])
-    else:
-        # Match the whole word exactly
-        return (word == pattern)
-
 def getLinkName(filen,library):
     """Return the 'analysis' file name based on a source file name.
     
