@@ -101,6 +101,20 @@ class Qstat:
         """
         return (job_id in self.list())
 
+    def jobStateCode(self,job_id):
+        """Get the state code for the specified job id
+
+        Will be one of the GE job state codes, or an empty
+        string if the job id isn't found.
+        """
+        jobs = self.__run_qstat()
+        for job_data in jobs:
+            if job_data[0] == job_id:
+                # State code is index 4
+                return job_data[4]
+        # Job not found
+        return ''
+
 # QsubJob: container for a script run
 class QsubJob:
     """Wrapper class for setting up, submitting and monitoring qsub scripts
@@ -205,6 +219,11 @@ class QsubJob:
                 self.__finished = True
         return not self.__finished
 
+    def stateCode(self):
+        """Return the GE state code
+        """
+        return self.__qstat.jobStateCode(self.job_id)
+
 # PipelineRunner: class to set up and run multiple jobs
 class PipelineRunner:
     """Class to run and manage multiple GE jobs.
@@ -299,6 +318,14 @@ class PipelineRunner:
                     # Set the permissions on the output log file to rw-rw-r--
                     if os.path.exists(os.path.join(job.working_dir,job.log)):
                         os.chmod(os.path.join(job.working_dir,job.log),0664)
+                else:
+                    # Job is running, check it's not in an error state
+                    job_state = job.stateCode()
+                    if job_state.startswith('E'):
+                        # Terminate jobs in error state
+                        logging.warning("Terminating job %s in error state (%s)" % 
+                                        (job.job_id,job_state))
+                        job.terminate()
             # Submit new jobs to GE queue
             while not self.jobs.empty() and self.qstat.njobs() < self.max_concurrent_jobs:
                 next_job = self.jobs.get()
