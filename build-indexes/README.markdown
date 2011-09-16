@@ -70,6 +70,20 @@ anywhere.
 
 * `.fai` and `.dict` files required by SRMA.
 
+index_indexes.sh
+----------------
+Utility for exploring/reporting on existing genome indexes within a directory
+hierarchy.
+
+### Usage ###
+
+    index_indexes.sh <dir>
+
+### Outputs ###
+
+Searches <dir> and its subdirectories recursively and prints a report of the genome
+index-specific files (fasta, info etc) it finds.
+
 Note on preparing reference genome files
 ----------------------------------------
 Where the reference genome is a collection of FASTA files for each
