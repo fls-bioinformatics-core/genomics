@@ -426,6 +426,10 @@ def SendEmail(subject,recipient,message):
 def GetSolidDataFiles(dirn):
     """Return list of csfasta/qual file pairs in target directory
     """
+    # Check directory exists
+    if not os.path.isdir(dirn):
+        logging.error("'%s' not a directory: unable to collect SOLiD files" % dirn)
+        return []
     # Gather data files
     logging.debug("Collecting csfasta/qual file pairs in %s" % dirn)
     data_files = []
@@ -456,6 +460,10 @@ def GetSolidDataFiles(dirn):
 def GetFastqFiles(dirn):
     """Return list of fastq files in target directory
     """
+    # Check directory exists
+    if not os.path.isdir(dirn):
+        logging.error("'%s' not a directory: unable to collect fastq files" % dirn)
+        return []
     # Gather data files
     logging.debug("Collecting fastq files in %s" % dirn)
     data_files = []
