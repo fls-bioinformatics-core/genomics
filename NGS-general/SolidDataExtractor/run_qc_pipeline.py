@@ -224,6 +224,22 @@ class QsubJob:
         """
         return self.__qstat.jobStateCode(self.job_id)
 
+    def status(self):
+        """Return descriptive string indicating job status
+        """
+        if self.__finished:
+            if self.terminated:
+                return "Terminated"
+            else:
+                return "Finished"
+        elif self.submitted:
+            if self.terminated:
+                return "Running pending termination"
+            else:
+                return "Running"
+        else:
+            return "Waiting"
+
 # PipelineRunner: class to set up and run multiple jobs
 class PipelineRunner:
     """Class to run and manage multiple GE jobs.
@@ -349,6 +365,43 @@ class PipelineRunner:
         # Pipeline has finished
         print "Pipeline completed"
         return
+
+    def report(self):
+        """Return a report of the pipeline status
+        """
+        # Pipeline status
+        if self.nRunning() > 0:
+            status = "RUNNING"
+        elif self.nWaiting() > 0:
+            status = "WAITING"
+        else:
+            status = "COMPLETED"
+        report = "Pipeline status at %s: %s\n\n" % (time.asctime(),status)
+        # Report directories
+        dirs = []
+        for job in self.completed:
+            if job.working_dir not in dirs:
+                dirs.append(job.working_dir)
+        for dirn in dirs:
+            report += "\t%s\n" % dirn
+        # Report jobs waiting
+        if self.nWaiting() > 0:
+            report += "\n%d jobs waiting to run\n" % self.nWaiting()
+        # Report jobs running
+        if self.nRunning() > 0:
+            report += "\n%d jobs running:\n" % self.nRunning()
+            for job in self.running:
+                report += "\t%s\t%s\t%s\n" % (job.job_id,job.name,job.working_dir)
+        # Report completed jobs
+        if self.nCompleted() > 0:
+            report += "\n%d jobs completed:\n" % self.nCompleted()
+            for job in self.completed:
+                report += "\t%s\t%s\t%s\t%.1fs\t[%s]\n" % (job.job_id,
+                                                           job.name,
+                                                           job.working_dir,
+                                                           (job.end_time - job.start_time),
+                                                           job.status())
+        return report
 
 #######################################################################
 # Module Functions
@@ -590,14 +643,5 @@ if __name__ == "__main__":
     if email_addr is not None:
         print "Sending email notification to %s" % email_addr
         subject = "QC pipeline completed"
-        message = "Pipeline finished at %s\n\n" % time.asctime()
-        for data_dir in data_dirs:
-            message += "\t%s\n" % data_dir
-        message += "\nRan %d jobs:\n\n" % pipeline.nCompleted()
-        for job in pipeline.completed:
-            message += "\t%s\t%s\t%s\t%.1fs\n" % (job.job_id,
-                                              job.name,
-                                              job.working_dir,
-                                              (job.end_time - job.start_time))
-        SendEmail(subject,email_addr,message)
+        SendEmail(subject,email_addr,pipeline.report())
     print "Finished"
