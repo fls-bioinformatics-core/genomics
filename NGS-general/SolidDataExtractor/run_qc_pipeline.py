@@ -403,6 +403,33 @@ class PipelineRunner:
                                                            job.status())
         return report
 
+class SolidPipelineRunner(PipelineRunner):
+    """Class to run and manage multiple GE jobs for Solid data pipelines
+
+    Subclass of PipelineRunner specifically for dealing with scripts
+    that take Solid data (i.e. csfasta/qual file pairs).
+
+    Defines the addDir method in addition to all methods already defined
+    in the base class; use this method one or more times to specify
+    directories with data to run the script on. The SOLiD data file pairs
+    in each specified directory will be located automatically.
+
+    For example:
+
+    solid_pipeline = SolidPipelineRunner('qc.sh')
+    solid_pipeline.addDir('/path/to/datadir')
+    solid_pipeline.run()
+    """
+    def __init__(self,script,max_concurrent_jobs=4,poll_interval=30):
+        PipelineRunner.__init__(self)
+        self.script = script
+
+    def addDir(self,dirn):
+        logging.debug("Add dir: %s" % dirn)
+        run_data = GetSolidDataFiles(dirn)
+        for data in run_data:
+            self.queueJob(dirn,self.script,*data)
+
 #######################################################################
 # Module Functions
 #######################################################################

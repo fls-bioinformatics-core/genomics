@@ -19,6 +19,7 @@
 import sys,os
 import logging
 import SolidDataExtractor
+import run_qc_pipeline
 
 #######################################################################
 # Class definitions
@@ -154,6 +155,23 @@ class ExperimentList:
                     # Make links to primary data
                     self.__linkToFile(library.csfasta,os.path.join(expt_dir,ln_csfasta),dry_run=dry_run)
                     self.__linkToFile(library.qual,os.path.join(expt_dir,ln_qual),dry_run=dry_run)
+
+    def runPipeline(self,script,top_dir=None):
+        """Run a pipeline script on the experiment directories
+
+        Create a SolidPipelineRunner and add the data files from each experiment,
+        then run the specified script.
+
+        Arguments:
+          script: script file to run (can be full or relative path)
+          top_dir: (optional) if set then look for the analysis directories as
+            subdirs of the specified directory; otherwise operate in cwd
+        """
+        pipeline = run_qc_pipeline.SolidPipelineRunner(script)
+        for expt in self.experiments:
+            pipeline.addDir(os.path.abspath(expt.dirname(top_dir)))
+        pipeline.run()
+        print "%s" % pipeline.report()
     
     def __linkToFile(self,source,target,dry_run=False):
         """Create symbolic link to a file
@@ -312,6 +330,8 @@ if __name__ == "__main__":
     print "    --debug: turn on debugging output"
     print "    --top-dir=<dir>: create analysis directories as subdirs of <dir>;"
     print "      otherwise create them in cwd."
+    print "    --run-pipeline=<script>: after creating analysis directories, run"
+    print "      the specified <script> on SOLiD data file pairs in each"
     print ""
     print "Defining experiments:"
     print ""
@@ -344,6 +364,7 @@ if __name__ == "__main__":
     logging.basicConfig(format="%(levelname)s %(message)s")
     dry_run = False
     top_dir = None
+    pipeline_script = None
 
     # Process command line
     if len(sys.argv) < 2:
@@ -397,6 +418,8 @@ if __name__ == "__main__":
             logging.getLogger().setLevel(logging.DEBUG)
         elif arg.startswith('--top-dir='):
             top_dir = arg.split('=')[1]
+        elif arg.startswith('--run-pipeline='):
+            pipeline_script = arg.split('=')[1]
         else:
             # Unrecognised argument
             print "Unrecognised argument: %s" % arg
@@ -428,3 +451,6 @@ if __name__ == "__main__":
     # Build the analysis directory structure
     expts.buildAnalysisDirs(top_dir=top_dir,dry_run=dry_run)
             
+    # Run the pipeline script
+    if pipeline_script:
+        expts.runPipeline(pipeline_script,top_dir=top_dir)
