@@ -275,7 +275,7 @@ class PipelineRunner:
         self.jobs.put(QsubJob(job_name,working_dir,script,*args))
         logging.debug("Added job: now %d jobs in pipeline" % self.jobs.qsize())
 
-    def nQueued(self):
+    def nWaiting(self):
         """Return the number of jobs still to be submitted to the GE queue
         """
         return self.jobs.qsize()
@@ -342,7 +342,7 @@ class PipelineRunner:
             # Report
             if updated_status:
                 print "Currently %d jobs waiting, %d running, %d finished" % \
-                    (self.nQueued(),self.nRunning(),self.nCompleted())
+                    (self.nWaiting(),self.nRunning(),self.nCompleted())
             # If there are still running jobs then wait
             if self.nRunning() > 0:
                 time.sleep(self.poll_interval)
@@ -580,7 +580,7 @@ if __name__ == "__main__":
         # Add jobs to pipeline runner (up to limit of max_total_jobs)
         for data in run_data:
             pipeline.queueJob(data_dir,script,*data)
-            if max_total_jobs > 0 and pipeline.nQueued() == max_total_jobs:
+            if max_total_jobs > 0 and pipeline.nWaiting() == max_total_jobs:
                 print "Maximum number of jobs queued (%d)" % max_total_jobs
                 break
     # Run the pipeline
