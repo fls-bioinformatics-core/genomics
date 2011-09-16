@@ -407,8 +407,10 @@ def QdelJob(job_id):
     """
     logging.debug("QdelJob: deleting job")
     qdel=('qdel',job_id)
-    p = subprocess.Popen(qdel)
+    p = subprocess.Popen(qdel,stdout=subprocess.PIPE)
     p.wait()
+    message = p.stdout.read()
+    logging.debug("qdel: %s" % message)
 
 # SendEmail: send an email message via mutt
 def SendEmail(subject,recipient,message):
