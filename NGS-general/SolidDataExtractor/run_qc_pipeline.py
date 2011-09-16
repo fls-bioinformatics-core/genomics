@@ -529,8 +529,7 @@ if __name__ == "__main__":
         elif arg.startswith("--email="):
             email_addr = arg.split('=')[1]
         elif arg.startswith("--") and len(data_dirs) > 0:
-            # Some option appeared after we started collecting
-            # directories
+            # Some option appeared after we started collecting directories
             logging.error("Unexpected argument encountered: %s" % arg)
             sys.exit(1)
         else:
