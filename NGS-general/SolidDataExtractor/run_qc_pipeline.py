@@ -350,37 +350,6 @@ class PipelineRunner:
         print "Pipeline completed"
         return
 
-class SolidPipelineRunner(PipelineRunner):
-    """Class to run and manage multiple GE jobs for Solid data pipelines
-
-    Subclass of PipelineRunner specifically for dealing with scripts
-    that take Solid data (i.e. csfasta/qual file pairs).
-
-    Defines the addDir method in addition to all methods already defined
-    in the base class; use this method one or more times to specify
-    directories with data to run the script on. The SOLiD data file pairs
-    in each specified directory will be located automatically.
-
-    For example:
-
-    solid_pipeline = SolidPipelineRunner('qc.sh')
-    solid_pipeline.addDir('/path/to/datadir')
-    solid_pipeline.run()
-    """
-
-    def __init__(self,script,max_concurrent_jobs=4,poll_interval=30):
-        PipelineRunner.__init__(self)
-        self.script = script
-
-    def addDir(self,dirn):
-        logging.debug("Add dir: %s" % dirn)
-        run_data = GetSolidDataFiles(dirn)
-        for data in run_data:
-            # This *should* break in the general case
-            self.queueJob(os.path.basename(dirn),self.script,*data)
-            # This should work
-            ##self.queueJob(dirn,self.script,*data)
-
 #######################################################################
 # Module Functions
 #######################################################################
@@ -438,10 +407,8 @@ def QdelJob(job_id):
     """
     logging.debug("QdelJob: deleting job")
     qdel=('qdel',job_id)
-    p = subprocess.Popen(qdel,stdout=subprocess.PIPE)
+    p = subprocess.Popen(qdel)
     p.wait()
-    message = p.stdout.read()
-    logging.debug("qdel: %s" % message)
 
 # SendEmail: send an email message via mutt
 def SendEmail(subject,recipient,message):
@@ -457,10 +424,6 @@ def SendEmail(subject,recipient,message):
 def GetSolidDataFiles(dirn):
     """Return list of csfasta/qual file pairs in target directory
     """
-    # Check directory exists
-    if not os.path.isdir(dirn):
-        logging.error("'%s' not a directory: unable to collect SOLiD files" % dirn)
-        return []
     # Gather data files
     logging.debug("Collecting csfasta/qual file pairs in %s" % dirn)
     data_files = []
@@ -634,8 +597,8 @@ if __name__ == "__main__":
         message += "\nRan %d jobs:\n\n" % pipeline.nCompleted()
         for job in pipeline.completed:
             message += "\t%s\t%s\t%s\t%.1fs\n" % (job.job_id,
-                                                  job.name,
-                                                  job.working_dir,
-                                                  (job.end_time - job.start_time))
+                                              job.name,
+                                              job.working_dir,
+                                              (job.end_time - job.start_time))
         SendEmail(subject,email_addr,message)
     print "Finished"
