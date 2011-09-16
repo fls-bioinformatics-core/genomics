@@ -46,8 +46,13 @@ class Qstat:
     def __init__(self):
         pass
 
-    def list(self,user=None):
-        """Get list of job ids in the queue.
+    def __run_qstat(self,user=None):
+        """Run qstat and return data as a list of lists
+
+        Runs 'qstat' command, processes the output and returns a
+        list where each item is the data for a job in the form of
+        another list, with the items in this list being the data
+        returned by qstat.
         """
         cmd = ['qstat']
         if user:
@@ -58,8 +63,8 @@ class Qstat:
         # Run the qstat
         p = subprocess.Popen(cmd,stdout=subprocess.PIPE)
         p.wait()
-        # Process the output: get job ids
-        job_ids = []
+        # Process the output
+        jobs = []
         # Typical output is:
         # job-ID  prior   name       user         ...<snipped>...
         # ----------------------------------------...<snipped>...
@@ -69,15 +74,27 @@ class Qstat:
         for line in p.stdout:
             try:
                 if line.split()[0].isdigit():
-                    job_ids.append(line.split()[0])
+                    jobs.append(line.split())
             except IndexError:
+                # Skip this line
                 pass
+        return jobs
+
+    def list(self,user=None):
+        """Get list of job ids in the queue.
+        """
+        jobs = self.__run_qstat(user=user)
+        # Process the output to get job ids
+        job_ids = []
+        for job_data in jobs:
+            # Id is first item for each job
+            job_ids.append(job_data[0])
         return job_ids
 
     def njobs(self,user=None):
         """Return the number of jobs in the queue.
         """
-        return len(self.list(user=user))
+        return len(self.__run_qstat(user=user))
 
     def hasJob(self,job_id):
         """Check if the specified job id is in the queue.
