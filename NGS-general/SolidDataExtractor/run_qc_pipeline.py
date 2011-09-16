@@ -354,16 +354,6 @@ class PipelineRunner:
 # Module Functions
 #######################################################################
 
-# RunScript: execute a script or command
-def RunScript(script,csfasta,qual):
-    """Run a script or command
-    """
-    cwd=os.path.dirname(csfasta)
-    p = subprocess.Popen((script,csfasta,qual),cwd=cwd)
-    print "Running..."
-    p.wait()
-    print "Finished"
-
 # QsubScript: submit a command to the cluster
 def QsubScript(name,working_dir,script,*args):
     """Submit a script or command to the cluster via 'qsub'
