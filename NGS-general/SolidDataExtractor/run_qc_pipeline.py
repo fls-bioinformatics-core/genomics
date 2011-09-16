@@ -154,8 +154,8 @@ class QsubJob:
     def terminate(self):
         """Terminate (qdel) a running job
         """
-        if not self.isRunning():
-            Qdeljob(self.job_id)
+        if self.isRunning():
+            QdelJob(self.job_id)
             self.terminated = True
             self.end_time = time.time()
 
