@@ -2,16 +2,26 @@
 #
 # srma_build_indexes.sh
 #
-# Create indexes for SRMA (.fai and .dict files)
-#
-# Takes a FASTA file as input.
-#
-# The index files are created in the same directory as the
-# input FASTA file.
-#
+function usage() {
+    # Print usage information
+    cat <<EOF
+
+Create indexes for SRMA.
+
+Usage
+   $script_name <genome_fasta_file>
+
+Inputs
+   <genome_fasta_file> FASTA file containing the reference genome
+
+Outputs
+    .fai and .dict files in the same directory as the input FASTA file
+   (as required by SRMA)
+EOF
+}
+
 script_name=`basename $0`
 SCRIPT_NAME=`echo ${script_name%.*} | tr [:lower:] [:upper:]`
-usage="$script_name <genome_fasta_file>"
 #
 # Initialisations
 SAMTOOLS=`which samtools 2>&1 | grep -v which`
@@ -41,7 +51,7 @@ run_dir=`pwd`
 # Input fasta file for reference genome
 if [ "$1" == "" ] ; then
     echo Fatal: no input fasta file specified
-    echo $usage
+    usage
     exit 1
 fi
 FASTA_GENOME=$1
@@ -49,7 +59,7 @@ FASTA_GENOME=$1
 # Check input file exists
 if [ ! -f "$FASTA_GENOME" ] ; then
     echo Fatal: input fasta file not found
-    echo $usage
+    usage
     exit 1
 fi
 #

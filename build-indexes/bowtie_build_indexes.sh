@@ -1,10 +1,27 @@
 #!/bin/sh
 #
-# Build indexes for bowtie (color space and nucleotide space)
+# bowtie_build_indexes.sh
 #
+function usage() {
+    # Print usage information
+    cat <<EOF
+
+Build color- and nucleotide-space indexes for BOWTIE.
+
+Usage
+   $script_name <genome_fasta_file>
+
+Inputs
+   <genome_fasta_file> FASTA file containing the reference genome
+
+Outputs
+   In the current directory: creates <genome_name>.*.ebwt (nucleotide-space) and
+   and <genome_name>_c.*.ebwt (color-space) files
+EOF
+}
 script_name=`basename $0`
 SCRIPT_NAME=`echo ${script_name%.*} | tr [:lower:] [:upper:]`
-usage="$script_name <genome_fasta_file>"
+
 #
 # Initialisations
 BOWTIE_BUILD=`which bowtie-build 2>&1 | grep -v which`
@@ -23,7 +40,7 @@ run_dir=`pwd`
 # Input fasta file for reference genome
 if [ "$1" == "" ] ; then
     echo Fatal: no input fasta file specified
-    echo $usage
+    usage
     exit 1
 fi
 FASTA_GENOME=$1
@@ -35,7 +52,7 @@ genome=${genome%.*}
 # Check input file exists
 if [ ! -f "$FASTA_GENOME" ] ; then
     echo Fatal: input fasta file not found
-    echo $usage
+    usage
     exit 1
 fi
 #
