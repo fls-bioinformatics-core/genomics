@@ -199,12 +199,68 @@ EOF
     fi
 }
 #
+# rsync_solid_to_cluster()
+#
+# Usage: rsync_solid_to_cluster <solid_run_dir>
+#
+# Wrap the whole rsync process in a shell function so it can easily
+# be repeated.
+function rsync_solid_to_cluster() {
+    #
+    # Collect arguments
+    solid_run_dir=$1
+    echo "Starting rsync for ${solid_run_dir}"
+    #
+    # Do dry run
+    do_rsync --dry-run $solid_run_dir
+    #
+    # Check that this is okay
+    prompt_user --exit 0 "Proceed with rsync?"
+    #
+    # Do rsync
+    echo "Starting rsync (this may take some time)"
+    do_rsync $solid_run_dir
+    #
+    # Check and report status
+    status=$?
+    echo -n "rsync completed: exit status = $status"
+    if [ $status == 0 ] ;  then
+	echo " [OK]"
+    else
+	echo " [ERROR]"
+	echo "*** WARNING: RSYNC RETURNED NON-ZERO EXIT STATUS ***"
+	echo "*** Check the rsync output in the log file       ***"
+	echo "*** Stopping ***"
+	exit 1
+    fi
+    #
+    # Check sizes
+    prompt_user "Check sizes of local and remote copies?" compare_sizes
+    status=$?
+    if [ $status != 1 ] ; then
+	echo "*** WARNING: SIZE OF LOCAL AND REMOTE COPIES DIFFERS ***"
+	echo "*** Check the remote copy and the rsync output       ***"
+	echo "*** Stopping ***"
+	exit 1
+    else
+	echo "Local and remote sizes appear to match"
+    fi
+    #
+    # Do chmod remotely
+    ssh_chmod_cmd="ssh ${REMOTE_USER}@${REMOTE_HOST} 'chmod -R g-w ${REMOTE_DATADIR}/$solid_run_dir'"
+    prompt_user "Remove write permission from remote data?" "$ssh_chmod_cmd"
+    echo "Done"
+    #
+    # Send email notification
+    prompt_user "Send email notification?" "send_email_notification $solid_run_dir"
+}
+#
 #####################################################################
 # Main script
 #####################################################################
 #
 # Collect and process arguments
-solid_run=$1
+solid_runs=$1
 if [ ! -z "$2" ] ; then
     REMOTE_USER=`echo $2 | cut -d@ -f1`
     REMOTE_HOST=`echo $2 | cut -d@ -f2 | cut -d: -f1`
@@ -212,11 +268,11 @@ if [ ! -z "$2" ] ; then
 fi
 #
 # Do checks
-if [ -z "$solid_run" ] ; then
+if [ -z "$solid_runs" ] ; then
     echo $usage
     exit 1
-elif [ ! -d "$solid_run" ] ; then
-    echo "${solid_run}: run not found"
+elif [ ! -d "$solid_runs" ] ; then
+    echo "${solid_runs}: run not found"
     exit 1
 fi
 if [ -z "$REMOTE_USER" ] || [ -z "$REMOTE_HOST" ] || [ -z "$REMOTE_DATADIR" ]
@@ -226,13 +282,22 @@ then
     exit 1
 fi
 #
+# Look for second SOLiD run dir
+if [ -d "${solid_runs}_2" ] ; then
+    prompt_user "Found partner directory ${solid_runs}_2. Also include?" 
+    response=$?
+    if [ $response == 1 ] ; then
+	solid_runs="${solid_runs} ${solid_runs}_2"
+    fi
+fi
+#
 # Report settings
 echo "Source:"
-echo "SOLiD directory : $solid_run"
+echo "SOLiD directories: $solid_runs"
 echo "Destination:"
-echo "Remote user     : $REMOTE_USER"
-echo "Remote host     : $REMOTE_HOST"
-echo "Remote directory: $REMOTE_DATADIR"
+echo "Remote user      : $REMOTE_USER"
+echo "Remote host      : $REMOTE_HOST"
+echo "Remote directory : $REMOTE_DATADIR"
 #
 # Confirm that this is correct
 prompt_user --exit 0 "Proceed?"
@@ -246,48 +311,10 @@ if [ ! -z "$SSH_AUTH_SOCK" ] && [ ! -z "$SSH_AGENT_PID" ] ; then
     ssh-add
 fi
 #
-# Do dry run
-do_rsync --dry-run $solid_run
-#
-# Check that this is okay
-prompt_user --exit 0 "Proceed with rsync?"
-#
-# Do rsync
-echo "Starting rsync (this may take some time)"
-do_rsync $solid_run
-#
-# Check and report status
-status=$?
-echo -n "rsync completed: exit status = $status"
-if [ $status == 0 ] ;  then
-    echo " [OK]"
-else
-    echo " [ERROR]"
-    echo "*** WARNING: RSYNC RETURNED NON-ZERO EXIT STATUS ***"
-    echo "*** Check the rsync output in the log file       ***"
-    echo "*** Stopping ***"
-    exit 1
-fi
-#
-# Check sizes
-prompt_user "Check sizes of local and remote copies?" compare_sizes
-status=$?
-if [ $status != 1 ] ; then
-    echo "*** WARNING: SIZE OF LOCAL AND REMOTE COPIES DIFFERS ***"
-    echo "*** Check the remote copy and the rsync output       ***"
-    echo "*** Stopping ***"
-    exit 1
-else
-    echo "Local and remote sizes appear to match"
-fi
-#
-# Do chmod remotely
-ssh_chmod_cmd="ssh ${REMOTE_USER}@${REMOTE_HOST} 'chmod -R g-w ${REMOTE_DATADIR}/$solid_run'"
-prompt_user "Remove write permission from remote data?" "$ssh_chmod_cmd"
-echo "Done"
-#
-# Send email notification
-prompt_user "Send email notification?" "send_email_notification $solid_run"
+# Run the rsync
+for solid_run in $solid_runs ; do
+    rsync_solid_to_cluster $solid_run $REMOTE_USER $REMOTE_HOST $REMOTE_DATADIR
+done
 #
 # Done
 echo "Finished"
