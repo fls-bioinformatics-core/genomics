@@ -31,7 +31,7 @@ REMOTE_USER=
 REMOTE_HOST=
 REMOTE_DATADIR=
 RSYNC_EXCLUDES="--exclude=color* --exclude=cycleplots --exclude=jobs* --exclude=traffic_lights"
-RSYNC_OPTIONS="-av -e ssh $RSYNC_EXCLUDES"
+RSYNC_OPTIONS="-av -e ssh --chmod=g-w,o-w $RSYNC_EXCLUDES"
 RSYNC_LOG="${SCRIPT_NAME%.*}_${NOW}.log"
 #
 #####################################################################
@@ -255,11 +255,6 @@ function rsync_solid_to_cluster() {
     else
 	echo "Local and remote sizes appear to match"
     fi
-    #
-    # Do chmod remotely
-    ssh_chmod_cmd="ssh ${REMOTE_USER}@${REMOTE_HOST} 'chmod -R g-w ${REMOTE_DATADIR}/$solid_run_dir'"
-    prompt_user "Remove write permission from remote data?" "$ssh_chmod_cmd"
-    echo "Done"
     #
     # Send email notification
     prompt_user "Send email notification?" "send_email_notification $solid_run_dir"
