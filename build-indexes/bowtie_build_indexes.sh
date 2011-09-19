@@ -72,8 +72,7 @@ Run directory   : $run_dir
 Input fasta file: $FASTA_GENOME
 bowtie-build exe: $BOWTIE_BUILD
 bowtie version  : $BOWTIE_VERSION
-Genome name     : $genome"
-qsub queue      : $USE_QUEUE
+Genome name     : $genome
 EOF
 #
 # ebwt outfile base names

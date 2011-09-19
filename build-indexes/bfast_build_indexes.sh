@@ -134,7 +134,6 @@ bfast exe       : $BFAST
 bfast version   : $BFAST_VERSION
 bfast index opts: $BFAST_INDEX_OPTIONS
 bfast temp dir  : $BFAST_TEMP_DIR
-qsub queue      : $USE_QUEUE
 EOF
 if [ ! -z $DRY_RUN ] ; then
     echo "************ Dry run mode ************"
@@ -158,8 +157,6 @@ fi
 #
 # Outputs ${input}.nt.brg file
 fasta2brg_nuc_cmd="$BFAST fasta2brg $BFAST_TEMP_DIR -f $LN_FASTA_GENOME"
-##echo qsub $USE_QUEUE -cwd -V -b y -N bfast_fasta2brg_nt \'$fasta2brg_nuc_cmd\'
-##qsub $USE_QUEUE -cwd -V -b y -N bfast_fasta2brg_nt $fasta2brg_nuc_cmd
 echo $fasta2brg_nuc_cmd
 if [ -z $DRY_RUN ] ; then
     $fasta2brg_nuc_cmd
@@ -169,8 +166,6 @@ fi
 #
 # Outputs ${input}.cs.brg file
 fasta2brg_cs_cmd="$BFAST fasta2brg $BFAST_TEMP_DIR -f $LN_FASTA_GENOME -A 1"
-##echo qsub $USE_QUEUE -cwd -V -b y -N bfast_fasta2brg_cs \'$fasta2brg_cs_cmd\'
-##qsub $USE_QUEUE -cwd -V -b y -N bfast_fasta2brg_cs $fasta2brg_cs_cmd
 echo $fasta2brg_cs_cmd
 if [ -z $DRY_RUN ] ; then
     $fasta2brg_cs_cmd
@@ -204,8 +199,6 @@ masks="1111111111111111111111
 indx=1
 for mask in $masks ; do
     bfast_index_cmd="$BFAST index -f $LN_FASTA_GENOME $BFAST_TEMP_DIR $BFAST_INDEX_OPTIONS -m $mask -i $indx -A 1"
-    ##echo qsub $USE_QUEUE -hold_jid bfast_fasta2brg_cs -cwd -V -N bfast_index -b y \'$bfast_index_cmd\'
-    ##qsub $USE_QUEUE -hold_jid bfast_fasta2brg_cs -cwd -V -N bfast_index -b y $bfast_index_cmd
     echo $bfast_index_cmd
     if [ -z $DRY_RUN ] ; then
 	$bfast_index_cmd
