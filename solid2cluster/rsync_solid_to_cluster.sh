@@ -4,7 +4,7 @@
 #
 # Script to do rsync of data from solid machine to cluster
 #
-# Usage: [ssh-agent] rsync_solid_to_cluster.sh <solid_run> <user>@<host>:<datadir>
+# Usage: [ssh-agent] rsync_solid_to_cluster.sh <solid_run> <user>@<host>:<datadir> [<email>]
 #
 # Note on using with ssh-agent:
 #
@@ -25,7 +25,7 @@
 # Script globals
 #####################################################################
 SCRIPT_NAME=`basename $0`
-usage="Usage: [ssh-agent] ${SCRIPT_NAME} <solid_run> <user>@<host>:<datadir>"
+usage="Usage: [ssh-agent] ${SCRIPT_NAME} <solid_run> <user>@<host>:<datadir> [<email>]"
 NOW=$(date +"%Y%m%d%H%M")
 REMOTE_USER=
 REMOTE_HOST=
@@ -185,8 +185,16 @@ function compare_sizes() {
 #
 # NB uses mutt
 function send_email_notification() {
-    echo -n "Email address for log file: "
+    if [ -z "$EMAIL_ADDRESS" ] ; then
+	addr="none"
+    else
+	addr=$EMAIL_ADDRESS
+    fi
+    echo -n "Email address for log file [${addr}]: "
     read addr
+    if [ -z "$addr" ] ; then
+	addr=$EMAIL_ADDRESS
+    fi
     if [ -z "$addr" ] ; then
 	echo "No address supplied, no email sent"
     else
@@ -196,6 +204,8 @@ rsync of solid data completed for $1
 
 Log file of rsync is attached
 EOF
+	# Store email address as future default
+	EMAIL_ADDRESS=$addr
     fi
 }
 #
@@ -266,6 +276,7 @@ if [ ! -z "$2" ] ; then
     REMOTE_HOST=`echo $2 | cut -d@ -f2 | cut -d: -f1`
     REMOTE_DATADIR=`echo $2 | cut -d@ -f2 | cut -d: -f2`
 fi
+EMAIL_ADDRESS=$3
 #
 # Do checks
 if [ -z "$solid_runs" ] ; then
@@ -298,6 +309,7 @@ echo "Destination:"
 echo "Remote user      : $REMOTE_USER"
 echo "Remote host      : $REMOTE_HOST"
 echo "Remote directory : $REMOTE_DATADIR"
+echo "Email address    : $EMAIL_ADDRESS"
 #
 # Confirm that this is correct
 prompt_user --exit 0 "Proceed?"
