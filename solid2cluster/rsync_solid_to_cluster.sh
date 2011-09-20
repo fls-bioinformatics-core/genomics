@@ -179,33 +179,29 @@ function compare_sizes() {
 #
 # send_email_notification()
 #
-# Usage: email_notification <solid_run_dir>
+# Usage: email_notification <solid_run_dir> [<status_msg>]
 #
 # Prompts user for an email address and sends the rsync log file to it
+# If <status_msg> is specified then incorporate into the subject line
+# for the email
 #
 # NB uses mutt
 function send_email_notification() {
-    if [ -z "$EMAIL_ADDRESS" ] ; then
-	addr="none"
-    else
-	addr=$EMAIL_ADDRESS
-    fi
-    echo -n "Email address for log file [${addr}]: "
-    read addr
-    if [ -z "$addr" ] ; then
-	addr=$EMAIL_ADDRESS
-    fi
-    if [ -z "$addr" ] ; then
-	echo "No address supplied, no email sent"
-    else
-	echo "Sending log to $addr"
-	mutt -s "SOLiD rsync completed: $1" -a $RSYNC_LOG -- $addr <<EOF
+    if [ ! -z "$EMAIL_ADDRESS" ] ; then
+	if [ ! -z "$2" ] ; then
+	    status_msg=$2
+	else
+	    status_msg="completed"
+	fi
+	echo "Sending log to $EMAIL_ADDRESS"
+	mutt -s "SOLiD rsync ${status_msg}: ${1}" -a $RSYNC_LOG -- $EMAIL_ADDRESS <<EOF
 rsync of solid data completed for $1
 
 Log file of rsync is attached
 EOF
-	# Store email address as future default
-	EMAIL_ADDRESS=$addr
+	
+    else
+	echo "No address supplied, no notification email sent"
     fi
 }
 #
@@ -236,28 +232,32 @@ function rsync_solid_to_cluster() {
     echo -n "rsync completed: exit status = $status"
     if [ $status == 0 ] ;  then
 	echo " [OK]"
+	send_email_notification $solid_run_dir
     else
 	echo " [ERROR]"
 	echo "*** WARNING: RSYNC RETURNED NON-ZERO EXIT STATUS ***"
 	echo "*** Check the rsync output in the log file       ***"
 	echo "*** Stopping ***"
-	exit 1
+	send_email_notification $solid_run_dir "failed"
     fi
     #
     # Check sizes
-    prompt_user "Check sizes of local and remote copies?" compare_sizes
-    status=$?
-    if [ $status != 1 ] ; then
-	echo "*** WARNING: SIZE OF LOCAL AND REMOTE COPIES DIFFERS ***"
-	echo "*** Check the remote copy and the rsync output       ***"
-	echo "*** Stopping ***"
-	exit 1
+    prompt_user "Check sizes of local and remote copies?"
+    do_check=$?
+    if [ $do_check == 1 ] ; then
+	compare_sizes
+	status=$?
+	if [ $status != 1 ] ; then
+	    echo "*** WARNING: SIZE OF LOCAL AND REMOTE COPIES DIFFERS ***"
+	    echo "*** Check the remote copy and the rsync output       ***"
+	    echo "*** Stopping ***"
+	    exit 1
+	else
+	    echo "Local and remote sizes appear to match"
+	fi
     else
-	echo "Local and remote sizes appear to match"
+	echo "Size check skipped"
     fi
-    #
-    # Send email notification
-    prompt_user "Send email notification?" "send_email_notification $solid_run_dir"
 }
 #
 #####################################################################
@@ -297,7 +297,19 @@ if [ -d "${solid_runs}_2" ] ; then
     fi
 fi
 #
+# Get email address for notifications, if not provided on command line
+if [ -z "$EMAIL_ADDRESS" ] ; then
+    echo -n "Email address to send log file/notifications to? "
+    read addr
+    if [ ! -z "$addr" ] ; then
+	EMAIL_ADDRESS=$addr
+    else
+	echo "No email address set"
+    fi
+fi
+#
 # Report settings
+echo "---------------------------------------------------------------"
 echo "Source:"
 echo "SOLiD directories: $solid_runs"
 echo "Destination:"
@@ -305,9 +317,7 @@ echo "Remote user      : $REMOTE_USER"
 echo "Remote host      : $REMOTE_HOST"
 echo "Remote directory : $REMOTE_DATADIR"
 echo "Email address    : $EMAIL_ADDRESS"
-#
-# Confirm that this is correct
-prompt_user --exit 0 "Proceed?"
+echo "---------------------------------------------------------------"
 #
 # Check if ssh-agent is running
 if [ ! -z "$SSH_AUTH_SOCK" ] && [ ! -z "$SSH_AGENT_PID" ] ; then
@@ -320,7 +330,13 @@ fi
 #
 # Run the rsync
 for solid_run in $solid_runs ; do
-    rsync_solid_to_cluster $solid_run $REMOTE_USER $REMOTE_HOST $REMOTE_DATADIR
+    prompt_user "Proceed with rsync for ${solid_run}?"
+    response=$?
+    if [ $response == 1 ] ; then
+	rsync_solid_to_cluster $solid_run $REMOTE_USER $REMOTE_HOST $REMOTE_DATADIR
+    else
+	echo "*** Skipped rsync for ${solid_run} ***"
+    fi
 done
 #
 # Done
