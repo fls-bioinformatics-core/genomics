@@ -98,7 +98,7 @@ function prompt_user() {
     esac
 }
 #
-# acknowldge()
+# acknowledge()
 #
 # Usage: acknowledge "my message"
 #
