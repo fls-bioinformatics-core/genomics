@@ -7,13 +7,20 @@ bfast_build_indexes.sh
 ----------------------
 Builds the bfast color-space indexes from a reference FASTA file.
 
-### Usage: ###
+### Usage ###
 
     bfast_build_indexes.sh [OPTIONS] <genome_fasta_file>
 
 Run with -h option to print full usage information.
 
-### Outputs: ###
+### Options ###
+
+* `-d <depth>` Specify depth-of-splitting used by Bfast (default 1)
+* `-w <hash_width>` Specify hash width used by Bfast (default 14)
+* `--dry-run` Print commands without executing them
+* `-h` Print usage information and defaults
+
+### Outputs ###
 
 Index file are created in the directory the script was run in.
 
@@ -21,28 +28,22 @@ Index file are created in the directory the script was run in.
 * `.brg` index files for base- and color-space
 * Symbolic link to the reference (input) FASTA file.
 
-**NOTE:** by default "bfast index" is run with options -d 1 and -w 14
-(specifying the hash width and depth of splitting respectively).
-These options can be changed by specifying -d and/or -w when
-running the script.
+### Tips ###
 
-**NOTE:** use the --dry-run option to print the commands without
-executing them.
-
-**NOTE:** if .brg and/or .bif files already exist then bfast index
-may not run correctly. It's recommended to remove any old files
-before rerunning the build script.
+*    If `.brg` and/or `.bif` files already exist then bfast index
+     may not run correctly. It's recommended to remove any old files
+     before rerunning the build script.
 
 bowtie_build_indexes.sh
 -----------------------
 Builds the bowtie color and nucleotide space indexes from the reference
 FASTA file.
 
-### Usage: ###
+### Usage ###
 
     bowtie_build_indexes.sh <genome_fasta_file>
 
-### Outputs: ###
+### Outputs ###
 
 Index files are created in the directory the script was run in.
 
@@ -51,18 +52,24 @@ Index files are created in the directory the script was run in.
 
 srma_build_indexes.sh
 ---------------------
-Creates the index files reqyure by SRMA.
+Creates the index files required by SRMA.
 
-### Setup: ###
+### Setup ###
 
-Edit the `PICARD_TOOLS` variable in the script to point to the directory
-holding the `CreateSequenceDictionary.jar` file.
+By default the script expects the `CreateSequenceDictionary.jar` file to be
+in the `/usr/share/java/picard-tools` directory; if this is not the case then
+set the variable `PICARD_TOOLS_DIR` variable in your environment to point to
+the actual location.
 
-### Usage: ###
+For example for `bash`:
+
+    export PICARD_TOOLS_DIR=/path/to/my/picard-tools
+
+### Usage ###
 
     srma_build_indexes.sh <genome_fasta_file>
 
-### Outputs: ###
+### Outputs ###
 
 Index files are created in the same directory as the reference FASTA file
 (which is where SRMA requires them to be); the script itself can be run from
