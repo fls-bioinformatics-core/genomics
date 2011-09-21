@@ -28,10 +28,12 @@ Outputs
 EOF
 }
 #
+# Import functions
+. `dirname $0`/functions.sh
+#
 # Initialisations
 script_name=`basename $0`
-SCRIPT_NAME=`echo ${script_name%.*} | tr [:lower:] [:upper:]`
-#usage="$script_name [-d <depth>] [-w <hash_width>] [--dry-run] <genome_fasta_file>"
+SCRIPT_NAME=$(rootname $script_name)
 #
 # Current environment
 run_date=`date`
@@ -89,7 +91,7 @@ if [ "$FASTA_GENOME" == "" ] ; then
 fi
 #
 # Check for bfast program
-BFAST=`which bfast 2>&1 | grep -v which`
+BFAST=$(find_program bfast)
 if [ "$BFAST" == "" ] ; then
     echo Fatal: bfast program not found
     echo Check that bfast is on your PATH and rerun
@@ -117,10 +119,10 @@ else
 fi
 #
 # Collect program version
-BFAST_VERSION=`$BFAST 2>&1 | grep Version | cut -d" " -f2`
+BFAST_VERSION=$(get_version $BFAST)
 #
 echo ===================================================
-echo $SCRIPT_NAME: START
+echo $(to_upper $SCRIPT_NAME): START
 echo ===================================================
 #
 # Print program information, versions etc
@@ -207,6 +209,6 @@ for mask in $masks ; do
 done
 #
 echo ===================================================
-echo $SCRIPT_NAME: FINISHED
+echo $(to_upper $SCRIPT_NAME): FINISHED
 echo ===================================================
 exit

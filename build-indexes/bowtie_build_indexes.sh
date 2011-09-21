@@ -19,12 +19,14 @@ Outputs
    and <genome_name>_c.*.ebwt (color-space) files
 EOF
 }
-script_name=`basename $0`
-SCRIPT_NAME=`echo ${script_name%.*} | tr [:lower:] [:upper:]`
-
+# Import functions
+. `dirname $0`/functions.sh
 #
 # Initialisations
-BOWTIE_BUILD=`which bowtie-build 2>&1 | grep -v which`
+script_name=`basename $0`
+SCRIPT_NAME=$(rootname $script_name)
+#
+BOWTIE_BUILD=$(find_program bowtie-build)
 if [ "$BOWTIE_BUILD" == "" ] ; then
     echo Fatal: bowtie-build program not found
     echo Check that bowtie-build is on your PATH and rerun
@@ -46,8 +48,7 @@ fi
 FASTA_GENOME=$1
 #
 # Genome base name
-genome=`basename $FASTA_GENOME`
-genome=${genome%.*}
+genome=$(baserootname $FASTA_GENOME)
 #
 # Check input file exists
 if [ ! -f "$FASTA_GENOME" ] ; then
@@ -57,10 +58,10 @@ if [ ! -f "$FASTA_GENOME" ] ; then
 fi
 #
 # Collect program version
-BOWTIE_VERSION=`$BOWTIE_BUILD --version 2>&1 | grep "bowtie-build version" | cut -d" " -f3`
+BOWTIE_VERSION=$(get_version $BOWTIE_BUILD)
 #
 echo ===================================================
-echo $SCRIPT_NAME: START
+echo $(to_upper $SCRIPT_NAME): START
 echo ===================================================
 #
 # Print program information, versions etc
@@ -96,6 +97,6 @@ cs_bowtie_build="$BOWTIE_BUILD -C -f $FASTA_GENOME $cs_ebwt_outfile_base"
 echo $cs_bowtie_build
 $cs_bowtie_build
 echo ===================================================
-echo $SCRIPT_NAME: FINISHED
+echo $(to_upper $SCRIPT_NAME): FINISHED
 echo ===================================================
 exit

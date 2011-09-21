@@ -59,7 +59,7 @@ function trawl() {
 	    $TRAWLER $name $indent
 	elif [ -f $name ] ; then
 	    # Process based on file extension
-	    ext=${name##*.}
+	    ext=$(getextension $name)
 	    case "$ext" in
 		info)
 		    # info files
@@ -123,6 +123,9 @@ if [ "$TRAWLER_DIR" == . ] ; then
 else
     TRAWLER=${TRAWLER_DIR}/${TRAWLER}
 fi
+#
+# Import external function library
+. ${TRAWLER_DIR}/functions.sh
 #
 # Begin the trawl
 trawl $1 $2
