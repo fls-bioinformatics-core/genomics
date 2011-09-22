@@ -29,7 +29,7 @@ EOF
 }
 #
 # Import functions
-. `dirname $0`/functions.sh
+. `dirname $0`/../share/functions.sh
 #
 # Initialisations
 script_name=`basename $0`

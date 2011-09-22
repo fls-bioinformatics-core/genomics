@@ -125,7 +125,7 @@ else
 fi
 #
 # Import external function library
-. ${TRAWLER_DIR}/functions.sh
+. ${TRAWLER_DIR}/../share/functions.sh
 #
 # Begin the trawl
 trawl $1 $2
