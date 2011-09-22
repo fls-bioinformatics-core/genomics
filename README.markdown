@@ -12,6 +12,7 @@ Scripts are organised into the following directories:
 * [solid2cluster](solid2cluster): utilities for copying data from SOLiD
   instrument to cluster
 * [utils](utils): non-NGS utility scripts
+* [share](share): common libraries and modules shared between applications
 * [shoebox](shoebox): a place for scrappy or one-off utility scripts which
   may or may not be useful in future.
 
