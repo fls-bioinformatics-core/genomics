@@ -215,7 +215,9 @@ class Worksheet:
         """
         for row in rows:
             self.data.append(row)
-            self.ncols = max(self.ncols,len(row))
+            self.ncols = max(self.ncols,len(row.split('\t')))
+        if self.ncols > 256:
+            logging.warning("Number of columns exceeds 256")
 
     def addText(self,text):
         """Write text to the sheet.
@@ -462,7 +464,8 @@ class Spreadsheet:
             self.sheet.addText("")
         else:
             empty_row = []
-            for i in range(self.sheet.ncols):
+            ncols = min(self.sheet.ncols,256)
+            for i in range(ncols):
                 empty_row.append("<style bgcolor=%s> </style>" % color)
             self.sheet.addText('\t'.join(empty_row))
 
