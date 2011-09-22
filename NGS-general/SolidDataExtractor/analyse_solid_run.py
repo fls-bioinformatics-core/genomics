@@ -133,10 +133,8 @@ def write_spreadsheet(solid_runs,spreadsheet):
             try:
                 if run.samples[0].projects[0].isBarcoded():
                     # Barcoded sample, get stats
-                    try:
-                        total_reads = run.samples[0].barcode_stats.\
-                            getDataByName("All Beads")[-1]
-                    except AttributeError:
+                    total_reads = run.samples[0].barcode_stats.totalReads()
+                    if total_reads is None:
                         # Potential problem
                         total_reads = "NOT_FOUND"
                 else:
@@ -175,13 +173,10 @@ def write_spreadsheet(solid_runs,spreadsheet):
                     # For barcoded samples we should be able to extract
                     # thos from the barcode statistics data
                     if project.isBarcoded():
-                        total_reads = ''
-                        if sample.barcode_stats:
-                            try:
-                                total_reads = sample.barcode_stats.\
-                                    getDataByName("All Beads")[-1]
-                            except IndexError:
-                                pass
+                        total_reads = sample.barcode_stats.totalReads()
+                        if total_reads is None:
+                            # Potential problem
+                            total_reads = "NOT_FOUND"
                     else:
                         # Not a barcoded sample, manual lookup
                         total_reads = "MANUAL_LOOKUP"

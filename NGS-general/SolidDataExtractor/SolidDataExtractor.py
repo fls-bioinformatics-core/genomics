@@ -757,6 +757,43 @@ class SolidBarcodeStatistics:
                 return data
         return None
 
+    def totalReads(self):
+        """Return the total reads
+
+        The total reads are calculated as the totals for all beads less the
+        subtotal of unassigned reads.
+
+        If the required data cannot be found from the barcode stats data then
+        returns None.
+        """
+        unassigned_subtotals = None
+        all_beads_totals = None
+        for line in self.data:
+            if line[0] == 'unassigned' and line[1] == 'Subtotals':
+                # Look for unassigned subtotals
+                logging.debug(">>> %s" % line)
+                if unassigned_subtotals is not None:
+                    logging.warning("Multiple unassigned subtotals found")
+                try:
+                    unassigned_subtotals = int(line[-1])
+                except ValueError:
+                    logging.error("Unassigned subtotal '%s' is not an integer" % line[-1])
+            elif line[0] == 'All Beads' and line[1] == 'Totals':  
+                # Look for total of all beads
+                logging.debug(">>> %s" % line)              
+                if all_beads_totals is not None:
+                    logging.warning("Multiple all beads totals found")
+                try:
+                    all_beads_totals = int(line[-1])
+                except ValueError:
+                    logging.error("Unassigned subtotal '%s' is not an integer" % line[-1])
+        # Work out the total reads
+        if unassigned_subtotals is None or all_beads_totals is None:
+            logging.error("Unable to acquire values for one or both of subtotals or totals")
+            return None
+        else:
+            return all_beads_totals - unassigned_subtotals
+
 #######################################################################
 # Module Functions
 #######################################################################
