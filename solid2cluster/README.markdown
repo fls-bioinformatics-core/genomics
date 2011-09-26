@@ -39,7 +39,7 @@ on the command line then a copy of the logs will be mailed to this address.
 log_solid_run.sh
 ----------------
 
-Script to add 
+Script to add entries for transferred SOLiD run directories to a logging file.
 
 Usage:
 
