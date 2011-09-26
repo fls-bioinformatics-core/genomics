@@ -1,5 +1,14 @@
+solid2cluster
+=============
+
+Utilities for transferring data from the SOLiD instrument to the cluster:
+
+ *   `rsync_solid_to_cluster.sh`: perform transfer of primary data
+ *   `log_solid_run.sh`: maintain logging file of transferred runs
+
+
 rsync_solid_to_cluster.sh
-=========================
+-------------------------
 
 Interactive script to semi-automate the transfer of data from the SOLiD
 instrument to a destination machine.
@@ -25,3 +34,19 @@ and offer to copy both in a single script run.
 
 The output from each `rsync` is also captured in a timestamped log file. If an email address is supplied
 on the command line then a copy of the logs will be mailed to this address.
+
+
+log_solid_run.sh
+----------------
+
+Script to add 
+
+Usage:
+
+    log_solid_run.sh <logging_file> <solid_run_dir> [<description>]
+
+A new entry for the directory `<solid_run_dir>` will be added to `<logging_file>`, consisting of
+the full path to the directory, a UNIX timestamp, and the optional description.
+
+If the logging file doesn't exist then it will be created, and a new entry won't be created for any
+SOLiD run directory that is already in the logging file.
