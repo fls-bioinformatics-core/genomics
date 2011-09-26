@@ -6,7 +6,7 @@ instrument to a destination machine.
 
 Usage:
 
-    rsync_solid_to_cluster.sh <local_dir> <user>@<remote_host>:<remote_dir>
+    rsync_solid_to_cluster.sh <local_dir> <user>@<remote_host>:<remote_dir> [<email_address>]
 
 `<local_dir>` is the directory to be copied; `<user>` is an account on the
 destination machine `<remote_host>` and `<remote_dir>` is the parent directory
@@ -17,6 +17,11 @@ confirm each action:
 
 1. Check that the information is correct
 2. Do `rsync --dry-run` and inspect the output
-3. Perform the actual rsync operation
+3. Perform the actual rsync operation (including removing group write permission from the remote copy)
 4. Check that the local and remote file sizes match
-5. Remove group write permissions from the remote copy
+
+If there is more than one run with the same base name then the script will detect the second run
+and offer to copy both in a single script run.
+
+The output from each `rsync` is also captured in a timestamped log file. If an email address is supplied
+on the command line then a copy of the logs will be mailed to this address.
