@@ -111,12 +111,9 @@ function has_lock() {
     fi
     ts=$(timestamp $lock_file)
     for lock in `ls ${lock_dir}/*.lock.*` ; do
-	if [ "$lock" != "$lock_file" ] ; then
-	    echo $lock $(timestamp $lock)
-	    if [ $(timestamp $lock) -lt $ts ] ; then
-		# Found an older lock file
-		return 0
-	    fi
+	if [ $(timestamp $lock) -lt $ts ] ; then
+	    # Found an older lock file
+	    return 0
 	fi
     done
     # This process has the oldest lock
