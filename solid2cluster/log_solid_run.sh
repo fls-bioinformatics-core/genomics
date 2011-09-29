@@ -143,7 +143,7 @@ elif [ "$2" == "-u" ] ; then
     MODE=update
     shift
 fi
-SOLID_RUN=$(abs_path $2)
+SOLID_RUN=`readlink -m $(abs_path $2)`
 DESCRIPTION=$3
 #
 # Make a lock on the log file
