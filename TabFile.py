@@ -49,12 +49,12 @@ class TabFile:
         # Initialise
         self.__filen = filen
         self.__ncols = 0
-        # Set up column names
         self.__header = []
+        self.__data = []
+        # Set up column names
         if column_names is not None:
             self.__setHeader(column_names)
         # Read in data
-        self.__data = []
         if fp is None:
             # Open named file
             fp = open(self.__filen,'rU')
@@ -86,7 +86,7 @@ class TabFile:
                 # Skip first line
                 skip_first_line = False
                 continue
-            elif first_line_is_header:
+            elif first_line_is_header and len(self.header()) == 0:
                 # Set up header from first line
                 self.__setHeader(line.strip().strip('#').split('\t'))
                 first_line_is_header = False
@@ -401,6 +401,17 @@ chr2\t1234\t5678\t6.8
         self.assertEqual(tabfile.header(),['chr','start','end','data'],"Wrong header")
         self.assertEqual(str(tabfile[0]),"chr1\t1\t234\t4.6","Incorrect string representation")
         self.assertEqual(tabfile[2]['chr'],'chr2',"Incorrect data")
+        self.assertEqual(tabfile.nColumns(),4)
+
+    def test_load_data_setting_explicit_header(self):
+        """Create and load TabFile setting the header explicitly
+        """
+        tabfile = TabFile('test',self.fp,first_line_is_header=True,
+                          column_names=('CHROM','START','STOP','VALUES'))
+        self.assertEqual(len(tabfile),3,"Input has 3 lines of data")
+        self.assertEqual(tabfile.header(),['CHROM','START','STOP','VALUES'],"Wrong header")
+        self.assertEqual(str(tabfile[0]),"chr1\t1\t234\t4.6","Incorrect string representation")
+        self.assertEqual(tabfile[2]['CHROM'],'chr2',"Incorrect data")
         self.assertEqual(tabfile.nColumns(),4)
 
     def test_lookup(self):
