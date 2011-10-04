@@ -133,6 +133,11 @@ class TabFile:
         found in the first line of data
         """
         return self.__ncols
+
+    def filename(self):
+        """Return the file name associated with the TabFile
+        """
+        return self.__filen
     
     def lookup(self,key,value):
         """Return lines where the key matches the specified value
@@ -392,6 +397,7 @@ chr2\t1234\t5678\t6.8
         self.assertEqual(str(tabfile[0]),"chr1\t1\t234\t4.6","Incorrect string representation")
         self.assertEqual(tabfile[2][0],'chr2',"Incorrect data")
         self.assertEqual(tabfile.nColumns(),4)
+        self.assertEqual(tabfile.filename(),'test')
 
     def test_load_data_with_header(self):
         """Create and load Tabfile using first line as header
