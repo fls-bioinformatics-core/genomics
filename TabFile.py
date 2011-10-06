@@ -537,14 +537,14 @@ chr2\t1234\t5678\t6.8
     def test_insert_line_with_data(self):
         """Insert line into a TabFile populated with data
         """
-        data = ['chr1','678','901','6.1']
+        data = ['chr1',678,901,6.1]
         tabfile = TabFile('test',self.fp)
         self.assertEqual(len(tabfile),3)
         line = tabfile.insert(2,data=data)
         self.assertEqual(len(tabfile),4)
         # Check new line is correct
         for i in range(len(data)):
-            self.assertTrue(str(line[i]) == data[i])
+            self.assertTrue(line[i] == data[i])
 
     def test_insert_line_with_tab_data(self):
         """Insert line into a TabFile populated from tabbed data
@@ -599,12 +599,12 @@ class TestEmptyTabFile(unittest.TestCase):
     def test_add_data_to_new_tabfile(self):
         """Test adding data as a list of items to a new empty TabFile
         """
-        data = ['chr1','10000','20000','+']
+        data = ['chr1',10000,20000,'+']
         tabfile = TabFile()
         tabfile.append(data=data)
         self.assertEqual(len(tabfile),1,"TabFile should now have one line")
         for i in range(len(data)):
-            self.assertEqual(str(tabfile[0][i]),data[i])
+            self.assertEqual(tabfile[0][i],data[i])
 
     def test_add_tab_data_to_new_tabfile(self):
         """Test adding data as a tab-delimited line to a new empty TabFile
@@ -672,8 +672,8 @@ class TestTabDataLine(unittest.TestCase):
         self.assertEqual(len(line),4,"Line should have 4 items")
         self.assertEqual(str(line),input_data,"String representation should be same as input")
         # Test getting
-        self.assertEqual(str(line[1]),str(2.2),"Column 2 data is incorrect")
-        self.assertEqual(str(line["two"]),str(2.2),"Column 2 data is incorrect")
+        self.assertEqual(line[1],2.2,"Column 2 data is incorrect")
+        self.assertEqual(line["two"],2.2,"Column 2 data is incorrect")
         # Test setting
         line["two"] = 4.4
         self.assertEqual(line[1],4.4,"Column 2 data is incorrect after set operation")
@@ -693,7 +693,7 @@ class TestTabDataLine(unittest.TestCase):
         self.assertEqual(len(subset),2,"Subset should have 2 items")
         self.assertEqual(str(subset),"3.3\t4.4","String representation should be last two columns")
         # Check key lookup still works
-        self.assertEqual(str(subset["three"]),str(3.3))
+        self.assertEqual(subset["three"],3.3)
 
     def test_subsetting_no_header(self):
         """Create new data line with no header and retrieve subset
@@ -705,7 +705,7 @@ class TestTabDataLine(unittest.TestCase):
         self.assertEqual(len(subset),2,"Subset should have 2 items")
         self.assertEqual(str(subset),"3.3\t4.4","String representation should be last two columns")
         # Check key lookup
-        self.assertEqual(str(subset[2]),str(3.3))
+        self.assertEqual(subset[2],3.3)
 
     def test_line_number(self):
         """Create new data line with line number
