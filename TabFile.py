@@ -193,17 +193,31 @@ class TabFile:
         self.__data.append(data_line)
         return data_line
 
-    def insert(self,i):
+    def insert(self,i,data=None,tabdata=None):
         """Create and insert a new data line at a specified index
  
-        Creates a new (empty) TabDataLine and inserts it into the
-        list of lines at the specified index position 'i' (nb NOT
-        a line number).
+        Creates a new TabDataLine and inserts it into the list of
+        lines at the specified index position 'i' (nb NOT a line
+        number).
 
-        Returns the new TabDataLine which can then be populated
-        by the calling subprogram.
+        Optionally the 'data' or 'tabdata' arguments can specify
+        data items which will be used to populate the new line.
+
+        Arguments:
+          i: index position to insert the line at
+          data: (optional) a list of data items
+          tabdata: (optional) a string of tab-delimited data items
+
+        Returns:
+          New inserted TabDataLine object.
         """
-        data_line = TabDataLine(column_names=self.header())
+        if data:
+            line = '\t'.join([str(x) for x in data])
+        elif tabdata:
+            line = tabdata
+        else:
+            line = None
+        data_line = TabDataLine(line=line,column_names=self.header())
         self.__data.insert(i,data_line)
         return data_line
 
@@ -481,6 +495,40 @@ chr2\t1234\t5678\t6.8
         self.assertRaises(IndexError,tabfile.indexByLineNumber,-12)
         # Look for a negative line number
         self.assertRaises(IndexError,tabfile.indexByLineNumber,99)
+
+    def test_insert_empty_line(self):
+        """Insert a blank line into a TabFile
+        """
+        tabfile = TabFile('test',self.fp)
+        self.assertEqual(len(tabfile),3)
+        line = tabfile.insert(2)
+        self.assertEqual(len(tabfile),4)
+        # Check new line is empty
+        for i in range(len(line)):
+            self.assertTrue(str(line[i]) == '')
+
+    def test_insert_line_with_data(self):
+        """Insert line into a TabFile populated with data
+        """
+        data = ['chr1','678','901','6.1']
+        tabfile = TabFile('test',self.fp)
+        self.assertEqual(len(tabfile),3)
+        line = tabfile.insert(2,data=data)
+        self.assertEqual(len(tabfile),4)
+        # Check new line is correct
+        for i in range(len(data)):
+            self.assertTrue(str(line[i]) == data[i])
+
+    def test_insert_line_with_tab_data(self):
+        """Insert line into a TabFile populated from tabbed data
+        """
+        data = 'chr1\t10000\t20000\t+'
+        tabfile = TabFile('test',self.fp)
+        self.assertEqual(len(tabfile),3)
+        line = tabfile.insert(2,tabdata=data)
+        self.assertEqual(len(tabfile),4)
+        # Check new line is correct
+        self.assertTrue(str(line) == data)
 
 class TestUncommentedHeaderTabFile(unittest.TestCase):
 
