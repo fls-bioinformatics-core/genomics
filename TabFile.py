@@ -253,6 +253,9 @@ class TabDataLine:
 
         line['second'] = new_value
 
+    Values are automatically converted to integer or float types as
+    appropriate.
+
     Subsets of data can be created using the 'subset' method.
 
     Line numbers can also be set by the creating subprogram, and
@@ -271,7 +274,8 @@ class TabDataLine:
         self.data = []
         self.__lineno = None
         if line is not None:
-            self.data = line.strip().split('\t')
+            for value in line.strip().split('\t'):
+                self.data.append(self.__convert(value))
         # Column names
         self.names = []
         if column_names:
@@ -330,10 +334,12 @@ class TabDataLine:
         WARNING there is potential ambiguity if any column "names"
         also happen to be integers. 
         """
+        # Convert value to correct type
+        converted_value = self.__convert(value)
         # See if key is a column name
         try:
             i = self.names.index(key)
-            self.data[i] = value
+            self.data[i] = converted_value
         except ValueError:
             # Not a column name
             # See if it's an integer index
@@ -343,7 +349,7 @@ class TabDataLine:
                 # Not an integer
                 raise KeyError, "column '%s' not found" % key
             try:
-                self.data[i] = value
+                self.data[i] = converted_value
             except IndexError:
                 # Integer but out of range
                 raise KeyError, "integer index out of range for '%s'" % key
@@ -351,13 +357,34 @@ class TabDataLine:
     def __len__(self):
         return len(self.data)
 
+    def __convert(self,value):
+        """Internal: convert a value to the correct type
+
+        Used to coerce input values into integers or floats
+        if appropriate before storage in the TabDataLine
+        object.
+        """
+        converted = str(value)
+        try:
+            # Try integer
+            converted = int(converted)
+        except ValueError:
+            # Not an integer, try float
+            try:
+                converted = float(converted)
+            except ValueError:
+                # Not a float, leave as input
+                pass
+        # Return value
+        return converted
+
     def append(self,*values):
         """Append values to the data line
 
         Should only be used when creating new data lines.
         """
         for value in values:
-            self.data.append(value)
+            self.data.append(self.__convert(value))
 
     def appendColumn(self,key,value):
         """Append keyed values to the data line
@@ -365,7 +392,7 @@ class TabDataLine:
         This adds a new value along with a header name (i.e. key)
         """
         self.names.append(key)
-        self.data.append(value)
+        self.data.append(self.__convert(value))
 
     def subset(self,*keys):
         """Return a subset of data items
@@ -411,7 +438,7 @@ class TabDataLine:
         return self.__lineno
 
     def __repr__(self):
-        return '\t'.join(self.data)
+        return '\t'.join([str(x) for x in self.data])
 
 ########################################################################
 #
@@ -577,7 +604,7 @@ class TestEmptyTabFile(unittest.TestCase):
         tabfile.append(data=data)
         self.assertEqual(len(tabfile),1,"TabFile should now have one line")
         for i in range(len(data)):
-            self.assertEqual(tabfile[0][i],data[i])
+            self.assertEqual(str(tabfile[0][i]),data[i])
 
     def test_add_tab_data_to_new_tabfile(self):
         """Test adding data as a tab-delimited line to a new empty TabFile
@@ -635,7 +662,7 @@ class TestTabDataLine(unittest.TestCase):
         input_data = "1.1\t2.2\t3.3\t4.4"
         line = TabDataLine(line=input_data)
         self.assertEqual(len(line),4,"Line should have 4 items")
-        self.assertEqual(line[1],str(2.2))
+        self.assertEqual(str(line),input_data)
 
     def test_get_and_set_data(self):
         """Create new data line and do get and set operations
@@ -645,8 +672,8 @@ class TestTabDataLine(unittest.TestCase):
         self.assertEqual(len(line),4,"Line should have 4 items")
         self.assertEqual(str(line),input_data,"String representation should be same as input")
         # Test getting
-        self.assertEqual(line[1],str(2.2),"Column 2 data is incorrect")
-        self.assertEqual(line["two"],str(2.2),"Column 2 data is incorrect")
+        self.assertEqual(str(line[1]),str(2.2),"Column 2 data is incorrect")
+        self.assertEqual(str(line["two"]),str(2.2),"Column 2 data is incorrect")
         # Test setting
         line["two"] = 4.4
         self.assertEqual(line[1],4.4,"Column 2 data is incorrect after set operation")
@@ -666,7 +693,7 @@ class TestTabDataLine(unittest.TestCase):
         self.assertEqual(len(subset),2,"Subset should have 2 items")
         self.assertEqual(str(subset),"3.3\t4.4","String representation should be last two columns")
         # Check key lookup still works
-        self.assertEqual(subset["three"],str(3.3))
+        self.assertEqual(str(subset["three"]),str(3.3))
 
     def test_subsetting_no_header(self):
         """Create new data line with no header and retrieve subset
@@ -678,7 +705,7 @@ class TestTabDataLine(unittest.TestCase):
         self.assertEqual(len(subset),2,"Subset should have 2 items")
         self.assertEqual(str(subset),"3.3\t4.4","String representation should be last two columns")
         # Check key lookup
-        self.assertEqual(subset[2],str(3.3))
+        self.assertEqual(str(subset[2]),str(3.3))
 
     def test_line_number(self):
         """Create new data line with line number
@@ -691,6 +718,46 @@ class TestTabDataLine(unittest.TestCase):
         """
         self.assertRaises(ValueError,TabDataLine,lineno=-3)
         self.assertRaises(ValueError,TabDataLine,lineno="three")
+
+class TestTabDataLineTypeConversion(unittest.TestCase):
+
+    def test_convert_integers(self):
+        """Load string data which should be converted to integers
+        """
+        test_values = [12,34,56]
+        input_data = '\t'.join([str(x) for x in test_values])
+        line = TabDataLine(line=input_data)
+        for i in range(len(test_values)):
+            self.assertEqual(line[i],test_values[i])
+
+    def test_convert_floats(self):
+        """Load string data which should be converted to floats
+        """
+        test_values = [1.2,3.4,5.6]
+        input_data = '\t'.join([str(x) for x in test_values])
+        line = TabDataLine(line=input_data)
+        for i in range(len(test_values)):
+            self.assertEqual(line[i],test_values[i])
+
+    def test_convert_append_items(self):
+        """Append items as strings and check type conversions
+        """
+        test_values = ['chr1',2,3.4]
+        line = TabDataLine()
+        for value in test_values:
+            line.append(str(value))
+        for i in range(len(test_values)):
+            self.assertEqual(line[i],test_values[i])
+
+    def test_convert_set_items(self):
+        """Set items as strings and check type conversions
+        """
+        test_values = ['chr1',2,3.4]
+        line = TabDataLine(line="x\ty\tz")
+        for i in range(len(test_values)):
+            line[i] = str(test_values[i])
+        for i in range(len(test_values)):
+            self.assertEqual(line[i],test_values[i])
         
 ########################################################################
 #
