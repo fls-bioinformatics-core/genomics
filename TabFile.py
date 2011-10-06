@@ -323,7 +323,7 @@ class TabDataLine:
                 return self.data[i]
             except IndexError:
                 # Integer but out of range
-                raise KeyError, "integer index out of range for '%s'" % key
+                raise IndexError, "integer index out of range for '%s'" % key
 
     def __setitem__(self,key,value):
         """Implement TabDataLine[key] = value
@@ -352,7 +352,7 @@ class TabDataLine:
                 self.data[i] = converted_value
             except IndexError:
                 # Integer but out of range
-                raise KeyError, "integer index out of range for '%s'" % key
+                raise IndexError, "integer index out of range for '%s'" % key
 
     def __len__(self):
         return len(self.data)
@@ -718,6 +718,19 @@ class TestTabDataLine(unittest.TestCase):
         """
         self.assertRaises(ValueError,TabDataLine,lineno=-3)
         self.assertRaises(ValueError,TabDataLine,lineno="three")
+
+    def test_iteration_over_items(self):
+        """Iterate over the data items in a data line
+        """
+        input_data = "1.1\t2.2\t3.3\t4.4"
+        line = TabDataLine(line=input_data)
+        try:
+            # This should work
+            for item in line:
+                pass
+        except Exception,ex:
+            # It hasn't worked
+            self.fail("Iteration test exception: '%s'" % ex)
 
 class TestTabDataLineTypeConversion(unittest.TestCase):
 
