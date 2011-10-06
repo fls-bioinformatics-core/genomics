@@ -30,14 +30,19 @@ class TabFile:
 
         myline = data[0]           # fetch first line of data
     """
-    def __init__(self,filen,fp=None,column_names=None,skip_first_line=False,
+    def __init__(self,filen=None,fp=None,column_names=None,skip_first_line=False,
                  first_line_is_header=False):
         """Create a new TabFile object
 
+        If either of 'filen' or 'fp' arguments are given then the
+        TabFile object will be populated with data from the specified
+        file or stream. Otherwise an empty TabFile object is created.
+
         Arguments:
-          filen: name of tab-delimited file to load
+          filen (optional): name of tab-delimited file to load data
+              from; ignored if fp is also specified
           fp: (optional) a file-like object which data can be loaded
-              from like a file
+              from like a file; used in preference to filen
           column_names: (optional) list of column names to assign to
               columns in the file
           skip_first_line: (optional) if True then ignore the first
@@ -55,12 +60,12 @@ class TabFile:
         if column_names is not None:
             self.__setHeader(column_names)
         # Read in data
-        if fp is None:
+        if fp is None and filen is not None:
             # Open named file
             fp = open(self.__filen,'rU')
-        self.__load(fp,skip_first_line=skip_first_line,
-                  first_line_is_header=first_line_is_header)
         if fp:
+            self.__load(fp,skip_first_line=skip_first_line,
+                        first_line_is_header=first_line_is_header)
             fp.close()
 
     def __load(self,fp,skip_first_line=False,first_line_is_header=False):
@@ -481,6 +486,14 @@ chr2\t1234\t5678\t6.8
         self.assertEqual(str(tabfile[0]),"chr\tstart\tend\tdata","Incorrect string representation")
         self.assertRaises(KeyError,tabfile[3].__getitem__,'chr')
         self.assertEqual(tabfile.nColumns(),4)
+
+class TestEmptyTabFile(unittest.TestCase):
+
+    def test_make_empty_tabfile(self):
+        """Test creating an empty TabFile with no associated file
+        """
+        tabfile = TabFile()
+        self.assertEqual(len(tabfile),0,"new TabFile should have zero length")
         
 class TestBadTabFile(unittest.TestCase):
     """Test with 'bad' input files
