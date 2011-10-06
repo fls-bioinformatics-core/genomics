@@ -167,6 +167,32 @@ class TabFile:
                 return idx
         raise IndexError,"No line number %d" % n
 
+    def append(self,data=None,tabdata=None):
+        """Create and append a new data line
+
+        Creates a new TabDataLine and appends it to the end of the
+        list of lines.
+
+        Optionally the 'data' or 'tabdata' arguments can specify
+        data items which will be used to populate the new line.
+
+        Arguments:
+          data: (optional) a list of data items
+          tabdata: (optional) a string of tab-delimited data items
+
+        Returns:
+          Appended TabDataLine object.
+        """
+        if data:
+            line = '\t'.join([str(x) for x in data])
+        elif tabdata:
+            line = tabdata
+        else:
+            line = None
+        data_line = TabDataLine(line=line,column_names=self.header())
+        self.__data.append(data_line)
+        return data_line
+
     def insert(self,i):
         """Create and insert a new data line at a specified index
  
@@ -494,6 +520,25 @@ class TestEmptyTabFile(unittest.TestCase):
         """
         tabfile = TabFile()
         self.assertEqual(len(tabfile),0,"new TabFile should have zero length")
+
+    def test_add_data_to_new_tabfile(self):
+        """Test adding data as a list of items to a new empty TabFile
+        """
+        data = ['chr1','10000','20000','+']
+        tabfile = TabFile()
+        tabfile.append(data=data)
+        self.assertEqual(len(tabfile),1,"TabFile should now have one line")
+        for i in range(len(data)):
+            self.assertEqual(tabfile[0][i],data[i])
+
+    def test_add_tab_data_to_new_tabfile(self):
+        """Test adding data as a tab-delimited line to a new empty TabFile
+        """
+        data = 'chr1\t10000\t20000\t+'
+        tabfile = TabFile()
+        tabfile.append(tabdata=data)
+        self.assertEqual(len(tabfile),1,"TabFile should now have one line")
+        self.assertEqual(str(tabfile[0]),data)
         
 class TestBadTabFile(unittest.TestCase):
     """Test with 'bad' input files
