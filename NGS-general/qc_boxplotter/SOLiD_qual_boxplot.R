@@ -42,7 +42,7 @@ for(i in files) {
 
    # first position = first drawing of boxplot
    if(s==1){
-      no_title = paste(fileName, "Nucleotide order", sep=" - ")
+      no_title = paste(basename(fileName), "Nucleotide order", sep=" - ")
 
       boxplot(values, xlim=c(0,50), ylim=c(-1,35), outline=FALSE, boxfill=2, main=no_title)
    }
