@@ -58,17 +58,17 @@ fi
 #
 # Determine basename for fastq file: same as csfasta, with
 # any leading directory and extension stripped off
-fastq_base=${csfasta%.*}
+csfasta_base=${csfasta%.*}
 #
 # Check if fastq file already exists
-fastq=${fastq_base}.fastq
+fastq=${csfasta_base}.fastq
 if [ -f "${fastq}" ] ; then
     echo Fastq file already exists, skipping solid2fastq
 else
     echo "--------------------------------------------------------"
     echo Executing solid2fastq
     echo "--------------------------------------------------------"
-    cmd="${SOLID2FASTQ} -o $fastq_base ${datadir}/${csfasta} ${datadir}/${qual}"
+    cmd="${SOLID2FASTQ} -o $csfasta_base ${datadir}/${csfasta} ${datadir}/${qual}"
     echo $cmd
     $cmd
 fi
