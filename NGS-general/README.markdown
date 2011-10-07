@@ -10,7 +10,16 @@ interpret each bit.
 
 qc_boxplotter
 -------------
-Generate a QC boxplot from SOLiD .qual file.
+Generates a QC boxplot from a SOLiD .qual file.
+
+Usage:
+
+    qc_boxplotter.sh <solid.qual>
+
+Outputs:
+
+Two files (PostScript and PDF format) with the boxplot, called
+`<solid.qual>_seq-order_boxplot.ps` and `<solid.qual>_seq-order_boxplot.pdf`
 
 SamStats
 --------
