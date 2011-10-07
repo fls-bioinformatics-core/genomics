@@ -94,8 +94,8 @@ fi
 cd qc
 #
 # Check if boxplot files already exist
-if [ -f "${qual}_primer-order_boxplot.pdf" ] && [ -f "${qual}_seq-order_boxplot.pdf" ] ; then
-    echo Boxplot pdfs already exist, skipping boxplotter
+if [ -f "${qual}_seq-order_boxplot.pdf" ] ; then
+    echo Boxplot pdf already exists, skipping boxplotter
 else
     echo "--------------------------------------------------------"
     echo Executing QC_boxplotter
