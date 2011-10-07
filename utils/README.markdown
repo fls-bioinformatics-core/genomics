@@ -22,6 +22,7 @@ ln -s /blah/blah2/myfile2.ext ./myfile2.ext
 ...
 ln -s /blah/blah43/myfile43.ext ./myfile43.ext
 
+
 makeBinsFromBed.pl
 ------------------
 Utility to to systematically and easily create feature 'bin' files, to be used in
@@ -74,3 +75,24 @@ Options:
  *  To get a bin of 1000bp ending 500bp upstream of the tss, use:
 
         --marker tss  --binSize 1000 --binType upstream --offset -500
+
+
+makeRegularBinsFromGenomeTable.R
+--------------------------------
+Make a bed file with bins of size [binSize] filling every chrom specified in [Genome Table File]
+
+Usage:
+
+    makeRegularBinsFromGenomeTable.R [Genome Table File] [binSize]
+
+Arguments:
+
+ *  Genome Table File: name of a two-column tab-delimited file with chromosome name-start position
+    information for each chromosome (i.e. the first two columns of the chromInfo table from UCSC).
+
+ *  binSize: integer size of each bin (in bp) in the output file
+
+Outputs:
+
+ *  Bed file: same name as the genome table file with the extension `<binSize>.bp.bin.bed`,
+    with each chromosome divided into bins of the requested size.
