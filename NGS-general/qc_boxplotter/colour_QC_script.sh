@@ -14,7 +14,6 @@ if [ $# != 1 ]; then
         echo "separate files."
 	echo "The second R script will plot the boxplot."	
         echo "By default all scripts need to be in the current directory."
-        echo "DO NOT RUN IN PARALLEL IN SAME DIRECTORY!!!"
         echo "-----"
 	exit
 fi
