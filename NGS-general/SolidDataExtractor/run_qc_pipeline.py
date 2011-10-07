@@ -317,54 +317,63 @@ class PipelineRunner:
         """
         logging.debug("PipelineRunner: started")
         while not self.jobs.empty() or self.nRunning() > 0:
-            # Flag to report updated status
-            updated_status = False
-            # Look for running jobs that have completed
-            for job in self.running[::-1]:
-                if not job.isRunning():
-                    # Job has completed
-                    self.running.remove(job)
-                    self.completed.append(job)
-                    updated_status = True
-                    print "Job has completed: %s: %s %s (%s)" % (
-                        job.job_id,
-                        job.name,
-                        os.path.basename(job.working_dir),
-                        time.asctime(time.localtime(job.end_time)))
-                    # Set the permissions on the output log file to rw-rw-r--
-                    if os.path.exists(os.path.join(job.working_dir,job.log)):
-                        os.chmod(os.path.join(job.working_dir,job.log),0664)
-                else:
-                    # Job is running, check it's not in an error state
-                    job_state = job.stateCode()
-                    if job_state.startswith('E'):
-                        # Terminate jobs in error state
-                        logging.warning("Terminating job %s in error state (%s)" % 
-                                        (job.job_id,job_state))
-                        job.terminate()
-            # Submit new jobs to GE queue
-            while not self.jobs.empty() and self.qstat.njobs() < self.max_concurrent_jobs:
-                next_job = self.jobs.get()
-                next_job.start()
-                self.running.append(next_job)
-                updated_status = True
-                print "Job has started: %s: %s %s (%s)" % (
-                    next_job.job_id,
-                    next_job.name,
-                    os.path.basename(next_job.working_dir),
-                    time.asctime(time.localtime(next_job.start_time)))
-                if self.jobs.empty():
-                    logging.debug("PipelineRunner: all jobs now submitted")
-            # Report
-            if updated_status:
-                print "Currently %d jobs waiting, %d running, %d finished" % \
-                    (self.nWaiting(),self.nRunning(),self.nCompleted())
+            # Update the pipeline status
+            self.update()
             # If there are still running jobs then wait
             if self.nRunning() > 0:
                 time.sleep(self.poll_interval)
         # Pipeline has finished
         print "Pipeline completed"
         return
+
+    def update(self):
+        """Update the pipeline
+
+        The 'update' method checks and updates the status of running jobs,
+        and submits any waiting jobs if space is available.
+        """
+        # Flag to report updated status
+        updated_status = False
+        # Look for running jobs that have completed
+        for job in self.running[::-1]:
+            if not job.isRunning():
+                # Job has completed
+                self.running.remove(job)
+                self.completed.append(job)
+                updated_status = True
+                print "Job has completed: %s: %s %s (%s)" % (
+                    job.job_id,
+                    job.name,
+                    os.path.basename(job.working_dir),
+                    time.asctime(time.localtime(job.end_time)))
+                # Set the permissions on the output log file to rw-rw-r--
+                if os.path.exists(os.path.join(job.working_dir,job.log)):
+                    os.chmod(os.path.join(job.working_dir,job.log),0664)
+            else:
+                # Job is running, check it's not in an error state
+                job_state = job.stateCode()
+                if job_state.startswith('E'):
+                    # Terminate jobs in error state
+                    logging.warning("Terminating job %s in error state (%s)" % 
+                                    (job.job_id,job_state))
+                    job.terminate()
+        # Submit new jobs to GE queue
+        while not self.jobs.empty() and self.qstat.njobs() < self.max_concurrent_jobs:
+            next_job = self.jobs.get()
+            next_job.start()
+            self.running.append(next_job)
+            updated_status = True
+            print "Job has started: %s: %s %s (%s)" % (
+                next_job.job_id,
+                next_job.name,
+                os.path.basename(next_job.working_dir),
+                time.asctime(time.localtime(next_job.start_time)))
+            if self.jobs.empty():
+                logging.debug("PipelineRunner: all jobs now submitted")
+        # Report
+        if updated_status:
+            print "Currently %d jobs waiting, %d running, %d finished" % \
+                (self.nWaiting(),self.nRunning(),self.nCompleted())
 
     def report(self):
         """Return a report of the pipeline status
