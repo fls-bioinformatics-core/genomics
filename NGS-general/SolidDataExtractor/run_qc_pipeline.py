@@ -317,22 +317,36 @@ class PipelineRunner:
         # Return the status
         return (self.nWaiting() > 0 or self.nRunning() > 0)
 
-    def run(self):
+    def run(self,blocking=True):
         """Execute the jobs in the pipeline
 
-        Each job previously added to the pipeline by 'queueJob' will be submitted to the
-        GE queue and checked for termination.
+        Each job previously added to the pipeline by 'queueJob' will be
+        submitted to the GE queue and checked for termination.
 
-        'run' operates in 'blocking' mode, so it doesn't return until all jobs have been
-        submitted and have finished executing.
+        By default 'run' operates in 'blocking' mode, so it doesn't return
+        until all jobs have been submitted and have finished executing.
+
+        To run in non-blocking mode, set the 'blocking' argument to False.
+        In this mode the pipeline starts and returns immediately; it is
+        the responsibility of the calling subprogram to then periodically
+        check the status of the pipeline, e.g.
+
+        >>> p = PipelineRunner()
+        >>> p.queueJob('/home/foo','foo.sh','bar.in')
+        >>> p.run()
+        >>> while p.isRunning():
+        >>>     time.sleep(30)
         """
         logging.debug("PipelineRunner: started")
-        while self.isRunning():
-            # Pipeline is still executing so wait
-            time.sleep(self.poll_interval)
-        # Pipeline has finished
-        print "Pipeline completed"
-        return
+        logging.debug("Blocking mode : %s" % blocking)
+        # Initial update sets the jobs running
+        self.update()
+        if blocking:
+            while self.isRunning():
+                # Pipeline is still executing so wait
+                time.sleep(self.poll_interval)
+            # Pipeline has finished
+            print "Pipeline completed"
 
     def update(self):
         """Update the pipeline
