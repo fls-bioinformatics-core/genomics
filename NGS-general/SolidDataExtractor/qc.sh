@@ -4,6 +4,32 @@
 #
 # Usage: qc.sh <csfasta> <qual>
 #
+# QC pipeline consists of the following steps:
+#
+# Primary data:
+# * create fastq files (solid2fastq)
+# * check for contamination (fastq_screen)
+# * generate QC boxplots (qc_boxplotter)
+# * filter primary data and make new csfastq/qual files
+#   (SOLiD_preprocess_filter)
+# * remove unwanted filter files
+# * generate QC boxplots for filtered data (qc_boxplotter)
+# * compare number of reads after filtering with original
+#   data files
+#
+# Functions
+#
+# Calculate difference
+function difference() {
+    echo "scale=10; $1 - $2" | bc -l
+}
+# Calculate percentage
+function percent() {
+    echo "scale=10; ${1}/${2}*100" | bc -l | cut -c1-5
+}
+#
+# Main script
+#
 # Set umask to allow group read-write on all new files etc
 umask 0002
 #
@@ -46,7 +72,8 @@ fi
 : ${FASTQ_SCREEN:=fastq_screen}
 : ${FASTQ_SCREEN_CONF_DIR:=}
 : ${SOLID2FASTQ:=solid2fastq}
-: ${QC_BOXPLOTTER:=colour_QC_script.sh}
+: ${QC_BOXPLOTTER:=qc_boxplotter.sh}
+: ${SOLID_PREPROCESS_FILTER:=SOLiD_preprocess_filter_v2.pl}
 #
 # Check: both files should be in the same directory
 if [ "$qualdir" != "$csfastadir" ] ; then
@@ -58,17 +85,17 @@ fi
 #
 # Determine basename for fastq file: same as csfasta, with
 # any leading directory and extension stripped off
-fastq_base=${csfasta%.*}
+csfasta_base=${csfasta%.*}
 #
 # Check if fastq file already exists
-fastq=${fastq_base}.fastq
+fastq=${csfasta_base}.fastq
 if [ -f "${fastq}" ] ; then
     echo Fastq file already exists, skipping solid2fastq
 else
     echo "--------------------------------------------------------"
     echo Executing solid2fastq
     echo "--------------------------------------------------------"
-    cmd="${SOLID2FASTQ} -o $fastq_base ${datadir}/${csfasta} ${datadir}/${qual}"
+    cmd="${SOLID2FASTQ} -o $csfasta_base ${datadir}/${csfasta} ${datadir}/${qual}"
     echo $cmd
     $cmd
 fi
@@ -88,7 +115,43 @@ else
     echo ERROR ${FASTQ_SCREEN_QC} not found, fastq_screen step skipped
 fi
 #
-# QC_boxplotter
+# SOLiD_preprocess_filter
+#
+# Filter original SOLiD data using polyclonal and error tests
+filtered_csfasta=${csfasta_base}_T_F3.csfasta
+filtered_qual=${csfasta_base}_QV_T_F3.qual
+if [ -f "${filtered_csfasta}" ] && [ -f "${filtered_qual}" ] ; then
+    echo Filtered csfasta and qual files already exist, skipping preprocess filter
+else
+    echo "--------------------------------------------------------"
+    echo Executing SOLiD_preprocess_filter
+    echo "--------------------------------------------------------"
+    FILTER_OPTIONS="-x y -p 3 -q 22 -y y -e 10 -d 9"
+    ${SOLID_PREPROCESS_FILTER}  -o ${csfasta_base} ${FILTER_OPTIONS} -f ${datadir}/${csfasta} -g ${datadir}/${qual}
+fi
+#
+# Clean up: removed *_U_F3.csfasta/qual files
+if [ -f "${csfasta_base}_U_F3.csfasta" ] ; then
+    /bin/rm -f ${csfasta_base}_U_F3.csfasta
+fi
+if [ -f "${csfasta_base}_QV_U_F3.qual" ] ; then
+    /bin/rm -f ${csfasta_base}_QV_U_F3.qual
+fi
+#
+# Compare number of reads between original and filtered data
+n_reads_primary=`grep -c "^>" ${datadir}/${csfasta}`
+n_reads_filter=`grep -c "^>" ${filtered_csfasta}`
+n_filtered=$(difference ${n_reads_primary} ${n_reads_filter})
+echo "--------------------------------------------------------"
+echo Comparision of primary and filtered reads
+echo "--------------------------------------------------------"
+echo ${csfasta}$'\t'${n_reads_primary}
+echo ${filtered_csfasta}$'\t'${n_reads_filter}
+echo Number filtered$'\t'${n_filtered}
+echo % filtered$'\t'$(percent ${n_filtered} ${n_reads_primary})
+echo "--------------------------------------------------------"
+#
+# QC_boxplots
 #
 # Move to qc directory
 cd qc
@@ -98,7 +161,7 @@ if [ -f "${qual}_seq-order_boxplot.pdf" ] ; then
     echo Boxplot pdf already exists, skipping boxplotter
 else
     echo "--------------------------------------------------------"
-    echo Executing QC_boxplotter
+    echo Executing QC_boxplotter for primary data
     echo "--------------------------------------------------------"
     # Make a link to the input qual file
     if [ ! -f "${qual}" ] ; then
