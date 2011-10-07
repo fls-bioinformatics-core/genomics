@@ -3,6 +3,13 @@ utils
 
 Place to put general utility scripts/tools.
 
+ *  `cd_set_umask.sh`: setup script to automagically set umask for specific directory
+ *  `do.sh`: execute shell command iteratively with range of integer index values
+ *  `makeBinsFromBed.pl`: create bin files for binning applications
+ *  `makeRegularBinsFromGenomeTable.R`: make bin file from set of chromosomes
+
+See below for more detailed usage documentation.
+
 cd_set_umask.sh
 ---------------
 Script to set and revert a user's umask appropriately when moving in and out of a
@@ -25,7 +32,7 @@ ln -s /blah/blah43/myfile43.ext ./myfile43.ext
 
 makeBinsFromBed.pl
 ------------------
-Utility to to systematically and easily create feature 'bin' files, to be used in
+Utility to systematically and easily create feature 'bin' files, to be used in
 binning applications.
 
 Example use cases include defining a region 500bp in front of the tss, and making a
