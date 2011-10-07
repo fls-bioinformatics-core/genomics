@@ -306,6 +306,17 @@ class PipelineRunner:
         """
         return len(self.completed)
 
+    def isRunning(self):
+        """Check whether the pipeline is still running
+
+        Returns True if the pipeline is still running (i.e. has either
+        running jobs, waiting jobs or both) and False otherwise.
+        """
+        # First update the pipeline status
+        self.update()
+        # Return the status
+        return (self.nWaiting() > 0 or self.nRunning() > 0)
+
     def run(self):
         """Execute the jobs in the pipeline
 
@@ -316,12 +327,9 @@ class PipelineRunner:
         submitted and have finished executing.
         """
         logging.debug("PipelineRunner: started")
-        while not self.jobs.empty() or self.nRunning() > 0:
-            # Update the pipeline status
-            self.update()
-            # If there are still running jobs then wait
-            if self.nRunning() > 0:
-                time.sleep(self.poll_interval)
+        while self.isRunning():
+            # Pipeline is still executing so wait
+            time.sleep(self.poll_interval)
         # Pipeline has finished
         print "Pipeline completed"
         return
