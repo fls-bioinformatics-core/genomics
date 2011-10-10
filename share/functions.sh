@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Shell function library
+# function.sh: library of useful shell functions
 # Peter Briggs, University of Manchester 2011
 #
 # Set of useful shell functions to do simple operations such as
@@ -59,6 +59,31 @@ function to_lower() {
 # e.g. prog=$(find_program <name>) 
 function find_program() {
     echo `which $1 2>&1 | grep -v which`
+}
+#
+# timestamp(): get timestamp on file as seconds from epoch
+#
+# Usage: timestamp <file>
+function timestamp() {
+    echo `stat -c %X $1`
+}
+#
+# abs_path(): get the absolute path
+#
+# Usage: abs_path <file>
+function abs_path() {
+    if [ "$1" == "." ] ; then
+	echo `pwd`
+    elif [ -e "$1" ] ; then
+	try_path=`pwd`/$1
+	if [ -e "$try_path" ] ; then
+	    echo $try_path
+	else
+	    echo $1
+	fi
+    else
+	echo $1
+    fi
 }
 #
 # get_version(): extract and return version number
