@@ -254,8 +254,9 @@ class PipelineRunner:
     ...
     p.run()
 
-    Currently it runs in 'blocking' mode, i.e. 'run' doesn't return until all jobs have been
-    submitted and have completed.
+    By default the pipeline runs in 'blocking' mode, i.e. 'run' doesn't return until all
+    jobs have been submitted and have completed; see the 'run' method for details of
+    how to operate the pipeline in non-blocking mode.
     """
     def __init__(self,max_concurrent_jobs=4,poll_interval=30):
         """Create new PipelineRunner instance.
@@ -263,6 +264,7 @@ class PipelineRunner:
         Arguments:
           max_concurrent_jobs: maximum number of GE jobs that the script will allow
           poll_interval: time interval (in seconds) between checks on the queue status
+            (only used when pipeline is run in 'blocking' mode)
         """
         # Parameters
         self.max_concurrent_jobs = max_concurrent_jobs
