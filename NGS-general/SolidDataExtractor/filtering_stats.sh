@@ -71,6 +71,11 @@ if [ $? == 1 ] ; then
     if [ ! -f ${stats_file} ] ; then
 	# Create new stats file and write header
 	echo "#File"$'\t'"Reads"$'\t'"Reads after filter"$'\t'"Difference"$'\t'"% Filtered" > ${stats_file}
+    else
+	# Filter out existing entry if present
+	tmp_file=`mktemp`
+	grep -v "^${base_csfasta}"$'\t' ${stats_file} > ${tmp_file}
+	/bin/mv -f ${tmp_file} ${stats_file}
     fi
     # Write to stats file
     echo ${base_csfasta}$'\t'${n_reads_primary}$'\t'${n_reads_filter}$'\t'${n_filtered}$'\t'${percent_filtered} >> ${stats_file}
