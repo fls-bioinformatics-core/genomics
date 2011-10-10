@@ -528,6 +528,9 @@ def SendEmail(subject,recipient,message):
 
 def GetSolidDataFiles(dirn):
     """Return list of csfasta/qual file pairs in target directory
+
+    Note that files with names ending in '_T_F3' will be rejected
+    as these are assumed to come from the preprocess filtering stage.
     """
     # Check directory exists
     if not os.path.isdir(dirn):
@@ -546,11 +549,19 @@ def GetSolidDataFiles(dirn):
         ext = os.path.splitext(filen)[1]
         if ext == ".qual":
             qual = filen
+            # Reject names ending with "_T_F3"
+            try:
+                i = root.rindex('_T_F3')
+                logging.debug("Rejecting %s" % qual)
+                continue
+            except ValueError:
+                # Name is okay, ignore
+                pass
             # Match csfasta names which don't have "_QV" in them
             try:
                 i = root.rindex('_QV')
                 csfasta = root[:i]+root[i+3:]+".csfasta"
-            except IndexError:
+            except ValueError:
                 # QV not in name, try to match whole name
                 csfasta = root+".csfasta"
             if os.path.exists(os.path.join(dirn,csfasta)):
