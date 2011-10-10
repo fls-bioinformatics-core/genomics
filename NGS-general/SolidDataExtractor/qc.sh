@@ -19,13 +19,48 @@
 #
 # Functions
 #
-# Calculate difference
-function difference() {
-    echo "scale=10; $1 - $2" | bc -l
+# Compare reads for original and preprocess filtered data
+#
+# Usage: filtering_stats <csfasta>
+function filtering_stats() {
+    # Input csfasta
+    csfasta_file=$1
+    # Run separate filtering_stats.sh script
+    FILTERING_STATS=`dirname $0`/filtering_stats.sh
+    if [ -f "${FILTERING_STATS}" ] ; then
+	${FILTERING_STATS} ${csfasta} SOLiD_preprocess_filter.stats
+    else
+	echo ERROR ${FILTERING_STATS} not found, filtering stats calculation skipped
+    fi
 }
-# Calculate percentage
-function percent() {
-    echo "scale=10; ${1}/${2}*100" | bc -l | cut -c1-5
+#
+# Run boxplotter
+#
+# Usage: qc_boxplotter <data_dir> <qual_file>
+function qc_boxplotter() {
+    # Input qual file
+    data_dir=$1
+    qual_file=$2
+    # Check if boxplot files already exist
+    if [ -f "${qual_file}_seq-order_boxplot.pdf" ] ; then
+	echo Boxplot pdf already exists for ${qual_file}, skipping boxplotter
+    else
+	echo "--------------------------------------------------------"
+	echo Executing QC_boxplotter
+	echo "--------------------------------------------------------"
+	# Make a link to the input qual file
+	if [ ! -f "${qual}" ] ; then
+	    echo Making symbolic link to qual file
+	    /bin/ln -s ${data_dir}/${qual_file} ${qual_file}
+	fi
+	cmd="${QC_BOXPLOTTER} $qual_file"
+	$cmd
+        # Clean up
+	if [ -L "${qual}" ] ; then
+	    echo Removing symbolic link to qual file
+	    /bin/rm -f ${qual_file}
+	fi
+    fi
 }
 #
 # Main script
@@ -130,6 +165,9 @@ else
     ${SOLID_PREPROCESS_FILTER}  -o ${csfasta_base} ${FILTER_OPTIONS} -f ${datadir}/${csfasta} -g ${datadir}/${qual}
 fi
 #
+# Filtering statistics
+filtering_stats ${datadir}/${csfasta}
+#
 # Clean up: removed *_U_F3.csfasta/qual files
 if [ -f "${csfasta_base}_U_F3.csfasta" ] ; then
     /bin/rm -f ${csfasta_base}_U_F3.csfasta
@@ -138,44 +176,16 @@ if [ -f "${csfasta_base}_QV_U_F3.qual" ] ; then
     /bin/rm -f ${csfasta_base}_QV_U_F3.qual
 fi
 #
-# Compare number of reads between original and filtered data
-n_reads_primary=`grep -c "^>" ${datadir}/${csfasta}`
-n_reads_filter=`grep -c "^>" ${filtered_csfasta}`
-n_filtered=$(difference ${n_reads_primary} ${n_reads_filter})
-echo "--------------------------------------------------------"
-echo Comparision of primary and filtered reads
-echo "--------------------------------------------------------"
-echo ${csfasta}$'\t'${n_reads_primary}
-echo ${filtered_csfasta}$'\t'${n_reads_filter}
-echo Number filtered$'\t'${n_filtered}
-echo % filtered$'\t'$(percent ${n_filtered} ${n_reads_primary})
-echo "--------------------------------------------------------"
-#
 # QC_boxplots
 #
 # Move to qc directory
 cd qc
 #
-# Check if boxplot files already exist
-if [ -f "${qual}_seq-order_boxplot.pdf" ] ; then
-    echo Boxplot pdf already exists, skipping boxplotter
-else
-    echo "--------------------------------------------------------"
-    echo Executing QC_boxplotter
-    echo "--------------------------------------------------------"
-    # Make a link to the input qual file
-    if [ ! -f "${qual}" ] ; then
-	echo Making symbolic link to qual file
-	/bin/ln -s ${datadir}/${qual} ${qual}
-    fi
-    cmd="${QC_BOXPLOTTER} $qual"
-    $cmd
-    # Clean up
-    if [ -L "${qual}" ] ; then
-	echo Removing symbolic link to qual file
-	/bin/rm -f ${qual}
-    fi
-fi
+# Boxplots for original primary data
+qc_boxplotter $datadir $qual
+#
+# Boxplots for filtered data
+qc_boxplotter $datadir $filtered_qual
 #
 echo QC pipeline completed: `date`
 exit
