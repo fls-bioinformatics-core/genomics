@@ -100,5 +100,41 @@ function has_lock() {
     # This process has the oldest lock
     return 1
 }
+#
+# wait_for_lock(): try to create a lock, with timeout
+#
+# Usage: wait_for_lock <file> <timeout>
+#
+# Tries to get the lock on the named <file> once a
+# second, until the lock is either acquired (returns 1)
+# or the <timeout> limit (in seconds) is reach
+# (returns 0).
+#
+# Example:
+#
+# wait_for_lock foo.bar 10
+# if [ $? == 1 ] ; then
+#    ...do something with foo.bar...
+#    unlock_file foo.bar
+# else
+#    ...failed to get lock after 10 seconds...
+# fi
+function wait_for_lock() {
+    timeout=$2
+    tries=0
+    lock_file $1 --remove
+    while [ $? != 1 ] ; do
+	tries=$((tries + 1))
+	if [ $timeout -le $tries ] ; then
+	    # Timed out before acquiring lock
+	    return 0
+	fi
+	sleep 1s
+	# Try again
+	lock_file $1 --remove
+    done
+    # Lock has been acquired
+    return 1
+}
 ##
 #
