@@ -110,11 +110,11 @@ function qc_boxplotter() {
 umask 0002
 #
 # Get the input files
-csfasta=$(abs_path $1)
-qual=$(abs_path $2)
+CSFASTA=$(abs_path $1)
+QUAL=$(abs_path $2)
 #
 # Get the data directory i.e. location of the input files
-datadir=`dirname $csfasta`
+datadir=`dirname $CSFASTA`
 #
 # Report
 echo ========================================================
@@ -123,8 +123,8 @@ echo ========================================================
 echo Started   : `date`
 echo Running in: `pwd`
 echo data dir  : $datadir
-echo csfasta   : `basename $csfasta`
-echo qual      : `basename $qual`
+echo csfasta   : `basename $CSFASTA`
+echo qual      : `basename $QUAL`
 #
 # Set up environment
 QC_SETUP=`dirname $0`/qc.setup
@@ -143,14 +143,19 @@ fi
 : ${QC_BOXPLOTTER:=qc_boxplotter.sh}
 : ${SOLID_PREPROCESS_FILTER:=SOLiD_preprocess_filter_v2.pl}
 #
+# Check: both files should exist
+if [ ! -f "$CSFASTA" ] || [ ! -f "$QUAL" ] ; then
+    echo ERROR one or both of csfasta or qual files not found
+    exit 1
+fi
 # Check: both files should be in the same directory
-if [ `dirname $csfasta` != `dirname $qual` ] ; then
+if [ `dirname $CSFASTA` != `dirname $QUAL` ] ; then
     echo ERROR csfasta and qual are in different directories
     exit 1
 fi
 #
 # Run solid2fastq to make fastq file
-run_solid2fastq ${csfasta} ${qual}
+run_solid2fastq ${CSFASTA} ${QUAL}
 #
 # Create 'qc' subdirectory
 if [ ! -d "qc" ] ; then
@@ -162,7 +167,7 @@ fi
 # Run separate fastq_screen.sh script
 FASTQ_SCREEN_QC=`dirname $0`/fastq_screen.sh
 if [ -f "${FASTQ_SCREEN_QC}" ] ; then
-    fastq=$(baserootname $csfasta).fastq
+    fastq=$(baserootname $CSFASTA).fastq
     ${FASTQ_SCREEN_QC} ${fastq}
 else
     echo ERROR ${FASTQ_SCREEN_QC} not found, fastq_screen step skipped
@@ -171,8 +176,8 @@ fi
 # SOLiD_preprocess_filter
 #
 # Filter original SOLiD data using polyclonal and error tests
-filtered_csfasta=$(baserootname $csfasta)_T_F3.csfasta
-filtered_qual=$(baserootname $csfasta)_QV_T_F3.qual
+filtered_csfasta=$(baserootname $CSFASTA)_T_F3.csfasta
+filtered_qual=$(baserootname $CSFASTA)_QV_T_F3.qual
 if [ -f "${filtered_csfasta}" ] && [ -f "${filtered_qual}" ] ; then
     echo Filtered csfasta and qual files already exist, skipping preprocess filter
 else
@@ -180,21 +185,24 @@ else
     echo Executing SOLiD_preprocess_filter
     echo "--------------------------------------------------------"
     FILTER_OPTIONS="-x y -p 3 -q 22 -y y -e 10 -d 9"
-    cmd="${SOLID_PREPROCESS_FILTER}  -o $(baserootname $csfasta) ${FILTER_OPTIONS} -f ${csfasta} -g ${qual}"
+    cmd="${SOLID_PREPROCESS_FILTER} -o $(baserootname $csfasta) ${FILTER_OPTIONS} -f ${CSFASTA} -g ${QUAL}"
     echo $cmd
     $cmd
 fi
 #
 # Filtering statistics
-filtering_stats ${csfasta}
+filtering_stats ${CSFASTA}
 #
 # Clean up: remove *_U_F3.csfasta/qual files
-if [ -f "$(baserootname $csfasta)_U_F3.csfasta" ] ; then
-    /bin/rm -f $(baserootname $csfasta)_U_F3.csfasta
+if [ -f "$(baserootname $CSFASTA)_U_F3.csfasta" ] ; then
+    /bin/rm -f $(baserootname $CSFASTA)_U_F3.csfasta
 fi
-if [ -f "$(baserootname $csfasta)_QV_U_F3.qual" ] ; then
-    /bin/rm -f $(baserootname $csfasta)_QV_U_F3.qual
+if [ -f "$(baserootname $CSFASTA)_QV_U_F3.qual" ] ; then
+    /bin/rm -f $(baserootname $CSFASTA)_QV_U_F3.qual
 fi
+#
+# Run solid2fastq to make fastq file
+run_solid2fastq ${filtered_csfasta} ${filtered_qual}
 #
 # QC_boxplots
 #
@@ -202,7 +210,7 @@ fi
 cd qc
 #
 # Boxplots for original primary data
-qc_boxplotter $qual
+qc_boxplotter $QUAL
 #
 # Boxplots for filtered data
 qc_boxplotter ${datadir}/${filtered_qual}
