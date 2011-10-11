@@ -1,7 +1,45 @@
 build-indexes
 =============
 
-Scripts for setting up Genome Indexes.
+Scripts for setting up genome indexes for various programs:
+
+ *  `build_indexes.sh`: build all indexes from a FASTA file
+ *  `bfast_build_indexes.sh`: build bfast color-space indexes
+ *  `bowtie_build_indexes.sh`: build color- and base-space bowtie indexes
+ *  `srma_build_indexes.sh`: build indexes for srma
+
+build_indexes.sh
+----------------
+Builds all indexes (bfast, bowtie, SRMA) within a standard directory
+structure from a FASTA file, by running the scripts for building the
+individual indexes.
+
+### Usage ###
+
+    build_indexes.sh <fasta_file>
+
+### Outputs ###
+
+Typically you would create a new directory for each organism, and then
+place the FASTA file in a `fasta` subdirectory e.g.
+
+    hg18/
+        fasta/
+             hg18.fasta
+
+Then invoke this script from within the top-level `hg18` directory e.g.
+
+    build_indexes.sh fasta/hg18.fasta
+
+resulting in:
+
+    hg18/
+        fasta/
+        bfast/
+        bowtie/
+
+with the indexes placed in the appropriate directories (see the
+individual scripts for more details).
 
 bfast_build_indexes.sh
 ----------------------
@@ -22,7 +60,7 @@ Run with -h option to print full usage information.
 
 ### Outputs ###
 
-Index file are created in the directory the script was run in.
+Index files are created in the directory the script was run in.
 
 * `.bif` index files
 * `.brg` index files for base- and color-space
