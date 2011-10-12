@@ -381,8 +381,9 @@ class PipelineRunner:
                     os.path.basename(job.working_dir),
                     time.asctime(time.localtime(job.end_time)))
                 # Set the permissions on the output log file to rw-rw-r--
-                if os.path.exists(os.path.join(job.working_dir,job.log)):
-                    os.chmod(os.path.join(job.working_dir,job.log),0664)
+                if job.log:
+                    if os.path.exists(os.path.join(job.working_dir,job.log)):
+                        os.chmod(os.path.join(job.working_dir,job.log),0664)
             else:
                 # Job is running, check it's not in an error state
                 job_state = job.stateCode()
