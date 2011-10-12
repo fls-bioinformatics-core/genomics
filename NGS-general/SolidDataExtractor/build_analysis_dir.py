@@ -306,13 +306,20 @@ def mkdir(dirn):
     ##print "Making %s" % dirn
     if not os.path.isdir(dirn):
         os.mkdir(dirn)
-        os.chmod(dirn,0775)
+        chmod(dirn,0775)
 
 def mklink(target,link_name):
     """Make a symbolic link"""
     ##print "Linking to %s from %s" % (target,link_name)
     os.symlink(target,link_name)
-    os.chmod(link_name,0664)
+    chmod(link_name,0664)
+
+def chmod(target,mode):
+    """Change mode of file or directory"""
+    try:
+        os.chmod(target,mode)
+    except OSError, ex:
+        logging.warning("Failed to change permissions on %s to %s: %s" % (target,mode,ex))
 
 #######################################################################
 # Main program
