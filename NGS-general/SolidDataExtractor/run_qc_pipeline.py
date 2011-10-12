@@ -159,6 +159,7 @@ class QsubJob:
         self.job_id = None
         self.log = None
         self.submitted = False
+        self.failed = False
         self.terminated = False
         self.start_time = None
         self.end_time = None
@@ -171,6 +172,15 @@ class QsubJob:
         """
         if not self.submitted and not self.__finished:
             self.job_id = QsubScript(self.name,self.working_dir,self.script,*self.args)
+            self.submitted = True
+            self.start_time = time.time()
+            if self.job_id is None:
+                # Failed to submit correctly
+                logging.warning("Job submission failed")
+                self.failed = True
+                self.__finished = True
+                self.end_time = self.start_time
+                return self.job_id
             self.submitted = True
             self.start_time = time.time()
             self.log = self.name+'.o'+self.job_id
