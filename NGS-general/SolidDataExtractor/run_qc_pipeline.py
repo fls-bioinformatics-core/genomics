@@ -504,8 +504,13 @@ def QsubScript(name,working_dir,script,*args):
     # This shouldn't be significant
     cwd = os.getcwd()
     logging.debug("QsubScript: executing in %s" % cwd)
-    p = subprocess.Popen(qsub,cwd=cwd,stdout=subprocess.PIPE)
+    p = subprocess.Popen(qsub,cwd=cwd,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
     p.wait()
+    # Check stderr
+    error = p.stderr.read().strip()
+    if error:
+        # Just echo error message as a warning
+        logging.warning("QsubScript: '%s'" % error)
     # Capture the job id from the output
     job_id = None
     for line in p.stdout:
