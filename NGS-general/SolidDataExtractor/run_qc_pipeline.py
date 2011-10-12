@@ -156,6 +156,7 @@ class QsubJob:
         self.working_dir = dirn
         self.script = script
         self.args = args
+        self.queue = None
         self.job_id = None
         self.log = None
         self.submitted = False
@@ -167,11 +168,21 @@ class QsubJob:
         self.__finished = False
         self.__qstat = Qstat()
 
-    def start(self):
+    def start(self,queue=None):
         """Submit the job to the GE queue
+
+        Arguments:
+          queue: (optional) specify name of a GE queue to use
+
+        Returns:
+          Id for submitted job
         """
         if not self.submitted and not self.__finished:
-            self.job_id = QsubScript(self.name,self.working_dir,self.script,*self.args)
+            if queue is not None:
+                logging.debug("GE queue '%s' specified" % queue)
+                self.queue = queue
+            self.job_id = QsubScript(self.name,self.queue,self.working_dir,self.script,
+                                     *self.args)
             self.submitted = True
             self.start_time = time.time()
             if self.job_id is None:
@@ -285,6 +296,8 @@ class PipelineRunner:
         self.running = []
         # Subset that have completed
         self.completed = []
+        # GE queue to use
+        self.queue = None
         # Local qstat instance for monitoring
         self.qstat = Qstat()
 
@@ -329,11 +342,14 @@ class PipelineRunner:
         # Return the status
         return (self.nWaiting() > 0 or self.nRunning() > 0)
 
-    def run(self,blocking=True):
+    def run(self,queue=None,blocking=True):
         """Execute the jobs in the pipeline
 
         Each job previously added to the pipeline by 'queueJob' will be
         submitted to the GE queue and checked for termination.
+
+        'queue' specifies the GE queue to use when submitting jobs (leave
+        as None to use the default queue).
 
         By default 'run' operates in 'blocking' mode, so it doesn't return
         until all jobs have been submitted and have finished executing.
@@ -351,6 +367,9 @@ class PipelineRunner:
         """
         logging.debug("PipelineRunner: started")
         logging.debug("Blocking mode : %s" % blocking)
+        # Set up queue
+        if queue:
+            self.queue = queue
         # Initial update sets the jobs running
         self.update()
         if blocking:
@@ -395,7 +414,7 @@ class PipelineRunner:
         # Submit new jobs to GE queue
         while not self.jobs.empty() and self.qstat.njobs() < self.max_concurrent_jobs:
             next_job = self.jobs.get()
-            next_job.start()
+            next_job.start(queue=self.queue)
             self.running.append(next_job)
             updated_status = True
             print "Job has started: %s: %s %s (%s)" % (
@@ -479,12 +498,17 @@ class SolidPipelineRunner(PipelineRunner):
 #######################################################################
 
 # QsubScript: submit a command to the cluster
-def QsubScript(name,working_dir,script,*args):
+def QsubScript(name,queue,working_dir,script,*args):
     """Submit a script or command to the cluster via 'qsub'
+
+    Arguments:
+      name: Name to give the job
+      queue: Name of GE queue to use (set to 'None' to use default queue)
     """
     # 
     logging.debug("QsubScript: submitting job")
-    logging.debug("QsubScript: name       :%s" % name)
+    logging.debug("QsubScript: name       : %s" % name)
+    logging.debug("QsubScript: queue      : %s" % queue)
     logging.debug("QsubScript: working_dir: %s" % working_dir)
     logging.debug("QsubScript: script     : %s" % script)
     logging.debug("QsubScript: args       : %s" % str(args))
@@ -494,6 +518,8 @@ def QsubScript(name,working_dir,script,*args):
     cmd = ' '.join(cmd_args)
     # Build qsub command to submit it
     qsub = ['qsub','-b','y','-V','-N',name]
+    if queue:
+        qsub.extend(('-q',queue))
     if not working_dir:
         qsub.append('-cwd')
     else:
@@ -623,6 +649,7 @@ if __name__ == "__main__":
     data_dirs = []
     input_type = "solid"
     email_addr = None
+    ge_queue = None
 
     # Deal with command line
     if len(sys.argv) < 3:
@@ -640,6 +667,7 @@ if __name__ == "__main__":
         print "Options:"
         print "  --limit=<n>: queue no more than <n> jobs at one time"
         print "               (default %s)" % max_concurrent_jobs
+        print "  --queue=<name>: explicitly specify GE queue to use"
         print "  --test=<n> : submit no more than <n> jobs in total"
         print "  --debug    : print debugging output while running"
         print "  --input=<type> : specify type of input for script"
@@ -656,6 +684,9 @@ if __name__ == "__main__":
         if arg.startswith("--limit="):
             # Set maximum number of jobs to queue at one time
             max_concurrent_jobs = int(arg.split('=')[1])
+        elif arg.startswith("--queue="):
+            # Name of GE queue to use
+            ge_queue = arg.split('=')[1]
         elif arg.startswith("--debug"):
             # Set logging level to output debugging info
             logging_level = logging.DEBUG
@@ -724,7 +755,7 @@ if __name__ == "__main__":
                 print "Maximum number of jobs queued (%d)" % max_total_jobs
                 break
     # Run the pipeline
-    pipeline.run()
+    pipeline.run(queue=ge_queue)
 
     # Finished
     if email_addr is not None:
