@@ -756,7 +756,7 @@ class SolidRunDefinition:
         try:
             pos = self.header_fields.index(field)
         except ValueError:
-            print "%s not found" % field
+            logging.error("Field '%s' not found in '%s'" % (field,self.file))
             return None
         return self.data[i][pos]
 
@@ -1389,6 +1389,11 @@ class TestSolidRunDefinition(unittest.TestCase):
         # Check non-existent line
         self.assertRaises(IndexError,
                           self.run_defn.getDataItem,'sampleName',12)
+        # Check non-existent field
+        self.assertEqual(None,
+                         self.run_defn.getDataItem('tertiaryAnalysis',0))
+        self.assertEqual(None,
+                         self.run_defn.getDataItem('tertiaryAnalysis',12))
 
     def test_nonexistent_run_definition_file(self):
         """Check failure mode when run definition file is missing
