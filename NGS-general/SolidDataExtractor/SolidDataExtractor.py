@@ -681,23 +681,6 @@ class SolidRunInfo:
         """
         return self.name
 
-    def dict(self):
-        """Return extracted data as a dictionary
-        """
-        return { 'name': self.name,
-                 'instrument': self.instrument,
-                 'datestamp': self.datestamp,
-                 'flow_cell': self.flow_cell,
-                 'is_fragment_library': self.is_fragment_library,
-                 'is_barcoded_sample': self.is_barcoded_sample}
-
-    def summary(self):
-        """Print summary of the data extracted from the name
-        """
-        for item in self.dict():
-            print "%s: %s" % (' '.join(item.split('_')).title(),
-                              str(self.dict()[item]))
-
 class SolidRunDefinition:
     """Class to store data from a SOLiD run definition file
 
