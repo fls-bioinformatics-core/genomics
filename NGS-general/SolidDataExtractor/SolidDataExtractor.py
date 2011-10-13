@@ -1346,6 +1346,16 @@ class TestSolidProject(unittest.TestCase):
             self.sample.addLibrary(name)
         self.project = self.sample.projects[0]
 
+    def test_libraries(self):
+        """Check that library information is correct
+        """
+        # Correct number of libraries
+        self.assertEqual(len(self.library_names),len(self.project.libraries))
+        # Check each library
+        for i in range(len(self.library_names)):
+            self.assertTrue(isinstance(self.project.libraries[i],SolidLibrary))
+            self.assertEqual(self.library_names[i],self.project.libraries[i].name)
+
     def test_get_sample(self):
         """Test retrieval of parent sample
         """
@@ -1362,7 +1372,14 @@ class TestSolidProject(unittest.TestCase):
     def test_is_barcoded(self):
         """Test check on whether all libraries in the project are barcoded
         """
+        # Check test project
         self.assertFalse(self.project.isBarcoded())
+        # Alter libraries in project so all have barcode flag set
+        for lib in self.project.libraries:
+            lib.is_barcoded = True
+        self.assertTrue(self.project.isBarcoded())
+        # Check with empty project (i.e. no libraries)
+        self.assertFalse(SolidProject('No_libraries').isBarcoded())
 
     def test_get_library_name_pattern(self):
         """Test generation of pattern for library names in the project
