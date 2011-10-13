@@ -11,7 +11,7 @@
 
 """TabFile
 
-Classes for working with generic tab-delimited data files.
+Classes for working with generic tab-delimited data.
 
 The TabFile module provides a TabFile class, which represents a tab-delimited
 data file, and a TabDataLine class, which represents a line of data.
@@ -74,6 +74,10 @@ A list of the column names can be fetched using the 'header' method:
 
 >>> print data.headers()
 
+Use the 'str' built-in to get the line as a tab-delimited string:
+
+>>> str(line)
+
 Adding and Removing Data
 ========================
 
@@ -115,6 +119,13 @@ for a set of column indices or column names:
 >>> data.append(data=['chr1',123456,234567,'+'])
 >>> data[0].subset('chr1','start')
 ['chr1',123456]
+
+Writing to File
+===============
+
+Use the TabFile's 'write' method to output the content to a file:
+
+>>> data.write('newfile.txt')
 """
 
 class TabFile:
