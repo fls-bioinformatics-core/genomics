@@ -632,7 +632,7 @@ class SolidRunInfo:
             NB this is not a path to a run directory
         """
         # Initialise
-        self.name = run_name
+        self.name = str(run_name)
         self.id = None
         self.instrument = None
         self.datestamp = None
@@ -679,7 +679,7 @@ class SolidRunInfo:
         Returns the orginal run name, which encodes all the
         information held in the object.
         """
-        return str(self.dict())
+        return self.name
 
     def dict(self):
         """Return extracted data as a dictionary
@@ -1226,6 +1226,7 @@ class TestSolidRunInfo(unittest.TestCase):
         self.assertTrue(info.is_fragment_library)
         self.assertTrue(info.is_barcoded_sample)
         self.assertEqual('26/04/13',info.date)
+        self.assertEqual(str(info),run_name)
 
     def test_flow_cell_two(self):
         instrument = 'solid0123'
@@ -1243,6 +1244,7 @@ class TestSolidRunInfo(unittest.TestCase):
         self.assertTrue(info.is_fragment_library)
         self.assertTrue(info.is_barcoded_sample)
         self.assertEqual('26/04/13',info.date)
+        self.assertEqual(str(info),run_name)
 
 class TestSolidLibrary(unittest.TestCase):
     """Unit tests for SolidLibrary class.
