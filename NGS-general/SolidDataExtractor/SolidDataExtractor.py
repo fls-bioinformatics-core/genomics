@@ -1447,6 +1447,12 @@ class TestSolidBarcodeStatistics(unittest.TestCase):
         # Check non-existent line
         self.assertEqual(None,self.stats.getDataByName('All beads'))
 
+    def test_total_reads(self):
+        """Check total number of reads
+        """
+        # Total number for this example is 446268790
+        self.assertEqual(446268790,self.stats.totalReads())
+
 class TestSolidRun(unittest.TestCase):
     """Unit tests for SolidRun class.
     """
