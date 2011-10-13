@@ -99,6 +99,7 @@ class SolidRun:
         # Basic data the supplied directory name
         if not os.path.isdir(os.path.abspath(solid_run_dir)):
             # Directory not found
+            logging.error("Failed to populate SolidRun: dir '%s' not found" % solid_run_dir)
             return
 
         self.run_dir = os.path.abspath(solid_run_dir)
@@ -1557,6 +1558,12 @@ class TestSolidRun(unittest.TestCase):
         """Check slide layout information
         """
         self.assertEqual(self.solid_run.slideLayout(),"Whole slide")
+
+    def test_nonexistent_solid_run_dir(self):
+        """Check failure mode when SOLiD run directory is missing
+        """
+        solid_run = SolidRun("/i/dont/exist/solid0123_20131013_FRAG_BC")
+        self.assertFalse(solid_run)
 
 class TestFunctions(unittest.TestCase):
     """Unit tests for module functions.
