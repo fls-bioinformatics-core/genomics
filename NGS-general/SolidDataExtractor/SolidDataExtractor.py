@@ -827,10 +827,6 @@ class SolidBarcodeStatistics:
         """Return the number of rows"""
         return len(self.data)
 
-    def getData(self,i):
-        """Return row of data"""
-        return self.data[i]
-
     def getDataByName(self,name):
         """Return a row of data matching 'name'
         """
