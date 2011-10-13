@@ -1516,67 +1516,6 @@ class TestFunctions(unittest.TestCase):
 #######################################################################
 
 if __name__ == "__main__":
-
     # Run tests
-    if len(sys.argv) == 1:
-        unittest.main()
-        sys.exit()
-
-    if len(sys.argv) != 2:
-        # Example input /home/pjb/SOLiD_meta_data/solid0123_20130426_FRAG_BC
-        print "Usage: python %s <solid_run_dir>" % sys.argv[0]
-        sys.exit()
-
-    # First argument is a directory name
-    run_dir = sys.argv[1]
-    print "Run dir: %s" % run_dir
-
-    # Set up a SolidRun class
-    run = SolidRun(run_dir)
-    if not run:
-        print "Error loading run data"
-        sys.exit(1)
-
-    # Print summary of run information
-    run.run_info.summary()
-
-    # Report run data
-    if not run.run_definition:
-        print "Failed to get run definition data"
-        sys.exit()
-    print str(run.run_definition.fields())
-
-    # Report info for each sample
-    for sample in run.samples:
-
-        print "=========================================="
-        print "Sample: %s" % sample
-        print "=========================================="
-
-        # Libraries and data files
-        print "%i Libraries:" % len(sample.libraries)
-        for library in sample.libraries:
-            print "%s" % library
-            # Files for this library
-            csfasta = library.csfasta
-            if csfasta:
-                print "\t...%s%s" % (os.sep,os.path.basename(csfasta))
-            qual = library.qual
-            if qual:
-                print "\t...%s%s" % (os.sep,os.path.basename(qual))
-            # Associated barcode stats data
-            # FIXME not very pretty at the moment
-            if sample.barcode_stats:
-                barcode_stats = sample.barcode_stats
-                for i in range(0,barcode_stats.nRows()):
-                    if barcode_stats.getDataItem('Library',i) == library:
-                        print "\t%s\n\t%s" % \
-                            (str(barcode_stats.header),
-                             str(barcode_stats.getData(i)))
-                        break
-        # Total reads for all beads
-        if sample.barcode_stats:
-            print "\t"+str(sample.barcode_stats.getDataByName("All Beads"))
-        else:
-            print "\tBarcode statistics not available for %s" % sample
+    unittest.main()
 
