@@ -1249,6 +1249,7 @@ class TestSolidLibrary(unittest.TestCase):
         self.assertEqual(None,library.csfasta)
         self.assertEqual(None,library.qual)
         self.assertEqual(sample,library.parent_sample)
+        self.assertEqual(library_name,str(library))
 
     def test_solid_library_with_files(self):
         sample_name = 'PJB_pool'
@@ -1259,6 +1260,7 @@ class TestSolidLibrary(unittest.TestCase):
         library.qual = '/path/to/solid_PJB_QV.qual'
         self.assertEqual('/path/to/solid_PJB.csfasta',library.csfasta)
         self.assertEqual('/path/to/solid_PJB_QV.qual',library.qual)
+        self.assertEqual(library_name,str(library))
 
     def test_solid_library_with_no_sample(self):
         library_name = 'PJB_NY17'
