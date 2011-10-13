@@ -1545,6 +1545,36 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(None,slide_layout(7))
         self.assertEqual(None,slide_layout("porkchops"))
 
+    def test_pretty_print_libraries(self):
+        """Test pretty printing of multiple library names
+        """
+        # Simple test
+        libraries = []
+        libraries.append(SolidLibrary('PB1'))
+        libraries.append(SolidLibrary('PB2'))
+        libraries.append(SolidLibrary('PB3'))
+        libraries.append(SolidLibrary('PB4'))
+        self.assertEqual("PB1-4",pretty_print_libraries(libraries))
+        # Sequence with gaps
+        libraries.append(SolidLibrary('PB7'))
+        libraries.append(SolidLibrary('PB8'))
+        self.assertEqual("PB1-4, PB7-8",pretty_print_libraries(libraries))
+        # Sequence with leading zeroes
+        libraries = []
+        libraries.append(SolidLibrary('PB_01'))
+        libraries.append(SolidLibrary('PB_02'))
+        libraries.append(SolidLibrary('PB_03'))
+        libraries.append(SolidLibrary('PB_04'))
+        self.assertEqual("PB_01-04",pretty_print_libraries(libraries))
+        # Not a sequence
+        libraries = []
+        libraries.append(SolidLibrary('PB_1ng'))
+        libraries.append(SolidLibrary('PB_10ng'))
+        libraries.append(SolidLibrary('PB_INPUT_1ng'))
+        libraries.append(SolidLibrary('PB_INPUT_10ng'))
+        self.assertEqual("PB_10ng, PB_1ng, PB_INPUT_10ng, PB_INPUT_1ng",
+                         pretty_print_libraries(libraries))
+
 #######################################################################
 # Main program
 #######################################################################
