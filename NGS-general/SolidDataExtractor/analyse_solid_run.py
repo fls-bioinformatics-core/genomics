@@ -22,7 +22,7 @@ about the run, and suggest a layout scheme for the analysis directories.
 import sys
 import os
 import string
-import SolidDataExtractor
+import SolidData
 import build_analysis_dir
 # Spreadsheet functionality
 try:
@@ -374,7 +374,7 @@ if __name__ == "__main__":
     # Get the run information
     solid_runs = []
     for solid_dir in solid_dirs:
-        run = SolidDataExtractor.SolidRun(solid_dir)
+        run = SolidData.SolidRun(solid_dir)
         if not run:
             print "Error extracting run data for %s" % solid_dir
         else:

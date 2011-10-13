@@ -18,7 +18,7 @@
 
 import sys,os
 import logging
-import SolidDataExtractor
+import SolidData
 import run_qc_pipeline
 
 #######################################################################
@@ -62,7 +62,7 @@ class ExperimentList:
             logging.debug("Acquiring run information")
             for solid_dir in (self.solid_run_dir,self.solid_run_dir+"_2"):
                 logging.debug("Examining %s" % solid_dir)
-                run = SolidDataExtractor.SolidRun(solid_dir)
+                run = SolidData.SolidRun(solid_dir)
                 if not run:
                     logging.debug("Unable to get run data for %s" % solid_dir)
                 else:
