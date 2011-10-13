@@ -727,7 +727,7 @@ class SolidRunDefinition:
         try:
             self.populate()
         except IOError, ex:
-            print "SolidRunDefinition: IOError exception: "+str(ex)
+            logging.error("Failed to populate SolidRunDefinition: '%s'" % ex)
 
     def __nonzero__(self):
         """Implement the built-in __nonzero__ method"""
@@ -1389,6 +1389,12 @@ class TestSolidRunDefinition(unittest.TestCase):
         # Check non-existent line
         self.assertRaises(IndexError,
                           self.run_defn.getDataItem,'sampleName',12)
+
+    def test_nonexistent_run_definition_file(self):
+        """Check failure mode when run definition file is missing
+        """
+        run_defn = SolidRunDefinition("i_dont_exist")
+        self.assertFalse(run_defn)
 
 class TestSolidBarcodeStatistics(unittest.TestCase):
     """Unit tests for SolidBarcodeStatistics class.
