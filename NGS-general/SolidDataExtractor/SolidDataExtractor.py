@@ -544,6 +544,8 @@ class SolidProject:
         parent_sample = self.getSample()
         if parent_sample:
             return parent_sample.parent_run
+        else:
+            return None
 
     def isBarcoded(self):
         """Return boolean indicating if the libraries are barcoded.
@@ -1325,6 +1327,54 @@ class TestSolidSample(unittest.TestCase):
         self.assertTrue(isinstance(project,SolidProject))
         # Fetch non-existant project
         self.assertEqual(None,sample.getProject('BJP'))
+
+class TestSolidProject(unittest.TestCase):
+    """Unit tests for SolidProject class
+    """
+
+    def setUp(self):
+        # Construct a sample object and populate
+        # with libraries
+        self.library_names = ['PJB_NY_17',
+                              'PJB_NY_18',
+                              'PJB_NY_19']
+        self.sample = SolidSample('PJB_pool')
+        for name in self.library_names:
+            self.sample.addLibrary(name)
+        self.project = self.sample.projects[0]
+
+    def test_get_sample(self):
+        """Test retrieval of parent sample
+        """
+        # Check for project with parent sample defined
+        self.assertEqual(self.sample,self.project.getSample())
+        # Check for project with no parent sample
+        self.assertEqual(None,SolidProject('No_sample').getSample())
+
+    def test_get_run(self):
+        """Test retrieval of parent run
+        """
+        self.assertEqual(None,self.project.getRun())
+
+    def test_is_barcoded(self):
+        """Test check on whether all libraries in the project are barcoded
+        """
+        self.assertFalse(self.project.isBarcoded())
+
+    def test_get_library_name_pattern(self):
+        """Test generation of pattern for library names in the project
+        """
+        self.assertEqual('PJB_NY_1*',self.project.getLibraryNamePattern())
+
+    def test_get_project_name(self):
+        """Test the name assigned to the project
+        """
+        self.assertEqual('PJB_pool',self.project.getProjectName())
+
+    def test_pretty_print_libraries(self):
+        """Test wrapper to pretty_print_libraries
+        """
+        self.assertEqual('PJB_NY_17-19',self.project.prettyPrintLibraries())
 
 class TestSolidRunDefinition(unittest.TestCase):
     """Unit tests for SolidRunDefinition class.
