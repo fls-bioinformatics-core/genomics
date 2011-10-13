@@ -113,7 +113,7 @@ class SolidRun:
             self.run_definition = SolidRunDefinition(self.run_defn_filn)
         else:
             # Unable to find run definition
-            print "WARNING no run definition file"
+            logging.error("Unable to find run definition file for %s" % self.run_dir)
             return
 
         # Determine samples and libraries
@@ -177,7 +177,7 @@ class SolidRun:
                                 SolidBarcodeStatistics(barcode_stats_filn)
                             break
                 else:
-                    print "WARNING no libraries dir %s" % libraries_dir
+                    logging.warning("Libraries directory '%s' is missing" % libraries_dir)
                     
             # Store the library
             library = sample.addLibrary(library_name)
@@ -247,11 +247,9 @@ class SolidRun:
                                 ##print "-----> Located primary data"
 
             if not got_primary_data:
-                print "WARNING unable to locate primary data for %s" % \
-                    library
+                logging.warning("Unable to locate primary data for %s" % library)
             elif ambiguity_error:
-                print "WARNING ambigiuous location for primary data for %s" % \
-                    library
+                logging.warning("Ambigiuous location for primary data for %s" % library)
 
     def fetchLibraries(self,sample_name='*',library_name='*'):
         """Retrieve libraries based on sample and library names
@@ -1644,6 +1642,8 @@ class TestFunctions(unittest.TestCase):
 #######################################################################
 
 if __name__ == "__main__":
+    # Turn off most logging output for tests
+    logging.getLogger().setLevel(logging.CRITICAL)
     # Run tests
     unittest.main()
 
