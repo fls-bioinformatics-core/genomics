@@ -831,18 +831,6 @@ class SolidBarcodeStatistics:
         """Return row of data"""
         return self.data[i]
 
-    def getDataItem(self,field,i):
-        """Return data item from specified row
-
-        field must be one of the fields read in from the file,
-        and i must be a valid row index."""
-        try:
-            pos = self.header.index(field)
-        except ValueError:
-            print "%s not found" % field
-            return None
-        return self.data[i][pos]
-
     def getDataByName(self,name):
         """Return a row of data matching 'name'
         """
