@@ -9,6 +9,114 @@
 #
 #########################################################################
 
+"""TabFile
+
+Classes for working with generic tab-delimited data files.
+
+The TabFile module provides a TabFile class, which represents a tab-delimited
+data file, and a TabDataLine class, which represents a line of data.
+
+Creating a TabFile
+==================
+
+TabFile objects can be initialised from existing files:
+
+>>> data = TabFile('data.txt')
+
+or an 'empty' TabFile can be created if no file name is specified.
+
+Lines starting with '#' are ignored.
+
+Accessing Data within a TabFile
+===============================
+
+Within a TabFile object each line of data is represented by a TabDataLine
+object. Lines of data are referenced using index notation, with the first
+line of data being index zero:
+
+>>> line = data[0]
+>>> line = data[i]
+
+Note that the index is not the same as the line number from the source file,
+(if one was specified) - this can be obtained from the 'lineno' method of
+each line:
+
+>>> line_number = line.lineno()
+
+len() gives the total number of lines of data in the TabFile object:
+
+>>> len(data)
+
+It is possible to iterate over the data lines in the object:
+
+>>> for line in data:
+>>>    ... do something with line ...
+
+By default columns of data in the file are referenced by index notation, with
+the first column being index zero:
+
+>>> line = data[0]
+>>> value = line[0]
+
+If column headers are specified then these can also be used to reference
+columns of data:
+
+>>> data = TabFile('data.txt',column_names=['ex','why','zed'])
+>>> line = data[0]
+>>> ex = line['ex']
+>>> line['why'] = 3.454
+
+Headers can also be read from the first line of an input file:
+
+>>> data = TabFile('data.txt',first_line_is_header=True)
+
+A list of the column names can be fetched using the 'header' method:
+
+>>> print data.headers()
+
+Adding and Removing Data
+========================
+
+New lines can be added to the TabFile object via the 'append' and 'insert'
+methods:
+
+>>> data.append()  # No data i.e. empty line
+>>> data.append(data=[1,2,3]) # Provide data values as a list
+>>> data.append(tabdata='1\t2\t3') # Provide values as tab-delimited string
+>>> data.insert(1,data=[5,6,7]) # Inserts line of data at index 1
+
+Type conversion is automatically performed when data values are assigned:
+
+>>> line = data.append(data=['1',2,'3.4','pjb'])
+>>> line[0]
+1
+>>> line[2]
+3.4
+>>> line[3]
+'pjb'
+
+Lines can also be removed using the 'del' built-in:
+
+>>> del(data[0]) # Deletes first data line
+
+Filtering Data
+===============
+
+The 'lookup' method returns a set of data lines where a key matches a
+specific value:
+
+>>> data = TabFile('data.txt',column_names=['chr','start','end'])
+>>> chrom = data.lookup('chr','chrX')
+
+Within a single data line the 'subset' method returns a list of values
+for a set of column indices or column names:
+
+>>> data = TabFile(column_names=['chr','start','end','strand'])
+>>> data.append(data=['chr1',123456,234567,'+'])
+>>> data[0].subset('chr1','start')
+['chr1',123456]
+"""
+
 class TabFile:
     """Class to get data from a tab-delimited file
 
@@ -44,7 +152,7 @@ class TabFile:
           fp: (optional) a file-like object which data can be loaded
               from like a file; used in preference to filen
           column_names: (optional) list of column names to assign to
-              columns in the file
+              columns in the file. Overrides column names in the file
           skip_first_line: (optional) if True then ignore the first
               line of the input file
           first_line_is_header: (optional) if True then takes column
