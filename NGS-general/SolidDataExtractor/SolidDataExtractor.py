@@ -441,6 +441,8 @@ class SolidProject:
 
         library: the name of the library to add.
         """
+        if not isinstance(library,SolidLibrary):
+            raise TypeError, "addLibrary requires SolidLibrary instance"
         self.libraries.append(library)
 
     def getSample(self):
