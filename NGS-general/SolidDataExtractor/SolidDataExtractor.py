@@ -293,16 +293,7 @@ class SolidRun:
           "Octets" etc.
           Returns None if the slide layout can't be determined.
         """
-        nsamples = len(self.samples)
-        if nsamples == 1:
-            return "Whole slide"
-        elif nsamples == 4:
-            return "Quads"
-        elif nsamples == 8:
-            return "Octets"
-        else:
-            logging.warning("Undefined layout for %s samples" % len(self.samples))
-            return "Undefined layout"
+        return slide_layout(len(self.samples))
 
     def __nonzero__(self):
         """Implement nonzero built-in
@@ -1524,6 +1515,11 @@ class TestSolidRun(unittest.TestCase):
             self.assertTrue(str(lib.name).startswith('AB_'))
             self.assertEqual(libraries.count(lib),1)
 
+    def test_slide_layout(self):
+        """Check slide layout information
+        """
+        self.assertEqual(self.solid_run.slideLayout(),"Whole slide")
+
 class TestFunctions(unittest.TestCase):
     """Unit tests for module functions.
     """
@@ -1538,6 +1534,16 @@ class TestFunctions(unittest.TestCase):
     def test_extract_index(self):
         self.assertEqual('1',extract_index('LD_C1'))
         self.assertEqual('07',extract_index('DR07'))
+
+    def test_slide_layout(self):
+        """Check descriptions for slide layout based on number of samples
+        """
+        self.assertEqual("Whole slide",slide_layout(1))
+        self.assertEqual("Quads",slide_layout(4))
+        self.assertEqual("Octets",slide_layout(8))
+        # Example of "bad" numbers of sample
+        self.assertEqual(None,slide_layout(7))
+        self.assertEqual(None,slide_layout("porkchops"))
 
 #######################################################################
 # Main program
