@@ -741,10 +741,6 @@ class SolidRunDefinition:
         """Return the number of samples"""
         return len(self.data)
 
-    def getData(self,i):
-        """Return row of data"""
-        return self.data[i]
-
     def getDataItem(self,field,i):
         """Return data item from specified row
 
