@@ -1496,6 +1496,34 @@ class TestSolidRun(unittest.TestCase):
                         os.path.join(os.path.dirname(library.csfasta),
                                      '..','reject')))
 
+    def test_fetch_libraries(self):
+        """Retrieve libraries based on sample and library names
+        """
+        # Defaults should retrieve everything
+        libraries = self.solid_run.fetchLibraries()
+        self.assertEqual(len(libraries),12)
+        for lib in libraries:
+            self.assertEqual(libraries.count(lib),1)
+        # "Bad" sample name shouldn't retrieve anything
+        libraries = self.solid_run.fetchLibraries(sample_name='XY_PQ_VW_pool',library_name='*')
+        self.assertEqual(len(libraries),0)
+        # Specify exact sample and library names
+        libraries = self.solid_run.fetchLibraries(sample_name='AB_CD_EF_pool',library_name='AB_A1M1')
+        self.assertEqual(len(libraries),1)
+        self.assertEqual(libraries[0].name,'AB_A1M1')
+        # Specify wildcard library name
+        libraries = self.solid_run.fetchLibraries(sample_name='AB_CD_EF_pool',library_name='AB_*')
+        self.assertEqual(len(libraries),4)
+        for lib in libraries:
+            self.assertTrue(str(lib.name).startswith('AB_'))
+            self.assertEqual(libraries.count(lib),1)
+        # Specify wildcard sample and library name
+        libraries = self.solid_run.fetchLibraries(sample_name='*',library_name='AB_*')
+        self.assertEqual(len(libraries),4)
+        for lib in libraries:
+            self.assertTrue(str(lib.name).startswith('AB_'))
+            self.assertEqual(libraries.count(lib),1)
+
 class TestFunctions(unittest.TestCase):
     """Unit tests for module functions.
     """
