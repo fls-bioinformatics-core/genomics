@@ -799,7 +799,7 @@ class SolidBarcodeStatistics:
         try:
             self.populate()
         except IOError, ex:
-            print "SolidBarcodeStatistics: IOError exception: "+str(ex)
+            logging.error("Failed to populate SolidBarcodeStatistics: '%s'" % ex)
 
     def __nonzero__(self):
         """Implement the __nonzero__ built-in"""
@@ -1452,6 +1452,12 @@ class TestSolidBarcodeStatistics(unittest.TestCase):
         """
         # Total number for this example is 446268790
         self.assertEqual(446268790,self.stats.totalReads())
+
+    def test_nonexistent_barcode_stats_file(self):
+        """Check failure mode when barcode statistics file is missing
+        """
+        stats = SolidBarcodeStatistics("i_dont_exist")
+        self.assertFalse(stats)
 
 class TestSolidRun(unittest.TestCase):
     """Unit tests for SolidRun class.
