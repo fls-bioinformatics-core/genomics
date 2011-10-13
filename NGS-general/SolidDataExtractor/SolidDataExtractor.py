@@ -135,7 +135,7 @@ class SolidRun:
                 barcodes = self.run_definition.getDataItem('barcodes',i)
             except IndexError:
                 barcodes = ''
-            ##print "%s: barcodes: %s" % (library_name,barcodes)
+            logging.debug("%s: barcodes: %s" % (library_name,barcodes))
             library_is_barcoded = (barcodes != '' and barcodes)
             if library_is_barcoded:
                 barcodes = barcodes.strip('"').split(',')
@@ -204,10 +204,10 @@ class SolidRun:
             got_primary_data = False
             ambiguity_error = False
             if this_library_dir:
-                ##print "Library dir: %s..." % this_library_dir
+                logging.debug("Library dir: %s..." % this_library_dir)
                 # Iterate over available directories
                 for d in os.listdir(this_library_dir):
-                    ##print "--> Library %s subdir: %s" % (library_name,d)
+                    logging.debug("--> Library %s subdir: %s" % (library_name,d))
                     reject = os.path.join(this_library_dir,d,"reject")
                     reads = os.path.join(this_library_dir,d,"reads")
                     reports = os.path.join(this_library_dir,d,"reports")
@@ -215,7 +215,7 @@ class SolidRun:
                     if os.path.isdir(reject) and \
                             os.path.isdir(reads) and \
                             os.path.isdir(reports):
-                        ##print "---> has all of reads, reject and reports"
+                        logging.debug("---> has all of reads, reject and reports")
                         # Check for csfasta and qual files
                         csfasta = None
                         qual = None
@@ -244,7 +244,7 @@ class SolidRun:
                                 library.csfasta = csfasta
                                 library.qual = qual
                                 got_primary_data = True
-                                ##print "-----> Located primary data"
+                                logging.debug("-----> Located primary data")
 
             if not got_primary_data:
                 logging.warning("Unable to locate primary data for %s" % library)
