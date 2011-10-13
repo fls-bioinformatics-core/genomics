@@ -146,21 +146,10 @@ class SolidRun:
             # point to the actual results directory
             results = os.path.join(self.run_dir,sample_name,'results')
             if os.path.islink(results):
-                ##if library_is_barcoded:
-                    # For barcoded samples, data will be a subdirectory
-                    # of the "libraries" directory
                 libraries_dir = os.path.join(self.run_dir,
                                              sample_name,
                                              os.readlink(results),
                                              'libraries')
-                ##else:
-                    # For non-barcoded samples, data is directly
-                    # below the "results" directory
-                    ##libraries_dir = os.path.join(self.run_dir,
-                    ##                             sample_name,
-                    ##                             os.readlink(results))
-                    
-                ##print "%s" % libraries_dir
             else:
                 libraries_dir = None
 
