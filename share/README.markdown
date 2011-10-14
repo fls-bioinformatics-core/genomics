@@ -7,4 +7,7 @@ share: common libraries and modules shared by applications
 *   `lock.sh`: library functions for locking files shared between scripts.
 
 *   `Spreadsheet.py`: Python module for creating and updating XLS format spreadsheets.
-     Requires the `xlwt`, `xlrd` and `xlutil` packages.
+     Requires the 3rd-party `xlwt`, `xlrd` and `xlutil` Python packages.
+
+*   `SolidData.py`: Python module providing classes for extracting data about SOLiD
+    runs from directory structure, data files and naming conventions.

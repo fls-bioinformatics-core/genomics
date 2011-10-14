@@ -5,6 +5,8 @@ Utilities for transferring data from the SOLiD instrument to the cluster:
 
  *   `rsync_solid_to_cluster.sh`: perform transfer of primary data
  *   `log_solid_run.sh`: maintain logging file of transferred runs
+ *   `analyse_solid_run.py`:
+ *   `build_analysis_dir.py`:
 
 
 rsync_solid_to_cluster.sh
@@ -50,3 +52,70 @@ the full path to the directory, a UNIX timestamp, and the optional description.
 
 If the logging file doesn't exist then it will be created, and a new entry won't be created for any
 SOLiD run directory that is already in the logging file.
+
+
+analyse_solid_run.py
+--------------------
+
+Report data about the samples and libraries from the run, suggest layout for the analysis
+directories, and write an entry for an XLS spreadsheet.
+
+Usage:
+
+    analyse_solid_run.py [OPTIONS] <solid_run_dir>
+
+Options:
+
+ *  `--report`: print a report of the SOLiD run
+ *  ` --verify`: do verification checks on SOLiD run directories
+ *  ` --layout`: suggest layout for analysis directories (generates options for `build_analysis_dir.py`)
+ *  ` --spreadsheet[=<file>.xls]`: write report to Excel spreadsheet
+
+
+build_analysis_dir.py
+---------------------
+
+Automatically construct analysis directories for experiments which contain links to the primary
+data files.
+
+Usage:
+
+    build_analysis_dir.py [OPTIONS] EXPERIMENT [EXPERIMENT ...] <solid_run_dir>
+
+General Options:
+
+ *  `--dry-run`: report the operations that would be performed
+ *  `--debug`: turn on debugging output
+ *  `--top-dir=<dir>`: create analysis directories as subdirs of <dir>;
+      otherwise create them in cwd.
+ *  `--run-pipeline=<script>`: after creating analysis directories, run
+      the specified `<script>` on SOLiD data file pairs in each
+
+Options For Defining Experiments:
+
+An "experiment" is defined by a group of options, which must be supplied
+in this order for each experiment specified on the command line:
+
+    --name=<name> [--type=<expt_type>] --source=<sample>/<library>
+                                      [--source=... ]
+
+`<name>` is an identifier (typically the user's initials) used for the
+analysis directory e.g. 'PB'
+
+`<expt_type>` is e.g. 'reseq', 'ChIP-seq', 'RNAseq', 'miRNA'...
+
+`<sample>/<library>` specify the names for primary data files e.g.
+'PB_JB_pool/PB*'
+
+Example:
+
+    --name=PB --type=ChIP-seq --source=PB_JB_pool/PB*
+
+Both `<sample>` and `<library>` can include a trailing wildcard character
+(i.e. *) to match multiple names. */* will match all primary data files.
+Multiple `--sources` can be declared for each experiment.
+
+For each experiment defined on the command line, a subdirectory called
+`<name>_<expt_type>` (e.g. 'PB_ChIP-seq' - if no `<expt_type>`
+was supplied then just the name is used) will be made containing links to
+each of the primary data files.
