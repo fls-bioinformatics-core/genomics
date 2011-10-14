@@ -18,8 +18,8 @@ if [ -f functions.sh ] ; then
     . lock.sh
 else
     # Import versions in share
-    . `dirname $0`/../../share/functions.sh
-    . `dirname $0`/../../share/lock.sh
+    . `dirname $0`/../share/functions.sh
+    . `dirname $0`/../share/lock.sh
 fi
 #
 # Local functions

@@ -23,7 +23,7 @@ if [ -f functions.sh ] ; then
     . functions.sh
 else
     # Import versions in share
-    . `dirname $0`/../../share/functions.sh
+    . `dirname $0`/../share/functions.sh
 fi
 #
 # Local functions
