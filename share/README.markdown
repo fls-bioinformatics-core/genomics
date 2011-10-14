@@ -12,5 +12,8 @@ share: common libraries and modules shared by applications
 *   `SolidData.py`: Python module providing classes for extracting data about SOLiD
     runs from directory structure, data files and naming conventions.
 
+*   `TabFile.py`: Python module providing classes for handling data from
+    tab-delimited files.
+
 *   `Experiment.py`: Python module providing classes for defining SOLiD sequencing
     experiments (collections of related primary data)
