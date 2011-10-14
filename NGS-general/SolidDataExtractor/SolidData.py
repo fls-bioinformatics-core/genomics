@@ -1,13 +1,13 @@
-#     SolidDataExtractor.py: get data about SOLiD sequencer runs
+#     SolidData.py: module for handling data about SOLiD sequencer runs
 #     Copyright (C) University of Manchester 2011 Peter Briggs
 #
 ########################################################################
 #
-# SolidDataExtractor.py
+# SolidData.py
 #
 #########################################################################
 
-"""SolidDataExtractor
+"""SolidData
 
 Provides classes for extracting data about SOLiD runs from directory
 structure, data files and naming conventions.
