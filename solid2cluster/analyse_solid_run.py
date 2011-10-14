@@ -22,15 +22,18 @@ about the run, and suggest a layout scheme for the analysis directories.
 import sys
 import os
 import string
-import SolidData
-import build_analysis_dir
-# Spreadsheet functionality
+
+# Put ../share onto Python search path for modules
+SHARE_DIR = os.path.abspath(
+    os.path.normpath(
+        os.path.join(os.path.dirname(sys.argv[0]),'..','share')))
+sys.path.append(SHARE_DIR)
 try:
+    import SolidData
     import Spreadsheet
-    SPREADSHEET_IMPORTED = True
-except ImportError,ex:
-    print "Failed to import Spreadsheet module: %s" % ex
-    SPREADSHEET_IMPORTED = False
+    import build_analysis_dir
+except ImportError, ex:
+    print "Error importing modules: %s" % ex
 
 #######################################################################
 # Class definitions
@@ -353,16 +356,13 @@ if __name__ == "__main__":
     do_spreadsheet = False
     for arg in sys.argv[1:-1]:
         if arg.startswith("--spreadsheet"):
-            if not SPREADSHEET_IMPORTED:
-                print "Spreadsheet functionality not available"
-            else:
-                do_spreadsheet = True
-                try:
-                    i = arg.index("=")
-                    spreadsheet = arg[i+1:]
-                except IndexError:
-                    spreadsheet = solid_dir_fc1+".xls"
-                print "Writing spreadsheet %s" % spreadsheet
+            do_spreadsheet = True
+            try:
+                i = arg.index("=")
+                spreadsheet = arg[i+1:]
+            except IndexError:
+                spreadsheet = solid_dir_fc1+".xls"
+            print "Writing spreadsheet %s" % spreadsheet
 
     # Check there's at least one thing to do
     if not (do_report_run or 
