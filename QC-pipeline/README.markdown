@@ -1,6 +1,7 @@
 QC-pipeline
 ===========
-Utilities for running QC pipeline scripts on SOLiD data.
+
+Scripts and utilities for running QC pipelines on SOLiD data.
 
 There is a core pipeline runner program:
 
@@ -8,13 +9,10 @@ There is a core pipeline runner program:
     to perform QC steps on each pairs of csfasta/qual data files in one or
     more analysis directories.
 
-Each is used for a separate function and must be run independently. These are
-built around some additional Python modules:
-
 There are bash scripts to perform the QC:
 
 *   `qc.sh`: given a csfasta and qual file pair, runs the QC pipeline
-    (solid2fastq, fastq_screen and qc_boxplotter) on them.
+    (solid2fastq, fastq_screen, SOLiD_preprocess_filter and qc_boxplotter).
 
 *   `fastq_screen.sh`: given a fastq file, runs `fastq_screen` against
     three sets of genome indexes, specified by the following `.conf` files:
@@ -29,6 +27,9 @@ There are bash scripts to perform the QC:
 
 *   `filter_stats.sh`: appends statistics comparing original SOLiD data files
     with the output from the preprocess filter step to a log file.
+
+Setup
+-----
 
 The QC scripts have an associated setup file called `qc.setup`, which
 will be read automatically if it exists. Make a site-specific version by
