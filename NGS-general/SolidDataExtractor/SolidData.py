@@ -1011,7 +1011,18 @@ import shutil
 
 class TestUtils:
     """Utilities to help with setting up/running tests etc
+
+    Provides methods for creating mock SOLiD directory structure populated
+    with example files.
+
+    make_solid_dir: constructs a mock SOLiD run directory, including the
+    run definition and barcode statistics files
+
+    make_run_definition_file: constructs a mock run definition file
+
+    make_barcode_statistics_file: constructs a mock barcode statistics file
     """
+
     def make_run_definition_file(self,filename=None):
         """Create example run definition file.
 
