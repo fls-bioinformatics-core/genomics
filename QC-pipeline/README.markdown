@@ -1,7 +1,6 @@
-SolidDataExtractor
-==================
-Utilities for analysing SOLiD runs, constructing analysis directories
-and running QC pipeline.
+QC-pipeline
+===========
+Utilities for running QC pipeline scripts on SOLiD data.
 
 There is a core pipeline runner program:
 

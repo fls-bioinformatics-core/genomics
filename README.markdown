@@ -9,6 +9,8 @@ Scripts are organised into the following directories:
   particular type of experiment
 * [build-indexes](build-indexes): contains scripts for building genome
   indexes for various programs
+* [QC-pipeline](QC-pipeline): contains scripts for running QC pipelines on
+  SOLiD data sets
 * [solid2cluster](solid2cluster): utilities for copying data from SOLiD
   instrument to cluster
 * [utils](utils): non-NGS utility scripts
