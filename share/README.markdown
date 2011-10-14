@@ -11,3 +11,6 @@ share: common libraries and modules shared by applications
 
 *   `SolidData.py`: Python module providing classes for extracting data about SOLiD
     runs from directory structure, data files and naming conventions.
+
+*   `Experiment.py`: Python module providing classes for defining SOLiD sequencing
+    experiments (collections of related primary data)

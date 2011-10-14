@@ -30,8 +30,8 @@ SHARE_DIR = os.path.abspath(
 sys.path.append(SHARE_DIR)
 try:
     import SolidData
+    import Experiment
     import Spreadsheet
-    import build_analysis_dir
 except ImportError, ex:
     print "Error importing modules: %s" % ex
 
@@ -235,7 +235,7 @@ def suggest_analysis_layout(solid_runs):
         for sample in run.samples:
             for project in sample.projects:
                 # Create one experiment per project
-                expt = build_analysis_dir.Experiment()
+                expt = Experiment.Experiment()
                 expt.name = project.getProjectName()
                 expt.type = "expt"
                 expt.sample = project.getSample().name
