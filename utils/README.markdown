@@ -7,6 +7,7 @@ Place to put general utility scripts/tools.
  *  `do.sh`: execute shell command iteratively with range of integer index values
  *  `makeBinsFromBed.pl`: create bin files for binning applications
  *  `makeRegularBinsFromGenomeTable.R`: make bin file from set of chromosomes
+ *  `make_mock_solid_dir.py`: create mock SOLiD directory structure for testing
 
 See below for more detailed usage documentation.
 
@@ -103,3 +104,12 @@ Outputs:
 
  *  Bed file: same name as the genome table file with the extension `<binSize>.bp.bin.bed`,
     with each chromosome divided into bins of the requested size.
+
+
+make_mock_solid_dir.py
+----------------------
+Make a temporary mock SOLiD directory structure that can be used for testing.
+
+Usage:
+
+    make_mock_solid_dir.py

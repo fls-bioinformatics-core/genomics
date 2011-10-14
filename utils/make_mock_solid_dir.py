@@ -27,7 +27,16 @@ Usage: make_mock_solid_dir.py
 #
 import os
 import sys
-import SolidData
+# Put ../share onto Python search path for modules
+SHARE_DIR = os.path.abspath(
+    os.path.normpath(
+        os.path.join(os.path.dirname(sys.argv[0]),'..','share')))
+sys.path.append(SHARE_DIR)
+try:
+    import SolidData
+except ImportError, ex:
+    print "Error importing modules: %s" % ex
+
 if __name__ == "__main__":
     # Make mock solid directory
     solid_dir = SolidData.TestUtils().make_solid_dir('solid0123_20111014_FRAG_BC')
