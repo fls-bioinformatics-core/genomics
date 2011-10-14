@@ -53,46 +53,6 @@ except ImportError, ex:
 #######################################################################
 
 if __name__ == "__main__":
-    print "%s [OPTIONS] EXPERIMENT [EXPERIMENT ...] <solid_run_dir>" % \
-        os.path.basename(sys.argv[0])
-    print ""
-    print "Build analysis directory structure for one or more 'experiments'"
-    print "and populate with links to the primary data in <solid_run_dir>."
-    print ""
-    print "Options:"
-    print "    --dry-run: report the operations that would be performed"
-    print "    --debug: turn on debugging output"
-    print "    --top-dir=<dir>: create analysis directories as subdirs of <dir>;"
-    print "      otherwise create them in cwd."
-    print "    --run-pipeline=<script>: after creating analysis directories, run"
-    print "      the specified <script> on SOLiD data file pairs in each"
-    print ""
-    print "Defining experiments:"
-    print ""
-    print "Each experiment is defined with a group of options (must be supplied"
-    print "in this order for each):"
-    print ""
-    print "    --name=<name> [--type=<expt_type>] --source=<sample>/<library>"
-    print "                                      [--source=... ]"
-    print ""
-    print "    <name> is an identifier (typically the user's initials) used"
-    print "        for the analysis directory e.g. 'PB'"
-    print "    <expt_type> is e.g. 'reseq', 'ChIP-seq', 'RNAseq', 'miRNA'..."
-    print "    <sample>/<library> specify the names for primary data files"
-    print "        e.g. 'PB_JB_pool/PB*'"
-    print ""
-    print "    Example:"
-    print "        --name=PB --type=ChIP-seq --source=PB_JB_pool/PB*"
-    print ""
-    print "    Both <sample> and <library> can include a trailing wildcard"
-    print "    character (i.e. *) to match multiple names. */* will match all"
-    print "    primary data files. Multiple --sources can be declared for"
-    print "    each experiment."
-    print ""
-    print "For each experiment defined on the command line, a subdirectory"
-    print "called '<name>_<expt_type>' (e.g. 'PB_ChIP-seq' - if no <expt_type>"
-    print "was supplied then just the name is used) will be made, and links to"
-    print "each of the primary data files."
 
     # Initialise
     logging.basicConfig(format="%(levelname)s %(message)s")
@@ -103,6 +63,46 @@ if __name__ == "__main__":
     # Process command line
     if len(sys.argv) < 2:
         # Insuffient arguments
+        print "%s [OPTIONS] EXPERIMENT [EXPERIMENT ...] <solid_run_dir>" % \
+              os.path.basename(sys.argv[0])
+        print ""
+        print "Build analysis directory structure for one or more 'experiments'"
+        print "and populate with links to the primary data in <solid_run_dir>."
+        print ""
+        print "Options:"
+        print "    --dry-run: report the operations that would be performed"
+        print "    --debug: turn on debugging output"
+        print "    --top-dir=<dir>: create analysis directories as subdirs of <dir>;"
+        print "      otherwise create them in cwd."
+        print "    --run-pipeline=<script>: after creating analysis directories, run"
+        print "      the specified <script> on SOLiD data file pairs in each"
+        print ""
+        print "Defining experiments:"
+        print ""
+        print "Each experiment is defined with a group of options (must be supplied"
+        print "in this order for each):"
+        print ""
+        print "    --name=<name> [--type=<expt_type>] --source=<sample>/<library>"
+        print "                                      [--source=... ]"
+        print ""
+        print "    <name> is an identifier (typically the user's initials) used"
+        print "        for the analysis directory e.g. 'PB'"
+        print "    <expt_type> is e.g. 'reseq', 'ChIP-seq', 'RNAseq', 'miRNA'..."
+        print "    <sample>/<library> specify the names for primary data files"
+        print "        e.g. 'PB_JB_pool/PB*'"
+        print ""
+        print "    Example:"
+        print "        --name=PB --type=ChIP-seq --source=PB_JB_pool/PB*"
+        print ""
+        print "    Both <sample> and <library> can include a trailing wildcard"
+        print "    character (i.e. *) to match multiple names. */* will match all"
+        print "    primary data files. Multiple --sources can be declared for"
+        print "    each experiment."
+        print ""
+        print "For each experiment defined on the command line, a subdirectory"
+        print "called '<name>_<expt_type>' (e.g. 'PB_ChIP-seq' - if no <expt_type>"
+        print "was supplied then just the name is used) will be made, and links to"
+        print "each of the primary data files."
         sys.exit(1)
 
     # Solid run directory
