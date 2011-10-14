@@ -41,12 +41,12 @@ Pipeline recipes
 
 *   Run the full QC pipeline on a set of directories:
 
-    `.../run_qc_pipeline.py qc.sh <dir1> <dir2> ...`
+    `run_qc_pipeline.py qc.sh <dir1> <dir2> ...`
 
 *   Run the fastq_screen steps only on a set of directories:
 
-    `.../run_qc_pipeline.py --input=fastq fastq_screen.sh <dir1> <dir2> ...`
+    `run_qc_pipeline.py --input=fastq fastq_screen.sh <dir1> <dir2> ...`
 
 *   To get an email notification on completion of the pipeline:
 
-    `.../run_qc_pipeline.py --email=foo@bar.com ...
+    `run_qc_pipeline.py --email=foo@bar.com ...`
