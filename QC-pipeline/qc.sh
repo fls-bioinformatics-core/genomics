@@ -4,6 +4,18 @@
 #
 # Usage: qc.sh <csfasta> <qual>
 #
+function usage() {
+    echo "Usage: qc.sh <csfasta_file> <qual_file>"
+    echo ""
+    echo "Run QC pipeline:"
+    echo ""
+    echo "* create fastq file"
+    echo "* check for contamination using fastq_screen"
+    echo "* generate QC boxplots"
+    echo "* preprocess/filter using polyclonal and error tests"
+    echo "  and generate fastq and boxplots for filtered data"
+}
+#
 # QC pipeline consists of the following steps:
 #
 # Primary data:
@@ -16,6 +28,12 @@
 # * generate QC boxplots for filtered data (qc_boxplotter)
 # * compare number of reads after filtering with original
 #   data files
+#
+# Check command line
+if [ $# -ne 2 ] || [ "$1" == "-h" ] || [ "$1" == "--help" ] ; then
+    usage
+    exit
+fi
 #
 # Import function libraries
 if [ -f functions.sh ] ; then
@@ -112,6 +130,12 @@ umask 0002
 # Get the input files
 CSFASTA=$(abs_path $1)
 QUAL=$(abs_path $2)
+#
+#
+if [ ! -f "$CSFASTA" ] || [ ! -f "$QUAL" ] ; then
+    echo "csfasta and/or qual files not found"
+    exit
+fi
 #
 # Get the data directory i.e. location of the input files
 datadir=`dirname $CSFASTA`

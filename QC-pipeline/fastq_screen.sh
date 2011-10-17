@@ -4,6 +4,17 @@
 #
 # Usage: fastq_screen.sh <fastq>
 #
+function usage() {
+    echo "Usage: fastq_screen.sh <fastq_file>"
+    echo ""
+    echo "Run fastq_screen against model organisms, other organisms and rRNA"
+}
+# Check command line
+if [ $# -ne 1 ] || [ "$1" == "-h" ] || [ "$1" == "--help" ] ; then
+    usage
+    exit
+fi
+#
 # Set umask to allow group read-write on all new files etc
 umask 0002
 #
@@ -13,20 +24,11 @@ fastq=`basename $1`
 # Strip extension
 fastq_base=${fastq%.*}
 #
-# Get the data directory i.e. location of the input files
+# Get the data directory i.e. location of the input file
 datadir=`dirname $1`
 if [ "$datadir" == "." ] ; then
     datadir=`pwd`
 fi
-#
-# Report
-echo ========================================================
-echo fastq_screen pipeline
-echo ========================================================
-echo Started   : `date`
-echo Running in: `pwd`
-echo data dir  : $datadir
-echo fastq     : $fastq
 #
 # Set up environment
 QC_SETUP=`dirname $0`/qc.setup
@@ -37,16 +39,27 @@ else
     echo WARNING qc.setup not found in `dirname $0`
 fi
 #
+# Set the programs
+# Override these defaults by setting them in qc.setup
+: ${FASTQ_SCREEN:=fastq_screen}
+: ${FASTQ_SCREEN_CONF_DIR:=}
+#
+# Report
+echo ========================================================
+echo fastq_screen pipeline
+echo ========================================================
+echo Started   : `date`
+echo Running in: `pwd`
+echo data dir  : $datadir
+echo fastq     : $fastq
+echo fastq_screen: $FASTQ_SCREEN
+echo Location of conf files: $FASTQ_SCREEN_CONF_DIR
+#
 # Check that fastq file exists
 if [ ! -f "${datadir}/${fastq}" ] ; then
     echo ERROR fastq file not found: ${datadir}/${fastq}, stopping
     exit 1
 fi
-#
-# Set the programs
-# Override these defaults by setting them in qc.setup
-: ${FASTQ_SCREEN:=fastq_screen}
-: ${FASTQ_SCREEN_CONF_DIR:=}
 #
 # Create 'qc' subdirectory
 if [ ! -d "qc" ] ; then
