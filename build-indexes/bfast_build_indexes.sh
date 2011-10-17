@@ -190,10 +190,6 @@ masks="1111111111111111111111
 #
 # Run index for each mask
 #
-# Note: these are dependent on the colorspace binary reference genome file
-# (.brg) generated in the initial step - use qsub hold_jid to ensure that
-# these jobs don't start before that job has finished
-#
 # Each mask is accompanied by an index (specified using the -i option) so
 # output files are:
 #
