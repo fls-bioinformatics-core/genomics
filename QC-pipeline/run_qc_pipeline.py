@@ -370,6 +370,9 @@ class PipelineRunner:
         # Set up queue
         if queue:
             self.queue = queue
+        # Report set up
+        print "Initially %d jobs waiting, %d running, %d finished" % \
+            (self.nWaiting(),self.nRunning(),self.nCompleted())
         # Initial update sets the jobs running
         self.update()
         if blocking:
