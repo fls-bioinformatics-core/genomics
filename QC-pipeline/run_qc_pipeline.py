@@ -737,7 +737,11 @@ if __name__ == "__main__":
                 if not os.path.isdir(dirn):
                     logging.error("Not a directory: %s" % dirn)
                     sys.exit(1)
-                data_dirs.append(dirn)
+                # Check for duplicates
+                if dirn not in data_dirs:
+                    data_dirs.append(dirn)
+                else:
+                    logging.warning("Directory '%s' already specified" % dirn)
 
     # Set logging format and level
     logging.basicConfig(format='%(levelname)8s %(message)s')
