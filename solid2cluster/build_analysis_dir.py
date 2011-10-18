@@ -24,15 +24,9 @@ SHARE_DIR = os.path.abspath(
     os.path.normpath(
         os.path.join(os.path.dirname(sys.argv[0]),'..','share')))
 sys.path.append(SHARE_DIR)
-# Put ../QC-pipeline onto Python search path for modules
-QC_DIR =  os.path.abspath(
-    os.path.normpath(
-        os.path.join(os.path.dirname(sys.argv[0]),'..','QC-pipeline')))
-sys.path.append(QC_DIR)
 try:
     import SolidData
     import Experiment
-    import run_qc_pipeline
 except ImportError, ex:
     print "Error importing modules: %s" % ex
 

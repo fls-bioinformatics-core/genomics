@@ -25,6 +25,17 @@ import os
 import logging
 import SolidData
 
+# Put ../QC-pipeline onto Python search path for modules
+import sys
+QC_DIR =  os.path.abspath(
+    os.path.normpath(
+        os.path.join(os.path.dirname(sys.argv[0]),'..','QC-pipeline')))
+sys.path.append(QC_DIR)
+try:
+    import run_qc_pipeline
+except ImportError, ex:
+    print "Error importing modules: %s" % ex
+
 #######################################################################
 # Class definitions
 #######################################################################
