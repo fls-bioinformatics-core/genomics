@@ -529,7 +529,11 @@ def QsubScript(name,queue,working_dir,script,*args):
     # Run the qsub job in the current directory
     # This shouldn't be significant
     cwd = os.getcwd()
+    # Check that this exists
     logging.debug("QsubScript: executing in %s" % cwd)
+    if not os.path.exists(cwd):
+        logging.error("QsubScript: cwd doesn't exist!")
+        return None
     p = subprocess.Popen(qsub,cwd=cwd,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
     p.wait()
     # Check stderr
