@@ -340,10 +340,17 @@ class TabFile:
         self.__data.insert(i,data_line)
         return data_line
 
-    def write(self,filen):
+    def write(self,filen,include_header=False):
         """Write the TabFile data to an output file
+
+        Arguments:
+          filen: name of file to write to
+          include_header: (optional) if set to True, the first
+            line will be a 'header' line
         """
         fp = open(filen,'w')
+        if include_header:
+            fp.write("#%s\n" % '\t'.join(self.header()))
         for data in self.__data:
             fp.write("%s\n" % data)
         fp.close()
