@@ -393,8 +393,8 @@ class TabDataLine:
         self.data = []
         self.__lineno = None
         if line is not None:
-            for value in line.strip().split('\t'):
-                self.data.append(self.__convert(value))
+            for value in line.split('\t'):
+                self.data.append(self.__convert(value.strip()))
         # Column names
         self.names = []
         if column_names:
@@ -783,6 +783,22 @@ class TestTabDataLine(unittest.TestCase):
         self.assertEqual(len(line),4,"Line should have 4 items")
         self.assertEqual(str(line),input_data)
 
+    def test_new_line_no_header_empty_items(self):
+        """Create new data line with no header and a line with empty items
+        """
+        input_data = "\t\t\t"
+        line = TabDataLine(line=input_data)
+        self.assertEqual(len(line),4,"Line should have 4 items")
+        self.assertEqual(str(line),input_data,"String representation should match input")
+
+    def test_new_line_no_header_leading_empty_item(self):
+        """Create new data line with no header and a line with a leading empty item
+        """
+        input_data = "\t1.2\t3.4\t5.6"
+        line = TabDataLine(line=input_data)
+        self.assertEqual(len(line),4,"Line should have 4 items")
+        self.assertEqual(str(line),input_data,"String representation should match input")
+
     def test_get_and_set_data(self):
         """Create new data line and do get and set operations
         """
@@ -825,6 +841,20 @@ class TestTabDataLine(unittest.TestCase):
         self.assertEqual(str(subset),"3.3\t4.4","String representation should be last two columns")
         # Check key lookup
         self.assertEqual(subset[2],3.3)
+
+    def test_subsetting_leading_empty_items(self):
+        """Create new data line with a leading empty items and retrieve subset
+        """
+        input_data = "\t2.2\t3.3\t4.4"
+        line = TabDataLine(line=input_data,column_names=('one','two','three','four'))
+        # Subset with integer indices
+        subset = line.subset(2,3)
+        self.assertEqual(len(subset),2,"Subset should have 2 items")
+        self.assertEqual(str(subset),"3.3\t4.4","String representation should be last two columns")
+        # Subset with keys
+        subset = line.subset("three","four")
+        self.assertEqual(len(subset),2,"Subset should have 2 items")
+        self.assertEqual(str(subset),"3.3\t4.4","String representation should be last two columns")
 
     def test_line_number(self):
         """Create new data line with line number
