@@ -340,6 +340,17 @@ class TabFile:
         self.__data.insert(i,data_line)
         return data_line
 
+    def appendColumn(self,name):
+        """Append a new (empty) column
+
+        Arguments:
+          name: name for the new column
+        """
+        for data in self.__data:
+            data.appendColumn(name,'')
+        self.__header.append(name)
+        self.__ncols = len(self.__header)
+
     def write(self,filen,include_header=False):
         """Write the TabFile data to an output file
 
@@ -682,6 +693,16 @@ chr2\t1234\t5678\t6.8
         self.assertEqual(len(tabfile),4)
         # Check new line is correct
         self.assertTrue(str(line) == data)
+
+    def test_append_column(self):
+        """Append new column to a Tabfile
+        """
+        tabfile = TabFile('test',self.fp,first_line_is_header=True)
+        self.assertEqual(len(tabfile.header()),4)
+        tabfile.appendColumn('new')
+        self.assertEqual(len(tabfile.header()),5)
+        self.assertEqual(tabfile.header()[4],'new')
+        self.assertEqual(tabfile[0]['new'],'')
 
 class TestUncommentedHeaderTabFile(unittest.TestCase):
 
