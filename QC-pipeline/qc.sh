@@ -91,9 +91,6 @@ function solid_preprocess_filter() {
     # Input file names
     csfasta=$1
     qual=$2
-    # Derive names for filtered output files
-    ##filtered_csfasta=$(baserootname $csfasta)_T_F3.csfasta
-    ##filtered_qual=$(baserootname $csfasta)_QV_T_F3.qual
     # Check if filtered files already exist
     if [ -f "${filtered_csfasta}" ] && [ -f "${filtered_qual}" ] ; then
 	echo Filtered csfasta and qual files already exist, skipping preprocess filter
@@ -101,6 +98,7 @@ function solid_preprocess_filter() {
 	echo "--------------------------------------------------------"
 	echo Executing SOLiD_preprocess_filter
 	echo "--------------------------------------------------------"
+	# Run preprocessor
 	FILTER_OPTIONS="-x y -p 3 -q 22 -y y -e 10 -d 9"
 	cmd="${SOLID_PREPROCESS_FILTER} -o $(baserootname $csfasta) ${FILTER_OPTIONS} -f ${csfasta} -g ${qual}"
 	echo $cmd
@@ -243,10 +241,8 @@ solid_preprocess_filter ${CSFASTA} ${QUAL}
 # Filtering statistics
 filtering_stats ${CSFASTA}
 #
-# Run solid2fastq to make fastq file
-filtered_csfasta=$(baserootname $CSFASTA)_T_F3.csfasta
-filtered_qual=$(baserootname $CSFASTA)_QV_T_F3.qual
-run_solid2fastq ${filtered_csfasta} ${filtered_qual}
+# Run solid2fastq to make fastq file from filtered files
+run_solid2fastq $(baserootname $CSFASTA)_T_F3.csfasta $(baserootname $CSFASTA)_QV_T_F3.qual
 #
 # QC_boxplots
 #
