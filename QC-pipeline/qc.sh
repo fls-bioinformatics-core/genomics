@@ -182,18 +182,36 @@ function qc_boxplotter() {
 	echo "--------------------------------------------------------"
 	echo Executing QC_boxplotter: ${qual_base}
 	echo "--------------------------------------------------------"
+	# Make a temporary directory to run in
+	# This stops intermediate files cluttering the working directory
+	# if the boxplotter stops (or is stopped) prematurely
+	wd=`pwd`
+	tmp=`mktemp -d`
+	cd $tmp
 	# Make a link to the input qual file
 	if [ ! -f "${qual_base}" ] ; then
 	    echo Making symbolic link to qual file
 	    /bin/ln -s ${qual} ${qual_base}
 	fi
+	# Run boxplotter
 	cmd="${QC_BOXPLOTTER} $qual_base"
 	$cmd
-        # Clean up
-	if [ -L "${qual_base}" ] ; then
-	    echo Removing symbolic link to qual file
-	    /bin/rm -f ${qual_base}
+	# Move back to working dir and copy output files
+	cd $wd
+	if [ -f "${tmp}/${qual_base}_seq-order_boxplot.ps" ] ; then
+	    /bin/cp ${tmp}/${qual_base}_seq-order_boxplot.ps .
+	    echo Created ${qual_base}_seq-order_boxplot.ps
+	else
+	    echo WARNING no file ${qual_base}_seq-order_boxplot.ps
 	fi
+	if [ -f "${tmp}/${qual_base}_seq-order_boxplot.pdf" ] ; then
+	    /bin/cp ${tmp}/${qual_base}_seq-order_boxplot.pdf .
+	    echo Created ${qual_base}_seq-order_boxplot.pdf
+	else
+	    echo WARNING no file ${qual_base}_seq-order_boxplot.pdf
+	fi
+	# Remove temporary dir
+	/bin/rm -rf ${tmp}
     fi
 }
 #
