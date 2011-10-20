@@ -265,6 +265,9 @@ run_solid2fastq $(baserootname $CSFASTA)_T_F3.csfasta $(baserootname $CSFASTA)_Q
 #
 # QC_boxplots
 #
+# Store working directory
+wd=`pwd`
+#
 # Move to qc directory
 cd qc
 #
@@ -272,7 +275,7 @@ cd qc
 qc_boxplotter $QUAL
 #
 # Boxplots for filtered data
-qc_boxplotter ${datadir}/$(baserootname $CSFASTA)_QV_T_F3.qual
+qc_boxplotter ${wd}/$(baserootname $CSFASTA)_QV_T_F3.qual
 #
 echo QC pipeline completed: `date`
 exit
