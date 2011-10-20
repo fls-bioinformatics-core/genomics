@@ -167,10 +167,12 @@ function filtering_stats() {
 #
 # Run boxplotter
 #
+# Supply full path of input qual_file
+#
 # Usage: qc_boxplotter <qual_file>
 function qc_boxplotter() {
     # Input qual file
-    qual=$1
+    qual=$(abs_path ${1})
     # Qual base name
     qual_base=`basename $qual`
     # Check if boxplot files already exist
@@ -234,6 +236,9 @@ else
     echo WARNING qc.setup not found in `dirname $0`
 fi
 #
+# Working directory
+WORKING_DIR=`pwd`
+#
 # Set the programs
 # Override these defaults by setting them in qc.setup
 : ${FASTQ_SCREEN:=fastq_screen}
@@ -283,9 +288,6 @@ run_solid2fastq $(baserootname $CSFASTA)_T_F3.csfasta $(baserootname $CSFASTA)_Q
 #
 # QC_boxplots
 #
-# Store working directory
-wd=`pwd`
-#
 # Move to qc directory
 cd qc
 #
@@ -293,7 +295,7 @@ cd qc
 qc_boxplotter $QUAL
 #
 # Boxplots for filtered data
-qc_boxplotter ${wd}/$(baserootname $CSFASTA)_QV_T_F3.qual
+qc_boxplotter ${WORKING_DIR}/$(baserootname $CSFASTA)_QV_T_F3.qual
 #
 echo QC pipeline completed: `date`
 exit
