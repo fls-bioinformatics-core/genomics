@@ -222,6 +222,161 @@ class SimpleJobRunner(BaseJobRunner):
         error_file = "%s.e%s" % (name,timestamp)
         return (log_file,error_file)
 
+class GEJobRunner(BaseJobRunner):
+
+    def __init__(self,queue=None):
+        """Create a new GEJobRunner instance
+
+        Arguments:
+          queue: Name of GE queue to use (set to 'None' to use default queue)
+        """
+        self.__queue = queue
+        self.__names = {}
+
+    def run(self,name,working_dir,script,*args):
+        """Submit a script or command to the cluster via 'qsub'
+
+        Arguments:
+          name: Name to give the job
+        """
+        logging.debug("QsubScript: submitting job")
+        logging.debug("QsubScript: name       : %s" % name)
+        logging.debug("QsubScript: queue      : %s" % self.__queue)
+        logging.debug("QsubScript: working_dir: %s" % working_dir)
+        logging.debug("QsubScript: script     : %s" % script)
+        logging.debug("QsubScript: args       : %s" % str(args))
+        # Build command to be submitted
+        cmd_args = [script]
+        cmd_args.extend(args)
+        cmd = ' '.join(cmd_args)
+        # Build qsub command to submit it
+        qsub = ['qsub','-b','y','-V','-N',name]
+        if self.__queue:
+            qsub.extend(('-q',self.__queue))
+        if not working_dir:
+            qsub.append('-cwd')
+        else:
+            qsub.extend(('-wd',working_dir))
+        qsub.append(cmd)
+        logging.debug("QsubScript: qsub command: %s" % qsub)
+        # Run the qsub job in the current directory
+        cwd = os.getcwd()
+        # Check that this exists
+        logging.debug("QsubScript: executing in %s" % cwd)
+        if not os.path.exists(cwd):
+            logging.error("QsubScript: cwd doesn't exist!")
+            return None
+        p = subprocess.Popen(qsub,cwd=cwd,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        p.wait()
+        # Check stderr
+        error = p.stderr.read().strip()
+        if error:
+            # Just echo error message as a warning
+            logging.warning("QsubScript: '%s'" % error)
+        # Capture the job id from the output
+        job_id = None
+        for line in p.stdout:
+            if line.startswith('Your job'):
+                job_id = line.split()[2]
+        logging.debug("QsubScript: done - job id = %s" % job_id)
+        # Store name against job id
+        if job_id is not None:
+            self.__names[job_id] = name
+        # Return the job id
+        return job_id
+
+    def terminate(self,job_id):
+        """Remove a job from the GE queue using 'qdel'
+        """
+        logging.debug("QdelJob: deleting job")
+        qdel=('qdel',job_id)
+        p = subprocess.Popen(qdel,stdout=subprocess.PIPE)
+        p.wait()
+        message = p.stdout.read()
+        logging.debug("qdel: %s" % message)
+        return True
+
+    def logfile(self,job_id):
+        """Return the log file name for a job
+
+        The name should be '<name>.o<job_id>'
+        """
+        return "%s.o%s" % (self.__names[job_id],job_id)
+
+    def errfile(self,job_id):
+        """Return the error file name for a job
+
+        The name should be '<name>.e<job_id>'
+        """
+        return "%s.e%s" % (self.__names[job_id],job_id)
+
+    def errorState(self,job_id):
+        """Check if the job is in an error state
+
+        Return True if the job is deemed to be in an 'error state',
+        False otherwise.
+        """
+        # Job is in error state if state code starts with E
+        return self.__job_state_code.startswith('E')
+
+    def list(self):
+        """Get list of job ids in the queue.
+        """
+        jobs = self.__run_qstat()
+        # Process the output to get job ids
+        job_ids = []
+        for job_data in jobs:
+            # Id is first item for each job
+            job_ids.append(job_data[0])
+        return job_ids
+
+    def __run_qstat(self):
+        """Internal: run qstat and return data as a list of lists
+
+        Runs 'qstat' command, processes the output and returns a
+        list where each item is the data for a job in the form of
+        another list, with the items in this list being the data
+        returned by qstat.
+        """
+        cmd = ['qstat','-u',os.getlogin()]
+        # Run the qstat
+        p = subprocess.Popen(cmd,stdout=subprocess.PIPE)
+        p.wait()
+        # Process the output
+        jobs = []
+        # Typical output is:
+        # job-ID  prior   name       user         ...<snipped>...
+        # ----------------------------------------...<snipped>...
+        # 620848 -499.50000 qc       myname       ...<snipped>...
+        # ...
+        # i.e. 2 header lines then one line per job
+        for line in p.stdout:
+            try:
+                if line.split()[0].isdigit():
+                    jobs.append(line.split())
+            except IndexError:
+                # Skip this line
+                pass
+        return jobs
+
+    def __job_state_code(self,job_id):
+        """Internal: get the state code for the specified job id
+
+        Will be one of the GE job state codes, or an empty
+        string if the job id isn't found.
+        """
+        jobs = self.__run_qstat()
+        for job_data in jobs:
+            if job_data[0] == job_id:
+                # State code is index 4
+                return job_data[4]
+        # Job not found
+        return ''
+
+#######################################################################
+# Main program
+#######################################################################
+
 if __name__ == "__main__":
     import sys
     logging.getLogger().setLevel(logging.DEBUG)
