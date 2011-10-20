@@ -61,8 +61,8 @@ fi
 # Usage: solid2fastq <csfasta> <qual>
 function run_solid2fastq() {
     # Input files
-    csfasta=$1
-    qual=$2
+    csfasta=$(abs_path ${1})
+    qual=$(abs_path ${2})
     #
     # Determine basename for fastq file: same as csfasta, with
     # any leading directory and extension stripped off
@@ -76,9 +76,27 @@ function run_solid2fastq() {
 	echo "--------------------------------------------------------"
 	echo Executing solid2fastq
 	echo "--------------------------------------------------------"
+	# Make a temporary directory to run in
+	# This stops incomplete fastq files being written to the working
+	# directory which might be left behind if solid2fastq stops (or
+	# is stopped) prematurely
+	wd=`pwd`
+	tmp=`mktemp -d`
+	cd $tmp
+	# Run solid2fastq
 	cmd="${SOLID2FASTQ} -o $fastq_base $csfasta $qual"
 	echo $cmd
 	$cmd
+	# Move back to working dir and copy preprocessed files
+	cd $wd
+	if [ -f "${tmp}/${fastq}" ] ; then
+	    /bin/cp ${tmp}/${fastq} .
+	    echo Created ${fastq}
+	else
+	    echo WARNING no file ${fastq}
+	fi
+	# Remove temporary dir
+	/bin/rm -rf ${tmp}
     fi
 }
 #
