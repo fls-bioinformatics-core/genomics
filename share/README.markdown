@@ -15,6 +15,11 @@ Python modules
 *   `Experiment.py`: Python module providing classes for defining SOLiD sequencing
     experiments (collections of related primary data)
 
+*   `JobRunner.py`: classes providing generic interface for starting and managing job
+    runs
+
+*   `Pipeline.py`: classes for running jobs iteratively
+
 *   `SolidData.py`: Python module providing classes for extracting data about SOLiD
     runs from directory structure, data files and naming conventions.
 
