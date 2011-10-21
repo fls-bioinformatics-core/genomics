@@ -37,16 +37,16 @@ import JobRunner
 # Class definitions
 #######################################################################
 
-# QsubJob: container for a script run
-class QsubJob:
-    """Wrapper class for setting up, submitting and monitoring qsub scripts
+# Job: container for a script run
+class Job:
+    """Wrapper class for setting up, submitting and monitoring running scripts
 
-    Set up a job by creating a QsubJob instance specifying the name, working directory,
+    Set up a job by creating a Job instance specifying the name, working directory,
     script file to execute, and arguments to be supplied to the script.
 
-    The job is started by invoking QsubJob's 'start' method; its status can be checked
-    with the 'isRunning' method, and terminated and resubmitted using the 'terminate' and
-    'resubmit' methods respectively.
+    The job is started by invoking the 'start' method; its status can be checked
+    with the 'isRunning' method, and terminated and restarted using the 'terminate'
+    and 'restart' methods respectively.
 
     Information about the job can also be accessed via its properties. The following
     properties record the original parameters supplied on instantiation:
@@ -58,22 +58,24 @@ class QsubJob:
 
     Additional information is set once the job has started or stopped running:
 
-      job_id      The id number for the running job set by GE
+      job_id      The id number for the running job returned by the JobRunner
       log         The log file for the job (relative to working_dir)
       start_time  The start time (seconds since the epoch)
       end_time    The end time (seconds since the epoch)
 
+    The Job class uses a JobRunner instance (which supplies the necessary methods for
+    starting, stopping and monitoring) for low-level job interactions.
     """
     def __init__(self,runner,name,dirn,script,*args):
-        """Create an instance of QsubJob.
+        """Create an instance of Job.
 
         Arguments:
           runner: a JobRunner instance supplying job control methods
-          name: name to give the running job (i.e. qsub -N)
-          dirn: directory to run the script in (i.e. qsub -wd)
+          name: name to give the running job
+          dirn: directory to run the script in
           script: script file to submit, either a full path, relative path to dirn, or
-            must be on the user's PATH in the environment where GE jobs are executed
-          args: arbitrary arguments to supply to the script when it is submitted via qsub
+            must be on the user's PATH in the environment where jobs are executed
+          args: arbitrary arguments to supply to the script when it is submitted
         """
         self.name = name
         self.working_dir = dirn
@@ -91,10 +93,10 @@ class QsubJob:
         self.__runner = runner
 
     def start(self):
-        """Submit the job to the GE queue
+        """Start the job running
 
         Returns:
-          Id for submitted job
+          Id for job
         """
         if not self.submitted and not self.__finished:
             self.job_id = self.__runner.run(self.name,self.working_dir,self.script,*self.args)
@@ -119,15 +121,15 @@ class QsubJob:
         return self.job_id
 
     def terminate(self):
-        """Terminate (qdel) a running job
+        """Terminate a running job
         """
         if self.isRunning():
             self.__runner.terminate(self.job_id)
             self.terminated = True
             self.end_time = time.time()
 
-    def resubmit(self):
-        """Resubmit the job
+    def restart(self):
+        """Restart the job
 
         Terminates the job (if still running) and restarts"""
         # Terminate running job
@@ -178,17 +180,19 @@ class QsubJob:
 
 # PipelineRunner: class to set up and run multiple jobs
 class PipelineRunner:
-    """Class to run and manage multiple GE jobs.
+    """Class to run and manage multiple concurrent jobs.
 
     PipelineRunner enables multiple jobs to be queued via the 'queueJob' method. The
-    pipeline is then started using the 'run' method - this submits each job in turn (while
-    limiting the number in the GE queue to a specified maximum) and monitors when they
-    finish:
+    pipeline is then started using the 'run' method - this starts each job up to a
+    a specified maximum of concurrent jobs, and then monitors their progress. As jobs
+    finish, pending jobs are started until all jobs have completed.
 
-    p = PipelineRunner()
-    p.queueJob('/home/foo','foo.sh','bar.in')
-    ...
-    p.run()
+    Example usage:
+
+    >>> p = PipelineRunner()
+    >>> p.queueJob('/home/foo','foo.sh','bar.in')
+    ... Queue more jobs ...
+    >>> p.run()
 
     By default the pipeline runs in 'blocking' mode, i.e. 'run' doesn't return until all
     jobs have been submitted and have completed; see the 'run' method for details of
@@ -199,7 +203,8 @@ class PipelineRunner:
 
         Arguments:
           runner: a JobRunner instance
-          max_concurrent_jobs: maximum number of GE jobs that the script will allow
+          max_concurrent_jobs: maximum number of jobs that the script will allow to run
+            at one time (default = 4)
           poll_interval: time interval (in seconds) between checks on the queue status
             (only used when pipeline is run in 'blocking' mode)
         """
@@ -226,16 +231,16 @@ class PipelineRunner:
           args: arguments to be supplied to the script at run time
         """
         job_name = os.path.splitext(os.path.basename(script))[0]
-        self.jobs.put(QsubJob(self.__runner,job_name,working_dir,script,*args))
+        self.jobs.put(Job(self.__runner,job_name,working_dir,script,*args))
         logging.debug("Added job: now %d jobs in pipeline" % self.jobs.qsize())
 
     def nWaiting(self):
-        """Return the number of jobs still to be submitted to the GE queue
+        """Return the number of jobs still waiting to be started
         """
         return self.jobs.qsize()
 
     def nRunning(self):
-        """Return the number of jobs currently running in the GE queue
+        """Return the number of jobs currently running
         """
         return len(self.running)
 
@@ -259,7 +264,7 @@ class PipelineRunner:
         """Execute the jobs in the pipeline
 
         Each job previously added to the pipeline by 'queueJob' will be
-        submitted to the GE queue and checked for termination.
+        started and checked periodically for termination.
 
         By default 'run' operates in 'blocking' mode, so it doesn't return
         until all jobs have been submitted and have finished executing.
@@ -375,7 +380,7 @@ class PipelineRunner:
         return report
 
 class SolidPipelineRunner(PipelineRunner):
-    """Class to run and manage multiple GE jobs for Solid data pipelines
+    """Class to run and manage multiple jobs for Solid data pipelines
 
     Subclass of PipelineRunner specifically for dealing with scripts
     that take Solid data (i.e. csfasta/qual file pairs).
