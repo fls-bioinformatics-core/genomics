@@ -28,8 +28,19 @@ Usage: python run_pipeline.py [OPTIONS] <script> <data_dir> [ <data_dir> ... ]
 import sys
 import os
 import logging
-import JobRunner
-import Pipeline
+
+# Put ../share onto Python search path for modules
+SHARE_DIR = os.path.abspath(
+    os.path.normpath(
+        os.path.join(os.path.dirname(sys.argv[0]),'..','share')))
+sys.path.append(SHARE_DIR)
+try:
+    import JobRunner
+    import Pipeline
+except ImportError, ex:
+    print "Error importing modules: %s" % ex
+    print "Check PYTHONPATH"
+    sys.exit(1)
 
 #######################################################################
 # Module Functions
