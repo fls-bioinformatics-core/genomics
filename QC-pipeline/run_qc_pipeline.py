@@ -28,6 +28,7 @@ Usage: python run_pipeline.py [OPTIONS] <script> <data_dir> [ <data_dir> ... ]
 import sys
 import os
 import logging
+import subprocess
 
 # Put ../share onto Python search path for modules
 SHARE_DIR = os.path.abspath(
