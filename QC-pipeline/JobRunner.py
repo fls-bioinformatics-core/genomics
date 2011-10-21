@@ -126,11 +126,11 @@ class SimpleJobRunner(BaseJobRunner):
     def run(self,name,working_dir,script,*args):
         """Run a command and return the PID (=job id)
         """
-        logging.debug("RunScript: submitting job")
-        logging.debug("RunScript: name       : %s" % name)
-        logging.debug("RunScript: working_dir: %s" % working_dir)
-        logging.debug("RunScript: script     : %s" % script)
-        logging.debug("RunScript: args       : %s" % str(args))
+        logging.debug("Submitting job")
+        logging.debug("Name       : %s" % name)
+        logging.debug("Working_dir: %s" % working_dir)
+        logging.debug("Script     : %s" % script)
+        logging.debug("Arguments  : %s" % str(args))
         # Build command to be submitted
         cmd = [script]
         cmd.extend(args)
@@ -266,12 +266,12 @@ class GEJobRunner(BaseJobRunner):
           Job id for submitted job, or 'None' if job failed to
           start.
         """
-        logging.debug("QsubScript: submitting job")
-        logging.debug("QsubScript: name       : %s" % name)
-        logging.debug("QsubScript: queue      : %s" % self.__queue)
-        logging.debug("QsubScript: working_dir: %s" % working_dir)
-        logging.debug("QsubScript: script     : %s" % script)
-        logging.debug("QsubScript: args       : %s" % str(args))
+        logging.debug("Submitting job")
+        logging.debug("Name       : %s" % name)
+        logging.debug("Queue      : %s" % self.__queue)
+        logging.debug("Working_dir: %s" % working_dir)
+        logging.debug("Script     : %s" % script)
+        logging.debug("Arguments  : %s" % str(args))
         # Build command to be submitted
         cmd_args = [script]
         cmd_args.extend(args)
