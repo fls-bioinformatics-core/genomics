@@ -96,6 +96,8 @@ class SimpleJobRunner(BaseJobRunner):
     def __init__(self):
         # Store a list of job ids (= pids) managed by this class
         self.__job_list = []
+        # Base log id
+        self.__log_id = int(time.time())
         # Keep track of log files etc
         self.__log_files = {}
         self.__err_files = {}
@@ -217,9 +219,10 @@ class SimpleJobRunner(BaseJobRunner):
         Since the job id isn't known before the job starts, create
         names based on the timestamp plus the supplied 'name'
         """
-        timestamp = int(time.time())
+        timestamp = self.__log_id
         log_file = "%s.o%s" % (name,timestamp)
         error_file = "%s.e%s" % (name,timestamp)
+        self.__log_id += 1
         return (log_file,error_file)
 
 class GEJobRunner(BaseJobRunner):
