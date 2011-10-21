@@ -405,6 +405,7 @@ class GEJobRunner(BaseJobRunner):
 #######################################################################
 
 if __name__ == "__main__":
+    # Example of usage
     import sys
     logging.getLogger().setLevel(logging.DEBUG)
     if len(sys.argv) < 2:
@@ -412,12 +413,11 @@ if __name__ == "__main__":
         sys.exit()
     args = sys.argv[1:]
     runner = SimpleJobRunner()
+    ##runner = GEJobRunner()
     pid = runner.run(os.path.basename(sys.argv[1]),None,*args)
     print "Submitted job: %s" % pid
-    print "Outputs: %s %s" % (runner.logfile(pid),runner.errfile(pid))
+    print "Outputs: %s %s" % (runner.logFile(pid),runner.errFile(pid))
     print "%s" % runner.list()
     while runner.isRunning(pid):
-        print "Still running..."
-        print "%s" % runner.list()
         time.sleep(10)
     print "Finished"
