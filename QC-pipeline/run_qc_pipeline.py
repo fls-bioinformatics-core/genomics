@@ -391,8 +391,8 @@ class SolidPipelineRunner(PipelineRunner):
     solid_pipeline.addDir('/path/to/datadir')
     solid_pipeline.run()
     """
-    def __init__(self,script,max_concurrent_jobs=4,poll_interval=30):
-        PipelineRunner.__init__(self)
+    def __init__(self,runner,script,max_concurrent_jobs=4,poll_interval=30):
+        PipelineRunner.__init__(self,runner)
         self.script = script
 
     def addDir(self,dirn):
