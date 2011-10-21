@@ -344,7 +344,7 @@ class GEJobRunner(BaseJobRunner):
         False otherwise.
         """
         # Job is in error state if state code starts with E
-        return self.__job_state_code.startswith('E')
+        return self.__job_state_code(job_id).startswith('E')
 
     def list(self):
         """Get list of job ids in the queue.
