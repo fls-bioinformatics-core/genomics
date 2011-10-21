@@ -31,89 +31,11 @@ import time
 import subprocess
 import Queue
 import logging
+import JobRunner
 
 #######################################################################
 # Class definitions
 #######################################################################
-
-# Qstat: helper class for getting information from qstat
-class Qstat:
-    """Utility class for getting information from the qstat command.
-
-    Provides basic functionality for getting information on running jobs
-    from the GE 'qstat' command.
-    """
-    def __init__(self):
-        pass
-
-    def __run_qstat(self,user=None):
-        """Run qstat and return data as a list of lists
-
-        Runs 'qstat' command, processes the output and returns a
-        list where each item is the data for a job in the form of
-        another list, with the items in this list being the data
-        returned by qstat.
-        """
-        cmd = ['qstat']
-        if user:
-            cmd.extend(('-u',user))
-        else:
-            # Get current user name
-            cmd.extend(('-u',os.getlogin()))
-        # Run the qstat
-        p = subprocess.Popen(cmd,stdout=subprocess.PIPE)
-        p.wait()
-        # Process the output
-        jobs = []
-        # Typical output is:
-        # job-ID  prior   name       user         ...<snipped>...
-        # ----------------------------------------...<snipped>...
-        # 620848 -499.50000 qc       myname       ...<snipped>...
-        # ...
-        # i.e. 2 header lines then one line per job
-        for line in p.stdout:
-            try:
-                if line.split()[0].isdigit():
-                    jobs.append(line.split())
-            except IndexError:
-                # Skip this line
-                pass
-        return jobs
-
-    def list(self,user=None):
-        """Get list of job ids in the queue.
-        """
-        jobs = self.__run_qstat(user=user)
-        # Process the output to get job ids
-        job_ids = []
-        for job_data in jobs:
-            # Id is first item for each job
-            job_ids.append(job_data[0])
-        return job_ids
-
-    def njobs(self,user=None):
-        """Return the number of jobs in the queue.
-        """
-        return len(self.__run_qstat(user=user))
-
-    def hasJob(self,job_id):
-        """Check if the specified job id is in the queue.
-        """
-        return (job_id in self.list())
-
-    def jobStateCode(self,job_id):
-        """Get the state code for the specified job id
-
-        Will be one of the GE job state codes, or an empty
-        string if the job id isn't found.
-        """
-        jobs = self.__run_qstat()
-        for job_data in jobs:
-            if job_data[0] == job_id:
-                # State code is index 4
-                return job_data[4]
-        # Job not found
-        return ''
 
 # QsubJob: container for a script run
 class QsubJob:
@@ -142,10 +64,11 @@ class QsubJob:
       end_time    The end time (seconds since the epoch)
 
     """
-    def __init__(self,name,dirn,script,*args):
+    def __init__(self,runner,name,dirn,script,*args):
         """Create an instance of QsubJob.
 
         Arguments:
+          runner: a JobRunner instance supplying job control methods
           name: name to give the running job (i.e. qsub -N)
           dirn: directory to run the script in (i.e. qsub -wd)
           script: script file to submit, either a full path, relative path to dirn, or
@@ -156,7 +79,6 @@ class QsubJob:
         self.working_dir = dirn
         self.script = script
         self.args = args
-        self.queue = None
         self.job_id = None
         self.log = None
         self.submitted = False
@@ -166,23 +88,16 @@ class QsubJob:
         self.end_time = None
         self.home_dir = os.getcwd()
         self.__finished = False
-        self.__qstat = Qstat()
+        self.__runner = runner
 
-    def start(self,queue=None):
+    def start(self):
         """Submit the job to the GE queue
-
-        Arguments:
-          queue: (optional) specify name of a GE queue to use
 
         Returns:
           Id for submitted job
         """
         if not self.submitted and not self.__finished:
-            if queue is not None:
-                logging.debug("GE queue '%s' specified" % queue)
-                self.queue = queue
-            self.job_id = QsubScript(self.name,self.queue,self.working_dir,self.script,
-                                     *self.args)
+            self.job_id = self.__runner.run(self.name,self.working_dir,self.script,*self.args)
             self.submitted = True
             self.start_time = time.time()
             if self.job_id is None:
@@ -194,10 +109,10 @@ class QsubJob:
                 return self.job_id
             self.submitted = True
             self.start_time = time.time()
-            self.log = self.name+'.o'+self.job_id
+            self.log = self.__runner.logfile(self.job_id)
             # Wait for evidence that the job has started
             logging.debug("Waiting for job to start")
-            while not self.__qstat.hasJob(self.job_id) and not os.path.exists(self.log):
+            while not self.__runner.isRunning(self.job_id) and not os.path.exists(self.log):
                 time.sleep(5)
         logging.debug("Job %s started (%s)" % (self.job_id,
                                                time.asctime(time.localtime(self.start_time))))
@@ -207,7 +122,7 @@ class QsubJob:
         """Terminate (qdel) a running job
         """
         if self.isRunning():
-            QdelJob(self.job_id)
+            self.__runner.terminate(self.job_id)
             self.terminated = True
             self.end_time = time.time()
 
@@ -235,15 +150,15 @@ class QsubJob:
         if not self.submitted:
             return False
         if not self.__finished:
-            if not self.__qstat.hasJob(self.job_id):
+            if not self.__runner.isRunning(self.job_id):
                 self.end_time = time.time()
                 self.__finished = True
         return not self.__finished
 
-    def stateCode(self):
-        """Return the GE state code
+    def errorState(self):
+        """Check if the job is in an error state
         """
-        return self.__qstat.jobStateCode(self.job_id)
+        return self.__runner.errorState(self.job_id)
 
     def status(self):
         """Return descriptive string indicating job status
@@ -279,15 +194,17 @@ class PipelineRunner:
     jobs have been submitted and have completed; see the 'run' method for details of
     how to operate the pipeline in non-blocking mode.
     """
-    def __init__(self,max_concurrent_jobs=4,poll_interval=30):
+    def __init__(self,runner,max_concurrent_jobs=4,poll_interval=30):
         """Create new PipelineRunner instance.
 
         Arguments:
+          runner: a JobRunner instance
           max_concurrent_jobs: maximum number of GE jobs that the script will allow
           poll_interval: time interval (in seconds) between checks on the queue status
             (only used when pipeline is run in 'blocking' mode)
         """
         # Parameters
+        self.__runner = runner
         self.max_concurrent_jobs = max_concurrent_jobs
         self.poll_interval = poll_interval
         # Queue of jobs to run
@@ -296,10 +213,6 @@ class PipelineRunner:
         self.running = []
         # Subset that have completed
         self.completed = []
-        # GE queue to use
-        self.queue = None
-        # Local qstat instance for monitoring
-        self.qstat = Qstat()
 
     def queueJob(self,working_dir,script,*args):
         """Add a job to the pipeline.
@@ -313,7 +226,7 @@ class PipelineRunner:
           args: arguments to be supplied to the script at run time
         """
         job_name = os.path.splitext(os.path.basename(script))[0]
-        self.jobs.put(QsubJob(job_name,working_dir,script,*args))
+        self.jobs.put(QsubJob(self.__runner,job_name,working_dir,script,*args))
         logging.debug("Added job: now %d jobs in pipeline" % self.jobs.qsize())
 
     def nWaiting(self):
@@ -342,14 +255,11 @@ class PipelineRunner:
         # Return the status
         return (self.nWaiting() > 0 or self.nRunning() > 0)
 
-    def run(self,queue=None,blocking=True):
+    def run(self,blocking=True):
         """Execute the jobs in the pipeline
 
         Each job previously added to the pipeline by 'queueJob' will be
         submitted to the GE queue and checked for termination.
-
-        'queue' specifies the GE queue to use when submitting jobs (leave
-        as None to use the default queue).
 
         By default 'run' operates in 'blocking' mode, so it doesn't return
         until all jobs have been submitted and have finished executing.
@@ -367,9 +277,6 @@ class PipelineRunner:
         """
         logging.debug("PipelineRunner: started")
         logging.debug("Blocking mode : %s" % blocking)
-        # Set up queue
-        if queue:
-            self.queue = queue
         # Report set up
         print "Initially %d jobs waiting, %d running, %d finished" % \
             (self.nWaiting(),self.nRunning(),self.nCompleted())
@@ -408,16 +315,14 @@ class PipelineRunner:
                         os.chmod(os.path.join(job.working_dir,job.log),0664)
             else:
                 # Job is running, check it's not in an error state
-                job_state = job.stateCode()
-                if job_state.startswith('E'):
+                if job.errorState():
                     # Terminate jobs in error state
-                    logging.warning("Terminating job %s in error state (%s)" % 
-                                    (job.job_id,job_state))
+                    logging.warning("Terminating job %s in error state" % job.job_id)
                     job.terminate()
         # Submit new jobs to GE queue
-        while not self.jobs.empty() and self.qstat.njobs() < self.max_concurrent_jobs:
+        while not self.jobs.empty() and len(self.__runner.list()) < self.max_concurrent_jobs:
             next_job = self.jobs.get()
-            next_job.start(queue=self.queue)
+            next_job.start()
             self.running.append(next_job)
             updated_status = True
             print "Job has started: %s: %s %s (%s)" % (
@@ -499,70 +404,6 @@ class SolidPipelineRunner(PipelineRunner):
 #######################################################################
 # Module Functions
 #######################################################################
-
-# QsubScript: submit a command to the cluster
-def QsubScript(name,queue,working_dir,script,*args):
-    """Submit a script or command to the cluster via 'qsub'
-
-    Arguments:
-      name: Name to give the job
-      queue: Name of GE queue to use (set to 'None' to use default queue)
-    """
-    # 
-    logging.debug("QsubScript: submitting job")
-    logging.debug("QsubScript: name       : %s" % name)
-    logging.debug("QsubScript: queue      : %s" % queue)
-    logging.debug("QsubScript: working_dir: %s" % working_dir)
-    logging.debug("QsubScript: script     : %s" % script)
-    logging.debug("QsubScript: args       : %s" % str(args))
-    # Build command to be submitted
-    cmd_args = [script]
-    cmd_args.extend(args)
-    cmd = ' '.join(cmd_args)
-    # Build qsub command to submit it
-    qsub = ['qsub','-b','y','-V','-N',name]
-    if queue:
-        qsub.extend(('-q',queue))
-    if not working_dir:
-        qsub.append('-cwd')
-    else:
-        qsub.extend(('-wd',working_dir))
-    qsub.append(cmd)
-    logging.debug("QsubScript: qsub command: %s" % qsub)
-    # Run the qsub job in the current directory
-    # This shouldn't be significant
-    cwd = os.getcwd()
-    # Check that this exists
-    logging.debug("QsubScript: executing in %s" % cwd)
-    if not os.path.exists(cwd):
-        logging.error("QsubScript: cwd doesn't exist!")
-        return None
-    p = subprocess.Popen(qsub,cwd=cwd,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-    p.wait()
-    # Check stderr
-    error = p.stderr.read().strip()
-    if error:
-        # Just echo error message as a warning
-        logging.warning("QsubScript: '%s'" % error)
-    # Capture the job id from the output
-    job_id = None
-    for line in p.stdout:
-        if line.startswith('Your job'):
-            job_id = line.split()[2]
-    logging.debug("QsubScript: done - job id = %s" % job_id)
-    # Return the job id
-    return job_id
-
-# QdelJob: delete a job from the queue
-def QdelJob(job_id):
-    """Remove a job from the GE queue using 'qdel'
-    """
-    logging.debug("QdelJob: deleting job")
-    qdel=('qdel',job_id)
-    p = subprocess.Popen(qdel,stdout=subprocess.PIPE)
-    p.wait()
-    message = p.stdout.read()
-    logging.debug("qdel: %s" % message)
 
 # SendEmail: send an email message via mutt
 def SendEmail(subject,recipient,message):
@@ -657,6 +498,7 @@ if __name__ == "__main__":
     input_type = "solid"
     email_addr = None
     ge_queue = None
+    use_simple_runner = False
 
     # Deal with command line
     if len(sys.argv) < 3:
@@ -671,18 +513,24 @@ if __name__ == "__main__":
         print "           Use --input option to run e.g."
         print "             <script> <fastq> etc"
         print ""
-        print "Options:"
+        print "Basic Options:"
         print "  --limit=<n>: queue no more than <n> jobs at one time"
         print "               (default %s)" % max_concurrent_jobs
         print "  --queue=<name>: explicitly specify GE queue to use"
-        print "  --test=<n> : submit no more than <n> jobs in total"
-        print "  --debug    : print debugging output while running"
         print "  --input=<type> : specify type of input for script"
         print "               Can be one of:"
         print "               solid = csfasta/qual file pair (default)"
         print "               fastq = fastq file"
         print "  --email=<address>: send an email to <address> when the"
         print "               pipeline has completed."
+        print
+        print "Advanced Options:"
+        print "  --test=<n> : submit no more than <n> jobs in total"
+        print "  --runner=<runner>: specify how jobs are executed"
+        print "               Can be one of:"
+        print "               ge = use Grid Engine (default)"
+        print "               simple = use local system"
+        print "  --debug    : print debugging output while running"
         print
         sys.exit()
 
@@ -706,6 +554,8 @@ if __name__ == "__main__":
             input_type = arg.split('=')[1]
         elif arg.startswith("--email="):
             email_addr = arg.split('=')[1]
+        elif arg.startswith("--runner="):
+            use_simple_runner = (arg.split('=')[1] == 'simple')
         elif arg.startswith("--") and len(data_dirs) > 0:
             # Some option appeared after we started collecting directories
             logging.error("Unexpected argument encountered: %s" % arg)
@@ -750,8 +600,14 @@ if __name__ == "__main__":
     logging.basicConfig(format='%(levelname)8s %(message)s')
     logging.getLogger().setLevel(logging_level)
 
+    # Set up job runner
+    if use_simple_runner:
+        runner = JobRunner.SimpleJobRunner()
+    else:
+        runner = JobRunner.GEJobRunner(queue=ge_queue)
+
     # Set up and run pipeline
-    pipeline = PipelineRunner(max_concurrent_jobs=max_concurrent_jobs)
+    pipeline = PipelineRunner(runner,max_concurrent_jobs=max_concurrent_jobs)
     for data_dir in data_dirs:
         # Get for this directory
         print "Collecting data from %s" % data_dir
@@ -766,7 +622,7 @@ if __name__ == "__main__":
                 print "Maximum number of jobs queued (%d)" % max_total_jobs
                 break
     # Run the pipeline
-    pipeline.run(queue=ge_queue)
+    pipeline.run()
 
     # Finished
     if email_addr is not None:
