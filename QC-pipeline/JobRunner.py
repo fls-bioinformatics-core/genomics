@@ -38,14 +38,19 @@ class BaseJobRunner:
 
       run
       terminate
-      stateCode
-      isRunning
       list
+      logFile
+      errFile
+
+    Optionally it can also implement the methods:
+
+      errorState
+      isRunning
+
+    if the default implementations are not sufficient.
     """
 
     def __init__(self):
-        self.__next_job_id = 0
-        self.__running_jobs = []
         pass
 
     def run(self,name,working_dir,script,*args):
@@ -53,9 +58,7 @@ class BaseJobRunner:
 
         Returns a job id, or None if the job failed to start
         """
-        self.__next_job_id += 1
-        self.__running_jobs.append(self.__next_job_id)
-        return self.__next_job_id
+        raise NotImplementedError, "Subclass must implement 'run'"
 
     def terminate(self,job_id):
         """Terminate a job
@@ -63,19 +66,25 @@ class BaseJobRunner:
         Returns True if termination was successful, False
         otherwise
         """
-        if job_id in self.list():
-            self.__running_jobs.remove(job_id)
-            return True
-        else:
-            return False
+        raise NotImplementedError, "Subclass must implement 'terminate'"
 
     def list(self):
         """Return a list of running job_ids
         """
-        return self.__running_jobs
+        raise NotImplementedError, "Subclass must implement 'list'"
+
+    def logFile(self,job_id):
+        """Return name of log file relative to working directory
+        """
+        raise NotImplementedError, "Subclass must implement 'logFile'"
+
+    def errFile(self,job_id):
+        """Return name of error file relative to working directory
+        """
+        raise NotImplementedError, "Subclass must implement 'errFile'"
 
     def isRunning(self,job_id):
-        """Check if a job is still running
+        """Check if a job is running
 
         Returns True if job is still running, False if not
         """
@@ -159,25 +168,15 @@ class SimpleJobRunner(BaseJobRunner):
             logging.error("Failed to delete job %s" % job_id)
             return False
 
-    def logfile(self,job_id):
+    def logFile(self,job_id):
         """Return the log file name for a job
         """
         return self.__log_files[job_id]
 
-    def errfile(self,job_id):
+    def errFile(self,job_id):
         """Return the error file name for a job
         """
         return self.__err_files[job_id]
-
-    def errorState(self,job_id):
-        """Check if the job is in an error state
-
-        Return True if the job is deemed to be in an 'error state',
-        False otherwise.
-        """
-        # Error state is undefined for this type of
-        # job control system
-        return False
 
     def list(self):
         """Return a list of running job_ids
@@ -299,14 +298,14 @@ class GEJobRunner(BaseJobRunner):
         logging.debug("qdel: %s" % message)
         return True
 
-    def logfile(self,job_id):
+    def logFile(self,job_id):
         """Return the log file name for a job
 
         The name should be '<name>.o<job_id>'
         """
         return "%s.o%s" % (self.__names[job_id],job_id)
 
-    def errfile(self,job_id):
+    def errFile(self,job_id):
         """Return the error file name for a job
 
         The name should be '<name>.e<job_id>'

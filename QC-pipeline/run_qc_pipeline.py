@@ -111,7 +111,7 @@ class Job:
                 return self.job_id
             self.submitted = True
             self.start_time = time.time()
-            self.log = self.__runner.logfile(self.job_id)
+            self.log = self.__runner.logFile(self.job_id)
             # Wait for evidence that the job has started
             logging.debug("Waiting for job to start")
             while not self.__runner.isRunning(self.job_id) and not os.path.exists(self.log):
