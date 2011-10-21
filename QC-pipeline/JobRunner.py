@@ -13,11 +13,11 @@
 
 Classes for starting, stopping and managing jobs.
 
-Class BaseJobRunner is a template which indicates methods that need
-to be implemented by any subclass.
+Class BaseJobRunner is a template with methods that need to be implemented
+by subclasses. The subclasses implemented here are:
 
-Class SimpleJobRunner is a subclass of BaseJobRunner which can run jobs
-(e.g. scripts) on a local file system.
+   SimpleJobRunner: run jobs (e.g. scripts) on a local file system.
+   GEJobRunner    : run jobs using Grid Engine (GE) i.e. qsub, qdel etc
 """
 
 #######################################################################
@@ -28,24 +28,30 @@ import logging
 import subprocess
 import time
 
+#######################################################################
+# Classes
+#######################################################################
+
 class BaseJobRunner:
     """Base class for implementing job runners
 
     This class can be used as a template for implementing custom
-    job runners.
+    job runners. The idea is that the runners wrap the specifics
+    of interacting with an underlying job control system and thus
+    provide a generic interface to be used by higher level classes.
 
     A job runner needs to implement the following methods:
 
-      run
-      terminate
-      list
-      logFile
-      errFile
+      run      : starts a job running
+      terminate: kills a running job
+      list     : lists the running job ids
+      logFile  : returns the name of the log file for a job
+      errFile  : returns the name of the error file for a job
 
     Optionally it can also implement the methods:
 
-      errorState
-      isRunning
+      errorState: indicates if running job is in an "error state"
+      isRunning : checks if a specific job is running
 
     if the default implementations are not sufficient.
     """
@@ -100,9 +106,15 @@ class BaseJobRunner:
 
 class SimpleJobRunner(BaseJobRunner):
     """Class implementing job runner for local system
+
+    SimpleJobRunner starts jobs as processes on a local system;
+    the status of jobs is determined using the Linux 'ps eu'
+    command, and jobs are terminated using 'kill -9'.
     """
 
     def __init__(self):
+        """Create a new SimpleJobRunner instance
+        """
         # Store a list of job ids (= pids) managed by this class
         self.__job_list = []
         # Base log id
@@ -225,6 +237,15 @@ class SimpleJobRunner(BaseJobRunner):
         return (log_file,error_file)
 
 class GEJobRunner(BaseJobRunner):
+    """Class implementing job runner for Grid Engine
+
+    GEJobRunner submits jobs to a Grid Engine cluster using the
+    'qsub' command, determines the status of jobs using 'qstat'
+    and terminates then using 'qdel'.
+
+    Additionally the runner can be configured for a specific GE
+    queue on initialisation.
+    """
 
     def __init__(self,queue=None):
         """Create a new GEJobRunner instance
@@ -240,6 +261,10 @@ class GEJobRunner(BaseJobRunner):
 
         Arguments:
           name: Name to give the job
+
+        Returns:
+          Job id for submitted job, or 'None' if job failed to
+          start.
         """
         logging.debug("QsubScript: submitting job")
         logging.debug("QsubScript: name       : %s" % name)
