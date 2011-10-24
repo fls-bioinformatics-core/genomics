@@ -1176,12 +1176,12 @@ All Beads	Totals	409927600	39452331	457541973
                         '/temp')
             #
             # solidXXX/AB_CD_EF_pool/results.F1B1/libraries/X/primary.x/reads/
-            self.touch(dirname+'/AB_CD_EF_pool/results.F1B1/libraries/'+d+
-                        '/primary.201312345678901/reads/'+
-                       solid_run_name+'_AB_CD_EF_pool_F3_'+d+'.csfasta')
-            self.touch(dirname+'/AB_CD_EF_pool/results.F1B1/libraries/'+d+
-                        '/primary.201312345678901/reads/'+
-                       solid_run_name+'_AB_CD_EF_pool_F3_QV_'+d+'.qual')
+            self.make_csfasta(dirname+'/AB_CD_EF_pool/results.F1B1/libraries/'+d+
+                              '/primary.201312345678901/reads/'+
+                              solid_run_name+'_AB_CD_EF_pool_F3_'+d+'.csfasta')
+            self.make_qual(dirname+'/AB_CD_EF_pool/results.F1B1/libraries/'+d+
+                           '/primary.201312345678901/reads/'+
+                           solid_run_name+'_AB_CD_EF_pool_F3_QV_'+d+'.qual')
             self.touch(dirname+'/AB_CD_EF_pool/results.F1B1/libraries/'+d+
                         '/primary.201312345678901/reads/'+
                        solid_run_name+'_AB_CD_EF_pool_F3.stats')
@@ -1193,6 +1193,20 @@ All Beads	Totals	409927600	39452331	457541973
         """
         if not os.path.exists(filename):
             open(filename, 'w').close()
+
+    def make_csfasta(self,filename):
+        """Make a mock csfasta file
+        """
+        fp = open(filename,'w')
+        fp.write(">1_14_622_F3\nT221.0033033232320030021103233332300123110201010031\n>1_14_1098_F3\nT033.3010033212202122212231302012120001123133212220\n")
+        fp.close()
+
+    def make_qual(self,filename):
+        """Make a mock qual file
+        """
+        fp = open(filename,'w')
+        fp.write(">1_14_622_F3\n33 33 32 -1 29 32 32 11 33 29 26 26 28 32 4 18 24 4 33 23 28 28 28 28 29 15 30 12 30 4 24 32 17 27 8 18 30 7 19 9 18 21 4 32 4 19 5 10 24 4 \n>1_14_1098_F3\n33 33 33 -1 33 33 33 30 33 31 28 31 30 31 29 32 33 31 33 33 27 32 24 33 31 32 31 30 32 24 32 24 31 33 31 33 24 33 10 22 30 25 4 17 22 27 22 28 31 19 \n")
+        fp.close()
 
 class TestSolidRunInfo(unittest.TestCase):
     """Unit tests for SolidRunInfo class.
