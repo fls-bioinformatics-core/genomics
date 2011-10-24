@@ -109,44 +109,12 @@ function solid_preprocess_filter() {
     # Input file names
     csfasta=$1
     qual=$2
-    # Output file names
-    processed_csfasta=$(baserootname $csfasta)_T_F3.csfasta
-    processed_qual=$(baserootname $csfasta)_QV_T_F3.qual
-    # Check if processed files already exist
-    if [ -f "${processed_csfasta}" ] && [ -f "${processed_qual}" ] ; then
-	echo Filtered csfasta and qual files already exist, skipping preprocess filter
+    # Run separate solid_preprocess_filter.sh script
+    SOLID_PREPROCESS=`dirname $0`/solid_preprocess_filter.sh
+    if [ -f "${SOLID_PREPROCESS}" ] ; then
+	${SOLID_PREPROCESS} ${csfasta} ${qual}
     else
-	echo "--------------------------------------------------------"
-	echo Executing SOLiD_preprocess_filter
-	echo "--------------------------------------------------------"
-	# Make a temporary directory to run in
-	# This stops incomplete processing files being written to the working
-	# directory which might be left behind if the preprocessor stops (or
-	# is stopped) prematurely
-	wd=`pwd`
-	tmp=`mktemp -d`
-	cd $tmp
-	# Run preprocessor
-	FILTER_OPTIONS="-x y -p 3 -q 22 -y y -e 10 -d 9"
-	cmd="${SOLID_PREPROCESS_FILTER} -o $(baserootname $csfasta) ${FILTER_OPTIONS} -f ${csfasta} -g ${qual}"
-	echo $cmd
-	$cmd
-	# Move back to working dir and copy preprocessed files
-	cd $wd
-	if [ -f "${tmp}/${processed_csfasta}" ] ; then
-	    /bin/cp ${tmp}/${processed_csfasta} .
-	    echo Created ${processed_csfasta}
-	else
-	    echo WARNING no file ${processed_csfasta}
-	fi
-	if [ -f "${tmp}/${processed_qual}" ] ; then
-	    /bin/cp ${tmp}/${processed_qual} .
-	    echo Created ${processed_qual}
-	else
-	    echo WARNING no file ${processed_csfasta}
-	fi
-	# Remove temporary dir
-	/bin/rm -rf ${tmp}
+	echo ERROR ${SOLID_PREPROCESS} not found, preprocess/filter step skipped
     fi
 }
 #
