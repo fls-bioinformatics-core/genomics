@@ -25,17 +25,6 @@ import os
 import logging
 import SolidData
 
-# Put ../QC-pipeline onto Python search path for modules
-import sys
-QC_DIR =  os.path.abspath(
-    os.path.normpath(
-        os.path.join(os.path.dirname(sys.argv[0]),'..','QC-pipeline')))
-sys.path.append(QC_DIR)
-try:
-    import run_qc_pipeline
-except ImportError, ex:
-    print "Error importing modules: %s" % ex
-
 #######################################################################
 # Class definitions
 #######################################################################
@@ -229,23 +218,6 @@ class ExperimentList:
                     # Make links to primary data
                     self.__linkToFile(library.csfasta,os.path.join(expt_dir,ln_csfasta),dry_run=dry_run)
                     self.__linkToFile(library.qual,os.path.join(expt_dir,ln_qual),dry_run=dry_run)
-
-    def runPipeline(self,script,top_dir=None):
-        """Run a pipeline script on the experiment directories
-
-        Create a SolidPipelineRunner and add the data files from each experiment,
-        then run the specified script.
-
-        Arguments:
-          script: script file to run (can be full or relative path)
-          top_dir: (optional) if set then look for the analysis directories as
-            subdirs of the specified directory; otherwise operate in cwd
-        """
-        pipeline = run_qc_pipeline.SolidPipelineRunner(script)
-        for expt in self.experiments:
-            pipeline.addDir(os.path.abspath(expt.dirname(top_dir)))
-        pipeline.run()
-        print "%s" % pipeline.report()
     
     def __linkToFile(self,source,target,dry_run=False):
         """Create symbolic link to a file

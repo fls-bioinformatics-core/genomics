@@ -27,6 +27,8 @@ sys.path.append(SHARE_DIR)
 try:
     import SolidData
     import Experiment
+    import JobRunner
+    import Pipeline
 except ImportError, ex:
     print "Error importing modules: %s" % ex
 
@@ -181,4 +183,10 @@ if __name__ == "__main__":
             
     # Run the pipeline script
     if pipeline_script:
-        expts.runPipeline(pipeline_script,top_dir=top_dir)
+        runner = JobRunner.GEJobRunner()
+        pipeline = Pipeline.SolidPipelineRunner(runner,pipeline_script)
+        for expt in expts:
+            pipeline.addDir(os.path.abspath(expt.dirname(top_dir)))
+        pipeline.run()
+        print "%s" % pipeline.report()
+
