@@ -27,6 +27,18 @@ There are also some useful methods:
     directory
 
   GetFastqFiles: collect fastq files from a specific directory
+
+The PipelineRunners depend on the JobRunner instances (created from
+classes in the JobRunner module) to interface with the job management
+system. So typical usage might look like:
+
+>>> import JobRunner
+>>> import Pipeline
+>>> runner = JobRunner.GEJobRunner() # to use Grid Engine
+>>> pipeline = Pipeline.PipelineRunner(runner)
+>>> pipeline.queueJob(...)
+>>> pipeline.run()
+
 """
 
 #######################################################################
