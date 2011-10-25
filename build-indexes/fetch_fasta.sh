@@ -24,7 +24,17 @@ chrX_random chrUn_random"
     FORMAT="gz"
 }
 #
-function setup_ws201() {
+function setup_c_elegans_ws200() {
+    NAME="Caenorhabditis elegans"
+    BUILD="WS200 February 24 2009"
+    INFO="C.Elegans WS201"
+    MIRROR=ftp://ftp.sanger.ac.uk/pub/wormbase/FROZEN_RELEASES/WS200/genomes/c_elegans/sequences/dna/
+    CHR_LIST="c_elegans.WS200.dna"
+    EXT="fa"
+    FORMAT="gz"
+}
+#
+function setup_c_elegans_ws201() {
     NAME="Caenorhabditis elegans"
     BUILD="WS201 March 25 2009"
     INFO="C.Elegans WS201"
