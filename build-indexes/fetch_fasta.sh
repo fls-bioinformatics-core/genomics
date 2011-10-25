@@ -16,33 +16,47 @@
 # ===============================================================
 # Setup functions for different sequences
 # ===============================================================
+#
+# hg19: human
+function setup_hg18() {
+    NAME="Homo sapiens"
+    BUILD="HG18/NCBI36.1 March 2006"
+    INFO="Base chr. (1 to 22, X, Y), 'random' and chrM - unmasked"
+    MIRROR=http://hgdownload.cse.ucsc.edu/goldenPath/hg18/bigZips
+    ARCHIVE=chromFa.zip
+    CHR_LIST=
+    EXT=fa
+    FORMAT=zip
+    # Delete haplotypes
+    POST_PROCESS="rm -f *hap*"
+}
+#
 # rn4: rat
 function setup_rn4() {
     NAME="Rattus norvegicus"
     BUILD="rn4 Nov. 2004 version 3.4"
     INFO="Base chr. (1 to 20, X, Un), 'random' and chrM"
-    MIRROR="http://hgdownload.cse.ucsc.edu/goldenPath/rn4/chromosomes/"
-    CHR_LIST="chr1 chr2 chr3 chr4 chr5 chr6 chr7 chr8 chr9 chr10 \
-chr11 chr12 chr13 chr14 chr15 chr16 chr17 chr18 chr19 chr20 \
-chrX chrUn chrM \
-chr1_random chr2_random chr3_random chr4_random chr5_random \
-chr6_random chr7_random chr8_random chr9_random chr10_random \
-chr11_random chr12_random chr13_random chr14_random chr15_random \
-chr16_random chr17_random chr18_random chr19_random chr20_random \
-chrX_random chrUn_random"
-    EXT="fa"
-    FORMAT="gz"
+    MIRROR=http://hgdownload.cse.ucsc.edu/goldenPath/rn4/bigZips
+    ARCHIVE=chromFa.tar.gz
+    CHR_LIST=
+    EXT=fa
+    FORMAT=zip
+    # Unpacks into subdirectories so need to move the fa files
+    # to the current directory
+    POST_PROCESS="mv */*.fa ."
 }
 #
 # ws200: worm
 function setup_c_elegans_ws200() {
     NAME="Caenorhabditis elegans"
     BUILD="WS200 February 24 2009"
-    INFO="C.Elegans WS201"
-    MIRROR=ftp://ftp.sanger.ac.uk/pub/wormbase/FROZEN_RELEASES/WS200/genomes/c_elegans/sequences/dna/
-    CHR_LIST="c_elegans.WS200.dna"
-    EXT="fa"
-    FORMAT="gz"
+    INFO="C.Elegans WS200"
+    MIRROR=ftp://ftp.sanger.ac.uk/pub/wormbase/FROZEN_RELEASES/WS200/genomes/c_elegans/sequences/dna
+    ARCHIVE=c_elegans.WS200.dna.fa.gz
+    CHR_LIST=
+    EXT=fa
+    FORMAT=gz
+    POST_PROCESS=
 }
 #
 # ws201: worm
@@ -50,10 +64,12 @@ function setup_c_elegans_ws201() {
     NAME="Caenorhabditis elegans"
     BUILD="WS201 March 25 2009"
     INFO="C.Elegans WS201"
-    MIRROR=ftp://ftp.wormbase.org/pub/wormbase/genomes/c_elegans/sequences/dna/
-    CHR_LIST="c_elegans.WS201.dna"
-    EXT="fa"
-    FORMAT="gz"
+    MIRROR=ftp://ftp.wormbase.org/pub/wormbase/genomes/c_elegans/sequences/dna
+    ARCHIVE=c_elegans.WS201.dna.fa.gz
+    CHR_LIST=
+    EXT=fa
+    FORMAT=gz
+    POST_PROCESS=
 }
 #
 # E.coli
@@ -61,10 +77,12 @@ function setup_ecoli() {
     NAME="Escherichia coli"
     BUILD=
     INFO="E.Coli"
-    MIRROR=ftp://ftp.ncbi.nlm.nih.gov/genomes/Bacteria/Escherichia_coli_536_uid58531/
-    CHR_LIST="NC_008253"
-    EXT="fna"
+    MIRROR=ftp://ftp.ncbi.nlm.nih.gov/genomes/Bacteria/Escherichia_coli_536_uid58531
+    ARCHIVE=NC_008253.fna
+    CHR_LIST=
+    EXT=fna
     FORMAT=
+    POST_PROCESS=
 }
 #
 # ===============================================================
@@ -103,30 +121,59 @@ function unpack_archive() {
     done
 }
 #
-function fetch_chrs() {
+function fetch_url() {
+    echo $url
+    wget -nv $url
+    filen=`basename $url`
+    if [ ! -f "$filen" ] ; then
+	echo ERROR failed to download $filen
+	exit 1
+    fi
+}
+#
+function fetch_sequence() {
     # Make temporary directory for download
     wd=`pwd`
     tmp=`mktemp -d`
     cd $tmp
     echo "Working in temporary directory $tmp"
-    # Download and unpack the chromosome files
-    for chr in $CHR_LIST ; do
-	filen=${chr}.${EXT}
-	if [ ! -z "${FORMAT}" ] ; then
-	    filen=${filen}.${FORMAT}
-	fi
-	url=${MIRROR}/${filen}
-	echo $url
-	wget -nv $url
-	if [ ! -f "$filen" ] ; then
-	    echo ERROR failed to download $filen
-	    exit 1
-	fi
-	unpack_archive $filen
-    done
+    if [ ! -z "$ARCHIVE" ] ; then
+	# Download archive
+	url=${MIRROR}/${ARCHIVE}
+	fetch_url $url
+	unpack_archive $ARCHIVE
+    elif [ ! -z "$CHR_LIST" ] ; then
+	# Download and unpack the chromosome files
+	for chr in $CHR_LIST ; do
+	    filen=${chr}
+	    if [ ! -z "${EXT}" ] ; then
+		filen=${filen}.${EXT}
+	    fi
+	    if [ ! -z "${FORMAT}" ] ; then
+		filen=${filen}.${FORMAT}
+	    fi
+	    url=${MIRROR}/${filen}
+	    fetch_url $url
+	    unpack_archive $filen
+	done
+    fi
+    # Apply post-processing commands, if any
+    if [ ! -z "$POST_PROCESS" ] ; then
+	echo "Doing post-processing:"
+	echo "$POST_PROCESS"
+	$POST_PROCESS
+    fi
     # Concatenate into a single fasta file
-    cat *.${EXT} > ${wd}/${FASTA}
+    cat *.${EXT} > ${FASTA}
+    # Check that something got written
+    fsize=`du --apparent-size -s ${FASTA} | cut -f1`
+    if [ "$fsize" == 0 ] ; then
+	echo "ERROR failed to create fasta file"
+	echo "See files in $tmp"
+	exit 1
+    fi
     echo "Made ${FASTA}"
+    /bin/cp ${FASTA} ${wd}
     # Remove temporary directory
     cd ${wd}
     /bin/rm -rf $tmp
@@ -137,11 +184,20 @@ function write_info() {
     cat <<EOF > ${ORGANISM}.info
 # Organism: $NAME
 # Genome build: $BUILD
-# Manipulations: $INFO
 # Source: ${MIRROR}
-# Chromosomes: $CHR_LIST
-# Extension: $EXT
-# Archive format: $FORMAT
+EOF
+    # Archives
+    if [ ! -z "$ARCHIVE" ] ; then
+	echo "# Archive: $ARCHIVE" >> ${ORGANISM}.info
+    else
+	echo "# Chromosomes: $CHR_LIST" >> ${ORGANISM}.info
+    fi
+    # Post-processing steps
+    if [ ! -z "$POST_PROCESS" ] ; then
+	echo "# Post-processing: $POST_PROCESS" >> ${ORGANISM}.info
+    fi
+    # Remaining information
+    cat <<EOF >> ${ORGANISM}.info
 # Fasta: $FASTA
 # Date: $now
 
@@ -192,5 +248,5 @@ if [ -f "${FASTA}" ] ; then
     echo $FASTA already exists
     exit 1
 fi
-fetch_chrs
+fetch_sequence
 write_info
