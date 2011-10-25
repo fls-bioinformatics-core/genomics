@@ -5,8 +5,18 @@
 #
 # Usage: fetch_fasta.sh <name>
 #
-# Data is only defined for certain names.
+# Data is only defined for certain names. To add a new genome
+# or genome build, make a new function in this file called e.g.
+# "setup_<name>" and set the variables NAME, BUILD, INFO, MIRROR,
+# CHR_LIST, EXT and FORMAT as appropriate.
 #
+# The new name will automatically be available the next time that
+# the script is run.
+#
+# ===============================================================
+# Setup functions for different sequences
+# ===============================================================
+# rn4: rat
 function setup_rn4() {
     NAME="Rattus norvegicus"
     BUILD="rn4 Nov. 2004 version 3.4"
@@ -24,6 +34,7 @@ chrX_random chrUn_random"
     FORMAT="gz"
 }
 #
+# ws200: worm
 function setup_c_elegans_ws200() {
     NAME="Caenorhabditis elegans"
     BUILD="WS200 February 24 2009"
@@ -34,6 +45,7 @@ function setup_c_elegans_ws200() {
     FORMAT="gz"
 }
 #
+# ws201: worm
 function setup_c_elegans_ws201() {
     NAME="Caenorhabditis elegans"
     BUILD="WS201 March 25 2009"
@@ -44,6 +56,7 @@ function setup_c_elegans_ws201() {
     FORMAT="gz"
 }
 #
+# E.coli
 function setup_ecoli() {
     NAME="Escherichia coli"
     BUILD=
@@ -53,6 +66,10 @@ function setup_ecoli() {
     EXT="fna"
     FORMAT=
 }
+#
+# ===============================================================
+# Functions for downloading and unpacking etc
+# ===============================================================
 #
 function unpack_archive() {
     filen=$1
@@ -145,6 +162,10 @@ function check_organism() {
     done
     return 1
 }
+#
+# ===============================================================
+# Main script
+# ===============================================================
 #
 if [ -z "$1" ] ; then
     echo "Usage: $0 <organism>"
