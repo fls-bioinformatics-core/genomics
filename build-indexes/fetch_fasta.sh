@@ -123,7 +123,7 @@ EOF
 }
 #
 function available_names() {
-    grep "^function setup_" $0 | cut -c16- | cut -f1 -d"("
+    grep "^function setup_" $0 | cut -c16- | cut -f1 -d"(" | sort
 }
 #
 function check_organism() {
