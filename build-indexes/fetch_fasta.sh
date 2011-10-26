@@ -339,7 +339,11 @@ function fetch_sequence() {
 	echo "See files in $TMP_DIR"
 	exit 1
     fi
-    /bin/cp ${FASTA} ${wd}
+    # Copy fasta file to target directory
+    if [ ! -d "${wd}/fasta" ] ; then
+	mkdir ${wd}/fasta
+    fi
+    /bin/cp ${FASTA} ${wd}/fasta
     echo "Made ${FASTA}"
     # Return to working directory
     cd ${wd}
@@ -352,7 +356,7 @@ function fetch_sequence() {
 # and write to <organism>.chr.list
 function list_chromosomes() {
     echo "Writing chromosome list"
-    grep "^>" ${FASTA} | cut -c2- > ${ORGANISM}.chr.list
+    grep "^>" fasta/${FASTA} | cut -c2- > ${ORGANISM}.chr.list
 }
 #
 # write_info
@@ -473,7 +477,7 @@ fi
 # Set up
 setup_${ORGANISM}
 FASTA=${ORGANISM}.${EXT}
-if [ -f "${FASTA}" ] ; then
+if [ -f "fasta/${FASTA}" ] ; then
     # Fasta file already exists
     echo $FASTA already exists, nothing to do
 else
