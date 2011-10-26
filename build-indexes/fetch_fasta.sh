@@ -109,11 +109,17 @@ function set_format() {
 }
 #
 function add_processing_step() {
-    if [ -z "$POST_PROCESS" ] ; then
-	POST_PROCESS=$2
-    else
-	POST_PROCESS="$POST_PROCESS ; $2"
+    if [ -z "$POST_PROCESS_SCRIPT" ] ; then
+	# Make the initial post process script
+	POST_PROCESS_SCRIPT=`mktemp --suffix .sh`
+	echo "Adding processing steps to script: $POST_PROCESS_SCRIPT"
     fi
+    # Append to the script
+    cat <<EOF >> $POST_PROCESS_SCRIPT
+
+# $1
+$2
+EOF
 }
 #
 function unpack_archive() {
@@ -129,7 +135,7 @@ function unpack_archive() {
 		;;
 	    zip)
 		# unzip
-		unzip $filen
+		unzip -qq $filen
 		;;
 	    tar)
 		# untar
@@ -164,7 +170,12 @@ function fetch_sequence() {
     tmp=`mktemp -d`
     cd $tmp
     echo "Working in temporary directory $tmp"
-    if [ ! -z "$ARCHIVE" ] ; then
+    if [ -f "${wd}/${ARCHIVE}" ] ; then
+	# Archive file already downloaded to pwd
+	echo "Archive file found in ${wd}"
+	/bin/cp ${wd}/${ARCHIVE} .
+	unpack_archive $ARCHIVE
+    elif [ ! -z "$ARCHIVE" ] ; then
 	# Download archive
 	url=${MIRROR}/${ARCHIVE}
 	fetch_url $url
@@ -184,14 +195,15 @@ function fetch_sequence() {
 	    unpack_archive $filen
 	done
     fi
-    # Apply post-processing commands, if any
-    if [ ! -z "$POST_PROCESS" ] ; then
+    # Add concatenation command into processing script
+    # Do it this way so that the concat is added to the info file
+    add_processing_step "concatenate" "cat *.${EXT} > ${FASTA}"
+    # Apply post-processing commands
+    if [ ! -z "$POST_PROCESS_SCRIPT" ] ; then
 	echo "Doing post-processing:"
-	echo "$POST_PROCESS"
-	$POST_PROCESS
+	cat $POST_PROCESS_SCRIPT
+	/bin/sh $POST_PROCESS_SCRIPT
     fi
-    # Concatenate into a single fasta file
-    cat *.${EXT} > ${FASTA}
     # Check that something got written
     fsize=`du --apparent-size -s ${FASTA} | cut -f1`
     if [ "$fsize" == 0 ] ; then
@@ -202,6 +214,7 @@ function fetch_sequence() {
     echo "Made ${FASTA}"
     /bin/cp ${FASTA} ${wd}
     # Remove temporary directory
+    echo "Cleaning up: remove $tmp"
     cd ${wd}
     /bin/rm -rf $tmp
 }
@@ -211,7 +224,8 @@ function write_info() {
     cat <<EOF > ${ORGANISM}.info
 # Organism: $NAME
 # Genome build: $BUILD
-# Source: ${MIRROR}
+# Manipulations: $INFO
+# Source: $MIRROR
 EOF
     # Archives
     if [ ! -z "$ARCHIVE" ] ; then
@@ -219,17 +233,19 @@ EOF
     else
 	echo "# Chromosomes: $CHR_LIST" >> ${ORGANISM}.info
     fi
-    # Post-processing steps
-    if [ ! -z "$POST_PROCESS" ] ; then
-	echo "# Post-processing: $POST_PROCESS" >> ${ORGANISM}.info
-    fi
     # Remaining information
     cat <<EOF >> ${ORGANISM}.info
 # Fasta: $FASTA
 # Date: $now
-
-###
 EOF
+    # Append the post-processing scripts
+    # Post-processing steps
+    if [ ! -z "$POST_PROCESS_SCRIPT" ] ; then
+	echo "" >> ${ORGANISM}.info
+	echo "### Scripts ###" >> ${ORGANISM}.info
+	cat $POST_PROCESS_SCRIPT >> ${ORGANISM}.info
+	/bin/rm $POST_PROCESS_SCRIPT
+    fi
 }
 #
 function available_names() {
