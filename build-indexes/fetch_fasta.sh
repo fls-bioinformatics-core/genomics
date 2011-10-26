@@ -158,6 +158,16 @@ function setup_sacCer2() {
     set_ext     fa
 }
 #
+# SpR6
+function setup_SpR6() {
+    set_name    "Streptococcus pneumoniae R6"
+    set_build   "NCBI accession code NC_003098"
+    set_info    "Complete genome"
+    set_mirror  ftp://ftp.ncbi.nih.gov/genomes/Bacteria/Streptococcus_pneumoniae_R6_uid57859
+    set_archive NC_003098.fna
+    set_ext     fna
+}
+#
 # ===============================================================
 # Functions for setup, downloading and unpacking etc
 # ===============================================================
