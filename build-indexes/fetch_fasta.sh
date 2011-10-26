@@ -27,6 +27,18 @@ function setup_ecoli_NC_008253() {
     set_ext     fna
 }
 #
+# dm3: fly
+function setup_dm3() {
+    set_name    "Drosophila melanogaster"
+    set_build   "DM3, BDGP Release 5 April 2006"
+    set_info    "Base chr. (2L, 2R, 3L, 3R, 4, X), heterochromatin, chrM and chrU - unmasked"
+    set_mirror  http://hgdownload.cse.ucsc.edu/goldenPath/dm3/bigZips
+    set_archive chromFa.tar.gz
+    set_ext     fa
+    # Remove chrUextra
+    add_processing_step "Exclude chrUextra" "rm chrUextra.fa"
+}
+#
 # WS200: worm
 function setup_c_elegans_WS200() {
     set_name    "Caenorhabditis elegans"
