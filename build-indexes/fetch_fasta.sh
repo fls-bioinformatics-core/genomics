@@ -229,6 +229,10 @@ function fetch_sequence() {
     cd ${wd}
 }
 #
+function list_chromosomes() {
+    grep "^>" ${FASTA} | cut -c2- > ${ORGANISM}.chr.list
+}
+#
 function write_info() {
     now=`date`
     cat <<EOF > ${ORGANISM}.info
@@ -313,6 +317,7 @@ if [ -f "${FASTA}" ] ; then
     echo $FASTA already exists, nothing to do
 else
     fetch_sequence
+    list_chromosomes
     write_info
 fi
 clean_up
