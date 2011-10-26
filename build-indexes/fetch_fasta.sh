@@ -17,6 +17,38 @@
 # Setup functions for different sequences
 # ===============================================================
 #
+# E.coli
+function setup_ecoli_NC_008253() {
+    set_name    "Escherichia coli"
+    set_build   "NC_008253"
+    set_info    "E.Coli"
+    set_mirror  ftp://ftp.ncbi.nlm.nih.gov/genomes/Bacteria/Escherichia_coli_536_uid58531
+    set_archive NC_008253.fna
+    set_ext     fna
+}
+#
+# WS200: worm
+function setup_c_elegans_WS200() {
+    set_name    "Caenorhabditis elegans"
+    set_build   "WS200 February 24 2009"
+    set_info    "C.Elegans WS200"
+    set_mirror  ftp://ftp.sanger.ac.uk/pub/wormbase/FROZEN_RELEASES/WS200/genomes/c_elegans/sequences/dna
+    set_archive c_elegans.WS200.dna.fa.gz
+    set_ext     fa
+    set_format  gz
+}
+#
+# WS201: worm
+function setup_c_elegans_WS201() {
+    set_name    "Caenorhabditis elegans"
+    set_build   "WS201 March 25 2009"
+    set_info    "C.Elegans WS201"
+    set_mirror  ftp://ftp.wormbase.org/pub/wormbase/genomes/c_elegans/sequences/dna
+    set_archive c_elegans.WS201.dna.fa.gz
+    set_ext     fa
+    set_format  gz
+}
+#
 # hg18: human
 function setup_hg18() {
     set_name    "Homo sapiens"
@@ -42,38 +74,6 @@ function setup_rn4() {
     # Unpacks into subdirectories so need to move the fa files
     # to the current directory
     add_processing_step "Put chromosome files in cwd" "mv */*.fa ."
-}
-#
-# WS200: worm
-function setup_c_elegans_WS200() {
-    set_name    "Caenorhabditis elegans"
-    set_build   "WS200 February 24 2009"
-    set_info    "C.Elegans WS200"
-    set_mirror  ftp://ftp.sanger.ac.uk/pub/wormbase/FROZEN_RELEASES/WS200/genomes/c_elegans/sequences/dna
-    set_archive c_elegans.WS200.dna.fa.gz
-    set_ext     fa
-    set_format  gz
-}
-#
-# WS201: worm
-function setup_c_elegans_WS201() {
-    set_name    "Caenorhabditis elegans"
-    set_build   "WS201 March 25 2009"
-    set_info    "C.Elegans WS201"
-    set_mirror  ftp://ftp.wormbase.org/pub/wormbase/genomes/c_elegans/sequences/dna
-    set_archive c_elegans.WS201.dna.fa.gz
-    set_ext     fa
-    set_format  gz
-}
-#
-# E.coli
-function setup_ecoli_NC_008253() {
-    set_name    "Escherichia coli"
-    set_build   "NC_008253"
-    set_info    "E.Coli"
-    set_mirror  ftp://ftp.ncbi.nlm.nih.gov/genomes/Bacteria/Escherichia_coli_536_uid58531
-    set_archive NC_008253.fna
-    set_ext     fna
 }
 #
 # ===============================================================
@@ -167,9 +167,9 @@ function fetch_url() {
 function fetch_sequence() {
     # Make temporary directory for download
     wd=`pwd`
-    tmp=`mktemp -d`
-    cd $tmp
-    echo "Working in temporary directory $tmp"
+    TMP_DIR=`mktemp -d`
+    cd $TMP_DIR
+    echo "Working in temporary directory $TMP_DIR"
     if [ -f "${wd}/${ARCHIVE}" ] ; then
 	# Archive file already downloaded to pwd
 	echo "Archive file found in ${wd}"
@@ -208,15 +208,13 @@ function fetch_sequence() {
     fsize=`du --apparent-size -s ${FASTA} | cut -f1`
     if [ "$fsize" == 0 ] ; then
 	echo "ERROR failed to create fasta file"
-	echo "See files in $tmp"
+	echo "See files in $TMP_DIR"
 	exit 1
     fi
-    echo "Made ${FASTA}"
     /bin/cp ${FASTA} ${wd}
-    # Remove temporary directory
-    echo "Cleaning up: remove $tmp"
+    echo "Made ${FASTA}"
+    # Return to working directory
     cd ${wd}
-    /bin/rm -rf $tmp
 }
 #
 function write_info() {
@@ -244,7 +242,19 @@ EOF
 	echo "" >> ${ORGANISM}.info
 	echo "### Scripts ###" >> ${ORGANISM}.info
 	cat $POST_PROCESS_SCRIPT >> ${ORGANISM}.info
+    fi
+}
+#
+function clean_up() {
+    # Remove processing script
+    if [ -f "$POST_PROCESS_SCRIPT" ] ; then
+	echo "Removing processing script"
 	/bin/rm $POST_PROCESS_SCRIPT
+    fi
+    # Remove temp dir
+    if [ -d "$TMP_DIR" ] ; then
+	echo "Removing temporary directory"
+	/bin/rm -rf $TMP_DIR
     fi
 }
 #
@@ -288,8 +298,11 @@ fi
 setup_${ORGANISM}
 FASTA=${ORGANISM}.${EXT}
 if [ -f "${FASTA}" ] ; then
-    echo $FASTA already exists
-    exit 1
+    echo $FASTA already exists, nothing to do
+else
+    fetch_sequence
+    write_info
 fi
-fetch_sequence
-write_info
+clean_up
+##
+#
