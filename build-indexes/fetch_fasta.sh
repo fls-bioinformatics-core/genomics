@@ -124,6 +124,16 @@ function setup_mm9() {
     set_ext     fa
 }
 #
+# PhiX
+function setup_phix() {
+    set_name    "Enterobacteria phage"
+    set_build   "phiX174 NCBI accession code NC_001422.1"
+    set_info    "Complete genome"
+    set_mirror  ftp://ftp.ncbi.nih.gov/genomes/Viruses/Enterobacteria_phage_phiX174_sensu_lato_uid14015
+    set_archive NC_001422.fna
+    set_ext     fna
+}
+#
 # rn4: rat
 function setup_rn4() {
     set_name    "Rattus norvegicus"
