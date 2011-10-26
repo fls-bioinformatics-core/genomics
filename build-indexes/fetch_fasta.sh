@@ -1,14 +1,14 @@
 #!/bin/sh
 #
-# fetch_fasta.sh: download and create fasta file for given
-# organism
+# fetch_fasta.sh: reproducibly download and create fasta files for
+# various organisms
 #
 # Usage: fetch_fasta.sh <name>
 #
 # Data is only defined for certain names. To add a new genome
 # or genome build, make a new function in this file called e.g.
 # "setup_<name>" and set the variables NAME, BUILD, INFO, MIRROR,
-# CHR_LIST, EXT and FORMAT as appropriate.
+# ARCHIVE (or CHR_LIST and FORMAT), EXT and FORMAT as appropriate.
 #
 # The new name will automatically be available the next time that
 # the script is run.
@@ -17,77 +17,104 @@
 # Setup functions for different sequences
 # ===============================================================
 #
-# hg19: human
+# hg18: human
 function setup_hg18() {
-    NAME="Homo sapiens"
-    BUILD="HG18/NCBI36.1 March 2006"
-    INFO="Base chr. (1 to 22, X, Y), 'random' and chrM - unmasked"
-    MIRROR=http://hgdownload.cse.ucsc.edu/goldenPath/hg18/bigZips
-    ARCHIVE=chromFa.zip
-    CHR_LIST=
-    EXT=fa
-    FORMAT=zip
+    set_name    "Homo sapiens"
+    set_build   "HG18/NCBI36.1 March 2006"
+    set_info    "Base chr. (1 to 22, X, Y), 'random' and chrM - unmasked"
+    set_mirror  http://hgdownload.cse.ucsc.edu/goldenPath/hg18/bigZips
+    set_archive chromFa.zip
+    set_ext     fa
+    set_format  zip
     # Delete haplotypes
-    POST_PROCESS="rm -f *hap*"
+    add_processing_step "Delete haplotypes" "rm -f *hap*"
 }
 #
 # rn4: rat
 function setup_rn4() {
-    NAME="Rattus norvegicus"
-    BUILD="rn4 Nov. 2004 version 3.4"
-    INFO="Base chr. (1 to 20, X, Un), 'random' and chrM"
-    MIRROR=http://hgdownload.cse.ucsc.edu/goldenPath/rn4/bigZips
-    ARCHIVE=chromFa.tar.gz
-    CHR_LIST=
-    EXT=fa
-    FORMAT=zip
+    set_name    "Rattus norvegicus"
+    set_build   "rn4 Nov. 2004 version 3.4"
+    set_info    "Base chr. (1 to 20, X, Un), 'random' and chrM"
+    set_mirror  http://hgdownload.cse.ucsc.edu/goldenPath/rn4/bigZips
+    set_archive chromFa.tar.gz
+    set_ext     fa
+    set_format  tar.gz
     # Unpacks into subdirectories so need to move the fa files
     # to the current directory
-    POST_PROCESS="mv */*.fa ."
+    add_processing_step "Put chromosome files in cwd" "mv */*.fa ."
 }
 #
-# ws200: worm
-function setup_c_elegans_ws200() {
-    NAME="Caenorhabditis elegans"
-    BUILD="WS200 February 24 2009"
-    INFO="C.Elegans WS200"
-    MIRROR=ftp://ftp.sanger.ac.uk/pub/wormbase/FROZEN_RELEASES/WS200/genomes/c_elegans/sequences/dna
-    ARCHIVE=c_elegans.WS200.dna.fa.gz
-    CHR_LIST=
-    EXT=fa
-    FORMAT=gz
-    POST_PROCESS=
+# WS200: worm
+function setup_c_elegans_WS200() {
+    set_name    "Caenorhabditis elegans"
+    set_build   "WS200 February 24 2009"
+    set_info    "C.Elegans WS200"
+    set_mirror  ftp://ftp.sanger.ac.uk/pub/wormbase/FROZEN_RELEASES/WS200/genomes/c_elegans/sequences/dna
+    set_archive c_elegans.WS200.dna.fa.gz
+    set_ext     fa
+    set_format  gz
 }
 #
-# ws201: worm
-function setup_c_elegans_ws201() {
-    NAME="Caenorhabditis elegans"
-    BUILD="WS201 March 25 2009"
-    INFO="C.Elegans WS201"
-    MIRROR=ftp://ftp.wormbase.org/pub/wormbase/genomes/c_elegans/sequences/dna
-    ARCHIVE=c_elegans.WS201.dna.fa.gz
-    CHR_LIST=
-    EXT=fa
-    FORMAT=gz
-    POST_PROCESS=
+# WS201: worm
+function setup_c_elegans_WS201() {
+    set_name    "Caenorhabditis elegans"
+    set_build   "WS201 March 25 2009"
+    set_info    "C.Elegans WS201"
+    set_mirror  ftp://ftp.wormbase.org/pub/wormbase/genomes/c_elegans/sequences/dna
+    set_archive c_elegans.WS201.dna.fa.gz
+    set_ext     fa
+    set_format  gz
 }
 #
 # E.coli
-function setup_ecoli() {
-    NAME="Escherichia coli"
-    BUILD=
-    INFO="E.Coli"
-    MIRROR=ftp://ftp.ncbi.nlm.nih.gov/genomes/Bacteria/Escherichia_coli_536_uid58531
-    ARCHIVE=NC_008253.fna
-    CHR_LIST=
-    EXT=fna
-    FORMAT=
-    POST_PROCESS=
+function setup_ecoli_NC_008253() {
+    set_name    "Escherichia coli"
+    set_build   "NC_008253"
+    set_info    "E.Coli"
+    set_mirror  ftp://ftp.ncbi.nlm.nih.gov/genomes/Bacteria/Escherichia_coli_536_uid58531
+    set_archive NC_008253.fna
+    set_ext     fna
 }
 #
 # ===============================================================
-# Functions for downloading and unpacking etc
+# Functions for setup, downloading and unpacking etc
 # ===============================================================
+#
+function set_name() {
+    NAME=$1
+}
+#
+function set_build() {
+    BUILD=$1
+}
+#
+function set_info() {
+    INFO=$1
+}
+#
+function set_mirror() {
+    MIRROR=$1
+}
+#
+function set_archive() {
+    ARCHIVE=$1
+}
+#
+function set_ext() {
+    EXT=$1
+}
+#
+function set_format() {
+    FORMAT=$1
+}
+#
+function add_processing_step() {
+    if [ -z "$POST_PROCESS" ] ; then
+	POST_PROCESS=$2
+    else
+	POST_PROCESS="$POST_PROCESS ; $2"
+    fi
+}
 #
 function unpack_archive() {
     filen=$1
