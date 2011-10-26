@@ -37,6 +37,10 @@ function setup_dm3() {
     set_ext     fa
     # Remove chrUextra
     add_processing_step "Exclude chrUextra" "rm chrUextra.fa"
+    # Comments
+    add_comment "These datafiles contain the finished genomic sequences of the long chromosome arms*, as well as nonredundant scaffolds from the heterochromatin."
+    add_comment "Scaffolds that could not be unambiguously mapped to a chromosome arm have been concatenated into chrU."
+    add_comment "Removed chrUextra: chrUextra contains 34,630 small scaffolds produced by the Celera shotgun assembler that could not be consistently joined with larger scaffolds. Because some of the chrUextra data are of low quality, researchers are encouraged to contact either BDGP or DHGP for further details on this resource."
 }
 #
 # WS200: worm
@@ -132,6 +136,16 @@ function add_processing_step() {
 # $1
 $2
 EOF
+}
+#
+function add_comment() {
+    if [ -z "$COMMENTS" ] ; then
+	# Make the initial comments file
+	COMMENTS=`mktemp --suffix .txt`
+	echo "Storing comments in: $COMMENTS"
+    fi
+    # Append comment
+    echo "# $1" >> $COMMENTS
 }
 #
 function unpack_archive() {
@@ -230,6 +244,7 @@ function fetch_sequence() {
 }
 #
 function list_chromosomes() {
+    echo "Writing chromosome list"
     grep "^>" ${FASTA} | cut -c2- > ${ORGANISM}.chr.list
 }
 #
@@ -252,8 +267,13 @@ EOF
 # Fasta: $FASTA
 # Date: $now
 EOF
+    # Append comments
+    if [ ! -z "$COMMENTS" ] ; then
+	echo "" >> ${ORGANISM}.info
+	echo "### Comments ###" >> ${ORGANISM}.info
+	cat $COMMENTS >> ${ORGANISM}.info
+    fi
     # Append the post-processing scripts
-    # Post-processing steps
     if [ ! -z "$POST_PROCESS_SCRIPT" ] ; then
 	echo "" >> ${ORGANISM}.info
 	echo "### Scripts ###" >> ${ORGANISM}.info
@@ -266,6 +286,11 @@ function clean_up() {
     if [ -f "$POST_PROCESS_SCRIPT" ] ; then
 	echo "Removing processing script"
 	/bin/rm $POST_PROCESS_SCRIPT
+    fi
+    # Remove comments file
+    if [ -f "$COMMENTS" ] ; then
+	echo "Removing temporary comments file"
+	/bin/rm $COMMENTS
     fi
     # Remove temp dir
     if [ -d "$TMP_DIR" ] ; then
