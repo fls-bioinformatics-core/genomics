@@ -45,7 +45,7 @@
 # ===============================================================
 #
 # E.coli
-function setup_ecoli_NC_008253() {
+function setup_ecoli() {
     set_name    "Escherichia coli"
     set_build   "NC_008253"
     set_info    "E.Coli"
@@ -71,7 +71,7 @@ function setup_dm3() {
 }
 #
 # WS200: worm
-function setup_c_elegans_WS200() {
+function setup_ws200() {
     set_name    "Caenorhabditis elegans"
     set_build   "WS200 February 24 2009"
     set_info    "C.Elegans WS200"
@@ -81,7 +81,7 @@ function setup_c_elegans_WS200() {
 }
 #
 # WS201: worm
-function setup_c_elegans_WS201() {
+function setup_ws201() {
     set_name    "Caenorhabditis elegans"
     set_build   "WS201 March 25 2009"
     set_info    "C.Elegans WS201"
