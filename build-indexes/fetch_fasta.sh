@@ -412,15 +412,16 @@ function check_organism() {
 #
 # Check command line
 if [ -z "$1" ] ; then
-    echo "Usage: $0 <organism>"
+    echo "Usage: `basename $0` <organism>"
     echo ""
-    echo "Given an organism name, downloads sequence data and creates"
+    echo "Given an organism name, downloads sequence data and creates a"
     echo "fasta file alongside descriptive 'info' file."
     echo ""
     echo "Available organisms:"
     names=$(available_names)
     for name in $names ; do
-	echo "  $name"
+	setup_${name} >> /dev/null
+	echo "  ${name}"$'\t'$'\t'"${NAME} (${BUILD})"
     done
     exit
 fi
