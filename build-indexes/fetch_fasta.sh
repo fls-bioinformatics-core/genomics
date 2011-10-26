@@ -102,6 +102,18 @@ function setup_hg18() {
     add_processing_step "Delete haplotypes" "rm -f *hap*"
 }
 #
+# hg19: human
+function setup_hg19() {
+    set_name    "Homo sapiens"
+    set_build   "hg19 GRCh37 - Feb. 2009 assembly of the human genome (hg19, GRCh37 Genome Reference Consortium Human Reference 37 (GCA_000001405.1))"
+    set_info    "Base chr. (1 to 22, X, Y), 'random' and chrM - unmasked"
+    set_mirror  http://hgdownload.cse.ucsc.edu/goldenPath/hg19/bigZips
+    set_archive chromFa.tar.gz
+    set_ext     fa
+    # Delete haplotypes
+    add_processing_step "Delete haplotypes" "rm -f *hap*"
+}
+#
 # mm9: mouse
 function setup_mm9() {
     set_name    "Mus musculus"
