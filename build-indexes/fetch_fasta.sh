@@ -3,18 +3,45 @@
 # fetch_fasta.sh: reproducibly download and create fasta files for
 # various organisms
 #
-# Usage: fetch_fasta.sh <name>
+# Usage: fetch_fasta.sh [ <name> ]
 #
-# Data is only defined for certain names. To add a new genome
-# or genome build, make a new function in this file called e.g.
-# "setup_<name>" and set the variables NAME, BUILD, INFO, MIRROR,
-# ARCHIVE (or CHR_LIST and FORMAT), EXT and FORMAT as appropriate.
+# If <name> is supplied then download the sequence and create the
+# fasta file for that organism.
 #
-# The new name will automatically be available the next time that
-# the script is run.
+# (If invoked without arguments then prints a list of the organism
+# names that are available.)
+#
+# Adding new organisms
+# --------------------
+# The information for downloading and creating the fasta file for
+# an organism called <name> is in a function "setup_<name>".
+#
+# Within the "setup_..." function, various "set_<attribute>"
+# functions are available to define the name, source archive
+# and any additional processing functions that are required. A
+# minimal set is:
+#
+# set_name "Organism name"
+# set_build "Genome build"
+# set_info "Info on e.g. which chromosomes are included"
+# set_mirror http://where/the/archive/is/kept
+# set_archive organism.zip
+# set_ext fa
+#
+# To specify additional processing steps use the
+# "add_processing_step" function, e.g.
+#
+# add_processing_step "Remove haplotypes" "rm *hap*"
+#
+# To specify comments to be added to the .info file use the
+# "add_comment" function, e.g.
+#
+# add_comment "Haplotypes removed"
+#
+# See the existing setup_... functions for examples.
 #
 # ===============================================================
-# Setup functions for different sequences
+# Setup functions for different organisms
 # ===============================================================
 #
 # E.coli
@@ -51,7 +78,6 @@ function setup_c_elegans_WS200() {
     set_mirror  ftp://ftp.sanger.ac.uk/pub/wormbase/FROZEN_RELEASES/WS200/genomes/c_elegans/sequences/dna
     set_archive c_elegans.WS200.dna.fa.gz
     set_ext     fa
-    set_format  gz
 }
 #
 # WS201: worm
@@ -62,7 +88,6 @@ function setup_c_elegans_WS201() {
     set_mirror  ftp://ftp.wormbase.org/pub/wormbase/genomes/c_elegans/sequences/dna
     set_archive c_elegans.WS201.dna.fa.gz
     set_ext     fa
-    set_format  gz
 }
 #
 # hg18: human
@@ -73,7 +98,6 @@ function setup_hg18() {
     set_mirror  http://hgdownload.cse.ucsc.edu/goldenPath/hg18/bigZips
     set_archive chromFa.zip
     set_ext     fa
-    set_format  zip
     # Delete haplotypes
     add_processing_step "Delete haplotypes" "rm -f *hap*"
 }
@@ -86,7 +110,6 @@ function setup_rn4() {
     set_mirror  http://hgdownload.cse.ucsc.edu/goldenPath/rn4/bigZips
     set_archive chromFa.tar.gz
     set_ext     fa
-    set_format  tar.gz
     # Unpacks into subdirectories so need to move the fa files
     # to the current directory
     add_processing_step "Put chromosome files in cwd" "mv */*.fa ."
@@ -96,34 +119,56 @@ function setup_rn4() {
 # Functions for setup, downloading and unpacking etc
 # ===============================================================
 #
+# set_name <organism>
+# Written to the "Organism" field of the info file
 function set_name() {
     NAME=$1
 }
 #
+# set_build <build_description>
+# Written to the "Genome build" field of the info file
 function set_build() {
     BUILD=$1
 }
 #
+# set_info <information>
+# Written to the "Manipulations" field of the info file
 function set_info() {
     INFO=$1
 }
 #
+# set_mirror <url>
+# Location to download the genome sequence archive from
+# (not including the archive itself)
 function set_mirror() {
     MIRROR=$1
 }
 #
+# set_archive <archive_name>
+# The archive file to be downloaded from the URL given
+# with set_mirror()
 function set_archive() {
     ARCHIVE=$1
 }
 #
+# set_ext <fasta_extension>
+# Set the file extension for the fasta files extracted
+# from the archive (e.g. "fa", "fasta")
 function set_ext() {
     EXT=$1
 }
 #
-function set_format() {
-    FORMAT=$1
-}
+# add_processing_step <description> <command>
 #
+# Add a command to be executed once the archive has been
+# downloaded and unpacked. The command is also recorded in the
+# ### Scripts ### section of the .info file.
+#
+# Multiple processing commands can be specified by calling
+# this function once for each command.
+#
+# Typically this can be used to move or rename files, or to
+# remove files before concatenation.
 function add_processing_step() {
     if [ -z "$POST_PROCESS_SCRIPT" ] ; then
 	# Make the initial post process script
@@ -138,6 +183,13 @@ $2
 EOF
 }
 #
+# add_comment <comment>
+#
+# Add a comment string to be added to the ### Comments ### section
+# of the .info file.
+#
+# Multiple comments can be added by calling this function once
+# for each comment.
 function add_comment() {
     if [ -z "$COMMENTS" ] ; then
 	# Make the initial comments file
@@ -148,6 +200,9 @@ function add_comment() {
     echo "# $1" >> $COMMENTS
 }
 #
+# unpack_archive <archive_file>
+#
+# Extracts contents of <archive_file> to the current directory
 function unpack_archive() {
     filen=$1
     ext=${filen##*.}
@@ -180,6 +235,9 @@ function unpack_archive() {
     done
 }
 #
+# fetch_url <url>
+#
+# Download <url> to the current directory
 function fetch_url() {
     echo $url
     wget -nv $url
@@ -190,6 +248,11 @@ function fetch_url() {
     fi
 }
 #
+# fetch_sequence
+#
+# Download, unpack, process and concat the sequence data
+# from the archive specified in the setup_<organism>
+# function
 function fetch_sequence() {
     # Make temporary directory for download
     wd=`pwd`
@@ -243,11 +306,19 @@ function fetch_sequence() {
     cd ${wd}
 }
 #
+# list_chromosomes
+#
+# Extract a list of chromosome names from the fasta file
+# and write to <organism>.chr.list
 function list_chromosomes() {
     echo "Writing chromosome list"
     grep "^>" ${FASTA} | cut -c2- > ${ORGANISM}.chr.list
 }
 #
+# write_info
+#
+# Create a .info file for the sequence file, with the data
+# supplied by the setup_<organism> function
 function write_info() {
     now=`date`
     cat <<EOF > ${ORGANISM}.info
@@ -281,6 +352,9 @@ EOF
     fi
 }
 #
+# clean_up
+#
+# Remove temporary files and directories
 function clean_up() {
     # Remove processing script
     if [ -f "$POST_PROCESS_SCRIPT" ] ; then
@@ -299,10 +373,19 @@ function clean_up() {
     fi
 }
 #
+# available_names
+#
+# Echo a list of available organism names i.e. all
+# names for which a setup_<organism> function exists
 function available_names() {
     grep "^function setup_" $0 | cut -c16- | cut -f1 -d"(" | sort
 }
 #
+# check_organism <name>
+#
+# Check if <name> is one of the available organism names.
+#
+# Return 0 if yes, 1 if no
 function check_organism() {
     available=$(available_names)
     for name in $available ; do
@@ -317,6 +400,7 @@ function check_organism() {
 # Main script
 # ===============================================================
 #
+# Check command line
 if [ -z "$1" ] ; then
     echo "Usage: $0 <organism>"
     echo ""
@@ -330,17 +414,20 @@ if [ -z "$1" ] ; then
     done
     exit
 fi
-#
+# Get organism name and check it's available
 ORGANISM=$1
 if ! check_organism $ORGANISM ; then
     echo "$ORGANISM not available"
     exit 1
 fi
+# Set up
 setup_${ORGANISM}
 FASTA=${ORGANISM}.${EXT}
 if [ -f "${FASTA}" ] ; then
+    # Fasta file already exists
     echo $FASTA already exists, nothing to do
 else
+    # Create the sequence file
     fetch_sequence
     list_chromosomes
     write_info
