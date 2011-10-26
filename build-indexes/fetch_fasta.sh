@@ -346,6 +346,7 @@ EOF
     # Remaining information
     cat <<EOF >> ${ORGANISM}.info
 # Fasta: $FASTA
+# Person: $(user_real_name $USER)
 # Date: $now
 EOF
     # Append comments
@@ -381,6 +382,13 @@ function clean_up() {
 	echo "Removing temporary directory"
 	/bin/rm -rf $TMP_DIR
     fi
+}
+#
+# user_real_name <username>
+#
+# Get a user's real name (from finger) based on their user name
+function user_real_name() {
+    finger $1 | grep -o "Name: .*$" | cut -d" " -f2-
 }
 #
 # available_names
