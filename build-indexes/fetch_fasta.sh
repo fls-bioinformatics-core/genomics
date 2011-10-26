@@ -122,6 +122,7 @@ function setup_rn4() {
     set_ext     fa
     # Unpacks into subdirectories so need to move the fa files
     # to the current directory
+    add_comment "Archive unpacks .fa files into subdirectories 1,2,3..etc"
     add_processing_step "Put chromosome files in cwd" "mv */*.fa ."
 }
 #
@@ -218,6 +219,23 @@ function add_comment() {
     fi
     # Append comment
     echo "# $1" >> $COMMENTS
+}
+#
+# reset_settings
+#
+# Reset the internal state after calling any of the "setup_..."
+# functions
+function reset_settings() {
+    clean_up > /dev/null
+    NAME=
+    BUILD=
+    INFO=
+    MIRROR=
+    ARCHIVE=
+    EXT=
+    FASTA=
+    POST_PROCESS_SCRIPT=
+    COMMENTS=
 }
 #
 # unpack_archive <archive_file>
@@ -430,6 +448,7 @@ if [ -z "$1" ] ; then
     for name in $names ; do
 	setup_${name} >> /dev/null
 	echo "  ${name}"$'\t'$'\t'"${NAME} (${BUILD})"
+	reset_settings
     done
     exit
 fi
