@@ -289,28 +289,17 @@ function fetch_sequence() {
 	url=${MIRROR}/${ARCHIVE}
 	fetch_url $url
 	unpack_archive $ARCHIVE
-    elif [ ! -z "$CHR_LIST" ] ; then
-	# Download and unpack the chromosome files
-	for chr in $CHR_LIST ; do
-	    filen=${chr}
-	    if [ ! -z "${EXT}" ] ; then
-		filen=${filen}.${EXT}
-	    fi
-	    if [ ! -z "${FORMAT}" ] ; then
-		filen=${filen}.${FORMAT}
-	    fi
-	    url=${MIRROR}/${filen}
-	    fetch_url $url
-	    unpack_archive $filen
-	done
+    else
+	# No archive
+	echo "ERROR no archive defined"
+	return 1
     fi
     # Add concatenation command into processing script
     # Do it this way so that the concat is added to the info file
     add_processing_step "concatenate" "cat *.${EXT} > ${FASTA}"
     # Apply post-processing commands
     if [ ! -z "$POST_PROCESS_SCRIPT" ] ; then
-	echo "Doing post-processing:"
-	cat $POST_PROCESS_SCRIPT
+	echo "Processing unpacked files"
 	/bin/sh $POST_PROCESS_SCRIPT
     fi
     # Check that something got written
@@ -324,6 +313,7 @@ function fetch_sequence() {
     echo "Made ${FASTA}"
     # Return to working directory
     cd ${wd}
+    return 0
 }
 #
 # list_chromosomes
@@ -457,9 +447,10 @@ if [ -f "${FASTA}" ] ; then
     echo $FASTA already exists, nothing to do
 else
     # Create the sequence file
-    fetch_sequence
-    list_chromosomes
-    write_info
+    if fetch_sequence ; then
+	list_chromosomes
+	write_info
+    fi
 fi
 clean_up
 ##
