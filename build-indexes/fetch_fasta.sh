@@ -102,6 +102,16 @@ function setup_hg18() {
     add_processing_step "Delete haplotypes" "rm -f *hap*"
 }
 #
+# mm9: mouse
+function setup_mm9() {
+    set_name    "Mus musculus"
+    set_build   "MM9/NCBI37 July 2007"
+    set_info    "Base chr. (1 to 19, chrN_random, chrM and chrUn_random - unmasked"
+    set_mirror  http://hgdownload.cse.ucsc.edu/goldenPath/mm9/bigZips
+    set_archive chromFa.tar.gz
+    set_ext     fa
+}
+#
 # rn4: rat
 function setup_rn4() {
     set_name    "Rattus norvegicus"
