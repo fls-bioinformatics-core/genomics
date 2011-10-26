@@ -125,6 +125,16 @@ function setup_rn4() {
     add_processing_step "Put chromosome files in cwd" "mv */*.fa ."
 }
 #
+# sacCer2: yeast
+function setup_sacCer2() {
+    set_name    "Saccharomyces cerevisiae"
+    set_build   "sacCer2 June 2008"
+    set_info    ""
+    set_mirror  http://hgdownload.cse.ucsc.edu/goldenPath/sacCer2/bigZips
+    set_archive chromFa.tar.gz
+    set_ext     fa
+}
+#
 # ===============================================================
 # Functions for setup, downloading and unpacking etc
 # ===============================================================
