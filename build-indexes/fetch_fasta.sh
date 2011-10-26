@@ -344,9 +344,14 @@ function fetch_sequence() {
 	echo "ERROR no archive defined"
 	return 1
     fi
-    # Add concatenation command into processing script
-    # Do it this way so that the concat is added to the info file
-    add_processing_step "concatenate" "cat *.${EXT} > ${FASTA}"
+    # Add rename or concatenation command into processing script
+    # Do it this way so that the command is added to the info file
+    n_fasta=`ls *.${EXT} 2>/dev/null | wc -l`
+    if [ "$n_fasta" == "1" ] ; then
+	add_processing_step "rename" "mv *.${EXT} ${FASTA}"
+    else
+	add_processing_step "concatenate" "cat *.${EXT} > ${FASTA}"
+    fi
     # Apply post-processing commands
     if [ ! -z "$POST_PROCESS_SCRIPT" ] ; then
 	echo "Processing unpacked files"
