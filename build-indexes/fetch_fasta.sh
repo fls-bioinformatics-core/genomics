@@ -134,6 +134,18 @@ function setup_mm9() {
     set_ext     fa
 }
 #
+# ncrassa
+function setup_Ncrassa() {
+    set_name    "Neurospora crassa OR74A"
+    set_build   "Release 3"
+    set_info    "See http://www.broadinstitute.org/annotation/genome/neurospora/MultiDownloads.html"
+    set_mirror  http://www.broadinstitute.org/annotation/genome/neurospora/download
+    set_archive "?sp=ZH4sIAAAAAAAAAE2Pv07DQAzGnTYMgEC0zGysXGFmQkClSuGPlO7ITdxwKLkc50ubdKjUmZWFgTdg4yHYWXkG3oFcGhAebMn%2B6fP3vX3DBhs4ijC9zwsl5jQRTGYmI2Jxkc9VmmMcrhe3aDAjS2b41HsPnr%2BKDnQD2EZmyiZpNYrZwl7wgDMcFFamg0CyPQ2gF%2BWZNsQscxUW06ksLfTXWIoqGYTWSJXU4E7c%2FhtXmvgRluCVuja371jhJMWZMVg53XL1efDyga9d8Ebgs1xQqQGgM%2FfrvmXBvz4%2FObaw6cbd1Wh8Uz%2F1xULqRtdBXoN6SwOHv%2BHb4MJQSsj0l9%2F5gbb6AKWB3caSsy8uVZH9P2oLvbDQZKJcWZnwENli%2BQM9lWagaAEAAA%3D%3D" --save-as neurospora_data.zip
+    set_ext     fasta
+    # Add comments
+    add_comment "Download 'All Assemblies'/'supercontigs.fasta' from http://www.broadinstitute.org/annotation/genome/neurospora/MultiDownloads.html to neurospora_data.zip, which contains 'neurospora_crassa_or74a__finished__10_supercontigs.fasta' and 'neurospora_crassa_or74a_mito_10_supercontigs.fasta'"
+}
+#
 # PhiX
 function setup_PhiX() {
     set_name    "Enterobacteria phage phiX174"
