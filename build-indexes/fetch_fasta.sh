@@ -168,6 +168,18 @@ function setup_SpR6() {
     set_ext     fna
 }
 #
+# UniVec
+function setup_UniVec() {
+    set_name    "UniVec"
+    set_build   "UniVec build #6.0 (Nov. 8, 2010)"
+    set_info    "See http://www.ncbi.nlm.nih.gov/VecScreen/UniVec.html"
+    set_mirror  ftp://ftp.ncbi.nih.gov/pub/UniVec
+    set_archive UniVec
+    set_ext     fa
+    # Rename the downloaded file
+    add_processing_step "Rename download to give it fa extension" "mv UniVec UniVec_fasta.fa"
+}
+#
 # ===============================================================
 # Functions for setup, downloading and unpacking etc
 # ===============================================================
