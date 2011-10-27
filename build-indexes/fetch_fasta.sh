@@ -462,6 +462,27 @@ function user_real_name() {
     finger $1 | grep -o "Name: .*$" | cut -d" " -f2-
 }
 #
+# usage
+#
+# Print usage information
+function usage() {
+    echo "Usage: `basename $0` [ <organism> ]"
+    echo ""
+    echo "Download sequence data for <organism> and create fasta file"
+    echo "alongside chromosome list and descriptive 'info' file."
+    echo ""
+    echo "Run without arguments to see this help and list the available"
+    echo "organisms."
+    echo ""
+    echo "Available organisms:"
+    names=$(available_names)
+    for name in $names ; do
+	setup_${name} >> /dev/null
+	echo "  ${name}"$'\t'$'\t'"${NAME} (${BUILD})"
+	reset_settings
+    done
+}
+#
 # available_names
 #
 # Echo a list of available organism names i.e. all
@@ -491,18 +512,7 @@ function check_organism() {
 #
 # Check command line
 if [ -z "$1" ] ; then
-    echo "Usage: `basename $0` <organism>"
-    echo ""
-    echo "Given an organism name, downloads sequence data and creates a"
-    echo "fasta file alongside descriptive 'info' file."
-    echo ""
-    echo "Available organisms:"
-    names=$(available_names)
-    for name in $names ; do
-	setup_${name} >> /dev/null
-	echo "  ${name}"$'\t'$'\t'"${NAME} (${BUILD})"
-	reset_settings
-    done
+    usage
     exit
 fi
 # Get organism name and check it's available
