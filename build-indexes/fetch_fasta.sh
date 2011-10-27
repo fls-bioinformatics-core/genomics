@@ -232,14 +232,20 @@ function set_mirror() {
     MIRROR=$1
 }
 #
-# set_archive <archive_name>
+# set_archive <archive_list> [ --save-as <name> ]
 # The archive file(s) to be downloaded from the URL given
 # with set_mirror()
 #
 # For multiple archives, separate with commas e.g.
 # # set_archive archive1,archive2,archive3
+#
+# To save to a different name, use the --save-as option.
 function set_archive() {
     ARCHIVE=$1
+    if [ "$2" == "--save-as" ] ; then
+	ARCHIVE_SAVE_AS=$3
+	echo "Save archive as $ARCHIVE_SAVE_AS"
+    fi
 }
 #
 # set_ext <fasta_extension>
@@ -302,6 +308,7 @@ function reset_settings() {
     INFO=
     MIRROR=
     ARCHIVE=
+    ARCHIVE_SAVE_AS=
     EXT=
     FASTA=
     POST_PROCESS_SCRIPT=
@@ -343,13 +350,20 @@ function unpack_archive() {
     done
 }
 #
-# fetch_url <url>
+# fetch_url <url> [ <save_as> ]
 #
 # Download <url> to the current directory
+# If <save_as> is specified then save to that name rather
+# than the name of the target in the URL
 function fetch_url() {
-    echo $url
-    wget -nv $url
+    echo Fetching URL: $url
     filen=`basename $url`
+    wget_cmd="wget -nv $url"
+    if [ ! -z "$2" ] ; then
+	wget_cmd="$wget_cmd -O $2"
+	filen=$2
+    fi
+    $wget_cmd
     if [ ! -f "$filen" ] ; then
 	echo ERROR failed to download $filen
 	exit 1
@@ -379,7 +393,10 @@ function fetch_sequence() {
 	elif [ ! -z "$archive" ] ; then
 	    # Download archive
 	    url=${MIRROR}/${archive}
-	    fetch_url $url
+	    fetch_url $url $ARCHIVE_SAVE_AS
+	    if [ ! -z "$ARCHIVE_SAVE_AS" ] ; then
+		archive=$ARCHIVE_SAVE_AS
+	    fi
 	    unpack_archive $archive
 	else
 	    # No archive
