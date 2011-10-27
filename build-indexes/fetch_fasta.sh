@@ -44,6 +44,16 @@
 # Setup functions for different organisms
 # ===============================================================
 #
+# Chlamydomonas reinhardtii
+function setup_chlamyR() {
+    set_name    "Chlamydomonas reinhardtii"
+    set_build   "2009"
+    set_info    ""
+    set_mirror  ftp://ftp.jgi-psf.org/pub/JGI_data/phytozome/v7.0/Creinhardtii/assembly
+    set_archive Creinhardtii_169.fa.gz
+    set_ext     fa
+}
+#
 # E.coli
 function setup_ecoli() {
     set_name    "Escherichia coli"
