@@ -38,6 +38,11 @@
 #
 # add_comment "Haplotypes removed"
 #
+# The fasta files can be verified using the md5 checksum, if
+# specified using the 'set_md5sum' function, e.g.
+#
+# set_md5sum 8f89f9d56e2fce03ac08f24f61e5bc40
+#
 # See the existing setup_... functions for examples.
 #
 # ===============================================================
@@ -52,6 +57,7 @@ function setup_chlamyR() {
     set_mirror  ftp://ftp.jgi-psf.org/pub/JGI_data/phytozome/v7.0/Creinhardtii/assembly
     set_archive Creinhardtii_169.fa.gz
     set_ext     fa
+    set_md5sum  27c4e0cdc13ab3727f784bf667ae3c08
 }
 #
 # E.coli
@@ -72,6 +78,7 @@ function setup_dm3() {
     set_mirror  http://hgdownload.cse.ucsc.edu/goldenPath/dm3/bigZips
     set_archive chromFa.tar.gz
     set_ext     fa
+    set_md5sum  96b3b597f64630f04f829a83fb90cf5e
     # Remove chrUextra
     add_processing_step "Exclude chrUextra" "rm chrUextra.fa"
     # Comments
@@ -108,6 +115,7 @@ function setup_hg18() {
     set_mirror  http://hgdownload.cse.ucsc.edu/goldenPath/hg18/bigZips
     set_archive chromFa.zip
     set_ext     fa
+    set_md5sum  8cdfcaee2db09f2437e73d1db22fe681
     # Delete haplotypes
     add_processing_step "Delete haplotypes" "rm -f *hap*"
 }
@@ -120,6 +128,7 @@ function setup_hg19() {
     set_mirror  http://hgdownload.cse.ucsc.edu/goldenPath/hg19/bigZips
     set_archive chromFa.tar.gz
     set_ext     fa
+    set_md5sum  93e837aa2ea65115bdfe05ba7cda4d2a
     # Delete haplotypes
     add_processing_step "Delete haplotypes" "rm -f *hap*"
 }
@@ -132,6 +141,7 @@ function setup_mm9() {
     set_mirror  http://hgdownload.cse.ucsc.edu/goldenPath/mm9/bigZips
     set_archive chromFa.tar.gz
     set_ext     fa
+    set_md5sum  bd0bc0969bd08667f475c5df2b13ca49
 }
 #
 # ncrassa
@@ -142,6 +152,7 @@ function setup_Ncrassa() {
     set_mirror  http://www.broadinstitute.org/annotation/genome/neurospora/download
     set_archive "?sp=ZH4sIAAAAAAAAAE2Pv07DQAzGnTYMgEC0zGysXGFmQkClSuGPlO7ITdxwKLkc50ubdKjUmZWFgTdg4yHYWXkG3oFcGhAebMn%2B6fP3vX3DBhs4ijC9zwsl5jQRTGYmI2Jxkc9VmmMcrhe3aDAjS2b41HsPnr%2BKDnQD2EZmyiZpNYrZwl7wgDMcFFamg0CyPQ2gF%2BWZNsQscxUW06ksLfTXWIoqGYTWSJXU4E7c%2FhtXmvgRluCVuja371jhJMWZMVg53XL1efDyga9d8Ebgs1xQqQGgM%2FfrvmXBvz4%2FObaw6cbd1Wh8Uz%2F1xULqRtdBXoN6SwOHv%2BHb4MJQSsj0l9%2F5gbb6AKWB3caSsy8uVZH9P2oLvbDQZKJcWZnwENli%2BQM9lWagaAEAAA%3D%3D" --save-as neurospora_data.zip
     set_ext     fasta
+    set_md5sum  8dee52a5101dc686a9862306002d513a
     # Add comments
     add_comment "Download 'All Assemblies'/'supercontigs.fasta' from http://www.broadinstitute.org/annotation/genome/neurospora/MultiDownloads.html to neurospora_data.zip, which contains 'neurospora_crassa_or74a__finished__10_supercontigs.fasta' and 'neurospora_crassa_or74a_mito_10_supercontigs.fasta'"
 }
@@ -178,6 +189,7 @@ function setup_sacCer2() {
     set_mirror  http://hgdownload.cse.ucsc.edu/goldenPath/sacCer2/bigZips
     set_archive chromFa.tar.gz
     set_ext     fa
+    set_md5sum  c5a5bc8634dcbccb4c153541146e713b
 }
 #
 # SacBay: yeast
@@ -188,6 +200,7 @@ function setup_sacBay() {
     set_mirror  http://www.saccharomycessensustricto.org/SaccharomycesSensuStrictoResources/current/Sbay
     set_archive Sbay.ultrascaf,Sbay.unplaced
     set_ext     fa
+    set_md5sum  8f89f9d56e2fce03ac08f24f61e5bc40
     add_comment "Concatenation of the ordered ('ultra_scaffolds') and unplaced sequences."
     # After download append .fa extension
     add_processing_step "Add .fa extension to ultrascaf" "mv Sbay.ultrascaf Sbay.ultrascaf.fa"
@@ -310,6 +323,13 @@ function add_comment() {
     echo "# $1" >> $COMMENTS
 }
 #
+# set_md5sum
+#
+# Specify MD5 checksum to verify final file
+function set_md5sum() {
+    MD5SUM=$1
+}
+#
 # reset_settings
 #
 # Reset the internal state after calling any of the "setup_..."
@@ -326,6 +346,7 @@ function reset_settings() {
     FASTA=
     POST_PROCESS_SCRIPT=
     COMMENTS=
+    MD5SUM=
 }
 #
 # unpack_archive <archive_file>
@@ -446,6 +467,28 @@ function fetch_sequence() {
     # Return to working directory
     cd ${wd}
     return 0
+}
+#
+# check_md5sum
+#
+# Check that md5sum is correct
+function check_md5sum() {
+    if [ ! -z "$MD5SUM" ] ; then
+	# Run md5sum check
+	echo -n "Checking MD5SUM for $FASTA: "
+	md5sum=`md5sum fasta/$FASTA | cut -d' ' -f1`
+	if [ $md5sum != $MD5SUM ] ; then
+	    echo FAILED
+	    echo ERROR md5sum check failed
+	    clean_up
+	    exit 1
+	else
+	    echo OK
+	fi
+    else
+	# No md5sum to check against
+	echo "No checksum available: md5sum check skipped"
+    fi
 }
 #
 # list_chromosomes
@@ -591,6 +634,7 @@ if [ -f "fasta/${FASTA}" ] ; then
 else
     # Create the sequence file
     if fetch_sequence ; then
+	check_md5sum
 	list_chromosomes
 	write_info
     fi
