@@ -189,8 +189,9 @@ function setup_sacBay() {
     set_archive Sbay.ultrascaf,Sbay.unplaced
     set_ext     fa
     add_comment "Concatenation of the ordered ('ultra_scaffolds') and unplaced sequences."
-    # After download concatenate and rename
-    add_processing_step "Concatenate into single fa file" "cat Sbay.ultrascaf Sbay.unplaced > Sbay_all.fa"
+    # After download append .fa extension
+    add_processing_step "Add .fa extension to ultrascaf" "mv Sbay.ultrascaf Sbay.ultrascaf.fa"
+    add_processing_step "Add .fa extension to unplaced" "mv Sbay.unplaced Sbay.unplaced.fa"
 }
 #
 # SpR6
