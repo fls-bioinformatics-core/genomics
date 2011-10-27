@@ -158,6 +158,19 @@ function setup_sacCer2() {
     set_ext     fa
 }
 #
+# SacBay: yeast
+function setup_sacBay() {
+    set_name    "Saccharomyces bayanus var. uvarum (CBS 7001)"
+    set_build   ""
+    set_info    "See http://www.saccharomycessensustricto.org/cgi-bin/s3?data=Assemblies&version=current"
+    set_mirror  http://www.saccharomycessensustricto.org/SaccharomycesSensuStrictoResources/current/Sbay
+    set_archive Sbay.ultrascaf,Sbay.unplaced
+    set_ext     fa
+    add_comment "Concatenation of the ordered ('ultra_scaffolds') and unplaced sequences."
+    # After download concatenate and rename
+    add_processing_step "Concatenate into single fa file" "cat Sbay.ultrascaf Sbay.unplaced > Sbay_all.fa"
+}
+#
 # SpR6
 function setup_SpR6() {
     set_name    "Streptococcus pneumoniae R6"
@@ -210,8 +223,11 @@ function set_mirror() {
 }
 #
 # set_archive <archive_name>
-# The archive file to be downloaded from the URL given
+# The archive file(s) to be downloaded from the URL given
 # with set_mirror()
+#
+# For multiple archives, separate with commas e.g.
+# # set_archive archive1,archive2,archive3
 function set_archive() {
     ARCHIVE=$1
 }
@@ -341,21 +357,26 @@ function fetch_sequence() {
     TMP_DIR=`mktemp -d`
     cd $TMP_DIR
     echo "Working in temporary directory $TMP_DIR"
-    if [ -f "${wd}/${ARCHIVE}" ] ; then
-	# Archive file already downloaded to pwd
-	echo "Archive file found in ${wd}"
-	/bin/cp ${wd}/${ARCHIVE} .
-	unpack_archive $ARCHIVE
-    elif [ ! -z "$ARCHIVE" ] ; then
-	# Download archive
-	url=${MIRROR}/${ARCHIVE}
-	fetch_url $url
-	unpack_archive $ARCHIVE
-    else
-	# No archive
-	echo "ERROR no archive defined"
-	return 1
-    fi
+    # Loop over specified archives
+    archive_list=`echo ${ARCHIVE} | tr ',' ' '`
+    for archive in $archive_list ; do
+	echo "Archive: $archive"
+	if [ -f "${wd}/${archive}" ] ; then
+	    # Archive file already downloaded to pwd
+	    echo "Archive file found in ${wd}"
+	    /bin/cp ${wd}/${archive} .
+	    unpack_archive $archive
+	elif [ ! -z "$archive" ] ; then
+	    # Download archive
+	    url=${MIRROR}/${archive}
+	    fetch_url $url
+	    unpack_archive $archive
+	else
+	    # No archive
+	    echo "ERROR no archive defined"
+	    return 1
+	fi
+    done
     # Add rename or concatenation command into processing script
     # Do it this way so that the command is added to the info file
     n_fasta=`ls *.${EXT} 2>/dev/null | wc -l`
