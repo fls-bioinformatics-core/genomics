@@ -66,8 +66,8 @@ function setup_ecoli() {
     set_build   "NC_008253"
     set_info    "E.Coli"
     set_mirror  ftp://ftp.ncbi.nlm.nih.gov/genomes/Bacteria/Escherichia_coli_536_uid58531
-    set_archive NC_008253.fna
-    set_ext     fna
+    set_archive NC_008253.fna --save-as NC_008253.fa
+    set_ext     fa
 }
 #
 # dm3: fly
@@ -163,8 +163,8 @@ function setup_PhiX() {
     set_build   "NCBI accession code NC_001422.1"
     set_info    "Complete genome"
     set_mirror  ftp://ftp.ncbi.nih.gov/genomes/Viruses/Enterobacteria_phage_phiX174_sensu_lato_uid14015
-    set_archive NC_001422.fna
-    set_ext     fna
+    set_archive NC_001422.fna --save-as NC_001422.fa
+    set_ext     fa
 }
 #
 # rn4: rat
@@ -213,8 +213,8 @@ function setup_SpR6() {
     set_build   "NCBI accession code NC_003098"
     set_info    "Complete genome"
     set_mirror  ftp://ftp.ncbi.nih.gov/genomes/Bacteria/Streptococcus_pneumoniae_R6_uid57859
-    set_archive NC_003098.fna
-    set_ext     fna
+    set_archive NC_003098.fna --save-as NC_003098.fa
+    set_ext     fa
 }
 #
 # UniVec
