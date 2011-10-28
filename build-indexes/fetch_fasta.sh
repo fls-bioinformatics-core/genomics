@@ -630,7 +630,7 @@ setup_${ORGANISM}
 FASTA=${ORGANISM}.${EXT}
 if [ -f "fasta/${FASTA}" ] ; then
     # Fasta file already exists
-    echo $FASTA already exists, nothing to do
+    echo WARNING $FASTA already exists, nothing to do
 else
     # Create the sequence file
     if fetch_sequence ; then
@@ -640,5 +640,14 @@ else
     fi
 fi
 clean_up
+# Exit status dependent on info file existing
+if [ -f ${ORGANISM}.info ] ; then
+    # OK
+    exit 0
+else
+    # Problem
+    echo ERROR no ${ORGANISM}.info file found
+    exit 1
+fi
 ##
 #
