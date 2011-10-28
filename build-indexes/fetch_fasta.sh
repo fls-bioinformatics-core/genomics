@@ -397,7 +397,7 @@ function fetch_url() {
 	wget_cmd="$wget_cmd -O $2"
 	filen=$2
     fi
-    $wget_cmd
+    $wget_cmd 2>&1
     if [ ! -f "$filen" ] ; then
 	echo ERROR failed to download $filen
 	exit 1
@@ -581,7 +581,7 @@ function usage() {
     echo "Available organisms:"
     names=$(available_names)
     for name in $names ; do
-	setup_${name} >> /dev/null
+	setup_${name} > /dev/null
 	echo "  ${name}"$'\t'$'\t'"${NAME} (${BUILD})"
 	reset_settings
     done
