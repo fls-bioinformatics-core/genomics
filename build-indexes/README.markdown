@@ -3,10 +3,55 @@ build-indexes
 
 Scripts for setting up genome indexes for various programs:
 
+ *  `fetch_fasta.sh`: download and build FASTA file for pre-defined organisms
  *  `build_indexes.sh`: build all indexes from a FASTA file
  *  `bfast_build_indexes.sh`: build bfast color-space indexes
  *  `bowtie_build_indexes.sh`: build color- and base-space bowtie indexes
  *  `srma_build_indexes.sh`: build indexes for srma
+
+fetch_fasta.sh
+--------------
+Reproducibly downloads and builds FASTA files for pre-defined organisms.
+
+### Usage ###
+
+    fetch_fasta.sh <name>
+
+`<name>` identifies a specific organism and build, for example 'hg18' or
+`mm9` (run without specifying a name to see a list of all the available
+organisms).
+
+### Outputs ###
+
+Downloads and creates a FASTA file for the specified organism and puts
+this into a`fasta` subdirectory in the current working directory. When
+possible the script verifies the FASTA file by running an MD5 checksum
+it.
+
+An `.info` file is also written which contains details about the FASTA
+file, such as source location and additional operations that were performed
+to unpack and construct the file, and the date and user who ran the script.
+
+### Adding new organisms ###
+
+New organisms can be added to the script by creating additional
+`setup_<name>` functions for each, and defining the source and operations
+required to build it. For example:
+
+     function setup_hg18() {
+         set_name    "Homo sapiens"
+         set_build   "HG18/NCBI36.1 March 2006"
+         set_info    "Base chr. (1 to 22, X, Y), 'random' and chrM - unmasked"
+         set_mirror  http://hgdownload.cse.ucsc.edu/goldenPath/hg18/bigZips
+         set_archive chromFa.zip
+         set_ext     fa
+         set_md5sum  8cdfcaee2db09f2437e73d1db22fe681
+         # Delete haplotypes
+         add_processing_step "Delete haplotypes" "rm -f *hap*"
+     }
+
+See the comments in the head of the script along with the existing
+`setup_...` functions for more specifics.
 
 build_indexes.sh
 ----------------
