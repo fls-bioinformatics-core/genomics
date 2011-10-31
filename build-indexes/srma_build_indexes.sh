@@ -92,11 +92,19 @@ DICT_GENOME=${FASTA_GENOME%.*}.dict
 samtools_faidx_cmd="$SAMTOOLS faidx $FASTA_GENOME"
 echo $samtools_faidx_cmd
 $samtools_faidx_cmd
+if [ ! -e "${FASTA_GENOME}.fai" ] ; then
+    echo "ERROR failed to create ${FASTA_GENOME}.fai"
+    exit 1
+fi
 #
 # Picard tools .dict index
 picard_tools_cmd="java -jar $CREATE_SEQ_DICT_JAR R=${FASTA_GENOME} O=${DICT_GENOME}"
 echo $picard_tools_cmd
 $picard_tools_cmd
+if [ ! -e "${DICT_GENOME}" ] ; then
+    echo "ERROR failed to create ${DICT_GENOME}"
+    exit 1
+fi
 #
 echo ===================================================
 echo $(to_upper $SCRIPT_NAME): FINISHED
