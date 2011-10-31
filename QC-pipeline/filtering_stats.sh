@@ -68,6 +68,7 @@ echo % filtered$'\t'${percent_filtered}
 # Write to file
 wait_for_lock ${stats_file} 30
 if [ $? == 1 ] ; then
+    echo Writing to ${stats_file}
     if [ ! -f ${stats_file} ] ; then
 	# Create new stats file and write header
 	echo "#File"$'\t'"Reads"$'\t'"Reads after filter"$'\t'"Difference"$'\t'"% Filtered" > ${stats_file}
