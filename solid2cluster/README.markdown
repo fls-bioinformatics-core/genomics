@@ -5,8 +5,8 @@ Utilities for transferring data from the SOLiD instrument to the cluster:
 
  *   `rsync_solid_to_cluster.sh`: perform transfer of primary data
  *   `log_solid_run.sh`: maintain logging file of transferred runs
- *   `analyse_solid_run.py`:
- *   `build_analysis_dir.py`:
+ *   `analyse_solid_run.py`: report on the primary data directories from SOLiD runs
+ *   `build_analysis_dir.py`: construct analysis directories for experiments
 
 
 rsync_solid_to_cluster.sh
@@ -57,8 +57,7 @@ SOLiD run directory that is already in the logging file.
 analyse_solid_run.py
 --------------------
 
-Report data about the samples and libraries from the run, suggest layout for the analysis
-directories, and write an entry for an XLS spreadsheet.
+Report on various aspects of the primary data directories from SOLiD runs.
 
 Usage:
 
@@ -100,22 +99,22 @@ in this order for each experiment specified on the command line:
                                       [--source=... ]
 
 `<name>` is an identifier (typically the user's initials) used for the
-analysis directory e.g. 'PB'
+analysis directory e.g. `PB`
 
-`<expt_type>` is e.g. 'reseq', 'ChIP-seq', 'RNAseq', 'miRNA'...
+`<expt_type>` is e.g. `reseq`, `ChIP-seq`, `RNAseq`, `miRNA`...
 
 `<sample>/<library>` specify the names for primary data files e.g.
-'PB_JB_pool/PB*'
+`PB_JB_pool/PB*`
 
 Example:
 
     --name=PB --type=ChIP-seq --source=PB_JB_pool/PB*
 
 Both `<sample>` and `<library>` can include a trailing wildcard character
-(i.e. *) to match multiple names. */* will match all primary data files.
+(i.e. `*`) to match multiple names. `*/*` will match all primary data files.
 Multiple `--sources` can be declared for each experiment.
 
 For each experiment defined on the command line, a subdirectory called
-`<name>_<expt_type>` (e.g. 'PB_ChIP-seq' - if no `<expt_type>`
+`<name>_<expt_type>` (e.g. `PB_ChIP-seq` - if no `<expt_type>`
 was supplied then just the name is used) will be made containing links to
 each of the primary data files.
