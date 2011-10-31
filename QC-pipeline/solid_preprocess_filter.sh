@@ -1,13 +1,24 @@
 #!/bin/sh
 #
-# Script to run fastq_screen QC steps on SOLiD data
+# Script to run SOLiD_preprocess_filter steps on SOLiD data
 #
-# Usage: fastq_screen.sh <fastq>
+# Usage: solid_preprocess_filter.sh [options] <csfasta> <qual>
 #
 function usage() {
-    echo "Usage: solid_process_filter.sh <csfasta> <qual>"
+    echo "Usage: solid_process_filter.sh [options] <csfasta> <qual>"
     echo ""
-    echo "Run SOLID_preprocess with FLS Bioinf settings"
+    echo "Run SOLiD_preprocess_filter_v2.pl script and calculate filtering"
+    echo "statistics."
+    echo ""
+    echo "Options:"
+    echo ""
+    echo "By default the preprocess/filter program is run using FLS Bioinf"
+    echo "settings i.e. $FILTER_SETTINGS"
+    echo ""
+    echo "However: any options explicitly specified on the command line are"
+    echo "used instead of the FLS Bioinf settings (which are essentially"
+    echo "ignored, with the defaults for any parameter reverting to those"
+    echo "in the underlying SOLiD_preprocess_filter_v2.pl program)."
     echo ""
     echo "Input"
     echo "  csfasta and qual file pair"
@@ -16,7 +27,7 @@ function usage() {
     echo "  <csfasta_base>_T_F3.csfasta and <cfasta_base>_QV_T_F3.qual"
 }
 # Check command line
-if [ $# -ne 2 ] || [ "$1" == "-h" ] || [ "$1" == "--help" ] ; then
+if [ $# -lt 2 ] || [ "$1" == "-h" ] || [ "$1" == "--help" ] ; then
     usage
     exit
 fi
@@ -39,6 +50,12 @@ fi
 #
 # Set umask to allow group read-write on all new files etc
 umask 0002
+#
+# Collect the user arguments to supply to SOLiD_preprocess_filter
+while [ $# -gt 2 ] ; do
+    FILTER_OPTIONS="$FILTER_OPTIONS $1"
+    shift
+done
 #
 # Collect inputs
 csfasta=$(abs_path $1)
@@ -78,6 +95,7 @@ echo Started   : `date`
 echo Running in: `pwd`
 echo csfasta   : $csfasta
 echo qual      : $qual
+echo Filter options: $FILTER_OPTIONS
 #
 # Output file names
 processed_csfasta=$(baserootname $csfasta)_T_F3.csfasta
@@ -117,6 +135,19 @@ else
     /bin/rm -rf ${tmp}
 fi
 #
+# Filter statistics: run separate filtering_stats.sh script
+FILTERING_STATS=`dirname $0`/filtering_stats.sh
+if [ -f "${FILTERING_STATS}" ] ; then
+    if [ -f "${processed_csfasta}" ] ; then
+	${FILTERING_STATS} ${csfasta} SOLiD_preprocess_filter.stats
+    else
+	echo ERROR output csfasta file not found, filtering stats calculcation skipped
+    fi
+else
+    echo ERROR ${FILTERING_STATS} not found, filtering stats calculation skipped
+fi
+#
 echo solid_preprocess_filter completed: `date`
 exit
+##
 #
