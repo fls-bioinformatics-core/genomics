@@ -118,21 +118,6 @@ function solid_preprocess_filter() {
     fi
 }
 #
-# Compare reads for original and preprocess filtered data
-#
-# Usage: filtering_stats <csfasta>
-function filtering_stats() {
-    # Input csfasta
-    csfasta_file=$1
-    # Run separate filtering_stats.sh script
-    FILTERING_STATS=`dirname $0`/filtering_stats.sh
-    if [ -f "${FILTERING_STATS}" ] ; then
-	${FILTERING_STATS} ${csfasta} SOLiD_preprocess_filter.stats
-    else
-	echo ERROR ${FILTERING_STATS} not found, filtering stats calculation skipped
-    fi
-}
-#
 # Run boxplotter
 #
 # Supply full path of input qual_file
@@ -265,9 +250,6 @@ fi
 #
 # SOLiD_preprocess_filter
 solid_preprocess_filter ${CSFASTA} ${QUAL}
-#
-# Filtering statistics
-filtering_stats ${CSFASTA}
 #
 # Run solid2fastq to make fastq file from filtered files
 run_solid2fastq $(baserootname $CSFASTA)_T_F3.csfasta $(baserootname $CSFASTA)_QV_T_F3.qual
