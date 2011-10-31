@@ -34,6 +34,16 @@ function get_fasta() {
     return 1
 }
 #
+function get_organism_name() {
+    if [ -f "$1.info" ] ; then
+	# Found .info file, extract organism name
+	local name=`grep "^# Organism:" ${1}.info | cut -d' ' -f3-`
+	echo "$name"
+    else
+	echo $1
+    fi
+}
+#
 function get_display_name() {
     if [ -f "$1.info" ] ; then
 	# Found .info file, extract organism name
@@ -375,5 +385,77 @@ for name in `ls . 2>&1` ; do
 	cd ${TOP_DIR}
     fi
 done
+#
+###########################################################
+# HTML pages
+###########################################################
+echo "### Writing HTML index file ###"
+cat <<EOF > ${TOP_DIR}/genome_indexes.html
+<html>
+<head>
+<title>Genome Indexes</title>
+</head>
+<body>
+<h1>Genome Indexes</h1>
+<table>
+<tr>
+<th>Id</th>
+<th>Organism</th>
+<th>Bowtie</th>
+<th>Bowtie (CS)</th>
+<th>Bfast (CS)</th>
+<th>Picard/SRMA</th>
+</tr>
+EOF
+for name in `ls . 2>&1` ; do
+    fasta=$(get_fasta $name)
+    if [ ! -z $fasta ] && [ -d $name ] ; then
+	echo Examining $name
+	# Move into organism dir
+	cd $name
+	# Display name
+	display_name=$(get_organism_name $name)
+	# Determine which indexes are available
+	# Bowtie
+	bowtie_indexes=$(get_bowtie_indexes $name)
+	if [ ! -z "$bowtie_indexes" ] ; then
+	    bowtie_indexes=YES
+	fi
+	# Bowtie color
+	bowtie_color_indexes=$(get_bowtie_color_indexes $name)
+	if [ ! -z "$bowtie_color_indexes" ] ; then
+	    bowtie_color_indexes=YES
+	fi
+	# Bfast
+	bfast_color_indexes=$(get_bfast_color_indexes $fasta)
+	if [ ! -z "$bfast_color_indexes" ] ; then
+	    bfast_color_indexes=YES
+	fi
+	# Picard/SRMA
+	dict=../${fasta%.*}.dict
+	fai=../${fasta}.fai
+	if [ -f $dict ] && [ -f $fai ] ; then
+	    picard_indexes=YES
+	fi
+	# Write the table line
+	cat <<EOF >> ${TOP_DIR}/genome_indexes.html
+<tr>
+<td>$name</td>
+<td>$display_name</td>
+<td>$bowtie_indexes</td>
+<td>$bowtie_color_indexes</td>
+<td>$bfast_color_indexes</td>
+<td>$picard_indexes</td>
+</tr>
+EOF
+	# Return to original dir
+	cd ${TOP_DIR}
+    fi
+done
+cat <<EOF >> ${TOP_DIR}/genome_indexes.html
+</table>
+</body>
+</html>
+EOF
 ##
 #
