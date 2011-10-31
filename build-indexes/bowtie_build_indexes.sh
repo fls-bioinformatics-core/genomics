@@ -52,7 +52,7 @@ genome=$(baserootname $FASTA_GENOME)
 #
 # Check input file exists
 if [ ! -f "$FASTA_GENOME" ] ; then
-    echo Fatal: input fasta file not found
+    echo Fatal: input fasta file $FASTA_GENOME not found
     usage
     exit 1
 fi
