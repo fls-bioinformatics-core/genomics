@@ -13,7 +13,7 @@ function usage() {
     echo "Options:"
     echo ""
     echo "By default the preprocess/filter program is run using FLS Bioinf"
-    echo "settings i.e. $FILTER_SETTINGS"
+    echo "settings."
     echo ""
     echo "However: any options explicitly specified on the command line are"
     echo "used instead of the FLS Bioinf settings (which are essentially"
