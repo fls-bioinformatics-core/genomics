@@ -1,5 +1,11 @@
 #!/bin/sh
 #
+# setup_genome_indexes.sh
+#
+# Script to automatically setup genome indexes by: fetching
+# fasta files, constructing indexes, and making configuration
+# files for fastq_screen and Galaxy.
+#
 # Import functions
 . `dirname $0`/../share/functions.sh
 #
@@ -112,6 +118,8 @@ function make_fastq_screen_conf() {
 	    echo "" >> $conf_file
 	    echo "## $organism ##" >> $conf_file
 	    echo "DATABASE"$'\t'${organism}$'\t'${bowtie_c_base} >> $conf_file
+	else
+	    echo "WARNING bowtie indexes not found for $organism"
 	fi
     done
 }
@@ -154,7 +162,7 @@ done
 # BOWTIE INDEXES
 ###########################################################
 echo "### Setting up BOWTIE indexes ###"
-BOWTIE_INDEXES="dm3 ecoli sacCer2 SpR6"
+BOWTIE_INDEXES="dm3 ecoli mm9 sacCer2 SpR6"
 for organism in $BOWTIE_INDEXES ; do
     echo -n "${organism}: "
     fasta=$(get_fasta $organism)
