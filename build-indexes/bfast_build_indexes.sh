@@ -15,6 +15,7 @@ Usage
 Options
    -d <depth>      Bfast depth-of-splitting [default $SPLITTING_DEPTH]
    -w <hash_width> Bfast hash width [default $HASH_WIDTH]
+   -n <nthreads>   Number of threads to run on [default $NTHREADS]
    --dry-run       Print commands but don't execute them
    -h              Print this help text
 
@@ -45,6 +46,7 @@ run_dir=`pwd`
 FASTA_GENOME=
 SPLITTING_DEPTH=1
 HASH_WIDTH=14
+NTHREADS=
 #
 # Dry run
 # If set to anything other than an empty value then only print
@@ -68,6 +70,11 @@ while [ "$1" != "" ] ; do
 	    # -w <hash_width>
 	    shift
 	    HASH_WIDTH=$1
+	    ;;
+	-n)
+	    # -n <nthreads>
+	    shift
+	    NTHREADS=$1
 	    ;;
 	--dry-run)
 	    # Dry run mode
@@ -197,6 +204,9 @@ masks="1111111111111111111111
 indx=1
 for mask in $masks ; do
     bfast_index_cmd="$BFAST index -f $LN_FASTA_GENOME $BFAST_TEMP_DIR $BFAST_INDEX_OPTIONS -m $mask -i $indx -A 1"
+    if [ ! -z $NTHREADS ] ; then
+	bfast_index_cmd="$bfast_index_cmd -n $NTHREADS"
+    fi
     echo $bfast_index_cmd
     if [ -z $DRY_RUN ] ; then
 	$bfast_index_cmd
