@@ -34,11 +34,12 @@ function get_fasta() {
     return 1
 }
 #
-function get_organism_name() {
+function get_organism_data() {
+    local field=$2
     if [ -f "$1.info" ] ; then
 	# Found .info file, extract organism name
-	local name=`grep "^# Organism:" ${1}.info | cut -d' ' -f3-`
-	echo "$name"
+	local data=`grep "^# $field:" ${1}.info | cut -d' ' -f3-`
+	echo "$data"
     else
 	echo $1
     fi
@@ -412,12 +413,18 @@ cat <<EOF > ${TOP_DIR}/genome_indexes.html
 <head>
 <title>Genome Indexes</title>
 <style>
+table {
+   empty-cells: show;
+}
 th {
    background-color: #660099;
    color: white;
 }
 td.index {
    text-align: center;
+}
+td {
+   border-bottom: 1px solid #aaaaaa;
 }
 </style>
 </head>
@@ -428,20 +435,26 @@ td.index {
 <tr>
 <th>Id</th>
 <th>Organism</th>
-<th>Bowtie</th>
+<th>Seq</th>
+<th>Bowtie (NT)</th>
 <th>Bowtie (CS)</th>
 <th>Bfast (CS)</th>
 <th>Picard/SRMA</th>
+<th>Size</th>
 </tr>
 EOF
 for name in `ls . 2>&1` ; do
     fasta=$(get_fasta $name)
     if [ ! -z $fasta ] && [ -d $name ] ; then
 	echo Examining $name
+	# Get size
+	size=`du -s -h $name | cut -f1`
 	# Move into organism dir
 	cd $name
+	# Species name
+	species=$(get_organism_data $name Species)
 	# Display name
-	display_name=$(get_organism_name $name)
+	display_name=$(get_organism_data $name Organism)
 	# Determine which indexes are available
 	# Bowtie
 	bowtie_indexes=$(get_bowtie_indexes $name)
@@ -468,20 +481,24 @@ for name in `ls . 2>&1` ; do
 	cat <<EOF >> ${TOP_DIR}/genome_indexes.html
 <tr>
 <td>$name</td>
-<td>$display_name</td>
+<td>$species ($display_name)</td>
+<td class="index">YES</td>
 <td class="index">$bowtie_indexes</td>
 <td class="index">$bowtie_color_indexes</td>
 <td class="index">$bfast_color_indexes</td>
 <td class="index">$picard_indexes</td>
+<td>$size</td>
 </tr>
 EOF
 	# Return to original dir
 	cd ${TOP_DIR}
     fi
 done
+total_size=`du -s -h ${TOP_DIR} | cut -f1`
 today=`date`
 cat <<EOF >> ${TOP_DIR}/genome_indexes.html
 </table>
+<p>Total size for all indexes: $total_size</p>
 <p>This page generated $today</p>
 </body>
 </html>
