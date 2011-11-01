@@ -8,6 +8,7 @@ Scripts for setting up genome indexes for various programs:
  *  `bfast_build_indexes.sh`: build bfast color-space indexes
  *  `bowtie_build_indexes.sh`: build color- and base-space bowtie indexes
  *  `srma_build_indexes.sh`: build indexes for srma
+ *  `setup_genome_indexes.sh`: automatically and reproducibly set up genome indexes
 
 fetch_fasta.sh
 --------------
@@ -40,6 +41,7 @@ required to build it. For example:
 
      function setup_hg18() {
          set_name    "Homo sapiens"
+         set_species "Human"
          set_build   "HG18/NCBI36.1 March 2006"
          set_info    "Base chr. (1 to 22, X, Y), 'random' and chrM - unmasked"
          set_mirror  http://hgdownload.cse.ucsc.edu/goldenPath/hg18/bigZips
@@ -173,6 +175,42 @@ hierarchy.
 
 Searches <dir> and its subdirectories recursively and prints a report of the genome
 index-specific files (fasta, info etc) it finds.
+
+setup_genome_indexes.sh
+-----------------------
+Automatically and reproducibly set up genome indexes.
+
+### Usage ###
+
+    setup_genome_indexes.sh
+
+The `setup_genome_indexes.sh` script doesn't take any options, it runs through
+hard-coded lists of organisms for obtaining the sequence and creating bowtie, bfast
+and Picard/SRMA indexes, Galaxy `.loc files` and `fastq_screen` `.conf` files.
+
+### Outputs ###
+
+The script outputs genome indexes based on the following directory structure for
+each organism:
+
+    pwd/
+        organism/
+                organism.info
+                organism.chr.list
+                bowtie/
+                      ...bowtie indexes...
+                bfast/
+                      ...bfast indexes...
+                fasta/
+                      organism.fasta
+		      ...picard/srma indexes...
+
+It also creates:
+
+ *   `fastq_screen` directory: containing specified `fastq_screen` `.conf` files
+ *   Galaxy `.loc` files: for bowtie, bfast, picard, all_fasta and fastq_screen
+ *   `genome_indexes.html` file: HTML file listing the available genome indexes
+
 
 Note on preparing reference genome files
 ----------------------------------------
