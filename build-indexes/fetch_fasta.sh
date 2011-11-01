@@ -52,6 +52,7 @@
 # Chlamydomonas reinhardtii
 function setup_chlamyR() {
     set_name    "Chlamydomonas reinhardtii"
+    set_species "Green alga"
     set_build   "2009"
     set_info    ""
     set_mirror  ftp://ftp.jgi-psf.org/pub/JGI_data/phytozome/v7.0/Creinhardtii/assembly
@@ -63,6 +64,7 @@ function setup_chlamyR() {
 # E.coli
 function setup_ecoli() {
     set_name    "Escherichia coli"
+    set_species "Ecoli"
     set_build   "NC_008253"
     set_info    "E.Coli"
     set_mirror  ftp://ftp.ncbi.nlm.nih.gov/genomes/Bacteria/Escherichia_coli_536_uid58531
@@ -73,6 +75,7 @@ function setup_ecoli() {
 # dm3: fly
 function setup_dm3() {
     set_name    "Drosophila melanogaster"
+    set_species "Fruit fly"
     set_build   "DM3, BDGP Release 5 April 2006"
     set_info    "Base chr. (2L, 2R, 3L, 3R, 4, X), heterochromatin, chrM and chrU - unmasked"
     set_mirror  http://hgdownload.cse.ucsc.edu/goldenPath/dm3/bigZips
@@ -90,6 +93,7 @@ function setup_dm3() {
 # WS200: worm
 function setup_ws200() {
     set_name    "Caenorhabditis elegans"
+    set_species "Worm"
     set_build   "WS200 February 24 2009"
     set_info    "C.Elegans WS200"
     set_mirror  ftp://ftp.sanger.ac.uk/pub/wormbase/FROZEN_RELEASES/WS200/genomes/c_elegans/sequences/dna
@@ -100,6 +104,7 @@ function setup_ws200() {
 # WS201: worm
 function setup_ws201() {
     set_name    "Caenorhabditis elegans"
+    set_species "Worm"
     set_build   "WS201 March 25 2009"
     set_info    "C.Elegans WS201"
     set_mirror  ftp://ftp.wormbase.org/pub/wormbase/genomes/c_elegans/sequences/dna
@@ -110,6 +115,7 @@ function setup_ws201() {
 # hg18: human
 function setup_hg18() {
     set_name    "Homo sapiens"
+    set_species "Human"
     set_build   "HG18/NCBI36.1 March 2006"
     set_info    "Base chr. (1 to 22, X, Y), 'random' and chrM - unmasked"
     set_mirror  http://hgdownload.cse.ucsc.edu/goldenPath/hg18/bigZips
@@ -123,7 +129,8 @@ function setup_hg18() {
 # hg19: human
 function setup_hg19() {
     set_name    "Homo sapiens"
-    set_build   "hg19 GRCh37 - Feb. 2009 assembly of the human genome (hg19, GRCh37 Genome Reference Consortium Human Reference 37 (GCA_000001405.1))"
+    set_species "Human"
+    set_build   "hg19 GRCh37 - Feb. 2009 (GCA_000001405.1)"
     set_info    "Base chr. (1 to 22, X, Y), 'random' and chrM - unmasked"
     set_mirror  http://hgdownload.cse.ucsc.edu/goldenPath/hg19/bigZips
     set_archive chromFa.tar.gz
@@ -136,6 +143,7 @@ function setup_hg19() {
 # mm9: mouse
 function setup_mm9() {
     set_name    "Mus musculus"
+    set_species "Mouse"
     set_build   "MM9/NCBI37 July 2007"
     set_info    "Base chr. (1 to 19, X, Y), chrN_random, chrM and chrUn_random - unmasked"
     set_mirror  http://hgdownload.cse.ucsc.edu/goldenPath/mm9/bigZips
@@ -147,6 +155,7 @@ function setup_mm9() {
 # ncrassa
 function setup_Ncrassa() {
     set_name    "Neurospora crassa OR74A"
+    set_species "Bread mold"
     set_build   "Release 3"
     set_info    "See http://www.broadinstitute.org/annotation/genome/neurospora/MultiDownloads.html"
     set_mirror  http://www.broadinstitute.org/annotation/genome/neurospora/download
@@ -160,6 +169,7 @@ function setup_Ncrassa() {
 # PhiX
 function setup_PhiX() {
     set_name    "Enterobacteria phage phiX174"
+    set_species "PhiX"
     set_build   "NCBI accession code NC_001422.1"
     set_info    "Complete genome"
     set_mirror  ftp://ftp.ncbi.nih.gov/genomes/Viruses/Enterobacteria_phage_phiX174_sensu_lato_uid14015
@@ -170,6 +180,7 @@ function setup_PhiX() {
 # rn4: rat
 function setup_rn4() {
     set_name    "Rattus norvegicus"
+    set_species "Rat"
     set_build   "rn4 Nov. 2004 version 3.4"
     set_info    "Base chr. (1 to 20, X, Un), 'random' and chrM"
     set_mirror  http://hgdownload.cse.ucsc.edu/goldenPath/rn4/bigZips
@@ -184,6 +195,7 @@ function setup_rn4() {
 # sacCer2: yeast
 function setup_sacCer2() {
     set_name    "Saccharomyces cerevisiae"
+    set_species "Yeast"
     set_build   "sacCer2 June 2008"
     set_info    ""
     set_mirror  http://hgdownload.cse.ucsc.edu/goldenPath/sacCer2/bigZips
@@ -195,6 +207,7 @@ function setup_sacCer2() {
 # SacBay: yeast
 function setup_sacBay() {
     set_name    "Saccharomyces bayanus var. uvarum (CBS 7001)"
+    set_species "Yeast"
     set_build   ""
     set_info    "See http://www.saccharomycessensustricto.org/cgi-bin/s3?data=Assemblies&version=current"
     set_mirror  http://www.saccharomycessensustricto.org/SaccharomycesSensuStrictoResources/current/Sbay
@@ -210,6 +223,7 @@ function setup_sacBay() {
 # SpR6
 function setup_SpR6() {
     set_name    "Streptococcus pneumoniae R6"
+    set_species "SpR6"
     set_build   "NCBI accession code NC_003098"
     set_info    "Complete genome"
     set_mirror  ftp://ftp.ncbi.nih.gov/genomes/Bacteria/Streptococcus_pneumoniae_R6_uid57859
@@ -220,6 +234,7 @@ function setup_SpR6() {
 # UniVec
 function setup_UniVec() {
     set_name    "UniVec"
+    set_species "Vectors"
     set_build   "UniVec build #6.0 (Nov. 8, 2010)"
     set_info    "See http://www.ncbi.nlm.nih.gov/VecScreen/UniVec.html"
     set_mirror  ftp://ftp.ncbi.nih.gov/pub/UniVec
@@ -234,9 +249,17 @@ function setup_UniVec() {
 # ===============================================================
 #
 # set_name <organism>
-# Written to the "Organism" field of the info file
+# Written to the "Organism" field of the info file, should
+# be full scientific name e.g. Homo Sapiens
 function set_name() {
     NAME=$1
+}
+#
+# set_species <name>
+# Written to the "Species" field of the info file, should
+# be common name e.g. Human
+function set_species() {
+    SPECIES=$1
 }
 #
 # set_build <build_description>
@@ -337,6 +360,7 @@ function set_md5sum() {
 function reset_settings() {
     clean_up > /dev/null
     NAME=
+    SPECIES=
     BUILD=
     INFO=
     MIRROR=
@@ -508,6 +532,7 @@ function write_info() {
     now=`date`
     cat <<EOF > ${ORGANISM}.info
 # Organism: $NAME
+# Species: $SPECIES
 # Genome build: $BUILD
 # Manipulations: $INFO
 # Source: $MIRROR
