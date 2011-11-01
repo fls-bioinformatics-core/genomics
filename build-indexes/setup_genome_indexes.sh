@@ -394,9 +394,19 @@ cat <<EOF > ${TOP_DIR}/genome_indexes.html
 <html>
 <head>
 <title>Genome Indexes</title>
+<style>
+th {
+   background-color: #660099;
+   color: white;
+}
+td.index {
+   text-align: center;
+}
+</style>
 </head>
 <body>
 <h1>Genome Indexes</h1>
+<p>The following indexes are currently available:</p>
 <table>
 <tr>
 <th>Id</th>
@@ -442,18 +452,20 @@ for name in `ls . 2>&1` ; do
 <tr>
 <td>$name</td>
 <td>$display_name</td>
-<td>$bowtie_indexes</td>
-<td>$bowtie_color_indexes</td>
-<td>$bfast_color_indexes</td>
-<td>$picard_indexes</td>
+<td class="index">$bowtie_indexes</td>
+<td class="index">$bowtie_color_indexes</td>
+<td class="index">$bfast_color_indexes</td>
+<td class="index">$picard_indexes</td>
 </tr>
 EOF
 	# Return to original dir
 	cd ${TOP_DIR}
     fi
 done
+today=`date`
 cat <<EOF >> ${TOP_DIR}/genome_indexes.html
 </table>
+<p>This page generated $today</p>
 </body>
 </html>
 EOF
