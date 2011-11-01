@@ -6,6 +6,23 @@
 # fasta files, constructing indexes, and making configuration
 # files for fastq_screen and Galaxy.
 #
+# Edit the following variables in the script to specify which
+# sequences and indexes to build:
+#
+# SEQUENCES: list of organisms to fetch FASTA files for (prerequisite
+#            for the indexes)
+# BOWTIE_INDEXES: list of organisms to build Bowtie indexes for
+# BFAST_INDEXES: list of organisms to build Bfast indexes for
+# SRMA_INDEXES: list of organisms to build Picard/SRMA indexes for
+#
+# The following variables specify which organisms to include in
+# the fastq_screen conf files (color space bowtie indexes are a
+# prerequisite)
+#
+# FASTQ_SCREEN_MODEL_ORGANISMS: model organisms
+# FASTQ_SCREEN_OTHER_ORGANISMS: "other" organisms
+# FASTQ_SCREEN_rRNA: rRNA
+#
 # Import functions
 . `dirname $0`/../share/functions.sh
 #
@@ -144,8 +161,8 @@ function make_fastq_screen_conf() {
 # FASTA FILES
 ###########################################################
 echo "### Setting up FASTA files ###"
-ORGANISMS="mm9 sacCer2 SpR6 dm3 ecoli ws200"
-for organism in $ORGANISMS ; do
+SEQUENCES="dm3 ecoli hg18 mm9 Ncrassa PhiX rn4 sacBay sacCer2 SpR6 UniVec ws200"
+for organism in $SEQUENCES ; do
     echo -n "${organism}: "
     fasta=$(get_fasta $organism)
     if [ -z "$fasta" ] ; then
@@ -292,10 +309,15 @@ done
 # FASTQ_SCREEN
 ###########################################################
 echo "### Setting up fastq_screen conf files ###"
-model_organisms="hg18 mm9 rn4 dm3 ws200 ecoli sacCer2 PhiX UniVec SpR6"
-other_organisms="sacBay Ncrassa dicty"
-make_fastq_screen_conf "model_organisms" "$model_organisms" "Model organisms"
-make_fastq_screen_conf "other_organisms" "$other_organisms" "Other organisms"
+FASTQ_SCREEN_MODEL_ORGANISMS="hg18 mm9 rn4 dm3 ws200 ecoli sacCer2 PhiX UniVec SpR6"
+FASTQ_SCREEN_OTHER_ORGANISMS="sacBay Ncrassa dicty"
+FASTQ_SCREEN_rRNA=""
+make_fastq_screen_conf model_organisms \
+    "$FASTQ_SCREEN_MODEL_ORGANISMS" "Model organisms"
+make_fastq_screen_conf other_organisms \
+    "$FASTQ_SCREEN_OTHER_ORGANISMS" "Other organisms"
+make_fastq_screen_conf rRNA \
+    "FASTQ_SCREEN_rRNA" "rRNA"
 #
 ###########################################################
 # GALAXY LOC FILES
