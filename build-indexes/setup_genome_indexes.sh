@@ -63,13 +63,9 @@ function get_organism_data() {
 }
 #
 function get_display_name() {
-    if [ -f "$1.info" ] ; then
-	# Found .info file, extract organism name
-	local name=`grep "^# Organism:" ${1}.info | cut -d' ' -f3-`
-	echo "$1 ($name)"
-    else
-	echo $1
-    fi
+    local organism=$(get_organism_data $1 Organism)
+    local name=$(get_organism_data $1 Species)
+    echo "$name $1 ($organism)"
 }
 #
 function get_bowtie_indexes() {
@@ -137,10 +133,21 @@ function make_fastq_screen_conf() {
     local conf_file=fastq_screen/fastq_screen_${screen_name}.conf
     echo Making conf file $conf_file
     # Header
-    echo "## $screen_name ##" > $conf_file
-    echo "# Description: $description" >> $conf_file
-    echo "#" >> $conf_file
-    echo "# `date`" >> $conf_file
+    # Default number of threads is 8
+    cat <<EOF > $conf_file
+## $screen_name ##
+# Description: $description
+#
+# `date`
+#
+
+############
+## Threads #
+############
+
+THREADS		8
+
+EOF
     # Populate
     local organism=
     for organism in $organisms ; do
@@ -456,6 +463,7 @@ td {
 <table>
 <tr>
 <th>Id</th>
+<th>Name</th>
 <th>Organism</th>
 <th>Seq</th>
 <th>Bowtie (NT)</th>
@@ -498,12 +506,15 @@ for name in `ls . 2>&1` ; do
 	fai=../${fasta}.fai
 	if [ -f $dict ] && [ -f $fai ] ; then
 	    picard_indexes=YES
+	else
+	    picard_indexes=
 	fi
 	# Write the table line
 	cat <<EOF >> ${TOP_DIR}/genome_indexes.html
 <tr>
 <td>$name</td>
-<td>$species ($display_name)</td>
+<td>$species</td>
+<td>$display_name</td>
 <td class="index">YES</td>
 <td class="index">$bowtie_indexes</td>
 <td class="index">$bowtie_color_indexes</td>
@@ -518,10 +529,11 @@ EOF
 done
 total_size=`du -s -h ${TOP_DIR} | cut -f1`
 today=`date`
+script=`basename $0`
 cat <<EOF >> ${TOP_DIR}/genome_indexes.html
 </table>
 <p>Total size for all indexes: $total_size</p>
-<p>This page generated $today</p>
+<p>This page generated at $today by $script</p>
 </body>
 </html>
 EOF
