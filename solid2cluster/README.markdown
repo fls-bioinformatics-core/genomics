@@ -84,8 +84,11 @@ Usage:
 General Options:
 
  *  `--dry-run`: report the operations that would be performed
+ *  `--use-library-names`: use the names of the libraries as the base for
+     the links to the primary csfasta/qual files; otherwise use the "long"
+     names (e.g. `solid0123_20111102_<sample>_<library>.csfasta` etc)
  *  `--debug`: turn on debugging output
- *  `--top-dir=<dir>`: create analysis directories as subdirs of <dir>;
+ *  `--top-dir=<dir>`: create analysis directories as subdirs of `<dir>`;
       otherwise create them in cwd.
  *  `--run-pipeline=<script>`: after creating analysis directories, run
       the specified `<script>` on SOLiD data file pairs in each

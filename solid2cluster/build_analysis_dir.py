@@ -55,6 +55,7 @@ if __name__ == "__main__":
     dry_run = False
     top_dir = None
     pipeline_script = None
+    use_library_names = False
 
     # Process command line
     if len(sys.argv) < 2:
@@ -70,6 +71,8 @@ if __name__ == "__main__":
         print "    --debug: turn on debugging output"
         print "    --top-dir=<dir>: create analysis directories as subdirs of <dir>;"
         print "      otherwise create them in cwd."
+        print "    --use-library-names: use library names for links to primary"
+        print "      csfasta/qual data files"
         print "    --run-pipeline=<script>: after creating analysis directories, run"
         print "      the specified <script> on SOLiD data file pairs in each"
         print ""
@@ -144,6 +147,8 @@ if __name__ == "__main__":
                 expt.sample = source
         elif arg == '--dry-run':
             dry_run = True
+        elif arg == '--use-library-names':
+            use_library_names = True
         elif arg == '--debug':
             logging.getLogger().setLevel(logging.DEBUG)
         elif arg.startswith('--top-dir='):
@@ -179,7 +184,8 @@ if __name__ == "__main__":
         sys.exit(1)
 
     # Build the analysis directory structure
-    expts.buildAnalysisDirs(top_dir=top_dir,dry_run=dry_run)
+    expts.buildAnalysisDirs(top_dir=top_dir,dry_run=dry_run,
+                            use_library_names=use_library_names)
             
     # Run the pipeline script
     if pipeline_script:

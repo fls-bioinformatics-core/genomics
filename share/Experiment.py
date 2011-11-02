@@ -168,7 +168,7 @@ class ExperimentList:
         except IndexError:
             return None
 
-    def buildAnalysisDirs(self,top_dir=None,dry_run=False):
+    def buildAnalysisDirs(self,top_dir=None,dry_run=False,use_library_names=False):
         """Construct and populate analysis directories for the experiments
 
         For each defined experiment, create the required analysis directories
@@ -179,6 +179,9 @@ class ExperimentList:
             subdirs of the specified directory; otherwise operate in cwd
           dry_run: if True then only report the mkdir, ln etc operations that
             would be performed. Default is False (do perform the operations).
+          use_library_names: if True then use the name of the library as the
+            base for the links to csfasta and qual files; otherwise use the
+            full instrument/datestamp/sample/library name combination (default).
         """
         # Deal with top_dir
         if top_dir:
@@ -210,8 +213,12 @@ class ExperimentList:
                 libraries = run.fetchLibraries(expt.sample,expt.library)
                 for library in libraries:
                     # Look up primary data
-                    ln_csfasta = getLinkName(library.csfasta,library)
-                    ln_qual = getLinkName(library.qual,library)
+                    if use_library_names:
+                        ln_csfasta = "%s.csfasta" % library.name
+                        ln_qual = "%s.qual" % library.name
+                    else:
+                        ln_csfasta = getLinkName(library.csfasta,library)
+                        ln_qual = getLinkName(library.qual,library)
                     logging.debug("Primary data:")
                     logging.debug("\t%s" % ln_csfasta)
                     logging.debug("\t%s" % ln_qual)
