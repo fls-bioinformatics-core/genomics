@@ -365,7 +365,11 @@ class GEJobRunner(BaseJobRunner):
         another list, with the items in this list being the data
         returned by qstat.
         """
-        cmd = ['qstat','-u',os.getlogin()]
+        try:
+            cmd = ['qstat','-u',os.getlogin()]
+        except OSError:
+            # os.getlogin() not guaranteed to work in all environments?
+            cmd = ['qstat']
         # Run the qstat
         p = subprocess.Popen(cmd,stdout=subprocess.PIPE)
         p.wait()
