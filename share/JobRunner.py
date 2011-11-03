@@ -59,7 +59,7 @@ class BaseJobRunner:
     def __init__(self):
         pass
 
-    def run(self,name,working_dir,script,*args):
+    def run(self,name,working_dir,script,args):
         """Start a job running
 
         Returns a job id, or None if the job failed to start
@@ -123,7 +123,7 @@ class SimpleJobRunner(BaseJobRunner):
         self.__log_files = {}
         self.__err_files = {}
 
-    def run(self,name,working_dir,script,*args):
+    def run(self,name,working_dir,script,args):
         """Run a command and return the PID (=job id)
         """
         logging.debug("Submitting job")
@@ -256,7 +256,7 @@ class GEJobRunner(BaseJobRunner):
         self.__queue = queue
         self.__names = {}
 
-    def run(self,name,working_dir,script,*args):
+    def run(self,name,working_dir,script,args):
         """Submit a script or command to the cluster via 'qsub'
 
         Arguments:

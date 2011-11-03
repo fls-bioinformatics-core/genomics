@@ -237,7 +237,7 @@ class PipelineRunner:
         # Subset that have completed
         self.completed = []
 
-    def queueJob(self,working_dir,script,*args):
+    def queueJob(self,working_dir,script,args):
         """Add a job to the pipeline.
 
         The job will be queued and executed once the pipeline's 'run' method has been
@@ -249,7 +249,7 @@ class PipelineRunner:
           args: arguments to be supplied to the script at run time
         """
         job_name = os.path.splitext(os.path.basename(script))[0]
-        self.jobs.put(Job(self.__runner,job_name,working_dir,script,*args))
+        self.jobs.put(Job(self.__runner,job_name,working_dir,script,args))
         logging.debug("Added job: now %d jobs in pipeline" % self.jobs.qsize())
 
     def nWaiting(self):
