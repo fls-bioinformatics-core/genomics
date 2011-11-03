@@ -29,6 +29,9 @@ There are bash scripts to perform the QC and specific substeps:
     `SOLiD_preprocess_filter_v2.pl` and outputs the filtered csfasta and qual
     files.
 
+*   `solid_preprocess_truncate_filter.sh`: similar to `solid_preprocess_filter.sh`,
+    but performs the truncation step separately from the filtering.
+
 *   `filter_stats.sh`: appends statistics comparing original SOLiD data files
     with the output from the preprocess filter step to a log file.
 
