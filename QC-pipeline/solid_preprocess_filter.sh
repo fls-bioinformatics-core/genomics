@@ -139,7 +139,7 @@ fi
 FILTERING_STATS=`dirname $0`/filtering_stats.sh
 if [ -f "${FILTERING_STATS}" ] ; then
     if [ -f "${processed_csfasta}" ] ; then
-	${FILTERING_STATS} ${csfasta} SOLiD_preprocess_filter.stats
+	${FILTERING_STATS} ${csfasta} ${processed_csfasta} SOLiD_preprocess_filter.stats
     else
 	echo ERROR output csfasta file not found, filtering stats calculcation skipped
     fi

@@ -2,11 +2,11 @@
 #
 # filtering_stats.sh: calculate stats for preprocess filtering
 #
-# Usage: filtering_stats.sh <csfasta> <stats_file>
+# Usage: filtering_stats.sh <original_csfasta> <processed_csfasta> <stats_file>
 #
-# Counts number of reads in original csfasta file and filtered
-# file <csfasta>_T_F3.csfasta, and reports numbers plus the
-# difference (= number filtered) and percentage filtered.
+# Counts number of reads in original csfasta and processed csfasta files,
+# and reports numbers plus the difference (= number filtered) and percentage
+# filtered.
 #
 # Appends a tab-delimited line with this information to the
 # specified <stats_file>
@@ -38,12 +38,16 @@ function percent() {
 #
 # Inputs
 csfasta=$1
-stats_file=$2
+filtered_csfasta=$2
+stats_file=$3
 #
-base_csfasta=`basename $1`
-filtered_csfasta=$(rootname $1)_T_F3.csfasta
+base_csfasta=$(baserootname $1)
 #
-# Check filtered file exists
+# Check original and filtered files exist
+if [ ! -f "${csfasta}" ] ; then
+    echo `basename $0`: ${csfasta}: not found
+    exit 1
+fi
 if [ ! -f "${filtered_csfasta}" ] ; then
     echo `basename $0`: ${filtered_csfasta}: not found
     exit 1
