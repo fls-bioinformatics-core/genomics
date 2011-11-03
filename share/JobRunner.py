@@ -62,7 +62,14 @@ class BaseJobRunner:
     def run(self,name,working_dir,script,args):
         """Start a job running
 
-        Returns a job id, or None if the job failed to start
+        Arguments:
+          name: Name to give the job
+          working_dir: Directory to run the job in
+          script: Script file to run
+          args: List of arguments to supply to the script
+
+        Returns:
+          Returns a job id, or None if the job failed to start
         """
         raise NotImplementedError, "Subclass must implement 'run'"
 
@@ -125,6 +132,16 @@ class SimpleJobRunner(BaseJobRunner):
 
     def run(self,name,working_dir,script,args):
         """Run a command and return the PID (=job id)
+
+        Arguments:
+          name: Name to give the job
+          working_dir: Directory to run the job in
+          script: Script file to run
+          args: List of arguments to supply to the script
+
+        Returns:
+          Job id for submitted job, or 'None' if job failed to
+          start.
         """
         logging.debug("Submitting job")
         logging.debug("Name       : %s" % name)
@@ -261,6 +278,9 @@ class GEJobRunner(BaseJobRunner):
 
         Arguments:
           name: Name to give the job
+          working_dir: Directory to run the job in
+          script: Script file to run
+          args: List of arguments to supply to the script
 
         Returns:
           Job id for submitted job, or 'None' if job failed to
