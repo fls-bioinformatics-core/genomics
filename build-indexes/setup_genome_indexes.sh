@@ -168,7 +168,7 @@ EOF
 # FASTA FILES
 ###########################################################
 echo "### Setting up FASTA files ###"
-SEQUENCES="dm3 ecoli hg18 mm9 Ncrassa PhiX rn4 sacBay sacCer2 SpR6 UniVec ws200"
+SEQUENCES="chlamyR dm3 ecoli hg18 mm9 Ncrassa PhiX rn4 sacBay sacCer2 SpR6 UniVec ws200"
 for organism in $SEQUENCES ; do
     echo -n "${organism}: "
     fasta=$(get_fasta $organism)
@@ -202,7 +202,7 @@ done
 # BOWTIE INDEXES
 ###########################################################
 echo "### Setting up BOWTIE indexes ###"
-BOWTIE_INDEXES="dm3 ecoli mm9 sacCer2 SpR6"
+BOWTIE_INDEXES="chlamyR dm3 ecoli hg18 mm9 Ncrassa PhiX rn4 sacBay sacCer2 SpR6 UniVec ws200"
 for organism in $BOWTIE_INDEXES ; do
     echo -n "${organism}: "
     fasta=$(get_fasta $organism)
@@ -242,7 +242,7 @@ done
 # BFAST INDEXES
 ###########################################################
 echo "### Setting up BFAST indexes ###"
-BFAST_INDEXES="ecoli SpR6 mm9"
+BFAST_INDEXES="sacBay sacCer2 SpR6"
 for organism in $BFAST_INDEXES ; do
     echo -n "${organism}: "
     fasta=$(get_fasta $organism)
@@ -282,7 +282,7 @@ done
 # SRMA INDEXES
 ###########################################################
 echo "### Setting up SRMA indexes ###"
-SRMA_INDEXES="ecoli sacCer2 SpR6"
+SRMA_INDEXES="hg18 mm9 sacBay sacCer2 SpR6"
 for organism in $SRMA_INDEXES ; do
     echo -n "${organism}: "
     fasta=$(get_fasta $organism)
