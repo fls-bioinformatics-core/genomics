@@ -203,6 +203,6 @@ if __name__ == "__main__":
     # Finished
     if email_addr is not None:
         print "Sending email notification to %s" % email_addr
-        subject = "QC pipeline completed"
+        subject = "Pipeline completed: %s" % os.path.basename(script)
         SendEmail(subject,email_addr,pipeline.report())
     print "Finished"
