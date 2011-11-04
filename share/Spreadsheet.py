@@ -182,6 +182,8 @@ class Worksheet:
     will be converted to substitue the column id (e.g. '=A1-A2' for column A,
     '=B1-B2' for column B etc).
 
+    Note that the substitution occurs when the spreadsheet is saved.
+
     Styles
     ------
 
@@ -194,6 +196,12 @@ class Worksheet:
     wrap (specifies that text should wrap)
 
     For example <style font=bold bgcolor=gray25>...</style>
+
+    Internal representation
+    -----------------------
+
+    The spreadsheet data is held internally as a list of rows, with each row
+    represented by a tab-delimited string.
     """
 
     def __init__(self,workbook,title,xlrd_index=None,xlrd_sheet=None):
@@ -233,7 +241,7 @@ class Worksheet:
         """Write a list of tab-delimited data rows to the sheet.
 
         Given a list of rows with tab-separated data items,
-        write the data to the worksheet.
+        append the data to the worksheet.
 
         Arguments:
           data: Python list representing rows of tab-separated
@@ -248,7 +256,16 @@ class Worksheet:
     def addText(self,text):
         """Append and populate rows from text.
 
-        
+        Given some arbitrary text as a string, the data it contains
+        will be appended to the worksheet using newlines to indicate
+        multiple rows and tabs to delimit data items.
+
+        This method is useful for turning tab-delimited data read
+        from a CSV-type file into a spreadsheet.
+
+        Arguments:
+          text: a string representing the data to add: rows are
+            delimited by newlines, and items by tabs
         """
         return self.addTabData(text.split('\n'))
 
@@ -258,13 +275,9 @@ class Worksheet:
         This inserts a new column into each row of data, at the
         specified positional index (starting from 0).
 
-        If insert_item starts with '=' then it's interpreted as a row-wise
-        formula. Formulas can be written in the form e.g. "=A+B-C", where
-        the letters indicate columns in the final XLS spreadsheet. When the
-        formulae are written they are expanded to include the row number
-        e.g. "=A1+B1-C1", "A2+B2-C2" etc.
-
-        Note: at present columns can only be inserted into new sheets.
+        Note: at present columns can only be inserted into worksheets that have
+        been created from scratch via Worksheet class (i.e. cannot insert into
+        an existing worksheet read in from a file).
 
         Arguments:
           position: positional index for the column to be inserted
