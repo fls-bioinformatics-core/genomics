@@ -17,9 +17,13 @@ Convert MACS output file to XLS spreadsheet"""
 # Import modules that this module depends on
 #######################################################################
 
-import sys
 import os
-import string
+import sys
+# Put ../share onto Python search path for modules
+SHARE_DIR = os.path.abspath(
+    os.path.normpath(
+        os.path.join(os.path.dirname(sys.argv[0]),'..','share')))
+sys.path.append(SHARE_DIR)
 import Spreadsheet
 
 #######################################################################
