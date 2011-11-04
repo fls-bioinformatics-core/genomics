@@ -36,6 +36,7 @@ from xlwt import easyxf
 
 import os
 import re
+import string
 import logging
 
 #######################################################################
@@ -133,8 +134,10 @@ class Worksheet:
 
     A Worksheet object represents a sheet in an XLS spreadsheet.
 
-    Once created, data can be appended to the worksheet in a variety of
-    ways:
+    Adding data
+    ------------
+
+    Data can be inserted into the worksheet in a variety of ways:
 
     * addTabData: a Python list of tab-delimited lines; each line forms a
       line in the output XLS, with each field forming a column.
@@ -152,12 +155,35 @@ class Worksheet:
       with that value; alternatively a list of values can be supplied which
       are written one-per-row.
 
-    Formulae can also be added in a simple row-wise format: items of the form
-    e.g.
+    Formulae
+    --------
 
-      =A+B
+    Formulae can be specified using a variation on Excel's '=' notation, e.g.
 
-    will be converted to add the row index (e.g. =A1+B1, =A2+B2) etc.
+      =A1+B2
+
+    adds the values from cells A1 and B2 in the final spreadsheet.
+
+    Formulae are written directly as supplied unless they contain special
+    characters '?' (indicates the current line number) or '#' (indicates the
+    current column).
+
+    Using '?' allows simple row-wise formulae to be added, e.g.
+
+      =A?+B?
+
+    will be converted to substitute the row index (e.g. '=A1+B1' for row 1,
+    '=A2+B2' for row 2 etc).
+
+    Using '#' allows simple column-wise formulae to be added, e.g.
+
+      =#1-#2
+
+    will be converted to substitue the column id (e.g. '=A1-A2' for column A,
+    '=B1-B2' for column B etc).
+
+    Styles
+    ------
 
     Individual items can have basic styles applied to them by wrapping them
     in <style ...>...</style> tags. Within the leading style tag the following
@@ -220,7 +246,9 @@ class Worksheet:
             logging.warning("Number of columns exceeds 256")
 
     def addText(self,text):
-        """Write text to the sheet.
+        """Append and populate rows from text.
+
+        
         """
         return self.addTabData(text.split('\n'))
 
@@ -306,20 +334,14 @@ class Worksheet:
             for item in row.split('\t'):
                 if str(item).startswith('='):
                     # Formula item
-                    substitute_row = False
-                    formula = ''
-                    for c in item[1:]:
-                        if c.isalpha() and c.isupper():
-                            formula += c
-                            substitute_row = True
-                        elif c == '?' and substitute_row:
-                            # Add the row number afterwards
-                            # NB xlwt takes row numbers from zero,
-                            # while XLS starts from 1
-                            formula += str(self.current_row+1)
-                        else:
-                            formula += c
-                            substitute_row = False
+                    # Remove leading '=' which xlwt doesn't want
+                    formula = item[1:]
+                    # Substitute '?' with current line number
+                    # NB xlwt takes row numbers from zero,
+                    # while XLS starts from 1
+                    formula = formula.replace('?',str(self.current_row+1))
+                    # Substitute '#' with current column
+                    formula = formula.replace('#',string.uppercase[cindex])
                     self.worksheet.write(self.current_row,cindex,
                                          xlwt.Formula(formula))
                 else:
