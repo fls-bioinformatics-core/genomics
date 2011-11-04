@@ -279,12 +279,22 @@ class Worksheet:
             logging.error("Cannot insert data into pre-existing worksheet")
             return False
         insert_title = True
+        # Determine number of rows needed
+        if isinstance(insert_items,list):
+            nrows = max(len(self.data),len(insert_items))
+        else:
+            nrows = len(self.data)
         # Loop over rows
-        for i in range(len(self.data)):
-            row = self.data[i]
-            items = row.split('\t')
+        for i in range(nrows):
+            try:
+                row = self.data[i]
+                items = row.split('\t')
+            except IndexError:
+                # Ran out of rows in current worksheet
+                items = []
+            # Rebuild the row
             new_items = []
-            for j in range(len(items)):
+            for j in range(max(len(items),position+1)):
                 # Insert appropriate item at this position
                 if j == position:
                     if insert_title:
@@ -295,7 +305,7 @@ class Worksheet:
                         # Data item
                         if isinstance(insert_items,list):
                             try:
-                                insert_item = insert_items[j-1]
+                                insert_item = insert_items[i]
                             except IndexError:
                                 # Ran out of items?
                                 insert_item = ''
@@ -303,9 +313,17 @@ class Worksheet:
                             insert_item = insert_items
                         new_items.append(insert_item)
                 # Append the existing row data
-                new_items.append(items[j])
+                try:
+                    new_items.append(items[j])
+                except IndexError:
+                    # Ran out of existing items, pad with blanks
+                    new_items.append('')
             # Replace old row with new one
-            self.data[i] = '\t'.join(new_items)
+            row = '\t'.join([str(x) for x in new_items])
+            try:
+                self.data[i] = row
+            except IndexError:
+                self.data.append(row)
         # Finished successfully
         return True
 
