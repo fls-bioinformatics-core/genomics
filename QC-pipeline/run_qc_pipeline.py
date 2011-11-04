@@ -193,7 +193,8 @@ if __name__ == "__main__":
         # Add jobs to pipeline runner (up to limit of max_total_jobs)
         for data in run_data:
             label = os.path.splitext(os.path.basename(data[0]))[0]
-            pipeline.queueJob(data_dir,script,data,label=label)
+            group = os.path.basename(data_dir)
+            pipeline.queueJob(data_dir,script,data,label=label,group=group)
             if max_total_jobs > 0 and pipeline.nWaiting() == max_total_jobs:
                 print "Maximum number of jobs queued (%d)" % max_total_jobs
                 break

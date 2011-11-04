@@ -73,6 +73,8 @@ class Job:
       working_dir
       script
       args
+      label
+      group_label
 
     Additional information is set once the job has started or stopped running:
 
@@ -84,7 +86,7 @@ class Job:
     The Job class uses a JobRunner instance (which supplies the necessary methods for
     starting, stopping and monitoring) for low-level job interactions.
     """
-    def __init__(self,runner,name,dirn,script,args,label=None):
+    def __init__(self,runner,name,dirn,script,args,label=None,group=None):
         """Create an instance of Job.
 
         Arguments:
@@ -96,12 +98,16 @@ class Job:
           args: Python list with the arguments to supply to the script when it is
             submitted
           label: (optional) arbitrary string to use as an identifier for the job
+          group: (optional) arbitrary string to use as a 'group' identifier;
+            assign the same 'group' label to multiple jobs to indicate they're
+            related
         """
         self.name = name
         self.working_dir = dirn
         self.script = script
         self.args = args
         self.label = label
+        self.group_label = group
         self.job_id = None
         self.log = None
         self.submitted = False
@@ -233,6 +239,9 @@ class PipelineRunner:
         self.__runner = runner
         self.max_concurrent_jobs = max_concurrent_jobs
         self.poll_interval = poll_interval
+        # Groups
+        self.groups = []
+        self.njobs_in_group = {}
         # Queue of jobs to run
         self.jobs = Queue.Queue()
         # Subset that are currently running
@@ -240,7 +249,7 @@ class PipelineRunner:
         # Subset that have completed
         self.completed = []
 
-    def queueJob(self,working_dir,script,script_args,label=None):
+    def queueJob(self,working_dir,script,script_args,label=None,group=None):
         """Add a job to the pipeline.
 
         The job will be queued and executed once the pipeline's 'run' method has been
@@ -251,9 +260,20 @@ class PipelineRunner:
           script: script file to run
           script_args: arguments to be supplied to the script at run time
           label: (optional) arbitrary string to use as an identifier in the job name
+          group: (optional) arbitrary string to use as a 'group' identifier;
+            assign the same 'group' label to multiple jobs to indicate they're
+            related
         """
         job_name = os.path.splitext(os.path.basename(script))[0]+'.'+str(label)
-        self.jobs.put(Job(self.__runner,job_name,working_dir,script,script_args,label))
+        if group:
+            if group not in self.groups:
+                # New group label
+                self.groups.append(group)
+                self.njobs_in_group[group] = 1
+            else:
+                self.njobs_in_group[group] += 1
+        self.jobs.put(Job(self.__runner,job_name,working_dir,script,script_args,
+                          label,group))
         logging.debug("Added job: now %d jobs in pipeline" % self.jobs.qsize())
 
     def nWaiting(self):
@@ -340,6 +360,15 @@ class PipelineRunner:
                 if job.log:
                     if os.path.exists(os.path.join(job.working_dir,job.log)):
                         os.chmod(os.path.join(job.working_dir,job.log),0664)
+                # Check for completed group
+                if job.group_label is not None:
+                    njobs_in_group = self.njobs_in_group[job.group_label]
+                    for check_job in self.completed:
+                        if check_job.group_label == job.group_label:
+                            njobs_in_group -= 1
+                    if njobs_in_group == 0:
+                        # No jobs left in group
+                        print "Group '%s' has completed" % job.group_label
             else:
                 # Job is running, check it's not in an error state
                 if job.errorState():
