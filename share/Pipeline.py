@@ -426,7 +426,7 @@ class SolidPipelineRunner(PipelineRunner):
         logging.debug("Add dir: %s" % dirn)
         run_data = GetSolidDataFiles(dirn)
         for data in run_data:
-            self.queueJob(dirn,self.script,*data)
+            self.queueJob(dirn,self.script,data)
 
 #######################################################################
 # Module Functions
