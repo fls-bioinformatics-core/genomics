@@ -306,14 +306,20 @@ class Worksheet:
             for item in row.split('\t'):
                 if str(item).startswith('='):
                     # Formula item
+                    substitute_row = False
                     formula = ''
                     for c in item[1:]:
-                        formula += c
-                        if c.isalpha() and c.isupper:
+                        if c.isalpha() and c.isupper():
+                            formula += c
+                            substitute_row = True
+                        elif c == '?' and substitute_row:
                             # Add the row number afterwards
                             # NB xlwt takes row numbers from zero,
                             # while XLS starts from 1
                             formula += str(self.current_row+1)
+                        else:
+                            formula += c
+                            substitute_row = False
                     self.worksheet.write(self.current_row,cindex,
                                          xlwt.Formula(formula))
                 else:
