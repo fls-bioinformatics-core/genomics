@@ -84,7 +84,7 @@ class Job:
     The Job class uses a JobRunner instance (which supplies the necessary methods for
     starting, stopping and monitoring) for low-level job interactions.
     """
-    def __init__(self,runner,name,dirn,script,*args):
+    def __init__(self,runner,name,dirn,script,args,label=None):
         """Create an instance of Job.
 
         Arguments:
@@ -93,12 +93,15 @@ class Job:
           dirn: directory to run the script in
           script: script file to submit, either a full path, relative path to dirn, or
             must be on the user's PATH in the environment where jobs are executed
-          args: arbitrary arguments to supply to the script when it is submitted
+          args: Python list with the arguments to supply to the script when it is
+            submitted
+          label: (optional) arbitrary string to use as an identifier for the job
         """
         self.name = name
         self.working_dir = dirn
         self.script = script
         self.args = args
+        self.label = label
         self.job_id = None
         self.log = None
         self.submitted = False
@@ -117,7 +120,7 @@ class Job:
           Id for job
         """
         if not self.submitted and not self.__finished:
-            self.job_id = self.__runner.run(self.name,self.working_dir,self.script,*self.args)
+            self.job_id = self.__runner.run(self.name,self.working_dir,self.script,self.args)
             self.submitted = True
             self.start_time = time.time()
             if self.job_id is None:
@@ -237,7 +240,7 @@ class PipelineRunner:
         # Subset that have completed
         self.completed = []
 
-    def queueJob(self,working_dir,script,args):
+    def queueJob(self,working_dir,script,script_args,label=None):
         """Add a job to the pipeline.
 
         The job will be queued and executed once the pipeline's 'run' method has been
@@ -246,10 +249,11 @@ class PipelineRunner:
         Arguments:
           working_dir: directory to run the job in
           script: script file to run
-          args: arguments to be supplied to the script at run time
+          script_args: arguments to be supplied to the script at run time
+          label: (optional) arbitrary string to use as an identifier in the job name
         """
-        job_name = os.path.splitext(os.path.basename(script))[0]
-        self.jobs.put(Job(self.__runner,job_name,working_dir,script,args))
+        job_name = os.path.splitext(os.path.basename(script))[0]+'.'+str(label)
+        self.jobs.put(Job(self.__runner,job_name,working_dir,script,script_args,label))
         logging.debug("Added job: now %d jobs in pipeline" % self.jobs.qsize())
 
     def nWaiting(self):
@@ -385,13 +389,13 @@ class PipelineRunner:
         if self.nRunning() > 0:
             report += "\n%d jobs running:\n" % self.nRunning()
             for job in self.running:
-                report += "\t%s\t%s\t%s\n" % (job.job_id,job.name,job.working_dir)
+                report += "\t%s\t%s\t%s\n" % (job.label,job.log,job.working_dir)
         # Report completed jobs
         if self.nCompleted() > 0:
             report += "\n%d jobs completed:\n" % self.nCompleted()
             for job in self.completed:
-                report += "\t%s\t%s\t%s\t%.1fs\t[%s]\n" % (job.job_id,
-                                                           job.name,
+                report += "\t%s\t%s\t%s\t%.1fs\t[%s]\n" % (job.label,
+                                                           job.log,
                                                            job.working_dir,
                                                            (job.end_time - job.start_time),
                                                            job.status())

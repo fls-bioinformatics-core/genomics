@@ -438,7 +438,7 @@ if __name__ == "__main__":
     args = sys.argv[1:]
     runner = SimpleJobRunner()
     ##runner = GEJobRunner()
-    pid = runner.run(os.path.basename(sys.argv[1]),None,*args)
+    pid = runner.run(os.path.basename(sys.argv[1]),None,args)
     print "Submitted job: %s" % pid
     print "Outputs: %s %s" % (runner.logFile(pid),runner.errFile(pid))
     print "%s" % runner.list()
