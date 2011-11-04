@@ -342,8 +342,15 @@ class Worksheet:
                     formula = formula.replace('?',str(self.current_row+1))
                     # Substitute '#' with current column
                     formula = formula.replace('#',string.uppercase[cindex])
-                    self.worksheet.write(self.current_row,cindex,
-                                         xlwt.Formula(formula))
+                    try:
+                        self.worksheet.write(self.current_row,cindex,
+                                             xlwt.Formula(formula))
+                    except Exception, ex:
+                        logging.warning("Error writing formula '%s' to cell %s%s: %s",
+                                        formula,
+                                        string.uppercase[cindex],
+                                        self.current_row+1,
+                                        ex)
                 else:
                     # Data item
                     #
