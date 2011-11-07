@@ -186,18 +186,20 @@ class ExperimentList:
         # Deal with top_dir
         if top_dir:
             if os.path.exists(top_dir):
-                logging.warning("Top directory %s already exists" % top_dir)
+                print "Directory %s already exists" % top_dir
             else:
                 if not dry_run:
                     # Create top directory
+                    print "Creating %s" % top_dir
                     mkdir(top_dir)
                 else:
                     # Report what would have been done
                     print "mkdir %s" % top_dir
         # For each experiment, make and populate directory
         for expt in self.experiments:
+            print "Experiment: %s %s %s/%s" % (expt.name,expt.type,expt.sample,expt.library)
             expt_dir = expt.dirname(top_dir)
-            logging.debug("Experiment dir: %s" % expt_dir)
+            print "\tDir: %s" % expt_dir
             # Make directory
             if os.path.exists(expt_dir):
                 logging.warning("Directory %s already exists" % expt_dir)
@@ -219,9 +221,8 @@ class ExperimentList:
                     else:
                         ln_csfasta = getLinkName(library.csfasta,library)
                         ln_qual = getLinkName(library.qual,library)
-                    logging.debug("Primary data:")
-                    logging.debug("\t%s" % ln_csfasta)
-                    logging.debug("\t%s" % ln_qual)
+                    print "\t\t%s" % ln_csfasta
+                    print "\t\t%s" % ln_qual
                     # Make links to primary data
                     self.__linkToFile(library.csfasta,os.path.join(expt_dir,ln_csfasta),dry_run=dry_run)
                     self.__linkToFile(library.qual,os.path.join(expt_dir,ln_qual),dry_run=dry_run)
