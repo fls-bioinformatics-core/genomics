@@ -197,6 +197,8 @@ class Worksheet:
 
     For example <style font=bold bgcolor=gray25>...</style>
 
+    Note that styles can also be applied to formulae.
+
     Internal representation
     -----------------------
 
@@ -363,6 +365,24 @@ class Worksheet:
             self.current_row += 1
             cindex = 0
             for item in row.split('\t'):
+                # Extract any formatting data for the item and
+                # retrieve easy_xf object for styling
+                bold = False
+                bg_color = None
+                wrap = False
+                style_match = self.re_style.match(item)
+                if style_match:
+                    item = style_match.group(2)
+                    styles = style_match.group(1)
+                    for style in styles.split(' '):
+                        if style.strip().startswith('bgcolor='):
+                            bg_color = style.split('=')[1].strip()
+                        elif style.strip() == 'font=bold':
+                            bold = True
+                        elif style.strip() == 'wrap':
+                            wrap = True
+                style = self.styles.getXfStyle(bold=bold,bg_color=bg_color,wrap=wrap)
+                # Deal with the item
                 if str(item).startswith('='):
                     # Formula item
                     # Remove leading '=' which xlwt doesn't want
@@ -375,7 +395,7 @@ class Worksheet:
                     formula = formula.replace('#',string.uppercase[cindex])
                     try:
                         self.worksheet.write(self.current_row,cindex,
-                                             xlwt.Formula(formula))
+                                             xlwt.Formula(formula),style)
                     except Exception, ex:
                         logging.warning("Error writing formula '%s' to cell %s%s: %s",
                                         formula,
@@ -384,25 +404,6 @@ class Worksheet:
                                         ex)
                 else:
                     # Data item
-                    #
-                    # Extract formatting data for individual items
-                    bold = False
-                    bg_color = None
-                    wrap = False
-                    style_match = self.re_style.match(item)
-                    if style_match:
-                        item = style_match.group(2)
-                        styles = style_match.group(1)
-                        for style in styles.split(' '):
-                            if style.strip().startswith('bgcolor='):
-                                bg_color = style.split('=')[1].strip()
-                            elif style.strip() == 'font=bold':
-                                bold = True
-                            elif style.strip() == 'wrap':
-                                wrap = True
-                    # Get the easy_xf object for the styling
-                    style = self.styles.getXfStyle(bold=bold,bg_color=bg_color,
-                                                   wrap=wrap)
                     self.worksheet.write(self.current_row,cindex,item,style)
                     # Set the column widths
                     try:
