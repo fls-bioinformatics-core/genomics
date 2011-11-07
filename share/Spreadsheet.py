@@ -194,10 +194,21 @@ class Worksheet:
     font=bold (sets bold face)
     bgcolor=<color> (sets the background colour)
     wrap (specifies that text should wrap)
+    number_format=<format_string> (specifies how to display numbers, see below)
 
     For example <style font=bold bgcolor=gray25>...</style>
 
     Note that styles can also be applied to formulae.
+
+    Number display formats
+    ----------------------
+
+    The 'number_format' style attribute allows the calling program to specify how
+    numbers should be displayed, for example:
+
+    number_format=0.00 (displays values to 2 decimal places)
+    number_format=0.0% (displays values as percentages to 1 decimal place)
+    number_format=#,### (displays values with , as the delimiter for thousands)
 
     Internal representation
     -----------------------
@@ -371,6 +382,7 @@ class Worksheet:
                 bg_color = None
                 wrap = False
                 style_match = self.re_style.match(item)
+                num_format_str = None
                 if style_match:
                     item = style_match.group(2)
                     styles = style_match.group(1)
@@ -381,7 +393,10 @@ class Worksheet:
                             bold = True
                         elif style.strip() == 'wrap':
                             wrap = True
-                style = self.styles.getXfStyle(bold=bold,bg_color=bg_color,wrap=wrap)
+                        elif style.strip().startswith('number_format='):
+                            num_format_str = style.split('=')[1].strip()
+                style = self.styles.getXfStyle(bold=bold,bg_color=bg_color,wrap=wrap,
+                                               num_format_str=num_format_str)
                 # Deal with the item
                 if str(item).startswith('='):
                     # Formula item
@@ -403,14 +418,28 @@ class Worksheet:
                                         self.current_row+1,
                                         ex)
                 else:
-                    # Data item
+                    # Deal with a data item
+                    # Attempt to convert to a number type i.e. integer/float
+                    converted = str(item)
+                    try:
+                        # Try integer
+                        converted = int(converted)
+                    except ValueError:
+                        # Not an integer, try float
+                        try:
+                            converted = float(converted)
+                        except ValueError:
+                            # Not a float, leave as input
+                            pass
+                    item = converted
                     self.worksheet.write(self.current_row,cindex,item,style)
                     # Set the column widths
+                    len_item = len(str(item))
                     try:
-                        if len(item) > self.max_col_width[cindex]:
-                            self.max_col_width[cindex] = len(item)
+                        if len_item > self.max_col_width[cindex]:
+                            self.max_col_width[cindex] = len_item
                     except IndexError:
-                        self.max_col_width.append(len(item))
+                        self.max_col_width.append(len_item)
                     self.worksheet.col(cindex).width = \
                         256*(self.max_col_width[cindex] + 5)
                 cindex += 1
@@ -429,7 +458,7 @@ class Styles:
     def __init__(self):
         self.styles = {}
 
-    def getXfStyle(self,bold=False,wrap=False,bg_color=None):
+    def getXfStyle(self,bold=False,wrap=False,bg_color=None,num_format_str=None):
         """Return EasyXf object to apply styles to spreadsheet cells.
 
         Arguments:
@@ -439,7 +468,7 @@ class Styles:
            color name as recognised by xlwt.
         """
         # Make a key to represent the style
-        style_key = "%s:%s:%s" % (bold,wrap,bg_color)
+        style_key = "%s:%s:%s:%s" % (bold,wrap,bg_color,num_format_str)
 
         # Check whether we already have an EasyXf object for this
         try:
@@ -466,7 +495,7 @@ class Styles:
                 easyxf_style += ', '.join(style[key])
                 easyxf_style += '; '
         try:
-            xf_style = easyxf(easyxf_style)
+            xf_style = easyxf(easyxf_style,num_format_str=num_format_str)
         except xlwt.Style.EasyXFCallerError, ex:
             logging.warning("Unable to get style: '%s'" % ex)
             xf_style = easyxf()
