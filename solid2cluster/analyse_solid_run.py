@@ -229,7 +229,7 @@ def suggest_analysis_layout(solid_runs):
     Arguments:
       solid_runs: a list of SolidRun objects.
     """
-    print "# Analysis directory layout"
+    print "#!/bin/sh\n#\n# Script commands to build analysis directory structure"
     for run in solid_runs:
         cmd_line = [ "build_analysis_dir.py --top-dir=%s_analysis" % run.run_dir ]
         for sample in run.samples:
