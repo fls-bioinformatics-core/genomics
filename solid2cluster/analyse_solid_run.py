@@ -244,6 +244,7 @@ def suggest_analysis_layout(solid_runs):
                 expt.library = project.getLibraryNamePattern()
                 # Print the arguments for the layout
                 cmd_line.append(expt.describe())
+        cmd_line.append(run.run_dir)
         print "#\n%s" % (' \\\n').join(cmd_line)
 
 def verify_runs(solid_runs):
