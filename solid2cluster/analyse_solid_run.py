@@ -229,9 +229,9 @@ def suggest_analysis_layout(solid_runs):
     Arguments:
       solid_runs: a list of SolidRun objects.
     """
-    print "Analysis directory layout:"
+    print "# Analysis directory layout"
     for run in solid_runs:
-        print "\n%s_analysis" % run.run_name
+        cmd_line = [ "build_analysis_dir.py --top-dir=%s_analysis" % run.run_dir ]
         for sample in run.samples:
             for project in sample.projects:
                 # Create one experiment per project
@@ -241,7 +241,8 @@ def suggest_analysis_layout(solid_runs):
                 expt.sample = project.getSample().name
                 expt.library = project.getLibraryNamePattern()
                 # Print the arguments for the layout
-                print "%s " % expt.describe()
+                cmd_line.append(expt.describe())
+        print "#\n%s" % (' \\\n').join(cmd_line)
 
 def verify_runs(solid_runs):
     """Do basic verification checks on SOLiD run data
