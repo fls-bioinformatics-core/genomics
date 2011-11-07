@@ -22,6 +22,8 @@ about the run, and suggest a layout scheme for the analysis directories.
 import sys
 import os
 import string
+import logging
+logging.basicConfig(format="%(levelname)s %(message)s")
 
 # Put ../share onto Python search path for modules
 SHARE_DIR = os.path.abspath(
@@ -33,7 +35,7 @@ try:
     import Experiment
     import Spreadsheet
 except ImportError, ex:
-    print "Error importing modules: %s" % ex
+    logging.warning("Error importing modules: %s" % ex)
 
 #######################################################################
 # Class definitions
