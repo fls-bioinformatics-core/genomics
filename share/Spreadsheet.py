@@ -192,6 +192,7 @@ class Worksheet:
     attributes can be specified:
     
     font=bold (sets bold face)
+    color=<color> (sets the text colour)
     bgcolor=<color> (sets the background colour)
     wrap (specifies that text should wrap)
     number_format=<format_string> (specifies how to display numbers, see below)
@@ -379,6 +380,7 @@ class Worksheet:
                 # Extract any formatting data for the item and
                 # retrieve easy_xf object for styling
                 bold = False
+                color=None
                 bg_color = None
                 wrap = False
                 style_match = self.re_style.match(item)
@@ -389,13 +391,16 @@ class Worksheet:
                     for style in styles.split(' '):
                         if style.strip().startswith('bgcolor='):
                             bg_color = style.split('=')[1].strip()
+                        elif style.strip().startswith('color='):
+                            color = style.split('=')[1].strip()
                         elif style.strip() == 'font=bold':
                             bold = True
                         elif style.strip() == 'wrap':
                             wrap = True
                         elif style.strip().startswith('number_format='):
                             num_format_str = style.split('=')[1].strip()
-                style = self.styles.getXfStyle(bold=bold,bg_color=bg_color,wrap=wrap,
+                style = self.styles.getXfStyle(bold=bold,color=color,bg_color=bg_color,
+                                               wrap=wrap,
                                                num_format_str=num_format_str)
                 # Deal with the item
                 if str(item).startswith('='):
@@ -458,17 +463,19 @@ class Styles:
     def __init__(self):
         self.styles = {}
 
-    def getXfStyle(self,bold=False,wrap=False,bg_color=None,num_format_str=None):
+    def getXfStyle(self,bold=False,wrap=False,color=None,bg_color=None,num_format_str=None):
         """Return EasyXf object to apply styles to spreadsheet cells.
 
         Arguments:
           bold: indicate whether font should be bold face
           wrap: indicate whether text should wrap in the cell
-          bg_color: set colo(u)r for cell background. Must be a valid
-           color name as recognised by xlwt.
+          color: set text colo(u)r
+          bg_color: set colo(u)r for cell background.
+
+        Note that colours must be a valid name as recognised by xlwt.
         """
         # Make a key to represent the style
-        style_key = "%s:%s:%s:%s" % (bold,wrap,bg_color,num_format_str)
+        style_key = "%s:%s:%s:%s:%s" % (bold,wrap,color,bg_color,num_format_str)
 
         # Check whether we already have an EasyXf object for this
         try:
@@ -487,6 +494,8 @@ class Styles:
         if bg_color:
             style['pattern'].append('pattern solid')
             style['pattern'].append('fore_color %s' % bg_color)
+        if color:
+            style['font'].append('color %s' % color)
         # Build easyfx object to apply styles
         easyxf_style = ''
         for key in style.keys():
