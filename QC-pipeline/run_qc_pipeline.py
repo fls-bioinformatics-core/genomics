@@ -67,6 +67,7 @@ if __name__ == "__main__":
     max_concurrent_jobs = 4
     poll_interval = 30
     max_total_jobs = 0
+    logging_level = logging.INFO
     script = None
     data_dirs = []
     input_type = "solid"
