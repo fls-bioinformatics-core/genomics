@@ -18,6 +18,7 @@
 
 import sys,os
 import logging
+logging.basicConfig(format="%(levelname)s %(message)s")
 
 # Put ../share onto Python search path for modules
 SHARE_DIR = os.path.abspath(
@@ -30,7 +31,7 @@ try:
     import JobRunner
     import Pipeline
 except ImportError, ex:
-    print "Error importing modules: %s" % ex
+    logging.warning("Error importing modules: %s" % ex)
 
 #######################################################################
 # Class definitions
@@ -51,7 +52,6 @@ except ImportError, ex:
 if __name__ == "__main__":
 
     # Initialise
-    logging.basicConfig(format="%(levelname)s %(message)s")
     dry_run = False
     top_dir = None
     pipeline_script = None
@@ -72,7 +72,8 @@ if __name__ == "__main__":
         print "    --top-dir=<dir>: create analysis directories as subdirs of <dir>;"
         print "      otherwise create them in cwd."
         print "    --use-library-names: use library names for links to primary"
-        print "      csfasta/qual data files"
+        print "      csfasta/qual data files e.g. 'PB_01.csfasta' rather than"
+        print "      'solid0123_20111107_PB_QR_pool_PB_01.csfasta'"
         print "    --run-pipeline=<script>: after creating analysis directories, run"
         print "      the specified <script> on SOLiD data file pairs in each"
         print ""
@@ -122,17 +123,17 @@ if __name__ == "__main__":
         elif arg.startswith('--type='):
             expt = expts.getLastExperiment()
             if expt is None:
-                print "No experiment defined for --type!"
+                logging.error("No experiment defined for --type argument")
                 sys.exit(1)
             if not expt.type:
                 expt.type = arg.split('=')[1]
             else:
-                print "Type already defined for experiment!"
+                logging.error("Type already defined for experiment")
                 sys.exit(1)
         elif arg.startswith('--source='):
             expt = expts.getLastExperiment()
             if expt is None:
-                print "No experiment defined for --source!"
+                logging.error("No experiment defined for --source argument")
                 sys.exit(1)
             if expt.sample:
                 # Duplicate the previous experiment
@@ -157,30 +158,31 @@ if __name__ == "__main__":
             pipeline_script = arg.split('=')[1]
         else:
             # Unrecognised argument
-            print "Unrecognised argument: %s" % arg
+            logging.error("Unrecognised argument: %s" % arg)
             sys.exit(1)
             
     # Check there's something to do
     if not solid_run_dir:
-        print "No SOLiD run directory specified, nothing to do"
+        logging.error("No SOLiD run directory specified")
         sys.exit(1)
     if not len(expts):
-        print "No experiments defined, nothing to do"
+        logging.error("No experiments defined")
         sys.exit(1)
     
     # Report
-    print "%d experiments defined:" % len(expts)
-    for expt in expts:
-        print "\tName   : %s" % expt.name
-        print "\tType   : %s" % expt.type
-        print "\tSample : %s" % expt.sample
-        print "\tLibrary: %s" % expt.library
-        print "\tOptions: %s" % expt.describe()
-        print ""
+    if dry_run:
+        print "%d experiments defined:" % len(expts)
+        for expt in expts:
+            print "\tName   : %s" % expt.name
+            print "\tType   : %s" % expt.type
+            print "\tSample : %s" % expt.sample
+            print "\tLibrary: %s" % expt.library
+            print "\tOptions: %s" % expt.describe()
+            print ""
 
     # Check we have run data
     if not len(expts.solid_runs):
-        print "No run data found!"
+        logging.error("No run data found!")
         sys.exit(1)
 
     # Build the analysis directory structure
