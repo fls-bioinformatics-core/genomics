@@ -302,9 +302,8 @@ class Worksheet:
         """
         for row in rows:
             self.data.append(row)
-            self.ncols = max(self.ncols,len(row.split('\t')))
-        if self.ncols > 256:
-            logging.warning("Number of columns exceeds 256")
+        # Update number of columns
+        self.__update_ncols()
 
     def addText(self,text):
         """Append and populate rows from text.
@@ -322,7 +321,7 @@ class Worksheet:
         """
         return self.addTabData(text.split('\n'))
 
-    def insertColumn(self,position,insert_items=None,title=''):
+    def insertColumn(self,position,insert_items=None,title=None):
         """Insert a new column into the spreadsheet.
         
         This inserts a new column into each row of data, at the
@@ -344,14 +343,27 @@ class Worksheet:
         if not self.is_new:
             logging.error("Cannot insert data into pre-existing worksheet")
             return False
-        insert_title = True
-        # Determine number of rows needed
-        if isinstance(insert_items,list):
-            nrows = max(len(self.data),len(insert_items))
+        # Deal with row title and number of rows
+        if title is None:
+            # No explicit title, use first item in list
+            if isinstance(insert_items,list):
+                title = insert_items[0]
+                nrows = max(len(self.data),len(insert_items))
+            else:
+                title = insert_items
+                nrows = len(self.data)
+            offset = 0
         else:
-            nrows = len(self.data)
+            # Title must be factored into row count
+            if isinstance(insert_items,list):
+                nrows = max(len(self.data),len(insert_items)+1)
+            else:
+                nrows = len(self.data)
+            offset = -1
         # Loop over rows
+        insert_title = True
         for i in range(nrows):
+            # Split the existing row into items
             try:
                 row = self.data[i]
                 items = row.split('\t')
@@ -371,7 +383,7 @@ class Worksheet:
                         # Data item
                         if isinstance(insert_items,list):
                             try:
-                                insert_item = insert_items[i]
+                                insert_item = insert_items[i+offset]
                             except IndexError:
                                 # Ran out of items?
                                 insert_item = ''
@@ -382,14 +394,17 @@ class Worksheet:
                 try:
                     new_items.append(items[j])
                 except IndexError:
-                    # Ran out of existing items, pad with blanks
-                    new_items.append('')
+                    if j < position:
+                        # Ran out of existing items, pad with blanks
+                        new_items.append('')
             # Replace old row with new one
             row = '\t'.join([str(x) for x in new_items])
             try:
                 self.data[i] = row
             except IndexError:
                 self.data.append(row)
+        # Update number of columns
+        self.__update_ncols()
         # Finished successfully
         return True
 
@@ -495,6 +510,17 @@ class Worksheet:
         self.is_new = False
         # Finished
         return
+
+    def __update_ncols(self):
+        """Internal: update the ncols property
+
+        This method should be called after operations which add or
+        remove data to or from the spreadsheet.
+        """
+        for row in self.data:
+            self.ncols = max(self.ncols,len(row.split('\t')))
+        if self.ncols > 256:
+            logging.warning("Number of columns exceeds 256")
 
 class Styles:
     """Class for creating and caching EasyXfStyle objects.
@@ -708,6 +734,158 @@ class TestWorkbook(unittest.TestCase):
         ws2 = wb.addSheet("sheet 2")
         self.assertEqual(ws2,wb.getSheet("sheet 2"),"Didn't fetch expected worksheet #2")
         self.assertNotEqual(ws1,ws2,"Worksheets should be different")
+
+class TestWorksheet(unittest.TestCase):
+    """Tests of the Worksheet class
+    """
+
+    def setUp(self):
+        """Set up common to all tests in this class
+        """
+        self.wb = Workbook()
+
+    def test_add_tab_data(self):
+        """Add data to the sheet as tab delimited rows
+        """
+        ws = self.wb.addSheet("test sheet")
+        self.assertEqual(len(ws.data),0)
+        self.assertEqual(ws.ncols,0)
+        data = ["1\t2\t3","4\t5\t6"]
+        ws.addTabData(data)
+        self.assertEqual(len(ws.data),2)
+        self.assertEqual(ws.ncols,3)
+        for i in range(2):
+            self.assertEqual(data[i],ws.data[i])
+
+    def test_add_text(self):
+        """Add data to the sheet as tab delimited text
+        """
+        ws = self.wb.addSheet("test sheet")
+        self.assertEqual(len(ws.data),0)
+        self.assertEqual(ws.ncols,0)
+        data = ["1\t2\t3","4\t5\t6"]
+        text = '\n'.join(data)
+        ws.addText(text)
+        self.assertEqual(len(ws.data),2)
+        self.assertEqual(ws.ncols,3)
+        for i in range(2):
+            self.assertEqual(data[i],ws.data[i])
+
+class TestWorksheetInsertColumn(unittest.TestCase):
+    """Tests specifically for inserting columns of data
+    """
+
+    def setUp(self):
+        """Set up common to all tests in this class
+        """
+        self.wb = Workbook()
+
+    def test_insert_first_column_into_empty_sheet(self):
+        """Insert a column of data as first column in a blank sheet (no title)
+        """
+        ws = self.wb.addSheet("test sheet")
+        self.assertEqual(len(ws.data),0)
+        self.assertEqual(ws.ncols,0)
+        column = ['1','2','3']
+        ws.insertColumn(0,insert_items=column)
+        self.assertEqual(len(ws.data),3)
+        self.assertEqual(ws.ncols,1)
+        for i in range(len(column)):
+            self.assertEqual(str(column[i]),ws.data[i])
+
+    def test_insert_second_column_into_empty_sheet(self):
+        """Insert a column of data as second column in a blank sheet
+        """
+        ws = self.wb.addSheet("test sheet")
+        self.assertEqual(len(ws.data),0)
+        self.assertEqual(ws.ncols,0)
+        column = ['1','2','3']
+        ws.insertColumn(1,insert_items=column)
+        self.assertEqual(len(ws.data),3)
+        self.assertEqual(ws.ncols,2)
+        for i in range(len(column)):
+            self.assertEqual("\t"+str(column[i]),ws.data[i])
+
+    def test_insert_column_into_sheet_with_data(self):
+        """Insert a column of data into a sheet with data
+        """
+        ws = self.wb.addSheet("test sheet")
+        data = ["1\t2\t3","4\t5\t6"]
+        ws.addTabData(data)
+        self.assertEqual(len(ws.data),2)
+        self.assertEqual(ws.ncols,3)
+        column = ['1','2','3']
+        ws.insertColumn(1,insert_items=column)
+        self.assertEqual(len(ws.data),3)
+        self.assertEqual(ws.ncols,4)
+        new_data = ["1\t1\t2\t3","4\t2\t5\t6","\t3"]
+        for i in range(len(new_data)):
+            self.assertEqual(new_data[i],ws.data[i])
+
+    def test_insert_column_into_sheet_with_data_single_value(self):
+        """Insert a single value as a column into a sheet with data
+        """
+        ws = self.wb.addSheet("test sheet")
+        data = ["1\t2\t3","4\t5\t6"]
+        ws.addTabData(data)
+        self.assertEqual(len(ws.data),2)
+        self.assertEqual(ws.ncols,3)
+        value = '7'
+        ws.insertColumn(1,insert_items=value)
+        self.assertEqual(len(ws.data),2)
+        self.assertEqual(ws.ncols,4)
+        new_data = ["1\t7\t2\t3","4\t7\t5\t6"]
+        for i in range(len(new_data)):
+            self.assertEqual(new_data[i],ws.data[i])
+
+    def test_insert_titled_column_into_empty_sheet(self):
+        """Insert a column of data with a title into an empty sheet
+        """
+        ws = self.wb.addSheet("test sheet")
+        self.assertEqual(len(ws.data),0)
+        self.assertEqual(ws.ncols,0)
+        title = 'hello'
+        column = ['1','2']
+        ws.insertColumn(1,title=title,insert_items=column)
+        self.assertEqual(len(ws.data),3)
+        self.assertEqual(ws.ncols,2)
+        new_data = ["\thello","\t1","\t2"]
+        for i in range(len(new_data)):
+            self.assertEqual(new_data[i],ws.data[i])
+
+    def test_insert_titled_column_into_sheet_with_data(self):
+        """Insert a column of data with a title into a sheet with data
+        """
+        ws = self.wb.addSheet("test sheet")
+        data = ["1\t2\t3","4\t5\t6","7\t8\t9"]
+        ws.addTabData(data)
+        self.assertEqual(len(ws.data),3)
+        self.assertEqual(ws.ncols,3)
+        title = 'hello'
+        column = ['1','2']
+        ws.insertColumn(1,title=title,insert_items=column)
+        self.assertEqual(len(ws.data),3)
+        self.assertEqual(ws.ncols,4)
+        new_data = ["1\thello\t2\t3","4\t1\t5\t6","7\t2\t8\t9"]
+        for i in range(len(new_data)):
+            self.assertEqual(new_data[i],ws.data[i])
+
+    def test_insert_long_titled_column_into_sheet_with_data(self):
+        """Insert a column of data with a title into a sheet with fewer rows of data
+        """
+        ws = self.wb.addSheet("test sheet")
+        data = ["1\t2\t3","4\t5\t6"]
+        ws.addTabData(data)
+        self.assertEqual(len(ws.data),2)
+        self.assertEqual(ws.ncols,3)
+        title = 'hello'
+        column = ['1','2']
+        ws.insertColumn(1,title=title,insert_items=column)
+        self.assertEqual(len(ws.data),3)
+        self.assertEqual(ws.ncols,4)
+        new_data = ["1\thello\t2\t3","4\t1\t5\t6","\t2"]
+        for i in range(len(new_data)):
+            self.assertEqual(new_data[i],ws.data[i])
 
 #######################################################################
 # Main program
