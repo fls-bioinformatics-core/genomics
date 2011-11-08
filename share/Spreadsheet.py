@@ -408,6 +408,33 @@ class Worksheet:
         # Finished successfully
         return True
 
+    def setCellValue(self,row,col,value):
+        """Set the value of a cell
+
+        Given row and column coordinates (using integer indices starting from zero
+        for both), replace the existing value with a new one.
+
+        The new value can include style information.
+
+        Arguments:
+          row: integer row index (starting at zero)
+          col: integer column index (starting at zero, i.e. 0=A, 1=B etc)
+          value: new value to be written into the cell
+        """
+        # First: add new (empty) rows if required
+        while len(self.data) < row + 1:
+            self.data.append('')
+        # Then: extend the row if required
+        new_row = self.data[row].split('\t')
+        while len(new_row) < col + 1:
+            new_row.append('')
+        # Insert the new value
+        new_row[col] = str(value)
+        new_row = '\t'.join(new_row)
+        self.data[row] = new_row
+        # Update number of columns
+        self.__update_ncols()
+
     def getColumnId(self,name):
         """Lookup XLS column id from name of column.
 
@@ -770,6 +797,34 @@ class TestWorksheet(unittest.TestCase):
         self.assertEqual(ws.ncols,3)
         for i in range(2):
             self.assertEqual(data[i],ws.data[i])
+
+    def test_set_cell_value(self):
+        """Set the value of a cell in a populated sheet
+        """
+        ws = self.wb.addSheet("test sheet")
+        self.assertEqual(len(ws.data),0)
+        self.assertEqual(ws.ncols,0)
+        data = ["1\t2\t3","4\t5\t6"]
+        ws.addTabData(data)
+        ws.setCellValue(0,1,'7')
+        self.assertEqual(len(ws.data),2)
+        self.assertEqual(ws.ncols,3)
+        new_data = ["1\t7\t3","4\t5\t6"]
+        for i in range(2):
+            self.assertEqual(new_data[i],ws.data[i])
+
+    def test_set_cell_value_in_empty_sheet(self):
+        """Set the value of a cell in an empty sheet
+        """
+        ws = self.wb.addSheet("test sheet")
+        self.assertEqual(len(ws.data),0)
+        self.assertEqual(ws.ncols,0)
+        ws.setCellValue(2,1,'7')
+        self.assertEqual(len(ws.data),3)
+        self.assertEqual(ws.ncols,2)
+        new_data = ["","","\t7"]
+        for i in range(1):
+            self.assertEqual(new_data[i],ws.data[i])
 
 class TestWorksheetInsertColumn(unittest.TestCase):
     """Tests specifically for inserting columns of data
