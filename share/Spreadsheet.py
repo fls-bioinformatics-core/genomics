@@ -7,21 +7,59 @@
 #
 #########################################################################
 
-"""Spreadsheet
+"""Spreadsheet.py
 
-Provides a Workbook class for writing data to an Excel spreadsheet, using
-the xlrd, xlwt and xlutils modules.
+Provides classes for writing data to an Excel spreadsheet, using the 3rd party modules
+xlrd, xlwt and xlutils.
 
-These can be found at:
+The basic classes are 'Workbook' (representing an XLS spreadsheet) and 'Worksheet'
+(representing a sheet within a workbook). There is also a 'Spreadsheet' class which is
+built on top of the other two classes and offers a simplified interface to writing
+line-by-line XLS spreadsheets.
+
+Simple usage examples
+---------------------
+
+1. Writing a new XLS spreadsheet using the Workbook class
+
+>>> wb = Workbook()
+>>> ws = wb.addSheet('test1')
+>>> ws.addText("Hello\tGoodbye\nGoodbye\tHello")
+>>> wb.save('test2.xls')
+
+2. Appending to an existing XLS spreadsheet using the Workbook class
+
+>>> wb = Workbook('test2.xls')
+>>> ws = wb.getSheet('test1')
+>>> ws.addText("Some more data for you")
+>>> ws = wb.addSheet('test2')
+>>> ws.addText("<style font=bold bgcolor=gray25>Hahahah</style>")
+>>> wb.save('test3.xls')
+
+3. Creating or appending to an XLS spreadsheet using the Spreadsheet class
+
+>>> wb = Spreadsheet('test.xls','test')
+>>> wb.addTitleRow(['File','Total reads','Unmapped reads'])
+>>> wb.addEmptyRow()
+>>> wb.addRow(['DR_1',875897,713425])
+>>> wb.write()
+
+Dependencies
+------------
+
+The Spreadsheet module depends on the xlwt, xlrd and xlutils libraries which
+can be found at:
+
 http://pypi.python.org/pypi/xlwt/0.7.2
 http://pypi.python.org/pypi/xlrd/0.7.1
 http://pypi.python.org/pypi/xlutils/1.4.1
 
-xlutils also needs functools:
+Note that xlutils also needs functools:
 http://pypi.python.org/pypi/functools
 
 but if you're using Python<2.5 then you need a backported version of
 functools, try:
+
 https://github.com/dln/pycassa/blob/90736f8146c1cac8287f66e8c8b64cb80e011513/pycassa/py25_functools.py
 """
 
