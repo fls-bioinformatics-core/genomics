@@ -672,28 +672,48 @@ class Spreadsheet:
 # No functions defined
 
 #######################################################################
+# Tests
+#######################################################################
+
+import unittest
+
+class TestWorkbook(unittest.TestCase):
+    """Tests of the Workbook class
+    """
+
+    def test_make_empty_workbook(self):
+        """Make a new empty workbook
+        """
+        wb = Workbook()
+        self.assertEqual(len(wb.sheets),0,"New workbook shouldn't have any sheets")
+        self.assertRaises(KeyError,wb.getSheet,"Nonexistant sheet")
+
+    def test_make_workbook_add_sheets(self):
+        """Make a new empty workbook and add sheets to it
+        """
+        wb = Workbook()
+        ws1 = wb.addSheet("sheet 1")
+        self.assertTrue(isinstance(ws1,Worksheet),"addSheet should return a Worksheet instance")
+        self.assertEqual(len(wb.sheets),1,"Workbook should have one sheet")
+        ws2 = wb.addSheet("sheet 2")
+        self.assertTrue(isinstance(ws2,Worksheet),"addSheet should return a Worksheet instance")
+        self.assertEqual(len(wb.sheets),2,"Workbook should have two sheets")
+
+    def test_make_workbook_get_sheets(self):
+        """Make a new empty workbook and add and retrieve sheets
+        """
+        wb = Workbook()
+        ws1 = wb.addSheet("sheet 1")
+        self.assertEqual(ws1,wb.getSheet("sheet 1"),"Didn't fetch expected worksheet #1")
+        ws2 = wb.addSheet("sheet 2")
+        self.assertEqual(ws2,wb.getSheet("sheet 2"),"Didn't fetch expected worksheet #2")
+        self.assertNotEqual(ws1,ws2,"Worksheets should be different")
+
+#######################################################################
 # Main program
 #######################################################################
 
 if __name__ == "__main__":
-    # Example writing XLS with Spreadsheet class
-    if os.path.exists('test.xls'):
-        os.remove('test.xls')
-    wb = Spreadsheet('test.xls','test')
-    wb.addTitleRow(['File','Total reads','Unmapped reads'])
-    wb.addEmptyRow()
-    wb.addRow(['DR_1',875897,713425])
-    wb.write()
-    # Example writing new XLS with Workbook class
-    wb = Workbook()
-    ws = wb.addSheet('test1')
-    ws.addText("Hello\tGoodbye\nGoodbye\tHello")
-    wb.save('test2.xls')
-    # Example appending to existing XLS with Workbook class
-    wb = Workbook('test2.xls')
-    ws = wb.getSheet('test1')
-    ws.addText("Some more data for you")
-    ws = wb.addSheet('test2')
-    ws.addText("<style font=bold bgcolor=gray25>Hahahah</style>")
-    wb.save('test3.xls')
+    unittest.main()
+
 
