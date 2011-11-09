@@ -102,10 +102,10 @@ Hopefully it will work okay\t:)
     #
     # Summit-100 = ("start"+"summit" columns) - 100
     ws_data.insertColumn(3,title="summit-100",
-                         insert_items="=(B+G)-100")
+                         insert_items="=(B?+G?)-100")
     # Summit+100 = ("start"+"summit" columns) + 100
     ws_data.insertColumn(4,title="summit+100",
-                         insert_items="=(B+G)+100")
+                         insert_items="=(B?+G?)+100")
     
     # Add header to the "header" sheet
     ws_header.addTabData(header)
