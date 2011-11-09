@@ -29,6 +29,7 @@ import sys
 import os
 import logging
 import subprocess
+import time
 
 # Put ../share onto Python search path for modules
 SHARE_DIR = os.path.abspath(
@@ -46,6 +47,49 @@ except ImportError, ex:
 #######################################################################
 # Module Functions
 #######################################################################
+
+def JobCleanup(job):
+    """Perform clean-up operations when job has completed
+
+    This is a callback function that should be invoked by the pipeline
+    runner when a job finishes, to do things like setting the correct
+    permissions on the output log files.
+
+    Arguments:
+      job: a Pipeline.Job instance for the finished job.
+    """
+    # Set the permissions on the output log file to rw-rw-r--
+    if job.log:
+        if os.path.exists(os.path.join(job.working_dir,job.log)):
+            os.chmod(os.path.join(job.working_dir,job.log),0664)
+
+def SendReport(email_addr,group,job_list):
+    """Send an email notification/report when a job group has completed
+
+    This is a callback function that should be invoked by the pipeline
+    runner when a group of jobs finishes. It creates a report on the
+    finished jobs and emails that to the supplied address.
+
+    Arguments:
+      email_addr: an email address to send the report to, or None
+      group: name of the completed group
+      job_list: list of Pipeline.Job instances for the jobs in the
+        completed group
+    """
+    if email_addr is not None:
+        subject = "Pipeline completed for %s" % group
+        report = "Group completed %s\n" % time.asctime()
+        report += "\n%d jobs completed:\n" % len(job_list)
+        for job in job_list:
+            report += "\t%s\t%s\t%s\t%.1fs\t[%s]\n" % (job.label,
+                                                       job.log,
+                                                       job.working_dir,
+                                                       (job.end_time - job.start_time),
+                                                       job.status())
+        print "Sending email notification to %s re group %s" % (email_addr,group)
+        SendEmail(subject,email_addr,report)
+    else:
+        print "Unable to send email notification: no address set"
 
 # SendEmail: send an email message via mutt
 def SendEmail(subject,recipient,message):
@@ -182,7 +226,10 @@ if __name__ == "__main__":
         runner = JobRunner.GEJobRunner(queue=ge_queue)
 
     # Set up and run pipeline
-    pipeline = Pipeline.PipelineRunner(runner,max_concurrent_jobs=max_concurrent_jobs)
+    pipeline = Pipeline.PipelineRunner(runner,max_concurrent_jobs=max_concurrent_jobs,
+                                       jobCompletionHandler=onJobCompletion,
+                                       groupCompletionHandler=lambda group,jobs,email=email_addr:
+                                           SendReport(email,group,jobs))
     for data_dir in data_dirs:
         # Get for this directory
         print "Collecting data from %s" % data_dir
@@ -192,12 +239,12 @@ if __name__ == "__main__":
             run_data = Pipeline.GetFastqFiles(data_dir)
         # Add jobs to pipeline runner (up to limit of max_total_jobs)
         for data in run_data:
-            label = os.path.splitext(os.path.basename(data[0]))[0]
-            group = os.path.basename(data_dir)
-            pipeline.queueJob(data_dir,script,data,label=label,group=group)
             if max_total_jobs > 0 and pipeline.nWaiting() == max_total_jobs:
                 print "Maximum number of jobs queued (%d)" % max_total_jobs
                 break
+            label = os.path.splitext(os.path.basename(data[0]))[0]
+            group = os.path.basename(data_dir)
+            pipeline.queueJob(data_dir,script,data,label=label,group=group)
     # Run the pipeline
     pipeline.run()
 

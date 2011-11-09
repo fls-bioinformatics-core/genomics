@@ -224,8 +224,14 @@ class PipelineRunner:
     By default the pipeline runs in 'blocking' mode, i.e. 'run' doesn't return until all
     jobs have been submitted and have completed; see the 'run' method for details of
     how to operate the pipeline in non-blocking mode.
+
+    The invoking subprogram can also specify functions that will be called when a job
+    completes ('jobCompletionHandler'), and when a group completes
+    ('groupCompletionHandler'). These can perform any specific actions that are required
+    such as sending notification email, setting file ownerships and permissions etc.
     """
-    def __init__(self,runner,max_concurrent_jobs=4,poll_interval=30):
+    def __init__(self,runner,max_concurrent_jobs=4,poll_interval=30,jobCompletionHandler=None,
+                 groupCompletionHandler=None):
         """Create new PipelineRunner instance.
 
         Arguments:
@@ -248,6 +254,9 @@ class PipelineRunner:
         self.running = []
         # Subset that have completed
         self.completed = []
+        # Callback functions
+        self.handle_job_completion = jobCompletionHandler
+        self.handle_group_completion = groupCompletionHandler
 
     def queueJob(self,working_dir,script,script_args,label=None,group=None):
         """Add a job to the pipeline.
@@ -356,19 +365,21 @@ class PipelineRunner:
                     job.name,
                     os.path.basename(job.working_dir),
                     time.asctime(time.localtime(job.end_time)))
-                # Set the permissions on the output log file to rw-rw-r--
-                if job.log:
-                    if os.path.exists(os.path.join(job.working_dir,job.log)):
-                        os.chmod(os.path.join(job.working_dir,job.log),0664)
+                # Invoke callback on job completion
+                if self.handle_job_completion:
+                    self.handle_job_completion(job)
                 # Check for completed group
                 if job.group_label is not None:
-                    njobs_in_group = self.njobs_in_group[job.group_label]
+                    jobs_in_group = []
                     for check_job in self.completed:
                         if check_job.group_label == job.group_label:
-                            njobs_in_group -= 1
-                    if njobs_in_group == 0:
-                        # No jobs left in group
+                            jobs_in_group.append(job)
+                    if self.njobs_in_group[job.group_label] == len(jobs_in_group):
+                        # All jobs in group have completed
                         print "Group '%s' has completed" % job.group_label
+                        # Invoke callback on group completion
+                        if self.handle_group_completion:
+                            self.handle_group_completion(job.group_label,jobs_in_group)
             else:
                 # Job is running, check it's not in an error state
                 if job.errorState():
