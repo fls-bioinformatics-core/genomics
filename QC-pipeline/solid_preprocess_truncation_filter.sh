@@ -27,7 +27,10 @@ function usage() {
     echo "  csfasta and qual file pair"
     echo ""
     echo "Output"
-    echo "  <basename>_T_F3.csfasta, <basename>_QV_T_F3.qual, <basename>_T_F3.fastq"
+    echo "  <basename>_<length>bp_T_F3.csfasta,"
+    echo "  <basename>_<length>bp_QV_T_F3.qual"
+    echo "  <basename>_<length>bp_T_F3.fastq"
+    echo "  Also writes statistics to 'SOLID_preprocess_truncation_filter.stats'"
 }
 #
 # truncate
@@ -232,6 +235,9 @@ echo Filter options: $FILTER_OPTIONS
 # Output file names
 if [ -z $output_basename ] ; then
     output_basename=$(baserootname $csfasta)
+    if [ ! -z $do_truncation ] ; then
+	output_basename=${output_basename}_${truncation_length}bp
+    fi
 fi
 processed_csfasta=${output_basename}_T_F3.csfasta
 processed_qual=${output_basename}_QV_T_F3.qual
@@ -295,7 +301,7 @@ fi
 FILTERING_STATS=`dirname $0`/filtering_stats.sh
 if [ -f "${FILTERING_STATS}" ] ; then
     if [ -f "${processed_csfasta}" ] ; then
-	${FILTERING_STATS} ${csfasta} ${processed_csfasta} SOLiD_preprocess_filter.stats
+	${FILTERING_STATS} ${csfasta} ${processed_csfasta} SOLiD_preprocess_truncation_filter.stats
     else
 	echo ERROR output csfasta file not found, filtering stats calculcation skipped
     fi
