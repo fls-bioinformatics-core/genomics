@@ -227,7 +227,7 @@ if __name__ == "__main__":
 
     # Set up and run pipeline
     pipeline = Pipeline.PipelineRunner(runner,max_concurrent_jobs=max_concurrent_jobs,
-                                       jobCompletionHandler=onJobCompletion,
+                                       jobCompletionHandler=JobCleanup,
                                        groupCompletionHandler=lambda group,jobs,email=email_addr:
                                            SendReport(email,group,jobs))
     for data_dir in data_dirs:
