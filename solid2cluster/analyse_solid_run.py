@@ -61,30 +61,30 @@ def report_run(solid_runs):
     for run in solid_runs:
         # Report overall slide layout
         slide_layout = run.slideLayout()
-        print "FC%s (%s)" % (str(run.run_info.flow_cell),
-                               str(slide_layout))
-        print "Date: %s" % (run.run_info.date)
-        print "I.D.: %s\n" % (run.run_info.name)
+        title = "Flow Cell %s (%s)" % (str(run.run_info.flow_cell),
+                                       str(slide_layout))
+        title = title + '\n' + "="*len(title)
+        print title
+        print "I.D.   : %s" % (run.run_info.name)
+        print "Date   : %s" % (run.run_info.date)
+        print "Samples: %d\n" % len(run.samples)
         #
         # Report projects for each sample
         for sample in run.samples:
+            title = "Sample %s" % sample
+            title = title + '\n' + "-"*len(title)
+            print title
             for project in sample.projects:
                 libraries = project.prettyPrintLibraries()
-                print "Sample %s: (project %s): %s" % (sample,
-                                                         project.name,
-                                                         libraries)
-                if run.run_info.is_barcoded_sample:
-                    print "B/C samples: %d" % len(project.libraries)
-                total_reads = 'not available'
-                if sample.barcode_stats:
-                    try:
-                        total_reads = sample.barcode_stats.\
-                            getDataByName("All Beads")[-1]
-                    except IndexError:
-                        pass
-                # FIXME need to check that this total read info is
-                # actually correct
-                print "Total reads: %s\n" % str(total_reads)
+                title = "Project %s: %s (%d libraries)" % (project.name,
+                                                           libraries,
+                                                           len(project.libraries))
+                title = '\n' + title + '\n' + "-"*len(title)
+                print title
+                print "Pattern: %s/%s" % (sample,project.getLibraryNamePattern())
+                # Report location of primary data
+                for library in project.libraries:
+                    print "%s\n%s" % (library.csfasta,library.qual)
 
 def write_spreadsheet(solid_runs,spreadsheet):
     """Generate or append run data to an XLS-format spreadsheet
