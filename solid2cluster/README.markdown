@@ -65,10 +65,11 @@ Usage:
 
 Options:
 
- *  `--report`: print a report of the SOLiD run
- *  ` --verify`: do verification checks on SOLiD run directories
- *  ` --layout`: suggest layout for analysis directories (generates options for `build_analysis_dir.py`)
- *  ` --spreadsheet[=<file>.xls]`: write report to Excel spreadsheet
+ *  `--report`: print a report of the SOLiD run (including location of primary data files)
+ *  `--verify`: do verification checks on SOLiD run directories
+ *  `--layout`: writes a script to build analysis directories using `build_analysis_dir.py`
+ *  `--rsync`: writes a script to run `rsync` for copying a subset of data
+ *  `--spreadsheet[=<file>.xls]`: write report to Excel spreadsheet
 
 
 build_analysis_dir.py
