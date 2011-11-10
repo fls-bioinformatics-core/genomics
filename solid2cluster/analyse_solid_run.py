@@ -246,6 +246,24 @@ def suggest_analysis_layout(solid_runs):
         cmd_line.append(run.run_dir)
         print "#\n%s" % (' \\\n').join(cmd_line)
 
+def suggest_rsync_command(solid_runs):
+    """Generate a bash script to rsync data to another location
+
+    Given a set of SolidRuns, print a set of script commands for running rsync
+    to copy the data directories to another location.
+
+    The script should be edited before being executed by the user.
+    """
+    print "#!/bin/sh\n#"
+    print "# Script command to rsync a subset of data to another location"
+    print "# Edit the script to remove the exclusions on the data sets to be copied"
+    for run in solid_runs:
+        print "rsync --dry-run -av -e ssh \\"
+        for sample in run.samples:
+            for library in sample.libraries:
+                print "--exclude=" + str(library) + " \\"
+        print "%s user@remote.system:/destination/parent/dir" % run.run_dir
+
 def verify_runs(solid_runs):
     """Do basic verification checks on SOLiD run data
 
@@ -331,7 +349,8 @@ if __name__ == "__main__":
         print "Options:"
         print "  --report: print a report of the SOLiD run"
         print "  --verify: do verification checks on SOLiD run directories"
-        print "  --layout: suggest layout for analysis directories"
+        print "  --layout: generate script for laying out analysis directories"
+        print "  --rsync:  generate script for rsyncing data"
         print "  --spreadsheet[=<file>.xls]: write report to Excel spreadsheet"
         sys.exit()
 
@@ -367,11 +386,16 @@ if __name__ == "__main__":
                 spreadsheet = solid_dir_fc1+".xls"
             print "Writing spreadsheet %s" % spreadsheet
 
+    do_suggest_rsync = False
+    if "--rsync" in sys.argv[1:-1]:
+        do_suggest_rsync = True
+
     # Check there's at least one thing to do
     if not (do_report_run or 
             do_suggest_layout or 
             do_spreadsheet or 
-            do_checks):
+            do_checks or
+            do_suggest_rsync):
         do_report_run = True
 
     # Get the run information
@@ -394,6 +418,10 @@ if __name__ == "__main__":
     # Suggest a layout for analysis
     if do_suggest_layout:
         suggest_analysis_layout(solid_runs)
+
+    # Generate script rsync
+    if do_suggest_rsync:   
+        suggest_rsync_command(solid_runs)
 
     # Do verification
     # Nb this should always be the last step
