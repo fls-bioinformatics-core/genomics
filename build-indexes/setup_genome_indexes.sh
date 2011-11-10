@@ -107,7 +107,6 @@ function set_bfast_splitting_depth() {
     # of the fasta file
     # Arbitrarily, if fasta file >~ 1Gb then set splitting
     # depth to 1, otherwise set to 0
-    echo fasta $1
     local size=`du -s $1 | cut -d$'\t' -f1`
     if [ $size -ge 1000000 ] ; then
 	echo 1
