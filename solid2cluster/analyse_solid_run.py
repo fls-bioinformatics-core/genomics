@@ -219,14 +219,12 @@ def write_spreadsheet(solid_runs,spreadsheet):
     wb.write()
 
 def suggest_analysis_layout(solid_runs):
-    """Print a suggested analysis directory scheme
+    """Generate a bash script to build the analysis directory scheme
 
-    Given a set of SolidRuns, print a suggested layout scheme for the
-    analysis directory including names and partitioning of primary data
-    (i.e. which data files should be associated with which subdirectory).
+    Given a set of SolidRuns, print a set of script commands for running the
+    build_analysis_dir.py program to create and populate the analysis directories.
 
-    Output is in the form of proposed arguments to the build_analysis_dir.py
-    program.
+    The script can be edited before being executed by the user.
 
     Arguments:
       solid_runs: a list of SolidRun objects.
@@ -394,7 +392,7 @@ if __name__ == "__main__":
         write_spreadsheet(solid_runs,spreadsheet)
 
     # Suggest a layout for analysis
-    if do_suggest_layout:    
+    if do_suggest_layout:
         suggest_analysis_layout(solid_runs)
 
     # Do verification
