@@ -418,11 +418,7 @@ class TabFile:
             the transformation
         """
         for line in self:
-            try:
-                line[column_name] = transform_func(line[column_name])
-            except Exception, ex:
-                logging.error("transformColumn raised exception for line %d" % line.lineno)
-                raise ex
+            line[column_name] = transform_func(line[column_name])
 
     def computeColumn(self,column_name,compute_func):
         """Compute and store values in a new column
