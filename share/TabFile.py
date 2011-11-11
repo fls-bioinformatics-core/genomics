@@ -103,6 +103,10 @@ Lines can also be removed using the 'del' built-in:
 
 >>> del(data[0]) # Deletes first data line
 
+New columns can be added using the 'appendColumn' method e.g.:
+
+>>> data.appendColumn('new_col') # Creates a new empty column
+
 Filtering Data
 ===============
 
