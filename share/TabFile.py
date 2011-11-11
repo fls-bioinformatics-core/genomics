@@ -124,12 +124,50 @@ for a set of column indices or column names:
 >>> data[0].subset('chr1','start')
 ['chr1',123456]
 
+Manipulating Data: whole column operations
+==========================================
+
+The 'transformColumn' and 'computeColumn' methods provide a way to
+update all the values in a column with a single method call. In each
+case the calling subprogram must supply a function object which is
+used to update the values in a specific column.
+
+The function supplied to 'transformColumn' must take a single
+argument which is the current value of the column in that line. For
+example: define a function to increment a supplied value by 1:
+
+>>> def addOne(x):
+>>> ...     return x+1
+
+Then use this to add one to all values in the column 'start':
+
+>>> data.transformColumn('start',addOne)
+
+Alternatively a lambda can be used to avoid defining a new function:
+
+>>> data.transformColumn('start',lambda x: x+1)
+
+The function supplied to 'computeColumn' must take a single argument
+which is the current line (i.e. a TabDataLine object) and return
+a new value for the specified column. For example:
+
+>>> def calculateMidpoint(line):
+>>> ...   return (line['start'] + line['stop'])/2.0
+>>> data.computeColumn('midpoint',calculateMidpoint)
+
+Again a lambda expression can be used instead:
+
+>>> data.computeColumn('midpoint',lambda line: line['stop'] - line['start'])
+
 Writing to File
 ===============
 
 Use the TabFile's 'write' method to output the content to a file:
 
->>> data.write('newfile.txt')
+>>> data.write('newfile.txt') # Writes all the data to newfile.txt
+
+It's also possible to reorder the columns before writing out using
+the 'reorderColumns' method.
 """
 
 class TabFile:
@@ -366,6 +404,42 @@ class TabFile:
         for data in self.__data:
             reordered_tabfile.append(data.subset(*new_columns))
         return reordered_tabfile
+
+    def transformColumn(self,column_name,transform_func):
+        """Apply arbitrary function to a column
+
+        For each line of data the transformation function will be invoked
+        with the value of the named column, with the result being written
+        back to that column (overwriting the existing value).
+
+        Arguments:
+          column_name: name of column to write transformation result to
+          transform_func: callable object that will be invoked to perform
+            the transformation
+        """
+        for line in self:
+            try:
+                line[column_name] = transform_func(line[column_name])
+            except Exception, ex:
+                logging.error("transformColumn raised exception for line %d" % line.lineno)
+                raise ex
+
+    def computeColumn(self,column_name,compute_func):
+        """Compute and store values in a new column
+    
+        For each line of data the computation function will be invoked
+        with the line as the sole argument, and the result will be stored in
+        a new column with the specified name.
+
+        Arguments:
+          column_name: name of column to write transformation result to
+          compute_func: callable object that will be invoked to perform
+            the computation
+        """
+        if column_name not in self.header():
+            self.appendColumn(column_name)
+        for line in self:
+            line[column_name] = compute_func(line)
 
     def write(self,filen,include_header=False):
         """Write the TabFile data to an output file
@@ -847,6 +921,78 @@ chr2\t1234\t5678\t6.8
         self.assertEqual(str(tabfile[0]),"\t4.6\t1\t234")
         self.assertEqual(str(tabfile[1]),"chr1\t5.7\t567\t890")
         self.assertEqual(str(tabfile[2]),"\t6.8\t1234\t5678")
+
+class TestWholeColumnOperations(unittest.TestCase):
+    """Test the transformColumn and computeColumn methods
+    """
+
+    def setUp(self):
+        # Make file-like object to read data in
+        self.fp = cStringIO.StringIO(
+"""#chr\tstart\tend\tdata
+chr1\t1\t234\t4.6
+chr1\t567\t890\t5.7
+chr2\t1234\t5678\t6.8
+""")
+
+    def test_set_column_to_constant_value(self):
+        """Set a column to a constant value using transformColumn
+        """
+        tabfile = TabFile('test',self.fp,first_line_is_header=True)
+        # Check number of columns and header items
+        self.assertEqual(tabfile.nColumns(),4)
+        self.assertEqual(tabfile.header(),['chr','start','end','data'])
+        # Add a strand column
+        tabfile.appendColumn('strand')
+        self.assertEqual(tabfile.nColumns(),5)
+        self.assertEqual(tabfile.header(),['chr','start','end','data','strand'])
+        # Set all values to '+'
+        tabfile.transformColumn('strand',lambda x: '+')
+        for line in tabfile:
+            self.assertEqual(line['strand'],'+')
+
+    def test_apply_operation_to_column(self):
+        """Divide values in a column by 10
+        """
+        tabfile = TabFile('test',self.fp,first_line_is_header=True)
+        # Check number of columns and header items
+        self.assertEqual(tabfile.nColumns(),4)
+        self.assertEqual(tabfile.header(),['chr','start','end','data'])
+        # Divide data column by 10
+        tabfile.transformColumn('data',lambda x: x/10)
+        results = [0.46,0.57,0.68]
+        for i in range(len(tabfile)):
+            self.assertEqual(tabfile[i]['data'],results[i])
+
+    def test_compute_midpoint(self):
+        """Compute the midpoint of the start and end columns
+        """
+        tabfile = TabFile('test',self.fp,first_line_is_header=True)
+        # Check number of columns and header items
+        self.assertEqual(tabfile.nColumns(),4)
+        self.assertEqual(tabfile.header(),['chr','start','end','data'])
+        # Compute midpoint of start and end
+        tabfile.computeColumn('midpoint',lambda line: (line['end'] + line['start'])/2.0)
+        self.assertEqual(tabfile.nColumns(),5)
+        self.assertEqual(tabfile.header(),['chr','start','end','data','midpoint'])
+        results = [117.5,728.5,3456]
+        for i in range(len(tabfile)):
+            self.assertEqual(tabfile[i]['midpoint'],results[i])
+        
+    def test_compute_and_overwrite_existing_column(self):
+        """Compute new values for an existing column
+        """
+        tabfile = TabFile('test',self.fp,first_line_is_header=True)
+        # Check number of columns and header items
+        self.assertEqual(tabfile.nColumns(),4)
+        self.assertEqual(tabfile.header(),['chr','start','end','data'])
+        # Compute new values for data column
+        tabfile.computeColumn('data',lambda line: line['end'] - line['start'])
+        self.assertEqual(tabfile.nColumns(),4)
+        self.assertEqual(tabfile.header(),['chr','start','end','data'])
+        results = [233,323,4444]
+        for i in range(len(tabfile)):
+            self.assertEqual(tabfile[i]['data'],results[i])
         
 class TestTabDataLine(unittest.TestCase):
 
