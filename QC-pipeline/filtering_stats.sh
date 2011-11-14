@@ -36,6 +36,9 @@ function percent() {
 #
 # Main script
 #
+# Set umask to allow group read-write on all new files etc
+umask 0002
+#
 # Inputs
 csfasta=$1
 filtered_csfasta=$2
