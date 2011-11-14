@@ -260,7 +260,11 @@ else
     # Do truncation, if requested
     if [ ! -z $do_truncation ] ; then
 	# Run preprocess truncation
-	preprocess_truncate $csfasta $qual "solid_preprocess_truncate"
+	if ! preprocess_truncate $csfasta $qual "solid_preprocess_truncate" ; then
+	    echo "Truncation finished with non-zero exit code indicating error"
+	    echo "Stopping"
+	    exit 1
+	fi
 	# Reset the files for next step
 	csfasta=`basename $csfasta`
 	qual=`basename $qual`
@@ -273,7 +277,11 @@ else
 	echo "Skipping explicit truncation step"
     fi
     # Run preprocess filter
-    preprocess_filter $csfasta $qual $output_basename
+    if ! preprocess_filter $csfasta $qual $output_basename ; then
+	echo "Filter finished with non-zero exit code indicating error"
+	echo "Stopping"
+	exit 1
+    fi
     # Move back to working dir and copy preprocessed files
     cd $wd
     if [ -f "${tmp}/${processed_csfasta}" ] ; then
