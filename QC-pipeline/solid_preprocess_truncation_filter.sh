@@ -134,7 +134,7 @@ function run_solid2fastq() {
 	# directory which might be left behind if solid2fastq stops (or
 	# is stopped) prematurely
 	local wd=`pwd`
-	local tmp=`mktemp -d -p $wd`
+	local tmp=$(make_temp -d --tmpdir=$wd --suffix=.solid2fastq)
 	cd $tmp
 	# Run solid2fastq
 	local cmd="${SOLID2FASTQ} -o $fastq_base $csfasta $qual"
@@ -272,7 +272,7 @@ else
     # directory which might be left behind if the preprocessor stops (or
     # is stopped) prematurely
     wd=`pwd`
-    tmp=`mktemp -d -p $wd`
+    tmp=$(make_temp -d --tmpdir=$wd --suffix=.preprocess)
     cd $tmp
     echo "Working in temporary directory ${tmp}"
     # Do truncation, if requested

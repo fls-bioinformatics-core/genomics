@@ -86,6 +86,95 @@ function abs_path() {
     fi
 }
 #
+# make_temp(): make a temporary file name or directory
+#
+# Wrapper for the mktemp command to deal with different versions
+# of mktemp. This attempts to emulate some of the behaviours of
+# mktemp 8.10 for older versions which don't support the --suffix
+# and --tmpdir options.
+#
+# Supports the following options for mktemp:
+#
+# -d: make a directory and return the name; otherwise just return
+#     a file name
+#
+# --tmpdir[=DIR]: interpret TEMPLATE relative to DIR; if DIR not
+#     specified then use $TMPDIR (or /tmp if TMPDIR not set).
+#
+# --suffix=SUFF: append SUFF to TEMPLATE
+#
+# NB TEMPLATE should contain "X"s that will be substituted with
+# random characters when the temporary name is generated
+#
+# Usage: make_temp [-d] [--tmpdir[=DIR]] [--suffix=SUFF] [TEMPLATE]
+function make_temp() {
+    # Set up
+    local make_dir=
+    local suffix=
+    local template=tmp.XXXXXXXXXX
+    local cmd="mktemp -t"
+    local save_TMPDIR=$TMPDIR
+    # Process the arguments
+    while [ ! -z $1 ] ; do
+	case "$1" in
+	    -d)
+		# Make a directory
+		make_dir=yes
+		;;
+	    --tmpdir=*)
+		# Interpret TEMPLATE relative to DIR
+	        export TMPDIR=`echo $1 | cut -d"=" -f2`
+		;;
+	    --tmpdir)
+		# Use TMPDIR if set, else use /tmp
+		if [ -z "$TMPDIR" ] ; then
+		    export TMPDIR=$TMPDIR
+		else
+		    export TMPDIR=/tmp
+		fi
+		;;
+	    --suffix=*)
+		# Append a suffix
+		suffix=`echo $1 | cut -d"=" -f2`
+		;;
+	    *)
+		# Assume this is the template
+		template=$1
+		;;
+	esac
+	shift
+    done
+    # Build the command
+    if [ ! -z "$make_dir" ] ; then
+	cmd="$cmd -d"
+    fi
+    if [ ! -z "$template" ] ; then
+	cmd="$cmd $template"
+    fi
+    local tmp=`$cmd`
+    if [ ! -z "$suffix" ] ; then
+	# Horrible kludge to add a suffix
+	#
+	# Newer versions of mktemp allow us to append the suffix to
+	# the template, but this doesn't work for older versions
+	while [ -e "${tmp}${suffix}" ] ; do
+	    # Remove the temporary file/dir we just made
+	    # and try again
+	    if [ -e "$tmp" ] ; then
+		/bin/rm -rf "$tmp"
+	    fi
+	    tmp=`$cmd`
+	done
+	# Found one that doesn't exist
+	/bin/mv $tmp ${tmp}${suffix}
+	tmp=${tmp}${suffix}
+    fi
+    # Reset TMPDIR to original value
+    export TMPDIR=$save_TMPDIR
+    # Return the value
+    echo $tmp
+}
+#
 # get_version(): extract and return version number
 #
 # e.g. version=$(get_version <name>)
