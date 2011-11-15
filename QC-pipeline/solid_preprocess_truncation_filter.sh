@@ -33,7 +33,26 @@ function usage() {
     echo "  Also writes statistics to 'SOLID_preprocess_truncation_filter.stats'"
 }
 #
-# truncate
+#===========================================================================
+# Import function libraries
+#===========================================================================
+#
+if [ -f functions.sh ] ; then
+    # Import local copies
+    . functions.sh
+else
+    # Import versions in share
+    . `dirname $0`/../share/functions.sh
+fi
+#
+#===========================================================================
+# Local functions
+#===========================================================================
+#
+# preprocess_truncate: run SOLiD_preprocess_filter_v2.pl to perform
+# truncation of reads without any filtering.
+#
+# Usage: preprocess_truncate <csfasta> <qual> [ <output_basename> ]
 function preprocess_truncate() {
     echo "--------------------------------------------------------"
     echo Executing preprocess_truncate
@@ -53,7 +72,11 @@ function preprocess_truncate() {
     $cmd
     return $?
 }
-# filter
+#
+# preprocess_filter: run SOLiD_preprocess_filter_v2.pl to perform
+# filtering of reads.
+#
+# Usage: preprocess_truncate <csfasta> <qual> [ <output_basename> ]
 function preprocess_filter() {
     echo "--------------------------------------------------------"
     echo Executing preprocess_filter
@@ -81,7 +104,7 @@ function preprocess_filter() {
 #
 # Creates fastq file in current directory
 #
-# Usage: solid2fastq <csfasta> <qual> [ <output_basename> ]
+# Usage: run_solid2fastq <csfasta> <qual> [ <output_basename> ]
 function run_solid2fastq() {
     # Input files
     local csfasta=$(abs_path ${1})
@@ -133,17 +156,12 @@ function run_solid2fastq() {
     return $status
 }
 #
-#===========================================================================
-# Import function libraries
-#===========================================================================
+# number_of_reads: count reads in csfasta file
 #
-if [ -f functions.sh ] ; then
-    # Import local copies
-    . functions.sh
-else
-    # Import versions in share
-    . `dirname $0`/../share/functions.sh
-fi
+# Usage: number_of_reads <csfasta>
+function number_of_reads() {
+    echo `grep -c "^>" $1`
+}
 #
 #===========================================================================
 # Main script
@@ -152,7 +170,7 @@ fi
 # Check command line
 if [ $# -lt 2 ] || [ "$1" == "-h" ] || [ "$1" == "--help" ] ; then
     usage
-    exit
+   exit
 fi
 #
 # Set umask to allow group read-write on all new files etc
@@ -247,7 +265,7 @@ if [ -f "${processed_csfasta}" ] && [ -f "${processed_qual}" ] ; then
     echo Filtered csfasta and qual files already exist, skipping preprocess filter
 else
     # Report initial number of reads
-    n_reads=`grep -c "^>" ${csfasta}`
+    n_reads=$(number_of_reads $csfasta)
     echo "Initial number of reads: $n_reads"
     # Make a temporary directory to run in
     # This stops incomplete processing files being written to the working
@@ -270,8 +288,8 @@ else
 	qual=`basename $qual`
 	/bin/mv solid_preprocess_truncate_T_F3.csfasta $csfasta
 	/bin/mv solid_preprocess_truncate_QV_T_F3.qual $qual
-	# Number of reads after truncation
-	n_reads=`grep -c "^>" ${csfasta}`
+	    # Number of reads after truncation
+	n_reads=$(number_of_reads $csfasta)
 	echo "Number of reads after truncation: $n_reads"
     else
 	echo "Skipping explicit truncation step"
@@ -299,7 +317,7 @@ else
     # Remove temporary dir
     /bin/rm -rf ${tmp}
     # Number of reads after filter
-    n_reads=`grep -c "^>" ${processed_csfasta}`
+    n_reads=$(number_of_reads $processed_csfasta)
     echo "Number of reads after filter: $n_reads"
     # Create fastq file
     run_solid2fastq $processed_csfasta $processed_qual
@@ -307,9 +325,10 @@ fi
 #
 # Filter statistics: run separate filtering_stats.sh script
 FILTERING_STATS=`dirname $0`/filtering_stats.sh
+STATS_FILE="SOLiD_preprocess_truncation_filter.stats"
 if [ -f "${FILTERING_STATS}" ] ; then
     if [ -f "${processed_csfasta}" ] ; then
-	${FILTERING_STATS} ${csfasta} ${processed_csfasta} SOLiD_preprocess_truncation_filter.stats
+	${FILTERING_STATS} ${csfasta} ${processed_csfasta} $STATS_FILE
     else
 	echo ERROR output csfasta file not found, filtering stats calculcation skipped
     fi
