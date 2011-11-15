@@ -24,7 +24,10 @@ function usage() {
     echo "  csfasta and qual file pair"
     echo ""
     echo "Output"
-    echo "  <csfasta_base>_T_F3.csfasta and <cfasta_base>_QV_T_F3.qual"
+    echo "  <csfasta_base>_T_F3.csfasta"
+    echo "  <csfasta_base>_QV_T_F3.qual"
+    echo "  <csfasta_base>_T_F3.fastq"
+    echo "  Also writes statistics to 'SOLID_preprocess_filter.stats'"
 }
 # Check command line
 if [ $# -lt 2 ] || [ "$1" == "-h" ] || [ "$1" == "--help" ] ; then
@@ -35,13 +38,23 @@ fi
 #===========================================================================
 # Import function libraries
 #===========================================================================
-#
+##
+# General shell functions
 if [ -f functions.sh ] ; then
-    # Import local copies
+    # Import local copy
     . functions.sh
 else
-    # Import versions in share
+    # Import version in share
     . `dirname $0`/../share/functions.sh
+fi
+#
+# NGS-specific functions
+if [ -f ngs_utils.sh ] ; then
+    # Import local copy
+    . ngs_utils.sh
+else
+    # Import version in share
+    . `dirname $0`/../share/ngs_utils.sh
 fi
 #
 #===========================================================================
@@ -133,13 +146,16 @@ else
     fi
     # Remove temporary dir
     /bin/rm -rf ${tmp}
+    # Create fastq file
+    run_solid2fastq $processed_csfasta $processed_qual
 fi
 #
 # Filter statistics: run separate filtering_stats.sh script
 FILTERING_STATS=`dirname $0`/filtering_stats.sh
+STATS_FILE="SOLiD_preprocess_filter.stats"
 if [ -f "${FILTERING_STATS}" ] ; then
     if [ -f "${processed_csfasta}" ] ; then
-	${FILTERING_STATS} ${csfasta} ${processed_csfasta} SOLiD_preprocess_filter.stats
+	${FILTERING_STATS} ${csfasta} ${processed_csfasta} $STATS_FILE
     else
 	echo ERROR output csfasta file not found, filtering stats calculcation skipped
     fi
