@@ -70,6 +70,7 @@ function setup_ecoli() {
     set_mirror  ftp://ftp.ncbi.nlm.nih.gov/genomes/Bacteria/Escherichia_coli_536_uid58531
     set_archive NC_008253.fna --save-as NC_008253.fa
     set_ext     fa
+    set_md5sum  6471f7146b10d02ed1387d1d4606c767
 }
 #
 # dm3: fly
@@ -99,6 +100,7 @@ function setup_ws200() {
     set_mirror  ftp://ftp.sanger.ac.uk/pub/wormbase/FROZEN_RELEASES/WS200/genomes/c_elegans/sequences/dna
     set_archive c_elegans.WS200.dna.fa.gz
     set_ext     fa
+    set_md5sum  4a06dec987c26922d98c2ff4a17a18c4
 }
 #
 # WS201: worm
@@ -175,6 +177,7 @@ function setup_PhiX() {
     set_mirror  ftp://ftp.ncbi.nih.gov/genomes/Viruses/Enterobacteria_phage_phiX174_sensu_lato_uid14015
     set_archive NC_001422.fna --save-as NC_001422.fa
     set_ext     fa
+    set_md5sum  2283fcba1718adb63c1075b0bc08b638
 }
 #
 # rn4: rat
@@ -186,6 +189,7 @@ function setup_rn4() {
     set_mirror  http://hgdownload.cse.ucsc.edu/goldenPath/rn4/bigZips
     set_archive chromFa.tar.gz
     set_ext     fa
+    set_md5sum  82a9f1505bb4cfbf9517195ac9830244
     # Unpacks into subdirectories so need to move the fa files
     # to the current directory
     add_comment "Archive unpacks .fa files into subdirectories 1,2,3..etc"
@@ -229,6 +233,7 @@ function setup_SpR6() {
     set_mirror  ftp://ftp.ncbi.nih.gov/genomes/Bacteria/Streptococcus_pneumoniae_R6_uid57859
     set_archive NC_003098.fna --save-as NC_003098.fa
     set_ext     fa
+    set_md5sum  155392253284ba995186204579f61ca8
 }
 #
 # UniVec
@@ -240,6 +245,7 @@ function setup_UniVec() {
     set_mirror  ftp://ftp.ncbi.nih.gov/pub/UniVec
     set_archive UniVec
     set_ext     fa
+    set_md5sum  3aa0d2e6c4d86fcbb47e721cce084bbd
     # Rename the downloaded file
     add_processing_step "Rename download to give it fa extension" "mv UniVec UniVec_fasta.fa"
 }
