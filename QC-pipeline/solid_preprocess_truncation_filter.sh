@@ -37,13 +37,21 @@ function usage() {
 # Import function libraries
 #===========================================================================
 #
+# General shell functions
 if [ -f functions.sh ] ; then
-    # Import local copies
+    # Import local copy
     . functions.sh
+else
+    # Import version in share
+    . `dirname $0`/../share/functions.sh
+fi
+#
+# NGS-specific functions
+if [ -f ngs_utils.sh ] ; then
+    # Import local copy
     . ngs_utils.sh
 else
-    # Import versions in share
-    . `dirname $0`/../share/functions.sh
+    # Import version in share
     . `dirname $0`/../share/ngs_utils.sh
 fi
 #
