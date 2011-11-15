@@ -39,66 +39,27 @@ fi
 # Import function libraries
 #===========================================================================
 #
+# General shell functions
 if [ -f functions.sh ] ; then
-    # Import local copies
+    # Import local copy
     . functions.sh
 else
-    # Import versions in share
+    # Import version in share
     . `dirname $0`/../share/functions.sh
+fi
+#
+# NGS-specific functions
+if [ -f ngs_utils.sh ] ; then
+    # Import local copy
+    . ngs_utils.sh
+else
+    # Import version in share
+    . `dirname $0`/../share/ngs_utils.sh
 fi
 #
 #===========================================================================
 # Local functions
 #===========================================================================
-#
-# run_solid2fastq: create fastq file
-#
-# Provide names of csfasta and qual files (can include leading
-# paths)
-#
-# Creates fastq file in current directory
-#
-# Usage: solid2fastq <csfasta> <qual>
-function run_solid2fastq() {
-    # Input files
-    csfasta=$(abs_path ${1})
-    qual=$(abs_path ${2})
-    #
-    # Determine basename for fastq file: same as csfasta, with
-    # any leading directory and extension stripped off
-    fastq_base=$(baserootname ${csfasta})
-    #
-    # Check if fastq file already exists
-    fastq=${fastq_base}.fastq
-    if [ -f "${fastq}" ] ; then
-	echo Fastq file already exists, skipping solid2fastq
-    else
-	echo "--------------------------------------------------------"
-	echo Executing solid2fastq
-	echo "--------------------------------------------------------"
-	# Make a temporary directory to run in
-	# This stops incomplete fastq files being written to the working
-	# directory which might be left behind if solid2fastq stops (or
-	# is stopped) prematurely
-	wd=`pwd`
-	tmp=`mktemp -d`
-	cd $tmp
-	# Run solid2fastq
-	cmd="${SOLID2FASTQ} -o $fastq_base $csfasta $qual"
-	echo $cmd
-	$cmd
-	# Move back to working dir and copy preprocessed files
-	cd $wd
-	if [ -f "${tmp}/${fastq}" ] ; then
-	    /bin/cp ${tmp}/${fastq} .
-	    echo Created ${fastq}
-	else
-	    echo WARNING no file ${fastq}
-	fi
-	# Remove temporary dir
-	/bin/rm -rf ${tmp}
-    fi
-}
 #
 # Run SOLiD_preprocess_filter
 #
@@ -250,9 +211,6 @@ fi
 #
 # SOLiD_preprocess_filter
 solid_preprocess_filter ${CSFASTA} ${QUAL}
-#
-# Run solid2fastq to make fastq file from filtered files
-run_solid2fastq $(baserootname $CSFASTA)_T_F3.csfasta $(baserootname $CSFASTA)_QV_T_F3.qual
 #
 # QC_boxplots
 #
