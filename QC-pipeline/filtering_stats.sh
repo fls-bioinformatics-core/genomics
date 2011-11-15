@@ -84,6 +84,9 @@ if [ $? == 1 ] ; then
 	tmp_file=`mktemp`
 	grep -v "^${base_csfasta}"$'\t' ${stats_file} > ${tmp_file}
 	/bin/mv -f ${tmp_file} ${stats_file}
+	# Explicitly set permissions (as the temp file has restricted
+	# permissions)
+	chmod ug+rw ${stats_file}
     fi
     # Write to stats file
     echo ${base_csfasta}$'\t'${n_reads_primary}$'\t'${n_reads_filter}$'\t'${n_filtered}$'\t'${percent_filtered} >> ${stats_file}
