@@ -595,7 +595,7 @@ function clean_up() {
 # Get a user's real name (from finger) based on their user name
 function user_real_name() {
     local real_name=`finger $1 2>&1 | grep -v "not found" | grep -o "Name: .*$" | cut -d" " -f2-`
-    if [ -z $real_name ] ; then
+    if [ -z "$real_name" ] ; then
 	# Couldn't acquire real name from finger
 	# Use username instead
 	real_name=$USER
