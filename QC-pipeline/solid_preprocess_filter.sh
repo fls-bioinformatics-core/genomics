@@ -110,7 +110,7 @@ else
     # directory which might be left behind if the preprocessor stops (or
     # is stopped) prematurely
     wd=`pwd`
-    tmp=`mktemp -d`
+    tmp=$(make_temp -d --tmpdir=$wd --suffix=.preprocess)
     cd $tmp
     echo "Working in temporary directory ${tmp}"
     # Run preprocessor
