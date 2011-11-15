@@ -40,9 +40,11 @@ function usage() {
 if [ -f functions.sh ] ; then
     # Import local copies
     . functions.sh
+    . ngs_utils.sh
 else
     # Import versions in share
     . `dirname $0`/../share/functions.sh
+    . `dirname $0`/../share/ngs_utils.sh
 fi
 #
 #===========================================================================
@@ -95,72 +97,6 @@ function preprocess_filter() {
     echo $cmd
     $cmd
     return $?
-}
-#
-# run_solid2fastq: create fastq file
-#
-# Provide names of csfasta and qual files (can include leading
-# paths)
-#
-# Creates fastq file in current directory
-#
-# Usage: run_solid2fastq <csfasta> <qual> [ <output_basename> ]
-function run_solid2fastq() {
-    # Input files
-    local csfasta=$(abs_path ${1})
-    local qual=$(abs_path ${2})
-    #
-    local status=0
-    #
-    # Determine basename for fastq file: if not explicitly
-    # specified then is same as csfasta (with leading directory
-    # and extension stripped off)
-    if [ ! -z $3 ] ; then
-	local fastq_base=$3
-    else
-	local fastq_base=$(baserootname ${csfasta})
-    fi
-    #
-    # Check if fastq file already exists
-    local fastq=${fastq_base}.fastq
-    if [ -f "${fastq}" ] ; then
-	echo Fastq file already exists, skipping solid2fastq
-    else
-	echo "--------------------------------------------------------"
-	echo Executing solid2fastq
-	echo "--------------------------------------------------------"
-	# Make a temporary directory to run in
-	# This stops incomplete fastq files being written to the working
-	# directory which might be left behind if solid2fastq stops (or
-	# is stopped) prematurely
-	local wd=`pwd`
-	local tmp=$(make_temp -d --tmpdir=$wd --suffix=.solid2fastq)
-	cd $tmp
-	# Run solid2fastq
-	local cmd="${SOLID2FASTQ} -o $fastq_base $csfasta $qual"
-	echo $cmd
-	$cmd
-	# Termination status
-	status=$?
-	# Move back to working dir and copy preprocessed files
-	cd $wd
-	if [ -f "${tmp}/${fastq}" ] ; then
-	    /bin/cp ${tmp}/${fastq} .
-	    echo Created ${fastq}
-	else
-	    echo WARNING no file ${fastq}
-	fi
-	# Remove temporary dir
-	/bin/rm -rf ${tmp}
-    fi
-    return $status
-}
-#
-# number_of_reads: count reads in csfasta file
-#
-# Usage: number_of_reads <csfasta>
-function number_of_reads() {
-    echo `grep -c "^>" $1`
 }
 #
 #===========================================================================
