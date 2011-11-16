@@ -67,15 +67,21 @@ https://github.com/dln/pycassa/blob/90736f8146c1cac8287f66e8c8b64cb80e011513/pyc
 # Import modules that this module depends on
 #######################################################################
 
-import xlwt, xlrd
-import xlutils, xlutils.copy
-from xlwt.Utils import rowcol_to_cell
-from xlwt import easyxf
-
 import os
 import re
 import string
 import logging
+
+try:
+    import xlwt, xlrd
+    import xlutils, xlutils.copy
+    from xlwt.Utils import rowcol_to_cell
+    from xlwt import easyxf
+except ImportError:
+    logging.error("Spreadsheet.py: unable to import one or more 3rd party XLS libraries")
+    logging.error("Spreadsheet.py: i.e. xlwt, xlrd, xlutils")
+    logging.error("Spreadsheet.py: Ensure these are installed and available on your PYTHONPATH")
+    raise
 
 #######################################################################
 # Class definitions
