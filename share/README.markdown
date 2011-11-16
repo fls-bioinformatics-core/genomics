@@ -9,6 +9,9 @@ Shell function libraries
 
 *   `lock.sh`: library functions for locking files shared between scripts.
 
+*   `ngs_utils.`: shell functions wrapping NGS programs (e.g. `solid2fastq`) and
+    providing NGS-specific helper functions.
+
 Python modules
 --------------
 
