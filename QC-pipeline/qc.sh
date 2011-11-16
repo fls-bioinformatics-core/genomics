@@ -100,7 +100,7 @@ function qc_boxplotter() {
 	# This stops intermediate files cluttering the working directory
 	# if the boxplotter stops (or is stopped) prematurely
 	wd=`pwd`
-	tmp=`mktemp -d`
+	tmp=$(make_temp -d --tmpdir=$wd --suffix=.boxplotter)
 	cd $tmp
 	# Make a link to the input qual file
 	if [ ! -f "${qual_base}" ] ; then
