@@ -124,6 +124,16 @@ for a set of column indices or column names:
 >>> data[0].subset('chr1','start')
 ['chr1',123456]
 
+Sorting Data
+============
+
+The 'sort' method offers a simple way of sorting the data lines within
+a TabFile. The simplest example is sorting on a specific column:
+
+>>> data.sort(lambda line: line['start'])
+
+See the method documentation for more detail on using the 'sort' method.
+
 Manipulating Data: whole column operations
 ==========================================
 
@@ -436,6 +446,28 @@ class TabFile:
             self.appendColumn(column_name)
         for line in self:
             line[column_name] = compute_func(line)
+
+    def sort(self,sort_func,reverse=False):
+        """Sort data using arbitrary function
+
+        Performs an in-place sort based on the suppled sort_func.
+
+        sort_func should be a function object which takes a TabDataLine
+        object as input and returns a single numerical value; the
+        data lines will be sorted in ascending order of these values
+        (or descending order if reverse is set to True).
+
+        To sort on the value of a specific column use e.g.
+        
+        >>> tabfile.sort(lambda line: line['col'])
+
+        Arguments:
+          sort_func: function object taking a TabDataLine as input and
+            returning a single numerical value
+          reverse: (optional) Boolean, either False (default) to sort
+            in ascending order, or True to sort in descendin order
+        """
+        self.__data = sorted(self.__data,key=sort_func,reverse=reverse)
 
     def write(self,filen,include_header=False):
         """Write the TabFile data to an output file
@@ -989,6 +1021,35 @@ chr2\t1234\t5678\t6.8
         results = [233,323,4444]
         for i in range(len(tabfile)):
             self.assertEqual(tabfile[i]['data'],results[i])
+
+class TestSortTabFile(unittest.TestCase):
+
+    def setUp(self):
+        # Make file-like object to read data in
+        self.fp = cStringIO.StringIO(
+"""#chr\tstart\tend\tdata
+chr1\t567\t890\t5.7
+chr1\t1\t234\t6.8
+chr2\t1234\t5678\t3.4
+""")
+
+    def test_sort_on_column(self):
+        """Sort data on a numerical column into (default) ascending order
+        """
+        tabfile = TabFile('test',self.fp,first_line_is_header=True)
+        tabfile.sort(lambda line: line['data'])
+        sorted_data = [3.4,5.7,6.8]
+        for i in range(len(tabfile)):
+            self.assertEqual(tabfile[i]['data'],sorted_data[i])
+
+    def test_reverse_sort_on_column(self):
+        """Sort data on a numerical column into (reverse) descending order
+        """
+        tabfile = TabFile('test',self.fp,first_line_is_header=True)
+        tabfile.sort(lambda line: line['data'],reverse=True)
+        sorted_data = [6.8,5.7,3.4]
+        for i in range(len(tabfile)):
+            self.assertEqual(tabfile[i]['data'],sorted_data[i])
         
 class TestTabDataLine(unittest.TestCase):
 
