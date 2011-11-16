@@ -493,6 +493,9 @@ class TabFile:
     def __len__(self):
         return len(self.__data)
 
+    def __repr__(self):
+        return '\n'.join([str(x) for x in self.__data])
+
 class TabDataLine:
     """Class to store a line of data from a tab-delimited file
 
