@@ -86,7 +86,8 @@ if __name__ == "__main__":
 
     # Insert "order" column
     data.appendColumn("order")
-    data[0]['order'] = "order"
+    # Perhaps confusingly must also insert initial value "#order"
+    data[0]['order'] = "#order"
     for i in range(1,len(data)):
         data[i]['order'] = i
     # Reorder columns to put it at the start
