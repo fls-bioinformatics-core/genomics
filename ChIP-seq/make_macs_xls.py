@@ -45,16 +45,19 @@ import Spreadsheet
 
 if __name__ == "__main__":
     # Get input file name
-    if len(sys.argv) != 2:
-        print "Usage: %s <macs_file>" % sys.argv[0]
+    if len(sys.argv) < 2 or len(sys.argv) > 3:
+        print "Usage: %s <macs_file> [ <xls_out> ]" % sys.argv[0]
         sys.exit(1)
     macs_in = sys.argv[1]
 
-    # Build output file name
-    # XLS_<input_name>.xls
-    # Note that MACS output file might already have an .xls extension
-    # but we'll add an explicit .xls extension
-    xls_out = "XLS_"+os.path.splitext(os.path.basename(macs_in))[0]+".xls"
+    # Build output file name: if not explicitly supplied on the command
+    # line then use "XLS_<input_name>.xls"
+    if len(sys.argv) == 3:
+        xls_out = sys.argv[2]
+    else:
+        # MACS output file might already have an .xls extension
+        # but we'll add an explicit .xls extension
+        xls_out = "XLS_"+os.path.splitext(os.path.basename(macs_in))[0]+".xls"
     print "Input file: %s" % macs_in
     print "Output XLS: %s" % xls_out
 
