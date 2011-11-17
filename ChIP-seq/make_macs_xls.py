@@ -11,7 +11,15 @@
 
 """macs_to_XLS.py
 
-Convert MACS output file to XLS spreadsheet"""
+Convert MACS output file to XLS spreadsheet
+
+Given tab-delimited output from MACS, creates an XLS spreadsheet with
+3 sheets: one containing the tabulated data plus extra columns derived
+from that data (e.g. summit+/-100bps); one containing the header
+information from the input; and one describing what each of the columns
+in the data sheet are.
+
+The program was developed to work with MACS 1.4."""
 
 #######################################################################
 # Import modules that this module depends on
@@ -47,6 +55,13 @@ if __name__ == "__main__":
     # Get input file name
     if len(sys.argv) < 2 or len(sys.argv) > 3:
         print "Usage: %s <macs_file> [ <xls_out> ]" % sys.argv[0]
+        print
+        print "Create an XLS spreadsheet from the output of the MACS peak caller."
+        print
+        print "The output XLS file will be written to <xls_out> if specified,"
+        print "otherwise the output file will be called XLS_<macs_file>.xls."
+        print
+        print "Works with output from MACS 1.4."
         sys.exit(1)
     macs_in = sys.argv[1]
 
