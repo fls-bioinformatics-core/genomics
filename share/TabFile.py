@@ -9,6 +9,8 @@
 #
 #########################################################################
 
+__version__ = 0.1.0
+
 """TabFile
 
 Classes for working with generic tab-delimited data.

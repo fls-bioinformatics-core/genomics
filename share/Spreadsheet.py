@@ -7,6 +7,8 @@
 #
 #########################################################################
 
+__version__ = 0.1.0
+
 """Spreadsheet.py
 
 Provides classes for writing data to an Excel spreadsheet, using the 3rd party modules
