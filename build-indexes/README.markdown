@@ -9,6 +9,7 @@ Scripts for setting up genome indexes for various programs:
  *  `bowtie_build_indexes.sh`: build color- and base-space bowtie indexes
  *  `srma_build_indexes.sh`: build indexes for srma
  *  `setup_genome_indexes.sh`: automatically and reproducibly set up genome indexes
+ *  `build_rRNA_bowtie_indexes.sh`: create indexes and fastq_screen.conf for rRNA
 
 fetch_fasta.sh
 --------------
@@ -210,6 +211,43 @@ It also creates:
  *   `fastq_screen` directory: containing specified `fastq_screen` `.conf` files
  *   Galaxy `.loc` files: for bowtie, bfast, picard, all_fasta and fastq_screen
  *   `genome_indexes.html` file: HTML file listing the available genome indexes
+
+
+build_rRNA_bowtie_indexes.sh
+-----------------------------
+Create bowtie indexes and `fastq_screen.conf` file for rRNA sequences.
+
+### Usage ###
+
+    build_rRNA_bowtie_indexes.sh <rRNAs>.tar.gz
+
+The `build_rRNA_bowtie_indexes.sh` script unpacks the supplied archive file
+`<rRNAs>.tar.gz` and copies the FASTA-formatted sequence files it contains, then
+generates bowtie indexes from these and produces a `fastq_screen.conf` file for
+them.
+
+### Inputs ###
+
+The script expects the input `<rRNAs>.tar.gz` file to unpack into the following
+directory structure:
+
+   rRNAs/
+	fasta/
+             ... fasta files ...
+
+### Outputs ###
+
+The script creates the following directory structure in the current directory:
+
+    pwd/
+        rRNAs/
+             bowtie/
+                   ...bowtie indexes...
+             fasta/
+		   ...rRNA fasta files...
+
+It also creates `fastq_screen_rRNAs.conf` in the `fastq_screen` subdirectory of
+the current directory.
 
 
 Note on preparing reference genome files
