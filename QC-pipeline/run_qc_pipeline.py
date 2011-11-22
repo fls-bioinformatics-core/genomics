@@ -86,7 +86,7 @@ def SendReport(email_addr,group,job_list):
                                                        job.working_dir,
                                                        (job.end_time - job.start_time),
                                                        job.status())
-        print "Sending email notification to %s re group %s" % (email_addr,group)
+        print "Sending email notification to %s re group '%s'" % (email_addr,group)
         SendEmail(subject,email_addr,report)
     else:
         print "Unable to send email notification: no address set"
