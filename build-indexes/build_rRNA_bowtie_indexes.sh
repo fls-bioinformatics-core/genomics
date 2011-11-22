@@ -66,7 +66,7 @@ for i in `ls ../fasta` ; do
     echo $i
     ${SCRIPT_DIR}/bowtie_build_indexes.sh ../fasta/$i
     if [ $? -ne 0 ] ; then
-	echo Failure building bowtie index
+	echo Failure building bowtie index for $i
 	exit 1
     fi
 done
