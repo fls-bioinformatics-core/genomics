@@ -94,13 +94,27 @@ def SendReport(email_addr,group,job_list):
 # SendEmail: send an email message via mutt
 def SendEmail(subject,recipient,message):
     """Send an email message via the 'mutt' client
+
+    Arguments:
+      subject: the subject line for the message
+      recipicient: email address to send the message to
+      message: text to be put in the message body
+
+    Returns:
+      If the send operation was successful then returns True, otherwise
+      returns False.
     """
-    p = subprocess.Popen(('mutt','-s',subject,recipient),
-                         stdin=subprocess.PIPE)
-    p.stdin.write(message)
-    p.stdin.close()
-    p.wait()
-    return
+    try:
+        p = subprocess.Popen(('mutt','-s',subject,recipient),
+                             stdin=subprocess.PIPE)
+        p.stdin.write(message)
+        p.stdin.close()
+        p.wait()
+        return True
+    except Exception, ex:
+        logging.error("SendMail failed to send email via mutt")
+        logging.error("Exception: %s" % ex)
+        return False
 
 #######################################################################
 # Main program
