@@ -7,7 +7,7 @@
 #
 #########################################################################
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 
 """Spreadsheet.py
 
@@ -50,6 +50,7 @@ Module constants
 ----------------
 
 MAX_LEN_WORKSHEET_TITLE: maximum length allowed by xlwt for worksheet titles
+MAX_LEN_WORKSHEET_CELL_VALUE: maximum number of characters allowed for cell value
 
 Dependencies
 ------------
@@ -68,6 +69,18 @@ but if you're using Python<2.5 then you need a backported version of
 functools, try:
 
 https://github.com/dln/pycassa/blob/90736f8146c1cac8287f66e8c8b64cb80e011513/pycassa/py25_functools.py
+
+Tests
+-----
+This module has a set of unit tests built-in; to run do
+
+% python Spreadsheet.py
+
+or
+
+% python Spreadsheet.py -v
+
+for verbose output.
 """
 
 #######################################################################
@@ -96,6 +109,9 @@ except ImportError:
 
 # Maximum length for worksheet title allowed by xlwt
 MAX_LEN_WORKSHEET_TITLE = 31
+
+# Maximum number of characters allowed for cell value
+MAX_LEN_WORKSHEET_CELL_VALUE = 250
 
 #######################################################################
 # Class definitions
@@ -547,8 +563,15 @@ class Worksheet:
                         try:
                             converted = float(converted)
                         except ValueError:
-                            # Not a float, leave as input
-                            pass
+                            # Not a float, leave as a string BUT check
+                            # the length
+                            if len(converted) > MAX_LEN_WORKSHEET_CELL_VALUE:
+                                logging.warning("Saving sheet '%s' (row %d, col %d)" %
+                                                (self.title,self.current_row,cindex))
+                                logging.warning("Truncating value '%s...' to %d characters" %
+                                                (converted[:15],
+                                                 MAX_LEN_WORKSHEET_CELL_VALUE))
+                                converted = converted[:MAX_LEN_WORKSHEET_CELL_VALUE]
                     item = converted
                     self.worksheet.write(self.current_row,cindex,item,style)
                     # Set the column widths
@@ -758,6 +781,7 @@ class Spreadsheet:
 #######################################################################
 
 import unittest
+import tempfile
 
 class TestWorkbook(unittest.TestCase):
     """Tests of the Workbook class
@@ -978,6 +1002,32 @@ class TestWorksheetInsertColumn(unittest.TestCase):
         new_data = ["1\thello\t2\t3","4\t1\t5\t6","\t2"]
         for i in range(len(new_data)):
             self.assertEqual(new_data[i],ws.data[i])
+
+class TestWorkbookSave(unittest.TestCase):
+    """Test saving the workbook to disk
+    """
+
+    def setUp(self):
+        """Set up common to all tests in this class
+        """
+        self.wb = Workbook()
+        # Make a temporary file name
+        self.xls = tempfile.mkstemp(suffix=".xls")
+        os.close(self.xls[0])
+        self.xls = self.xls[1]
+
+    def tearDown(self):
+        """Do clean up after tests
+        """
+        if os.path.exists(self.xls): os.remove(self.xls)
+
+    def test_too_long_cell_value(self):
+        """Insert a data item into a worksheet which exceeds the xlwt length limit
+        """
+        long_value = "This is a very very very very very very very very very very very very very very very very very very long long long long looooooooong loooooooooooooooooooooooong loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong string value to put into a cell"
+        ws = self.wb.addSheet("test sheet")
+        ws.addText(long_value)
+        self.wb.save(self.xls)
 
 #######################################################################
 # Main program
