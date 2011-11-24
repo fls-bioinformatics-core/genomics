@@ -7,7 +7,7 @@
 #
 #########################################################################
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 """Spreadsheet.py
 
@@ -45,6 +45,11 @@ Simple usage examples
 >>> wb.addEmptyRow()
 >>> wb.addRow(['DR_1',875897,713425])
 >>> wb.write()
+
+Module constants
+----------------
+
+MAX_LEN_WORKSHEET_TITLE: maximum length allowed by xlwt for worksheet titles
 
 Dependencies
 ------------
@@ -84,6 +89,13 @@ except ImportError:
     logging.error("Spreadsheet.py: i.e. xlwt, xlrd, xlutils")
     logging.error("Spreadsheet.py: Ensure these are installed and available on your PYTHONPATH")
     raise
+
+#######################################################################
+# Constants
+#######################################################################
+
+# Maximum length for worksheet title allowed by xlwt
+MAX_LEN_WORKSHEET_TITLE = 31
 
 #######################################################################
 # Class definitions
@@ -268,6 +280,10 @@ class Worksheet:
     def __init__(self,workbook,title,xlrd_index=None,xlrd_sheet=None):
         """Create a new Worksheet instance.
 
+        Note that xlwt imposes a limit of the length of title strings; if
+        the supplied title exceeds this limit then the title will be
+        truncated.
+
         Arguments:
           workbook: 'parent' xlwt.workbook instance
           title: title text for the sheet
@@ -277,17 +293,22 @@ class Worksheet:
             xlrd.worksheet instance
         """
         self.title = title
+        if len(self.title) > MAX_LEN_WORKSHEET_TITLE:
+            # Truncate too-long title string
+            self.title = self.title[:MAX_LEN_WORKSHEET_TITLE]
+            logging.warning("Worksheet title > %d characters" % MAX_LEN_WORKSHEET_TITLE)
+            logging.warning("Truncated to '%s'" % self.title)
         self.workbook = workbook
         if xlrd_index is None and xlrd_sheet is None:
             # New worksheet
+            self.worksheet = self.workbook.add_sheet(self.title)
             self.is_new = True
-            self.worksheet = self.workbook.add_sheet(title)
             self.current_row = -1
             self.ncols = 0
         else:
             # Existing worksheet
-            self.is_new = False
             self.worksheet = self.workbook.get_sheet(xlrd_index)
+            self.is_new = False
             self.current_row = xlrd_sheet.nrows - 1
             self.ncols = xlrd_sheet.ncols
         self.data = []
@@ -779,6 +800,14 @@ class TestWorksheet(unittest.TestCase):
         """
         self.wb = Workbook()
 
+    def test_too_long_title(self):
+        """Try to create a worksheet with a title exceeding xlwt length limit
+        """
+        long_title = "This is a very long title indeed for a worksheet"
+        trunc_title = long_title[0:MAX_LEN_WORKSHEET_TITLE]
+        ws = self.wb.addSheet(long_title)
+        self.assertEqual(ws.title,trunc_title)
+
     def test_add_tab_data(self):
         """Add data to the sheet as tab delimited rows
         """
@@ -950,11 +979,26 @@ class TestWorksheetInsertColumn(unittest.TestCase):
         for i in range(len(new_data)):
             self.assertEqual(new_data[i],ws.data[i])
 
+##class TestBigXLS(unittest.TestCase):
+##    """Test writing big XLS files
+##    """
+##    def test_writing_big_data_in_one_sheet(self):
+##        """Write a lot of data into a workbook with one sheet
+##        """
+##        xlsfile = "big.xls"
+##        text="All\twork\tno\tplay\tmakes\tJack\ta\tdull\tboy"
+##        wb = Workbook()
+##        ws = wb.addSheet("test")
+##        for i in range(1000):
+##            ws.addText(text)
+##        wb.save(xlsfile)
+
 #######################################################################
 # Main program
 #######################################################################
 
 if __name__ == "__main__":
+    logging.getLogger().setLevel(logging.CRITICAL)
     unittest.main()
 
 
