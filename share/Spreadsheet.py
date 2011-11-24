@@ -979,20 +979,6 @@ class TestWorksheetInsertColumn(unittest.TestCase):
         for i in range(len(new_data)):
             self.assertEqual(new_data[i],ws.data[i])
 
-##class TestBigXLS(unittest.TestCase):
-##    """Test writing big XLS files
-##    """
-##    def test_writing_big_data_in_one_sheet(self):
-##        """Write a lot of data into a workbook with one sheet
-##        """
-##        xlsfile = "big.xls"
-##        text="All\twork\tno\tplay\tmakes\tJack\ta\tdull\tboy"
-##        wb = Workbook()
-##        ws = wb.addSheet("test")
-##        for i in range(1000):
-##            ws.addText(text)
-##        wb.save(xlsfile)
-
 #######################################################################
 # Main program
 #######################################################################
