@@ -130,6 +130,9 @@ def write_spreadsheet(solid_runs,spreadsheet):
     for run in solid_runs:
         # First line: date, flow cell layout, and id
         slide_layout = run.slideLayout()
+        if slide_layout is None:
+            # Unknown layout arrangement
+            slide_layout = "%d samples" % len(run.samples)
         description = "FC"+str(run.run_info.flow_cell)+" ("+slide_layout+")"
         # Run with only one sample
         total_reads = ''
