@@ -546,15 +546,16 @@ class Worksheet:
                     formula = formula.replace('?',str(self.current_row+1))
                     # Substitute '#' with current column
                     formula = formula.replace('#',string.uppercase[cindex])
+                    # Create the item
                     try:
-                        self.worksheet.write(self.current_row,cindex,
-                                             xlwt.Formula(formula),style)
+                        item = xlwt.Formula(formula)
                     except Exception, ex:
                         logging.warning("Error writing formula '%s' to cell %s%s: %s",
                                         formula,
                                         string.uppercase[cindex],
                                         self.current_row+1,
                                         ex)
+                        item = "FORMULA_ERROR"
                 else:
                     # Deal with a data item
                     # Attempt to convert to a number type i.e. integer/float
@@ -577,6 +578,8 @@ class Worksheet:
                                                  MAX_LEN_WORKSHEET_CELL_VALUE))
                                 converted = converted[:MAX_LEN_WORKSHEET_CELL_VALUE]
                     item = converted
+                # Write the item to the current line
+                try:
                     self.worksheet.write(self.current_row,cindex,item,style)
                     # Set the column widths
                     len_item = len(str(item))
@@ -585,9 +588,12 @@ class Worksheet:
                             self.max_col_width[cindex] = len_item
                     except IndexError:
                         self.max_col_width.append(len_item)
-                    self.worksheet.col(cindex).width = \
-                        256*(self.max_col_width[cindex] + 5)
-                cindex += 1
+                        self.worksheet.col(cindex).width = \
+                            256*(self.max_col_width[cindex] + 5)
+                    cindex += 1
+                except ValueError, ex:
+                    logging.error("couldn't write item to sheet '%s' (row %d col %d)" %
+                                  (self.title,self.current_row+1,cindex+1))
         # Update/reset the sheet properties etc
         self.data = []
         self.is_new = False
