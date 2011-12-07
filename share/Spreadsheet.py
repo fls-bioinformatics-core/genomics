@@ -588,8 +588,8 @@ class Worksheet:
                             self.max_col_width[cindex] = len_item
                     except IndexError:
                         self.max_col_width.append(len_item)
-                        self.worksheet.col(cindex).width = \
-                            256*(self.max_col_width[cindex] + 5)
+                    self.worksheet.col(cindex).width = \
+                        256*(self.max_col_width[cindex] + 5)
                     cindex += 1
                 except ValueError, ex:
                     logging.error("couldn't write item to sheet '%s' (row %d col %d)" %
