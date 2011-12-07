@@ -1010,6 +1010,22 @@ class TestWorkbookSave(unittest.TestCase):
         """
         if os.path.exists(self.xls): os.remove(self.xls)
 
+    def test_basic_write(self):
+        """Create and write a simple one-sheet spreadsheet
+        """
+        ws = self.wb.addSheet("test sheet")
+        ws.addText("This is a\ttest")
+        self.wb.save(self.xls)
+        self.assertTrue(os.path.exists(self.xls))
+
+    def test_basic_write_with_formulae(self):
+        """Create and write a simple one-sheet spreadsheet including formulae
+        """
+        ws = self.wb.addSheet("test sheet")
+        ws.addText("Test\t1\t2\t=B?+C?")
+        self.wb.save(self.xls)
+        self.assertTrue(os.path.exists(self.xls))
+
     def test_too_long_cell_value(self):
         """Insert a data item into a worksheet which exceeds the xlwt length limit
         """
