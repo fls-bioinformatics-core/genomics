@@ -1018,6 +1018,17 @@ class TestWorkbookSave(unittest.TestCase):
         ws.addText(long_value)
         self.wb.save(self.xls)
 
+    def test_too_many_rows(self):
+        """Insert more rows into a worksheet than xlwt can handle
+        """
+        n_rows = 65536 + 1
+        data = []
+        ws = self.wb.addSheet("test sheet")
+        for i in range(n_rows):
+            data.append("value")
+        ws.addText('\n'.join(data))
+        self.wb.save(self.xls)
+
 #######################################################################
 # Main program
 #######################################################################
