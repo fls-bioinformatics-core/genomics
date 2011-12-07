@@ -51,6 +51,7 @@ Module constants
 
 MAX_LEN_WORKSHEET_TITLE: maximum length allowed by xlwt for worksheet titles
 MAX_LEN_WORKSHEET_CELL_VALUE: maximum number of characters allowed for cell value
+MAX_NUMBER_ROWS_PER_WORKSHEET: maximum number of rows allowed per worksheet by xlwt
 
 Dependencies
 ------------
@@ -112,6 +113,9 @@ MAX_LEN_WORKSHEET_TITLE = 31
 
 # Maximum number of characters allowed for cell value
 MAX_LEN_WORKSHEET_CELL_VALUE = 250
+
+# Maximum number of rows allowed per worksheet by xlwt
+MAX_NUMBER_ROWS_PER_WORKSHEET = 65536
 
 #######################################################################
 # Class definitions
@@ -1035,9 +1039,9 @@ class TestWorkbookSave(unittest.TestCase):
         self.wb.save(self.xls)
 
     def test_too_many_rows(self):
-        """Insert more rows into a worksheet than xlwt can handle
+        """Insert one more row into a worksheet than xlwt can handle
         """
-        n_rows = 65536 + 1
+        n_rows = MAX_NUMBER_ROWS_PER_WORKSHEET + 1
         data = []
         ws = self.wb.addSheet("test sheet")
         for i in range(n_rows):
