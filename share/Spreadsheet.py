@@ -1021,14 +1021,30 @@ class TestWorkbookSave(unittest.TestCase):
         ws.addText("This is a\ttest")
         self.wb.save(self.xls)
         self.assertTrue(os.path.exists(self.xls))
+        # Open the file with xlrd and check it contains what we expect
+        rb = xlrd.open_workbook(self.xls)
+        self.assertEqual(len(rb.sheets()),1)
+        s = rb.sheets()[0]
+        self.assertEqual(s.name,"test sheet")
+        self.assertEqual(s.nrows,1)
+        self.assertEqual(s.ncols,2)
+        self.assertEqual(s.cell(0,0).value,"This is a")
+        self.assertEqual(s.cell(0,1).value,"test")
 
-    def test_basic_write_with_formulae(self):
-        """Create and write a simple one-sheet spreadsheet including formulae
+    def test_basic_write_with_formula(self):
+        """Create and write a simple one-sheet spreadsheet including a formula
         """
         ws = self.wb.addSheet("test sheet")
         ws.addText("Test\t1\t2\t=B?+C?")
         self.wb.save(self.xls)
         self.assertTrue(os.path.exists(self.xls))
+        # Open the file with xlrd and check it contains what we expect
+        rb = xlrd.open_workbook(self.xls)
+        self.assertEqual(len(rb.sheets()),1)
+        s = rb.sheets()[0]
+        self.assertEqual(s.name,"test sheet")
+        self.assertEqual(s.nrows,1)
+        self.assertEqual(s.ncols,4)
 
     def test_too_long_cell_value(self):
         """Insert a data item into a worksheet which exceeds the xlwt length limit
@@ -1037,6 +1053,15 @@ class TestWorkbookSave(unittest.TestCase):
         ws = self.wb.addSheet("test sheet")
         ws.addText(long_value)
         self.wb.save(self.xls)
+        self.assertTrue(os.path.exists(self.xls))
+        # Open the file with xlrd and check it contains what we expect
+        rb = xlrd.open_workbook(self.xls)
+        self.assertEqual(len(rb.sheets()),1)
+        s = rb.sheets()[0]
+        self.assertEqual(s.name,"test sheet")
+        self.assertEqual(s.nrows,1)
+        self.assertEqual(s.ncols,1)
+        self.assertEqual(s.cell(0,0).value,long_value[:MAX_LEN_WORKSHEET_CELL_VALUE])
 
     def test_too_many_rows(self):
         """Insert one more row into a worksheet than xlwt can handle
@@ -1048,6 +1073,14 @@ class TestWorkbookSave(unittest.TestCase):
             data.append("value")
         ws.addText('\n'.join(data))
         self.wb.save(self.xls)
+        self.assertTrue(os.path.exists(self.xls))
+        # Open the file with xlrd and check it contains what we expect
+        rb = xlrd.open_workbook(self.xls)
+        self.assertEqual(len(rb.sheets()),1)
+        s = rb.sheets()[0]
+        self.assertEqual(s.name,"test sheet")
+        self.assertEqual(s.nrows,MAX_NUMBER_ROWS_PER_WORKSHEET)
+        self.assertEqual(s.ncols,1)
 
 #######################################################################
 # Main program
