@@ -347,8 +347,8 @@ class Worksheet:
         """
         for row in rows:
             self.data.append(row)
-        # Update number of columns
-        self.__update_ncols()
+            # Update number of columns
+            self.ncols = max(self.ncols,len(row.split('\t')))
 
     def addText(self,text):
         """Append and populate rows from text.
@@ -448,8 +448,8 @@ class Worksheet:
                 self.data[i] = row
             except IndexError:
                 self.data.append(row)
-        # Update number of columns
-        self.__update_ncols()
+            # Update number of columns
+            self.ncols = max(self.ncols,len(row.split('\t')))
         # Finished successfully
         return True
 
@@ -473,12 +473,12 @@ class Worksheet:
         new_row = self.data[row].split('\t')
         while len(new_row) < col + 1:
             new_row.append('')
+        # Update number of columns
+        self.ncols = max(self.ncols,len(new_row))
         # Insert the new value
         new_row[col] = str(value)
         new_row = '\t'.join(new_row)
         self.data[row] = new_row
-        # Update number of columns
-        self.__update_ncols()
 
     def getColumnId(self,name):
         """Lookup XLS column id from name of column.
@@ -589,17 +589,6 @@ class Worksheet:
         self.is_new = False
         # Finished
         return
-
-    def __update_ncols(self):
-        """Internal: update the ncols property
-
-        This method should be called after operations which add or
-        remove data to or from the spreadsheet.
-        """
-        for row in self.data:
-            self.ncols = max(self.ncols,len(row.split('\t')))
-        if self.ncols > 256:
-            logging.warning("Number of columns exceeds 256")
 
 class Styles:
     """Class for creating and caching EasyXfStyle objects.
