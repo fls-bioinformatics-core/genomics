@@ -8,7 +8,8 @@
 # 1. Unpack the rRNA.tar.gz file
 # 2. Iterate over the sequence files and create the
 #    bowtie indexes
-# 3. Make the fastq_screen file
+# 3. Make the fastq_screen files for colorspace and
+#    nucleotide indexes
 #
 # Import functions
 . `dirname $0`/../share/functions.sh
@@ -71,10 +72,21 @@ for i in `ls ../fasta` ; do
     fi
 done
 #
-# Make fastq_conf file
-FASTQ_SCREEN_CONF=${GENOME_INDEXES}/fastq_screen/fastq_screen_rRNA.conf
-cd ../..
-cat <<EOF > ${FASTQ_SCREEN_CONF}
+# Make fastq_conf files
+for index_type in "color nt" ; do
+    if [ "$index_type" == "color" ] ; then
+	index_type="colorspace"
+	bowtie_ext=_c
+	conf_ext=
+    else
+	index_type="nucleotide space"
+	bowtie_ext=
+	conf_ext=_nt
+    fi
+    #
+    FASTQ_SCREEN_CONF=${GENOME_INDEXES}/fastq_screen/fastq_screen_rRNA${conf_ext}.conf
+    cd ../..
+    cat <<EOF > ${FASTQ_SCREEN_CONF}
 ## fastq_screen_rRNA ##
 # Description: rRNA
 #
@@ -88,11 +100,12 @@ cat <<EOF > ${FASTQ_SCREEN_CONF}
 THREADS		8
 
 EOF
-for i in `ls rRNAs/fasta` ; do
-    name=$(baserootname $i)
-    display_name=`echo $name | cut -d"_" -f1`
-    bowtie_cs_index=$(abs_path rRNAs/bowtie)/${name}_c
-    echo "DATABASE"$'\t'${display_name}$'\t'${bowtie_cs_index} >> ${FASTQ_SCREEN_CONF}
+    for i in `ls rRNAs/fasta` ; do
+	name=$(baserootname $i)
+	display_name=`echo $name | cut -d"_" -f1`
+	bowtie_cs_index=$(abs_path rRNAs/bowtie)/${name}${bowtie_ext}
+	echo "DATABASE"$'\t'${display_name}$'\t'${bowtie_cs_index} >> ${FASTQ_SCREEN_CONF}
+    done
 done
 ##
 #
