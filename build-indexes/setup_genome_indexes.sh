@@ -213,7 +213,7 @@ done
 # BOWTIE INDEXES
 ###########################################################
 echo "### Setting up BOWTIE indexes ###"
-BOWTIE_INDEXES="chlamyR dm3 ecoli hg18 mm9 Ncrassa PhiX rn4 sacBay sacCer2 SpR6 UniVec ws200"
+BOWTIE_INDEXES="chlamyR dicty dm3 ecoli hg18 mm9 Ncrassa PhiX rn4 sacBay sacCer2 SpR6 UniVec ws200"
 for organism in $BOWTIE_INDEXES ; do
     echo -n "${organism}: "
     fasta=$(get_fasta $organism)
