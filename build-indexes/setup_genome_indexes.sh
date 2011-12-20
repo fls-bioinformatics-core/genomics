@@ -179,7 +179,7 @@ EOF
 # FASTA FILES
 ###########################################################
 echo "### Setting up FASTA files ###"
-SEQUENCES="chlamyR dm3 ecoli hg18 mm9 Ncrassa PhiX rn4 sacBay sacCer2 SpR6 UniVec ws200"
+SEQUENCES="chlamyR dicty dm3 ecoli hg18 mm9 Ncrassa PhiX rn4 sacBay sacCer2 SpR6 UniVec ws200"
 for organism in $SEQUENCES ; do
     echo -n "${organism}: "
     fasta=$(get_fasta $organism)
