@@ -373,7 +373,7 @@ class PipelineRunner:
                     jobs_in_group = []
                     for check_job in self.completed:
                         if check_job.group_label == job.group_label:
-                            jobs_in_group.append(job)
+                            jobs_in_group.append(check_job)
                     if self.njobs_in_group[job.group_label] == len(jobs_in_group):
                         # All jobs in group have completed
                         print "Group '%s' has completed" % job.group_label
