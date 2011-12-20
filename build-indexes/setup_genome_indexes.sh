@@ -344,6 +344,10 @@ make_fastq_screen_conf other_organisms \
 # rRNA BOWTIE INDEXES/FASTQ_SCREENS
 ###########################################################
 echo "### Setting up rRNA bowtie indexes and fastq_screen ###"
+if [ ! -f rRNAs.tar.gz ] ; then
+    # Download
+    wget http://galaxy.smith.man.ac.uk/sequences/rRNAs.tar.gz
+fi
 if [ -f rRNAs.tar.gz ] ; then
     echo "Found rRNA.tar.gz, running build_rRNA_bowtie_indexes.sh"
     echo -n "Building rRNA bowtie indexes: "
