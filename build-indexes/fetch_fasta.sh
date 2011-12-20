@@ -61,6 +61,20 @@ function setup_chlamyR() {
     set_md5sum  27c4e0cdc13ab3727f784bf667ae3c08
 }
 #
+# Dictystelium discoideum
+# Original download of masked genome from http://dictygenome.bcm.tmc/~anup/RNAseq
+# doesn't appear to be available any more so get locally hosted copy
+function setup_dicty() {
+    set_name    "Dictystelium discoideum"
+    set_species "Social amoeba"
+    set_build   ""
+    set_info    "Masked genome from http://dictygenome.bcm.tmc.edu/~anup/RNAseq/  Supplement, edited to make the chr notation of chromosomes DDB"
+    set_mirror  http://galaxy.smith.man.ac.uk/sequences
+    set_archive dd_masked_09.05.13.fasta.gz
+    set_ext     fasta
+    set_md5sum  f277579acf122eeb3932f99ca97a9a61
+}
+#
 # E.coli
 function setup_ecoli() {
     set_name    "Escherichia coli"
