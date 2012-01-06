@@ -5,6 +5,7 @@ Place to put general utility scripts/tools.
 
  *  `cd_set_umask.sh`: setup script to automagically set umask for specific directory
  *  `do.sh`: execute shell command iteratively with range of integer index values
+ *  `extract_random.py`: write out random subsets of reads from input data files
  *  `makeBinsFromBed.pl`: create bin files for binning applications
  *  `makeRegularBinsFromGenomeTable.R`: make bin file from set of chromosomes
  *  `make_mock_solid_dir.py`: create mock SOLiD directory structure for testing
@@ -30,6 +31,20 @@ ln -s /blah/blah2/myfile2.ext ./myfile2.ext
 ...
 ln -s /blah/blah43/myfile43.ext ./myfile43.ext
 
+extract_random.py
+-----------------
+
+Usage: `extract_random.py OPTIONS infile [infile ...]`
+
+Extract a random subset of reads from each of the supplied files - where
+multiple files are specified, the same subsets will be extracted for all of
+them. Output file names the input file names with '.subset' appended.
+
+Options:
+
+  * `-n N`
+
+    Number of records to extract from the input file(s) (default 500)
 
 makeBinsFromBed.pl
 ------------------
