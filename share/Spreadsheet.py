@@ -7,7 +7,7 @@
 #
 #########################################################################
 
-__version__ = "0.1.3"
+__version__ = "0.1.4"
 
 """Spreadsheet.py
 
@@ -93,16 +93,10 @@ import re
 import string
 import logging
 
-try:
-    import xlwt, xlrd
-    import xlutils, xlutils.copy
-    from xlwt.Utils import rowcol_to_cell
-    from xlwt import easyxf
-except ImportError:
-    logging.error("Spreadsheet.py: unable to import one or more 3rd party XLS libraries")
-    logging.error("Spreadsheet.py: i.e. xlwt, xlrd, xlutils")
-    logging.error("Spreadsheet.py: Ensure these are installed and available on your PYTHONPATH")
-    raise
+import xlwt, xlrd
+import xlutils, xlutils.copy
+from xlwt.Utils import rowcol_to_cell
+from xlwt import easyxf
 
 #######################################################################
 # Constants
