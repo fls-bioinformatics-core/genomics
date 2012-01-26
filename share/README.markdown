@@ -15,19 +15,18 @@ Shell function libraries
 Python modules
 --------------
 
-*   `Experiment.py`: Python module providing classes for defining SOLiD sequencing
-    experiments (collections of related primary data)
+*   `Experiment.py`: classes for defining SOLiD sequencing experiments (i.e. collections
+    of related primary data).
 
 *   `JobRunner.py`: classes providing generic interface for starting and managing job
-    runs
+    runs.
 
 *   `Pipeline.py`: classes for running jobs iteratively
 
-*   `SolidData.py`: Python module providing classes for extracting data about SOLiD
-    runs from directory structure, data files and naming conventions.
+*   `SolidData.py`: classes for extracting data about SOLiD runs from directory structure,
+    data files and naming conventions.
 
-*   `Spreadsheet.py`: Python module for creating and updating XLS format spreadsheets.
-     Requires the 3rd-party `xlwt`, `xlrd` and `xlutil` Python packages.
+*   `Spreadsheet.py`: classes for creating and updating XLS format spreadsheets (requires
+    the 3rd-party `xlwt`, `xlrd` and `xlutil` Python packages).
 
-*   `TabFile.py`: Python module providing classes for handling data from
-    tab-delimited files.
+*   `TabFile.py`: classes for handling data from generic tab-delimited files.
