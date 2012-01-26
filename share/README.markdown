@@ -18,6 +18,8 @@ Python modules
 *   `Experiment.py`: classes for defining SOLiD sequencing experiments (i.e. collections
     of related primary data).
 
+*   `FASTQFile.py`: classes for iterating through records in FASTQ files.
+
 *   `JobRunner.py`: classes providing generic interface for starting and managing job
     runs.
 
