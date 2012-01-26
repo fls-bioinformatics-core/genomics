@@ -6,6 +6,7 @@ Place to put general utility scripts/tools.
  *  `cd_set_umask.sh`: setup script to automagically set umask for specific directory
  *  `do.sh`: execute shell command iteratively with range of integer index values
  *  `extract_random.py`: write out random subsets of reads from input data files
+ *  `fastq_edit.py`: edit FASTQ files and data
  *  `makeBinsFromBed.pl`: create bin files for binning applications
  *  `makeRegularBinsFromGenomeTable.R`: make bin file from set of chromosomes
  *  `make_mock_solid_dir.py`: create mock SOLiD directory structure for testing
@@ -45,6 +46,21 @@ Options:
   * `-n N`
 
     Number of records to extract from the input file(s) (default 500)
+
+fastq_edit.py
+-------------
+
+Usage: `fastq_edit.py [options] <fastq_file>`
+
+Read in FASTQ file, perform edit operations and write new version to stdout.
+
+Options:
+
+    --version             show program's version number and exit
+    -h, --help            show this help message and exit
+    --instrument-name=INSTRUMENT_NAME
+                          Update the 'instrument name' in the sequence
+                          identifier part of each read record
 
 makeBinsFromBed.pl
 ------------------
