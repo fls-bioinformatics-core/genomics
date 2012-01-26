@@ -27,10 +27,10 @@ values for each execution. For example:
 
 will execute:
 
-ln -s /blah/blah1/myfile1.ext ./myfile1.ext
-ln -s /blah/blah2/myfile2.ext ./myfile2.ext
-...
-ln -s /blah/blah43/myfile43.ext ./myfile43.ext
+    ln -s /blah/blah1/myfile1.ext ./myfile1.ext
+    ln -s /blah/blah2/myfile2.ext ./myfile2.ext
+    ...
+    ln -s /blah/blah43/myfile43.ext ./myfile43.ext
 
 extract_random.py
 -----------------
@@ -39,13 +39,14 @@ Usage: `extract_random.py OPTIONS infile [infile ...]`
 
 Extract a random subset of reads from each of the supplied files - where
 multiple files are specified, the same subsets will be extracted for all of
-them. Output file names the input file names with '.subset' appended.
+them. Output file names are the input file names with '.subset' appended.
 
 Options:
 
-  * `-n N`
-
-    Number of records to extract from the input file(s) (default 500)
+    --version   show program's version number and exit
+    -h, --help  show this help message and exit
+    -n N        Number of records to extract from the input file(s) (default
+                500)
 
 fastq_edit.py
 -------------
@@ -76,45 +77,38 @@ Usage:
 
 Options:
 
- *  `--marker [ midpoint | start | end | tss | tts ]`
+    --marker [ midpoint | start | end | tss | tts ]
+        On which component of feature to position the bin(s) (default midpoint).
+	    tss: transcription start site (using strand)
+	    tts: transcription termination site (using strand)	
 
-    On which component of feature to position the bin(s) (default midpoint).
-    `tss`: transcription start site (using strand)
-    `tts`: transcription termination site (using strand)
+    --binType [ centred | upstream | downstream ]
+	    How to position the bin relative to the feature (default centred).
+	    If marker is start/end, position is relative to chromosome. 
+	    If marker is tss/tts, position is relative to strand of feature	
+        
+    --offset n
+	    All bins are shifted by this many bases (default 0).
+	    If marker is start/end, n is relative to chromosome. 
+	    If marker is tss/tts, n is relative to strand of feature
 
- * `--binType [ centred | upstream | downstream ]`
-
-    How to position the bin relative to the feature (default centred).
-    If `marker` is `start`/`end`, position is relative to chromosome.
-    If `marker` is `tss`/`tts`, position is relative to strand of feature
-
- *  `--offset n`
-
-    All bins are shifted by this many bases (default 0).
-    If `marker` is `start`/`end`, `n` is relative to chromosome.
-    If `marker` is `tss`/`tts`, `n` is relative to strand of feature
-
- *  `--binSize n`
-
-    The size of the bins (default 200)
-
- *  `--makeIntervalBins n`
-
-    n bins are made of equal size within the feature.
-    The bins begin, and are numbered from, the marker.
-    If > 0, ignores binSize, offset and binType.
-    Incompatible with `--marker midpoint`
+    --binSize n
+	   The size of the bins (default 200)
+	
+    --makeIntervalBins n
+	   n bins are made of equal size within the feature. 
+	   The bins begin, and are numbered from, the marker.
+	   If > 0, ignores binSize, offset and binType.
+	   Incompatible with --marker midpoint 
 
 *Tips:*
 
- *  To create single bp of the tss, use:
-
-        --marker tss  --binSize 1 --binType downstream
-
- *  To get a bin of 1000bp ending 500bp upstream of the tss, use:
-
-        --marker tss  --binSize 1000 --binType upstream --offset -500
-
+    To create single bp of the tss, use:  
+		--marker tss  --binSize 1 --binType downstream
+        
+	To get a bin of 1000bp ending 500bp upstream of the tss, use: 
+		--marker tss  --binSize 1000 --binType upstream --offset -500
+        
 
 makeRegularBinsFromGenomeTable.R
 --------------------------------
