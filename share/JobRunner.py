@@ -18,6 +18,30 @@ by subclasses. The subclasses implemented here are:
 
    SimpleJobRunner: run jobs (e.g. scripts) on a local file system.
    GEJobRunner    : run jobs using Grid Engine (GE) i.e. qsub, qdel etc
+
+A single JobRunner instance can be used to start and manage multiple processes.
+
+Each job is started by invoking the 'run' method of the runner. This returns
+an id string which is then used in calls to the 'isRunning', 'terminate' etc
+methods to check on and control the job.
+
+The runner's 'list' method returns a list of running job ids.
+
+Simple usage example:
+
+>>> # Create a JobRunner instance
+>>> runner = SimpleJobRunner()
+>>> # Start a job using the runner and collect its id
+>>> job_id = runner.run('Example',None,'myscript.sh')
+>>> # Wait for job to complete
+>>> import time
+>>> while runner.isRunning(job_id):
+>>>     time.sleep(10)
+>>> # Get the names of the output files
+>>> log,err = (runner.logFile(job_id),runner.errFile(job_id))
+
+
+
 """
 
 #######################################################################
