@@ -1020,6 +1020,9 @@ class TestUtils:
 
     make_run_definition_file: constructs a mock run definition file
 
+    make_run_definition_file_paired_end: constructs mock run definition file for
+    a paired-end run
+
     make_barcode_statistics_file: constructs a mock barcode statistics file
     """
 
@@ -1185,6 +1188,197 @@ All Beads	Totals	409927600	39452331	457541973
             self.touch(dirname+'/AB_CD_EF_pool/results.F1B1/libraries/'+d+
                         '/primary.201312345678901/reads/'+
                        solid_run_name+'_AB_CD_EF_pool_F3.stats')
+        # Return the temporary directory with the mock SOLiD run 
+        return dirname
+
+    def make_run_definition_file_paired_end(self,filename=None):
+        """Create example run definition file for paired-end run.
+
+        If a name is explicitly specified then the file will be created
+        with that name; otherwise a temporary file name will be generated.
+
+        Returns the name for the run definition file.
+        """
+        run_definition_text = \
+"""version	userId	runType	isMultiplexing	runName	runDesc	mask	protocol
+v1.3	lab_user	PAIRED-END	TRUE	solid123_20130426_PE_BC		1_spot_mask_sf	SOLiD4 Multiplex
+primerSet	baseLength
+BC	10
+F5-BC	35
+F3	50
+sampleName	sampleDesc	spotAssignments	primarySetting	library	application	secondaryAnalysis	multiplexingSeries	barcodes
+AB_CD_pool		1	default primary	AB_SEQ26	SingleTag	sacCer2	BC Kit Module 1-96	"17"
+AB_CD_pool		1	default primary	AB_SEQ27	SingleTag	sacCer2	BC Kit Module 1-96	"18"
+AB_CD_pool		1	default primary	AB_SEQ28	SingleTag	sacCer2	BC Kit Module 1-96	"19"
+AB_CD_pool		1	default primary	AB_SEQ29	SingleTag	sacCer2	BC Kit Module 1-96	"20"
+AB_CD_pool		1	default primary	AB_SEQ30	SingleTag	sacCer2	BC Kit Module 1-96	"21"
+AB_CD_pool		1	default primary	AB_SEQ31	SingleTag	sacCer2	BC Kit Module 1-96	"22"
+AB_CD_pool		1	default primary	AB_SEQ32	SingleTag	sacCer2	BC Kit Module 1-96	"23"
+AB_CD_pool		1	default primary	AB_SEQ33	SingleTag	sacCer2	BC Kit Module 1-96	"24"
+AB_CD_pool		1	default primary	CD_SP6033	SingleTag	none	BC Kit Module 1-96	"1"
+AB_CD_pool		1	default primary	CD_SP6257	SingleTag	none	BC Kit Module 1-96	"3"
+AB_CD_pool		1	default primary	CD_SP6261	SingleTag	none	BC Kit Module 1-96	"2"
+"""   
+        if filename is None:
+            # mkstemp returns a tuple
+            tmpfile = tempfile.mkstemp()
+            filename = tmpfile[1]
+        fp = open(filename,'w')
+        fp.write(run_definition_text)
+        fp.close()
+        return filename
+
+    def make_barcode_statistics_file_paired_end(self,filename=None):
+        """Create example barcode statistics file for paired-end run.
+
+        If a name is explicitly specified then the file will be created
+        with that name; otherwise a temporary file name will be generated.
+
+        Returns the name for the barcode statistics file.
+        """
+        barcode_statistics_text = \
+"""#? missing-barcode-reads=0
+#? missing-F3-reads=0
+##Library	Barcode	0 Mismatches	1 Mismatch	Total
+AB_SEQ26	19	32034098	3010512	35044610
+AB_SEQ26	Subtotals	32034098	3010512	35044610
+AB_SEQ27	18	33802784	2697225	36500009
+AB_SEQ27	Subtotals	33802784	2697225	36500009
+AB_SEQ28	21	34132646	2304212	36436858
+AB_SEQ28	Subtotals	34132646	2304212	36436858
+AB_SEQ29	20	35492369	2789254	38281623
+AB_SEQ29	Subtotals	35492369	2789254	38281623
+AB_SEQ30	22	30460845	2818591	33279436
+AB_SEQ30	Subtotals	30460845	2818591	33279436
+AB_SEQ31	3	36824658	2939962	39764620
+AB_SEQ31	Subtotals	36824658	2939962	39764620
+AB_SEQ32	1	35897351	2904080	38801431
+AB_SEQ32	Subtotals	35897351	2904080	38801431
+AB_SEQ33	2	24853173	2186475	27039648
+AB_SEQ33	Subtotals	24853173	2186475	27039648
+CD_SP6033	23	44673850	4675548	49349398
+CD_SP6033	Subtotals	44673850	4675548	49349398
+CD_SP6257	17	40817315	4882499	45699814
+CD_SP6257	Subtotals	40817315	4882499	45699814
+CD_SP6261	24	33385249	2446268	35831517
+CD_SP6261	Subtotals	33385249	2446268	35831517
+unassigned	03020	98926	1021138	1120064
+unassigned	12213	10872	611071	621943
+unassigned	20131	9880	696765	706645
+unassigned	31302	8180	654309	662489
+unassigned	unresolved	NA	NA	8162042
+unassigned	Subtotals	127858	2983283	11273183
+All Beads	Totals	409927600	39452331	457541973
+"""
+        if filename is None:
+            # mkstemp returns a tuple
+            tmpfile = tempfile.mkstemp()
+            filename = tmpfile[1]
+        fp = open(filename,'w')
+        fp.write(barcode_statistics_text)
+        fp.close()
+        return filename
+
+    def make_solid_dir_paired_end(self,solid_run_name):
+        """Create a mock SOLiD run directory structure for paired-end run.
+
+        Creates a temporary directory and builds a mock SOLiD run directory
+        called 'solid_run_name' inside that.
+        
+        Returns the full path to the mock SOLiD run directory.
+        """
+        
+        # Put everything in a temporary directory
+        top_level = tempfile.mkdtemp()
+        # Top-level
+        dirname = os.path.join(top_level,solid_run_name)
+        os.mkdir(dirname)
+        self.make_run_definition_file_paired_end(
+            dirname+'/'+solid_run_name+'_run_definition.txt')
+        #
+        # Subdirectories:
+        #
+        ### solidXXX/plots
+        os.makedirs(dirname+'/plots')
+        #
+        ### solidXXX/AB_CD_pool
+        os.makedirs(dirname+'/AB_CD_pool/results.F1B1')
+        os.symlink('results.F1B1',dirname+'/AB_CD_pool/results')
+        #
+        ### solidXXX/AB_CD_pool/results.F1B1/
+        os.makedirs(dirname+'/AB_CD_pool/results.F1B1/libraries')
+        os.makedirs(dirname+
+                    '/AB_CD_pool/results.F1B1/primary.20131234567890')
+        os.makedirs(dirname+
+                    '/AB_CD_pool/results.F1B1/primary.20132345678901')
+        #
+        ## solidXXX/AB_CD_pool/results.F1B1/libraries/
+        self.make_barcode_statistics_file_paired_end(
+            dirname+
+            '/AB_CD_pool/results.F1B1/libraries/'+
+            'BarcodeStatistics.20130123456789012.txt')
+        for d in ('AB_SEQ26','AB_SEQ27','AB_SEQ28','AB_SEQ29',
+                  'AB_SEQ30','AB_SEQ31','AB_SEQ32','AB_SEQ33',
+                  'CD_SP6033','CD_SP6257','CD_SP6261'):
+            os.makedirs(dirname+'/AB_CD_pool/results.F1B1/libraries/'+d)
+            os.makedirs(dirname+'/AB_CD_pool/results.F1B1/libraries/'+d+
+                        '/intermediate')
+            # Primary with no rejects (shouldn't be used)
+            os.makedirs(dirname+'/AB_CD_pool/results.F1B1/libraries/'+d+
+                        '/primary.201301234567890')
+            os.makedirs(dirname+'/AB_CD_pool/results.F1B1/libraries/'+d+
+                        '/primary.201301234567890/reads')
+            os.makedirs(dirname+'/AB_CD_pool/results.F1B1/libraries/'+d+
+                        '/primary.201301234567890/reports')
+            # Primary with reads, rejects and reports for reverse reads
+            os.makedirs(dirname+'/AB_CD_pool/results.F1B1/libraries/'+d+
+                        '/primary.201312345678901')
+            os.makedirs(dirname+'/AB_CD_pool/results.F1B1/libraries/'+d+
+                        '/primary.201312345678901/reads')
+            os.makedirs(dirname+'/AB_CD_pool/results.F1B1/libraries/'+d+
+                        '/primary.201312345678901/reject')
+            os.makedirs(dirname+'/AB_CD_pool/results.F1B1/libraries/'+d+
+                        '/primary.201312345678901/reports')
+            # Primary with reads, rejects and reports for forward reads
+            os.makedirs(dirname+'/AB_CD_pool/results.F1B1/libraries/'+d+
+                        '/primary.201322345678901')
+            os.makedirs(dirname+'/AB_CD_pool/results.F1B1/libraries/'+d+
+                        '/primary.201322345678901/reads')
+            os.makedirs(dirname+'/AB_CD_pool/results.F1B1/libraries/'+d+
+                        '/primary.201322345678901/reject')
+            os.makedirs(dirname+'/AB_CD_pool/results.F1B1/libraries/'+d+
+                        '/primary.201322345678901/reports')
+            # Secondaries (shouldn't be used)
+            os.makedirs(dirname+'/AB_CD_pool/results.F1B1/libraries/'+d+
+                        '/secondary.F5-BC.20130012345678')
+            os.makedirs(dirname+'/AB_CD_pool/results.F1B1/libraries/'+d+
+                        '/secondary.F5-BC.20130123456789')
+            os.makedirs(dirname+'/AB_CD_pool/results.F1B1/libraries/'+d+
+                        '/temp')
+            #
+            # Populate reverse read dirs
+            # solidXXX/AB_CD_pool/results.F1B1/libraries/X/primary.x/reads/
+            self.make_csfasta(dirname+'/AB_CD_pool/results.F1B1/libraries/'+d+
+                              '/primary.201312345678901/reads/'+
+                              solid_run_name+'_AB_CD_pool_F5-BC_'+d+'.csfasta')
+            self.make_qual(dirname+'/AB_CD_pool/results.F1B1/libraries/'+d+
+                           '/primary.201312345678901/reads/'+
+                           solid_run_name+'_AB_CD_pool_F5-BC_QV_'+d+'.qual')
+            self.touch(dirname+'/AB_CD_pool/results.F1B1/libraries/'+d+
+                        '/primary.201312345678901/reads/'+
+                       solid_run_name+'_AB_CD_pool_F5-BC.stats')
+            #
+            # Populate forward read dirs
+            # solidXXX/AB_CD_pool/results.F1B1/libraries/X/primary.x/reads/
+            self.make_csfasta(dirname+'/AB_CD_pool/results.F1B1/libraries/'+d+
+                              '/primary.201322345678901/reads/'+
+                              solid_run_name+'_AB_CD_pool_F3_'+d+'.csfasta')
+            self.make_qual(dirname+'/AB_CD_pool/results.F1B1/libraries/'+d+
+                           '/primary.201322345678901/reads/'+
+                           solid_run_name+'_AB_CD_pool_F3_QV_'+d+'.qual')
+            self.touch(dirname+'/AB_CD_pool/results.F1B1/libraries/'+d+
+                        '/primary.201322345678901/reads/'+
+                       solid_run_name+'_AB_CD_pool_F3.stats')
         # Return the temporary directory with the mock SOLiD run 
         return dirname
 
