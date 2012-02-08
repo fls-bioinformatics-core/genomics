@@ -137,4 +137,9 @@ Make a temporary mock SOLiD directory structure that can be used for testing.
 
 Usage:
 
-    make_mock_solid_dir.py
+    make_mock_solid_dir.py [OPTIONS]
+
+Arguments:
+
+    --paired-end          Create directory structure for paired-end run
+
