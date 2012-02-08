@@ -687,6 +687,19 @@ class SolidRunDefinition:
     particular line, e.g.:
 
     >>> library = run_defn.getDataItem('library',0)
+
+    The SolidRunDefinition object also has a number of attributes
+    populated from the header of the run definition file,
+    specifically:
+    
+    version, userId, runType, isMultiplexing, runName, runDesc,
+    mask and protocol.
+
+    The attributes are strings and can be accessed directly from
+    the object, e.g.:
+
+    >>> version = run_defn.version
+    >>> isMultiplexing = run_defn.isMultiplexing
     """
 
     def __init__(self,run_definition_file):
@@ -697,6 +710,16 @@ class SolidRunDefinition:
             any leading path) from which to extract data
         """
         self.file = run_definition_file
+        # Header attributes
+        self.version = None
+        self.userId = None
+        self.runType = None
+        self.isMultiplexing = None
+        self.runName = None
+        self.runDesc = None
+        self.mask = None
+        self.protocol = None
+        # Data about specific samples/libraries
         self.header_fields = []
         self.data = []
         try:
@@ -741,18 +764,36 @@ class SolidRunDefinition:
         Internal: loads data from the run definition file into
         the object."""
         # Initialise
-        got_header = False
+        reading_header = False
+        reading_samples = False
         # Open the file
         f = open(self.file,'r')
         for line in f:
-            # Look for header line
+            # Look for the header line (first line of the file) describing run attributes
+            # This looks like:
+            # version	userId	runType	isMultiplexing	runName	runDesc	mask	protocol
+            if line.startswith("version"):
+                reading_header = True
+            elif reading_header:
+                # Store the data from the header
+                data = line.strip().split('\t')
+                self.version = data[0]
+                self.userId = data[1]
+                self.runType = data[2]
+                self.isMultiplexing = data[3]
+                self.runName = data[4]
+                self.runDesc = data[5]
+                self.mask = data[6]
+                self.protocol = data[7]
+                reading_header = False
+            # Look for header line for sample/library data
             # This looks like:
             # sampleName	sampleDesc	spotAssignments	primarySetting	library	application	secondaryAnalysis	multiplexingSeries	barcodes
             if line.startswith("sampleName"):
                 for field in line.strip().split('\t'):
                     self.header_fields.append(field)
-                got_header = True
-            elif got_header:
+                reading_samples = True
+            elif reading_samples:
                 # Deal with information under the header
                 data = line.strip().split('\t')
                 self.data.append(data)
@@ -1621,6 +1662,16 @@ class TestSolidRunDefinition(unittest.TestCase):
 
     def test_nsamples(self):
         self.assertEqual(12,self.run_defn.nSamples())
+
+    def test_attributes(self):
+        self.assertEqual(self.run_defn.version,'v0.0')
+        self.assertEqual(self.run_defn.userId,'user')
+        self.assertEqual(self.run_defn.runType,'FRAGMENT')
+        self.assertEqual(self.run_defn.isMultiplexing,'TRUE')
+        self.assertEqual(self.run_defn.runName,'solid0123_20130426_FRAG_BC_2')
+        self.assertEqual(self.run_defn.runDesc,'')
+        self.assertEqual(self.run_defn.mask,'1_spot_mask_sf')
+        self.assertEqual(self.run_defn.protocol,'SOLiD4 Multiplex')
 
     def test_fields(self):
         self.assertEqual(['sampleName',
