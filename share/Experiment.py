@@ -212,6 +212,7 @@ class ExperimentList:
                     print "mkdir %s" % expt_dir
             # Locate the primary data
             for run in self.solid_runs:
+                paired_end = SolidData.is_paired_end(run)
                 libraries = run.fetchLibraries(expt.sample,expt.library)
                 for library in libraries:
                     # Look up primary data
@@ -224,8 +225,26 @@ class ExperimentList:
                     print "\t\t%s" % ln_csfasta
                     print "\t\t%s" % ln_qual
                     # Make links to primary data
-                    self.__linkToFile(library.csfasta,os.path.join(expt_dir,ln_csfasta),dry_run=dry_run)
-                    self.__linkToFile(library.qual,os.path.join(expt_dir,ln_qual),dry_run=dry_run)
+                    self.__linkToFile(library.csfasta,os.path.join(expt_dir,ln_csfasta),
+                                      dry_run=dry_run)
+                    self.__linkToFile(library.qual,os.path.join(expt_dir,ln_qual),
+                                      dry_run=dry_run)
+                    # Reverse reads for paired-end run
+                    if paired_end:
+                        if use_library_names:
+                            ln_csfasta = "%s_F5.csfasta" % library.name
+                            ln_qual = "%s_F5.qual" % library.name
+                        else:
+                            ln_csfasta = getLinkName(library.csfasta_reverse,library,reverse=True)
+                            ln_qual = getLinkName(library.qual_reverse,library,reverse=True)
+                        print "\t\t%s" % ln_csfasta
+                        print "\t\t%s" % ln_qual
+                        # Make links to reverse read data
+                        self.__linkToFile(library.csfasta_reverse,os.path.join(expt_dir,ln_csfasta),
+                                          dry_run=dry_run)
+                        self.__linkToFile(library.qual_reverse,os.path.join(expt_dir,ln_qual),
+                                          dry_run=dry_run)
+                        
     
     def __linkToFile(self,source,target,dry_run=False):
         """Create symbolic link to a file
@@ -264,7 +283,7 @@ class ExperimentList:
 # Module functions
 #######################################################################
 
-def getLinkName(filen,library):
+def getLinkName(filen,library,reverse=False):
     """Return the 'analysis' file name based on a source file name.
     
     The analysis file name is constructed as
@@ -275,10 +294,17 @@ def getLinkName(filen,library):
 
     <instrument>_<datestamp>_<sample>_<library>_QV.qual
     
+    For reverse reads (indicated by the 'reverse' argument), there
+    will be an additional '_F5' added to the name, e.g.:
+
+    <instrument>_<datestamp>_<sample>_<library>_F5.csfasta
+
     Arguments:
       filen: name of the source file
       library: SolidLibrary object representing the parent library (nb
          requires that the parent_sample of the library is set)
+      reverse: if True then indicates that this is a reverse read
+         (default is False)
 
     Returns:
     Name for the analysis file.
@@ -288,6 +314,8 @@ def getLinkName(filen,library):
     link_filen_elements = [sample.parent_run.run_info.instrument,
                            sample.parent_run.run_info.datestamp,
                            sample.name,library.name]
+    if reverse:
+        link_filen_elements.append('F5')
     ext = os.path.splitext(filen)[1]
     if ext == ".qual":
         link_filen_elements.append("QV")
