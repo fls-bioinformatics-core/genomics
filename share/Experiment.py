@@ -249,7 +249,7 @@ class ExperimentList:
             return
         if not dry_run:
             # Make symbolic links
-            mklink(source,target)
+            mklink(source,target,relative=True)
         else:
             # Report what would have been done
             print "ln -s %s %s" % (source,target)
@@ -303,11 +303,45 @@ def mkdir(dirn):
         os.mkdir(dirn)
         chmod(dirn,0775)
 
-def mklink(target,link_name):
-    """Make a symbolic link"""
+def mklink(target,link_name,relative=False):
+    """Make a symbolic link
+
+    Arguments:
+      target: the file or directory to link to
+      link_name: name of the link
+      relative: if True then make a relative link (if possible);
+        otherwise link to the target as given (default)"""
     logging.debug("Linking to %s from %s" % (target,link_name))
-    os.symlink(target,link_name)
+    target_path = target
+    if relative:
+        # Try to construct relative link to target
+        target_abs_path = os.path.abspath(target)
+        link_abs_path = os.path.abspath(link_name)
+        common_prefix = commonprefix(target_abs_path,link_abs_path)
+        if common_prefix:
+            # Use relpath to generate the relative path from the link
+            # to the target
+            target_path = os.path.relpath(target_abs_path,os.path.dirname(link_abs_path))
+    os.symlink(target_path,link_name)
     chmod(link_name,0664)
+
+def commonprefix(path1,path2):
+    """Determine common prefix path for path1 and path2
+
+    Can't use os.path.commonprefix as it checks characters not
+    path components, so essentially it doesn't work as required.
+    """
+    path1_components = str(path1).split(os.sep)
+    path2_components = str(path2).split(os.sep)
+    common_components = []
+    ncomponents = min(len(path1_components),len(path2_components))
+    for i in range(ncomponents):
+        if path1_components[i] == path2_components[i]:
+            common_components.append(path1_components[i])
+        else:
+            break
+    commonprefix = "%s" % os.sep.join(common_components)
+    return commonprefix
 
 def chmod(target,mode):
     """Change mode of file or directory"""
