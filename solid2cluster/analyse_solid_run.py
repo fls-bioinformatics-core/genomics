@@ -68,6 +68,8 @@ def report_run(solid_runs):
         print "I.D.   : %s" % (run.run_info.name)
         print "Date   : %s" % (run.run_info.date)
         print "Samples: %d\n" % len(run.samples)
+        if SolidData.is_paired_end(run):
+            print "Paired-end run\n"
         #
         # Report projects for each sample
         for sample in run.samples:
@@ -85,6 +87,8 @@ def report_run(solid_runs):
                 # Report location of primary data
                 for library in project.libraries:
                     print "%s\n%s" % (library.csfasta,library.qual)
+                    if SolidData.is_paired_end(run):
+                        print "%s\n%s" % (library.csfasta_reverse,library.qual_reverse)
 
 def write_spreadsheet(solid_runs,spreadsheet):
     """Generate or append run data to an XLS-format spreadsheet
