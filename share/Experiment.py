@@ -235,8 +235,10 @@ class ExperimentList:
                             ln_csfasta = "%s_F5.csfasta" % library.name
                             ln_qual = "%s_F5.qual" % library.name
                         else:
-                            ln_csfasta = getLinkName(library.csfasta_reverse,library,reverse=True)
-                            ln_qual = getLinkName(library.qual_reverse,library,reverse=True)
+                            ln_csfasta = getLinkName(library.csfasta_reverse,library,
+                                                     reverse='F5')
+                            ln_qual = getLinkName(library.qual_reverse,library,
+                                                  reverse='F5')
                         print "\t\t%s" % ln_csfasta
                         print "\t\t%s" % ln_qual
                         # Make links to reverse read data
@@ -283,7 +285,7 @@ class ExperimentList:
 # Module functions
 #######################################################################
 
-def getLinkName(filen,library,reverse=False):
+def getLinkName(filen,library,reverse=''):
     """Return the 'analysis' file name based on a source file name.
     
     The analysis file name is constructed as
@@ -294,17 +296,17 @@ def getLinkName(filen,library,reverse=False):
 
     <instrument>_<datestamp>_<sample>_<library>_QV.qual
     
-    For reverse reads (indicated by the 'reverse' argument), there
-    will be an additional '_F5' added to the name, e.g.:
+    For reverse reads (indicated by a non-empty 'reverse' argument),
+    the supplied 'reverse' value will be added to the name, e.g.:
 
-    <instrument>_<datestamp>_<sample>_<library>_F5.csfasta
+    <instrument>_<datestamp>_<sample>_<library>_<reverse>.csfasta
 
     Arguments:
       filen: name of the source file
       library: SolidLibrary object representing the parent library (nb
          requires that the parent_sample of the library is set)
-      reverse: if True then indicates that this is a reverse read
-         (default is False)
+      reverse: (optional) specifies an additional string to be added to
+         the link name to indicate a reverse read
 
     Returns:
     Name for the analysis file.
@@ -315,7 +317,7 @@ def getLinkName(filen,library,reverse=False):
                            sample.parent_run.run_info.datestamp,
                            sample.name,library.name]
     if reverse:
-        link_filen_elements.append('F5')
+        link_filen_elements.append(reverse)
     ext = os.path.splitext(filen)[1]
     if ext == ".qual":
         link_filen_elements.append("QV")
