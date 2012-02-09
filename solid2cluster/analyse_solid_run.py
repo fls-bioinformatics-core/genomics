@@ -295,6 +295,9 @@ def verify_runs(solid_runs):
             if len(run.samples) == 0:
                 print "No sample data"
                 run_status = 1
+            # Determine if run is paired-end
+            paired_end = SolidData.is_paired_end(run)
+            # Check libraries in each sample
             for sample in run.samples:
                 if len(sample.libraries) == 0:
                     print "No libraries for sample %s" % sample.name
@@ -320,6 +323,27 @@ def verify_runs(solid_runs):
                             print "Missing qual for %s/%s" % \
                                 (sample.name,library.name)
                             run_status = 1
+                    # Paired-end run: check reverse reads
+                    if paired_end:
+                        if not library.csfasta_reverse:
+                            print "No reverse csfasta for %s/%s" % \
+                                (sample.name,library.name)
+                            run_status = 1
+                        else:
+                            if not os.path.exists(library.csfasta_reverse):
+                                print "Missing reverse csfasta for %s/%s" % \
+                                    (sample.name,library.name)
+                                run_status = 1
+                        # Check for reverse qual
+                        if not library.qual_reverse:
+                            print "No reverse qual for %s/%s" % \
+                                (sample.name,library.name)
+                            run_status = 1
+                        else:
+                            if not os.path.exists(library.qual_reverse):
+                                print "Missing reverse qual for %s/%s" % \
+                                    (sample.name,library.name)
+                                run_status = 1
         # Completed checks for run
         print "%s:" % run.run_name,
         if run_status == 0:
