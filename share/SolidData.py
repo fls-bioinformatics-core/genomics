@@ -191,6 +191,7 @@ class SolidRun:
 
             # Locate the primary data
             got_primary_data = False
+            got_primary_data_reverse = False
             ambiguity_error = False
             if this_library_dir:
                 logging.debug("Library dir: %s..." % this_library_dir)
@@ -208,6 +209,8 @@ class SolidRun:
                         # Check for csfasta and qual files
                         csfasta = None
                         qual = None
+                        csfasta_reverse = None
+                        qual_reverse = None
                         for f in os.listdir(reads):
                             ext = os.path.splitext(f)[1]
                             if ext == ".csfasta":
@@ -216,16 +219,22 @@ class SolidRun:
                             elif ext == ".qual":
                                 qual = os.path.abspath( \
                                     os.path.join(reads,f))
-                        # Sanity check names for barcoded samples
-                        # Look for "F3" in the file names
+                        # Check barcoded samples
                         if library.is_barcoded:
                             if csfasta:
+                                if csfasta.rfind('_F5-BC_') > -1:
+                                    # Reverse strand
+                                    csfasta_reverse = csfasta
                                 if csfasta.rfind('_F3_') < 0:
+                                    # Not a recognised name
                                     csfasta = None
                             if qual:
+                                if qual.rfind('_F5-BC_') > -1:
+                                    # Reverse strand
+                                    qual_reverse = qual
                                 if qual.rfind('_F3_') < 0:
                                     qual = None
-                        # Store primary data
+                        # Store primary data: forward strand
                         if csfasta and qual:
                             if got_primary_data:
                                 ambiguity_error = True
@@ -233,7 +242,16 @@ class SolidRun:
                                 library.csfasta = csfasta
                                 library.qual = qual
                                 got_primary_data = True
-                                logging.debug("-----> Located primary data")
+                                logging.debug("-----> Located primary data (forward)")
+                        # Store primary data: reverse strand
+                        if csfasta_reverse and qual_reverse:
+                            if got_primary_data_reverse:
+                                ambiguity_error = True
+                            else:
+                                library.csfasta_reverse = csfasta_reverse
+                                library.qual_reverse = qual_reverse
+                                got_primary_data_reverse = True
+                                logging.debug("-----> Located primary data (reverse)")
 
             if not got_primary_data:
                 logging.warning("Unable to locate primary data for %s" % library)
@@ -454,6 +472,8 @@ class SolidLibrary:
         # Associated data files
         self.csfasta = None
         self.qual = None
+        self.csfasta_reverse = None
+        self.qual_reverse = None
         # Parent sample
         self.parent_sample = parent_sample
 
@@ -1788,6 +1808,9 @@ class TestSolidRun(unittest.TestCase):
                 self.assertTrue(os.path.isfile(library.csfasta))
                 self.assertNotEqual(None,library.qual)
                 self.assertTrue(os.path.isfile(library.qual))
+                # Reverse reads should not be assigned
+                self.assertEqual(None,library.csfasta_reverse)
+                self.assertEqual(None,library.qual_reverse)
 
     def test_library_files_in_same_location(self):
         for sample in self.solid_run.samples:
@@ -1842,6 +1865,90 @@ class TestSolidRun(unittest.TestCase):
         """
         solid_run = SolidRun("/i/dont/exist/solid0123_20131013_FRAG_BC")
         self.assertFalse(solid_run)
+
+class TestSolidRunPairedEnd(unittest.TestCase):
+    """Unit tests for SolidRun class for paired-end run data.
+    """
+    def setUp(self):
+        # Set up a mock SOLiD directory structure
+        self.solid_test_dir = \
+            TestUtils().make_solid_dir_paired_end('solid0123_20130426_PE_BC')
+        # Create a SolidRun object for tests
+        self.solid_run = SolidRun(self.solid_test_dir)
+
+    def tearDown(self):
+        shutil.rmtree(self.solid_test_dir)
+
+    def test_solid_run(self):
+        self.assertTrue(self.solid_run)
+
+    def test_libraries_are_assigned(self):
+        for sample in self.solid_run.samples:
+            for library in sample.libraries:
+                # Check names were assigned to data files
+                self.assertNotEqual(None,library.csfasta)
+                self.assertTrue(os.path.isfile(library.csfasta))
+                self.assertNotEqual(None,library.qual)
+                self.assertTrue(os.path.isfile(library.qual))
+                # Check read names contain "_F3_"
+                self.assertTrue(library.csfasta.rfind("_F3_") > -1)
+                self.assertTrue(library.qual.rfind("_F3_") > -1)
+                # Reverse reads
+                self.assertNotEqual(None,library.csfasta_reverse)
+                self.assertTrue(os.path.isfile(library.csfasta_reverse))
+                self.assertNotEqual(None,library.qual_reverse)
+                self.assertTrue(os.path.isfile(library.qual_reverse))
+                # Check reverse read names contain "_F5-BC_"
+                self.assertTrue(library.csfasta_reverse.rfind("_F5-BC_") > -1)
+                self.assertTrue(library.qual_reverse.rfind("_F5-BC_") > -1)
+
+    def test_library_files_in_same_location(self):
+        for sample in self.solid_run.samples:
+            for library in sample.libraries:
+                # Check they're in the same location as each other
+                self.assertEqual(os.path.dirname(library.csfasta),
+                                 os.path.dirname(library.qual))
+                self.assertEqual(os.path.dirname(library.csfasta_reverse),
+                                 os.path.dirname(library.qual_reverse))
+
+    def test_library_parent_dir_has_reject(self):
+        for sample in self.solid_run.samples:
+            for library in sample.libraries:
+                # Check that the parent dirs also has "reject" dir
+                self.assertTrue(os.path.isdir(
+                        os.path.join(os.path.dirname(library.csfasta),
+                                     '..','reject')))
+                self.assertTrue(os.path.isdir(
+                        os.path.join(os.path.dirname(library.csfasta_reverse),
+                                     '..','reject')))
+
+    def test_fetch_libraries(self):
+        """Retrieve libraries based on sample and library names
+        """
+        # Defaults should retrieve everything
+        libraries = self.solid_run.fetchLibraries()
+        self.assertEqual(len(libraries),11)
+        for lib in libraries:
+            self.assertEqual(libraries.count(lib),1)
+        # "Bad" sample name shouldn't retrieve anything
+        libraries = self.solid_run.fetchLibraries(sample_name='XY_PQ_VW_pool',library_name='*')
+        self.assertEqual(len(libraries),0)
+        # Specify exact sample and library names
+        libraries = self.solid_run.fetchLibraries(sample_name='AB_CD_pool',library_name='AB_SEQ26')
+        self.assertEqual(len(libraries),1)
+        self.assertEqual(libraries[0].name,'AB_SEQ26')
+        # Specify wildcard library name
+        libraries = self.solid_run.fetchLibraries(sample_name='AB_CD_pool',library_name='AB_*')
+        self.assertEqual(len(libraries),8)
+        for lib in libraries:
+            self.assertTrue(str(lib.name).startswith('AB_'))
+            self.assertEqual(libraries.count(lib),1)
+        # Specify wildcard sample and library name
+        libraries = self.solid_run.fetchLibraries(sample_name='*',library_name='AB_*')
+        self.assertEqual(len(libraries),8)
+        for lib in libraries:
+            self.assertTrue(str(lib.name).startswith('AB_'))
+            self.assertEqual(libraries.count(lib),1)
 
 class TestFunctions(unittest.TestCase):
     """Unit tests for module functions.
