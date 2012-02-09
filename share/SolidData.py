@@ -908,6 +908,17 @@ class SolidBarcodeStatistics:
 # Module Functions
 #######################################################################
 
+def is_paired_end(solid_run):
+    """Determine if a SolidRun instance is a paired-end run
+
+    Arguments:
+      solid_run: a populated SolidRun instance
+
+    Returns:
+      True if this is a paired-end run, False otherwise.
+    """
+    return (solid_run.run_definition.runType == "PAIRED-END")
+
 def extract_initials(library):
     """Return leading initials from the library name
 
@@ -1953,6 +1964,18 @@ class TestSolidRunPairedEnd(unittest.TestCase):
 class TestFunctions(unittest.TestCase):
     """Unit tests for module functions.
     """
+    def test_is_paired_end(self):
+        # Test with non-paired end mock SOLiD directory
+        self.solid_test_dir = TestUtils().make_solid_dir('solid0123_20130426_FRAG_BC')
+        self.solid_run = SolidRun(self.solid_test_dir)
+        self.assertFalse(is_paired_end(self.solid_run))
+        shutil.rmtree(self.solid_test_dir)
+        # Test with paired end mock SOLiD directory
+        self.solid_test_dir = TestUtils().make_solid_dir_paired_end('solid0123_20130426_PE_BC')
+        self.solid_run = SolidRun(self.solid_test_dir)
+        self.assertTrue(is_paired_end(self.solid_run))
+        shutil.rmtree(self.solid_test_dir)
+
     def test_extract_initials(self):
         self.assertEqual('DR',extract_initials('DR1'))
         self.assertEqual('EP',extract_initials('EP_NCYC2669'))
