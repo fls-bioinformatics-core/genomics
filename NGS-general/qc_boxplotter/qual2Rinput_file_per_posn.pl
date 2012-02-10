@@ -1,4 +1,4 @@
-#! /usr/bin/perl -w
+#! /usr/bin/perl
 #
 # Convert SOLiD file to format acceptible to R
 # Creates 1 file per position of read
