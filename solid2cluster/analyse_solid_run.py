@@ -24,6 +24,7 @@ import os
 import string
 import logging
 logging.basicConfig(format="%(levelname)s %(message)s")
+import md5
 
 # Put ../share onto Python search path for modules
 SHARE_DIR = os.path.abspath(
@@ -41,7 +42,45 @@ except ImportError, ex:
 # Class definitions
 #######################################################################
 
-# No classes defined
+class Md5sum:
+    """Utility class for generating MD5SUM checksums
+
+    Code based on example at
+    http://www.python.org/getit/releases/2.0.1/md5sum.py
+
+    Example usage:
+    >>> chksum = Md5Sum().md5sum("myfile.txt")
+    eacc9c036025f0e64fb724cacaadd8b4
+    """
+
+    def __init__(self):
+        """Create a new Md5sum instance
+        """
+        self.__BLOCKSIZE = 1024*1024
+
+    def __hexify(self,s):
+        """Internal: return a hex representation of a string
+        """
+        return ("%02x"*len(s)) % tuple(map(ord, s))
+
+    def md5sum(self,filen):
+        """Return md5sum digest for a file
+
+        Arguments:
+          filen: name of the file to generate the checksum from
+        
+        Returns:
+          Md5sum digest for the named file.
+        """
+        f = open(filen, "rb")
+        sum = md5.new()
+        while 1:
+            block = f.read(self.__BLOCKSIZE)
+            if not block:
+                break
+            sum.update(block)
+        f.close()
+        return self.__hexify(sum.digest())
 
 #######################################################################
 # Module Functions: program functions
@@ -363,6 +402,42 @@ def verify_runs(solid_runs):
         print " [FAILED]"
     return status
 
+def print_md5sums(solid_runs):
+    """Calculate and print md5sums for primary data files
+
+    This will generate a list of md5sums that can be passed to the
+    md5sum program to check against a copy of the the runs using
+
+    md5sum -c CHECKSUMS
+
+    Arguments:
+      solid_runs: list or tuple of SolidRun instances.
+    """
+    md5sum = Md5sum()
+    for run in solid_runs:
+        for sample in run.samples:
+            for library in sample.libraries:
+                print "%s  %s" % (md5sum.md5sum(library.csfasta),
+                                  strip_prefix(library.csfasta,os.getcwd()))
+                print "%s  %s" % (md5sum.md5sum(library.qual),
+                                  strip_prefix(library.qual,os.getcwd()))
+                if SolidData.is_paired_end(run):
+                    print "%s  %s" % (md5sum.md5sum(library.csfasta_reverse),
+                                      strip_prefix(library.csfasta_reverse,os.getcwd()))
+                    print "%s  %s" % (md5sum.md5sum(library.qual_reverse),
+                                      strip_prefix(library.qual_reverse,os.getcwd()))
+
+def strip_prefix(path,prefix):
+    """Strip the supplied prefix from a file name
+    """
+    if path.startswith(prefix):
+        new_path = path.replace(prefix,'',1)
+        if new_path.startswith(os.sep):
+            new_path = new_path.replace(os.sep,'',1)
+        return new_path
+    else:
+        return path
+
 #######################################################################
 # Main program
 #######################################################################
@@ -383,6 +458,7 @@ if __name__ == "__main__":
         print "  --layout: generate script for laying out analysis directories"
         print "  --rsync:  generate script for rsyncing data"
         print "  --spreadsheet[=<file>.xls]: write report to Excel spreadsheet"
+        print "  --md5sum: calculate md5sums for primary data files"
         sys.exit()
 
     # Solid run directories
@@ -421,12 +497,17 @@ if __name__ == "__main__":
     if "--rsync" in sys.argv[1:-1]:
         do_suggest_rsync = True
 
+    do_md5sum = False
+    if "--md5sum" in sys.argv[1:-1]:
+        do_md5sum = True
+
     # Check there's at least one thing to do
     if not (do_report_run or 
             do_suggest_layout or 
             do_spreadsheet or 
             do_checks or
-            do_suggest_rsync):
+            do_suggest_rsync or
+            do_md5sum):
         do_report_run = True
 
     # Get the run information
@@ -453,6 +534,10 @@ if __name__ == "__main__":
     # Generate script rsync
     if do_suggest_rsync:   
         suggest_rsync_command(solid_runs)
+
+    # Generate md5sums
+    if do_md5sum:
+        print_md5sums(solid_runs)
 
     # Do verification
     # Nb this should always be the last step
