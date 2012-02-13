@@ -114,7 +114,7 @@ def main():
                               description="Annotate probeset list based on name: reads in "
                               "first column of tab-delimited input file 'probe_set_file' as a "
                               "list of probeset names and outputs these names to another "
-                              "tab-delimited file with a description for each."
+                              "tab-delimited file with a description for each. "
                               "Output file name can be specified with the -o option, otherwise "
                               "it will be the input file name with '_annotated' appended.")
     p.add_option('-o',action='store',dest='out_file',default=None,
