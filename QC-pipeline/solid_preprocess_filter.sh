@@ -142,7 +142,7 @@ else
 	/bin/cp ${tmp}/${processed_qual} .
 	echo Created ${processed_qual}
     else
-	echo WARNING no file ${processed_csfasta}
+	echo WARNING no file ${processed_qual}
     fi
     # Remove temporary dir
     /bin/rm -rf ${tmp}
