@@ -9,7 +9,7 @@
 #
 #########################################################################
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 """TabFile
 
@@ -471,17 +471,24 @@ class TabFile:
         """
         self.__data = sorted(self.__data,key=sort_func,reverse=reverse)
 
-    def write(self,filen,include_header=False):
+    def write(self,filen,include_header=False,no_hash=False):
         """Write the TabFile data to an output file
 
         Arguments:
           filen: name of file to write to
           include_header: (optional) if set to True, the first
             line will be a 'header' line
+          no_hash: (optional) if set to True and include_header is
+            also True then don't put a hash character '#' at the
+            start of the header line in the output file.
         """
         fp = open(filen,'w')
         if include_header:
-            fp.write("#%s\n" % '\t'.join(self.header()))
+            if not no_hash:
+                leading_hash = '#'
+            else:
+                leading_hash = ''
+            fp.write("%s%s\n" % (leading_hash,'\t'.join(self.header())))
         for data in self.__data:
             fp.write("%s\n" % data)
         fp.close()
