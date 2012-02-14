@@ -91,3 +91,42 @@ function number_of_reads() {
     echo `grep -c "^>" $1`
 }
 #
+#====================================================================
+#
+# solid_preprocess_files
+#
+# Returns csfasta and qual file pair, if found (otherwise returns
+# empty string).
+#
+# Input is the basename of the input csfasta file (which can include
+# a leading directory name).
+#
+# The function checks for a csfasta/qual file pair based on the input
+# basename, using different variants of the naming convention used
+# by the SOLiD_preprocess_filter_v2.pl script.
+#
+# Reports "<csfasta> <qual>", use 'cut -d" " -f...' to extract just
+# the csfasta or qual name.
+#
+# Use 'if [ ! -z "$(solid_preprocess_files ...)" ] ; then' as a test
+# on whether the files already exist.
+#
+# Usage: solid_preprocess_files <csfasta_basename>
+function solid_preprocess_files() {
+    # Old form of the output file names
+    local csfasta=${1}_T_F3.csfasta
+    local qual=${1}_QV_T_F3.qual
+    if [ -f "$csfasta" ] && [ -f "$qual" ] ; then
+	echo "$csfasta $qual"
+	return
+    fi
+    # Newer form
+    csfasta=${1}_T_F3.csfasta
+    qual=${1}_T_F3_QV.qual
+    if [ -f "$csfasta" ] && [ -f "$qual" ] ; then
+	echo "$csfasta $qual"
+	return
+    fi
+    # No matches
+}
+#
