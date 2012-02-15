@@ -110,12 +110,8 @@ echo csfasta   : $csfasta
 echo qual      : $qual
 echo Filter options: $FILTER_OPTIONS
 #
-# Output file names
-processed_csfasta=$(baserootname $csfasta)_T_F3.csfasta
-processed_qual=$(baserootname $csfasta)_QV_T_F3.qual
-#
 # Check if processed files already exist
-if [ -f "${processed_csfasta}" ] && [ -f "${processed_qual}" ] ; then
+if [ ! -z "$(solid_preprocess_files $(baserootname $csfasta))" ] ; then
     echo Filtered csfasta and qual files already exist, skipping preprocess filter
 else
     # Make a temporary directory to run in
@@ -130,24 +126,28 @@ else
     cmd="${SOLID_PREPROCESS_FILTER} -o $(baserootname $csfasta) ${FILTER_OPTIONS} -f ${csfasta} -g ${qual}"
     echo $cmd
     $cmd
+    # Output files
+    preprocess_outputs=$(solid_preprocess_files $(baserootname $csfasta))
     # Move back to working dir and copy preprocessed files
     cd $wd
-    if [ -f "${tmp}/${processed_csfasta}" ] ; then
+    if [ ! -z "$preprocess_outputs" ] ; then
+	processed_csfasta=`echo $preprocess_outputs | cut -d" " -f1`
+	processed_qual=`echo $preprocess_outputs | cut -d" " -f2`
 	/bin/cp ${tmp}/${processed_csfasta} .
 	echo Created ${processed_csfasta}
-    else
-	echo WARNING no file ${processed_csfasta}
-    fi
-    if [ -f "${tmp}/${processed_qual}" ] ; then
 	/bin/cp ${tmp}/${processed_qual} .
 	echo Created ${processed_qual}
     else
-	echo WARNING no file ${processed_qual}
+	echo WARNING no preprocess CSFASTA/QUAL file pair found
     fi
     # Remove temporary dir
     /bin/rm -rf ${tmp}
     # Create fastq file
-    run_solid2fastq $processed_csfasta $processed_qual
+    if [ ! -z "$preprocess_outputs" ] ; then
+	run_solid2fastq $processed_csfasta $processed_qual
+    else
+	echo WARNING unable to run solid2fastq without QUAL file
+    fi
 fi
 #
 # Filter statistics: run separate filtering_stats.sh script

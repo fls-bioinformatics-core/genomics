@@ -201,11 +201,9 @@ if [ -z $output_basename ] ; then
 	output_basename=${output_basename}_${truncation_length}bp
     fi
 fi
-processed_csfasta=${output_basename}_T_F3.csfasta
-processed_qual=${output_basename}_QV_T_F3.qual
 #
 # Check if processed files already exist
-if [ -f "${processed_csfasta}" ] && [ -f "${processed_qual}" ] ; then
+if [ ! -z "$(solid_preprocess_files $(baserootname $csfasta))" ] ; then
     echo Filtered csfasta and qual files already exist, skipping preprocess filter
 else
     # Report initial number of reads
@@ -228,43 +226,51 @@ else
 	    exit 1
 	fi
 	# Reset the files for next step
-	csfasta=`basename $csfasta`
-	qual=`basename $qual`
-	/bin/mv solid_preprocess_truncate_T_F3.csfasta $csfasta
-	/bin/mv solid_preprocess_truncate_QV_T_F3.qual $qual
-	    # Number of reads after truncation
-	n_reads=$(number_of_reads $csfasta)
+	# Output files from preprocess truncation
+	preprocess_outputs=$(solid_preprocess_files solid_preprocess_truncate)
+	processed_csfasta=`echo $preprocess_outputs | cut -d" " -f1`
+	processed_qual=`echo $preprocess_outputs | cut -d" " -f2`
+	# Move and rename for input to preprocess filtering step
+	truncated_csfasta=`basename $csfasta`
+	truncated_qual=`basename $qual`
+	/bin/mv $processed_csfasta $truncated_csfasta
+	/bin/mv $processed_qual $truncated_qual
+	# Number of reads after truncation
+	n_reads=$(number_of_reads $truncated_csfasta)
 	echo "Number of reads after truncation: $n_reads"
     else
 	echo "Skipping explicit truncation step"
     fi
     # Run preprocess filter
-    if ! preprocess_filter $csfasta $qual $output_basename ; then
+    if ! preprocess_filter $truncated_csfasta $truncated_qual $output_basename ; then
 	echo "Filter finished with non-zero exit code indicating error"
 	echo "Stopping"
 	exit 1
     fi
+    # Output files
+    preprocess_outputs=$(solid_preprocess_files $output_basename)
     # Move back to working dir and copy preprocessed files
     cd $wd
-    if [ -f "${tmp}/${processed_csfasta}" ] ; then
+    if [ ! -z "$preprocess_outputs" ] ; then
+	processed_csfasta=`echo $preprocess_outputs | cut -d" " -f1`
+	processed_qual=`echo $preprocess_outputs | cut -d" " -f2`
 	/bin/cp ${tmp}/${processed_csfasta} .
 	echo Created ${processed_csfasta}
-    else
-	echo WARNING no file ${processed_csfasta}
-    fi
-    if [ -f "${tmp}/${processed_qual}" ] ; then
 	/bin/cp ${tmp}/${processed_qual} .
 	echo Created ${processed_qual}
+	n_reads=$(number_of_reads $processed_csfasta)
+	echo "Number of reads after filter: $n_reads"
     else
-	echo WARNING no file ${processed_csfasta}
+	echo WARNING no preprocess CSFASTA/QUAL file pair found
     fi
     # Remove temporary dir
     /bin/rm -rf ${tmp}
     # Number of reads after filter
-    n_reads=$(number_of_reads $processed_csfasta)
-    echo "Number of reads after filter: $n_reads"
-    # Create fastq file
-    run_solid2fastq $processed_csfasta $processed_qual
+    if [ ! -z "$preprocess_outputs" ] ; then
+	run_solid2fastq $processed_csfasta $processed_qual
+    else
+	echo WARNING unable to run solid2fastq without QUAL file
+    fi
 fi
 #
 # Filter statistics: run separate filtering_stats.sh script

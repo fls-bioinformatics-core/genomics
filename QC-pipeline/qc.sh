@@ -221,7 +221,12 @@ cd qc
 qc_boxplotter $QUAL
 #
 # Boxplots for filtered data
-qc_boxplotter ${WORKING_DIR}/$(baserootname $CSFASTA)_QV_T_F3.qual
+qual=`echo $(solid_preprocess_files ${WORKING_DIR}/$(baserootname $CSFASTA)) | cut -d" " -f2`
+if [ ! -z "$qual" ] ; then
+    qc_boxplotter $qual
+else
+    echo Unable to locate preprocess filtered QUAL file, boxplot skipped
+fi
 #
 echo QC pipeline completed: `date`
 exit
