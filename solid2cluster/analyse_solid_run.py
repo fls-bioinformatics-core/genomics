@@ -24,7 +24,12 @@ import os
 import string
 import logging
 logging.basicConfig(format="%(levelname)s %(message)s")
-import md5
+try:
+    # Preferentially use hashlib module
+    import hashlib
+except ImportError:
+    # hashlib not available, use deprecated md5 module
+    import md5
 
 # Put ../share onto Python search path for modules
 SHARE_DIR = os.path.abspath(
@@ -45,12 +50,23 @@ except ImportError, ex:
 class Md5sum:
     """Utility class for generating MD5SUM checksums
 
-    Code based on example at
+    Code based on examples at:
+
     http://www.python.org/getit/releases/2.0.1/md5sum.py
+
+    and
+
+    http://stackoverflow.com/questions/1131220/get-md5-hash-of-a-files-without-open-it-in-python
 
     Example usage:
     >>> chksum = Md5Sum().md5sum("myfile.txt")
     eacc9c036025f0e64fb724cacaadd8b4
+
+    This class implements two methods for generating the md5
+    digest of a file: the first uses a method based on the hashlib
+    module, while the second (used as a fallback for pre-2.5 Python)
+    uses the now deprecated md5 module. Note however that the class
+    determines itself which method to use.
     """
 
     def __init__(self):
@@ -63,6 +79,47 @@ class Md5sum:
         """
         return ("%02x"*len(s)) % tuple(map(ord, s))
 
+    def __md5sum_hashlib(self,filen):
+        """Return md5sum digest for a file using hashlib module
+
+        This implements the md5sum checksum generation using the
+        hashlib module. This should be available in Python 2.5.
+
+        Arguments:
+          filen: name of the file to generate the checksum from
+        
+        Returns:
+          Md5sum digest for the named file.
+        """
+        chksum = hashlib.md5()
+        with open(filen,'rb') as f: 
+            for chunk in iter(lambda: f.read(self.__BLOCKSIZE), ''): 
+                chksum.update(chunk)
+        return self.__hexify(chksum.digest())
+
+    def __md5sum_md5(self,filen):
+        """Return md5sum digest for a file using md5 module
+
+        This implements the md5sum checksum generation using the
+        deprecated md5 module. This should only be used if the hashlib
+        module is unavailable (e.g. Python 2.4 and earlier).
+
+        Arguments:
+          filen: name of the file to generate the checksum from
+        
+        Returns:
+          Md5sum digest for the named file.
+        """
+        f = open(filen, "rb")
+        chksum = md5.new()
+        while 1:
+            block = f.read(self.__BLOCKSIZE)
+            if not block:
+                break
+            chksum.update(block)
+        f.close()
+        return self.__hexify(chksum.digest())
+
     def md5sum(self,filen):
         """Return md5sum digest for a file
 
@@ -72,15 +129,12 @@ class Md5sum:
         Returns:
           Md5sum digest for the named file.
         """
-        f = open(filen, "rb")
-        sum = md5.new()
-        while 1:
-            block = f.read(self.__BLOCKSIZE)
-            if not block:
-                break
-            sum.update(block)
-        f.close()
-        return self.__hexify(sum.digest())
+        try:
+            # Attempt to use hashlib
+            return self.__md5sum_hashlib(filen)
+        except NameError:
+            # hashlib not available, fall back to md5 module
+            return self.__md5sum_md5(filen)
 
 #######################################################################
 # Module Functions: program functions
