@@ -4,6 +4,7 @@
 # Args: 'R'=1 '--no-save'=2 'arg1'=3 
 # 
 # Author: Ian Donaldson 1 August 2010
+# Updated: Peter Briggs 16 February 2012
 # Draws bars of a boxplot from individuals files (one per position in sequence reads)
 
 #### Get argument for script
@@ -26,6 +27,9 @@ so_pattern = paste(basename(fileName), "posn*", sep="_")
 #files <- list.files(pattern="qual_posn*")
 files <- list.files(path=dirname(fileName),pattern=so_pattern,full.names=TRUE)
 
+# Number of base pairs equal to number of files read in
+bases = length(files)
+
 # counter for current file
 s=0
 
@@ -44,23 +48,32 @@ for(i in files) {
    if(s==1){
       no_title = paste(basename(fileName), "Nucleotide order", sep=" - ")
 
-      boxplot(values, xlim=c(0,50), ylim=c(-1,35), outline=FALSE, boxfill=2, main=no_title)
+      boxplot(values, xlim=c(0,bases), ylim=c(-1,35), outline=FALSE, boxfill=2, main=no_title)
    }
 
    # successive bars of plot without graph frames and axis, which increase the size of the .ps file
    # start of cycle draw colour
    else if (length(which(colours == s))) {
-      boxplot(values,xlim=c(0,50), ylim=c(-1,35), add=TRUE, at=s, axes=FALSE, boxfill="red", show.names=FALSE, outline=FALSE)
+      boxplot(values,xlim=c(0,bases), ylim=c(-1,35), add=TRUE, at=s, axes=FALSE, boxfill="red", show.names=FALSE, outline=FALSE)
    }
 
    # successive bars of plot without graph frames and axis, which increase the size of the .ps file
    else{
-      boxplot(values,xlim=c(0,50), ylim=c(-1,35), add=TRUE, at=s, axes=FALSE, boxfill="cyan", show.names=FALSE, outline=FALSE)
+      boxplot(values,xlim=c(0,bases), ylim=c(-1,35), add=TRUE, at=s, axes=FALSE, boxfill="cyan", show.names=FALSE, outline=FALSE)
    }
 }
 
 # Add X-axis labels - for start of each cycle
-axis_labels <- c('1','','','','','6','','','','','11','','','','','16','','','','','21','','','','','26','','','','','31','','','','','36','','','','','41','','','','','46','','','','')
+#
+# Create a vector with empty strings (one vector element for each base)
+axis_labels <- rep('',bases)
+#
+# Every five elements insert the base number (so we get 1,...,6,...11,... etc)
+for(i in 1:bases) {
+   if ((i-1) %% 5 == 0) {
+      axis_labels[i] = toString(i)
+   }
+}
 axis(1, at=axis_labels, labels=axis_labels)
 
 # close postscript file

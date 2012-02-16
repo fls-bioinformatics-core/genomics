@@ -5,6 +5,7 @@
 # Ian Donaldson 20 July 2010
 # Modified to also output a second set of file in primer order - 5 Aug 2010
 # Modified to obsfurcate the file names etc in the example below - 16 Jun 2011 (PJB)
+# Substantial refactoring to deal with 35bp reads - 16 Feb 2012 (PJB)
 
 use strict;
 
@@ -20,8 +21,17 @@ unless(@ARGV == 2) {
    die"USAGE: $0 | Input qual file | Output suffix\n\n";
 }
 
-# input
+# Open input once to determine number of bases
+my $bases = 50;
 open(INPUT, "<$ARGV[0]") or die("Could not open input!");
+while(defined(my $line = <INPUT>)) {
+   if($line =~ /(^#|^>)/) { next } # comment lines and headers
+   my @line_bits = split(/\s/, $line);
+   $bases = @line_bits;
+   # Break out of loop
+   last;
+}
+close(INPUT);
 
 # array of extensions for intermediate files
 my @extensions = ("AA","AB","AC","AD","AE","AF","AG","AH","AI","AJ","AK","AL","AM",
@@ -33,7 +43,7 @@ my @extensions = ("AA","AB","AC","AD","AE","AF","AG","AH","AI","AJ","AK","AL","A
 # Files will be named <blah>_posnAA, <blah>_posnAB etc
 # We'll store the file handles in an array so we can access them later on
 my @output = ();
-for (my $pos = 1; $pos <= 50; $pos++) {
+for (my $pos = 1; $pos <= $bases; $pos++) {
     # Make names
     my $filename = ">$ARGV[1]\_posn" . $extensions[$pos-1];
     # Open file
@@ -43,12 +53,13 @@ for (my $pos = 1; $pos <= 50; $pos++) {
 }
 
 # extract data from file line by line
+open(INPUT, "<$ARGV[0]") or die("Could not open input!");
 while(defined(my $line = <INPUT>)) {
    if($line =~ /(^#|^>)/) { next } # comment lines and headers
    # Output in sequence order
    my @line_bits = split(/\s/, $line);
    # Loop over line bits and write each to the appropriate file
-   for (my $pos = 1; $pos <= 50; $pos++) {
+   for (my $pos = 1; $pos <= $bases; $pos++) {
        my $fh = $output[$pos-1];
        print $fh "$line_bits[$pos-1]\n";
    }
@@ -56,7 +67,7 @@ while(defined(my $line = <INPUT>)) {
 
 # Close the files
 close(INPUT);
-for (my $pos = 1; $pos <= 50; $pos++) {
+for (my $pos = 1; $pos <= $bases; $pos++) {
     my $fh = $output[$pos-1];
     close($fh . $pos);
 }
