@@ -49,14 +49,16 @@ while(defined(my $line = <INPUT>)) {
    my @line_bits = split(/\s/, $line);
    # Loop over line bits and write each to the appropriate file
    for (my $pos = 1; $pos <= 50; $pos++) {
-       print $output[$pos-1] "$line_bits[$pos-1]\n";
+       my $fh = $output[$pos-1];
+       print $fh "$line_bits[$pos-1]\n";
    }
 }
 
 # Close the files
 close(INPUT);
 for (my $pos = 1; $pos <= 50; $pos++) {
-    close($output[$pos-1] . $pos);
+    my $fh = $output[$pos-1];
+    close($fh . $pos);
 }
 
 exit;
