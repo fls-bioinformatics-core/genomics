@@ -18,7 +18,7 @@ Utility for checking files and directories using md5 checksums.
 # Module metadata
 #######################################################################
 
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 
 #######################################################################
 # Import modules that this module depends on
@@ -129,7 +129,8 @@ def diff_directories(dirn1,dirn2,verbose=False):
     """
     # Move to first dir and generate temporary Md5sum file
     os.chdir(dirn1)
-    tmpfile = tempfile.mkstemp()[1]
+    fp,tmpfile = tempfile.mkstemp()
+    os.close(fp)
     compute_md5sums('.',output_file=tmpfile)
     # Run this against the second directory
     os.chdir(dirn2)
