@@ -11,6 +11,7 @@ Place to put general utility scripts/tools.
  *  `makeBinsFromBed.pl`: create bin files for binning applications
  *  `makeRegularBinsFromGenomeTable.R`: make bin file from set of chromosomes
  *  `make_mock_solid_dir.py`: create mock SOLiD directory structure for testing
+ *  `md5checker.py`: check files and directories using MD5 sums
 
 See below for more detailed usage documentation.
 
@@ -175,3 +176,21 @@ Arguments:
 
     --paired-end          Create directory structure for paired-end run
 
+
+md5checker.py
+-------------
+Utility for checking files and directories using MD5 checksums.
+
+Usage:
+
+To generate MD5 sums for a directory:
+
+    md5checker.py [ -o FILE ] DIR
+
+To check a set of files against MD5 sums stored in a file:
+
+    md5checker.py -c FILE
+
+To compare the contents of a directory against another directory using MD5 sums:
+
+    md5checker.py --diff DIR1 DIR2
