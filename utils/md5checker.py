@@ -85,6 +85,9 @@ def verify_md5sums(chksum_file,verbose=False):
     failures = []
     for line in open(chksum_file,'rU'):
         items = line.strip().split()
+        if len(items) != 2:
+            sys.stderr.write("Badly formatted MD5 checksum line, skipped\n")
+            continue
         chksum = items[0]
         chkfile = items[1]
         try:
@@ -98,9 +101,9 @@ def verify_md5sums(chksum_file,verbose=False):
             report("%s: MISSING" % chkfile,verbose)
             failures.append(chkfile)
     if failures:
-        print "Failed for following files:"
+        sys.stderr.write("Check failed for %d file(s):\n" % len(failures))
         for f in failures:
-            print "\t%s" % f
+            sys.stderr.write("\t%s\n" % f)
 
 def diff_directories(dirn1,dirn2,verbose=False):
     """Check one directory against another using MD5 sums
