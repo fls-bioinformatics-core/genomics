@@ -71,9 +71,10 @@ if __name__ == "__main__":
         print "    --debug: turn on debugging output"
         print "    --top-dir=<dir>: create analysis directories as subdirs of <dir>;"
         print "      otherwise create them in cwd."
-        print "    --use-library-names: use library names for links to primary"
-        print "      csfasta/qual data files e.g. 'PB_01.csfasta' rather than"
-        print "      'solid0123_20111107_PB_QR_pool_PB_01.csfasta'"
+        print "    --naming-scheme=<scheme>: specify naming scheme for links to"
+        print "      primary data (one of 'minimal' - library names only, 'partial' -"
+        print "      includes instrument name, datestamp and library name (default)"
+        print "      or 'full' - same as source data file"
         print "    --run-pipeline=<script>: after creating analysis directories, run"
         print "      the specified <script> on SOLiD data file pairs in each"
         print ""
@@ -148,8 +149,8 @@ if __name__ == "__main__":
                 expt.sample = source
         elif arg == '--dry-run':
             dry_run = True
-        elif arg == '--use-library-names':
-            link_naming_scheme = "minimal"
+        elif arg.startswith('--naming-scheme='):
+            link_naming_scheme = arg.split('=')[1]
         elif arg == '--debug':
             logging.getLogger().setLevel(logging.DEBUG)
         elif arg.startswith('--top-dir='):
