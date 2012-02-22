@@ -91,14 +91,10 @@ def md5sum_md5(filen):
     Returns:
       Md5sum digest for the named file.
     """
-    f = open(filen, "rb")
     chksum = md5.new()
-    while 1:
-        block = f.read(BLOCKSIZE)
-        if not block:
-            break
-        chksum.update(block)
-    f.close()
+    with open(filen, "rb") as f:
+        for block in iter(lambda: f.read(BLOCKSIZE), ''):
+            chksum.update(block)
     return hexify(chksum.digest())
 
 def md5sum(filen):
