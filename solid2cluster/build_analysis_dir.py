@@ -55,7 +55,7 @@ if __name__ == "__main__":
     dry_run = False
     top_dir = None
     pipeline_script = None
-    use_library_names = False
+    link_naming_scheme = "partial"
 
     # Process command line
     if len(sys.argv) < 2:
@@ -149,7 +149,7 @@ if __name__ == "__main__":
         elif arg == '--dry-run':
             dry_run = True
         elif arg == '--use-library-names':
-            use_library_names = True
+            link_naming_scheme = "minimal"
         elif arg == '--debug':
             logging.getLogger().setLevel(logging.DEBUG)
         elif arg.startswith('--top-dir='):
@@ -187,7 +187,7 @@ if __name__ == "__main__":
 
     # Build the analysis directory structure
     expts.buildAnalysisDirs(top_dir=top_dir,dry_run=dry_run,
-                            use_library_names=use_library_names)
+                            naming_scheme=link_naming_scheme)
             
     # Run the pipeline script
     if pipeline_script:

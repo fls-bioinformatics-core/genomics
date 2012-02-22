@@ -168,7 +168,7 @@ class ExperimentList:
         except IndexError:
             return None
 
-    def buildAnalysisDirs(self,top_dir=None,dry_run=False,use_library_names=False):
+    def buildAnalysisDirs(self,top_dir=None,dry_run=False,naming_scheme="partial"):
         """Construct and populate analysis directories for the experiments
 
         For each defined experiment, create the required analysis directories
@@ -179,9 +179,10 @@ class ExperimentList:
             subdirs of the specified directory; otherwise operate in cwd
           dry_run: if True then only report the mkdir, ln etc operations that
             would be performed. Default is False (do perform the operations).
-          use_library_names: if True then use the name of the library as the
-            base for the links to csfasta and qual files; otherwise use the
-            full instrument/datestamp/sample/library name combination (default).
+          naming_scheme: naming scheme to use for links to primary data, one of
+            'full' (same names as primary data files), 'partial' (cut-down version
+            of the full name which excludes sample names - the default), or
+            'minimal' (just the library name).
         """
         # Deal with top_dir
         if top_dir:
@@ -215,13 +216,8 @@ class ExperimentList:
                 paired_end = SolidData.is_paired_end(run)
                 libraries = run.fetchLibraries(expt.sample,expt.library)
                 for library in libraries:
-                    # Look up primary data
-                    if use_library_names:
-                        ln_csfasta = "%s.csfasta" % library.name
-                        ln_qual = "%s.qual" % library.name
-                    else:
-                        ln_csfasta = getLinkName(library.csfasta,library)
-                        ln_qual = getLinkName(library.qual,library)
+                    # Get names for links to primary data - F3
+                    ln_csfasta,ln_qual = LinkNames(naming_scheme).names(library)
                     print "\t\t%s" % ln_csfasta
                     print "\t\t%s" % ln_qual
                     # Make links to primary data
@@ -229,16 +225,9 @@ class ExperimentList:
                                       dry_run=dry_run)
                     self.__linkToFile(library.qual,os.path.join(expt_dir,ln_qual),
                                       dry_run=dry_run)
-                    # Reverse reads for paired-end run
+                    # Get names for links to F5 reads (if paired-end run)
                     if paired_end:
-                        if use_library_names:
-                            ln_csfasta = "%s_F5.csfasta" % library.name
-                            ln_qual = "%s_F5.qual" % library.name
-                        else:
-                            ln_csfasta = getLinkName(library.csfasta_reverse,library,
-                                                     reverse='F5')
-                            ln_qual = getLinkName(library.qual_reverse,library,
-                                                  reverse='F5')
+                        ln_csfasta,ln_qual = LinkNames(naming_scheme).names(library,F5=True)
                         print "\t\t%s" % ln_csfasta
                         print "\t\t%s" % ln_qual
                         # Make links to reverse read data
@@ -281,48 +270,129 @@ class ExperimentList:
     def __len__(self):
         return len(self.experiments)
 
+class LinkNames:
+    """Class to construct names for links to primary data files
+
+    The LinkNames class encodes a set of naming schemes that are used to
+    construct names for the links in the analysis directories that point
+    to the primary CFASTA and QUAL data files.
+
+    The schemes are:
+
+      full:    link name is the same as the source file, e.g.
+               solid0123_20111014_FRAG_BC_AB_CD_EF_pool_F3_CD_PQ5.csfasta
+
+      partial: link name consists of the instrument name, datestamp and
+               library name, e.g.
+               solid0123_20111014_CD_PQ5.csfasta
+
+      minimal: link name consists of just the library name, e.g.
+               CD_PQ5.csfasta
+
+    For paired-end data, the 'partial' and 'minimal' names have '_F3' and
+    '_F5' appended as appropriate (full names already have this distinction).
+
+    Example usage:
+
+    To get the link names using the minimal scheme for the F3 reads ('library'
+    is a SolidLibrary object):
+
+    >>> csfasta_lnk,qual_lnk = LinkNames('minimal').names(library)
+
+    To get names for the F5 reads using the partial scheme:
+
+    >>> csfasta_lnk,qual_lnk = LinkNames('partial').names(library,F5=True)
+    """
+    
+    def __init__(self,scheme):
+        """Create a new LinkNames instance
+
+        Argments:
+          scheme: naming scheme, one of 'full', 'partial' or
+            'minimal'
+        """
+        # Default
+        self.__names = self.__full_names
+        # Assign according to requested scheme
+        if scheme == "minimal":
+            self.__names = self.__minimal_names
+        elif scheme == "partial":
+            self.__names = self.__partial_names
+        elif scheme == "full":
+            self.__names = self.__full_names
+
+    def names(self,library,F5=False):
+        """Get names for links to the primary data in a library
+
+        Returns a tuple of link names:
+
+        (csfasta_link_name,qual_link_name)
+
+        derived from the data in the library plus the naming scheme
+        specified when the LinkNames object was created.
+        
+        Arguments:
+          library: SolidLibrary object
+          F5: if True then indicates that names should be returned
+            for linking to the F5 reads (default is F3 reads)
+        """
+        return self.__names(library,F5)
+
+    def __minimal_names(self,library,F5):
+        """Internal: link names based on 'minimal' naming scheme
+        """
+        # Alternative naming schemes for primary data for links
+        run = library.parent_sample.parent_run
+        if not SolidData.is_paired_end(run):
+            # Library names alone
+            return ("%s.csfasta" % library.name,
+                    "%s.qual" % library.name)
+        else:
+            # Add F3/F5 to distinguish the samples
+            if not F5:
+                return ("%s_F3.csfasta" % library.name,
+                        "%s_F3.qual" % library.name)
+            else:
+                return ("%s_F5.csfasta" % library.name,
+                        "%s_F5.qual" % library.name)
+
+    def __partial_names(self,library,F5):
+        """Internal: link names based on 'partial' naming scheme
+        """
+        run = library.parent_sample.parent_run
+        name = '_'.join([run.run_info.instrument,
+                         run.run_info.datestamp,
+                         library.name])
+        if not SolidData.is_paired_end(run):
+            return ("%s.csfasta" % name,
+                    "%s_QV.qual" % name)
+        else:
+            # Add F3/F5 to distinguish the samples
+            if not F5:
+                return ("%s_F3.csfasta" % name,
+                        "%s_F3_QV.qual" % name)
+            else:
+                return ("%s_F5.csfasta" % name,
+                        "%s_F5_QV.qual" % name)
+
+    def __full_names(self,library,F5):
+        """Internal: link names based on 'full' naming scheme
+        """
+        run = library.parent_sample.parent_run
+        if not SolidData.is_paired_end(run):
+            return (os.path.basename(library.csfasta),
+                    os.path.basename(library.qual))
+        else:
+            if not F5:
+                return (os.path.basename(library.csfasta),
+                        os.path.basename(library.qual))
+            else:
+                return (os.path.basename(library.csfasta_reverse),
+                        os.path.basename(library.qual_reverse))
+
 #######################################################################
 # Module functions
 #######################################################################
-
-def getLinkName(filen,library,reverse=''):
-    """Return the 'analysis' file name based on a source file name.
-    
-    The analysis file name is constructed as
-
-    <instrument>_<datestamp>_<sample>_<library>.csfasta
-
-    or
-
-    <instrument>_<datestamp>_<sample>_<library>_QV.qual
-    
-    For reverse reads (indicated by a non-empty 'reverse' argument),
-    the supplied 'reverse' value will be added to the name, e.g.:
-
-    <instrument>_<datestamp>_<sample>_<library>_<reverse>.csfasta
-
-    Arguments:
-      filen: name of the source file
-      library: SolidLibrary object representing the parent library (nb
-         requires that the parent_sample of the library is set)
-      reverse: (optional) specifies an additional string to be added to
-         the link name to indicate a reverse read
-
-    Returns:
-    Name for the analysis file.
-    """
-    # Construct new name
-    sample = library.parent_sample
-    link_filen_elements = [sample.parent_run.run_info.instrument,
-                           sample.parent_run.run_info.datestamp,
-                           sample.name,library.name]
-    if reverse:
-        link_filen_elements.append(reverse)
-    ext = os.path.splitext(filen)[1]
-    if ext == ".qual":
-        link_filen_elements.append("QV")
-    link_filen = '_'.join(link_filen_elements) + ext
-    return link_filen
 
 # Filesystem wrappers
 
