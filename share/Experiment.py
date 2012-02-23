@@ -230,10 +230,10 @@ class ExperimentList:
                         ln_csfasta,ln_qual = LinkNames(naming_scheme).names(library,F5=True)
                         print "\t\t%s" % ln_csfasta
                         print "\t\t%s" % ln_qual
-                        # Make links to reverse read data
-                        self.__linkToFile(library.csfasta_reverse,os.path.join(expt_dir,ln_csfasta),
+                        # Make links to F5 read data
+                        self.__linkToFile(library.csfasta_f5,os.path.join(expt_dir,ln_csfasta),
                                           dry_run=dry_run)
-                        self.__linkToFile(library.qual_reverse,os.path.join(expt_dir,ln_qual),
+                        self.__linkToFile(library.qual_f5,os.path.join(expt_dir,ln_qual),
                                           dry_run=dry_run)
                         
     
@@ -387,8 +387,8 @@ class LinkNames:
                 return (os.path.basename(library.csfasta),
                         os.path.basename(library.qual))
             else:
-                return (os.path.basename(library.csfasta_reverse),
-                        os.path.basename(library.qual_reverse))
+                return (os.path.basename(library.csfasta_f5),
+                        os.path.basename(library.qual_f5))
 
 #######################################################################
 # Module functions

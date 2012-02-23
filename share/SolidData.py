@@ -41,8 +41,13 @@ be obtained via the SolidLibrary.projects, or using the 'getLibrary'
 method.
 
 Finally, SolidLibrary objects hold data about the location of the
-primary data files via the 'SolidLibrary.csfasta' and 'SolidLibrary.qual'
-properties.
+primary data files. The 'SolidLibrary.csfasta' and 'SolidLibrary.qual'
+properties hold the locations of the data for the F3 reads, while for
+paired-end runs the 'SolidLibrary.csfasta_f5' and 'SolidLibrary.qual_f5'
+properties point to the F5 reads.
+
+(The 'is_paired_end' function can be used to test whether a SolidRun
+object holds data for a paired-end run.)
 """
 
 #######################################################################
@@ -191,7 +196,7 @@ class SolidRun:
 
             # Locate the primary data
             got_primary_data = False
-            got_primary_data_reverse = False
+            got_primary_data_f5 = False
             ambiguity_error = False
             if this_library_dir:
                 logging.debug("Library dir: %s..." % this_library_dir)
@@ -209,8 +214,8 @@ class SolidRun:
                         # Check for csfasta and qual files
                         csfasta = None
                         qual = None
-                        csfasta_reverse = None
-                        qual_reverse = None
+                        csfasta_f5 = None
+                        qual_f5 = None
                         for f in os.listdir(reads):
                             ext = os.path.splitext(f)[1]
                             if ext == ".csfasta":
@@ -223,18 +228,18 @@ class SolidRun:
                         if library.is_barcoded:
                             if csfasta:
                                 if csfasta.rfind('_F5-BC_') > -1:
-                                    # Reverse strand
-                                    csfasta_reverse = csfasta
+                                    # F5 reads
+                                    csfasta_f5 = csfasta
                                 if csfasta.rfind('_F3_') < 0:
                                     # Not a recognised name
                                     csfasta = None
                             if qual:
                                 if qual.rfind('_F5-BC_') > -1:
-                                    # Reverse strand
-                                    qual_reverse = qual
+                                    # F5 reads
+                                    qual_f5 = qual
                                 if qual.rfind('_F3_') < 0:
                                     qual = None
-                        # Store primary data: forward strand
+                        # Store primary data: F3 reads
                         if csfasta and qual:
                             if got_primary_data:
                                 ambiguity_error = True
@@ -242,16 +247,16 @@ class SolidRun:
                                 library.csfasta = csfasta
                                 library.qual = qual
                                 got_primary_data = True
-                                logging.debug("-----> Located primary data (forward)")
-                        # Store primary data: reverse strand
-                        if csfasta_reverse and qual_reverse:
-                            if got_primary_data_reverse:
+                                logging.debug("-----> Located primary data (F3)")
+                        # Store primary data: F5 reads
+                        if csfasta_f5 and qual_f5:
+                            if got_primary_data_f5:
                                 ambiguity_error = True
                             else:
-                                library.csfasta_reverse = csfasta_reverse
-                                library.qual_reverse = qual_reverse
-                                got_primary_data_reverse = True
-                                logging.debug("-----> Located primary data (reverse)")
+                                library.csfasta_f5 = csfasta_f5
+                                library.qual_f5 = qual_f5
+                                got_primary_data_f5 = True
+                                logging.debug("-----> Located primary data (F5)")
 
             if not got_primary_data:
                 logging.warning("Unable to locate primary data for %s" % library)
@@ -445,8 +450,12 @@ class SolidLibrary:
     index_as_string: the trailing numbers from the name, as a string
       (preserves any leading zeroes)
     index: the trailing numbers from the name as an integer
-    csfasta: full path to the csfasta file for the library
-    qual: full path to qual file for the library
+    csfasta: full path to the csfasta file for the library (F3 reads)
+    qual: full path to qual file for the library (F3 reads)
+    csfasta_f5: full path to the F5 read (paired-end runs, otherwise
+      will be None)
+    qual_f5: full path to the F5 read (paired-end runs, otherwise will
+      be None)
     parent_sample: parent SolidSample object, or None.
     """
 
@@ -472,8 +481,8 @@ class SolidLibrary:
         # Associated data files
         self.csfasta = None
         self.qual = None
-        self.csfasta_reverse = None
-        self.qual_reverse = None
+        self.csfasta_f5 = None
+        self.qual_f5 = None
         # Parent sample
         self.parent_sample = parent_sample
 
@@ -1402,7 +1411,7 @@ All Beads	Totals	409927600	39452331	457541973
                         '/primary.201301234567890/reads')
             os.makedirs(dirname+'/AB_CD_pool/results.F1B1/libraries/'+d+
                         '/primary.201301234567890/reports')
-            # Primary with reads, rejects and reports for reverse reads
+            # Primary with reads, rejects and reports for F5 reads
             os.makedirs(dirname+'/AB_CD_pool/results.F1B1/libraries/'+d+
                         '/primary.201312345678901')
             os.makedirs(dirname+'/AB_CD_pool/results.F1B1/libraries/'+d+
@@ -1428,7 +1437,7 @@ All Beads	Totals	409927600	39452331	457541973
             os.makedirs(dirname+'/AB_CD_pool/results.F1B1/libraries/'+d+
                         '/temp')
             #
-            # Populate reverse read dirs
+            # Populate F5 read dirs
             # solidXXX/AB_CD_pool/results.F1B1/libraries/X/primary.x/reads/
             self.make_csfasta(dirname+'/AB_CD_pool/results.F1B1/libraries/'+d+
                               '/primary.201312345678901/reads/'+
@@ -1819,9 +1828,9 @@ class TestSolidRun(unittest.TestCase):
                 self.assertTrue(os.path.isfile(library.csfasta))
                 self.assertNotEqual(None,library.qual)
                 self.assertTrue(os.path.isfile(library.qual))
-                # Reverse reads should not be assigned
-                self.assertEqual(None,library.csfasta_reverse)
-                self.assertEqual(None,library.qual_reverse)
+                # F5 reads should not be assigned
+                self.assertEqual(None,library.csfasta_f5)
+                self.assertEqual(None,library.qual_f5)
 
     def test_library_files_in_same_location(self):
         for sample in self.solid_run.samples:
@@ -1904,14 +1913,14 @@ class TestSolidRunPairedEnd(unittest.TestCase):
                 # Check read names contain "_F3_"
                 self.assertTrue(library.csfasta.rfind("_F3_") > -1)
                 self.assertTrue(library.qual.rfind("_F3_") > -1)
-                # Reverse reads
-                self.assertNotEqual(None,library.csfasta_reverse)
-                self.assertTrue(os.path.isfile(library.csfasta_reverse))
-                self.assertNotEqual(None,library.qual_reverse)
-                self.assertTrue(os.path.isfile(library.qual_reverse))
-                # Check reverse read names contain "_F5-BC_"
-                self.assertTrue(library.csfasta_reverse.rfind("_F5-BC_") > -1)
-                self.assertTrue(library.qual_reverse.rfind("_F5-BC_") > -1)
+                # F5 reads
+                self.assertNotEqual(None,library.csfasta_f5)
+                self.assertTrue(os.path.isfile(library.csfasta_f5))
+                self.assertNotEqual(None,library.qual_f5)
+                self.assertTrue(os.path.isfile(library.qual_f5))
+                # Check F5 read names contain "_F5-BC_"
+                self.assertTrue(library.csfasta_f5.rfind("_F5-BC_") > -1)
+                self.assertTrue(library.qual_f5.rfind("_F5-BC_") > -1)
 
     def test_library_files_in_same_location(self):
         for sample in self.solid_run.samples:
@@ -1919,8 +1928,8 @@ class TestSolidRunPairedEnd(unittest.TestCase):
                 # Check they're in the same location as each other
                 self.assertEqual(os.path.dirname(library.csfasta),
                                  os.path.dirname(library.qual))
-                self.assertEqual(os.path.dirname(library.csfasta_reverse),
-                                 os.path.dirname(library.qual_reverse))
+                self.assertEqual(os.path.dirname(library.csfasta_f5),
+                                 os.path.dirname(library.qual_f5))
 
     def test_library_parent_dir_has_reject(self):
         for sample in self.solid_run.samples:
@@ -1930,7 +1939,7 @@ class TestSolidRunPairedEnd(unittest.TestCase):
                         os.path.join(os.path.dirname(library.csfasta),
                                      '..','reject')))
                 self.assertTrue(os.path.isdir(
-                        os.path.join(os.path.dirname(library.csfasta_reverse),
+                        os.path.join(os.path.dirname(library.csfasta_f5),
                                      '..','reject')))
 
     def test_fetch_libraries(self):

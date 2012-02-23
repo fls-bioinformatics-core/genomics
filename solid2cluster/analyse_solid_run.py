@@ -89,7 +89,7 @@ def report_run(solid_runs):
                 for library in project.libraries:
                     print "%s\n%s" % (library.csfasta,library.qual)
                     if SolidData.is_paired_end(run):
-                        print "%s\n%s" % (library.csfasta_reverse,library.qual_reverse)
+                        print "%s\n%s" % (library.csfasta_f5,library.qual_f5)
 
 def write_spreadsheet(solid_runs,spreadsheet):
     """Generate or append run data to an XLS-format spreadsheet
@@ -328,25 +328,25 @@ def verify_runs(solid_runs):
                             print "Missing qual for %s/%s" % \
                                 (sample.name,library.name)
                             run_status = 1
-                    # Paired-end run: check reverse reads
+                    # Paired-end run: check F5 reads
                     if paired_end:
-                        if not library.csfasta_reverse:
-                            print "No reverse csfasta for %s/%s" % \
+                        if not library.csfasta_f5:
+                            print "No F5 csfasta for %s/%s" % \
                                 (sample.name,library.name)
                             run_status = 1
                         else:
-                            if not os.path.exists(library.csfasta_reverse):
-                                print "Missing reverse csfasta for %s/%s" % \
+                            if not os.path.exists(library.csfasta_f5):
+                                print "Missing F5 csfasta for %s/%s" % \
                                     (sample.name,library.name)
                                 run_status = 1
-                        # Check for reverse qual
-                        if not library.qual_reverse:
-                            print "No reverse qual for %s/%s" % \
+                        # Check for F5 qual
+                        if not library.qual_f5:
+                            print "No F5 qual for %s/%s" % \
                                 (sample.name,library.name)
                             run_status = 1
                         else:
-                            if not os.path.exists(library.qual_reverse):
-                                print "Missing reverse qual for %s/%s" % \
+                            if not os.path.exists(library.qual_f5):
+                                print "Missing F5 qual for %s/%s" % \
                                     (sample.name,library.name)
                                 run_status = 1
         # Completed checks for run
@@ -383,10 +383,10 @@ def print_md5sums(solid_runs):
                 print "%s  %s" % (Md5sum.md5sum(library.qual),
                                   strip_prefix(library.qual,os.getcwd()))
                 if SolidData.is_paired_end(run):
-                    print "%s  %s" % (Md5sum.md5sum(library.csfasta_reverse),
-                                      strip_prefix(library.csfasta_reverse,os.getcwd()))
-                    print "%s  %s" % (Md5sum.md5sum(library.qual_reverse),
-                                      strip_prefix(library.qual_reverse,os.getcwd()))
+                    print "%s  %s" % (Md5sum.md5sum(library.csfasta_f5),
+                                      strip_prefix(library.csfasta_f5,os.getcwd()))
+                    print "%s  %s" % (Md5sum.md5sum(library.qual_f5),
+                                      strip_prefix(library.qual_f5,os.getcwd()))
 
 def strip_prefix(path,prefix):
     """Strip the supplied prefix from a file name
