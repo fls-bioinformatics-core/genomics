@@ -185,6 +185,13 @@ class SolidRun:
             # subdirectory
             # The "reads" subdirectory parallel to the "reject"
             # dir has the data we want
+            #
+            # For non-paired-end runs there should only be one
+            # matching directory, containing data files with 'F3'
+            # in the names.
+            # For paired-end runs there should be two matching
+            # directories, one with the 'F3' files and the other
+            # with the 'F5' files.
             
             # Check for directory with result files
             if libraries_dir:
