@@ -30,13 +30,8 @@ SHARE_DIR = os.path.abspath(
     os.path.normpath(
         os.path.join(os.path.dirname(sys.argv[0]),'..','share')))
 sys.path.append(SHARE_DIR)
-try:
-    import SolidData
-    import Experiment
-    import Md5sum
-    import Spreadsheet
-except ImportError, ex:
-    logging.warning("Error importing modules: %s" % ex)
+import SolidData
+import Experiment
 
 #######################################################################
 # Class definitions
@@ -488,7 +483,11 @@ if __name__ == "__main__":
 
     # Report the runs to a spreadsheet
     if do_spreadsheet:
-        write_spreadsheet(solid_runs,spreadsheet)
+        try:
+            import Spreadsheet
+            write_spreadsheet(solid_runs,spreadsheet)
+        except ImportError, ex:
+            logging.error("Unable to write spreadsheet: %s" % ex)
 
     # Suggest a layout for analysis
     if do_suggest_layout:
@@ -500,7 +499,11 @@ if __name__ == "__main__":
 
     # Generate md5sums
     if do_md5sum:
-        print_md5sums(solid_runs)
+        try:
+            import Md5sum
+            print_md5sums(solid_runs)
+        except ImportError:
+            logging.error("Unable to generate MD5 sums: %s" % ex)
 
     # Do verification
     # Nb this should always be the last step
