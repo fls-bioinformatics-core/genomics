@@ -65,11 +65,12 @@ Usage:
 
 Options:
 
- *  `--report`: print a report of the SOLiD run (including location of primary data files)
- *  `--verify`: do verification checks on SOLiD run directories
- *  `--layout`: writes a script to build analysis directories using `build_analysis_dir.py`
- *  `--rsync`: writes a script to run `rsync` for copying a subset of data
- *  `--spreadsheet[=<file>.xls]`: write report to Excel spreadsheet
+    --report: print a report of the SOLiD run
+    --verify: do verification checks on SOLiD run directories
+    --layout: generate script for laying out analysis directories
+    --rsync:  generate script for rsyncing data
+    --spreadsheet[=<file>.xls]: write report to Excel spreadsheet
+    --md5sum: calculate md5sums for primary data files
 
 
 build_analysis_dir.py
@@ -84,16 +85,18 @@ Usage:
 
 General Options:
 
- *  `--dry-run`: report the operations that would be performed
- *  `--naming-scheme=<scheme>`: specify naming scheme for links to
+    --dry-run: report the operations that would be performed
+    --debug: turn on debugging output
+    --top-dir=<dir>: create analysis directories as subdirs of <dir>;
+      otherwise create them in cwd.
+    --naming-scheme=<scheme>: specify naming scheme for links to
       primary data (one of 'minimal' - library names only, 'partial' -
       includes instrument name, datestamp and library name (default)
       or 'full' - same as source data file
- *  `--debug`: turn on debugging output
- *  `--top-dir=<dir>`: create analysis directories as subdirs of `<dir>`;
-      otherwise create them in cwd.
- *  `--run-pipeline=<script>`: after creating analysis directories, run
-      the specified `<script>` on SOLiD data file pairs in each
+    --link=<type>: type of links to create to primary data files,
+      either 'relative' (default) or 'absolute'
+    --run-pipeline=<script>: after creating analysis directories, run
+      the specified <script> on SOLiD data file pairs in each
 
 Options For Defining Experiments:
 
