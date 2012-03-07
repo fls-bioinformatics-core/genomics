@@ -56,6 +56,7 @@ if __name__ == "__main__":
     top_dir = None
     pipeline_script = None
     link_naming_scheme = "partial"
+    link_type = "relative"
 
     # Process command line
     if len(sys.argv) < 2:
@@ -75,6 +76,8 @@ if __name__ == "__main__":
         print "      primary data (one of 'minimal' - library names only, 'partial' -"
         print "      includes instrument name, datestamp and library name (default)"
         print "      or 'full' - same as source data file"
+        print "    --link=<type>: type of links to create to primary data files,"
+        print "      either 'relative' (default) or 'absolute'"
         print "    --run-pipeline=<script>: after creating analysis directories, run"
         print "      the specified <script> on SOLiD data file pairs in each"
         print ""
@@ -155,6 +158,8 @@ if __name__ == "__main__":
             logging.getLogger().setLevel(logging.DEBUG)
         elif arg.startswith('--top-dir='):
             top_dir = arg.split('=')[1]
+        elif arg.startswith('--link='):
+            link_type = arg.split('=')[1]
         elif arg.startswith('--run-pipeline='):
             pipeline_script = arg.split('=')[1]
         else:
@@ -168,6 +173,11 @@ if __name__ == "__main__":
         sys.exit(1)
     if not len(expts):
         logging.error("No experiments defined")
+        sys.exit(1)
+
+    # Verify link type
+    if link_type not in ('relative','absolute'):
+        logging.error("Unrecognised link type: '%s'" % link_type)
         sys.exit(1)
     
     # Report
@@ -188,6 +198,7 @@ if __name__ == "__main__":
 
     # Build the analysis directory structure
     expts.buildAnalysisDirs(top_dir=top_dir,dry_run=dry_run,
+                            link_type=link_type,
                             naming_scheme=link_naming_scheme)
             
     # Run the pipeline script
