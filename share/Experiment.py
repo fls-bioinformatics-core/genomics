@@ -168,7 +168,8 @@ class ExperimentList:
         except IndexError:
             return None
 
-    def buildAnalysisDirs(self,top_dir=None,dry_run=False,naming_scheme="partial"):
+    def buildAnalysisDirs(self,top_dir=None,dry_run=False,link_type="relative",
+                          naming_scheme="partial"):
         """Construct and populate analysis directories for the experiments
 
         For each defined experiment, create the required analysis directories
@@ -179,6 +180,8 @@ class ExperimentList:
             subdirs of the specified directory; otherwise operate in cwd
           dry_run: if True then only report the mkdir, ln etc operations that
             would be performed. Default is False (do perform the operations).
+          link_type: type of link to use when linking to primary data, one of
+            'relative' or 'absolute'.
           naming_scheme: naming scheme to use for links to primary data, one of
             'full' (same names as primary data files), 'partial' (cut-down version
             of the full name which excludes sample names - the default), or
@@ -196,6 +199,11 @@ class ExperimentList:
                 else:
                     # Report what would have been done
                     print "mkdir %s" % top_dir
+        # Type of link
+        if link_type == 'absolute':
+            use_relative_links = False
+        else:
+            use_relative_links = True
         # For each experiment, make and populate directory
         for expt in self.experiments:
             print "Experiment: %s %s %s/%s" % (expt.name,expt.type,expt.sample,expt.library)
@@ -222,9 +230,9 @@ class ExperimentList:
                     print "\t\t%s" % ln_qual
                     # Make links to primary data
                     self.__linkToFile(library.csfasta,os.path.join(expt_dir,ln_csfasta),
-                                      dry_run=dry_run)
+                                      relative=use_relative_links,dry_run=dry_run)
                     self.__linkToFile(library.qual,os.path.join(expt_dir,ln_qual),
-                                      dry_run=dry_run)
+                                      relative=use_relative_links,dry_run=dry_run)
                     # Get names for links to F5 reads (if paired-end run)
                     if paired_end:
                         ln_csfasta,ln_qual = LinkNames(naming_scheme).names(library,F5=True)
@@ -232,12 +240,12 @@ class ExperimentList:
                         print "\t\t%s" % ln_qual
                         # Make links to F5 read data
                         self.__linkToFile(library.csfasta_f5,os.path.join(expt_dir,ln_csfasta),
-                                          dry_run=dry_run)
+                                          relative=use_relative_links,dry_run=dry_run)
                         self.__linkToFile(library.qual_f5,os.path.join(expt_dir,ln_qual),
-                                          dry_run=dry_run)
+                                          relative=use_relative_links,dry_run=dry_run)
                         
     
-    def __linkToFile(self,source,target,dry_run=False):
+    def __linkToFile(self,source,target,relative=True,dry_run=False):
         """Create symbolic link to a file
         
         Internal function to make symbolic links to primary data. Checks that the
@@ -247,6 +255,8 @@ class ExperimentList:
         Arguments:
           source: the file to be linked to
           target: the name of the link pointing to source
+          relative: if True then make a relative link (if possible); otherwise
+            link to the target as given (default)
           dry_run: if True then only report the actions that would be performed
             (default is False, perform the actions)
         """
@@ -259,7 +269,7 @@ class ExperimentList:
             return
         if not dry_run:
             # Make symbolic links
-            mklink(source,target,relative=True)
+            mklink(source,target,relative=relative)
         else:
             # Report what would have been done
             print "ln -s %s %s" % (source,target)
