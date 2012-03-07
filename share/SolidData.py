@@ -104,7 +104,7 @@ class SolidRun:
         # Basic data the supplied directory name
         if not os.path.isdir(os.path.abspath(solid_run_dir)):
             # Directory not found
-            logging.warning("SOLiD data dir '%s' not found" % solid_run_dir)
+            logging.info("SOLiD data dir '%s' not found" % solid_run_dir)
             return
 
         self.run_dir = os.path.abspath(solid_run_dir)
