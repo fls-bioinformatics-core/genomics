@@ -390,6 +390,23 @@ class GEJobRunner(BaseJobRunner):
         # Job is in error state if state code starts with E
         return self.__job_state_code(job_id).startswith('E')
 
+    def queue(self,job_id):
+        """Fetch the job queue name
+
+        Returns the queue as reported by qstat, or None if
+        not found.
+        """
+        jobs = self.__run_qstat()
+        for job_data in jobs:
+            # Id is first item, Queue is 8th item for each job
+            if job_data[0] == job_id:
+                try:
+                    return job_data[7]
+                except Exception:
+                    return None
+        # No match
+        return None
+
     def list(self):
         """Get list of job ids in the queue.
         """
@@ -397,8 +414,10 @@ class GEJobRunner(BaseJobRunner):
         # Process the output to get job ids
         job_ids = []
         for job_data in jobs:
-            # Id is first item for each job
-            job_ids.append(job_data[0])
+            # Check for state being 'r' (=running)
+            if job_data[4] == 'r':
+                # Id is first item for each job
+                job_ids.append(job_data[0])
         return job_ids
 
     def __run_qstat(self):

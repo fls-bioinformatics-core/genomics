@@ -151,6 +151,11 @@ class Job:
                 time.sleep(5)
         logging.debug("Job %s started (%s)" % (self.job_id,
                                                time.asctime(time.localtime(self.start_time))))
+        # Also report queue (for GE jobs only)
+        try:
+            logging.debug("Queue: %s" % self.__runner.queue(self.job_id))
+        except AttributeError:
+            pass
         return self.job_id
 
     def terminate(self):
