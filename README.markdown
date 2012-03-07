@@ -15,8 +15,6 @@ Scripts are organised into the following directories:
   instrument to cluster
 * [utils](utils): non-NGS utility scripts
 * [share](share): common libraries and modules shared between applications
-* [shoebox](shoebox): a place for scrappy or one-off utility scripts which
-  may or may not be useful in future.
 
 Dependencies
 ------------
