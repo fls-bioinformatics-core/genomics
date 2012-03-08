@@ -127,6 +127,9 @@ class Job:
         # Time interval to use when checking for job start (seconds)
         # Can be floating point number e.g. 0.1 (= 100ms)
         self.__poll_interval = 1
+        # Time out period to use before giving up on job submission
+        # (seconds)
+        self.__timeout = 3600
 
     def start(self):
         """Start the job running
@@ -150,8 +153,17 @@ class Job:
             self.log = self.__runner.logFile(self.job_id)
             # Wait for evidence that the job has started
             logging.debug("Waiting for job to start")
+            time_waiting = 0
             while not self.__runner.isRunning(self.job_id) and not os.path.exists(self.log):
                 time.sleep(self.__poll_interval)
+                time_waiting += self.__poll_interval
+                if time_waiting > self.__timeout:
+                    # Waited too long for job to start, give up
+                    logging.error("Timed out waiting for job to start")
+                    self.failed = True
+                    self.__finished = True
+                    self.end_time = self.start_time
+                    return self.job_id
         logging.debug("Job %s started (%s)" % (self.job_id,
                                                time.asctime(time.localtime(self.start_time))))
         # Also report queue (for GE jobs only)
