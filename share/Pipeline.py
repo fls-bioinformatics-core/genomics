@@ -124,6 +124,9 @@ class Job:
         self.home_dir = os.getcwd()
         self.__finished = False
         self.__runner = runner
+        # Time interval to use when checking for job start (seconds)
+        # Can be floating point number e.g. 0.1 (= 100ms)
+        self.__poll_interval = 1
 
     def start(self):
         """Start the job running
@@ -148,7 +151,7 @@ class Job:
             # Wait for evidence that the job has started
             logging.debug("Waiting for job to start")
             while not self.__runner.isRunning(self.job_id) and not os.path.exists(self.log):
-                time.sleep(5)
+                time.sleep(self.__poll_interval)
         logging.debug("Job %s started (%s)" % (self.job_id,
                                                time.asctime(time.localtime(self.start_time))))
         # Also report queue (for GE jobs only)
@@ -174,7 +177,7 @@ class Job:
         if self.isRunning():
             self.terminate()
             while self.isRunning():
-                time.sleep(5)
+                time.sleep(self.__poll_interval)
         # Reset flags
         self.__finished = False
         self.submitted = False
