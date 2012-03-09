@@ -179,9 +179,9 @@ if __name__ == "__main__":
 
     # Directory differencing
     group = optparse.OptionGroup(p,"Directory comparison (-d, --diff)",
-                                 "Check that the contents of SOURCE_DIR are present and have "
-                                 "matching MD5 in TARGET_DIR. Note that files that are only "
-                                 "present in TARGET_DIR are not reported.")
+                                 "Check that the contents of SOURCE_DIR are present in "
+                                 "TARGET_DIR and have matching MD5 sums. Note that files that "
+                                 "are only present in TARGET_DIR are not reported.")
     p.add_option_group(group)
 
     # Checksum generation
