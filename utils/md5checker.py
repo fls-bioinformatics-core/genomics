@@ -18,7 +18,7 @@ Utility for checking files and directories using md5 checksums.
 # Module metadata
 #######################################################################
 
-__version__ = "0.0.2"
+__version__ = "0.0.3"
 
 #######################################################################
 # Import modules that this module depends on
@@ -61,9 +61,14 @@ def compute_md5sums(dirn,output_file=None):
     for d in os.walk(dirn):
         # Calculate md5sum for each file
         for f in d[2]:
-            filen = os.path.join(d[0],f)
-            chksum = Md5sum.md5sum(filen)
-            fp.write("%s  %s\n" % (chksum,filen))
+            try:
+                filen = os.path.join(d[0],f)
+                chksum = Md5sum.md5sum(filen)
+                fp.write("%s  %s\n" % (chksum,filen))
+            except IOError, ex:
+                # Error accessing file, report and skip
+                sys.stderr.write("%s: error while generating MD5 sum: '%s'" % (filen,ex))
+                sys.stderr.write("%s: skipped" % filen)
     if output_file:
         fp.close()
 
@@ -97,8 +102,11 @@ def verify_md5sums(chksum_file,verbose=False):
             else:
                 report("%s: FAILED" % chkfile,verbose)
                 failures.append(chkfile)
-        except IOError:
-            report("%s: MISSING" % chkfile,verbose)
+        except IOError, ex:
+            if not os.path.exists(chkfile):
+                report("%s: FAILED (missing file)" % chkfile,verbose)
+            else:
+                report("%s: FAILED (%s)" % ex,verbose)
             failures.append(chkfile)
     if failures:
         sys.stderr.write("Check failed for %d file(s):\n" % len(failures))
