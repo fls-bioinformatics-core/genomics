@@ -87,7 +87,9 @@ def verify_md5sums(chksum_file,verbose=False):
       verbose: (optional) if True then report status for all
         files checked; otherwise only report summary
     """
+    nsuccess = 0
     failures = []
+    # Perform the verification
     for line in open(chksum_file,'rU'):
         items = line.strip().split()
         if len(items) != 2:
@@ -99,6 +101,7 @@ def verify_md5sums(chksum_file,verbose=False):
             new_chksum = Md5sum.md5sum(chkfile)
             if chksum == new_chksum:
                 report("%s: OK" % chkfile,verbose)
+                nsuccess += 1
             else:
                 report("%s: FAILED" % chkfile,verbose)
                 failures.append(chkfile)
@@ -108,6 +111,10 @@ def verify_md5sums(chksum_file,verbose=False):
             else:
                 report("%s: FAILED (%s)" % ex,verbose)
             failures.append(chkfile)
+    # Summarise
+    nfailed = len(failures)
+    print "Summary: %d files checked, %d okay %d failed" % (nsuccess + nfailed,
+                                                            nsuccess,nfailed)
     if failures:
         sys.stderr.write("Check failed for %d file(s):\n" % len(failures))
         for f in failures:
@@ -223,6 +230,8 @@ if __name__ == "__main__":
         dirn2 = os.path.abspath(arguments[1])
         if not (os.path.isdir(dirn1) and os.path.isdir(dirn2)):
             p.error("Supplied arguments must be directories")
+        print "Recursively checking files in %s against copies in %s" % (dirn1,dirn2)
+        # Run the comparison
         diff_directories(dirn1,dirn2,verbose=options.verbose)
     else:
         # Running in "compute" mode
