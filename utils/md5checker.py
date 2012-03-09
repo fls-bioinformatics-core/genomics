@@ -62,7 +62,7 @@ def compute_md5sums(dirn,output_file=None):
         # Calculate md5sum for each file
         for f in d[2]:
             try:
-                filen = os.path.join(d[0],f)
+                filen = os.path.normpath(os.path.join(d[0],f))
                 chksum = Md5sum.md5sum(filen)
                 fp.write("%s  %s\n" % (chksum,filen))
             except IOError, ex:
