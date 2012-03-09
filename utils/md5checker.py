@@ -160,20 +160,46 @@ def report(msg,verbose=False):
 #######################################################################    
 
 if __name__ == "__main__":
-    p = optparse.OptionParser(usage="%prog [OPTIONS] DIR|FILE",
+    usage = """
+  %prog -d SOURCE_DIR DEST_DIR
+  %prog [ -o CHKSUM_FILE ] DIR
+  %prog -c CHKSUM_FILE"""
+    p = optparse.OptionParser(usage=usage,
                               version="%prog "+__version__,
                               description=
                               "Compute and verify MD5 checksums for files and directories.")
 
-    # General options
-    p.add_option('-c','--check',action="store_true",dest="check",default=False,
-                 help="read MD5 sums from the specified file and check them")
-    p.add_option('-o','--output',action="store",dest="output_file",default=None,
-                 help="write computed MD5 sums to OUTPUT_FILE")
+    # Define options
     p.add_option('-d','--diff',action="store_true",dest="diff",default=False,
                  help="check that contents of DIR1 and DIR2 have the same MD5 sums")
+    p.add_option('-c','--check',action="store_true",dest="check",default=False,
+                 help="read MD5 sums from the specified file and check them")
     p.add_option('-v','--verbose',action="store_true",dest="verbose",default=False,
                  help="verbose output mode")
+
+    # Directory differencing
+    group = optparse.OptionGroup(p,"Directory comparison (-d, --diff)",
+                                 "Check that the contents of SOURCE_DIR are present and have "
+                                 "matching MD5 in TARGET_DIR. Note that files that are only "
+                                 "present in TARGET_DIR are not reported.")
+    p.add_option_group(group)
+
+    # Checksum generation
+    group = optparse.OptionGroup(p,"Checksum generation",
+                                 "MD5 checksums are calcuated for all files in the specified "
+                                 "directory")
+    group.add_option('-o','--output',action="store",dest="chksum_file",default=None,
+                     help="optionally write computed MD5 sums to CHKSUM_FILE (otherwise the "
+                     "sums are written to stdout). The output format is the same as that used "
+                     "by the Linux 'md5sum' tool.")
+    p.add_option_group(group)
+
+    # Checksum verification
+    group = optparse.OptionGroup(p,"Checksum verification (-c, --check)",
+                                 "Check MD5 sums for each of the files listed in the "
+                                 "specified CHKSUM_FILE relative to the current directory. "
+                                 "This option behaves the same as the Linux 'md5sum' tool.")
+    p.add_option_group(group)
 
     # Process the command line
     options,arguments = p.parse_args()
@@ -207,7 +233,7 @@ if __name__ == "__main__":
             p.error("Supplied argument must be a directory")
         # Check if output file was specified
         output_file = None
-        if options.output_file:
-            output_file = options.output_file
+        if options.chksum_file:
+            output_file = options.chksum_file
         # Generate the checksums
         compute_md5sums(start_dir,output_file)
