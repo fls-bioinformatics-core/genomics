@@ -153,6 +153,32 @@ def diff_directories(dirn1,dirn2,verbose=False):
     # Delete temporary file
     os.remove(tmpfile)
 
+def compute_md5sum_for_file(filen,output_file=None):
+    """Compute and write MD5 sum for specifed file
+
+    Computes the MD5 sum for a file, and writes the sum and the file
+    name either to stdout or to the specified file name.
+
+    Note that the output format is compatible with the Linux
+    'md5sum' program's '-c' option.
+
+    Arguments:
+      filen: file to compute the MD5 sum for
+      output_file: (optional) name of file to write MD5 sum to
+    """
+    if output_file:
+        fp = open(output_file,'w')
+    else:
+        fp = sys.stdout
+    try:
+        chksum = Md5sum.md5sum(filen)
+        fp.write("%s  %s\n" % (chksum,filen))
+    except IOError, ex:
+        # Error accessing file, report and skip
+        sys.stderr.write("%s: error while generating MD5 sum: '%s'" % (filen,ex))
+    if output_file:
+        fp.close()
+
 def diff_files(filen1,filen2,verbose=False):
     """Check that the MD5 sums of two files match
 
@@ -193,6 +219,7 @@ if __name__ == "__main__":
   %prog -d SOURCE_DIR DEST_DIR
   %prog -d FILE1 FILE2
   %prog [ -o CHKSUM_FILE ] DIR
+  %prog [ -o CHKSUM_FILE ] FILE
   %prog -c CHKSUM_FILE"""
     p = optparse.OptionParser(usage=usage,
                               version="%prog "+__version__,
@@ -222,7 +249,7 @@ if __name__ == "__main__":
     # Checksum generation
     group = optparse.OptionGroup(p,"Checksum generation",
                                  "MD5 checksums are calcuated for all files in the specified "
-                                 "directory")
+                                 "directory, or for a single specified file.")
     group.add_option('-o','--output',action="store",dest="chksum_file",default=None,
                      help="optionally write computed MD5 sums to CHKSUM_FILE (otherwise the "
                      "sums are written to stdout). The output format is the same as that used "
@@ -270,12 +297,14 @@ if __name__ == "__main__":
         # Running in "compute" mode
         if len(arguments) != 1:
             p.error("Needs a single argument (name of directory to generate MD5 sums for)")
-        start_dir = arguments[0]
-        if not os.path.isdir(start_dir):
-            p.error("Supplied argument must be a directory")
         # Check if output file was specified
         output_file = None
         if options.chksum_file:
             output_file = options.chksum_file
         # Generate the checksums
-        compute_md5sums(start_dir,output_file)
+        if os.path.isdir(arguments[0]):
+            compute_md5sums(arguments[0],output_file)
+        elif os.path.isfile(arguments[0]):
+            compute_md5sum_for_file(arguments[0],output_file)
+        else:
+            p.error("Supplied argument must be an existing directory or file")
