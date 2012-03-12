@@ -109,7 +109,7 @@ def verify_md5sums(chksum_file,verbose=False):
             if not os.path.exists(chkfile):
                 report("%s: FAILED (missing file)" % chkfile,verbose)
             else:
-                report("%s: FAILED (%s)" % ex,verbose)
+                report("%s: FAILED (%s)" % (chkfile,ex),verbose)
             failures.append(chkfile)
     # Summarise
     nfailed = len(failures)
