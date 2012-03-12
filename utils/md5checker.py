@@ -228,7 +228,9 @@ if __name__ == "__main__":
 
     # Define options
     p.add_option('-d','--diff',action="store_true",dest="diff",default=False,
-                 help="check that contents of DIR1 and DIR2 have the same MD5 sums")
+                 help="for two directories: check that contents of directory DIR1 are present "
+                 "in DIR2 and have the same MD5 sums; for two files: check that FILE1 and FILE2 "
+                 "have the same MD5 sums")
     p.add_option('-c','--check',action="store_true",dest="check",default=False,
                  help="read MD5 sums from the specified file and check them")
     p.add_option('-v','--verbose',action="store_true",dest="verbose",default=False,
