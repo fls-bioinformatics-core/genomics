@@ -185,12 +185,22 @@ Usage:
 
 To generate MD5 sums for a directory:
 
-    md5checker.py [ -o FILE ] DIR
+    md5checker.py [ -o CHKSUM_FILE ] DIR
+
+To generate the MD5 sum for a file:
+
+    md5checker.py [ -o CHKSUM_FILE ] FILE
 
 To check a set of files against MD5 sums stored in a file:
 
-    md5checker.py -c FILE
+    md5checker.py -c CHKSUM_FILE
 
-To compare the contents of a directory against another directory using MD5 sums:
+To compare the contents of source directory recursively against the contents of a destination
+directory, checking that files in the source are present in the target and have the same MD5
+sums:
 
-    md5checker.py --diff DIR1 DIR2
+    md5checker.py --diff SOURCE_DIR DEST_DIR
+
+To compare two files by their MD5 sums:
+
+    md5checker.py --diff FILE1 FILE2
