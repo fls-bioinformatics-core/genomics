@@ -53,7 +53,11 @@ def compute_md5sums(dirn,output_file=None):
     Arguments:
       dirn: directory to run the MD5 sum computation on
       output_file: (optional) name of file to write MD5 sums to
+
+    Returns:
+      Zero on success, 1 if errors were encountered
     """
+    retval = 0
     if output_file:
         fp = open(output_file,'w')
     else:
@@ -69,8 +73,10 @@ def compute_md5sums(dirn,output_file=None):
                 # Error accessing file, report and skip
                 sys.stderr.write("%s: error while generating MD5 sum: '%s'\n" % (filen,ex))
                 sys.stderr.write("%s: skipped\n" % filen)
+                retval = 1
     if output_file:
         fp.close()
+    return retval
 
 def verify_md5sums(chksum_file,verbose=False):
     """Check the MD5 sums for all entries specified in a file
@@ -85,8 +91,13 @@ def verify_md5sums(chksum_file,verbose=False):
     Arguments:
       chksum_file: name of the file containing the MD5 sums
       verbose: (optional) if True then report status for all
-        files checked; otherwise only report summary
+        files checked, plus a summary; otherwise only report
+        failures
+
+    Returns:
+      Zero on success, 1 if errors were encountered
     """
+    retval = 0
     nsuccess = 0
     failures = []
     # Perform the verification
@@ -105,17 +116,20 @@ def verify_md5sums(chksum_file,verbose=False):
             else:
                 sys.stderr.write("%s: FAILED\n" % chkfile)
                 failures.append(chkfile)
+                retval = 1
         except IOError, ex:
             if not os.path.exists(chkfile):
                 sys.stderr.write("%s: FAILED (missing file)\n" % chkfile)
             else:
                 sys.stderr.write("%s: FAILED (%s)\n" % (chkfile,ex))
             failures.append(chkfile)
+            retval = 1
     # Summarise
     nfailed = len(failures)
     report("Summary: %d files checked, %d okay %d failed" % 
            (nsuccess + nfailed,nsuccess,nfailed),
            verbose)
+    return retval
 
 def diff_directories(dirn1,dirn2,verbose=False):
     """Check one directory against another using MD5 sums
@@ -138,17 +152,22 @@ def diff_directories(dirn1,dirn2,verbose=False):
       dirn2: "target" directory to be compared to dirn1
       verbose: (optional) if True then report status for all
         files checked; otherwise only report summary
+
+    Returns:
+      Zero on success, 1 if errors were encountered
     """
     # Move to first dir and generate temporary Md5sum file
     os.chdir(dirn1)
     fp,tmpfile = tempfile.mkstemp()
     os.close(fp)
-    compute_md5sums('.',output_file=tmpfile)
+    retval1 = compute_md5sums('.',output_file=tmpfile)
     # Run this against the second directory
     os.chdir(dirn2)
-    verify_md5sums(tmpfile,verbose=verbose)
+    retval2 = verify_md5sums(tmpfile,verbose=verbose)
     # Delete temporary file
     os.remove(tmpfile)
+    # Return status
+    return max(retval1,retval2)
 
 def compute_md5sum_for_file(filen,output_file=None):
     """Compute and write MD5 sum for specifed file
@@ -162,7 +181,11 @@ def compute_md5sum_for_file(filen,output_file=None):
     Arguments:
       filen: file to compute the MD5 sum for
       output_file: (optional) name of file to write MD5 sum to
+
+    Returns:
+      Zero on success, 1 if errors were encountered
     """
+    retval = 1
     if output_file:
         fp = open(output_file,'w')
     else:
@@ -173,8 +196,10 @@ def compute_md5sum_for_file(filen,output_file=None):
     except IOError, ex:
         # Error accessing file, report and skip
         sys.stderr.write("%s: error while generating MD5 sum: '%s'\n" % (filen,ex))
+        retval = 1
     if output_file:
         fp.close()
+    return retval
 
 def diff_files(filen1,filen2,verbose=False):
     """Check that the MD5 sums of two files match
@@ -186,17 +211,23 @@ def diff_files(filen1,filen2,verbose=False):
       filen2: "target" file to be compared with filen1
       verbose: (optional) if True then report status for all
         files checked; otherwise only report summary
+
+    Returns:
+      Zero on success, 1 if errors were encountered
     """
     # Generate Md5sum for each file
+    retval = 1
     try:
         chksum1 = Md5sum.md5sum(filen1)
         chksum2 = Md5sum.md5sum(filen2)
         if chksum1 == chksum2:
             report("OK: MD5 sums match",verbose)
+            retval = 0
         else:
             report("FAILED: MD5 sums don't match",verbose)
     except IOError, ex:
         report("FAILED (%s)" % ex,verbose)
+    return retval
 
 def report(msg,verbose=False):
     """Write text to stdout
@@ -274,7 +305,7 @@ if __name__ == "__main__":
         if not os.path.isfile(chksum_file):
             p.error("Checksum '%s' file not found (or is not a file)" % chksum_file)
         # Do the verification
-        verify_md5sums(chksum_file,verbose=options.verbose)
+        status = verify_md5sums(chksum_file,verbose=options.verbose)
     elif options.diff:
         # Running in "diff" mode
         if len(arguments) != 2:
@@ -286,11 +317,11 @@ if __name__ == "__main__":
             # Compare two directories
             report("Recursively checking files in %s against copies in %s" % (source,target),
                    options.verbose)
-            diff_directories(source,target,verbose=options.verbose)
+            status = diff_directories(source,target,verbose=options.verbose)
         elif os.path.isfile(source) and os.path.isfile(target):
             # Compare two files
             report("Checking MD5 sums for %s and %s" % (source,target),options.verbose)
-            diff_files(source,target,verbose=options.verbose)
+            status = diff_files(source,target,verbose=options.verbose)
         else:
             p.error("Supplied arguments must be a pair of directories or a pair of files")
     else:
@@ -303,8 +334,10 @@ if __name__ == "__main__":
             output_file = options.chksum_file
         # Generate the checksums
         if os.path.isdir(arguments[0]):
-            compute_md5sums(arguments[0],output_file)
+            status = compute_md5sums(arguments[0],output_file)
         elif os.path.isfile(arguments[0]):
-            compute_md5sum_for_file(arguments[0],output_file)
+            status = compute_md5sum_for_file(arguments[0],output_file)
         else:
             p.error("Supplied argument must be an existing directory or file")
+    # Finish
+    sys.exit(status)
