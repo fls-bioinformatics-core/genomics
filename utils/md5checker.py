@@ -153,6 +153,28 @@ def diff_directories(dirn1,dirn2,verbose=False):
     # Delete temporary file
     os.remove(tmpfile)
 
+def diff_files(filen1,filen2,verbose=False):
+    """Check that the MD5 sums of two files match
+
+    This compares two files by computing the MD5 sums for each.
+
+    Arguments:
+      filen1: "source" file
+      filen2: "target" file to be compared with filen1
+      verbose: (optional) if True then report status for all
+        files checked; otherwise only report summary
+    """
+    # Generate Md5sum for each file
+    try:
+        chksum1 = Md5sum.md5sum(filen1)
+        chksum2 = Md5sum.md5sum(filen2)
+        if chksum1 == chksum2:
+            report("OK: MD5 sums match",verbose)
+        else:
+            report("FAILED: MD5 sums don't match",verbose)
+    except IOError, ex:
+        report("FAILED (%s)" % ex,verbose)
+
 def report(msg,verbose=False):
     """Write text to stdout
 
@@ -169,6 +191,7 @@ def report(msg,verbose=False):
 if __name__ == "__main__":
     usage = """
   %prog -d SOURCE_DIR DEST_DIR
+  %prog -d FILE1 FILE2
   %prog [ -o CHKSUM_FILE ] DIR
   %prog -c CHKSUM_FILE"""
     p = optparse.OptionParser(usage=usage,
@@ -189,6 +212,11 @@ if __name__ == "__main__":
                                  "Check that the contents of SOURCE_DIR are present in "
                                  "TARGET_DIR and have matching MD5 sums. Note that files that "
                                  "are only present in TARGET_DIR are not reported.")
+    p.add_option_group(group)
+
+    # File differencing
+    group = optparse.OptionGroup(p,"File comparison (-d, --diff)",
+                                 "Check that FILE1 and FILE2 have matching MD5 sums.")
     p.add_option_group(group)
 
     # Checksum generation
@@ -224,15 +252,20 @@ if __name__ == "__main__":
     elif options.diff:
         # Running in "diff" mode
         if len(arguments) != 2:
-            p.error("-d: needs two arguments (names of directories to compare)")
-        # Get directories as absolute paths
-        dirn1 = os.path.abspath(arguments[0])
-        dirn2 = os.path.abspath(arguments[1])
-        if not (os.path.isdir(dirn1) and os.path.isdir(dirn2)):
-            p.error("Supplied arguments must be directories")
-        print "Recursively checking files in %s against copies in %s" % (dirn1,dirn2)
-        # Run the comparison
-        diff_directories(dirn1,dirn2,verbose=options.verbose)
+            p.error("-d: needs two arguments (pair of directories or files to compare)")
+        # Get directories/files as absolute paths
+        source = os.path.abspath(arguments[0])
+        target = os.path.abspath(arguments[1])
+        if os.path.isdir(source) and os.path.isdir(target):
+            # Compare two directories
+            print "Recursively checking files in %s against copies in %s" % (source,target)
+            diff_directories(source,target,verbose=options.verbose)
+        elif os.path.isfile(source) and os.path.isfile(target):
+            # Compare two files
+            print "Checking MD5 sums for %s and %s" % (source,target)
+            diff_files(source,target,verbose=options.verbose)
+        else:
+            p.error("Supplied arguments must be a pair of directories or a pair of files")
     else:
         # Running in "compute" mode
         if len(arguments) != 1:
