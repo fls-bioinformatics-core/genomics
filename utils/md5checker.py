@@ -67,8 +67,8 @@ def compute_md5sums(dirn,output_file=None):
                 fp.write("%s  %s\n" % (chksum,filen))
             except IOError, ex:
                 # Error accessing file, report and skip
-                sys.stderr.write("%s: error while generating MD5 sum: '%s'" % (filen,ex))
-                sys.stderr.write("%s: skipped" % filen)
+                sys.stderr.write("%s: error while generating MD5 sum: '%s'\n" % (filen,ex))
+                sys.stderr.write("%s: skipped\n" % filen)
     if output_file:
         fp.close()
 
@@ -103,22 +103,19 @@ def verify_md5sums(chksum_file,verbose=False):
                 report("%s: OK" % chkfile,verbose)
                 nsuccess += 1
             else:
-                report("%s: FAILED" % chkfile,verbose)
+                sys.stderr.write("%s: FAILED\n" % chkfile)
                 failures.append(chkfile)
         except IOError, ex:
             if not os.path.exists(chkfile):
-                report("%s: FAILED (missing file)" % chkfile,verbose)
+                sys.stderr.write("%s: FAILED (missing file)\n" % chkfile)
             else:
-                report("%s: FAILED (%s)" % (chkfile,ex),verbose)
+                sys.stderr.write("%s: FAILED (%s)\n" % (chkfile,ex))
             failures.append(chkfile)
     # Summarise
     nfailed = len(failures)
-    print "Summary: %d files checked, %d okay %d failed" % (nsuccess + nfailed,
-                                                            nsuccess,nfailed)
-    if failures:
-        sys.stderr.write("Check failed for %d file(s):\n" % len(failures))
-        for f in failures:
-            sys.stderr.write("\t%s\n" % f)
+    report("Summary: %d files checked, %d okay %d failed" % 
+           (nsuccess + nfailed,nsuccess,nfailed),
+           verbose)
 
 def diff_directories(dirn1,dirn2,verbose=False):
     """Check one directory against another using MD5 sums
@@ -175,7 +172,7 @@ def compute_md5sum_for_file(filen,output_file=None):
         fp.write("%s  %s\n" % (chksum,filen))
     except IOError, ex:
         # Error accessing file, report and skip
-        sys.stderr.write("%s: error while generating MD5 sum: '%s'" % (filen,ex))
+        sys.stderr.write("%s: error while generating MD5 sum: '%s'\n" % (filen,ex))
     if output_file:
         fp.close()
 
@@ -233,8 +230,8 @@ if __name__ == "__main__":
                  "have the same MD5 sums")
     p.add_option('-c','--check',action="store_true",dest="check",default=False,
                  help="read MD5 sums from the specified file and check them")
-    p.add_option('-v','--verbose',action="store_true",dest="verbose",default=False,
-                 help="verbose output mode")
+    p.add_option('-q','--quiet',action="store_false",dest="verbose",default=True,
+                 help="suppress output messages and only report failures")
 
     # Directory differencing
     group = optparse.OptionGroup(p,"Directory comparison (-d, --diff)",
@@ -287,11 +284,12 @@ if __name__ == "__main__":
         target = os.path.abspath(arguments[1])
         if os.path.isdir(source) and os.path.isdir(target):
             # Compare two directories
-            print "Recursively checking files in %s against copies in %s" % (source,target)
+            report("Recursively checking files in %s against copies in %s" % (source,target),
+                   options.verbose)
             diff_directories(source,target,verbose=options.verbose)
         elif os.path.isfile(source) and os.path.isfile(target):
             # Compare two files
-            print "Checking MD5 sums for %s and %s" % (source,target)
+            report("Checking MD5 sums for %s and %s" % (source,target),options.verbose)
             diff_files(source,target,verbose=options.verbose)
         else:
             p.error("Supplied arguments must be a pair of directories or a pair of files")
