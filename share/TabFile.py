@@ -542,7 +542,7 @@ class TabDataLine:
         self.__lineno = None
         if line is not None:
             for value in line.split('\t'):
-                self.data.append(self.__convert(value.strip()))
+                self.data.append(self.__convert(value.rstrip('\n')))
         # Column names
         self.names = []
         if column_names:
@@ -833,6 +833,24 @@ chr2\t1234\t5678\t6.8
         self.assertEqual(len(tabfile.header()),5)
         self.assertEqual(tabfile.header()[4],'new')
         self.assertEqual(tabfile[0]['new'],'')
+
+class TestWhiteSpaceHandlingTabFile(unittest.TestCase):
+
+    def setUp(self):
+        # Make file-like object to read data in
+        self.fp = cStringIO.StringIO(
+"""chr1\t1\t234\t4.6\tA comment
+chr1\t567\t890\t5.7\tComment with a trailing space 
+chr2\t1234\t5678\t6.8\t.
+""")
+
+    def test_preserve_trailing_spaces_on_lines(self):
+        """Check that trailing spaces aren't lost
+        """
+        tabfile = TabFile('test',self.fp)
+        self.assertEqual(tabfile[0][4],"A comment")
+        self.assertEqual(tabfile[1][4],"Comment with a trailing space ")
+        self.assertEqual(tabfile[2][4],".")
 
 class TestUncommentedHeaderTabFile(unittest.TestCase):
 
@@ -1186,6 +1204,13 @@ class TestTabDataLine(unittest.TestCase):
         except Exception,ex:
             # It hasn't worked
             self.fail("Iteration test exception: '%s'" % ex)
+
+    def test_preserve_trailing_spaces_in_data_items(self):
+        """Check that trailing spaces aren't lost from data items
+        """
+        input_data = "1.1\t2.2\tThis has trailing space "
+        line = TabDataLine(line=input_data)
+        self.assertEqual(line[2],"This has trailing space ")
 
 class TestTabDataLineTypeConversion(unittest.TestCase):
 
