@@ -163,7 +163,8 @@ function compare_sizes() {
     local_size=`du --apparent-size -h $RSYNC_EXCLUDES -s $solid_run`
     local_size=`echo $local_size | cut -f1 -d" "`
     # Get size on remote system
-    du_cmd="du --apparent-size -h $RSYNC_EXCLUDES -s ${REMOTE_DATADIR}/$solid_run"
+    solid_run_dir=`basename $solid_run`
+    du_cmd="du --apparent-size -h $RSYNC_EXCLUDES -s ${REMOTE_DATADIR}/$solid_run_dir"
     remote_size=`ssh ${REMOTE_USER}@${REMOTE_HOST} $du_cmd`
     remote_size=`echo $remote_size | cut -f1 -d" "`
     # Report
