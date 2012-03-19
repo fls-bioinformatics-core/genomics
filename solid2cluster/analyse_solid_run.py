@@ -234,7 +234,8 @@ def suggest_analysis_layout(solid_runs):
     """
     print "#!/bin/sh\n#\n# Script commands to build analysis directory structure"
     for run in solid_runs:
-        build_analysis_dir_cmd = os.path.join(os.path.dirname(sys.argv[0]),'build_analysis_dir.py')
+        build_analysis_dir_cmd = os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]),
+                                                              'build_analysis_dir.py'))
         cmd_line = [ build_analysis_dir_cmd,
                      "--top-dir=%s_analysis" % run.run_dir,
                      "--link=relative" ]
