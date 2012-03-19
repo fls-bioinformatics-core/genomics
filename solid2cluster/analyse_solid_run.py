@@ -307,22 +307,22 @@ def verify_runs(solid_runs):
                 for library in sample.libraries:
                     # Check csfasta was found
                     if not library.csfasta:
-                        print "No csfasta for %s/%s" % \
+                        print "No F3 csfasta for %s/%s" % \
                             (sample.name,library.name)
                         run_status = 1
                     else:
                         if not os.path.exists(library.csfasta):
-                            print "Missing csfasta for %s/%s" % \
+                            print "Missing F3 csfasta for %s/%s" % \
                                 (sample.name,library.name)
                             run_status = 1
                     # Check qual was found
                     if not library.qual:
-                        print "No qual for %s/%s" % \
+                        print "No F3 qual for %s/%s" % \
                             (sample.name,library.name)
                         run_status = 1
                     else:
                         if not os.path.exists(library.qual):
-                            print "Missing qual for %s/%s" % \
+                            print "Missing F3 qual for %s/%s" % \
                                 (sample.name,library.name)
                             run_status = 1
                     # Paired-end run: check F5 reads
@@ -375,15 +375,27 @@ def print_md5sums(solid_runs):
     for run in solid_runs:
         for sample in run.samples:
             for library in sample.libraries:
-                print "%s  %s" % (Md5sum.md5sum(library.csfasta),
-                                  strip_prefix(library.csfasta,os.getcwd()))
-                print "%s  %s" % (Md5sum.md5sum(library.qual),
-                                  strip_prefix(library.qual,os.getcwd()))
+                try:
+                    print "%s  %s" % (Md5sum.md5sum(library.csfasta),
+                                      strip_prefix(library.csfasta,os.getcwd()))
+                except Exception,ex:
+                    logging.error("FAILED for F3 csfasta: %s" % ex)
+                try:
+                    print "%s  %s" % (Md5sum.md5sum(library.qual),
+                                      strip_prefix(library.qual,os.getcwd()))
+                except Exception,ex:
+                    logging.error("FAILED for F3 qual: %s" % ex)
                 if SolidData.is_paired_end(run):
-                    print "%s  %s" % (Md5sum.md5sum(library.csfasta_f5),
-                                      strip_prefix(library.csfasta_f5,os.getcwd()))
-                    print "%s  %s" % (Md5sum.md5sum(library.qual_f5),
-                                      strip_prefix(library.qual_f5,os.getcwd()))
+                    try:
+                        print "%s  %s" % (Md5sum.md5sum(library.csfasta_f5),
+                                          strip_prefix(library.csfasta_f5,os.getcwd()))
+                    except Exception,ex:
+                        logging.error("FAILED for F5 csfasta: %s" % ex)
+                    try:
+                        print "%s  %s" % (Md5sum.md5sum(library.qual_f5),
+                                          strip_prefix(library.qual_f5,os.getcwd()))
+                    except Exception,ex:
+                        logging.error("FAILED for F5 qual: %s" % ex)
 
 def strip_prefix(path,prefix):
     """Strip the supplied prefix from a file name
