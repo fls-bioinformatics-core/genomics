@@ -250,6 +250,17 @@ class SolidRun:
                         if csfasta and qual:
                             if got_primary_data:
                                 ambiguity_error = True
+                                logging.warning("Located F3 primary data in multiple locations:\n"
+                                                "\t%s\n\t%s\nand\n\t%s\n\t%s",
+                                                library.csfasta,library.qual,
+                                                csfasta,qual)
+                                # Resolve by storing the most recent
+                                if (os.path.getmtime(csfasta) > 
+                                    os.path.getmtime(library.csfasta)) \
+                                    and (os.path.getmtime(qual) > 
+                                         os.path.getmtime(library.qual)):
+                                    library.csfasta = csfasta
+                                    library.qual = qual
                             else:
                                 library.csfasta = csfasta
                                 library.qual = qual
@@ -258,7 +269,20 @@ class SolidRun:
                         # Store primary data: F5 reads
                         if csfasta_f5 and qual_f5:
                             if got_primary_data_f5:
+                                # More than one candidate for primary data
                                 ambiguity_error = True
+                                logging.warning("Located F5 primary data in multiple locations:\n"
+                                                "\t%s\n\t%s\nand\n\t%s\n\t%s",
+                                                library.csfasta_f5,
+                                                library.qual_f5,
+                                                csfasta_f5,qual_f5)
+                                # Resolve by storing the most recent
+                                if (os.path.getmtime(csfasta_f5) > 
+                                    os.path.getmtime(library.csfasta_f5)) \
+                                    and (os.path.getmtime(qual_f5) > 
+                                         os.path.getmtime(library.qual_f5)):
+                                    library.csfasta_f5 = csfasta_f5
+                                    library.qual_f5 = qual_f5
                             else:
                                 library.csfasta_f5 = csfasta_f5
                                 library.qual_f5 = qual_f5
