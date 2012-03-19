@@ -125,6 +125,11 @@ class TestMd5sum(unittest.TestCase):
         """
         self.assertEqual(md5sum(self.filen),
                          '08a6facee51e5435b9ef3744bd4dd5dc')
+
+    def test_no_file_name(self):
+        """Test handling of file name 'None'
+        """
+        self.assertRaises(Exception,md5sum,None)
         
 ########################################################################
 # Main: test runner
