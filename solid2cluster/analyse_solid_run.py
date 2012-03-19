@@ -236,8 +236,9 @@ def suggest_analysis_layout(solid_runs):
     for run in solid_runs:
         build_analysis_dir_cmd = os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]),
                                                               'build_analysis_dir.py'))
+        top_dir = os.path.abspath(os.path.join(os.getcwd(),os.path.basename(run.run_dir)))
         cmd_line = [ build_analysis_dir_cmd,
-                     "--top-dir=%s_analysis" % run.run_dir,
+                     "--top-dir=%s_analysis" % top_dir,
                      "--link=relative",
                      "--naming-scheme=partial"]
         for sample in run.samples:
