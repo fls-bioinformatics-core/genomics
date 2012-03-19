@@ -290,9 +290,9 @@ class SolidRun:
                                 logging.debug("-----> Located primary data (F5)")
 
             if not got_primary_data:
-                logging.warning("Unable to locate primary data for %s" % library)
+                logging.warning("Unable to locate some or all primary data for %s" % library)
             elif ambiguity_error:
-                logging.warning("Ambigiuous location for primary data for %s" % library)
+                logging.warning("Ambigiuous location for some primary data for %s" % library)
 
     def fetchLibraries(self,sample_name='*',library_name='*'):
         """Retrieve libraries based on sample and library names
