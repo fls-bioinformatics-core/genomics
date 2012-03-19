@@ -266,7 +266,7 @@ function rsync_solid_to_cluster() {
 #
 # Collect and process arguments
 # NB strip any trailing '/' from the directory name
-solid_runs=${1%/*}
+solid_runs=${1%/}
 if [ ! -z "$2" ] ; then
     REMOTE_USER=`echo $2 | cut -d@ -f1`
     REMOTE_HOST=`echo $2 | cut -d@ -f2 | cut -d: -f1`
