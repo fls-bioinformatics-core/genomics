@@ -238,7 +238,8 @@ def suggest_analysis_layout(solid_runs):
                                                               'build_analysis_dir.py'))
         cmd_line = [ build_analysis_dir_cmd,
                      "--top-dir=%s_analysis" % run.run_dir,
-                     "--link=relative" ]
+                     "--link=relative",
+                     "--naming-scheme=partial"]
         for sample in run.samples:
             for project in sample.projects:
                 # Create one experiment per project
