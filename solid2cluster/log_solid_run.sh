@@ -52,8 +52,9 @@ if [ "$?" != "1" ] ; then
     exit 1
 fi
 #
-# Check that the SOLiD run directory exists
-if [ ! -d "$SOLID_RUN" ] ; then
+# Check that the SOLiD run directory exists (unless
+# in delete mode)
+if [ ! -d "$SOLID_RUN" ] && [ $MODE != "delete" ] ; then
     echo "No directory $SOLID_RUN"
     unlock_file $LOG_FILE
     exit 1
