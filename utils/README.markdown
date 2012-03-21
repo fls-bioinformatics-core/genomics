@@ -6,7 +6,7 @@ Place to put general utility scripts/tools.
  *  `annotate_probesets.py`: annotate probe set list based on probe set names
  *  `cd_set_umask.sh`: setup script to automagically set umask for specific directory
  *  `do.sh`: execute shell command iteratively with range of integer index values
- *  `extract_random.py`: write out random subsets of reads from input data files
+ *  `extract_reads.py`: write out subsets of reads from input data files
  *  `fastq_edit.py`: edit FASTQ files and data
  *  `makeBinsFromBed.pl`: create bin files for binning applications
  *  `makeRegularBinsFromGenomeTable.R`: make bin file from set of chromosomes
@@ -65,21 +65,26 @@ will execute:
     ...
     ln -s /blah/blah43/myfile43.ext ./myfile43.ext
 
-extract_random.py
------------------
 
-Usage: `extract_random.py OPTIONS infile [infile ...]`
+extract_reads.py
+----------------
 
-Extract a random subset of reads from each of the supplied files - where
-multiple files are specified, the same subsets will be extracted for all of
-them. Output file names are the input file names with '.subset' appended.
+Usage: `extract_reads.py OPTIONS infile [infile ...]`
+
+Extract subsets of reads from each of the supplied files according to
+specified criteria (e.g. random, matching a pattern etc). Output file names
+are the input file names with '.subset' appended.
 
 Options:
 
-    --version   show program's version number and exit
-    -h, --help  show this help message and exit
-    -n N        Number of records to extract from the input file(s) (default
-                500)
+    --version             show program's version number and exit
+    -h, --help            show this help message and exit
+    -m PATTERN, --match=PATTERN
+                          Extract records that match regular expression PATTERN
+    -n N                  Extract N random records from the input file(s)
+                          (default 500). If multiple files are specified, the
+                          same subsets will be extracted for each.
+
 
 fastq_edit.py
 -------------
