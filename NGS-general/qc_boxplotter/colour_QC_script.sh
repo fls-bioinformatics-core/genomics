@@ -56,6 +56,9 @@ else
     echo Warning $iFileN\_seq-order_boxplot.ps not found
 fi
 
+# Generate PNG
+convert -rotate 90 $iFileN\_seq-order_boxplot.ps -resize 1060x750 -antialias $iFileN\_seq-order_boxplot.png
+
 # Rename output files based on $iFileN
 #mv colour_quality_seq-order.ps $iFileN\_seq-order.ps
 
