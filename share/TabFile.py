@@ -182,329 +182,6 @@ It's also possible to reorder the columns before writing out using
 the 'reorderColumns' method.
 """
 
-class TabFile:
-    """Class to get data from a tab-delimited file
-
-    Loads data from the specified file into a data structure than can
-    then be queried on a per line and per item basis.
-
-    Data lines are represented by TabDataLine objects.
-
-    Example usage:
-
-        data = TabFile(myfile)     # load initial data
-
-        print '%s' % len(data)     # report number of lines of data
-
-        print '%s' % data.header() # report header (i.e. column names)
-
-        for line in data:
-            ...                    # loop over lines of data
-
-        myline = data[0]           # fetch first line of data
-    """
-    def __init__(self,filen=None,fp=None,column_names=None,skip_first_line=False,
-                 first_line_is_header=False):
-        """Create a new TabFile object
-
-        If either of 'filen' or 'fp' arguments are given then the
-        TabFile object will be populated with data from the specified
-        file or stream. Otherwise an empty TabFile object is created.
-
-        Arguments:
-          filen (optional): name of tab-delimited file to load data
-              from; ignored if fp is also specified
-          fp: (optional) a file-like object which data can be loaded
-              from like a file; used in preference to filen
-          column_names: (optional) list of column names to assign to
-              columns in the file. Overrides column names in the file
-          skip_first_line: (optional) if True then ignore the first
-              line of the input file
-          first_line_is_header: (optional) if True then takes column
-              names from the first line of the file (over-riding
-              'column_names' argument if specified.
-        """
-        # Initialise
-        self.__filen = filen
-        self.__ncols = 0
-        self.__header = []
-        self.__data = []
-        # Set up column names
-        if column_names is not None:
-            self.__setHeader(column_names)
-        # Read in data
-        if fp is None and filen is not None:
-            # Open named file
-            fp = open(self.__filen,'rU')
-        if fp:
-            self.__load(fp,skip_first_line=skip_first_line,
-                        first_line_is_header=first_line_is_header)
-            fp.close()
-
-    def __load(self,fp,skip_first_line=False,first_line_is_header=False):
-        """Load data into the object from file
-
-        Lines starting with '#' are ignored (unless the first_line_is_header
-        is set and the first line starts with '#').
-
-        If a header is set then lines with fewer data items than header
-        items raise an IndexError exception.
-
-        Arguments:
-          fp: file-like object to read data from
-          skip_first_line: (optional) if True then ignore the first
-              line of the input file
-          first_line_is_header: (optional) if True then take column
-              names from the first line of the file
-        """
-        line_no = 0
-        for line in fp:
-            line_no += 1
-            if skip_first_line:
-                # Skip first line
-                skip_first_line = False
-                continue
-            elif first_line_is_header and len(self.header()) == 0:
-                # Set up header from first line
-                self.__setHeader(line.strip().strip('#').split('\t'))
-                first_line_is_header = False
-                continue
-            if line.lstrip().startswith('#'):
-                # Skip commented line
-                continue
-            # Store data
-            data_line = TabDataLine(line,column_names=self.header(),lineno=line_no)
-            if self.__ncols > 0:
-                if len(data_line) != self.__ncols:
-                    # Inconsistent lines are an error
-                    raise IndexError, "wrong number of data items in line %d" % line_no
-            else:
-                # Set number of columns
-                self.__ncols = len(data_line)
-            self.__data.append(data_line)
-
-    def __setHeader(self,column_names):
-        """Set the names for columns of data
-
-        Arguments:
-          column_names: a tuple or list with names for each column in order.
-        """
-        assert(len(self) == 0)
-        if len(self.__header) > 0:
-            self.__header = []
-        for name in column_names:
-            self.__header.append(name)
-        self.__ncols = len(self.__header)
-
-    def header(self):
-        """Return list of column names
-
-        If no column names were set then this will be an empty list.
-        """
-        return self.__header
-    
-    def nColumns(self):
-        """Return the number of columns in the file
-
-        If the file had a header then this will be the number of
-        header columns; otherwise it will be the number of columns
-        found in the first line of data
-        """
-        return self.__ncols
-
-    def filename(self):
-        """Return the file name associated with the TabFile
-        """
-        return self.__filen
-    
-    def lookup(self,key,value):
-        """Return lines where the key matches the specified value
-        """
-        result = []
-        for line in self.__data:
-            if line[key] == value:
-                result.append(line)
-        return result
-
-    def indexByLineNumber(self,n):
-        """Return index of a data line given the file line number
-
-        Given the line number n for a line in the original file,
-        returns the index required to access the data for that
-        line in the TabFile object.
-
-        If no matching line is found then raises an IndexError.
-        """
-        for idx in range(len(self.__data)):
-            if self.__data[idx].lineno() == n:
-                return idx
-        raise IndexError,"No line number %d" % n
-
-    def append(self,data=None,tabdata=None):
-        """Create and append a new data line
-
-        Creates a new TabDataLine and appends it to the end of the
-        list of lines.
-
-        Optionally the 'data' or 'tabdata' arguments can specify
-        data items which will be used to populate the new line.
-
-        Arguments:
-          data: (optional) a list of data items
-          tabdata: (optional) a string of tab-delimited data items
-
-        Returns:
-          Appended TabDataLine object.
-        """
-        if data:
-            line = '\t'.join([str(x) for x in data])
-        elif tabdata:
-            line = tabdata
-        else:
-            line = None
-        data_line = TabDataLine(line=line,column_names=self.header())
-        self.__data.append(data_line)
-        return data_line
-
-    def insert(self,i,data=None,tabdata=None):
-        """Create and insert a new data line at a specified index
- 
-        Creates a new TabDataLine and inserts it into the list of
-        lines at the specified index position 'i' (nb NOT a line
-        number).
-
-        Optionally the 'data' or 'tabdata' arguments can specify
-        data items which will be used to populate the new line.
-
-        Arguments:
-          i: index position to insert the line at
-          data: (optional) a list of data items
-          tabdata: (optional) a string of tab-delimited data items
-
-        Returns:
-          New inserted TabDataLine object.
-        """
-        if data:
-            line = '\t'.join([str(x) for x in data])
-        elif tabdata:
-            line = tabdata
-        else:
-            line = None
-        data_line = TabDataLine(line=line,column_names=self.header())
-        self.__data.insert(i,data_line)
-        return data_line
-
-    def appendColumn(self,name):
-        """Append a new (empty) column
-
-        Arguments:
-          name: name for the new column
-        """
-        for data in self.__data:
-            data.appendColumn(name,'')
-        self.__header.append(name)
-        self.__ncols = len(self.__header)
-
-    def reorderColumns(self,new_columns):
-        """Rearrange the columns in the file
-
-        Arguments:
-          new_columns: list of column names or indices in the
-            new order
-        """
-        reordered_tabfile = TabFile(column_names=new_columns)
-        for data in self.__data:
-            reordered_tabfile.append(data.subset(*new_columns))
-        return reordered_tabfile
-
-    def transformColumn(self,column_name,transform_func):
-        """Apply arbitrary function to a column
-
-        For each line of data the transformation function will be invoked
-        with the value of the named column, with the result being written
-        back to that column (overwriting the existing value).
-
-        Arguments:
-          column_name: name of column to write transformation result to
-          transform_func: callable object that will be invoked to perform
-            the transformation
-        """
-        for line in self:
-            line[column_name] = transform_func(line[column_name])
-
-    def computeColumn(self,column_name,compute_func):
-        """Compute and store values in a new column
-    
-        For each line of data the computation function will be invoked
-        with the line as the sole argument, and the result will be stored in
-        a new column with the specified name.
-
-        Arguments:
-          column_name: name of column to write transformation result to
-          compute_func: callable object that will be invoked to perform
-            the computation
-        """
-        if column_name not in self.header():
-            self.appendColumn(column_name)
-        for line in self:
-            line[column_name] = compute_func(line)
-
-    def sort(self,sort_func,reverse=False):
-        """Sort data using arbitrary function
-
-        Performs an in-place sort based on the suppled sort_func.
-
-        sort_func should be a function object which takes a TabDataLine
-        object as input and returns a single numerical value; the
-        data lines will be sorted in ascending order of these values
-        (or descending order if reverse is set to True).
-
-        To sort on the value of a specific column use e.g.
-        
-        >>> tabfile.sort(lambda line: line['col'])
-
-        Arguments:
-          sort_func: function object taking a TabDataLine as input and
-            returning a single numerical value
-          reverse: (optional) Boolean, either False (default) to sort
-            in ascending order, or True to sort in descendin order
-        """
-        self.__data = sorted(self.__data,key=sort_func,reverse=reverse)
-
-    def write(self,filen,include_header=False,no_hash=False):
-        """Write the TabFile data to an output file
-
-        Arguments:
-          filen: name of file to write to
-          include_header: (optional) if set to True, the first
-            line will be a 'header' line
-          no_hash: (optional) if set to True and include_header is
-            also True then don't put a hash character '#' at the
-            start of the header line in the output file.
-        """
-        fp = open(filen,'w')
-        if include_header:
-            if not no_hash:
-                leading_hash = '#'
-            else:
-                leading_hash = ''
-            fp.write("%s%s\n" % (leading_hash,'\t'.join(self.header())))
-        for data in self.__data:
-            fp.write("%s\n" % data)
-        fp.close()
-
-    def __getitem__(self,key):
-        return self.__data[key]
-
-    def __delitem__(self,key):
-        del(self.__data[key])
-
-    def __len__(self):
-        return len(self.__data)
-
-    def __repr__(self):
-        return '\n'.join([str(x) for x in self.__data])
-
 class TabDataLine:
     """Class to store a line of data from a tab-delimited file
 
@@ -706,6 +383,333 @@ class TabDataLine:
 
     def __repr__(self):
         return '\t'.join([str(x) for x in self.data])
+
+class TabFile:
+    """Class to get data from a tab-delimited file
+
+    Loads data from the specified file into a data structure than can
+    then be queried on a per line and per item basis.
+
+    Data lines are represented by TabDataLine objects.
+
+    Example usage:
+
+        data = TabFile(myfile)     # load initial data
+
+        print '%s' % len(data)     # report number of lines of data
+
+        print '%s' % data.header() # report header (i.e. column names)
+
+        for line in data:
+            ...                    # loop over lines of data
+
+        myline = data[0]           # fetch first line of data
+    """
+    def __init__(self,filen=None,fp=None,column_names=None,skip_first_line=False,
+                 first_line_is_header=False,tab_data_line=TabDataLine):
+        """Create a new TabFile object
+
+        If either of 'filen' or 'fp' arguments are given then the
+        TabFile object will be populated with data from the specified
+        file or stream. Otherwise an empty TabFile object is created.
+
+        Arguments:
+          filen (optional): name of tab-delimited file to load data
+              from; ignored if fp is also specified
+          fp: (optional) a file-like object which data can be loaded
+              from like a file; used in preference to filen
+          column_names: (optional) list of column names to assign to
+              columns in the file. Overrides column names in the file
+          skip_first_line: (optional) if True then ignore the first
+              line of the input file
+          first_line_is_header: (optional) if True then takes column
+              names from the first line of the file (over-riding
+              'column_names' argument if specified.
+          tab_data_line: (optional) class to use for creating data
+              line objects (defaults to TabDataLine).
+        """
+        # Initialise
+        self.__filen = filen
+        self.__ncols = 0
+        self.__header = []
+        self.__data = []
+        # Class to use for data lines
+        self.__tabdataline = tab_data_line
+        # Set up column names
+        if column_names is not None:
+            self.__setHeader(column_names)
+        # Read in data
+        if fp is None and filen is not None:
+            # Open named file
+            fp = open(self.__filen,'rU')
+        if fp:
+            self.__load(fp,skip_first_line=skip_first_line,
+                        first_line_is_header=first_line_is_header)
+            fp.close()
+
+    def __load(self,fp,skip_first_line=False,first_line_is_header=False):
+        """Load data into the object from file
+
+        Lines starting with '#' are ignored (unless the first_line_is_header
+        is set and the first line starts with '#').
+
+        If a header is set then lines with fewer data items than header
+        items raise an IndexError exception.
+
+        Arguments:
+          fp: file-like object to read data from
+          skip_first_line: (optional) if True then ignore the first
+              line of the input file
+          first_line_is_header: (optional) if True then take column
+              names from the first line of the file
+        """
+        line_no = 0
+        for line in fp:
+            line_no += 1
+            if skip_first_line:
+                # Skip first line
+                skip_first_line = False
+                continue
+            elif first_line_is_header and len(self.header()) == 0:
+                # Set up header from first line
+                self.__setHeader(line.strip().strip('#').split('\t'))
+                first_line_is_header = False
+                continue
+            if line.lstrip().startswith('#'):
+                # Skip commented line
+                continue
+            # Store data
+            data_line = self.__tabdataline(line,column_names=self.header(),lineno=line_no)
+            if self.__ncols > 0:
+                if len(data_line) != self.__ncols:
+                    # Inconsistent lines are an error
+                    raise IndexError, "wrong number of data items in line %d" % line_no
+            else:
+                # Set number of columns
+                self.__ncols = len(data_line)
+            self.__data.append(data_line)
+
+    def __setHeader(self,column_names):
+        """Set the names for columns of data
+
+        Arguments:
+          column_names: a tuple or list with names for each column in order.
+        """
+        assert(len(self) == 0)
+        if len(self.__header) > 0:
+            self.__header = []
+        for name in column_names:
+            self.__header.append(name)
+        self.__ncols = len(self.__header)
+
+    def header(self):
+        """Return list of column names
+
+        If no column names were set then this will be an empty list.
+        """
+        return self.__header
+    
+    def nColumns(self):
+        """Return the number of columns in the file
+
+        If the file had a header then this will be the number of
+        header columns; otherwise it will be the number of columns
+        found in the first line of data
+        """
+        return self.__ncols
+
+    def filename(self):
+        """Return the file name associated with the TabFile
+        """
+        return self.__filen
+    
+    def lookup(self,key,value):
+        """Return lines where the key matches the specified value
+        """
+        result = []
+        for line in self.__data:
+            if line[key] == value:
+                result.append(line)
+        return result
+
+    def indexByLineNumber(self,n):
+        """Return index of a data line given the file line number
+
+        Given the line number n for a line in the original file,
+        returns the index required to access the data for that
+        line in the TabFile object.
+
+        If no matching line is found then raises an IndexError.
+        """
+        for idx in range(len(self.__data)):
+            if self.__data[idx].lineno() == n:
+                return idx
+        raise IndexError,"No line number %d" % n
+
+    def append(self,data=None,tabdata=None):
+        """Create and append a new data line
+
+        Creates a new data line object and appends it to the end of
+        the list of lines.
+
+        Optionally the 'data' or 'tabdata' arguments can specify
+        data items which will be used to populate the new line.
+
+        Arguments:
+          data: (optional) a list of data items
+          tabdata: (optional) a string of tab-delimited data items
+
+        Returns:
+          Appended data line object.
+        """
+        if data:
+            line = '\t'.join([str(x) for x in data])
+        elif tabdata:
+            line = tabdata
+        else:
+            line = None
+        data_line = self.__tabdataline(line=line,column_names=self.header())
+        self.__data.append(data_line)
+        return data_line
+
+    def insert(self,i,data=None,tabdata=None):
+        """Create and insert a new data line at a specified index
+ 
+        Creates a new data line object and inserts it into the list
+        of lines at the specified index position 'i' (nb NOT a line
+        number).
+
+        Optionally the 'data' or 'tabdata' arguments can specify
+        data items which will be used to populate the new line.
+
+        Arguments:
+          i: index position to insert the line at
+          data: (optional) a list of data items
+          tabdata: (optional) a string of tab-delimited data items
+
+        Returns:
+          New inserted data line object.
+        """
+        if data:
+            line = '\t'.join([str(x) for x in data])
+        elif tabdata:
+            line = tabdata
+        else:
+            line = None
+        data_line = self.__tabdataline(line=line,column_names=self.header())
+        self.__data.insert(i,data_line)
+        return data_line
+
+    def appendColumn(self,name):
+        """Append a new (empty) column
+
+        Arguments:
+          name: name for the new column
+        """
+        for data in self.__data:
+            data.appendColumn(name,'')
+        self.__header.append(name)
+        self.__ncols = len(self.__header)
+
+    def reorderColumns(self,new_columns):
+        """Rearrange the columns in the file
+
+        Arguments:
+          new_columns: list of column names or indices in the
+            new order
+        """
+        reordered_tabfile = TabFile(column_names=new_columns)
+        for data in self.__data:
+            reordered_tabfile.append(data.subset(*new_columns))
+        return reordered_tabfile
+
+    def transformColumn(self,column_name,transform_func):
+        """Apply arbitrary function to a column
+
+        For each line of data the transformation function will be invoked
+        with the value of the named column, with the result being written
+        back to that column (overwriting the existing value).
+
+        Arguments:
+          column_name: name of column to write transformation result to
+          transform_func: callable object that will be invoked to perform
+            the transformation
+        """
+        for line in self:
+            line[column_name] = transform_func(line[column_name])
+
+    def computeColumn(self,column_name,compute_func):
+        """Compute and store values in a new column
+    
+        For each line of data the computation function will be invoked
+        with the line as the sole argument, and the result will be stored in
+        a new column with the specified name.
+
+        Arguments:
+          column_name: name of column to write transformation result to
+          compute_func: callable object that will be invoked to perform
+            the computation
+        """
+        if column_name not in self.header():
+            self.appendColumn(column_name)
+        for line in self:
+            line[column_name] = compute_func(line)
+
+    def sort(self,sort_func,reverse=False):
+        """Sort data using arbitrary function
+
+        Performs an in-place sort based on the suppled sort_func.
+
+        sort_func should be a function object which takes a data line
+        object as input and returns a single numerical value; the data
+        lines will be sorted in ascending order of these values (or
+        descending order if reverse is set to True).
+
+        To sort on the value of a specific column use e.g.
+        
+        >>> tabfile.sort(lambda line: line['col'])
+
+        Arguments:
+          sort_func: function object taking a data line object as
+            input and returning a single numerical value
+          reverse: (optional) Boolean, either False (default) to sort
+            in ascending order, or True to sort in descending order
+        """
+        self.__data = sorted(self.__data,key=sort_func,reverse=reverse)
+
+    def write(self,filen,include_header=False,no_hash=False):
+        """Write the TabFile data to an output file
+
+        Arguments:
+          filen: name of file to write to
+          include_header: (optional) if set to True, the first
+            line will be a 'header' line
+          no_hash: (optional) if set to True and include_header is
+            also True then don't put a hash character '#' at the
+            start of the header line in the output file.
+        """
+        fp = open(filen,'w')
+        if include_header:
+            if not no_hash:
+                leading_hash = '#'
+            else:
+                leading_hash = ''
+            fp.write("%s%s\n" % (leading_hash,'\t'.join(self.header())))
+        for data in self.__data:
+            fp.write("%s\n" % data)
+        fp.close()
+
+    def __getitem__(self,key):
+        return self.__data[key]
+
+    def __delitem__(self,key):
+        del(self.__data[key])
+
+    def __len__(self):
+        return len(self.__data)
+
+    def __repr__(self):
+        return '\n'.join([str(x) for x in self.__data])
 
 ########################################################################
 #
