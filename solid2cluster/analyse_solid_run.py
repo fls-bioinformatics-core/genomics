@@ -272,27 +272,30 @@ def suggest_rsync_command(solid_runs):
                 print "--exclude=" + str(library) + " \\"
         print "%s user@remote.system:/destination/parent/dir" % run.run_dir
 
-def verify_runs(solid_runs):
-    """Do basic verification checks on SOLiD run data
+def verify_runs(solid_dirs):
+    """Do basic verification checks on SOLiD run directories
 
-    For each run described by a SolidRun object, check that there is
-    run_definition file, samples and libraries, and that primary data
-    files (csfasta and qual) have been assigned and exist.
+    For each SOLiD run directory, create a SolidRun object and check for the
+    expected sample and library directories, and that primary data files
+    (csfasta and qual) have been assigned and exist.
 
     Returns a UNIX-like status code: 0 indicates that the checks passed,
     1 indicates that they failed.
 
     Arguments:
-      solid_runs: a list of SolidRun objects.
+      solid_dirs: a list of SOLiD sequencing directory names.
+
+    Returns:
+      0 if the run is verified, 1 if there is a problem.
     """
     print "Performing verification"
     status = 0
-    for run in solid_runs:
-        print "\nExamining %s:" % run.run_name
+    for solid_dir in solid_dirs:
+        # Initialise
         run_status = 0
-        # Check that run_definition file loaded
-        if not run.run_definition:
-            print "Error with run_definition"
+        run = SolidData.SolidRun(solid_dir)
+        if not run:
+            # Some error processing the basics
             run_status = 1
         else:
             # Check basic parameters: should have non-zero numbers of
@@ -524,5 +527,5 @@ if __name__ == "__main__":
     # Nb this should always be the last step
     # Use the verification return code as the exit status
     if do_checks:
-        status = verify_runs(solid_runs)
+        status = verify_runs(solid_dirs)
         sys.exit(status)
