@@ -90,6 +90,8 @@ if [ $? == 1 ] ; then
     fi
     # Write to stats file
     echo ${base_csfasta}$'\t'${n_reads_primary}$'\t'${n_reads_filter}$'\t'${n_filtered}$'\t'${percent_filtered} >> ${stats_file}
+    # Sort into order
+    sort -o ${stats_file} ${stats_file}
     # Release lock
     unlock_file ${stats_file}
 else
