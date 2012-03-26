@@ -124,6 +124,12 @@ function qc_boxplotter() {
 	else
 	    echo WARNING no file ${qual_base}_seq-order_boxplot.pdf
 	fi
+	if [ -f "${tmp}/${qual_base}_seq-order_boxplot.png" ] ; then
+	    /bin/cp ${tmp}/${qual_base}_seq-order_boxplot.png .
+	    echo Created ${qual_base}_seq-order_boxplot.png
+	else
+	    echo WARNING no file ${qual_base}_seq-order_boxplot.png
+	fi
 	# Remove temporary dir
 	/bin/rm -rf ${tmp}
     fi
