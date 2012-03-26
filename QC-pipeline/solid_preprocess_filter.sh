@@ -112,7 +112,10 @@ echo Filter options: $FILTER_OPTIONS
 #
 # Check if processed files already exist
 if [ ! -z "$(solid_preprocess_files $(baserootname $csfasta))" ] ; then
+    # Don't repeat the filtering
     echo Filtered csfasta and qual files already exist, skipping preprocess filter
+    # Set the csfasta file name for the stats
+    processed_csfasta=`echo $(solid_preprocess_files $(baserootname $csfasta)) | cut -d" " -f1`
 else
     # Make a temporary directory to run in
     # This stops incomplete processing files being written to the working

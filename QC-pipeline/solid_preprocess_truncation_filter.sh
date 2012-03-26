@@ -204,7 +204,10 @@ fi
 #
 # Check if processed files already exist
 if [ ! -z "$(solid_preprocess_files $(baserootname $csfasta))" ] ; then
+    # Don't repeat the filtering
     echo Filtered csfasta and qual files already exist, skipping preprocess filter
+    # Set the csfasta file name for the stats
+    processed_csfasta=`echo $(solid_preprocess_files $(baserootname $csfasta)) | cut -d" " -f1`
 else
     # Report initial number of reads
     n_reads=$(number_of_reads $csfasta)
