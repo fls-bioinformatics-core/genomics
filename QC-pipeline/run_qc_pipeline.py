@@ -30,6 +30,7 @@ import os
 import logging
 import subprocess
 import time
+import optparse
 
 # Put ../share onto Python search path for modules
 SHARE_DIR = os.path.abspath(
@@ -125,139 +126,128 @@ if __name__ == "__main__":
     max_concurrent_jobs = 4
     poll_interval = 30
     max_total_jobs = 0
-    logging_level = logging.INFO
     script = None
     data_dirs = []
     input_type = "solid"
     email_addr = None
     ge_queue = None
-    runner_type = "simple"
+    runner_type = "ge"
+
+    # Set up command line parser
+    p = optparse.OptionParser(usage="%prog [options] SCRIPT DIR [ DIR ...]",
+                              description=
+                              "Execute SCRIPT on data in each directory DIR. By default"
+                              "the SCRIPT is executed on each CSFASTA/QUAL file pair "
+                              "found in DIR, as 'SCRIPT CSFASTA QUAL. Use the --input "
+                              "option to run SCRIPT on different types of data (e.g. "
+                              "FASTQ files.")
+
+    # Basic options
+    group = optparse.OptionGroup(p,"Basic Options")
+    group.add_option('--limit',action='store',dest='max_concurrent_jobs',type='int',
+                     default=max_concurrent_jobs,
+                     help="queue no more than MAX_CONCURRENT_JOBS at one time (default %s)"
+                     % max_concurrent_jobs)
+    group.add_option('--queue',action='store',dest='ge_queue',default=ge_queue,
+                     help="explicitly specify Grid Engine queue to use")
+    group.add_option('--input',action='store',dest='input_type',default=input_type,
+                     help="specify type of data to use as input for the script. INPUT_TYPE "
+                     "can be one of: 'solid' (CSFASTA/QUAL file pair, default), 'fastq' "
+                     "(FASTQ file)")
+    group.add_option('--email',action='store',dest='email_addr',default=None,
+                     help="send email to EMAIL_ADDR when each stage of the pipeline is "
+                     "complete")
+    p.add_option_group(group)
+
+    # Advanced options
+    group = optparse.OptionGroup(p,"Advanced Options")
+    group.add_option('--test',action='store',dest='max_total_jobs',default=0,type='int',
+                     help="submit no more than MAX_TOTAL_JOBS (otherwise submit all jobs)")
+    group.add_option('--runner',action='store',dest='runner',default=runner_type,
+                     help="specify how jobs are executed: ge = Grid Engine, "
+                     "simple = use local system. Default is '%s'" % runner_type)
+    group.add_option('--debug',action='store_true',dest='debug',default=False,
+                     help="print debugging output")
+    p.add_option_group(group)
 
     # Deal with command line
-    if len(sys.argv) < 3:
-        print "Usage: %s [OPTIONS] <script> <dir> [<dir> ...]" % \
-            os.path.basename(sys.argv[0])
-        print ""
-        print "<script> : pipeline script file to execute"
-        print "<dir>    : one or more directories holding SOLiD data"
-        print "           By default, <script> will be executed for each"
-        print "           csfasta/qual file pair in dir, using:"
-        print "             <script> <csfasta> <qual>"
-        print "           Use --input option to run e.g."
-        print "             <script> <fastq> etc"
-        print ""
-        print "Basic Options:"
-        print "  --limit=<n>: queue no more than <n> jobs at one time"
-        print "               (default %s)" % max_concurrent_jobs
-        print "  --queue=<name>: explicitly specify GE queue to use"
-        print "  --input=<type> : specify type of input for script"
-        print "               Can be one of:"
-        print "               solid = csfasta/qual file pair (default)"
-        print "               fastq = fastq file"
-        print "  --email=<address>: send an email to <address> when the"
-        print "               pipeline has completed."
-        print
-        print "Advanced Options:"
-        print "  --test=<n> : submit no more than <n> jobs in total"
-        print "  --runner=<runner>: specify how jobs are executed"
-        print "               Can be one of:"
-        print "               ge = use Grid Engine (default)"
-        print "               simple = use local system"
-        print "  --debug    : print debugging output while running"
-        print
-        sys.exit()
+    options,arguments = p.parse_args()
 
-    # Collect command line options
-    for arg in sys.argv[1:]:
-        if arg.startswith("--limit="):
-            # Set maximum number of jobs to queue at one time
-            max_concurrent_jobs = int(arg.split('=')[1])
-        elif arg.startswith("--queue="):
-            # Name of GE queue to use
-            ge_queue = arg.split('=')[1]
-        elif arg.startswith("--debug"):
-            # Set logging level to output debugging info
-            logging_level = logging.DEBUG
-        elif arg.startswith("--test="):
-            # Run in test mode: limit the number of jobs
-            # submitted
-            max_total_jobs = int(arg.split('=')[1])
-        elif arg.startswith("--input="):
-            # Specify input type
-            input_type = arg.split('=')[1]
-        elif arg.startswith("--email="):
-            email_addr = arg.split('=')[1]
-        elif arg.startswith("--runner="):
-            runner_type = arg.split('=')[1]
-        elif arg.startswith("--") and len(data_dirs) > 0:
-            # Some option appeared after we started collecting directories
-            logging.error("Unexpected argument encountered: %s" % arg)
-            sys.exit(1)
-        else:
-            if script is None:
-                # Script name
-                print "Script: %s" % arg
-                if os.path.isabs(arg):
-                    # Absolute path
-                    if os.path.isfile(arg):
-                        script = arg
-                    else:
-                        script = None
-                else:
-                    # Try relative to pwd
-                    script = os.path.normpath(os.path.join(os.getcwd(),arg))
-                    if not os.path.isfile(script):
-                        # Try relative to directory for script
-                        script = os.path.abspath(os.path.normpath(
-                                os.path.join(os.path.dirname(sys.argv[0]),arg)))
-                        if not os.path.isfile(script):
-                            script = None
-                if script is None:
-                    logging.error("Script file not found: %s" % script)
-                    sys.exit(1)
-                print "Full path for script: %s" % script
+    # Check arguments
+    if len(arguments) < 2:
+        p.error("Takes at least two arguments: script and one or more directories")
+    else:
+        # Script name
+        arg = arguments[0]
+        print "Script: %s" % arg
+        if os.path.isabs(arg):
+            # Absolute path
+            if os.path.isfile(arg):
+                script = arg
             else:
-                # Data directory
-                print "Directory: %s" % arg
-                dirn = os.path.abspath(arg)
-                if not os.path.isdir(dirn):
-                    logging.error("Not a directory: %s" % dirn)
-                    sys.exit(1)
-                # Check for duplicates
-                if dirn not in data_dirs:
-                    data_dirs.append(dirn)
-                else:
-                    logging.warning("Directory '%s' already specified" % dirn)
+                script = None
+        else:
+            # Try relative to pwd
+            script = os.path.normpath(os.path.join(os.getcwd(),arg))
+            if not os.path.isfile(script):
+                # Try relative to directory for script
+                script = os.path.abspath(os.path.normpath(
+                        os.path.join(os.path.dirname(sys.argv[0]),arg)))
+                if not os.path.isfile(script):
+                    script = None
+        if script is None:
+            logging.error("Script file not found: %s" % script)
+            sys.exit(1)
+        print "Full path for script: %s" % script
+        # Data directories
+        for arg in arguments[1:]:
+            print "Directory: %s" % arg
+            dirn = os.path.abspath(arg)
+            if not os.path.isdir(dirn):
+                logging.error("Not a directory: %s" % dirn)
+                sys.exit(1)
+            # Check for duplicates
+            if dirn not in data_dirs:
+                data_dirs.append(dirn)
+            else:
+                logging.warning("Directory '%s' already specified" % dirn)
 
     # Set logging format and level
+    if options.debug:
+        logging_level = logging.DEBUG
+    else:
+        logging_level = logging.INFO
     logging.basicConfig(format='%(levelname)8s %(message)s')
     logging.getLogger().setLevel(logging_level)
 
     # Set up job runner
-    if runner_type == 'simple':
+    if options.runner == 'simple':
         runner = JobRunner.SimpleJobRunner()
-    elif runner_type == 'ge':
+    elif options.runner == 'ge':
         runner = JobRunner.GEJobRunner(queue=ge_queue)
     else:
-        logging.error("Unknown job runner: '%s'" % runner_type)
+        logging.error("Unknown job runner: '%s'" % options.runner)
         sys.exit(1)
 
     # Set up and run pipeline
-    pipeline = Pipeline.PipelineRunner(runner,max_concurrent_jobs=max_concurrent_jobs,
+    pipeline = Pipeline.PipelineRunner(runner,max_concurrent_jobs=options.max_concurrent_jobs,
                                        jobCompletionHandler=JobCleanup,
-                                       groupCompletionHandler=lambda group,jobs,email=email_addr:
-                                           SendReport(email,group,jobs))
+                                       groupCompletionHandler=lambda group,jobs,
+                                       email=options.email_addr: SendReport(email,group,jobs))
     for data_dir in data_dirs:
         # Get for this directory
         print "Collecting data from %s" % data_dir
-        if input_type == "solid":
+        if options.input_type == "solid":
             run_data = Pipeline.GetSolidDataFiles(data_dir)
-        elif input_type == "fastq":
+        elif options.input_type == "fastq":
             run_data = Pipeline.GetFastqFiles(data_dir)
+        else:
+            logging.error("Unknown input type: '%s'" % options.input_type)
+            sys.exit(1)
         # Add jobs to pipeline runner (up to limit of max_total_jobs)
         for data in run_data:
-            if max_total_jobs > 0 and pipeline.nWaiting() == max_total_jobs:
-                print "Maximum number of jobs queued (%d)" % max_total_jobs
+            if options.max_total_jobs > 0 and pipeline.nWaiting() == options.max_total_jobs:
+                print "Maximum number of jobs queued (%d)" % options.max_total_jobs
                 break
             label = os.path.splitext(os.path.basename(data[0]))[0]
             group = os.path.basename(data_dir)
@@ -267,7 +257,7 @@ if __name__ == "__main__":
 
     # Finished
     if email_addr is not None:
-        print "Sending email notification to %s" % email_addr
+        print "Sending email notification to %s" % options.email_addr
         subject = "Pipeline completed: %s" % os.path.basename(script)
-        SendEmail(subject,email_addr,pipeline.report())
+        SendEmail(subject,options.email_addr,pipeline.report())
     print "Finished"
