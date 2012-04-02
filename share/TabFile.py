@@ -418,7 +418,9 @@ class TabFile:
           filen (optional): name of tab-delimited file to load data
               from; ignored if fp is also specified
           fp: (optional) a file-like object which data can be loaded
-              from like a file; used in preference to filen
+              from like a file; used in preference to filen.
+              Note that the calling program must close the stream in
+              these cases.
           column_names: (optional) list of column names to assign to
               columns in the file. Overrides column names in the file
           skip_first_line: (optional) if True then ignore the first
@@ -443,10 +445,14 @@ class TabFile:
         if fp is None and filen is not None:
             # Open named file
             fp = open(self.__filen,'rU')
+            close_fp = True
+        else:
+            close_fp = False
         if fp:
             self.__load(fp,skip_first_line=skip_first_line,
                         first_line_is_header=first_line_is_header)
-            fp.close()
+        # Only close the stream if it was opened locally
+        if close_fp: fp.close()
 
     def __load(self,fp,skip_first_line=False,first_line_is_header=False):
         """Load data into the object from file
@@ -678,18 +684,31 @@ class TabFile:
         """
         self.__data = sorted(self.__data,key=sort_func,reverse=reverse)
 
-    def write(self,filen,include_header=False,no_hash=False):
+    def write(self,filen=None,fp=None,include_header=False,no_hash=False):
         """Write the TabFile data to an output file
 
+        One of either the 'filen' or 'fp' arguments must be given,
+        specifying the file name or stream to write the TabFile data to.
+
         Arguments:
-          filen: name of file to write to
+          filen: (optional) name of file to write to; ignored if fp is
+            also specified
+          fp: (optional) a file-like object opened for writing; used in
+            preference to filen if set to a non-null value
+              Note that the calling program must close the stream in
+              these cases.
           include_header: (optional) if set to True, the first
             line will be a 'header' line
           no_hash: (optional) if set to True and include_header is
             also True then don't put a hash character '#' at the
             start of the header line in the output file.
         """
-        fp = open(filen,'w')
+        if fp is None and filen is not None:
+            # Open named file for writing
+            fp = open(filen,'w')
+            close_fp = True
+        else:
+            close_fp = False
         if include_header:
             if not no_hash:
                 leading_hash = '#'
@@ -698,7 +717,8 @@ class TabFile:
             fp.write("%s%s\n" % (leading_hash,'\t'.join(self.header())))
         for data in self.__data:
             fp.write("%s\n" % data)
-        fp.close()
+        # Only close the stream if it was opened locally
+        if close_fp: fp.close()
 
     def __getitem__(self,key):
         return self.__data[key]
@@ -724,13 +744,20 @@ import cStringIO
 class TestTabFile(unittest.TestCase):
 
     def setUp(self):
-        # Make file-like object to read data in
-        self.fp = cStringIO.StringIO(
-"""#chr\tstart\tend\tdata
-chr1\t1\t234\t4.6
+        # Header
+        self.header = "#chr\tstart\tend\tdata\n"
+        # Tab-delimited data
+        self.data = \
+"""chr1\t1\t234\t4.6
 chr1\t567\t890\t5.7
 chr2\t1234\t5678\t6.8
-""")
+"""
+        # Make file-like object to read data in
+        self.fp = cStringIO.StringIO(self.header+self.data)
+
+    def tearDown(self):
+        # Close the open file-like input
+        self.fp.close()
 
     def test_load_data(self):
         """Create and load new TabFile instance
@@ -742,6 +769,15 @@ chr2\t1234\t5678\t6.8
         self.assertEqual(tabfile[2][0],'chr2',"Incorrect data")
         self.assertEqual(tabfile.nColumns(),4)
         self.assertEqual(tabfile.filename(),'test')
+
+    def test_write_data(self):
+        """Write data to file-like object
+        """
+        tabfile = TabFile('test',self.fp)
+        fp = cStringIO.StringIO()
+        tabfile.write(fp=fp)
+        self.assertEqual(fp.getvalue(),self.data)
+        fp.close()
 
     def test_load_data_with_header(self):
         """Create and load Tabfile using first line as header
@@ -849,6 +885,10 @@ chr1\t567\t890\t5.7\tComment with a trailing space
 chr2\t1234\t5678\t6.8\t.
 """)
 
+    def tearDown(self):
+        # Close the open file-like input
+        self.fp.close()
+
     def test_preserve_trailing_spaces_on_lines(self):
         """Check that trailing spaces aren't lost
         """
@@ -867,6 +907,10 @@ chr1\t1\t234\t4.6
 chr1\t567\t890\t5.7
 chr2\t1234\t5678\t6.8
 """)
+
+    def tearDown(self):
+        # Close the open file-like input
+        self.fp.close()
 
     def test_expected_uncommented_header(self):
         """Test reading in a tab file with an expected uncommented header
@@ -927,6 +971,10 @@ chr1\t1\t234
 chr1\t567\t890\t5.7\t4.6
 chr2\t1234\t5678\t6.8
 """)
+
+    def tearDown(self):
+        # Close the open file-like input
+        self.fp.close()
     
     def test_ragged_input_file(self):
         """Deal with mismatched numbers of items on different lines
@@ -998,6 +1046,10 @@ chr1\t567\t890\t5.7
 chr2\t1234\t5678\t6.8
 """)
 
+    def tearDown(self):
+        # Close the open file-like input
+        self.fp.close()
+
     def test_set_column_to_constant_value(self):
         """Set a column to a constant value using transformColumn
         """
@@ -1067,6 +1119,10 @@ chr1\t567\t890\t5.7
 chr1\t1\t234\t6.8
 chr2\t1234\t5678\t3.4
 """)
+
+    def tearDown(self):
+        # Close the open file-like input
+        self.fp.close()
 
     def test_sort_on_column(self):
         """Sort data on a numerical column into (default) ascending order
