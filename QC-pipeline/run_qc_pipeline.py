@@ -164,8 +164,9 @@ if __name__ == "__main__":
     group.add_option('--test',action='store',dest='max_total_jobs',default=0,type='int',
                      help="submit no more than MAX_TOTAL_JOBS (otherwise submit all jobs)")
     group.add_option('--runner',action='store',dest='runner',default=runner_type,
-                     help="specify how jobs are executed: ge = Grid Engine, "
-                     "simple = use local system. Default is '%s'" % runner_type)
+                     help="specify how jobs are executed: ge = Grid Engine, drmma = Grid "
+                     "Engine via DRMAA interface, simple = use local system. Default is "
+                     "'%s'" % runner_type)
     group.add_option('--debug',action='store_true',dest='debug',default=False,
                      help="print debugging output")
     p.add_option_group(group)
@@ -225,6 +226,8 @@ if __name__ == "__main__":
         runner = JobRunner.SimpleJobRunner()
     elif options.runner == 'ge':
         runner = JobRunner.GEJobRunner(queue=ge_queue)
+    elif options.runner == 'drmaa':
+        runner = JobRunner.DRMAAJobRunner(queue=ge_queue)
     else:
         logging.error("Unknown job runner: '%s'" % options.runner)
         sys.exit(1)
