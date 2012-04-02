@@ -131,7 +131,7 @@ if __name__ == "__main__":
     input_type = "solid"
     email_addr = None
     ge_queue = None
-    use_simple_runner = False
+    runner_type = "simple"
 
     # Deal with command line
     if len(sys.argv) < 3:
@@ -188,7 +188,7 @@ if __name__ == "__main__":
         elif arg.startswith("--email="):
             email_addr = arg.split('=')[1]
         elif arg.startswith("--runner="):
-            use_simple_runner = (arg.split('=')[1] == 'simple')
+            runner_type = arg.split('=')[1]
         elif arg.startswith("--") and len(data_dirs) > 0:
             # Some option appeared after we started collecting directories
             logging.error("Unexpected argument encountered: %s" % arg)
@@ -234,10 +234,13 @@ if __name__ == "__main__":
     logging.getLogger().setLevel(logging_level)
 
     # Set up job runner
-    if use_simple_runner:
+    if runner_type == 'simple':
         runner = JobRunner.SimpleJobRunner()
-    else:
+    elif runner_type == 'ge':
         runner = JobRunner.GEJobRunner(queue=ge_queue)
+    else:
+        logging.error("Unknown job runner: '%s'" % runner_type)
+        sys.exit(1)
 
     # Set up and run pipeline
     pipeline = Pipeline.PipelineRunner(runner,max_concurrent_jobs=max_concurrent_jobs,
