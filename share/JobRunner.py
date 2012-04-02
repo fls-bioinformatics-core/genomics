@@ -167,7 +167,7 @@ class SimpleJobRunner(BaseJobRunner):
           Job id for submitted job, or 'None' if job failed to
           start.
         """
-        logging.debug("Submitting job")
+        logging.debug("SimpleJobRunner: submitting job")
         logging.debug("Name       : %s" % name)
         logging.debug("Working_dir: %s" % working_dir)
         logging.debug("Script     : %s" % script)
@@ -310,7 +310,7 @@ class GEJobRunner(BaseJobRunner):
           Job id for submitted job, or 'None' if job failed to
           start.
         """
-        logging.debug("Submitting job")
+        logging.debug("GEJobRunner: submitting job")
         logging.debug("Name       : %s" % name)
         logging.debug("Queue      : %s" % self.__queue)
         logging.debug("Working_dir: %s" % working_dir)
