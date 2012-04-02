@@ -390,7 +390,8 @@ class TabFile:
     Loads data from the specified file into a data structure than can
     then be queried on a per line and per item basis.
 
-    Data lines are represented by TabDataLine objects.
+    Data lines are represented by data line objects which must be
+    TabDataLine-like.
 
     Example usage:
 
