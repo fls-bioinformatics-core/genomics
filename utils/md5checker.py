@@ -167,18 +167,46 @@ def diff_directories(dirn1,dirn2,verbose=False):
     Returns:
       Zero on success, 1 if errors were encountered
     """
-    # Move to first dir and generate temporary Md5sum file
-    os.chdir(dirn1)
-    fp,tmpfile = tempfile.mkstemp()
-    os.close(fp)
-    retval1 = compute_md5sums('.',output_file=tmpfile)
-    # Run this against the second directory
-    os.chdir(dirn2)
-    retval2 = verify_md5sums(tmpfile,verbose=verbose)
-    # Delete temporary file
-    os.remove(tmpfile)
+    retval = 0
+    nsuccess = 0
+    failures = []
+    # Iterate over all files in the first directory
+    for d in os.walk(dirn1):
+        for f in d[2]:
+            # Get full paths for source and target files
+            filen1 = os.path.normpath(os.path.join(d[0],f))
+            filen2 = os.path.normpath(os.path.join(dirn2,f))
+            ##print "%s %s" % (filen1,filen2)
+            # Check that target exists
+            if not os.path.isfile(filen2):
+                sys.stderr.write("%s: FAILED\n" % filen2)
+                sys.stderr.write("Missing file %s\n" % filen2)
+                failures.append(filen2)
+            else:
+                try:
+                    # Calculate and compare MD5 sums
+                    chksum1 = Md5sum.md5sum(filen1)
+                    chksum2 = Md5sum.md5sum(filen2)
+                    if chksum1 == chksum2:
+                        report("%s: OK" % filen2,verbose)
+                        nsuccess += 1
+                    else:
+                        sys.stderr.write("%s: FAILED\n" % filen2)
+                        failures.append(filen2)
+                        retval = 1
+                except IOError, ex:
+                    # Error accessing one or both files, report and skip
+                    sys.stderr.write("%s: FAILED\n" % filen2)
+                    sys.stderr.write("Error while generating MD5 sums: '%s'\n" % ex)
+                    failures.append(filen2)
+                    retval = 1
+    # Summarise
+    nfailed = len(failures)
+    report("Summary: %d files checked, %d okay %d failed" % 
+           (nsuccess + nfailed,nsuccess,nfailed),
+           verbose)
     # Return status
-    return max(retval1,retval2)
+    return retval
 
 def compute_md5sum_for_file(filen,output_file=None):
     """Compute and write MD5 sum for specifed file
@@ -327,7 +355,7 @@ if __name__ == "__main__":
         target = os.path.abspath(arguments[1])
         if os.path.isdir(source) and os.path.isdir(target):
             # Compare two directories
-            report("Recursively checking files in %s against copies in %s" % (source,target),
+            report("Recursively copies of files in %s against originals in %s" % (target,source),
                    options.verbose)
             status = diff_directories(source,target,verbose=options.verbose)
         elif os.path.isfile(source) and os.path.isfile(target):
