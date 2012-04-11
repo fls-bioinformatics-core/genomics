@@ -170,13 +170,12 @@ def diff_directories(dirn1,dirn2,verbose=False):
     retval = 0
     nsuccess = 0
     failures = []
-    # Iterate over all files in the first directory
+    # Iterate over all files in the source directory
     for d in os.walk(dirn1):
         for f in d[2]:
             # Get full paths for source and target files
             filen1 = os.path.normpath(os.path.join(d[0],f))
-            filen2 = os.path.normpath(os.path.join(dirn2,f))
-            ##print "%s %s" % (filen1,filen2)
+            filen2 = filen1.replace(dirn1,dirn2,1)
             # Check that target exists
             if not os.path.isfile(filen2):
                 sys.stderr.write("%s: FAILED\n" % filen2)
