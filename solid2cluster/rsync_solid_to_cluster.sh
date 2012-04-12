@@ -31,7 +31,7 @@ REMOTE_USER=
 REMOTE_HOST=
 REMOTE_DATADIR=
 RSYNC_EXCLUDES="--exclude=color* --exclude=cycleplots --exclude=jobs* --exclude=traffic_lights"
-RSYNC_OPTIONS="-av -e ssh --chmod=g-w,o-w $RSYNC_EXCLUDES"
+RSYNC_OPTIONS="-av -e ssh --chmod=u-w,g-w,o-w $RSYNC_EXCLUDES"
 RSYNC_LOG="${SCRIPT_NAME%.*}_${NOW}.log"
 #
 #####################################################################
