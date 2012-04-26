@@ -14,6 +14,9 @@ There are bash scripts to perform the QC and specific substeps:
 *   `qc.sh`: given a csfasta and qual file pair, runs the QC pipeline
     (solid2fastq, fastq_screen, solid_preprocess_filter and qc_boxplotter).
 
+*   `run_solid2fastq.sh`: given a csfasta and qual file pair, generates a
+    fastq file by running the `solid2fastq` program.
+
 *   `fastq_screen.sh`: given a fastq file, runs `fastq_screen` against
     three sets of genome indexes, specified by the following `.conf` files:
 
@@ -43,12 +46,16 @@ will be read automatically if it exists. Make a site-specific version by
 copying `qc.setup.sample` and editing it as appropriate to specify
 locations for the programs and data files.
 
-Pipeline recipes
-----------------
+Pipeline recipes/examples
+-------------------------
 
 *   Run the full QC pipeline on a set of directories:
 
     `run_qc_pipeline.py qc.sh <dir1> <dir2> ...`
+
+*   Generate gzipped fastq files only in a set of directories:
+
+    `run_qc_pipeline.py "run_solid2fastq.sh --gzip" <dir1> <dir2> ...`
 
 *   Run the fastq_screen steps only on a set of directories:
 
