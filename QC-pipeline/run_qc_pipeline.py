@@ -138,9 +138,10 @@ if __name__ == "__main__":
                               description=
                               "Execute SCRIPT on data in each directory DIR. By default"
                               "the SCRIPT is executed on each CSFASTA/QUAL file pair "
-                              "found in DIR, as 'SCRIPT CSFASTA QUAL. Use the --input "
+                              "found in DIR, as 'SCRIPT CSFASTA QUAL'. Use the --input "
                               "option to run SCRIPT on different types of data (e.g. "
-                              "FASTQ files.")
+                              "FASTQ files). SCRIPT can be a quoted string to include "
+                              "command line options (e.g. 'run_solid2fastq.sh --gzip').")
 
     # Basic options
     group = optparse.OptionGroup(p,"Basic Options")
@@ -178,28 +179,34 @@ if __name__ == "__main__":
     if len(arguments) < 2:
         p.error("Takes at least two arguments: script and one or more directories")
     else:
+        # "Script" can consist of script name alone, or a script plus options
+        script_args = arguments[0].split()
         # Script name
-        arg = arguments[0]
-        print "Script: %s" % arg
-        if os.path.isabs(arg):
+        print "Script: '%s'" % arguments[0]
+        if os.path.isabs(script_args[0]):
             # Absolute path
-            if os.path.isfile(arg):
-                script = arg
+            if os.path.isfile(script_args[0]):
+                script = script_args[0]
             else:
                 script = None
         else:
             # Try relative to pwd
-            script = os.path.normpath(os.path.join(os.getcwd(),arg))
+            script = os.path.normpath(os.path.join(os.getcwd(),script_args[0]))
             if not os.path.isfile(script):
                 # Try relative to directory for script
                 script = os.path.abspath(os.path.normpath(
-                        os.path.join(os.path.dirname(sys.argv[0]),arg)))
+                        os.path.join(os.path.dirname(sys.argv[0]),script_args[0])))
                 if not os.path.isfile(script):
                     script = None
         if script is None:
             logging.error("Script file not found: %s" % script)
             sys.exit(1)
+        script_args = script_args[1:]
         print "Full path for script: %s" % script
+        if script_args:
+            print "Additional script arguments:"
+            for arg in script_args:
+                print "\t%s" % arg
         # Data directories
         for arg in arguments[1:]:
             print "Directory: %s" % arg
@@ -254,7 +261,14 @@ if __name__ == "__main__":
                 break
             label = os.path.splitext(os.path.basename(data[0]))[0]
             group = os.path.basename(data_dir)
-            pipeline.queueJob(data_dir,script,data,label=label,group=group)
+            # Set up argument list for script
+            args = []
+            if script_args:
+                for arg in script_args:
+                    args.append(arg)
+            for arg in data:
+                args.append(arg)
+            pipeline.queueJob(data_dir,script,args,label=label,group=group)
     # Run the pipeline
     pipeline.run()
 
