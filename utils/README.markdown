@@ -12,6 +12,7 @@ Place to put general utility scripts/tools.
  *  `makeRegularBinsFromGenomeTable.R`: make bin file from set of chromosomes
  *  `make_mock_solid_dir.py`: create mock SOLiD directory structure for testing
  *  `md5checker.py`: check files and directories using MD5 sums
+ *  `sam2soap.py`: convert from SAM file to SOAP format
 
 See below for more detailed usage documentation.
 
@@ -209,3 +210,21 @@ sums:
 To compare two files by their MD5 sums:
 
     md5checker.py --diff FILE1 FILE2
+
+
+sam2soap.py
+-----------
+Convert a SAM file into SOAP format.
+
+Usage:
+
+    sam2soap.py OPTIONS [ SAMFILE ]
+
+Convert SAM file to SOAP format - reads from stdin (or SAMFILE, if specified),
+and writes output to stdout unless -o option is specified.
+
+Options:
+
+    -o SOAPFILE  Output SOAP file name
+    --debug      Turn on debugging output
+    --test       Run unit tests
