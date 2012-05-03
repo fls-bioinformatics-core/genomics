@@ -1,0 +1,5 @@
+2012-05-03  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* sam2soap.py
+	- first version of SAM to SOAP converter added to 'utils'
+
