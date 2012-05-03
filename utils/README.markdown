@@ -73,18 +73,20 @@ extract_reads.py
 Usage: `extract_reads.py OPTIONS infile [infile ...]`
 
 Extract subsets of reads from each of the supplied files according to
-specified criteria (e.g. random, matching a pattern etc). Output file names
-are the input file names with '.subset' appended.
+specified criteria (e.g. random, matching a pattern etc). Input files can be
+any mixture of FASTQ (.fastq, .fq), CSFASTA (.csfasta) and QUAL (.qual).
+Output file names will be the input file names with '.subset' appended.
 
 Options:
 
     --version             show program's version number and exit
     -h, --help            show this help message and exit
     -m PATTERN, --match=PATTERN
-                          Extract records that match regular expression PATTERN
+                          Extract records that match Python regular expression
+                          PATTERN
     -n N                  Extract N random records from the input file(s)
-                          (default 500). If multiple files are specified, the
-                          same subsets will be extracted for each.
+                          (default 500). If multiple input files are specified,
+                          the same subsets will be extracted for each.
 
 
 fastq_edit.py

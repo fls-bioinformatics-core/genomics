@@ -17,12 +17,14 @@ Usage: extract_random.py [-n <n_records> ] infile [infile ...]
 
 If multiple infiles are specified then the same set of records from
 each file.
+
+Recognises FASTQ, CSFASTA and QUAL files.
 """
 #######################################################################
 # Module metadata
 #######################################################################
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 #######################################################################
 # Import modules
@@ -154,14 +156,16 @@ if __name__ == "__main__":
                               version="%prog "+__version__,
                               description="Extract subsets of reads from each of the "
                               "supplied files according to specified criteria (e.g. "
-                              "random, matching a pattern etc). Output file names "
-                              "are the input file names with '.subset' appended.")
+                              "random, matching a pattern etc). Input files can be "
+                              "any mixture of FASTQ (.fastq, .fq), CSFASTA (.csfasta) "
+                              "and QUAL (.qual). Output file names will be the input "
+                              "file names with '.subset' appended.")
     p.add_option('-m','--match',action='store',dest='pattern',default=None,
-                 help="Extract records that match regular expression PATTERN")
+                 help="Extract records that match Python regular expression PATTERN")
     p.add_option('-n',action='store',dest='N',default=500,type="int",
                  help="Extract N random records from the input file(s) (default 500). If "
-                 "multiple files are specified, the same subsets will be extracted for "
-                 "each.")
+                 "multiple input files are specified, the same subsets will be extracted "
+                 "for each.")
     options,arguments = p.parse_args()
     if len(arguments) < 1:
         p.error("No input files supplied")
