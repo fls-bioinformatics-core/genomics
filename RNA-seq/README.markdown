@@ -3,7 +3,7 @@ RNA-seq
 
 Scripts and tools for RNA-seq specific tasks.
 
-  * `bowtie_mapping_stats.py`: summarise statistics from a bowtie output in spreadsheet
+  * `bowtie_mapping_stats.py`: summarise statistics from bowtie output in spreadsheet
   * `GFFedit`: swap gene names in GFF file to gene ID
   * `qc_bash_script.sh`: generalised QC pipeline for RNA-seq
   * `Split`: filter reads from bowtie mapping against two genomes
