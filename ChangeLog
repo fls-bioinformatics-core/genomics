@@ -1,3 +1,8 @@
+2012-05-08  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* bowtie_mapping_stats.py
+	- summarise statistics from bowtie output into XLS spreadsheet
+
 2012-05-03  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* sam2soap.py
