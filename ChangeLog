@@ -1,10 +1,15 @@
+2012-05-09  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* microarray/xrothologs.py
+	- cross-reference data for two species using probe set lookup
+
 2012-05-08  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
-	* bowtie_mapping_stats.py
+	* RNA-seq/bowtie_mapping_stats.py
 	- summarise statistics from bowtie output into XLS spreadsheet
 
 2012-05-03  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
-	* sam2soap.py
-	- first version of SAM to SOAP converter added to 'utils'
+	* utils/sam2soap.py
+	- first version of SAM to SOAP converter
 
