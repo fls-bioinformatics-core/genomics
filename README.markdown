@@ -3,12 +3,13 @@ genomics: repository for FLS in-house genomics-related software
 
 Scripts are organised into the following directories:
 
-* [ChIP-seq](ChIP-seq): contains ChIP-seq-specific scripts
-* [RNA-seq](RNA-seq): contains RNA-seq-specific scripts
-* [NGS-general](NGS-general): contains general NGS scripts not specific to a
-  particular type of experiment
 * [build-indexes](build-indexes): contains scripts for building genome
   indexes for various programs
+* [ChIP-seq](ChIP-seq): contains ChIP-seq-specific scripts
+* [RNA-seq](RNA-seq): contains RNA-seq-specific scripts
+* [microarray](microarray): contains microarray-specific scripts
+* [NGS-general](NGS-general): contains general NGS scripts not specific to a
+  particular type of experiment
 * [QC-pipeline](QC-pipeline): contains scripts for running QC pipelines on
   SOLiD data sets
 * [solid2cluster](solid2cluster): utilities for copying data from SOLiD
