@@ -1,3 +1,11 @@
+2012-05-10  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* NGS-general
+	- New utilities from Ian Donaldson:
+	- remove_mispairs.pl: remove "singleton" reads from paired end fastq
+	- separate_paired_fastq.pl: separate F3 and F5 reads from fastq
+	- trim_fastq.pl: trim down sequences in fastq file from 5' end
+
 2012-05-09  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* microarray/xrothologs.py
