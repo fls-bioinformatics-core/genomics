@@ -3,6 +3,11 @@ NGS-general
 
 General NGS scripts that are used for both ChIP-seq and RNA-seq.
 
+  * `explain_sam_flag.sh`: decodes bit-wise flag from SAM file
+  * `qc_boxplotter.sh`: generate QC boxplot from SOLiD qual file
+  * `SamStats`: counts uniquely map reads per chromosome/contig
+  * `splitBarcodes.pl`: separate multiple barcodes in SOLiD data
+
 explain_sam_flag.sh
 -------------------
 Convert a decimal bitwise SAM flag value to binary representation and
@@ -49,20 +54,3 @@ Currently set up for 'BC Kit Module 1-16'.
 
 Note that this utility also requires `BioPerl`.
 
-SolidDataExtractor
-------------------
-Python modules for extracting data about a SOLiD run from the data in
-the run directory.
-
-- SolidDataExtractor.py: classes for data extraction, analysis and
-  reporting of a SOLiD run.
-  Can also be run as a stand-alone program:
-
-  python SolidDataExtractor.py /path/to/solid/run/directory
-
-- analyse_solid_run.py: use the SolidDataExtractor classes to analyse
-  and report the layout, samples etc for a SOLiD run:
-
-  python analyse_solid_run.py /path/to/solid/run/directory
-
-- Spreadsheet.py: utility class to generate basic spreadsheet.
