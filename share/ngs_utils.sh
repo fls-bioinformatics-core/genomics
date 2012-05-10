@@ -130,3 +130,85 @@ function solid_preprocess_files() {
     # No matches
 }
 #
+#====================================================================
+#
+# solid_preprocess_filter
+#
+# Run solid_preprocess_filter.sh script to perform quality filtering
+# of original SOLiD data using polyclonal and error tests from the
+# SOLiD_precess_filter_v2.pl program
+#
+# Usage: solid_preprocess_filter <csfasta> <qual>
+function solid_preprocess_filter() {
+    # Input file names
+    csfasta=$1
+    qual=$2
+    # Run separate solid_preprocess_filter.sh script
+    SOLID_PREPROCESS=`dirname $0`/solid_preprocess_filter.sh
+    if [ -f "${SOLID_PREPROCESS}" ] ; then
+	${SOLID_PREPROCESS} ${csfasta} ${qual}
+    else
+	echo ERROR ${SOLID_PREPROCESS} not found, preprocess/filter step skipped
+    fi
+}
+#
+#====================================================================
+#
+# qc_boxplotter
+#
+# Run FLS in-house boxplotter on SOLiD data
+#
+# Supply full path of input qual file
+#
+# Usage: qc_boxplotter <qual_file>
+function qc_boxplotter() {
+    # Input qual file
+    qual=$(abs_path ${1})
+    # Qual base name
+    qual_base=`basename $qual`
+    # Check if boxplot files already exist
+    if [ -f "${qual_base}_seq-order_boxplot.pdf" ] ; then
+	echo Boxplot pdf already exists for ${qual_base}, skipping boxplotter
+    else
+	echo "--------------------------------------------------------"
+	echo Executing QC_boxplotter: ${qual_base}
+	echo "--------------------------------------------------------"
+	# Make a temporary directory to run in
+	# This stops intermediate files cluttering the working directory
+	# if the boxplotter stops (or is stopped) prematurely
+	wd=`pwd`
+	tmp=$(make_temp -d --tmpdir=$wd --suffix=.boxplotter)
+	cd $tmp
+	# Make a link to the input qual file
+	if [ ! -f "${qual_base}" ] ; then
+	    echo Making symbolic link to qual file
+	    /bin/ln -s ${qual} ${qual_base}
+	fi
+	# Run boxplotter
+	cmd="${QC_BOXPLOTTER} $qual_base"
+	$cmd
+	# Move back to working dir and copy output files
+	cd $wd
+	if [ -f "${tmp}/${qual_base}_seq-order_boxplot.ps" ] ; then
+	    /bin/cp ${tmp}/${qual_base}_seq-order_boxplot.ps .
+	    echo Created ${qual_base}_seq-order_boxplot.ps
+	else
+	    echo WARNING no file ${qual_base}_seq-order_boxplot.ps
+	fi
+	if [ -f "${tmp}/${qual_base}_seq-order_boxplot.pdf" ] ; then
+	    /bin/cp ${tmp}/${qual_base}_seq-order_boxplot.pdf .
+	    echo Created ${qual_base}_seq-order_boxplot.pdf
+	else
+	    echo WARNING no file ${qual_base}_seq-order_boxplot.pdf
+	fi
+	if [ -f "${tmp}/${qual_base}_seq-order_boxplot.png" ] ; then
+	    /bin/cp ${tmp}/${qual_base}_seq-order_boxplot.png .
+	    echo Created ${qual_base}_seq-order_boxplot.png
+	else
+	    echo WARNING no file ${qual_base}_seq-order_boxplot.png
+	fi
+	# Remove temporary dir
+	/bin/rm -rf ${tmp}
+    fi
+}
+#
