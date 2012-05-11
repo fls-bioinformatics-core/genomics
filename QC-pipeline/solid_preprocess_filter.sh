@@ -12,6 +12,8 @@ function usage() {
     echo ""
     echo "Options:"
     echo ""
+    echo "  --nofastq: skip FASTQ generation after filtering"
+    echo ""
     echo "By default the preprocess/filter program is run using FLS Bioinf"
     echo "settings."
     echo ""
@@ -26,7 +28,7 @@ function usage() {
     echo "Output"
     echo "  <csfasta_base>_T_F3.csfasta"
     echo "  <csfasta_base>_QV_T_F3.qual"
-    echo "  <csfasta_base>_T_F3.fastq"
+    echo "  <csfasta_base>_T_F3.fastq (unless --nofastq option specified)"
     echo "  Also writes statistics to 'SOLID_preprocess_filter.stats'"
 }
 # Check command line
@@ -64,9 +66,17 @@ fi
 # Set umask to allow group read-write on all new files etc
 umask 0002
 #
-# Collect the user arguments to supply to SOLiD_preprocess_filter
+# Process command line options
+make_fastq=yes
 while [ $# -gt 2 ] ; do
-    FILTER_OPTIONS="$FILTER_OPTIONS $1"
+    if [ "$1" == "--nofastq" ] ; then
+	# Turn off fastq generation
+	make_fastq=
+    else
+	# Collect arguments to pass directly to SOLiD_preprocess_filter
+	FILTER_OPTIONS="$FILTER_OPTIONS $1"
+    fi
+    # Next argument
     shift
 done
 #
@@ -146,10 +156,14 @@ else
     # Remove temporary dir
     /bin/rm -rf ${tmp}
     # Create fastq file
-    if [ ! -z "$preprocess_outputs" ] ; then
-	run_solid2fastq $processed_csfasta $processed_qual
+    if [ "$make_fastq" == "yes" ] ; then
+	if [ ! -z "$preprocess_outputs" ] ; then
+	    run_solid2fastq $processed_csfasta $processed_qual
+	else
+	    echo WARNING unable to run solid2fastq without QUAL file
+	fi
     else
-	echo WARNING unable to run solid2fastq without QUAL file
+	echo FASTQ generation switched off by --nofastq
     fi
 fi
 #
