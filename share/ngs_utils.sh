@@ -212,3 +212,21 @@ function qc_boxplotter() {
     fi
 }
 #
+#====================================================================
+#
+# run_fastq_screen
+#
+# Run set of contaminant screens using the fastq_screen.sh script
+#
+# Supply full path of input qual file; specify --color if using
+# colorspace data
+#
+# Usage: run_fastq_screen [ --color ] <fastq_file>
+function run_fastq_screen() {
+    FASTQ_SCREEN_QC=`dirname $0`/fastq_screen.sh
+    if [ -f "${FASTQ_SCREEN_QC}" ] ; then
+	${FASTQ_SCREEN_QC} $@
+    else
+	echo ERROR ${FASTQ_SCREEN_QC} not found, fastq_screen step skipped
+    fi
+}

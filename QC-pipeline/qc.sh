@@ -126,16 +126,9 @@ if [ ! -d "qc" ] ; then
     mkdir qc
 fi
 #
-# fastq_screen
-#
-# Run separate fastq_screen.sh script
-FASTQ_SCREEN_QC=`dirname $0`/fastq_screen.sh
-if [ -f "${FASTQ_SCREEN_QC}" ] ; then
-    fastq=$(baserootname $CSFASTA).fastq
-    ${FASTQ_SCREEN_QC} ${fastq}
-else
-    echo ERROR ${FASTQ_SCREEN_QC} not found, fastq_screen step skipped
-fi
+# Run fastq_screen
+fastq=$(baserootname $CSFASTA).fastq
+run_fastq_screen --color $fastq
 #
 # SOLiD_preprocess_filter
 solid_preprocess_filter ${CSFASTA} ${QUAL}

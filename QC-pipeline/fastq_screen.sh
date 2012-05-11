@@ -1,19 +1,32 @@
 #!/bin/sh
 #
-# Script to run fastq_screen QC steps on SOLiD data
+# Script to run fastq_screen QC steps on NGS data
 #
-# Usage: fastq_screen.sh <fastq>
+# Usage: fastq_screen.sh [options] <fastq>
 #
 function usage() {
-    echo "Usage: fastq_screen.sh <fastq_file>"
+    echo "Usage: fastq_screen.sh [options] <fastq_file>"
     echo ""
     echo "Run fastq_screen against model organisms, other organisms and rRNA"
+    echo ""
+    echo "Options:"
+    echo "  --color: use colorspace bowtie indexes (SOLiD data)"
 }
 # Check command line
-if [ $# -ne 1 ] || [ "$1" == "-h" ] || [ "$1" == "--help" ] ; then
+if [ $# -eq 0 ] || [ "$1" == "-h" ] || [ "$1" == "--help" ] ; then
     usage
     exit
 fi
+# Collect options
+options=
+color=
+case "$1" in
+    --color)
+	color=yes
+	options="$options --color"
+	shift
+    ;;
+esac
 #
 # Set umask to allow group read-write on all new files etc
 umask 0002
@@ -45,10 +58,16 @@ fi
 : ${FASTQ_SCREEN_CONF_DIR:=}
 #
 # fastq_screen options
-FASTQ_SCREEN_OPTIONS="--color --subset 1000000"
+FASTQ_SCREEN_OPTIONS="$options --subset 1000000"
 #
 # Extension for conf file based on index type
-conf_ext=
+if [ -z "$color" ] ; then
+    # Letterspace indexes
+    conf_ext=${FASTQ_SCREEN_CONF_NT_EXT}
+else:
+    # Colorspace indexes
+    conf_ext=${FASTQ_SCREEN_CONF_CS_EXT}
+fi
 #
 # Report
 echo ========================================================
@@ -60,6 +79,7 @@ echo data dir  : $datadir
 echo fastq     : $fastq
 echo fastq_screen: $FASTQ_SCREEN
 echo Location of conf files: $FASTQ_SCREEN_CONF_DIR
+echo Colorspace: $color
 #
 # Check that fastq file exists
 if [ ! -f "${datadir}/${fastq}" ] ; then

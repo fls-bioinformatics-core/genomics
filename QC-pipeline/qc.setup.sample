@@ -17,4 +17,9 @@ export SOLID_PREPROCESS_FILTER=/path/to/SOLiD_preprocess_filter_v2.pl
 # Location of fastq_screen configuration files
 # (leave blank for default)
 export FASTQ_SCREEN_CONF_DIR=/path/to/conf_file_dir
+# Extensions for letterspace and colorspace indexes
+# e.g. if conf file is 'fastq_screen_model_organisms_nt.conf' for
+# letterspace then the extension is '_nt'
+export FASTQ_SCREEN_CONF_NT_EXT=_nt
+export FASTQ_SCREEN_CONF_CS_EXT=
 #
