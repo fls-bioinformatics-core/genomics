@@ -138,15 +138,22 @@ function solid_preprocess_files() {
 # of original SOLiD data using polyclonal and error tests from the
 # SOLiD_precess_filter_v2.pl program
 #
-# Usage: solid_preprocess_filter <csfasta> <qual>
+# Usage: solid_preprocess_filter [ --nofastq ] <csfasta> <qual>
 function solid_preprocess_filter() {
+    # Check for --nofastq option
+    options=
+    if [ "$1" == "--nofastq" ] ; then
+	options="$options $1"
+	shift
+    fi
     # Input file names
     csfasta=$1
     qual=$2
     # Run separate solid_preprocess_filter.sh script
     SOLID_PREPROCESS=`dirname $0`/solid_preprocess_filter.sh
     if [ -f "${SOLID_PREPROCESS}" ] ; then
-	${SOLID_PREPROCESS} ${csfasta} ${qual}
+	cmd="${SOLID_PREPROCESS} ${options} ${csfasta} ${qual}"
+	$cmd
     else
 	echo ERROR ${SOLID_PREPROCESS} not found, preprocess/filter step skipped
     fi
