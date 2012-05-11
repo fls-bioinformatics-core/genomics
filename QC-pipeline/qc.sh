@@ -5,7 +5,7 @@
 # Usage: qc.sh <csfasta> <qual>
 #
 function usage() {
-    echo "Usage: qc.sh <csfasta_file> <qual_file>"
+    echo "Usage: qc.sh <csfasta_file> <qual_file> [ <csfasta_f5> <qual_f5> ]"
     echo ""
     echo "Run QC pipeline:"
     echo ""
@@ -14,6 +14,8 @@ function usage() {
     echo "* generate QC boxplots"
     echo "* preprocess/filter using polyclonal and error tests"
     echo "  and generate fastq and boxplots for filtered data"
+    echo ""
+    echo "If F5 files are also supplied then run in paired-end mode"
 }
 #
 # QC pipeline consists of the following steps:
@@ -30,7 +32,7 @@ function usage() {
 #   data files
 #
 # Check command line
-if [ $# -ne 2 ] || [ "$1" == "-h" ] || [ "$1" == "--help" ] ; then
+if [ $# -lt 2 ] || [ $# -gt 4 ] || [ "$1" == "-h" ] || [ "$1" == "--help" ] ; then
     usage
     exit
 fi
@@ -67,11 +69,20 @@ umask 0002
 # Get the input files
 CSFASTA=$(abs_path $1)
 QUAL=$(abs_path $2)
-#
-#
 if [ ! -f "$CSFASTA" ] || [ ! -f "$QUAL" ] ; then
     echo "csfasta and/or qual files not found"
     exit
+fi
+#
+paired_end=no
+if [ ! -z "$3" ] && [ ! -z "$4" ] ; then
+    paired_end=yes
+    CSFASTA_F5=$(abs_path $3)
+    QUAL_F5=$(abs_path $4)
+    if [ ! -f "$CSFASTA_F5" ] || [ ! -f "$QUAL_F5" ] ; then
+	echo "F5 csfasta and/or qual files not found"
+	exit
+    fi
 fi
 #
 # Get the data directory i.e. location of the input files
@@ -86,6 +97,10 @@ echo Running in: `pwd`
 echo data dir  : $datadir
 echo csfasta   : `basename $CSFASTA`
 echo qual      : `basename $QUAL`
+if [ "$paired_end" == "yes" ] ; then
+    echo F5 csfasta: `basename $CSFASTA_F5`
+    echo F5 qual   : `basename $QUAL_F5`
+fi
 #
 # Set up environment
 QC_SETUP=`dirname $0`/qc.setup
@@ -106,20 +121,67 @@ WORKING_DIR=`pwd`
 : ${SOLID2FASTQ:=solid2fastq}
 : ${QC_BOXPLOTTER:=qc_boxplotter.sh}
 : ${SOLID_PREPROCESS_FILTER:=SOLiD_preprocess_filter_v2.pl}
+: ${REMOVE_MISPAIRS:=remove_mispairs.pl}
 #
-# Check: both files should exist
-if [ ! -f "$CSFASTA" ] || [ ! -f "$QUAL" ] ; then
-    echo ERROR one or both of csfasta or qual files not found
-    exit 1
-fi
-# Check: both files should be in the same directory
+# Check: all files should be in the same directory
 if [ `dirname $CSFASTA` != `dirname $QUAL` ] ; then
-    echo ERROR csfasta and qual are in different directories
+    echo ERROR one or more csfasta and qual files are in different directories
     exit 1
+elif [ "$paired_end" == "yes" ] ; then
+    if [ `dirname $CSFASTA_F5` != `dirname $QUAL_F5` ] || \
+	[ `dirname $CSFASTA` != `dirname $CSFASTA_F5` ] ; then
+	echo ERROR one or more csfasta and qual files are in different directories
+	exit 1
+    fi
 fi
+#
+#############################################
+# FASTQ GENERATION
+#############################################
 #
 # Run solid2fastq to make fastq file
-run_solid2fastq ${CSFASTA} ${QUAL}
+if [ "$paired_end" == "no" ] ; then
+    echo Running single end pipeline
+    # Single end data
+    # Fastq generation (all reads)
+    run_solid2fastq ${CSFASTA} ${QUAL}
+    # SOLiD_preprocess_filter
+    solid_preprocess_filter --nofastq ${CSFASTA} ${QUAL}
+    # Collect filter file names
+    preprocess_filter_files=$(solid_preprocess_files $(baserootname $CSFASTA))
+    csfasta_filt=`echo $preprocess_filter_files | cut -d" " -f1`
+    qual_filt=`echo $preprocess_filter_files | cut -d" " -f2`
+    # Fastq generation for filtered data
+    run_solid2fastq ${csfasta_filt} ${qual_filt}
+else
+    echo Running paired end pipeline
+    # Paired end data
+    # Fastq generation (all reads)
+    run_solid2fastq ${CSFASTA} ${QUAL} ${CSFASTA_F5} ${QUAL_F5}
+    # SOLiD_preprocess_filter on F3 and F5 separately
+    solid_preprocess_filter --nofastq ${CSFASTA} ${QUAL}
+    solid_preprocess_filter --nofastq ${CSFASTA_F5} ${QUAL_F5}
+    # Collect filter file names
+    preprocess_filter_files=$(solid_preprocess_files $(baserootname $CSFASTA))
+    csfasta_filt_f3=`echo $preprocess_filter_files | cut -d" " -f1`
+    qual_filt_f3=`echo $preprocess_filter_files | cut -d" " -f2`
+    preprocess_filter_files=$(solid_preprocess_files $(baserootname $CSFASTA_F5))
+    csfasta_filt_f5=`echo $preprocess_filter_files | cut -d" " -f1`
+    qual_filt_f5=`echo $preprocess_filter_files | cut -d" " -f2`
+    # Fastq generation for filtered data
+    # "Strict" filtering = combine for F3 and F5 after filtering both
+    fastq_strict=$(baserootname $csfasta_filt_f3).and_F5.strict.fastq
+    run_solid2fastq ${csfasta_filt_f3} ${qual_filt_f3} ${csfasta_filt_f5} ${qual_filt_f5} $(rootname $fastq_strict)
+    remove_mispairs ${fastq_strict}
+    # "Lenient" filtering = combine filtered F3 with all F5
+    fastq_lenient=$(baserootname $csfasta_filt_f3).and_F5.lenient.fastq
+    run_solid2fastq ${csfasta_filt_f3} ${qual_filt_f3} ${CSFASTA_F5} ${QUAL_F5} $(rootname $fastq_lenient)
+    remove_mispairs ${fastq_lenient}
+fi  
+#
+#############################################
+# QC
+#############################################
 #
 # Create 'qc' subdirectory
 if [ ! -d "qc" ] ; then
@@ -129,9 +191,6 @@ fi
 # Run fastq_screen
 fastq=$(baserootname $CSFASTA).fastq
 run_fastq_screen --color $fastq
-#
-# SOLiD_preprocess_filter
-solid_preprocess_filter ${CSFASTA} ${QUAL}
 #
 # QC_boxplots
 #
