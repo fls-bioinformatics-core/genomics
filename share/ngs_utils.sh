@@ -22,12 +22,13 @@
 #
 # run_solid2fastq: create fastq file
 #
-# Provide names of csfasta and qual files (can include leading
-# paths)
+# Provide names of csfasta and qual files (can include leading paths)
+# If a second pair of csfasta/qual files is supplied then an "interleaved"
+# fastq file will be generated.
 #
 # Creates fastq file in current directory
 #
-# Usage: run_solid2fastq <csfasta> <qual> [ <output_basename> ]
+# Usage: run_solid2fastq <csfasta> <qual> [ <csfasta_f5> <qual5> ] [ <output_basename> ]
 function run_solid2fastq() {
     #
     # solid2fastq executable
@@ -35,14 +36,20 @@ function run_solid2fastq() {
     # Input files
     local csfasta=$(abs_path ${1})
     local qual=$(abs_path ${2})
+    if [ $# -ge 4 ] ; then
+	local csfasta="${csfasta} $(abs_path ${3})"
+	local qual="${qual} $(abs_path ${4})"
+    fi
     #
     local status=0
     #
     # Determine basename for fastq file: if not explicitly
     # specified then is same as csfasta (with leading directory
     # and extension stripped off)
-    if [ ! -z $3 ] ; then
+    if [ $# -eq 3 ] ; then
 	local fastq_base=$3
+    elif [ $# -eq 5 ] ; then
+	local fastq_base=$5
     else
 	local fastq_base=$(baserootname ${csfasta})
     fi
