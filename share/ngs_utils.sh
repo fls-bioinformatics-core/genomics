@@ -91,6 +91,42 @@ function run_solid2fastq() {
 #
 #====================================================================
 #
+# remove_mispairs: remove singleton reads from interleaved fastq file
+#
+# Usage: remove_mispairs <fastq>
+function remove_mispairs() {
+    fastq=$1
+    echo "--------------------------------------------------------"
+    echo Executing remove_mispairs
+    echo "--------------------------------------------------------"
+    # Make a temporary directory to run in
+    local wd=`pwd`
+    local tmp=$(make_temp -d --tmpdir=$wd --suffix=.solid2fastq)
+    cd $tmp
+    # Make link to input fastq file
+    ln -s $(abs_path $fastq)
+    fastq_in=`basename $1`
+    # Run remove mispairs
+    local cmd="${REMOVE_MISPAIRS} $fastq_in"
+    echo $cmd
+    $cmd
+    # Termination status
+    status=$?
+    # Move back to working dir and deal with output
+    cd $wd
+    fastq_mispairs=`basename $1`.paired
+    if [ -f "${tmp}/${fastq_mispairs}" ] ; then
+	/bin/cp ${tmp}/${fastq_mispairs} .
+	echo Created ${fastq_mispairs}
+    else
+	echo WARNING no file ${fastq_mispairs}
+    fi
+    # Remove temporary dir
+    /bin/rm -rf ${tmp}
+}
+#
+#====================================================================
+#
 # number_of_reads: count reads in csfasta file
 #
 # Usage: number_of_reads <csfasta>

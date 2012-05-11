@@ -11,6 +11,7 @@ export FASTQ_SCREEN=/path/to/fastq_screen
 export SOLID2FASTQ=/path/to/solid2fastq
 export QC_BOXPLOTTER=/path/to/genomics/NGS-general/qc_boxplotter.sh
 export SOLID_PREPROCESS_FILTER=/path/to/SOLiD_preprocess_filter_v2.pl
+export REMOVE_MISPAIRS=/path/to/genomics/NGS-general/remove_mispairs.pl
 #
 # Data files
 #
