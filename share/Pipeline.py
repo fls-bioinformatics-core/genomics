@@ -543,6 +543,54 @@ def GetSolidDataFiles(dirn):
     # Done - return file pairs
     return data_files
 
+def GetSolidPairedEndFiles(dirn):
+    """Return list of csfasta/qual file pairs for paired end data
+    """
+    # Get list of pairs
+    file_pairs = GetSolidDataFiles(dirn)
+    if not file_pairs:
+        return []
+    # Now match pairs of pairs: files with the same name except for
+    # 'F3' and 'F5' or 'F5-BC'
+    logging.debug("Matching F3 csfasta/qual file pairs with F5 counterparts")
+    matched_files = dict()
+    for pair in file_pairs:
+        # Remove _F3, _F5 and _F5-BC components from csfasta to
+        # use as a key
+        key = pair[0].replace('_F3','').replace('_F5-BC','').replace('_F5','')
+        logging.debug("Key: %s for %s" % (key,pair))
+        if key in matched_files:
+            # Already has an entry
+            matched_files[key].append(pair)
+        else:
+            # New key
+            matched_files[key] = [pair]
+    # Check pairs of pairs
+    data_files = []
+    for key in matched_files:
+        if len(matched_files[key]) != 2:
+            logging.debug("discarding pairs: %s" % matched_files[key])
+        else:
+            # Look for F3 and F5s and put into order
+            try:
+                matched_files[key][0][0].index('F5')
+                # F5 pair are first set
+                f3_index = 1
+                f5_index = 0
+            except ValueError:
+                # F3 pair are first set
+                f3_index = 0
+                f5_index = 1
+            # Pull out files and append to list in the
+            # correct order (F3 then F5)
+            csfasta_f3 = matched_files[key][f3_index][0]
+            qual_f3 = matched_files[key][f3_index][1]
+            csfasta_f5 = matched_files[key][f5_index][0]
+            qual_f5 = matched_files[key][f5_index][1]
+            data_files.append((csfasta_f3,qual_f3,csfasta_f5,qual_f5))
+    # Done - return file list
+    return data_files
+
 def GetFastqFiles(dirn):
     """Return list of fastq files in target directory
     """

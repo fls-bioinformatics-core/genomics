@@ -153,8 +153,9 @@ if __name__ == "__main__":
                      help="explicitly specify Grid Engine queue to use")
     group.add_option('--input',action='store',dest='input_type',default=input_type,
                      help="specify type of data to use as input for the script. INPUT_TYPE "
-                     "can be one of: 'solid' (CSFASTA/QUAL file pair, default), 'fastq' "
-                     "(FASTQ file)")
+                     "can be one of: 'solid' (CSFASTA/QUAL file pair, default), "
+                     "'solid_paired_end' (CSFASTA/QUAL_F3 and CSFASTA/QUAL_F5 quartet), "
+                     "'fastq' (FASTQ file)")
     group.add_option('--email',action='store',dest='email_addr',default=None,
                      help="send email to EMAIL_ADDR when each stage of the pipeline is "
                      "complete")
@@ -249,6 +250,8 @@ if __name__ == "__main__":
         print "Collecting data from %s" % data_dir
         if options.input_type == "solid":
             run_data = Pipeline.GetSolidDataFiles(data_dir)
+        elif options.input_type == "solid_paired_end":
+            run_data = Pipeline.GetSolidPairedEndFiles(data_dir)
         elif options.input_type == "fastq":
             run_data = Pipeline.GetFastqFiles(data_dir)
         else:
