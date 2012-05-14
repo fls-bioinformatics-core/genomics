@@ -199,6 +199,9 @@ cd qc
 #
 # Boxplots for original primary data
 qc_boxplotter $QUAL
+if [ "$paired_end" == "yes" ] ; then
+    qc_boxplotter $QUAL_F5
+fi
 #
 # Boxplots for filtered data
 qual=`echo $(solid_preprocess_files ${WORKING_DIR}/$(baserootname $CSFASTA)) | cut -d" " -f2`
@@ -206,6 +209,14 @@ if [ ! -z "$qual" ] ; then
     qc_boxplotter $qual
 else
     echo Unable to locate preprocess filtered QUAL file, boxplot skipped
+fi
+if [ "$paired_end" == "yes" ] ; then
+    qual=`echo $(solid_preprocess_files ${WORKING_DIR}/$(baserootname $CSFASTA_F5)) | cut -d" " -f2`
+    if [ ! -z "$qual" ] ; then
+	qc_boxplotter $qual
+    else
+	echo Unable to locate preprocess filtered F5 QUAL file, boxplot skipped
+    fi
 fi
 #
 echo QC pipeline completed: `date`
