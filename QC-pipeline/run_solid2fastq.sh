@@ -5,12 +5,19 @@
 # Usage: qc.sh <csfasta> <qual>
 #
 function usage() {
-    echo "Usage: run_solid2fastq.sh [--gzip] <csfasta_file> <qual_file>"
+    echo "Usage: run_solid2fastq.sh OPTIONS <csfasta_file> <qual_file> [<csfasta_file> <qual_file> ] "
     echo ""
     echo "Generate fastq file from csfasta/qual file pair using"
-    echo "solid2fastq program"
+    echo "solid2fastq program."
+    echo ""
+    echo "If second csfasta/qual pair is provided then create an"
+    echo "interleaved fastq (in this case the first pair is assumed"
+    echo "to be F3 reads and the second F5). Use the --remove-mispairs"
+    echo "option to remove 'singleton' reads from the final fastq."
     echo ""
     echo "Options:"
+    echo "  --remove-mispairs: for F3/F5 interleaved fastq, remove"
+    echo "      any singleton reads from the final fastq"
     echo "  --gzip: compress the output fastq file using gzip"
 }
 #
@@ -50,21 +57,43 @@ fi
 # Set umask to allow group read-write on all new files etc
 umask 0002
 #
-# Check for --gzip option
+# Check for command line options
+options=
 do_gzip=
-if [ "$1" == "--gzip" ] ; then
-    do_gzip=yes
-    shift
-fi
+get_cmd_opts=yes
+while [ ! -z "$get_cmd_opts" ] ; do
+    case "$1" in
+	--gzip)
+	    do_gzip=yes
+	    shift
+	    ;;
+	--remove-mispairs)
+	    options="$options --remove-mispairs"
+	    shift
+	    ;;
+	*)
+	    # Assume end of command line options
+	    get_cmd_opts=
+	    ;;
+    esac
+done
 #
 # Get the input files
 CSFASTA=$(abs_path $1)
 QUAL=$(abs_path $2)
-#
-#
 if [ ! -f "$CSFASTA" ] || [ ! -f "$QUAL" ] ; then
     echo "csfasta and/or qual files not found"
     exit
+fi
+#
+# Paired end
+if [ ! -z "$3" ] && [ ! -z "$4" ] ; then
+    CSFASTA_F5=$(abs_path $3)
+    QUAL_F5=$(abs_path $4)
+    if [ ! -f "$CSFASTA_F5" ] || [ ! -f "$QUAL_F5" ] ; then
+	echo "csfasta and/or qual files not found"
+	exit
+    fi
 fi
 #
 # Get the data directory i.e. location of the input files
@@ -79,6 +108,12 @@ echo Running in: `pwd`
 echo data dir  : $datadir
 echo csfasta   : `basename $CSFASTA`
 echo qual      : `basename $QUAL`
+echo csfasta   : `basename $CSFASTA`
+echo qual      : `basename $QUAL`
+if [ ! -z "$CSFASTA_F5" ] || [ ! -z "$QUAL_F5" ] ; then
+    echo csfasta f5: `basename $CSFASTA_F5`
+    echo qual f5   : `basename $QUAL_F5`
+fi
 #
 # Set up environment
 QC_SETUP=`dirname $0`/qc.setup
@@ -90,7 +125,9 @@ else
 fi
 #
 # Run solid2fastq to make fastq file
-run_solid2fastq ${CSFASTA} ${QUAL}
+solid2fastq_cmd="run_solid2fastq ${options} ${CSFASTA} ${QUAL} ${CSFASTA_F5} ${QUAL_F5}"
+echo $solid2fastq_cmd
+$solid2fastq_cmd
 #
 # Compress if requested
 if [ "$do_gzip" == "yes" ] ; then
