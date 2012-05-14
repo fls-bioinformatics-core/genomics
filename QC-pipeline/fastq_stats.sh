@@ -39,6 +39,15 @@ function count_reads() {
     echo $((`wc -l $1 | cut -f1 -d" "`/4))
 }
 #
+# get_stats(): generate stats line for a pair of files
+function get_stats_line() {
+    # Get numbers of reads (fastq line count divided by 4)
+    n_reads_filt=$(count_reads $1)
+    n_filtered=$(difference ${n_reads_orig} ${n_reads_filt})
+    percent_filtered=$(percent ${n_filtered} ${n_reads_orig})
+    echo "${n_reads_filt} ${n_filtered} ${percent_filtered}"
+}
+#
 # Main script
 #
 # Set umask to allow group read-write on all new files etc
@@ -50,61 +59,60 @@ if [ "$1" == "-f" ] ; then
     shift; shift
 fi
 #
-# Inputs
-fastq_orig=$1
-fastq_filt=$2
-#
-fastq_base=$(baserootname $1)
-#
-# Check original and filtered files exist
-if [ ! -f "${fastq_orig}" ] ; then
-    echo `basename $0`: ${fastq_orig}: not found
+# Reference file
+ref_fastq=$1
+if [ ! -f "${ref_fastq}" ] ; then
+    echo `basename $0`: reference fastq ${ref_fastq} not found
     exit 1
 fi
-if [ ! -f "${fastq_filt}" ] ; then
-    echo `basename $0`: ${fastq_filt}: not found
-    exit 1
-fi
+# Base name
+fastq_base=$(baserootname $ref_fastq)
+# Get numbers of reads for reference
+n_reads_orig=$(count_reads $1)
+header="#File Reads"
+line="${fastq_base} ${n_reads_orig}"
 #
-# Get numbers of reads (fastq line count divided by 4)
-#n_reads_orig=$((`wc -l $fastq_orig | cut -f1 -d" "`/4))
-n_reads_orig=$(count_reads $fastq_orig)
-n_reads_filt=$(count_reads $fastq_filt)
-#
-# Get difference and percent diff
-n_filtered=$(difference ${n_reads_orig} ${n_reads_filt})
-percent_filtered=$(percent ${n_filtered} ${n_reads_orig})
-#
-echo "--------------------------------------------------------"
-echo Comparing numbers of primary and filtered reads
-echo "--------------------------------------------------------"
-echo ${fastq_orig}$'\t'${n_reads_orig}
-echo ${fastq_filt}$'\t'${n_reads_filt}
-echo Number filtered$'\t'${n_filtered}
-echo % filtered$'\t'${percent_filtered}
-#
-# Write to file
-if [ ! -z "$stats_file" ] ; then
-    wait_for_lock ${stats_file} 30
-    if [ $? == 1 ] ; then
-	echo Writing to ${stats_file}
-	if [ ! -f ${stats_file} ] ; then
-	    # Create new stats file and write header
-	    echo "#File"$'\t'"Reads"$'\t'"Reads after filter"$'\t'"Difference"$'\t'"% Filtered" > ${stats_file}
-	else
-	    # Filter out existing entry if present
-	    tmp_file=`mktemp`
-	    grep -v "^${fastq_base}"$'\t' ${stats_file} > ${tmp_file}
-	    /bin/mv -f ${tmp_file} ${stats_file}
-	fi
-	# Write to stats file
-	echo ${fastq_base}$'\t'${n_reads_orig}$'\t'${n_reads_filt}$'\t'${n_filtered}$'\t'${percent_filtered} >> ${stats_file}
-	# Sort into order
-	sort -o ${stats_file} ${stats_file}
-	# Release lock
-	unlock_file ${stats_file}
+# Loop over remaining arguments and generate stats against
+# reference
+while [ ! -z "$2" ] ; do
+    fastq=$2
+    if [ ! -f "${fastq}" ] ; then
+	echo `basename $0`: ${fastq}: not found
     else
-	echo Unable to get lock on ${stats_file}
+	header="${header} Reads_(filtered) Diff %_Filtered"
+	line="${line} $(get_stats_line $fastq)"
+    fi
+    shift
+done
+#
+# Output
+if [ -z "$stats_file" ] ; then
+    # Send to stdout
+    echo $line
+else
+    # Write to stats file
+    if [ ! -z "$stats_file" ] ; then
+	wait_for_lock ${stats_file} 30
+	if [ $? == 1 ] ; then
+	    echo Writing to ${stats_file}
+	    if [ ! -f ${stats_file} ] ; then
+		# Create new stats file and write header
+		echo $header | sed 's/ /\t/g' | sed 's/_/ /g' >>  ${stats_file}
+	    else
+		# Filter out existing entry if present
+		tmp_file=`mktemp`
+		grep -v "^${fastq_base}"$'\t' ${stats_file} > ${tmp_file}
+		/bin/mv -f ${tmp_file} ${stats_file}
+	    fi
+	    # Write stats line
+	    echo $line | sed 's/ /\t/g' >> ${stats_file}
+	    # Sort into order
+	    sort -o ${stats_file} ${stats_file}
+	    # Release lock
+	    unlock_file ${stats_file}
+	else
+	    echo Unable to get lock on ${stats_file}
+	fi
     fi
 fi
 ##
