@@ -208,14 +208,14 @@ function solid_preprocess_files() {
 # of original SOLiD data using polyclonal and error tests from the
 # SOLiD_precess_filter_v2.pl program
 #
-# Usage: solid_preprocess_filter [ --nofastq ] <csfasta> <qual>
+# Usage: solid_preprocess_filter [ options ] <csfasta> <qual>
 function solid_preprocess_filter() {
-    # Check for --nofastq option
+    # Check for options to pass to the solid_preprocess_filter script
     options=
-    if [ "$1" == "--nofastq" ] ; then
+    while [ $# -gt 2 ] ; do
 	options="$options $1"
 	shift
-    fi
+    done
     # Input file names
     csfasta=$1
     qual=$2
