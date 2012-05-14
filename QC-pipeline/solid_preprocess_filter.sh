@@ -13,6 +13,7 @@ function usage() {
     echo "Options:"
     echo ""
     echo "  --nofastq: skip FASTQ generation after filtering"
+    echo "  --nostats: skip statistics generation"
     echo ""
     echo "By default the preprocess/filter program is run using FLS Bioinf"
     echo "settings."
@@ -68,14 +69,23 @@ umask 0002
 #
 # Process command line options
 make_fastq=yes
+do_stats=yes
 while [ $# -gt 2 ] ; do
-    if [ "$1" == "--nofastq" ] ; then
-	# Turn off fastq generation
-	make_fastq=
-    else
-	# Collect arguments to pass directly to SOLiD_preprocess_filter
-	FILTER_OPTIONS="$FILTER_OPTIONS $1"
-    fi
+    case "$1" in
+	--nofastq)
+	    # Turn off fastq generation
+	    make_fastq=
+	    ;;
+	--nostats)
+	    # Turn off post filtering statistics
+	    do_stats=
+	    ;;
+	*)
+	    # Collect all other arguments to pass directly to
+	    # SOLiD_preprocess_filter
+	    FILTER_OPTIONS="$FILTER_OPTIONS $1"
+	    ;;
+    esac
     # Next argument
     shift
 done
@@ -168,16 +178,20 @@ else
 fi
 #
 # Filter statistics: run separate filtering_stats.sh script
-FILTERING_STATS=`dirname $0`/filtering_stats.sh
-STATS_FILE="SOLiD_preprocess_filter.stats"
-if [ -f "${FILTERING_STATS}" ] ; then
-    if [ -f "${processed_csfasta}" ] ; then
-	${FILTERING_STATS} ${csfasta} ${processed_csfasta} $STATS_FILE
+if [ "$do_stats" == "yes" ] ; then
+    FILTERING_STATS=`dirname $0`/filtering_stats.sh
+    STATS_FILE="SOLiD_preprocess_filter.stats"
+    if [ -f "${FILTERING_STATS}" ] ; then
+	if [ -f "${processed_csfasta}" ] ; then
+	    ${FILTERING_STATS} ${csfasta} ${processed_csfasta} $STATS_FILE
+	else
+	    echo ERROR output csfasta file not found, filtering stats calculcation skipped
+	fi
     else
-	echo ERROR output csfasta file not found, filtering stats calculcation skipped
+	echo ERROR ${FILTERING_STATS} not found, filtering stats calculation skipped
     fi
 else
-    echo ERROR ${FILTERING_STATS} not found, filtering stats calculation skipped
+    echo Filtering statistics switched off by --nostats
 fi
 #
 echo solid_preprocess_filter completed: `date`
