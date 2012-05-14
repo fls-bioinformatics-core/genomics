@@ -171,12 +171,12 @@ else
     # Fastq generation for filtered data
     # "Strict" filtering = combine for F3 and F5 after filtering both
     fastq_strict=$(baserootname $csfasta_filt_f3).and_F5.strict.fastq
-    run_solid2fastq ${csfasta_filt_f3} ${qual_filt_f3} ${csfasta_filt_f5} ${qual_filt_f5} $(rootname $fastq_strict)
-    remove_mispairs ${fastq_strict}
+    run_solid2fastq --remove-mispairs ${csfasta_filt_f3} ${qual_filt_f3} \
+	${csfasta_filt_f5} ${qual_filt_f5} $(rootname $fastq_strict)
     # "Lenient" filtering = combine filtered F3 with all F5
     fastq_lenient=$(baserootname $csfasta_filt_f3).and_F5.lenient.fastq
-    run_solid2fastq ${csfasta_filt_f3} ${qual_filt_f3} ${CSFASTA_F5} ${QUAL_F5} $(rootname $fastq_lenient)
-    remove_mispairs ${fastq_lenient}
+    run_solid2fastq --remove-mispairs ${csfasta_filt_f3} ${qual_filt_f3} \
+	${CSFASTA_F5} ${QUAL_F5} $(rootname $fastq_lenient)
 fi  
 #
 #############################################
