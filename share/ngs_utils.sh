@@ -28,11 +28,22 @@
 #
 # Creates fastq file in current directory
 #
-# Usage: run_solid2fastq <csfasta> <qual> [ <csfasta_f5> <qual5> ] [ <output_basename> ]
+# Specify --remove-mispairs to perform removal of singleton reads if
+# combining multiple csffasta/qual pairs into a single fastq file (i.e.
+# paired end data)
+#
+# Usage: run_solid2fastq [ --remove-mispairs ] <csfasta> <qual> [ <csfasta_f5> <qual5> ]
+#        [ <output_basename> ]
 function run_solid2fastq() {
     #
     # solid2fastq executable
     : ${SOLID2FASTQ:=solid2fastq}
+    # Check for --remove-mispairs
+    remove_mispairs=no
+    if [ "$1" == "--remove-mispairs" ] ; then
+	remove_mispairs=yes
+	shift
+    fi
     # Input files
     local csfasta=$(abs_path ${1})
     local qual=$(abs_path ${2})
@@ -73,6 +84,22 @@ function run_solid2fastq() {
 	local cmd="${SOLID2FASTQ} -o $fastq_base $csfasta $qual"
 	echo $cmd
 	$cmd
+	# Remove mispairs
+	if [ "$remove_mispairs" == yes ] ; then 
+	    # Run the remove_mispairs script
+	    fastq_in=`basename $fastq`
+	    cmd="${REMOVE_MISPAIRS} $fastq_in"
+	    echo $cmd
+	    $cmd
+	    # Overwrite the input file with the processed file
+	    fastq_mispairs=`basename $fastq`.paired
+	    if [ -f "${fastq_mispairs}" ] ; then
+		/bin/cp ${fastq_mispairs} $fastq
+		echo Created ${fastq_mispairs}
+	    else
+		echo WARNING no file ${fastq_mispairs}
+	    fi
+	fi
 	# Termination status
 	status=$?
 	# Move back to working dir and copy preprocessed files
