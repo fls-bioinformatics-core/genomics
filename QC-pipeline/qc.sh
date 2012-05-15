@@ -157,10 +157,11 @@ else
     echo Running paired end pipeline
     # Paired end data
     # Fastq generation (all reads)
-    run_solid2fastq ${CSFASTA} ${QUAL} ${CSFASTA_F5} ${QUAL_F5}
+    fastq_all=$(baserootname $CSFASTA).fastq
+    run_solid2fastq ${CSFASTA} ${QUAL} ${CSFASTA_F5} ${QUAL_F5} $(rootname $fastq_all)
     # SOLiD_preprocess_filter on F3 and F5 separately
-    solid_preprocess_filter --nofastq ${CSFASTA} ${QUAL}
-    solid_preprocess_filter --nofastq ${CSFASTA_F5} ${QUAL_F5}
+    solid_preprocess_filter --nofastq --nostats ${CSFASTA} ${QUAL}
+    solid_preprocess_filter --nofastq --nostats ${CSFASTA_F5} ${QUAL_F5}
     # Collect filter file names
     preprocess_filter_files=$(solid_preprocess_files $(baserootname $CSFASTA))
     csfasta_filt_f3=`echo $preprocess_filter_files | cut -d" " -f1`
@@ -170,13 +171,16 @@ else
     qual_filt_f5=`echo $preprocess_filter_files | cut -d" " -f2`
     # Fastq generation for filtered data
     # "Strict" filtering = combine for F3 and F5 after filtering both
-    fastq_strict=$(baserootname $csfasta_filt_f3).and_F5.strict.fastq
+    fastq_strict=`echo $(baserootname $CSFASTA) | sed 's/_F3//g'`_paired_F3_and_F5_filt.fastq
     run_solid2fastq --remove-mispairs ${csfasta_filt_f3} ${qual_filt_f3} \
 	${csfasta_filt_f5} ${qual_filt_f5} $(rootname $fastq_strict)
     # "Lenient" filtering = combine filtered F3 with all F5
-    fastq_lenient=$(baserootname $csfasta_filt_f3).and_F5.lenient.fastq
+    fastq_lenient=`echo $(baserootname $CSFASTA) | sed 's/_F3//g'`_paired_F3_filt.fastq
     run_solid2fastq --remove-mispairs ${csfasta_filt_f3} ${qual_filt_f3} \
 	${CSFASTA_F5} ${QUAL_F5} $(rootname $fastq_lenient)
+    # Generate filtering statistics
+    `dirname $0`/fastq_stats.sh -f SOLiD_preprocess_filter_paired.stats \
+	$fastq_all $fastq_lenient $fastq_strict
 fi  
 #
 #############################################
