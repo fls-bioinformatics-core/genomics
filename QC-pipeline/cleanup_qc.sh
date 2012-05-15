@@ -11,6 +11,7 @@ case $ok in
 	/bin/rm *.fastq
 	/bin/rm SOLiD_preprocess_filter.stats SOLiD_preprocess_filter_paired.stats
 	/bin/rm qc.*.o* qc.*.e*
+	/bin/rm -r tmp.*
 	;;
 esac
 echo "Done"
