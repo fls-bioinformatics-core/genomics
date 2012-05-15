@@ -4,7 +4,8 @@
 # and remove singletons (missing partner)
 #
 # Ian Donaldson 15 February 2012
-
+use strict;
+use warnings;
 
 # Usage
 unless(@ARGV==1) {
@@ -34,46 +35,47 @@ while(defined(my $line1 = <INPUT>)) {
    my $position1 = tell(INPUT);
    #print "$line1";
 
-   my $line5 = readline(INPUT);
-   my $line6 = readline(INPUT);
-   my $line7 = readline(INPUT);
-   my $line8 = readline(INPUT);
+   if (defined(my $line5 = readline(INPUT))) {
+       my $line6 = readline(INPUT);
+       my $line7 = readline(INPUT);
+       my $line8 = readline(INPUT);
 
-   # Record end of eighth line (end of second fastq entry)
-   my $position2 = tell(INPUT);
-   #print "$lineA";
+       # Record end of eighth line (end of second fastq entry)
+       my $position2 = tell(INPUT);
+       #print "$lineA";
 
-   # The header of the first and second fastq entries match
-   if($line1 eq $line5) {
-      #print "$line1";
-      #print "$line5";
+       # The header of the first and second fastq entries match
+       if($line1 eq $line5) {
+	   #print "$line1";
+	   #print "$line5";
 
-      # Goto the end of the eighth line as both entries are a pair
-      seek(INPUT,$position2,0);
+	   # Goto the end of the eighth line as both entries are a pair
+	   seek(INPUT,$position2,0);
+      
+	   # Main output containing all fastq data
+	   print OUTPUT "$line1";
+	   print OUTPUT "$line2";
+	   print OUTPUT "$line3";
+	   print OUTPUT "$line4";
+	   print OUTPUT "$line5";
+	   print OUTPUT "$line6";
+	   print OUTPUT "$line7";
+	   print OUTPUT "$line8";
 
-      # Main output containing all fastq data
-      print OUTPUT "$line1";
-      print OUTPUT "$line2";
-      print OUTPUT "$line3";
-      print OUTPUT "$line4";
-      print OUTPUT "$line5";
-      print OUTPUT "$line6";
-      print OUTPUT "$line7";
-      print OUTPUT "$line8";
+	   # Headers of paired entries (summary file)
+	   print PAIR "$line1";
+	   print PAIR "$line5";
+       }
 
-      # Headers of paired entries (summary file)
-      print PAIR "$line1";
-      print PAIR "$line5";
+       # The headers  of the first and second entries are different, i.e. not a pair
+       elsif($line1 ne $line5) {
+	   # Goto the end of the first entry - ready to see if it is a pair with the next entry, in the next loop
+	   seek(INPUT,$position1,0);
+	   
+	   # Headers of unpaired entires (summary file)
+	   print SINGLE "$line1";
+       }
    }
-
-   # The headers  of the first and second entries are different, i.e. not a pair
-   elsif($line1 ne $line5) {
-      # Goto the end of the first entry - ready to see if it is a pair with the next entry, in the next loop
-      seek(INPUT,$position1,0);
-
-      # Headers of unpaired entires (summary file)
-      print SINGLE "$line1";
-   }  
 
    # Next loop that will start according to the seek
    next;
