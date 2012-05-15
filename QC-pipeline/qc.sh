@@ -144,6 +144,7 @@ if [ "$paired_end" == "no" ] ; then
     echo Running single end pipeline
     # Single end data
     # Fastq generation (all reads)
+    fastq=$(baserootname $CSFASTA).fastq
     run_solid2fastq ${CSFASTA} ${QUAL}
     # SOLiD_preprocess_filter
     solid_preprocess_filter --nofastq ${CSFASTA} ${QUAL}
@@ -157,8 +158,8 @@ else
     echo Running paired end pipeline
     # Paired end data
     # Fastq generation (all reads)
-    fastq_all=$(baserootname $CSFASTA).fastq
-    run_solid2fastq ${CSFASTA} ${QUAL} ${CSFASTA_F5} ${QUAL_F5} $(rootname $fastq_all)
+    fastq=`echo $(baserootname $CSFASTA) | sed 's/_F3//g'`_paired.fastq
+    run_solid2fastq ${CSFASTA} ${QUAL} ${CSFASTA_F5} ${QUAL_F5} $(rootname $fastq)
     # SOLiD_preprocess_filter on F3 and F5 separately
     solid_preprocess_filter --nofastq --nostats ${CSFASTA} ${QUAL}
     solid_preprocess_filter --nofastq --nostats ${CSFASTA_F5} ${QUAL_F5}
@@ -180,7 +181,7 @@ else
 	${CSFASTA_F5} ${QUAL_F5} $(rootname $fastq_lenient)
     # Generate filtering statistics
     `dirname $0`/fastq_stats.sh -f SOLiD_preprocess_filter_paired.stats \
-	$fastq_all $fastq_lenient $fastq_strict
+	$fastq $fastq_lenient $fastq_strict
 fi  
 #
 #############################################
@@ -193,7 +194,6 @@ if [ ! -d "qc" ] ; then
 fi
 #
 # Run fastq_screen
-fastq=$(baserootname $CSFASTA).fastq
 run_fastq_screen --color $fastq
 #
 # QC_boxplots
