@@ -1,3 +1,9 @@
+2012-05-17  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* NGS-general/remove_mispairs.py
+	- Python implementation of remove_mispairs.pl works with
+	  non-interleaved any fastq
+
 2012-05-15  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* QC-pipeline/qc.sh
