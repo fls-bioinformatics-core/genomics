@@ -55,6 +55,10 @@ import time
 try:
     import drmaa
 except ImportError:
+    # No drmaa module
+    pass
+except RuntimeError:
+    # DRMAA_LIBRARY_PATH not defined or invalid
     pass
 
 #######################################################################
