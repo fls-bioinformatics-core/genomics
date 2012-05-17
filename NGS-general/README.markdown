@@ -8,6 +8,7 @@ General NGS scripts that are used for both ChIP-seq and RNA-seq.
   * `SamStats`: counts uniquely map reads per chromosome/contig
   * `splitBarcodes.pl`: separate multiple barcodes in SOLiD data
   * `remove_mispairs.pl`: remove "singleton" reads from paired end fastq
+  * `remove_mispairs.py`: remove "singleton" reads from paired end fastq
   * `separate_paired_fastq.pl`: separate F3 and F5 reads from fastq
   * `trim_fastq.pl`: trim down sequences in fastq file from 5' end
 
@@ -70,6 +71,20 @@ and remove singletons (missing partner)
 Usage:
 
     remove_mispairs.pl <interleaved FASTQ>
+
+Outputs:
+
+    <FASTQ>.paired: copy of input fastq with all singleton reads removed
+    <FASTQ>.single.header: list of headers for all reads that were removed
+       as singletons
+    <FASTQ>.pair.header: list of headers for all reads there were kept as
+       part of a pair
+
+
+remove_mispairs.py
+------------------
+Python implementation of `remove_mispairs.pl` which can also remove singletons
+for paired end fastq data file where the reads are not interleaved.
 
 
 separate_paired_fastq.pl
