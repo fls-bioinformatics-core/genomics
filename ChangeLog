@@ -1,3 +1,13 @@
+2012-05-15  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* QC-pipeline/qc.sh
+	- updated to run in either 'single end' mode (operate on one F3 or
+	  F5 csfasta/qual pair) or 'paired end' mode (operate on F3
+	  csfasta/qual pair plus csfasta/qual F5 pair)
+	
+	* QC-pipeline/cleanup_qc.sh
+	- utility to clean up all QC products from current directory
+
 2012-05-10  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* NGS-general
