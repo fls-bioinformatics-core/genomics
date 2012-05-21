@@ -229,20 +229,28 @@ class ExperimentList:
                     print "\t\t%s" % ln_csfasta
                     print "\t\t%s" % ln_qual
                     # Make links to primary data
-                    self.__linkToFile(library.csfasta,os.path.join(expt_dir,ln_csfasta),
-                                      relative=use_relative_links,dry_run=dry_run)
-                    self.__linkToFile(library.qual,os.path.join(expt_dir,ln_qual),
-                                      relative=use_relative_links,dry_run=dry_run)
+                    try:
+                        self.__linkToFile(library.csfasta,os.path.join(expt_dir,ln_csfasta),
+                                          relative=use_relative_links,dry_run=dry_run)
+                        self.__linkToFile(library.qual,os.path.join(expt_dir,ln_qual),
+                                          relative=use_relative_links,dry_run=dry_run)
+                    except Exception, ex:
+                        logging.error("Failed to link to some or all F3 primary data")
+                        logging.error("Exception: %s" % ex)
                     # Get names for links to F5 reads (if paired-end run)
                     if paired_end:
                         ln_csfasta,ln_qual = LinkNames(naming_scheme).names(library,F5=True)
                         print "\t\t%s" % ln_csfasta
                         print "\t\t%s" % ln_qual
                         # Make links to F5 read data
-                        self.__linkToFile(library.csfasta_f5,os.path.join(expt_dir,ln_csfasta),
-                                          relative=use_relative_links,dry_run=dry_run)
-                        self.__linkToFile(library.qual_f5,os.path.join(expt_dir,ln_qual),
-                                          relative=use_relative_links,dry_run=dry_run)
+                        try:
+                            self.__linkToFile(library.csfasta_f5,os.path.join(expt_dir,ln_csfasta),
+                                              relative=use_relative_links,dry_run=dry_run)
+                            self.__linkToFile(library.qual_f5,os.path.join(expt_dir,ln_qual),
+                                              relative=use_relative_links,dry_run=dry_run)
+                        except Exception, ex:
+                            logging.error("Failed to link to some or all F5 primary data")
+                            logging.error("Exception: %s" % ex)
                         
     
     def __linkToFile(self,source,target,relative=True,dry_run=False):
