@@ -64,7 +64,7 @@ FASTQ_SCREEN_OPTIONS="$options --subset 1000000"
 if [ -z "$color" ] ; then
     # Letterspace indexes
     conf_ext=${FASTQ_SCREEN_CONF_NT_EXT}
-else:
+else
     # Colorspace indexes
     conf_ext=${FASTQ_SCREEN_CONF_CS_EXT}
 fi
