@@ -25,3 +25,10 @@ export FASTQ_SCREEN_CONF_DIR=/path/to/conf_file_dir
 export FASTQ_SCREEN_CONF_NT_EXT=_nt
 export FASTQ_SCREEN_CONF_CS_EXT=
 #
+# Ownership and permissions
+#
+# Group and permissions to assign to QC results
+#
+# (Leave blank to keep default group and/or permissions)
+export SET_GROUP=
+export SET_PERMISSIONS=

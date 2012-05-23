@@ -224,6 +224,19 @@ if [ "$paired_end" == "yes" ] ; then
     fi
 fi
 #
+# Return to parent directory
+cd ..
+#
+# Set permissions and group (if specified)
+if [ ! -z "$SET_GROUP" ] ; then
+    echo Recursively setting group to $SET_GROUP
+    chgrp -R $SET_GROUP *
+fi
+if [ ! -z "$SET_PERMISSIONS" ] ; then
+    echo Recursively setting permissions to $SET_PERMISSIONS
+    chmod -R $SET_PERMISSIONS *
+fi
+#
 echo QC pipeline completed: `date`
 exit
 #
