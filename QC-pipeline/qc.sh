@@ -122,6 +122,7 @@ WORKING_DIR=`pwd`
 : ${QC_BOXPLOTTER:=qc_boxplotter.sh}
 : ${SOLID_PREPROCESS_FILTER:=SOLiD_preprocess_filter_v2.pl}
 : ${REMOVE_MISPAIRS:=remove_mispairs.pl}
+: ${SEPARATE_PAIRED_FASTQ:=separate_paired_fastq.pl}
 #
 # Check: all files should be in the same directory
 if [ `dirname $CSFASTA` != `dirname $QUAL` ] ; then
@@ -173,11 +174,11 @@ else
     # Fastq generation for filtered data
     # "Strict" filtering = combine for F3 and F5 after filtering both
     fastq_strict=`echo $(baserootname $CSFASTA) | sed 's/_F3//g'`_paired_F3_and_F5_filt.fastq
-    run_solid2fastq --remove-mispairs ${csfasta_filt_f3} ${qual_filt_f3} \
+    run_solid2fastq --remove-mispairs --separate-pairs ${csfasta_filt_f3} ${qual_filt_f3} \
 	${csfasta_filt_f5} ${qual_filt_f5} $(rootname $fastq_strict)
     # "Lenient" filtering = combine filtered F3 with all F5
     fastq_lenient=`echo $(baserootname $CSFASTA) | sed 's/_F3//g'`_paired_F3_filt.fastq
-    run_solid2fastq --remove-mispairs ${csfasta_filt_f3} ${qual_filt_f3} \
+    run_solid2fastq --remove-mispairs --separate-pairs ${csfasta_filt_f3} ${qual_filt_f3} \
 	${CSFASTA_F5} ${QUAL_F5} $(rootname $fastq_lenient)
     # Generate filtering statistics
     `dirname $0`/fastq_stats.sh -f SOLiD_preprocess_filter_paired.stats \

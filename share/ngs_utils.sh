@@ -32,18 +32,35 @@
 # combining multiple csffasta/qual pairs into a single fastq file (i.e.
 # paired end data)
 #
-# Usage: run_solid2fastq [ --remove-mispairs ] <csfasta> <qual> [ <csfasta_f5> <qual5> ]
+# Specify --separate-pairs to split the combined F3 and F5 pairs back
+# out to separate files for paired end data - in this case there will
+# be an additional pair of output files ".F3" (F3 reads only) and
+# ".F5" (F5 reads only)
+#
+# Usage: run_solid2fastq [ --remove-mispairs ] [ --separate-pairs ]
+#        <csfasta> <qual> [ <csfasta_f5> <qual5> ]
 #        [ <output_basename> ]
 function run_solid2fastq() {
     #
     # solid2fastq executable
     : ${SOLID2FASTQ:=solid2fastq}
-    # Check for --remove-mispairs
+    # Check for options
+    get_options=yes
     remove_mispairs=no
-    if [ "$1" == "--remove-mispairs" ] ; then
-	remove_mispairs=yes
-	shift
-    fi
+    separate_pairs=no
+    while [ ! -z "$get_options" ] ; do
+	case $1 in
+	    --remove-mispairs)
+		remove_mispairs=yes; shift
+		;;
+	    --separate-pairs)
+		separate_pairs=yes; shift
+		;;
+	    *)
+		get_options=
+		;;
+	esac
+    done
     # Input files
     local csfasta=$(abs_path ${1})
     local qual=$(abs_path ${2})
@@ -100,6 +117,26 @@ function run_solid2fastq() {
 		echo WARNING no file ${fastq_mispairs}
 	    fi
 	fi
+	# Separate pairs
+	if [ "${separate_pairs}" == yes ] ; then
+	    # Run the separate_paired_fastq script
+	    cmd="${SEPARATE_PAIRED_FASTQ} $fastq"
+	    echo $cmd
+	    $cmd
+	    # Check for outputs
+	    fastq_f3=$(rootname $fastq).F3.fastq
+	    if [ -f "${fastq}.F3" ] ; then
+		/bin/mv ${fastq}.F3 $fastq_f3
+	    else
+		echo WARNING no file ${fastq}.F3
+	    fi
+	    fastq_f5=$(rootname $fastq).F5.fastq
+	    if [ -f "${fastq}.F5" ] ; then
+		/bin/mv ${fastq}.F5 $fastq_f5
+	    else
+		echo WARNING no file ${fastq}.F5
+	    fi
+	fi
 	# Termination status
 	status=$?
 	# Move back to working dir and copy preprocessed files
@@ -109,6 +146,16 @@ function run_solid2fastq() {
 	    echo Created ${fastq}
 	else
 	    echo WARNING no file ${fastq}
+	fi
+	if [ "${separate_pairs}" == yes ] ; then
+	    if [ -f "${tmp}/${fastq_f3}" ] && [ -f "${tmp}/${fastq_f5}" ] ; then
+		/bin/cp ${tmp}/${fastq_f3} .
+		echo Created ${fastq_f3}
+		/bin/cp ${tmp}/${fastq_f5} .
+		echo Created ${fastq_f5}
+	    else
+		echo WARNING missing one or both files ${fastq_f3}/${fastq_f5}
+	    fi
 	fi
 	# Remove temporary dir
 	/bin/rm -rf ${tmp}
