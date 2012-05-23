@@ -148,13 +148,16 @@ if [ "$paired_end" == "no" ] ; then
     fastq=$(baserootname $CSFASTA).fastq
     run_solid2fastq ${CSFASTA} ${QUAL}
     # SOLiD_preprocess_filter
-    solid_preprocess_filter --nofastq ${CSFASTA} ${QUAL}
+    solid_preprocess_filter --nofastq --nostats ${CSFASTA} ${QUAL}
     # Collect filter file names
     preprocess_filter_files=$(solid_preprocess_files $(baserootname $CSFASTA))
     csfasta_filt=`echo $preprocess_filter_files | cut -d" " -f1`
     qual_filt=`echo $preprocess_filter_files | cut -d" " -f2`
     # Fastq generation for filtered data
     run_solid2fastq ${csfasta_filt} ${qual_filt}
+    # Generate filtering statistics
+    fastq_filt=`echo $(baserootname $csfasta_filt)`.fastq
+    `dirname $0`/fastq_stats.sh -f SOLiD_preprocess_filter.stats $fastq $fastq_filt
 else
     echo Running paired end pipeline
     # Paired end data
