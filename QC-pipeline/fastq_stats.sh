@@ -97,7 +97,7 @@ else
 	    echo Writing to ${stats_file}
 	    if [ ! -f ${stats_file} ] ; then
 		# Create new stats file and write header
-		echo $header | sed 's/ /\t/g' | sed 's/_/ /g' >>  ${stats_file}
+		echo $header | sed 's/ /\t/g' | sed 's/_/ /g' >  ${stats_file}
 	    else
 		# Filter out existing entry if present
 		tmp_file=`mktemp`
