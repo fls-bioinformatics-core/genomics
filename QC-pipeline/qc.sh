@@ -233,7 +233,7 @@ cd ..
 # Set permissions and group (if specified)
 if [ ! -z "$SET_GROUP" ] ; then
     echo Recursively setting group to $SET_GROUP
-    chgrp -R $SET_GROUP *
+    chgrp -R --quiet $SET_GROUP *
 fi
 if [ ! -z "$SET_PERMISSIONS" ] ; then
     echo Recursively setting permissions to $SET_PERMISSIONS
