@@ -149,6 +149,9 @@ else
     cmd="${SOLID_PREPROCESS_FILTER} -o $(baserootname $csfasta) ${FILTER_OPTIONS} -f ${csfasta} -g ${qual}"
     echo $cmd
     $cmd
+    # Report exit status
+    status=$?
+    echo "Preprocess filter finished: exit status $status"
     # Output files
     preprocess_outputs=$(solid_preprocess_files $(baserootname $csfasta))
     # Move back to working dir and copy preprocessed files
