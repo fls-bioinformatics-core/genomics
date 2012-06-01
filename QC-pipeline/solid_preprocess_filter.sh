@@ -152,22 +152,30 @@ else
     # Report exit status
     status=$?
     echo "Preprocess filter finished: exit status $status"
-    # Output files
-    preprocess_outputs=$(solid_preprocess_files $(baserootname $csfasta))
-    # Move back to working dir and copy preprocessed files
-    cd $wd
-    if [ ! -z "$preprocess_outputs" ] ; then
-	processed_csfasta=`echo $preprocess_outputs | cut -d" " -f1`
-	processed_qual=`echo $preprocess_outputs | cut -d" " -f2`
-	/bin/cp ${tmp}/${processed_csfasta} .
-	echo Created ${processed_csfasta}
-	/bin/cp ${tmp}/${processed_qual} .
-	echo Created ${processed_qual}
-    else
-	echo WARNING no preprocess CSFASTA/QUAL file pair found
+    if [ $status -eq 0 ] ; then
+	# Output files
+	preprocess_outputs=$(solid_preprocess_files $(baserootname $csfasta))
+	# Move back to working dir and copy preprocessed files
+	cd $wd
+	if [ ! -z "$preprocess_outputs" ] ; then
+	    processed_csfasta=`echo $preprocess_outputs | cut -d" " -f1`
+	    processed_qual=`echo $preprocess_outputs | cut -d" " -f2`
+	    /bin/cp ${tmp}/${processed_csfasta} .
+	    echo Created ${processed_csfasta}
+	    /bin/cp ${tmp}/${processed_qual} .
+	    echo Created ${processed_qual}
+	else
+	    echo WARNING no preprocess CSFASTA/QUAL file pair found
+	    status=-1
+	fi
     fi
     # Remove temporary dir
     /bin/rm -rf ${tmp}
+    # Terminate if an error was encountered previously
+    if [ $status -ne 0 ] ; then
+	echo ERROR in preprocess filter, terminating
+	exit $status
+    fi
     # Create fastq file
     if [ "$make_fastq" == "yes" ] ; then
 	if [ ! -z "$preprocess_outputs" ] ; then
