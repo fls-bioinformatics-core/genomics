@@ -1,11 +1,5 @@
-2012-05-17  Peter Briggs  <peter.briggs@manchester.ac.uk>
-
-	* NGS-general/remove_mispairs.py
-	- Python implementation of remove_mispairs.pl works with
-	  non-interleaved any fastq
-
-2012-05-15  Peter Briggs  <peter.briggs@manchester.ac.uk>
-
+2012-06-01  Peter Briggs  <peter.briggs@manchester.ac.uk>
+	
 	* QC-pipeline/qc.sh
 	- updated to run in either 'single end' mode (operate on one F3 or
 	  F5 csfasta/qual pair) or 'paired end' mode (operate on F3
@@ -13,6 +7,12 @@
 	
 	* QC-pipeline/cleanup_qc.sh
 	- utility to clean up all QC products from current directory
+
+2012-05-17  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* NGS-general/remove_mispairs.py
+	- Python implementation of remove_mispairs.pl works with
+	  non-interleaved any fastq
 
 2012-05-10  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
