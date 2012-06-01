@@ -105,7 +105,19 @@ part of `T_F3`.)
 (This is called "strict" filtering as a pair of reads will be rejected on the
 quality of either of the F3 or F5 components.)
 
-### Contamination screens (`fastq_screen`) ###
+### Filtering statistics ###
+
+The filtering statistics output file name depends on the mode that the pipeline
+was run using:
+
+ * `SOLiD_preprocess_filter.stats`: for fragment mode
+ * `SOLiD_preprocess_filter_paired.stats`: for paired end mode
+
+In each case the file summarises the number of reads before and after filtering
+and merging, and indicates the percentage that have been filtered out (with
+typical values being between 20-30%).
+
+### Contamination screens (`fastq_screen.sh`) ###
 
 Contamination screen outputs are written to the `qc` directory:
 
@@ -115,7 +127,7 @@ Contamination screen outputs are written to the `qc` directory:
 
 For each there are `.txt` and `.png` files.
 
-### Boxplots ###
+### Boxplots (`qc_boxplotter.sh`) ###
 
 Boxplots are written to the `qc` subdirectory:
 
