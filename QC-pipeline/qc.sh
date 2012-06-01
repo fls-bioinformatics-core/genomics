@@ -163,7 +163,7 @@ else
     # Paired end data
     # Fastq generation (all reads)
     fastq=`echo $(baserootname $CSFASTA) | sed 's/_F3//g'`_paired.fastq
-    run_solid2fastq ${CSFASTA} ${QUAL} ${CSFASTA_F5} ${QUAL_F5} $(rootname $fastq)
+    run_solid2fastq --separate-pairs ${CSFASTA} ${QUAL} ${CSFASTA_F5} ${QUAL_F5} $(rootname $fastq)
     # SOLiD_preprocess_filter on F3 and F5 separately
     solid_preprocess_filter --nofastq --nostats ${CSFASTA} ${QUAL}
     solid_preprocess_filter --nofastq --nostats ${CSFASTA_F5} ${QUAL_F5}
