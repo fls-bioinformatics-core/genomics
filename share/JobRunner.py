@@ -57,8 +57,9 @@ try:
 except ImportError:
     # No drmaa module
     pass
-except RuntimeError:
+except Exception, ex:
     # DRMAA_LIBRARY_PATH not defined or invalid
+    logging.warning("Exception from dramma module: %s", ex)
     pass
 
 #######################################################################
