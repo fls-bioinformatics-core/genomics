@@ -258,14 +258,14 @@ function solid_preprocess_files() {
 # Usage: solid_preprocess_filter [ options ] <csfasta> <qual>
 function solid_preprocess_filter() {
     # Check for options to pass to the solid_preprocess_filter script
-    options=
+    local options=
     while [ $# -gt 2 ] ; do
 	options="$options $1"
 	shift
     done
     # Input file names
-    csfasta=$1
-    qual=$2
+    local csfasta=$1
+    local qual=$2
     # Run separate solid_preprocess_filter.sh script
     SOLID_PREPROCESS=`dirname $0`/solid_preprocess_filter.sh
     if [ -f "${SOLID_PREPROCESS}" ] ; then
