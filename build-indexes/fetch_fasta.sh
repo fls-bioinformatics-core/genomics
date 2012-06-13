@@ -254,12 +254,12 @@ function setup_SpR6() {
 function setup_UniVec() {
     set_name    "UniVec"
     set_species "Vectors"
-    set_build   "UniVec build #6.0 (Nov. 8, 2010)"
+    set_build   "UniVec build #7.0 (Dec. 5, 2011)"
     set_info    "See http://www.ncbi.nlm.nih.gov/VecScreen/UniVec.html"
     set_mirror  ftp://ftp.ncbi.nih.gov/pub/UniVec
     set_archive UniVec
     set_ext     fa
-    set_md5sum  3aa0d2e6c4d86fcbb47e721cce084bbd
+    set_md5sum  5dee49d4467a98762b356f855b016c05
     # Rename the downloaded file
     add_processing_step "Rename download to give it fa extension" "mv UniVec UniVec_fasta.fa"
 }
