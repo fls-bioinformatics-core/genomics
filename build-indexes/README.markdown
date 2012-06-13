@@ -122,12 +122,20 @@ Index files are created in the directory the script was run in.
 
 bowtie_build_indexes.sh
 -----------------------
-Builds the bowtie color and nucleotide space indexes from the reference
+Builds the bowtie color and/or nucleotide space indexes from the reference
 FASTA file.
 
 ### Usage ###
 
-    bowtie_build_indexes.sh <genome_fasta_file>
+    bowtie_build_indexes.sh OPTIONS <genome_fasta_file>
+
+### Options ###
+
+By default both color- and nucleotide space indexes are built; to
+only build one or the other use one of:
+
+    --nt: build nucleotide-space indexes
+    --cs: build colorspace indexes
 
 ### Outputs ###
 
