@@ -72,9 +72,17 @@ class QCReport:
         """Write the HTML report
         """
         fp = open(os.path.join(self.__qc_dir,'index.html'),'w')
+        # Title
+        fp.write("<h1>QC for %s</h1>" % os.path.basename(self.__dirn))
+        # Index
+        fp.write("<p>Samples in %s</p>" % self.__dirn)
+        fp.write("<ul>")
+        for sample in self.__samples:
+            fp.write("<li><a href='#%s'>%s</a></li>" % (sample.name,sample.name))
+        fp.write("</ul>")
         # QC plots etc
         for sample in self.__samples:
-            fp.write("<h2>%s</h2>" % sample.name)
+            fp.write("<a name='%s'><h2>%s</h2></a>" % (sample.name,sample.name))
             fp.write("<table><tr>")
             # Boxplots
             fp.write("<td>")
