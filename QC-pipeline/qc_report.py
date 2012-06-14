@@ -71,39 +71,39 @@ class QCReport:
     def html(self):
         """Write the HTML report
         """
-        fp = open(os.path.join(self.__qc_dir,'index.html'),'w')
+        html = HTMLPageWriter("QC for %s" % os.path.basename(self.__dirn))
         # Title
-        fp.write("<h1>QC for %s</h1>" % os.path.basename(self.__dirn))
+        html.add("<h1>QC for %s</h1>" % os.path.basename(self.__dirn))
         # Index
-        fp.write("<p>Samples in %s</p>" % self.__dirn)
-        fp.write("<ul>")
+        html.add("<p>Samples in %s</p>" % self.__dirn)
+        html.add("<ul>")
         for sample in self.__samples:
-            fp.write("<li><a href='#%s'>%s</a></li>" % (sample.name,sample.name))
-        fp.write("</ul>")
+            html.add("<li><a href='#%s'>%s</a></li>" % (sample.name,sample.name))
+        html.add("</ul>")
         # QC plots etc
         for sample in self.__samples:
-            fp.write("<a name='%s'><h2>%s</h2></a>" % (sample.name,sample.name))
-            fp.write("<table><tr>")
+            html.add("<a name='%s'><h2>%s</h2></a>" % (sample.name,sample.name))
+            html.add("<table><tr>")
             # Boxplots
-            fp.write("<td>")
+            html.add("<td>")
             if sample.boxplots():
-                fp.write("<h3>Boxplots</h3>")
+                html.add("<h3>Boxplots</h3>")
                 for b in sample.boxplots():
-                    fp.write("<img src='%s' height=250 />\n" % b)
+                    html.add("<img src='%s' height=250 />" % b)
             else:
-                fp.write("No boxplots found")
-            fp.write("</td>")
+                html.add("No boxplots found")
+            html.add("</td>")
             # Screens
-            fp.write("<td>")
+            html.add("<td>")
             if sample.screens():
-                fp.write("<h3>Screens</h3>")
+                html.add("<h3>Screens</h3>")
                 for s in sample.screens():
-                    fp.write("<img src='%s' height=250 />\n" % s)
+                    html.add("<img src='%s' height=250 />\n" % s)
             else:
-                fp.write("No screens found")
-            fp.write("</td>")
-            fp.write("</tr></table>")
-        fp.close()
+                html.add("No screens found")
+            html.add("</td>")
+            html.add("</tr></table>")
+        html.write(os.path.join(self.__qc_dir,'index.html'))
 
 class QCSample:
 
@@ -129,6 +129,45 @@ class QCSample:
         """Return list of screens for a sample
         """
         return self.__screens
+
+class HTMLPageWriter:
+
+    def __init__(self,title=''):
+        self.__page_title = str(title)
+        self.__content = []
+        self.__css_rules = None
+
+    def add(self,content):
+        """Add content to page body
+        """
+        self.__content.append(str(content))
+
+    def addCSSRule(self,css_rule):
+        """Add CSS rule
+        """
+        self.__css_rules.append(str(css_rule))
+
+    def write(self,filen):
+        """Write the HTML content to a file
+        """
+        fp = open(filen,'w')
+        fp.write("<html>\n")
+        # Header
+        fp.write("<head>\n")
+        fp.write("<title>%s</title>\n" % self.__page_title)
+        # CSS rules
+        if self.__css_rules:
+            fp.write("<style type=\"text/css\">\n")
+            fp.write('\n'.join(self.__css_rules))
+            fp.write("</style>\n")
+        fp.write("<head>\n")
+        # Body and content
+        fp.write("<body>\n")
+        fp.write('\n'.join(self.__content))
+        fp.write("</body>\n")
+        # Finish
+        fp.write("</html>\n")
+        fp.close()
 
 if __name__ == "__main__":
     # Set up command line parser
