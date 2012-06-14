@@ -1,3 +1,12 @@
+2012-06-13  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* build-indexes/bowtie_build_indexes.sh
+	- added --cs and --nt options (build only color- or nucleotide
+	  space indexes)
+
+	* build-indexes/fetch_fasta.sh
+	- updated UniVec for build 7.0 (Dec. 5 2011)
+
 2012-06-01  Peter Briggs  <peter.briggs@manchester.ac.uk>
 	
 	* QC-pipeline/qc.sh
