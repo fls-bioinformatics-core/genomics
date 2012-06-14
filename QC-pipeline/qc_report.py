@@ -95,7 +95,7 @@ class QCReport:
             if sample.boxplots():
                 html.add("<h3>Boxplots</h3>")
                 for b in sample.boxplots():
-                    html.add("<img src='%s' height=250 />" % b)
+                    html.add("<a href='%s'><img src='%s' height=250 /></a>" % (b,b))
             else:
                 html.add("No boxplots found")
             html.add("</td>")
@@ -104,7 +104,7 @@ class QCReport:
             if sample.screens():
                 html.add("<h3>Screens</h3>")
                 for s in sample.screens():
-                    html.add("<img src='%s' height=250 />" % s)
+                    html.add("<a href='%s'><img src='%s' height=250 /></a>" % (s,s))
             else:
                 html.add("No screens found")
             html.add("</td>")
