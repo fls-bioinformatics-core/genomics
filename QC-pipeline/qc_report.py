@@ -135,7 +135,7 @@ class HTMLPageWriter:
     def __init__(self,title=''):
         self.__page_title = str(title)
         self.__content = []
-        self.__css_rules = None
+        self.__css_rules = []
 
     def add(self,content):
         """Add content to page body
