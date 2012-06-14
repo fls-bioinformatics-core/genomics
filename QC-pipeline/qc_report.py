@@ -74,6 +74,11 @@ class QCReport:
         html = HTMLPageWriter("QC for %s" % os.path.basename(self.__dirn))
         # Title
         html.add("<h1>QC for %s</h1>" % os.path.basename(self.__dirn))
+        # Add styles
+        html.addCSSRule("h1 { background-color: grey; }")
+        html.addCSSRule("h2 { background-color: lightgrey; display: inline-block; }")
+        html.addCSSRule(".sample { margin: 10 10; border: solid 1px grey; padding: 5px; }")
+        html.addCSSRule("td { vertical-align: top; }")
         # Index
         html.add("<p>Samples in %s</p>" % self.__dirn)
         html.add("<ul>")
@@ -82,6 +87,7 @@ class QCReport:
         html.add("</ul>")
         # QC plots etc
         for sample in self.__samples:
+            html.add("<div class='sample'>")
             html.add("<a name='%s'><h2>%s</h2></a>" % (sample.name,sample.name))
             html.add("<table><tr>")
             # Boxplots
@@ -98,11 +104,12 @@ class QCReport:
             if sample.screens():
                 html.add("<h3>Screens</h3>")
                 for s in sample.screens():
-                    html.add("<img src='%s' height=250 />\n" % s)
+                    html.add("<img src='%s' height=250 />" % s)
             else:
                 html.add("No screens found")
             html.add("</td>")
             html.add("</tr></table>")
+            html.add("</div>")
         html.write(os.path.join(self.__qc_dir,'index.html'))
 
 class QCSample:
