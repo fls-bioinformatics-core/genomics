@@ -101,6 +101,7 @@ if [ "$paired_end" == "yes" ] ; then
     echo F5 csfasta: `basename $CSFASTA_F5`
     echo F5 qual   : `basename $QUAL_F5`
 fi
+echo hostname  : $HOSTNAME
 #
 # Set up environment
 QC_SETUP=`dirname $0`/qc.setup
