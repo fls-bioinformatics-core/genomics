@@ -24,7 +24,7 @@ class QCReport:
     def __init__(self,dirn):
         """Make a new QCReport instance
         """
-        self.__dirn = dirn
+        self.__dirn = os.path.abspath(dirn)
         self.__qc_dir = os.path.join(self.__dirn,'qc')
         self.__samples = []
         # Get primary data files
