@@ -100,11 +100,15 @@ def verify_md5sums(chksum_file,verbose=False):
     retval = 0
     nsuccess = 0
     failures = []
+    badlines = []
     # Perform the verification
     for line in open(chksum_file,'rU'):
         items = line.strip().split()
         if len(items) != 2:
-            sys.stderr.write("Badly formatted MD5 checksum line, skipped\n")
+            sys.stderr.write("Unable to get MD5 sum from line (skipped):\n")
+            sys.stderr.write("%s" % line)
+            badlines.append(line)
+            retval = 1
             continue
         chksum = items[0]
         chkfile = items[1]
@@ -126,9 +130,12 @@ def verify_md5sums(chksum_file,verbose=False):
             retval = 1
     # Summarise
     nfailed = len(failures)
-    report("Summary: %d files checked, %d okay %d failed" % 
-           (nsuccess + nfailed,nsuccess,nfailed),
-           verbose)
+    nbad = len(badlines)
+    report("Summary:",verbose)
+    report("\t%d files checked" % (nsuccess + nfailed),verbose)
+    report("\t%d okay" % nsuccess,verbose)
+    report("\t%d failed" % nfailed,verbose)
+    report("\t%d 'bad' MD5 checksum lines" % nbad,verbose)
     return retval
 
 def diff_directories(dirn1,dirn2,verbose=False):
