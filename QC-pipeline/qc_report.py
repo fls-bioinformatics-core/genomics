@@ -5,6 +5,7 @@
 import sys
 import os
 import optparse
+import base64
 
 # Put ../share onto Python search path for modules
 SHARE_DIR = os.path.abspath(
@@ -68,8 +69,12 @@ class QCReport:
             else:
                 print "\tNo screens found"
 
-    def html(self):
+    def html(self,inline_pngs=False):
         """Write the HTML report
+
+        Arguments:
+          inline_pngs: if set True then PNG image data will be inlined (report file
+            will be more portable)
         """
         html = HTMLPageWriter("QC for %s" % os.path.basename(self.__dirn))
         # Title
@@ -95,7 +100,12 @@ class QCReport:
             if sample.boxplots():
                 html.add("<h3>Boxplots</h3>")
                 for b in sample.boxplots():
-                    html.add("<a href='%s'><img src='%s' height=250 /></a>" % (b,b))
+                    if not inline_pngs:
+                        html_content="<a href='%s'><img src='%s' height=250 /></a>" % (b,b)
+                    else:
+                        pngdata = PNGBase64Encoder().encodePNG(os.path.join(self.__qc_dir,b))
+                        html_content="<a href='%s'><img src='data:image/png;base64,%s' height=250 /></a>" % (b,pngdata)
+                    html.add(html_content)
             else:
                 html.add("No boxplots found")
             html.add("</td>")
@@ -104,7 +114,12 @@ class QCReport:
             if sample.screens():
                 html.add("<h3>Screens</h3>")
                 for s in sample.screens():
-                    html.add("<a href='%s'><img src='%s' height=250 /></a>" % (s,s))
+                    if not inline_pngs:
+                        html_content="<a href='%s'><img src='%s' height=250 /></a>" % (s,s)
+                    else:
+                        pngdata = PNGBase64Encoder().encodePNG(os.path.join(self.__qc_dir,s))
+                        html_content="<a href='%s'><img src='data:image/png;base64,%s' height=250 /></a>" % (s,pngdata)
+                    html.add(html_content)
             else:
                 html.add("No screens found")
             html.add("</td>")
@@ -176,6 +191,11 @@ class HTMLPageWriter:
         fp.write("</html>\n")
         fp.close()
 
+class PNGBase64Encoder:
+
+    def encodePNG(self,pngfile):
+        return base64.b64encode(open(pngfile,'rb').read())
+
 if __name__ == "__main__":
     # Set up command line parser
     p = optparse.OptionParser(usage="%prog [options] DIR [ DIR ...]",
@@ -191,5 +211,5 @@ if __name__ == "__main__":
     else:
         for d in arguments:
             ##QCReport(d).write()
-            QCReport(d).html()
+            QCReport(d).html(inline_pngs=True)
     
