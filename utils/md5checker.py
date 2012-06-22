@@ -104,14 +104,14 @@ def verify_md5sums(chksum_file,verbose=False):
     # Perform the verification
     for line in open(chksum_file,'rU'):
         items = line.strip().split()
-        if len(items) != 2:
-            sys.stderr.write("Unable to get MD5 sum from line (skipped):\n")
+        if len(items) < 2:
+            sys.stderr.write("Unable to read MD5 sum from line (skipped):\n")
             sys.stderr.write("%s" % line)
             badlines.append(line)
             retval = 1
             continue
         chksum = items[0]
-        chkfile = items[1]
+        chkfile = line[len(chksum):].strip()
         try:
             new_chksum = Md5sum.md5sum(chkfile)
             if chksum == new_chksum:
