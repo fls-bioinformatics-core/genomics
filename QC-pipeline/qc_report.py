@@ -158,6 +158,7 @@ class HTMLPageWriter:
         self.__page_title = str(title)
         self.__content = []
         self.__css_rules = []
+        self.__javascript = []
 
     def add(self,content):
         """Add content to page body
@@ -168,6 +169,11 @@ class HTMLPageWriter:
         """Add CSS rule
         """
         self.__css_rules.append(str(css_rule))
+
+    def addJavaScript(self,javascript):
+        """Add JavaScript
+        """
+        self.__javascript.append(str(javascript))
 
     def write(self,filen):
         """Write the HTML content to a file
@@ -182,6 +188,11 @@ class HTMLPageWriter:
             fp.write("<style type=\"text/css\">\n")
             fp.write('\n'.join(self.__css_rules))
             fp.write("</style>\n")
+        # JavaScript
+        if self.__javascript:
+            fp.write("<script language='javascript' type='text/javascript'><!--\n")
+            fp.write('\n'.join(self.__javascript))
+            fp.write("\n--></script>\n")
         fp.write("<head>\n")
         # Body and content
         fp.write("<body>\n")
