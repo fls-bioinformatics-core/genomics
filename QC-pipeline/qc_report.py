@@ -84,6 +84,16 @@ class QCReport:
         html.addCSSRule("h2 { background-color: lightgrey; display: inline-block; }")
         html.addCSSRule(".sample { margin: 10 10; border: solid 1px grey; padding: 5px; }")
         html.addCSSRule("td { vertical-align: top; }")
+        # Add JavaScript
+        if inline_pngs:
+            html.addJavaScript("function view_img(pngb64) {")
+            html.addJavaScript("  w = window.open('','View image','');")
+            html.addJavaScript("  w.document.write('<html><head><title>View image</title></head>');")
+            html.addJavaScript("  w.document.write('<body>');")
+            html.addJavaScript("  w.document.write('<img src=\"data:image/png;base64,'+pngb64+'\" />');")
+            html.addJavaScript("  w.document.write('</body></html>');")
+            html.addJavaScript("  return false;")
+            html.addJavaScript("}")
         # Index
         html.add("<p>Samples in %s</p>" % self.__dirn)
         html.add("<ul>")
@@ -104,7 +114,7 @@ class QCReport:
                         html_content="<a href='%s'><img src='%s' height=250 /></a>" % (b,b)
                     else:
                         pngdata = PNGBase64Encoder().encodePNG(os.path.join(self.__qc_dir,b))
-                        html_content="<a href='%s'><img src='data:image/png;base64,%s' height=250 /></a>" % (b,pngdata)
+                        html_content="<a href='#' onclick='view_img(\"%s\");'><img src='data:image/png;base64,%s' height=250 /></a>" % (pngdata,pngdata)
                     html.add(html_content)
             else:
                 html.add("No boxplots found")
@@ -118,7 +128,7 @@ class QCReport:
                         html_content="<a href='%s'><img src='%s' height=250 /></a>" % (s,s)
                     else:
                         pngdata = PNGBase64Encoder().encodePNG(os.path.join(self.__qc_dir,s))
-                        html_content="<a href='%s'><img src='data:image/png;base64,%s' height=250 /></a>" % (s,pngdata)
+                        html_content="<a href='#' onclick='view_img(\"%s\");'><img src='data:image/png;base64,%s' height=250 /></a>" % (pngdata,pngdata)
                     html.add(html_content)
             else:
                 html.add("No screens found")
