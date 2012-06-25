@@ -9,7 +9,7 @@
 #
 #########################################################################
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 
 """TabFile
 
@@ -308,14 +308,14 @@ class TabDataLine:
         if appropriate before storage in the TabDataLine
         object.
         """
-        converted = str(value)
+        converted = value
         try:
             # Try integer
-            converted = int(converted)
+            converted = int(str(converted))
         except ValueError:
             # Not an integer, try float
             try:
-                converted = float(converted)
+                converted = float(str(converted))
             except ValueError:
                 # Not a float, leave as input
                 pass
@@ -1310,6 +1310,16 @@ class TestTabDataLineTypeConversion(unittest.TestCase):
         line = TabDataLine(line="x\ty\tz")
         for i in range(len(test_values)):
             line[i] = str(test_values[i])
+        for i in range(len(test_values)):
+            self.assertEqual(line[i],test_values[i])
+
+    def test_convert_preserve_objects(self):
+        """Set item to object and check its type is preserved
+        """
+        test_values = ['chr1',{'this': 'is a dictionary'}]
+        line = TabDataLine()
+        for value in test_values:
+            line.append(value)
         for i in range(len(test_values)):
             self.assertEqual(line[i],test_values[i])
         
