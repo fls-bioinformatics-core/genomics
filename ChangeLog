@@ -1,3 +1,9 @@
+2012-06-25  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* share/TabFile.py
+	- version 0.2.1: TabDataLine now preserves the type of non-numeric
+	  data items (previously they were automatically converted to strings) 
+
 2012-06-22  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* utils/md5checker.py
