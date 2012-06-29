@@ -175,6 +175,25 @@ function make_temp() {
     echo $tmp
 }
 #
+# set_permissions_and_group(): recursively set permissions and group
+#
+# e.g. set_permissions_and_group <permissions_mode> <new_group>
+#
+# The new group and permissions mode can be empty strings if no
+# change is required
+function set_permissions_and_group() {
+    local permissions_mode=$1
+    local new_group=$2
+    if [ ! -z "$permissions_mode" ] ; then
+	echo Recursively setting permissions to $permissions_mode
+	chmod -R $permissions_mode *
+    fi
+    if [ ! -z "$new_group" ] ; then
+	echo Recursively setting group to $new_group
+	chgrp -R --quiet $new_group *
+    fi
+}
+#
 # get_version(): extract and return version number
 #
 # e.g. version=$(get_version <name>)
