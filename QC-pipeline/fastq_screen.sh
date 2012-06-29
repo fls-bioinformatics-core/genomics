@@ -8,6 +8,7 @@ function usage() {
     echo "Usage: fastq_screen.sh [options] <fastq_file>"
     echo ""
     echo "Run fastq_screen against model organisms, other organisms and rRNA"
+    echo "Note that a gzipped <fastq_file> is also valid as input"
     echo ""
     echo "Options:"
     echo "  --color: use colorspace bowtie indexes (SOLiD data)"
@@ -34,8 +35,8 @@ umask 0002
 # Get the input file
 fastq=`basename $1`
 #
-# Strip extension
-fastq_base=${fastq%.*}
+# Strip "fastq" extension
+fastq_base=${fastq%.fastq}
 #
 # Get the data directory i.e. location of the input file
 datadir=`dirname $1`
@@ -104,7 +105,7 @@ SCREENS="model_organisms other_organisms rRNA"
 #
 for screen in $SCREENS ; do
     # Check if screen files already exist
-    screen_base=${fastq_base}_${screen}_screen
+    screen_base=${fastq%%.*}_${screen}_screen
     if [ -f "${screen_base}.txt" ] && [ -f "${screen_base}.png" ] ; then
 	echo Screen files already exist for ${screen}, skipping fastq_screen
     else
