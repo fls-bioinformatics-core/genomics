@@ -7,7 +7,7 @@
 #
 #########################################################################
 
-__version__ = "0.1.4"
+__version__ = "0.1.5"
 
 """Spreadsheet.py
 
@@ -198,7 +198,7 @@ class Workbook:
             s.save()
         # Save workbook
         if os.path.exists(xls_name):
-            logging.warning("Overwriting existing file: '%s'" % xls_name)
+            logging.debug("Overwriting existing file: '%s'" % xls_name)
         self.workbook.save(xls_name)
 
 class Worksheet:
