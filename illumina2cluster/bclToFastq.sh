@@ -7,6 +7,8 @@
 # Runs configureBclToFastq.pl from CASAVA to set up conversion scripts,
 # then runs make to perform the actual conversion
 #
+# Requires that CASAVA is available on the system.
+#
 # Check arguments
 if [ $# -lt 2 ] ; then
     echo "Usage: `basename $0` <illumina_run_dir> <output_dir>"
