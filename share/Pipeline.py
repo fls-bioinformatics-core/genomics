@@ -612,3 +612,31 @@ def GetFastqFiles(dirn):
         if ext == ".fastq": data_files.append((filen,))
     # Done - return file list
     return data_files
+
+def GetFastqGzFiles(dirn):
+    """Return list of fastq.gz files in target directory
+    """
+    # Check directory exists
+    if not os.path.isdir(dirn):
+        logging.error("'%s' not a directory: unable to collect fastq.gz files" % dirn)
+        return []
+    # Gather data files
+    logging.debug("Collecting fastq.gz files in %s" % dirn)
+    data_files = []
+    all_files = os.listdir(dirn)
+    all_files.sort()
+
+    # Look for .fastq.gz
+    for filen in all_files:
+        logging.debug("Examining file %s" % filen)
+        if filen.split('.')[-1] == "gz":
+            # Ends with gz
+            try:
+                if filen.split('.')[-2] == "fastq":
+                    data_files.append((filen,))
+            except IndexError:
+                # Ignore
+                pass
+    # Done - return file list
+    return data_files
+

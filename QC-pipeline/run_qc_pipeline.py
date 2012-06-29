@@ -155,7 +155,7 @@ if __name__ == "__main__":
                      help="specify type of data to use as input for the script. INPUT_TYPE "
                      "can be one of: 'solid' (CSFASTA/QUAL file pair, default), "
                      "'solid_paired_end' (CSFASTA/QUAL_F3 and CSFASTA/QUAL_F5 quartet), "
-                     "'fastq' (FASTQ file)")
+                     "'fastq' (FASTQ file), 'fastqgz' (gzipped FASTQ file)")
     group.add_option('--email',action='store',dest='email_addr',default=None,
                      help="send email to EMAIL_ADDR when each stage of the pipeline is "
                      "complete")
@@ -254,6 +254,8 @@ if __name__ == "__main__":
             run_data = Pipeline.GetSolidPairedEndFiles(data_dir)
         elif options.input_type == "fastq":
             run_data = Pipeline.GetFastqFiles(data_dir)
+        elif options.input_type == "fastqgz":
+            run_data = Pipeline.GetFastqGzFiles(data_dir)
         else:
             logging.error("Unknown input type: '%s'" % options.input_type)
             sys.exit(1)
