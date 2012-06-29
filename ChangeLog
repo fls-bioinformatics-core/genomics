@@ -3,6 +3,10 @@
 	* illumina2cluster/bclToFastq.sh
 	- Bcl to Fastq conversion wrapper script for Illumina sequencing data
 
+	* QC-pipeline
+	- new script illumina_qc.sh implements QC pipeline for Illumina data
+	- qc.sh renamed to solid_qc.sh
+
 2012-06-25  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* share/TabFile.py
