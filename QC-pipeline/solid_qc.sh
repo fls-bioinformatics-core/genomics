@@ -2,12 +2,12 @@
 #
 # Script to run QC steps on SOLiD data
 #
-# Usage: qc.sh <csfasta> <qual>
+# Usage: solid_qc.sh <csfasta> <qual>
 #
 function usage() {
-    echo "Usage: qc.sh <csfasta_file> <qual_file> [ <csfasta_f5> <qual_f5> ]"
+    echo "Usage: solid_qc.sh <csfasta_file> <qual_file> [ <csfasta_f5> <qual_f5> ]"
     echo ""
-    echo "Run QC pipeline:"
+    echo "Run FASTQ generation and QC pipeline for SOLiD data:"
     echo ""
     echo "* create fastq file"
     echo "* check for contamination using fastq_screen"
@@ -90,7 +90,7 @@ datadir=`dirname $CSFASTA`
 #
 # Report
 echo ========================================================
-echo QC pipeline
+echo SOLiD QC pipeline
 echo ========================================================
 echo Started   : `date`
 echo Running in: `pwd`
@@ -241,6 +241,6 @@ if [ ! -z "$SET_PERMISSIONS" ] ; then
     chmod -R $SET_PERMISSIONS *
 fi
 #
-echo QC pipeline completed: `date`
+echo SOLiD QC pipeline completed: `date`
 exit
 #
