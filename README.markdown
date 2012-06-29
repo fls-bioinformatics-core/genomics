@@ -16,7 +16,6 @@ Scripts are organised into the following directories:
   instrument to cluster
 * [illumina2cluster](illumina2cluster): utilities for transferring and
   preparing Illumina data on the compute cluster
-  instrument to cluster
 * [utils](utils): non-NGS utility scripts
 * [share](share): common libraries and modules shared between applications
 
