@@ -42,7 +42,7 @@ Python modules xlwt, xlrd and xlutils.
 # Module metadata
 #######################################################################
 
-__version__ = "0.1.4"
+__version__ = "0.1.5"
 
 #######################################################################
 # Import
@@ -103,8 +103,9 @@ if __name__ == "__main__":
                  help="specify name of the output XLS file (otherwise defaults to"
                  "'mapping_summary.xls').")
     p.add_option('-t',action="store_true",dest="tab_file",metavar="tab_file",default=False,
-                 help="write data to tab-delimited file (same name as XLS file with .txt "
-                 "extension).")
+                 help="write data to tab-delimited file in addition to the XLS file. The tab "
+                 "file will have the same name as the XLS file, with the extension replaced "
+                 "by .txt")
 
     # Process the command line
     options,arguments = p.parse_args()
