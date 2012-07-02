@@ -143,7 +143,8 @@ if __name__ == "__main__":
         for line in fp:
             if line.startswith("# reads processed: "):
                 # Lines of the form "# reads processed: 39808407"
-                data.append({'total_reads': None,
+                data.append({'filen': os.path.basename(bowtie_log),
+                             'total_reads': None,
                              'didnt_align': None,
                              'uniquely_mapped': None })
                 data[-1]['total_reads'] = int(line.strip().split()[-1])
@@ -179,10 +180,13 @@ if __name__ == "__main__":
                                     "% of mapped reads"])
     for i in range(len(data)):
         n = i+1
+        sample = str(n)
+        # Append input file name to sample name if there are multiple input files
+        if len(bowtie_log_files) > 1: sample += " (" + data[i]['filen'] + ")"
         ws.insertColumn(n,insert_items=\
                             ['',
                              '',
-                             "<style color=red bgcolor=ivory border=medium>"+str(n)+"</style>",
+                             "<style color=red bgcolor=ivory border=medium>"+sample+"</style>",
                              '<style bgcolor=ivory border=medium></style>',
                              "<style bgcolor=ivory border=medium number_format=#,###>"+\
                                  str(data[i]['total_reads'])+"</style>",
@@ -219,7 +223,10 @@ if __name__ == "__main__":
             tab_data.append([item])
         # Add columns for each sample
         for i in xrange(len(data)):
-            tab_data[0].append(str(i+1))
+            sample = str(i+1)
+            # Append input file name to sample name if there are multiple input files
+            if len(bowtie_log_files) > 1: sample += " (" + data[i]['filen'] + ")"
+            tab_data[0].append(sample)
             tab_data[1].append(data[i]['total_reads'])
             tab_data[2].append(data[i]['didnt_align'])
             total_mapped_reads = data[i]['total_reads'] - data[i]['didnt_align']
