@@ -86,6 +86,7 @@ WORKING_DIR=`pwd`
 # Override these defaults by setting them in qc.setup
 : ${FASTQ_SCREEN:=fastq_screen}
 : ${FASTQ_SCREEN_CONF_DIR:=}
+: ${FASTQC:=fastqc}
 #
 #############################################
 # QC
@@ -100,7 +101,7 @@ fi
 run_fastq_screen $FASTQ
 #
 # Run FASTQC
-fastqc --outdir qc $FASTQ
+${FASTQC} --outdir qc $FASTQ
 #
 # Update permissions and group (if specified)
 set_permissions_and_group "$SET_PERMISSIONS" "$SET_GROUP"
