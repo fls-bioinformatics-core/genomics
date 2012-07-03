@@ -1,3 +1,9 @@
+2012-07-02  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* RNA-seq/bowtie_mapping_stats.py
+	- version 0.1.6: for multiple input files, add the filename to the
+	  sample number in the output file
+
 2012-06-29  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* illumina2cluster/bclToFastq.sh
