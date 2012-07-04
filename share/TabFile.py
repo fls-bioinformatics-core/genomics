@@ -233,7 +233,7 @@ class TabDataLine:
         """
         # Data
         self.data = []
-        self.__delimiter = str(delimiter)
+        self.delimiter(delimiter)
         self.__lineno = None
         if line is not None:
             for value in line.split(self.__delimiter):
@@ -389,6 +389,20 @@ class TabDataLine:
         for key in keys:
             subset.appendColumn(key,self[key])
         return subset
+
+    def delimiter(self,new_delimiter=None):
+        """Set and get the delimiter for the line
+
+        If 'new_delimiter' is not None then the field delimiter
+        for the line will be updated to the supplied value. This
+        affects how lines are represented via the __repr__
+        built-in.
+
+        Returns the current value of the delimiter.
+        """
+        if new_delimiter is not None:
+            self.__delimiter = str(new_delimiter)
+        return self.__delimiter
 
     def lineno(self):
         """Return the line number associated with the line
@@ -707,7 +721,8 @@ class TabFile:
         """
         self.__data = sorted(self.__data,key=sort_func,reverse=reverse)
 
-    def write(self,filen=None,fp=None,include_header=False,no_hash=False):
+    def write(self,filen=None,fp=None,include_header=False,no_hash=False,
+              delimiter=None):
         """Write the TabFile data to an output file
 
         One of either the 'filen' or 'fp' arguments must be given,
@@ -725,6 +740,8 @@ class TabFile:
           no_hash: (optional) if set to True and include_header is
             also True then don't put a hash character '#' at the
             start of the header line in the output file.
+          delimiter: (optional) delimiter to use when writing data values
+            to file (defaults to the delimiter specified on input)
         """
         if fp is None and filen is not None:
             # Open named file for writing
@@ -738,8 +755,15 @@ class TabFile:
             else:
                 leading_hash = ''
             fp.write("%s%s\n" % (leading_hash,'\t'.join(self.header())))
+        # Update line delimiters for output if necessary
+        if delimiter is not None and delimiter != self.__delimiter:
+            for data in self.__data: data.delimiter(delimiter)
+        # Write the data
         for data in self.__data:
             fp.write("%s\n" % data)
+        # Reset line delimiters        
+        if delimiter is not None and delimiter != self.__delimiter:
+            for data in self.__data: data.delimiter(self.__delimiter)
         # Only close the stream if it was opened locally
         if close_fp: fp.close()
 
@@ -1048,7 +1072,22 @@ chr2\t1234\t5678\t6.8
         data = ['chr3','10','9','8']
         tabfile.append(data=data)
         self.assertEqual(str(tabfile[-1]),','.join([str(x) for x in data]))
-        
+
+    def test_change_delimiter_for_write(self):
+        """Write data out with different delimiter to input
+        """
+        tabfile = TabFile('test',self.fp,delimiter=',')
+        # Modified delimiter (tab)
+        fp = cStringIO.StringIO()
+        tabfile.write(fp=fp,delimiter='\t')
+        self.assertEqual(fp.getvalue(),self.data)
+        fp.close()
+        # Default (should revert to comma)
+        fp = cStringIO.StringIO()
+        tabfile.write(fp=fp)
+        self.assertEqual(fp.getvalue(),self.data.replace('\t',','))
+        fp.close()
+
 class TestBadTabFile(unittest.TestCase):
     """Test with 'bad' input files
     """
