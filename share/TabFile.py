@@ -204,21 +204,30 @@ class TabDataLine:
 
     Line numbers can also be set by the creating subprogram, and
     queried via the 'lineno' method.
+
+    It is possible to use a different field delimiter than tabs, by
+    explicitly specifying the value of the 'delimiter' argument,
+    e.g. for a comma-delimited line:
+
+        line = TabDataLine("1,2,3",delimiter=',')
+    
     """
-    def __init__(self,line=None,column_names=None,lineno=None):
+    def __init__(self,line=None,column_names=None,delimiter='\t',lineno=None,):
         """Create a new TabFileLine object
 
         Arguments:
           line: (optional) Tab-delimited line with data values
           column_names: (optional) tuple or list of column names
             to assign to each value.
+          delimiter: (optional) delimiter character (defaults to tab)
           lineno: (optional) Line number
         """
         # Data
         self.data = []
+        self.__delimiter = str(delimiter)
         self.__lineno = None
         if line is not None:
-            for value in line.split('\t'):
+            for value in line.split(self.__delimiter):
                 self.data.append(self.__convert(value.rstrip('\n')))
         # Column names
         self.names = []
@@ -382,7 +391,7 @@ class TabDataLine:
         return self.__lineno
 
     def __repr__(self):
-        return '\t'.join([str(x) for x in self.data])
+        return self.__delimiter.join([str(x) for x in self.data])
 
 class TabFile:
     """Class to get data from a tab-delimited file
@@ -1322,6 +1331,25 @@ class TestTabDataLineTypeConversion(unittest.TestCase):
             line.append(value)
         for i in range(len(test_values)):
             self.assertEqual(line[i],test_values[i])
+
+class TestTabDataLineDelimiters(unittest.TestCase):
+
+    def test_default_delimiters(self):
+        """Check that default delimiter (tab) works
+        """
+        input_data = [1.1,2.2,3.3,4.4]
+        line = TabDataLine(line='\t'.join([str(x) for x in input_data]))
+        for i in range(len(input_data)):
+            self.assertEqual(input_data[i],line[i])
+
+    def test_non_default_delimiters(self):
+        """Check that non-default delimiter (comma) works
+        """
+        input_data = [1.1,2.2,3.3,4.4]
+        line = TabDataLine(line=','.join([str(x) for x in input_data]),
+                           delimiter=',')
+        for i in range(len(input_data)):
+            self.assertEqual(input_data[i],line[i])
         
 ########################################################################
 #
