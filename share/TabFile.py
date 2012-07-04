@@ -671,6 +671,24 @@ class TabFile:
             reordered_tabfile.append(data.subset(*new_columns))
         return reordered_tabfile
 
+    def transpose(self):
+        """Transpose the contents of the file
+
+        Returns:
+          New TabFile object
+        """
+        transposed_tabfile = TabFile(delimiter=self.__delimiter)
+        first_column = True
+        for data in self.__data:
+            transposed_tabfile.appendColumn(None)
+            for i in range(len(data)):
+                try:
+                    transposed_tabfile[i][-1] = data[i]
+                except IndexError:
+                    transposed_tabfile.append()
+                    transposed_tabfile[i][-1] = data[i]
+        return transposed_tabfile
+
     def transformColumn(self,column_name,transform_func):
         """Apply arbitrary function to a column
 
@@ -1165,6 +1183,30 @@ chr2\t1234\t5678\t6.8
         self.assertEqual(str(tabfile[0]),"\t4.6\t1\t234")
         self.assertEqual(str(tabfile[1]),"chr1\t5.7\t567\t890")
         self.assertEqual(str(tabfile[2]),"\t6.8\t1234\t5678")
+
+class TestTransposeTabFile(unittest.TestCase):
+    """Test transposing the contents of a TabFile
+    """
+    def setUp(self):
+        # Make file-like object to read data in
+        self.fp = cStringIO.StringIO(
+"""#chr\tstart\tend\tdata
+chr1\t1\t234\t4.6
+chr1\t567\t890\t5.7
+chr2\t1234\t5678\t6.8
+""")
+
+    def tearDown(self):
+        # Close the open file-like input
+        self.fp.close()
+
+    def test_transpose_tab_file(self):
+        """Test transposing TabFile
+        """
+        tabfile1 = TabFile('test',self.fp,first_line_is_header=False)
+        tabfile2 = tabfile1.transpose()
+        self.assertEqual(len(tabfile1),tabfile2.nColumns())
+        self.assertEqual(len(tabfile2),tabfile1.nColumns())
 
 class TestWholeColumnOperations(unittest.TestCase):
     """Test the transformColumn and computeColumn methods
