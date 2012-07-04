@@ -180,6 +180,15 @@ Use the TabFile's 'write' method to output the content to a file:
 
 It's also possible to reorder the columns before writing out using
 the 'reorderColumns' method.
+
+Specifying Delimiters
+=====================
+
+It's possible to use a different field delimiter than tabs, by explicitly
+specifying the value of the 'delimiter' argument when creating a new
+TabFile object, for example for a comma-delimited file:
+
+>>> data = TabFile('data.txt',delimiter=',')
 """
 
 class TabDataLine:
@@ -416,7 +425,8 @@ class TabFile:
         myline = data[0]           # fetch first line of data
     """
     def __init__(self,filen=None,fp=None,column_names=None,skip_first_line=False,
-                 first_line_is_header=False,tab_data_line=TabDataLine):
+                 first_line_is_header=False,tab_data_line=TabDataLine,
+                 delimiter='\t'):
         """Create a new TabFile object
 
         If either of 'filen' or 'fp' arguments are given then the
@@ -439,11 +449,13 @@ class TabFile:
               'column_names' argument if specified.
           tab_data_line: (optional) class to use for creating data
               line objects (defaults to TabDataLine).
+          delimiter: (optional) delimiter character (defaults to tab)
         """
         # Initialise
         self.__filen = filen
         self.__ncols = 0
         self.__header = []
+        self.__delimiter = delimiter
         self.__data = []
         # Class to use for data lines
         self.__tabdataline = tab_data_line
@@ -488,14 +500,15 @@ class TabFile:
                 continue
             elif first_line_is_header and len(self.header()) == 0:
                 # Set up header from first line
-                self.__setHeader(line.strip().strip('#').split('\t'))
+                self.__setHeader(line.strip().strip('#').split(self.__delimiter))
                 first_line_is_header = False
                 continue
             if line.lstrip().startswith('#'):
                 # Skip commented line
                 continue
             # Store data
-            data_line = self.__tabdataline(line,column_names=self.header(),lineno=line_no)
+            data_line = self.__tabdataline(line,column_names=self.header(),lineno=line_no,
+                                           delimiter=self.__delimiter)
             if self.__ncols > 0:
                 if len(data_line) != self.__ncols:
                     # Inconsistent lines are an error
@@ -967,6 +980,57 @@ class TestEmptyTabFile(unittest.TestCase):
         tabfile.append(tabdata=data)
         self.assertEqual(len(tabfile),1,"TabFile should now have one line")
         self.assertEqual(str(tabfile[0]),data)
+
+class TestTabFileDelimiters(unittest.TestCase):
+    """Test behaviour of different field delimiters
+    """
+
+    def setUp(self):
+        # Header
+        self.header = "#chr\tstart\tend\tdata\n"
+        # Tab-delimited data
+        self.data = \
+"""chr1\t1\t234\t4.6
+chr1\t567\t890\t5.7
+chr2\t1234\t5678\t6.8
+"""
+        # Make file-like object to read data in
+        self.fp = cStringIO.StringIO(self.header.replace('\t',',')+
+                                     self.data.replace('\t',','))
+
+    def tearDown(self):
+        # Close the open file-like input
+        self.fp.close()
+
+    def test_load_data(self):
+        """Create and load new TabFile instance
+        """
+        tabfile = TabFile('test',self.fp,delimiter=',')
+        self.assertEqual(len(tabfile),3,"Input has 3 lines of data")
+        self.assertEqual(tabfile.header(),[],"Header should be empty")
+        self.assertEqual(str(tabfile[0]),"chr1,1,234,4.6","Incorrect string representation")
+        self.assertEqual(tabfile[2][0],'chr2',"Incorrect data")
+        self.assertEqual(tabfile.nColumns(),4)
+        self.assertEqual(tabfile.filename(),'test')
+
+    def test_write_data(self):
+        """Write data to file-like object
+        """
+        tabfile = TabFile('test',self.fp)
+        fp = cStringIO.StringIO()
+        tabfile.write(fp=fp)
+        self.assertEqual(fp.getvalue(),self.data.replace('\t',','))
+        fp.close()
+
+    def test_load_data_with_header(self):
+        """Create and load Tabfile using first line as header
+        """
+        tabfile = TabFile('test',self.fp,first_line_is_header=True,delimiter=',')
+        self.assertEqual(len(tabfile),3,"Input has 3 lines of data")
+        self.assertEqual(tabfile.header(),['chr','start','end','data'],"Wrong header")
+        self.assertEqual(str(tabfile[0]),"chr1,1,234,4.6","Incorrect string representation")
+        self.assertEqual(tabfile[2]['chr'],'chr2',"Incorrect data")
+        self.assertEqual(tabfile.nColumns(),4)
         
 class TestBadTabFile(unittest.TestCase):
     """Test with 'bad' input files
