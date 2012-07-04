@@ -661,8 +661,12 @@ class TabFile:
         Arguments:
           new_columns: list of column names or indices in the
             new order
+
+        Returns:
+          New TabFile object
         """
-        reordered_tabfile = TabFile(column_names=new_columns)
+        reordered_tabfile = TabFile(column_names=new_columns,
+                                    delimiter=self.__delimiter)
         for data in self.__data:
             reordered_tabfile.append(data.subset(*new_columns))
         return reordered_tabfile
