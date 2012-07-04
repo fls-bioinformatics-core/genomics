@@ -592,12 +592,13 @@ class TabFile:
           Appended data line object.
         """
         if data:
-            line = '\t'.join([str(x) for x in data])
+            line = self.__delimiter.join([str(x) for x in data])
         elif tabdata:
             line = tabdata
         else:
             line = None
-        data_line = self.__tabdataline(line=line,column_names=self.header())
+        data_line = self.__tabdataline(line=line,column_names=self.header(),
+                                       delimiter=self.__delimiter)
         self.__data.append(data_line)
         return data_line
 
@@ -1031,6 +1032,22 @@ chr2\t1234\t5678\t6.8
         self.assertEqual(str(tabfile[0]),"chr1,1,234,4.6","Incorrect string representation")
         self.assertEqual(tabfile[2]['chr'],'chr2',"Incorrect data")
         self.assertEqual(tabfile.nColumns(),4)
+
+    def test_append_line(self):
+        """Append a line to a file
+        """
+        tabfile = TabFile('test',self.fp,first_line_is_header=True,delimiter=',')
+        line = 'chr3,10,9,8'
+        tabfile.append(tabdata=line)
+        self.assertEqual(str(tabfile[-1]),line)
+
+    def test_append_line_as_data(self):
+        """Append a line to a file with data supplied as a list
+        """
+        tabfile = TabFile('test',self.fp,first_line_is_header=True,delimiter=',')
+        data = ['chr3','10','9','8']
+        tabfile.append(data=data)
+        self.assertEqual(str(tabfile[-1]),','.join([str(x) for x in data]))
         
 class TestBadTabFile(unittest.TestCase):
     """Test with 'bad' input files
