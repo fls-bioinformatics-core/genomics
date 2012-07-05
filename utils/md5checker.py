@@ -18,7 +18,7 @@ Utility for checking files and directories using md5 checksums.
 # Module metadata
 #######################################################################
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 
 #######################################################################
 # Import modules that this module depends on
@@ -100,6 +100,7 @@ def verify_md5sums(chksum_file,verbose=False):
     retval = 0
     nsuccess = 0
     failures = []
+    missing = []
     badlines = []
     # Perform the verification
     for line in open(chksum_file,'rU'):
@@ -123,18 +124,21 @@ def verify_md5sums(chksum_file,verbose=False):
                 retval = 1
         except IOError, ex:
             if not os.path.exists(chkfile):
-                sys.stderr.write("%s: FAILED (missing file)\n" % chkfile)
+                sys.stderr.write("%s: FAILED (file not found)\n" % chkfile)
+                missing.append(chkfile)
             else:
                 sys.stderr.write("%s: FAILED (%s)\n" % (chkfile,ex))
-            failures.append(chkfile)
+                failures.append(chkfile)
             retval = 1
     # Summarise
     nfailed = len(failures)
+    nmissing = len(missing)
     nbad = len(badlines)
     report("Summary:",verbose)
     report("\t%d files checked" % (nsuccess + nfailed),verbose)
     report("\t%d okay" % nsuccess,verbose)
     report("\t%d failed" % nfailed,verbose)
+    report("\t%d not found" % nmissing,verbose) 
     report("\t%d 'bad' MD5 checksum lines" % nbad,verbose)
     return retval
 
