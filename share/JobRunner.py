@@ -185,7 +185,8 @@ class SimpleJobRunner(BaseJobRunner):
         # Build command to be submitted
         cmd = [script]
         cmd.extend(args)
-        # Build qsub command to submit it
+        # Capture current dir
+        current_dir = os.getcwd()
         if working_dir:
             # Move to working directory
             os.chdir(working_dir)
@@ -209,6 +210,10 @@ class SimpleJobRunner(BaseJobRunner):
         self.__job_list.append(job_id)
         self.__log_files[job_id] = lognames[0]
         self.__err_files[job_id] = lognames[1]
+        # Return to original dir if necessary
+        if working_dir:
+            # Move to working directory
+            os.chdir(current_dir)
         # Return the job id
         return job_id
 
