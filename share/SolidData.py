@@ -254,11 +254,11 @@ class SolidRun:
                                                 "\t%s\n\t%s\nand\n\t%s\n\t%s",
                                                 library.csfasta,library.qual,
                                                 csfasta,qual)
-                                # Resolve by storing the most recent
-                                if (os.path.getmtime(csfasta) > 
-                                    os.path.getmtime(library.csfasta)) \
-                                    and (os.path.getmtime(qual) > 
-                                         os.path.getmtime(library.qual)):
+                                # Resolve by storing the most recent timestamp
+                                if (extract_library_timestamp(csfasta) >
+                                    extract_library_timestamp(library.csfasta)) and \
+                                    (extract_library_timestamp(qual) >
+                                     extract_library_timestamp(library.qual)):
                                     library.csfasta = csfasta
                                     library.qual = qual
                             else:
@@ -958,6 +958,30 @@ def is_paired_end(solid_run):
       True if this is a paired-end run, False otherwise.
     """
     return (solid_run.run_definition.runType == "PAIRED-END")
+
+def extract_library_timestamp(path):
+    """Extract the timestamp string from a path
+
+    Given a path of the form '/path/to/data/.../primary.1234567/...',
+    return the timestamp string attached to the 'primary.XXXXXXX'
+    component of the name.
+
+    Arguments:
+      path: absolute or relative path to arbitrary directory or
+        file in the SOLiD data structure
+
+    Returns:
+      Timestamp string, or None if no timestamp was identified.
+    """
+    # Given the path to a file, extract the timestamp attached to
+    # the "primary" component of the name
+    for c in path.split(os.sep):
+        if c.startswith("primary."):
+            i = c.index('.')
+            timestamp = c[i+1:]
+            return timestamp
+    # Got to the end without locating the timestamp, return None
+    return None
 
 def extract_initials(library):
     """Return leading initials from the library name
@@ -2015,6 +2039,12 @@ class TestFunctions(unittest.TestCase):
         self.solid_run = SolidRun(self.solid_test_dir)
         self.assertTrue(is_paired_end(self.solid_run))
         shutil.rmtree(self.solid_test_dir)
+
+    def test_extract_library_timestamp(self):
+        self.assertEqual(extract_library_timestamp("/path/to/data/solid0123_20120712_FRAG_BC/AB_CD_EF_POOL/results.F1B1/libraries/AB2/primary.20120705075541493"),'20120705075541493')
+        self.assertEqual(extract_library_timestamp("/path/to/data/solid0123_20120712_FRAG_BC/AB_CD_EF_POOL/results.F1B1/libraries/AB2/primary.20120705075541493/"),'20120705075541493')
+        self.assertEqual(extract_library_timestamp("/path/to/data/solid0123_20120712_FRAG_BC/AB_CD_EF_POOL/results.F1B1/libraries/AB2/primary.20120705075541493/reads"),'20120705075541493')
+        self.assertEqual(extract_library_timestamp("/path/to/data/solid0123_20120712_FRAG_BC/AB_CD_EF_POOL/results.F1B1/libraries/AB2"),None)
 
     def test_extract_initials(self):
         self.assertEqual('DR',extract_initials('DR1'))
