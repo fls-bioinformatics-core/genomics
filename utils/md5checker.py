@@ -18,7 +18,7 @@ Utility for checking files and directories using md5 checksums.
 # Module metadata
 #######################################################################
 
-__version__ = "0.1.2"
+__version__ = "0.1.3"
 
 #######################################################################
 # Import modules that this module depends on
@@ -320,7 +320,8 @@ if __name__ == "__main__":
     elif options.diff:
         # Running in "diff" mode
         if len(arguments) != 2:
-            p.error("-d: needs two arguments (pair of directories or files to compare)")
+            p.error("-d: takes two arguments but got %s: %s"
+                    % (len(arguments),arguments))
         # Get directories/files as absolute paths
         source = os.path.abspath(arguments[0])
         target = os.path.abspath(arguments[1])
