@@ -89,6 +89,18 @@ WORKING_DIR=`pwd`
 : ${FASTQC:=fastqc}
 #
 #############################################
+# FASTQ MANIPULATIONS
+#############################################
+#
+# Unpack gzipped fastq file
+ext=$(getextension $FASTQ)
+if [ "$ext" == "gz" ] ; then
+    echo Input FASTQ is gzipped, making unzipped version
+    uncompressed_fastq=$(baserootname $FASTQ)
+    gzip -dc $FASTQ > $uncompressed_fastq
+fi
+#
+#############################################
 # QC
 #############################################
 #
