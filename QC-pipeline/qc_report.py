@@ -44,10 +44,13 @@ class QCReport:
         for sample in self.__samples:
             for f in qc_files:
                 # Boxplots
-                if f.startswith(sample.name) or f.startswith(sample.qual):
+                sample_name_underscore = sample.name+'_'
+                sample_name_dot = sample.name+'.'
+                if f.startswith(sample_name_dot) or f.startswith(sample_name_underscore) or \
+                        f.startswith(sample.qual):
                     if f.endswith('_boxplot.png'): sample.addBoxplot(f)
                 # Screens
-                if f.startswith(sample.name):
+                if f.startswith(sample_name_underscore):
                     if f.endswith('_screen.png'): sample.addScreen(f)
         # Filtering stats
         stats_file = os.path.join(self.__dirn,"SOLiD_preprocess_filter.stats")
