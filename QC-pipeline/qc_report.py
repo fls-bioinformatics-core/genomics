@@ -141,12 +141,16 @@ class QCReport:
             if sample.screens():
                 html.add("<h3>Screens</h3>")
                 for s in sample.screens():
+                    # Images
                     if not inline_pngs:
                         html_content="<a href='qc/%s'><img src='%s' height=250 /></a>" % (s,s)
                     else:
                         pngdata = PNGBase64Encoder().encodePNG(os.path.join(self.__qc_dir,s))
                         html_content="<a href='qc/%s'><img src='data:image/png;base64,%s' height=250 /></a>" % (s,pngdata)
                     html.add(html_content)
+                    # Link to text files
+                    screen_txt = os.path.splitext(s)[0] + '.txt'
+                    html.add("<a href='qc/%s'>%s</a>" % (screen_txt,screen_txt))
             else:
                 html.add("No screens found")
             html.add("</td>")
