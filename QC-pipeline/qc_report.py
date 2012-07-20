@@ -48,6 +48,21 @@ class QCReport:
                 # Screens
                 if f.startswith(sample.name):
                     if f.endswith('_screen.png'): sample.addScreen(f)
+        # Filtering stats
+        stats_file = os.path.join(self.__dirn,"SOLiD_preprocess_filter.stats")
+        if os.path.exists(stats_file):
+            fp = open(stats_file,'rU')
+            for line in fp:
+                if line.startswith('#'): continue
+                fields = line.rstrip().split('\t')
+                sample_name = fields[0]
+                for sample in self.__samples:
+                    if sample_name == sample.name:
+                        sample.addFilterStat('reads',fields[1])
+                        sample.addFilterStat('reads_post_filter',fields[2])
+                        sample.addFilterStat('diff_reads',fields[3])
+                        sample.addFilterStat('percent_filtered',fields[4])
+            fp.close()
 
     def write(self):
         """Write the report
@@ -85,13 +100,23 @@ class QCReport:
         html.addCSSRule("h1 { background-color: grey; }")
         html.addCSSRule("h2 { background-color: lightgrey; display: inline-block; }")
         html.addCSSRule(".sample { margin: 10 10; border: solid 1px grey; padding: 5px; }")
+        html.addCSSRule("table.summary { border: solid 1px grey; }")
+        html.addCSSRule("table.summary th { background-color: grey; }")
         html.addCSSRule("td { vertical-align: top; }")
         # Index
         html.add("<p>Samples in %s</p>" % self.__dirn)
-        html.add("<ul>")
+        html.add("<table class='summary'>")
+        html.add("<tr><th>Sample</th><th>Reads</th><th>Reads (filtered)</th><th># filtered</th>"
+                 "<th>% filtered</th></tr>")
         for sample in self.__samples:
-            html.add("<li><a href='#%s'>%s</a></li>" % (sample.name,sample.name))
-        html.add("</ul>")
+            html.add("<tr>")
+            html.add("<td><a href='#%s'>%s</a></td>" % (sample.name,sample.name))
+            html.add("<td>%s</td>" % sample.filterStat('reads'))
+            html.add("<td>%s</td>" % sample.filterStat('reads_post_filter'))
+            html.add("<td>%s</td>" % sample.filterStat('diff_reads'))
+            html.add("<td>%s</td>" % sample.filterStat('percent_filtered'))
+            html.add("</tr>")
+        html.add("</table>")
         # QC plots etc
         for sample in self.__samples:
             html.add("<div class='sample'>")
@@ -137,6 +162,7 @@ class QCSample:
         self.qual = qual
         self.__boxplots = []
         self.__screens = []
+        self.__filter_stats = {}
 
     def addBoxplot(self,boxplot):
         self.__boxplots.append(boxplot)
@@ -145,6 +171,9 @@ class QCSample:
     def addScreen(self,screen):
         self.__screens.append(screen)
         self.__screens.sort()
+
+    def addFilterStat(self,name,value):
+        self.__filter_stats[name] = value
 
     def boxplots(self):
         """Return list of boxplots for a sample
@@ -155,6 +184,11 @@ class QCSample:
         """Return list of screens for a sample
         """
         return self.__screens
+
+    def filterStat(self,name):
+        """Return value associated with a statistic
+        """
+        return self.__filter_stats[name]
 
 class HTMLPageWriter:
 
