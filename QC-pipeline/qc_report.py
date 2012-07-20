@@ -102,10 +102,10 @@ class QCReport:
                 html.add("<h3>Boxplots</h3>")
                 for b in sample.boxplots():
                     if not inline_pngs:
-                        html_content="<a href='%s'><img src='%s' height=250 /></a>" % (b,b)
+                        html_content="<a href='qc/%s'><img src='%s' height=250 /></a>" % (b,b)
                     else:
                         pngdata = PNGBase64Encoder().encodePNG(os.path.join(self.__qc_dir,b))
-                        html_content="<a href='%s''><img src='data:image/png;base64,%s' height=250 /></a>" % (b,pngdata)
+                        html_content="<a href='qc/%s''><img src='data:image/png;base64,%s' height=250 /></a>" % (b,pngdata)
                     html.add(html_content)
             else:
                 html.add("No boxplots found")
@@ -116,17 +116,17 @@ class QCReport:
                 html.add("<h3>Screens</h3>")
                 for s in sample.screens():
                     if not inline_pngs:
-                        html_content="<a href='%s'><img src='%s' height=250 /></a>" % (s,s)
+                        html_content="<a href='qc/%s'><img src='%s' height=250 /></a>" % (s,s)
                     else:
                         pngdata = PNGBase64Encoder().encodePNG(os.path.join(self.__qc_dir,s))
-                        html_content="<a href='%s'><img src='data:image/png;base64,%s' height=250 /></a>" % (s,pngdata)
+                        html_content="<a href='qc/%s'><img src='data:image/png;base64,%s' height=250 /></a>" % (s,pngdata)
                     html.add(html_content)
             else:
                 html.add("No screens found")
             html.add("</td>")
             html.add("</tr></table>")
             html.add("</div>")
-        html.write(os.path.join(self.__qc_dir,'index.html'))
+        html.write(os.path.join(self.__dirn,'qc_report.html'))
 
 class QCSample:
 
