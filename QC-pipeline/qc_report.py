@@ -33,6 +33,7 @@ class QCReport:
             sample = os.path.splitext(data[0])[0]
             self.__samples.append(QCSample(sample,data[0],data[1]))
             print "Sample: %s" % sample
+        self.__samples.sort()
         # Get QC files
         if not os.path.isdir(self.__qc_dir):
             print "%s not found" % self.__qc_dir
@@ -139,9 +140,11 @@ class QCSample:
 
     def addBoxplot(self,boxplot):
         self.__boxplots.append(boxplot)
+        self.__boxplots.sort()
 
     def addScreen(self,screen):
         self.__screens.append(screen)
+        self.__screens.sort()
 
     def boxplots(self):
         """Return list of boxplots for a sample
