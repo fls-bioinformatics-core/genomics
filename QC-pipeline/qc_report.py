@@ -6,6 +6,7 @@ import sys
 import os
 import optparse
 import base64
+import zipfile
 
 # Put ../share onto Python search path for modules
 SHARE_DIR = os.path.abspath(
@@ -158,6 +159,25 @@ class QCReport:
             html.add("</div>")
         html.write(os.path.join(self.__dirn,'qc_report.html'))
 
+    def zip(self):
+        """Make a zip file containing the report and the images
+        """
+        self.html(inline_pngs=True)
+        cwd = os.getcwd()
+        os.chdir(self.__dirn)
+        try:
+            z = zipfile.ZipFile('qc_report.zip','w')
+            z.write('qc_report.html')
+            for sample in self.__samples:
+                for boxplot in sample.boxplots():
+                    z.write(os.path.join('qc',boxplot))
+                for screen in sample.screens():
+                    z.write(os.path.join('qc',screen))
+                    z.write(os.path.join('qc',os.path.splitext(screen)[0]+'.txt'))
+        except Exception, ex:
+            print "Exception creating zip archive: %s" % ex
+        os.chdir(cwd)
+
 class QCSample:
 
     def __init__(self,name,csfasta,qual):
@@ -264,5 +284,5 @@ if __name__ == "__main__":
     else:
         for d in arguments:
             ##QCReport(d).write()
-            QCReport(d).html(inline_pngs=True)
-    
+            ##QCReport(d).html(inline_pngs=True)
+            QCReport(d).zip()
