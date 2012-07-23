@@ -257,7 +257,7 @@ class SolidQCSample:
           boxplot: boxplot file name
         """
         self.__boxplots.append(boxplot)
-        self.__boxplots.sort()
+        self.__boxplots.sort(cmp_boxplots)
 
     def addScreen(self,screen):
         """Associate a fastq_screen with the sample
@@ -413,6 +413,22 @@ class PNGBase64Encoder:
         """Return base64 string encoding a PNG file.
         """
         return base64.b64encode(open(pngfile,'rb').read())
+
+#######################################################################
+# Functions
+#######################################################################
+
+def cmp_boxplots(b1,b2):
+    """Compare the names of two boxplots for sorting purposes
+    """
+    b1_is_filtered = (os.path.basename(b1).rfind('T_F3') > -1)
+    b2_is_filtered = (os.path.basename(b2).rfind('T_F3') > -1)
+    if b1_is_filtered and not b2_is_filtered:
+        return 1
+    elif not b1_is_filtered and b2_is_filtered:
+        return -1
+    else:
+        return cmp(b1,b2)
 
 #######################################################################
 # Main program
