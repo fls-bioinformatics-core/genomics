@@ -145,6 +145,7 @@ class SolidQCReport:
         html.addCSSRule(".sample { margin: 10 10; border: solid 1px grey; padding: 5px; }")
         html.addCSSRule("table.summary { border: solid 1px grey; }")
         html.addCSSRule("table.summary th { background-color: grey; }")
+        html.addCSSRule("table.summary td { text-align: right; }")
         html.addCSSRule("td { vertical-align: top; }")
         # Index
         html.add("<p>Samples in %s</p>" % self.__dirn)
