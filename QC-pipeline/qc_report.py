@@ -1,6 +1,22 @@
 #!/bin/env python
 #
-# qc_report.py: generate report file for qc run
+#     qc_report.py: generate report file for NGS qc runs
+#     Copyright (C) University of Manchester 2012 Peter Briggs
+#
+########################################################################
+#
+# qc_report.py
+#
+#########################################################################
+
+"""qc_report
+
+Generate a HTML report for an NGS QC pipeline run.
+"""
+
+#######################################################################
+# Import modules that this module depends on
+#######################################################################
 #
 import sys
 import os
@@ -20,10 +36,28 @@ except ImportError, ex:
     print "Check PYTHONPATH"
     sys.exit(1)
 
-class QCReport:
+#######################################################################
+# Class definitions
+#######################################################################
+
+class SolidQCReport:
+    """Class for reporting QC run on SOLiD data
+
+    SolidQCReport assembles the data associated with a QC run for a set
+    of SOLiD data and generates a HTML document which summarises the
+    results for quick review.
+    """
 
     def __init__(self,dirn):
-        """Make a new QCReport instance
+        """Make a new SolidQCReport instance
+
+        The SolidQCReport class checks the contents of the supplied
+        directory looking for SOLiD data sets corresponding to samples,
+        and collects the associated QC outputs (boxplots, screens and
+        filtering statistics).
+
+        Arguments:
+          dirn: top-level directory holding the QC run outputs
         """
         self.__dirn = os.path.abspath(dirn)
         self.__qc_dir = os.path.join(self.__dirn,'qc')
@@ -32,7 +66,7 @@ class QCReport:
         primary_data = Pipeline.GetSolidDataFiles(self.__dirn)
         for data in primary_data:
             sample = os.path.splitext(data[0])[0]
-            self.__samples.append(QCSample(sample,data[0],data[1]))
+            self.__samples.append(SolidQCSample(sample,data[0],data[1]))
             print "Sample: %s" % sample
         self.__samples.sort()
         # Get QC files
@@ -69,7 +103,9 @@ class QCReport:
             fp.close()
 
     def write(self):
-        """Write the report
+        """Write a summary of the QC report
+
+        Deprecated: writes a summary of the QC run to stdout.
         """
         for sample in self.__samples:
             print "Sample: %s" % sample
@@ -93,9 +129,12 @@ class QCReport:
     def html(self,inline_pngs=False):
         """Write the HTML report
 
+        Writes a HTML document 'qc_report.html' to the top-level
+        analysis directory.
+
         Arguments:
-          inline_pngs: if set True then PNG image data will be inlined (report file
-            will be more portable)
+          inline_pngs: if set True then PNG image data will be inlined
+            (report file will be more portable)
         """
         html = HTMLPageWriter("QC for %s" % os.path.basename(self.__dirn))
         # Title
@@ -151,10 +190,10 @@ class QCReport:
                     else:
                         pngdata = PNGBase64Encoder().encodePNG(os.path.join(self.__qc_dir,s))
                         html_content="<a href='qc/%s'><img src='data:image/png;base64,%s' height=250 /></a>" % (s,pngdata)
-                    html.add(html_content)
+                    html.add(html_content+"<br />")
                     # Link to text files
                     screen_txt = os.path.splitext(s)[0] + '.txt'
-                    html.add("<a href='qc/%s'>%s</a>" % (screen_txt,screen_txt))
+                    html.add("<a href='qc/%s'>%s</a><br />" % (screen_txt,screen_txt))
             else:
                 html.add("No screens found")
             html.add("</td>")
@@ -164,6 +203,11 @@ class QCReport:
 
     def zip(self):
         """Make a zip file containing the report and the images
+
+        Generate the 'qc_report.html' file and make a zip file
+        'qc_report.zip' which contains the report plus the
+        associated image files, which can be unpacked elsewhere
+        for viewing.
         """
         self.html(inline_pngs=True)
         cwd = os.getcwd()
@@ -181,9 +225,24 @@ class QCReport:
             print "Exception creating zip archive: %s" % ex
         os.chdir(cwd)
 
-class QCSample:
+class SolidQCSample:
+    """Class for holding QC data for a SOLiD sample
+
+    A SOLiD QC run typically conists of filtered and unfiltered
+    boxplots, quality filtering stats, and contamination screens.
+    """
 
     def __init__(self,name,csfasta,qual):
+        """Create a new SolidQCSample instance
+
+        Note that the sample name is used as the base name for
+        identifying the associated output files.
+
+        Arguments:
+          name: name for the sample
+          csfasta: associated CSFASTA file
+          qual: associated QUAL file
+        """
         self.name = name
         self.csfasta = csfasta
         self.qual = qual
@@ -192,14 +251,30 @@ class QCSample:
         self.__filter_stats = {}
 
     def addBoxplot(self,boxplot):
+        """Associate a boxplot with the sample
+
+        Arguments:
+          boxplot: boxplot file name
+        """
         self.__boxplots.append(boxplot)
         self.__boxplots.sort()
 
     def addScreen(self,screen):
+        """Associate a fastq_screen with the sample
+
+        Arguments:
+          screen: fastq_screen file name
+        """
         self.__screens.append(screen)
         self.__screens.sort()
 
     def addFilterStat(self,name,value):
+        """Associate a filtering statistic with the sample
+
+        Arguments:
+          name: name for the statistic
+          value: the value of the statistic
+        """
         self.__filter_stats[name] = value
 
     def boxplots(self):
@@ -217,9 +292,26 @@ class QCSample:
         """
         return self.__filter_stats[name]
 
+# 
 class HTMLPageWriter:
+    """Generic HTML generation class
+
+    HTMLPageWriter provides basic operations for writing HTML
+    files.
+
+    Example usage:
+
+    >>> p = HTMLPageWriter("Example page")
+    >>> p.add("This is some text")
+    >>> p.write("example.html")
+    """
 
     def __init__(self,title=''):
+        """Create a new HTMLPageWriter instance
+
+        Arguments:
+          title: optional title for the HTML document
+        """
         self.__page_title = str(title)
         self.__content = []
         self.__css_rules = []
@@ -227,21 +319,60 @@ class HTMLPageWriter:
 
     def add(self,content):
         """Add content to page body
+
+        Note that the supplied content is added to the HTML
+        document as-is; no escaping is performed so the content
+        can include arbitrary HTML tags. Note also that no
+        validation is performed.
+
+        Arguments:
+          content: text to add to the HTML document body
         """
         self.__content.append(str(content))
 
     def addCSSRule(self,css_rule):
         """Add CSS rule
+
+        Defines a CSS rule that will be inlined into a
+        "style" tag in the HTML head when the document is
+        written out.
+
+        The rule text is added as-is, e.g.:
+
+        >>> p = HTMLPageWriter("Example page")
+        >>> p.addCSSRule("body { color: blue; }")
+
+        No checking or validation is performed.
+
+        Arguments:
+          css_rule: text defining CSS rule
         """
         self.__css_rules.append(str(css_rule))
 
     def addJavaScript(self,javascript):
         """Add JavaScript
+
+        Defines a line of Javascript code that will be
+        inlined into a "script" tag in the HTML head when
+        the document is written out.
+
+        The code is added as-is, no checking or validation
+        is performed.
+
+        Arguments:
+          javascript: Javascript code
         """
         self.__javascript.append(str(javascript))
 
     def write(self,filen):
-        """Write the HTML content to a file
+        """Write the HTML document to file
+
+        Generates a HTML document based on the content, styles
+        etc that have been defined by calls to the object's
+        methods.
+
+        Arguments:
+          filen: name of the file to write the document to
         """
         fp = open(filen,'w')
         fp.write("<html>\n")
@@ -267,10 +398,25 @@ class HTMLPageWriter:
         fp.write("</html>\n")
         fp.close()
 
+# Utility class to encode PNGs for embedding in HTML
 class PNGBase64Encoder:
+    """Utility class to encode PNG file into a base64 string
+
+    Base64 encoded PNGs can be embedded in HTML <img> tags.
+
+    To use:
+
+    >>> p = PNGBase64Encoder.encodePNG("image.png")
+    """
 
     def encodePNG(self,pngfile):
+        """Return base64 string encoding a PNG file.
+        """
         return base64.b64encode(open(pngfile,'rb').read())
+
+#######################################################################
+# Main program
+#######################################################################
 
 if __name__ == "__main__":
     # Set up command line parser
@@ -286,6 +432,5 @@ if __name__ == "__main__":
         p.error("Takes at least one argument (one or more directories)")
     else:
         for d in arguments:
-            ##QCReport(d).write()
-            ##QCReport(d).html(inline_pngs=True)
-            QCReport(d).zip()
+            print "Generating report for %s" % d
+            SolidQCReport(d).zip()
