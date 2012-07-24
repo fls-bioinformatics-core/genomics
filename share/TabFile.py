@@ -9,7 +9,7 @@
 #
 #########################################################################
 
-__version__ = "0.2.2"
+__version__ = "0.2.3"
 
 """TabFile
 
@@ -776,7 +776,11 @@ class TabFile:
                 leading_hash = '#'
             else:
                 leading_hash = ''
-            fp.write("%s%s\n" % (leading_hash,'\t'.join(self.header())))
+            if delimiter is None:
+                delim = self.__delimiter
+            else:
+                delim = str(delimiter)
+            fp.write("%s%s\n" % (leading_hash,delim.join(self.header())))
         # Update line delimiters for output if necessary
         if delimiter is not None and delimiter != self.__delimiter:
             for data in self.__data: data.delimiter(delimiter)
@@ -1078,6 +1082,15 @@ chr2\t1234\t5678\t6.8
         self.assertEqual(str(tabfile[0]),"chr1,1,234,4.6","Incorrect string representation")
         self.assertEqual(tabfile[2]['chr'],'chr2',"Incorrect data")
         self.assertEqual(tabfile.nColumns(),4)
+
+    def test_write_data_with_header(self):
+        """Write data to file-like object including a header line
+        """
+        tabfile = TabFile('test',self.fp,first_line_is_header=True,delimiter=',')
+        fp = cStringIO.StringIO()
+        tabfile.write(fp=fp,include_header=True)
+        self.assertEqual(fp.getvalue(),self.header.replace('\t',',')+self.data.replace('\t',','))
+        fp.close()
 
     def test_append_line(self):
         """Append a line to a file
