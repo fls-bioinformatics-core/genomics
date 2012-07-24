@@ -1,3 +1,10 @@
+2012-07-24  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* shared/TabFile.py
+	- version 0.2.2: TabFile can now handle user-defined delimiters (not
+	  just tabs) for reading and writing; new TabFile.transpose() method
+	  converts columns to rows
+
 2012-07-05  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* utils/md5checker.py
