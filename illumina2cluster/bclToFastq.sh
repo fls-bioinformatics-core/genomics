@@ -11,7 +11,7 @@
 #
 # Help information
 usage="Usage: `basename $0` OPTIONS <illumina_run_dir> <output_dir> [ <sample_sheet> ]"
-if [ $1 == "-h" ] || [ $1 == "--help" ] ; then
+if [ "$1" == "-h" ] || [ "$1" == "--help" ] ; then
     echo $usage
     cat <<EOF
 
