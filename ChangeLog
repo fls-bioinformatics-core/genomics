@@ -1,3 +1,9 @@
+2012-07-27  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* shared/TabFile.py
+	- version 0.2.4: allow TabFile.computeColumn() to reference
+	  destination columns by integer indices as well as by column name
+
 2012-07-24  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* shared/TabFile.py
