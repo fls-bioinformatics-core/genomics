@@ -9,7 +9,7 @@
 #
 #########################################################################
 
-__version__ = "0.2.3"
+__version__ = "0.2.4"
 
 """TabFile
 
@@ -712,12 +712,18 @@ class TabFile:
         a new column with the specified name.
 
         Arguments:
-          column_name: name of column to write transformation result to
+          column_name: name or index of column to write transformation
+             result to
           compute_func: callable object that will be invoked to perform
             the computation
         """
         if column_name not in self.header():
-            self.appendColumn(column_name)
+            try:
+                # Check to see if it's actually an integer index
+                column_name = int(column_name)
+            except ValueError:
+                # Neither existing column name nor integer index
+                self.appendColumn(column_name)
         for line in self:
             line[column_name] = compute_func(line)
 
@@ -1291,6 +1297,21 @@ chr2\t1234\t5678\t6.8
         self.assertEqual(tabfile.header(),['chr','start','end','data'])
         # Compute new values for data column
         tabfile.computeColumn('data',lambda line: line['end'] - line['start'])
+        self.assertEqual(tabfile.nColumns(),4)
+        self.assertEqual(tabfile.header(),['chr','start','end','data'])
+        results = [233,323,4444]
+        for i in range(len(tabfile)):
+            self.assertEqual(tabfile[i]['data'],results[i])
+        
+    def test_compute_and_overwrite_existing_column_integer_index(self):
+        """Compute new values for an existing column referenced using integer index
+        """
+        tabfile = TabFile('test',self.fp,first_line_is_header=True)
+        # Check number of columns and header items
+        self.assertEqual(tabfile.nColumns(),4)
+        self.assertEqual(tabfile.header(),['chr','start','end','data'])
+        # Compute new values for data column
+        tabfile.computeColumn(3,lambda line: line['end'] - line['start'])
         self.assertEqual(tabfile.nColumns(),4)
         self.assertEqual(tabfile.header(),['chr','start','end','data'])
         results = [233,323,4444]
