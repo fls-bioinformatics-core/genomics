@@ -189,6 +189,8 @@ class SolidQCReport:
                         "                   border-bottom: solid 1px lightgray; }")
         html.addCSSRule("td { vertical-align: top; }")
         html.addCSSRule("img { background-color: white; }")
+        html.addCSSRule("p { font-size: 85%;\n"
+                        "    color: #808080; }")
         # Index
         html.add("<p>Samples in %s</p>" % self.__dirn)
         html.add("<table class='summary'>")
@@ -225,6 +227,7 @@ class SolidQCReport:
                 for b in sample.boxplots():
                     # Get name/description
                     try:
+                        # Indicate whether it's pre- or post-filtering
                         b.index('_T_F3')
                         description = "After quality filtering"
                     except ValueError:
@@ -248,19 +251,28 @@ class SolidQCReport:
             html.add("</td>")
             # Screens
             html.add("<td>")
+            html.add("<h3>Screens</h3>")
             if sample.screens():
-                html.add("<h3>Screens</h3>")
                 for s in sample.screens():
-                    # Images
+                    # Get name/description
+                    for screen_name in ('model_organisms','other_organisms','rRNA'):
+                        try:
+                            s.index(screen_name)
+                            description = screen_name.replace('_',' ').title()
+                        except ValueError:
+                            pass
+                    html.add("<p>%s:</p>" % description)
+                    # Add Images
                     if not inline_pngs:
                         html_content="<a href='qc/%s'><img src='%s' height=250 /></a>" % (s,s)
                     else:
                         pngdata = PNGBase64Encoder().encodePNG(os.path.join(self.__qc_dir,s))
                         html_content="<a href='qc/%s'><img src='data:image/png;base64,%s' height=250 /></a>" % (s,pngdata)
-                    html.add(html_content+"<br />")
+                    html.add(html_content)
                     # Link to text files
                     screen_txt = os.path.splitext(s)[0] + '.txt'
-                    html.add("<a href='qc/%s'>%s</a><br />" % (screen_txt,screen_txt))
+                    html.add("<p>(See original data for <a href='qc/%s'>%s</a>)</p>" % \
+                                 (screen_txt,description))
             else:
                 html.add("No screens found")
             html.add("</td>")
