@@ -164,7 +164,8 @@ class SolidQCReport:
         # Title
         html.add("<h1>QC for %s</h1>" % os.path.basename(self.__dirn))
         # Add styles
-        html.addCSSRule("h1 { background-color: grey; }")
+        html.addCSSRule("h1 { background-color: #42AEC2;\n"
+                        "     color: white; }")
         html.addCSSRule("h2 { background-color: #8CC63F;\n"
                         "     color: white;\n"
                         "     display: inline-block;\n"
@@ -192,10 +193,10 @@ class SolidQCReport:
             html.add("<tr><th>Sample</th><th>Reads</th><th>Reads (filtered)</th>"
                      "<th># filtered</th><th>% filtered</th></tr>")
         else:
-            html.add("<tr><th>Sample</th><th>Reads</th><th>Reads (filtered)</th>"
-                     "<th># filtered</th><th>% filtered</th>"
-                     "<th>Reads (filtered)</th>"
-                     "<th># filtered</th><th>% filtered</th></tr>")
+            html.add("<tr><th>Sample</th><th>Reads</th><th>Reads (filtered, lenient)</th>"
+                     "<th># filtered (lenient)</th><th>% filtered (lenient)</th>"
+                     "<th>Reads (filtered, strict)</th>"
+                     "<th># filtered (strict)</th><th>% filtered (strict)</th></tr>")
         for sample in self.__samples:
             html.add("<tr>")
             html.add("<td><a href='#%s'>%s</a></td>" % (sample.name,sample.name))
