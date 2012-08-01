@@ -220,9 +220,23 @@ class SolidQCReport:
             html.add("<table><tr>")
             # Boxplots
             html.add("<td>")
+            html.add("<h3>Boxplots</h3>")
             if sample.boxplots():
-                html.add("<h3>Boxplots</h3>")
                 for b in sample.boxplots():
+                    # Get name/description
+                    try:
+                        b.index('_T_F3')
+                        description = "After quality filtering"
+                    except ValueError:
+                        description = "Before quality filtering"
+                    if self.__paired_end:
+                        try:
+                            b.index('_F5')
+                            description += " (F5)"
+                        except ValueError:
+                            description += " (F3)"
+                    html.add("<p>%s:</p>" % description)
+                    # Add images
                     if not inline_pngs:
                         html_content="<a href='qc/%s'><img src='%s' height=250 /></a>" % (b,b)
                     else:
