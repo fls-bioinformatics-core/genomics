@@ -85,7 +85,7 @@ class SolidQCReport:
                 sample = sample.replace('_F3','')
             self.__samples.append(SolidQCSample(sample,data[0],data[1]))
             print "Sample: '%s'" % sample
-        self.__samples.sort()
+        self.__samples.sort(cmp_samples)
         # Get QC files
         if not os.path.isdir(self.__qc_dir):
             print "%s not found" % self.__qc_dir
@@ -511,6 +511,11 @@ def cmp_boxplots(b1,b2):
         return -1
     else:
         return cmp(b1,b2)
+
+def cmp_samples(s1,s2):
+    """Compare the names of two samples for sorting purposes
+    """
+    return cmp(s1.name,s2.name)
 
 #######################################################################
 # Main program
