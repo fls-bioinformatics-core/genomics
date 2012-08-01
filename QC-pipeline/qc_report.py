@@ -21,6 +21,7 @@ Generate a HTML report for an NGS QC pipeline run.
 import sys
 import os
 import optparse
+import logging
 import base64
 import zipfile
 
@@ -62,12 +63,28 @@ class SolidQCReport:
         self.__dirn = os.path.abspath(dirn)
         self.__qc_dir = os.path.join(self.__dirn,'qc')
         self.__samples = []
+        self.__paired_end = False
+        # Locate stats file and determine if we have paired end data
+        stats_file = os.path.join(self.__dirn,"SOLiD_preprocess_filter.stats")
+        if not os.path.exists(stats_file):
+            stats_file = os.path.join(self.__dirn,"SOLiD_preprocess_filter_paired.stats")
+            if os.path.exists(stats_file):
+                self.__paired_end = True
+            else:
+                stats_file = None
+                logging.error("Can't find stats file in %s" % self.__dirn)
         # Get primary data files
-        primary_data = Pipeline.GetSolidDataFiles(self.__dirn)
+        if not self.__paired_end:
+            primary_data = Pipeline.GetSolidDataFiles(self.__dirn)
+        else:
+            primary_data = Pipeline.GetSolidPairedEndFiles(self.__dirn)
         for data in primary_data:
             sample = os.path.splitext(data[0])[0]
+            if self.__paired_end:
+                # Strip trailing "_F3" from names
+                sample = sample.replace('_F3','')
             self.__samples.append(SolidQCSample(sample,data[0],data[1]))
-            print "Sample: %s" % sample
+            print "Sample: '%s'" % sample
         self.__samples.sort()
         # Get QC files
         if not os.path.isdir(self.__qc_dir):
@@ -87,20 +104,27 @@ class SolidQCReport:
                 if f.startswith(sample_name_underscore):
                     if f.endswith('_screen.png'): sample.addScreen(f)
         # Filtering stats
-        stats_file = os.path.join(self.__dirn,"SOLiD_preprocess_filter.stats")
         if os.path.exists(stats_file):
             fp = open(stats_file,'rU')
             for line in fp:
                 if line.startswith('#'): continue
                 fields = line.rstrip().split('\t')
                 sample_name = fields[0]
+                if self.__paired_end: sample_name = sample_name.replace('_paired','')
                 for sample in self.__samples:
                     if sample_name == sample.name:
                         sample.addFilterStat('reads',fields[1])
                         sample.addFilterStat('reads_post_filter',fields[2])
                         sample.addFilterStat('diff_reads',fields[3])
                         sample.addFilterStat('percent_filtered',fields[4])
+                        if self.__paired_end:
+                            sample.addFilterStat('reads_post_filter2',fields[5])
+                            sample.addFilterStat('diff_reads2',fields[6])
+                            sample.addFilterStat('percent_filtered2',fields[7])
+                        break
             fp.close()
+        else:
+            logging.error("Can't find stats file %s" % stats_file)
 
     def write(self):
         """Write a summary of the QC report
@@ -141,17 +165,35 @@ class SolidQCReport:
         html.add("<h1>QC for %s</h1>" % os.path.basename(self.__dirn))
         # Add styles
         html.addCSSRule("h1 { background-color: grey; }")
-        html.addCSSRule("h2 { background-color: lightgrey; display: inline-block; }")
-        html.addCSSRule(".sample { margin: 10 10; border: solid 1px grey; padding: 5px; }")
-        html.addCSSRule("table.summary { border: solid 1px grey; }")
-        html.addCSSRule("table.summary th { background-color: grey; }")
-        html.addCSSRule("table.summary td { text-align: right; }")
+        html.addCSSRule("h2 { background-color: grey;\n"
+                        "     color: white;\n"
+                        "     display: inline-block;\n"
+                        "     padding: 5px 5px;\n"
+                        "     margin: 0; }")
+        html.addCSSRule(".sample { margin: 10 10;\n"
+                        "          border: solid 2px grey;\n"
+                        "          padding: 0;\n"
+                        "          background-color: #ffe; }")
+        html.addCSSRule("table.summary { border: solid 1px grey;\n"
+                        "                font-size: 90% }")
+        html.addCSSRule("table.summary th { background-color: grey;\n"
+                        "                   color: white; }")
+        html.addCSSRule("table.summary td { text-align: right; \n"
+                        "                   padding: 2px 5px;\n"
+                        "                   border-bottom: solid 1px lightgray; }")
         html.addCSSRule("td { vertical-align: top; }")
+        html.addCSSRule("img { background-color: white; }")
         # Index
         html.add("<p>Samples in %s</p>" % self.__dirn)
         html.add("<table class='summary'>")
-        html.add("<tr><th>Sample</th><th>Reads</th><th>Reads (filtered)</th><th># filtered</th>"
-                 "<th>% filtered</th></tr>")
+        if not self.__paired_end:
+            html.add("<tr><th>Sample</th><th>Reads</th><th>Reads (filtered)</th>"
+                     "<th># filtered</th><th>% filtered</th></tr>")
+        else:
+            html.add("<tr><th>Sample</th><th>Reads</th><th>Reads (filtered)</th>"
+                     "<th># filtered</th><th>% filtered</th>"
+                     "<th>Reads (filtered)</th>"
+                     "<th># filtered</th><th>% filtered</th></tr>")
         for sample in self.__samples:
             html.add("<tr>")
             html.add("<td><a href='#%s'>%s</a></td>" % (sample.name,sample.name))
@@ -159,6 +201,10 @@ class SolidQCReport:
             html.add("<td>%s</td>" % sample.filterStat('reads_post_filter'))
             html.add("<td>%s</td>" % sample.filterStat('diff_reads'))
             html.add("<td>%s</td>" % sample.filterStat('percent_filtered'))
+            if self.__paired_end:
+                html.add("<td>%s</td>" % sample.filterStat('reads_post_filter2'))
+                html.add("<td>%s</td>" % sample.filterStat('diff_reads2'))
+                html.add("<td>%s</td>" % sample.filterStat('percent_filtered2'))
             html.add("</tr>")
         html.add("</table>")
         # QC plots etc
@@ -291,7 +337,10 @@ class SolidQCSample:
     def filterStat(self,name):
         """Return value associated with a statistic
         """
-        return self.__filter_stats[name]
+        try:
+            return self.__filter_stats[name]
+        except KeyError:
+            return None
 
 # 
 class HTMLPageWriter:
