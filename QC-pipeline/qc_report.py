@@ -165,15 +165,17 @@ class SolidQCReport:
         html.add("<h1>QC for %s</h1>" % os.path.basename(self.__dirn))
         # Add styles
         html.addCSSRule("h1 { background-color: grey; }")
-        html.addCSSRule("h2 { background-color: grey;\n"
+        html.addCSSRule("h2 { background-color: #8CC63F;\n"
                         "     color: white;\n"
                         "     display: inline-block;\n"
                         "     padding: 5px 5px;\n"
-                        "     margin: 0; }")
+                        "     margin: 0;\n"
+                        "     border-top-left-radius: 20; }")
         html.addCSSRule(".sample { margin: 10 10;\n"
-                        "          border: solid 2px grey;\n"
+                        "          border: solid 2px #8CC63F;\n"
                         "          padding: 0;\n"
-                        "          background-color: #ffe; }")
+                        "          background-color: #ffe;\n"
+                        "          border-top-left-radius: 25; }")
         html.addCSSRule("table.summary { border: solid 1px grey;\n"
                         "                font-size: 90% }")
         html.addCSSRule("table.summary th { background-color: grey;\n"
