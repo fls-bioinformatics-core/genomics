@@ -107,9 +107,11 @@ class IlluminaQCReport:
                         "          border-top-left-radius: 25;\n"
                         "          border-bottom-right-radius: 25; }")
         html.addCSSRule("table.summary { border: solid 1px grey;\n"
+                        "                background-color: white;\n"
                         "                font-size: 90% }")
         html.addCSSRule("table.summary th { background-color: grey;\n"
-                        "                   color: white; }")
+                        "                   color: white;"
+                        "                   padding: 2px 5px; }")
         html.addCSSRule("table.summary td { text-align: right; \n"
                         "                   padding: 2px 5px;\n"
                         "                   border-bottom: solid 1px lightgray; }")
@@ -422,9 +424,11 @@ class SolidQCReport:
                         "          border-top-left-radius: 25;\n"
                         "          border-bottom-right-radius: 25; }")
         html.addCSSRule("table.summary { border: solid 1px grey;\n"
+                        "                background-color: white;\n"
                         "                font-size: 90% }")
         html.addCSSRule("table.summary th { background-color: grey;\n"
-                        "                   color: white; }")
+                        "                   color: white;"
+                        "                   padding: 2px 5px; }")
         html.addCSSRule("table.summary td { text-align: right; \n"
                         "                   padding: 2px 5px;\n"
                         "                   border-bottom: solid 1px lightgray; }")
@@ -436,13 +440,16 @@ class SolidQCReport:
         html.add("<p>Samples in %s</p>" % self.__dirn)
         html.add("<table class='summary'>")
         if not self.__paired_end:
-            html.add("<tr><th>Sample</th><th>Reads</th><th>Reads (filtered)</th>"
-                     "<th># filtered</th><th>% filtered</th></tr>")
+            html.add("<tr><th>Sample</th><th>Reads</th><th>Reads after filter</th>"
+                     "<th># removed</th><th>% removed</th></tr>")
         else:
-            html.add("<tr><th>Sample</th><th>Reads</th><th>Reads (filtered, lenient)</th>"
-                     "<th># filtered (lenient)</th><th>% filtered (lenient)</th>"
-                     "<th>Reads (filtered, strict)</th>"
-                     "<th># filtered (strict)</th><th>% filtered (strict)</th></tr>")
+            html.add("<tr><th colspan=2>&nbsp;</th>"
+                     "<th colspan=3>Lenient filtering</th>"
+                     "<th colspan=3>Strict filtering</th></tr>")
+            html.add("<tr><th>Sample</th><th>Reads</th><th>Reads after filter</th>"
+                     "<th># removed</th><th>% removed</th>"
+                     "<th>Reads after filter</th>"
+                     "<th># removed</th><th>% removed</th></tr>")
         for sample in self.__samples:
             html.add("<tr>")
             html.add("<td><a href='#%s'>%s</a></td>" % (sample.name,sample.name))
@@ -456,6 +463,13 @@ class SolidQCReport:
                 html.add("<td>%s</td>" % sample.filterStat('percent_filtered2'))
             html.add("</tr>")
         html.add("</table>")
+        if self.__paired_end:
+            # Add explanation of lenient and strict for paired end
+            html.add("<p>Number of reads are the sum of F3 and F5 reads</p>")
+            html.add("<p>&quot;Lenient filtering&quot; filters each F3/F5 read pair only "
+                     "on the quality of the F3 reads</p>")
+            html.add("<p>&quot;Strict filtering&quot; filters each F3/F5 read pair on the "
+                     "quality of both F3 and F5 reads</p>")
         # QC plots etc
         for sample in self.__samples:
             html.add("<div class='sample'>")
