@@ -41,6 +41,247 @@ except ImportError, ex:
 # Class definitions
 #######################################################################
 
+class IlluminaQCReport:
+    """Class for reporting QC run on Illumina data
+
+    IlluminaQCReport assembles the data associated with a QC run for a set
+    of Illumina data and generates a HTML document which summarises the
+    results for quick review.
+    """
+    
+    def __init__(self,dirn):
+        self.__dirn = os.path.abspath(dirn)
+        self.__qc_dir = os.path.join(self.__dirn,'qc')
+        self.__samples = []
+        # Locate input fastq.gz files
+        primary_data = Pipeline.GetFastqGzFiles(self.__dirn)
+        for data in primary_data:
+            sample = rootname(data[0])
+            self.__samples.append(IlluminaQCSample(sample,data[0]))
+            print "Sample: '%s'" % sample
+        self.__samples.sort(cmp_samples)
+        # Get QC files
+        if not os.path.isdir(self.__qc_dir):
+            print "%s not found" % self.__qc_dir
+            return
+        qc_files = os.listdir(self.__qc_dir)
+        # Associate QC outputs with sample names
+        for sample in self.__samples:
+            for f in qc_files:
+                sample_name_underscore = sample.name+'_'
+                # Screens
+                if f.startswith(sample_name_underscore):
+                    if f.endswith('_screen.png'): sample.addScreen(f)
+                # FastQC
+                if f == "%sfastqc" % sample_name_underscore:
+                    sample.addFastQC(f)
+
+    def html(self,inline_pngs=False):
+        """Write the HTML report
+
+        Writes a HTML document 'qc_report.html' to the top-level
+        analysis directory.
+
+        Arguments:
+          inline_pngs: if set True then PNG image data will be inlined
+            (report file will be more portable)
+        """
+        html = HTMLPageWriter("QC for %s" % os.path.basename(self.__dirn))
+        # Title
+        html.add("<h1>QC for %s</h1>" % os.path.basename(self.__dirn))
+        # Add styles
+        html.addCSSRule("h1 { background-color: #42AEC2;\n"
+                        "     color: white;\n"
+                        "     padding: 5px 10px; }")
+        html.addCSSRule("h2 { background-color: #8CC63F;\n"
+                        "     color: white;\n"
+                        "     display: inline-block;\n"
+                        "     padding: 5px 15px;\n"
+                        "     margin: 0;\n"
+                        "     border-top-left-radius: 20;\n"
+                        "     border-bottom-right-radius: 20; }")
+        html.addCSSRule(".sample { margin: 10 10;\n"
+                        "          border: solid 2px #8CC63F;\n"
+                        "          padding: 0;\n"
+                        "          background-color: #ffe;\n"
+                        "          border-top-left-radius: 25;\n"
+                        "          border-bottom-right-radius: 25; }")
+        html.addCSSRule("table.summary { border: solid 1px grey;\n"
+                        "                font-size: 90% }")
+        html.addCSSRule("table.summary th { background-color: grey;\n"
+                        "                   color: white; }")
+        html.addCSSRule("table.summary td { text-align: right; \n"
+                        "                   padding: 2px 5px;\n"
+                        "                   border-bottom: solid 1px lightgray; }")
+        html.addCSSRule("table.fastqc_summary td.PASS { font-weight: bold;\n"
+                        "                               color: green; }")
+        html.addCSSRule("table.fastqc_summary td.WARN { font-weight: bold;\n"
+                        "                               color: orange; }")
+        html.addCSSRule("table.fastqc_summary td.FAIL { font-weight: bold;\n"
+                        "                               color: red; }")
+        html.addCSSRule("td { vertical-align: top; }")
+        html.addCSSRule("img { background-color: white; }")
+        html.addCSSRule("p { font-size: 85%;\n"
+                        "    color: #808080; }")
+        # Index
+        html.add("<p>Samples in %s</p>" % self.__dirn)
+        html.add("<table class='summary'>")
+        html.add("<tr><th>Sample</th></tr>")
+        for sample in self.__samples:
+            html.add("<tr>")
+            html.add("<td><a href='#%s'>%s</a></td>" % (sample.name,sample.name))
+            html.add("</tr>")
+        html.add("</table>")
+        # QC plots etc
+        for sample in self.__samples:
+            html.add("<div class='sample'>")
+            html.add("<a name='%s'><h2>%s</h2></a>" % (sample.name,sample.name))
+            html.add("<table><tr>")
+            # FastQC
+            html.add("<td>")
+            html.add("<h3>FastQC</h3>")
+            if sample.fastqc():
+                # Link to the report HTML
+                fastqc_report = os.path.join('qc',sample.fastqc(),'fastqc_report.html')
+                # Add summary table
+                fastqc_summary = os.path.join(self.__qc_dir,sample.fastqc(),'summary.txt')
+                if os.path.exists(fastqc_summary):
+                    html.add("<table class='fastqc_summary summary'>")
+                    html.add("<tr><th>Test</th><th>Outcome</th></tr>")
+                    test_id = 0
+                    for line in open(fastqc_summary,'rU'):
+                        fields = line.split('\t')
+                        test_name = fields[1]
+                        test_link = fastqc_report + "#M%d" % test_id
+                        test_outcome = fields[0]
+                        html.add("<tr><td><a href='%s'>%s</a></td><td class='%s'>%s</td></tr>" % \
+                                     (test_link,test_name,test_outcome,test_outcome))
+                        test_id += 1
+                    html.add("</table>")
+                # Direct link to full report
+                html.add("<p><a href='%s'>Full FastQC report for %s</a></p>" % (fastqc_report,
+                                                                           sample.name))
+            else:
+                html.add("No FastQC report found")
+            html.add("</td>")
+            # Screens
+            html.add("<td>")
+            html.add("<h3>Screens</h3>")
+            if sample.screens():
+                for s in sample.screens():
+                    # Get name/description
+                    for screen_name in ('model_organisms','other_organisms','rRNA'):
+                        try:
+                            s.index(screen_name)
+                            description = screen_name.replace('_',' ').title()
+                        except ValueError:
+                            pass
+                    html.add("<p>%s:</p>" % description)
+                    # Add Images
+                    if not inline_pngs:
+                        html_content="<a href='qc/%s'><img src='%s' height=250 /></a>" % (s,s)
+                    else:
+                        pngdata = PNGBase64Encoder().encodePNG(os.path.join(self.__qc_dir,s))
+                        html_content="<a href='qc/%s'><img src='data:image/png;base64,%s' height=250 /></a>" % (s,pngdata)
+                    html.add(html_content)
+                    # Link to text files
+                    screen_txt = os.path.splitext(s)[0] + '.txt'
+                    html.add("<p>(See original data for <a href='qc/%s'>%s</a>)</p>" % \
+                                 (screen_txt,description))
+            else:
+                html.add("No screens found")
+            html.add("</td>")
+            html.add("</tr></table>")
+            html.add("</div>")
+        html.write(os.path.join(self.__dirn,'qc_report.html'))
+
+    def zip(self):
+        """Make a zip file containing the report and the images
+
+        Generate the 'qc_report.html' file and make a zip file
+        'qc_report.zip' which contains the report plus the
+        associated image files, which can be unpacked elsewhere
+        for viewing.
+        """
+        self.html(inline_pngs=True)
+        cwd = os.getcwd()
+        os.chdir(self.__dirn)
+        try:
+            z = zipfile.ZipFile('qc_report.zip','w')
+            z.write('qc_report.html')
+            for sample in self.__samples:
+                for screen in sample.screens():
+                    # Add screen files
+                    z.write(os.path.join('qc',screen))
+                    z.write(os.path.join('qc',os.path.splitext(screen)[0]+'.txt'))
+                if sample.fastqc():
+                    # Add all files in fastqc dir
+                    add_dir_to_zip(z,os.path.join('qc',sample.fastqc()))
+        except Exception, ex:
+            print "Exception creating zip archive: %s" % ex
+        os.chdir(cwd)
+    
+def add_dir_to_zip(z,dirn):
+    """Recursively add a directory and its contents to a zip archive
+
+    z is a zipfile.ZipFile object already opened for reading; this
+    function adds all files in directory dirn and its subdirectories
+    to z.
+    """
+    for f in os.listdir(dirn):
+        f1 = os.path.join(dirn,f)
+        logging.debug("%s" % f1)
+        if os.path.isdir(f1):
+            add_dir_to_zip(z,f1)
+        else:
+            z.write(f1)
+
+class IlluminaQCSample:
+    """Class for holding QC data for an Illumina sample
+
+    An Illumina QC run typically conists of contamination screens
+    and output from FastQC.
+    """
+
+    def __init__(self,name,fastq):
+        """Create a new IlluminaQCSample instance
+
+        Note that the sample name is used as the base name for
+        identifying the associated output files.
+
+        Arguments:
+          name: name for the sample
+          fastq: associated FASTQ file
+        """
+        self.name = name
+        self.fastq = fastq
+        self.__screens = []
+        self.__fastqc = None
+
+    def addScreen(self,screen):
+        """Associate a fastq_screen with the sample
+
+        Arguments:
+          screen: fastq_screen file name
+        """
+        self.__screens.append(screen)
+        self.__screens.sort()
+
+    def addFastQC(self,fastqc_dir):
+        """Associate a FastQC output directory with the sample
+        """
+        self.__fastqc = fastqc_dir
+
+    def screens(self):
+        """Return list of screens for a sample
+        """
+        return self.__screens
+
+    def fastqc(self):
+        """Return name of FastQC run dir
+        """
+        return self.__fastqc
+
 class SolidQCReport:
     """Class for reporting QC run on SOLiD data
 
@@ -79,7 +320,7 @@ class SolidQCReport:
         else:
             primary_data = Pipeline.GetSolidPairedEndFiles(self.__dirn)
         for data in primary_data:
-            sample = os.path.splitext(data[0])[0]
+            sample = rootname(data[0])
             if self.__paired_end:
                 # Strip trailing "_F3" from names
                 sample = sample.replace('_F3','')
@@ -517,6 +758,16 @@ def cmp_samples(s1,s2):
     """
     return cmp(s1.name,s2.name)
 
+def rootname(name):
+    """Remove all extensions from name
+    """
+    try:
+        i = name.index('.')
+        return name[0:i]
+    except ValueError:
+        # No dot
+        return name
+
 #######################################################################
 # Main program
 #######################################################################
@@ -536,4 +787,12 @@ if __name__ == "__main__":
     else:
         for d in arguments:
             print "Generating report for %s" % d
-            SolidQCReport(d).zip()
+            try:
+                os.path.abspath(d).index('solid')
+                SolidQCReport(d).zip()
+            except ValueError:
+                try:
+                   os.path.abspath(d).index('ILLUMINA')
+                   IlluminaQCReport(d).zip()
+                except ValueError:
+                    logging.error("Unable to identify platform for %s" % d)
