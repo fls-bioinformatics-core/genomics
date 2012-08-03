@@ -47,6 +47,11 @@ There are other scripts which perform QC substeps:
 
 These also use `functions.sh` and `ngs_utils.sh` from the `share` directory.
 
+Finally there is a reporting utility which generates HTML reports from QC runs:
+
+*   `qcreporter.py`: creates HTML report plus `zip` archive for specified
+    QC run directories.
+
 Setup
 -----
 
