@@ -1,17 +1,17 @@
 #!/bin/env python
 #
-#     qc_report.py: generate report file for NGS qc runs
+#     qcreporter.py: generate report file for NGS qc runs
 #     Copyright (C) University of Manchester 2012 Peter Briggs
 #
 ########################################################################
 #
-# qc_report.py
+# qcreporter.py
 #
 #########################################################################
 
-"""qc_report
+"""qcreporter
 
-Generate a HTML report for an NGS QC pipeline run.
+Generate HTML reports for an NGS QC pipeline runs.
 """
 
 #######################################################################
