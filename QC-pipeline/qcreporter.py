@@ -849,7 +849,11 @@ if __name__ == "__main__":
     # Set up command line parser
     p = optparse.OptionParser(usage="%prog [options] DIR [ DIR ...]",
                               description=
-                              "Generate QC report for each directory DIR.")
+                              "Generate QC report for each directory DIR which contains the "
+                              "outputs from a QC script (either SOLiD or Illumina). Creates "
+                              "a 'qc_report.html' in DIR plus an archive 'qc_report.zip' "
+                              "which contains the HTML plus all the necessary files for "
+                              "unpacking and viewing elsewhere.")
 
     # Deal with command line
     options,arguments = p.parse_args()
