@@ -598,24 +598,10 @@ class SolidQCReporter(QCReporter):
             print "Sample: '%s'" % sample
         # Filtering stats
         if os.path.exists(stats_file):
-            fp = open(stats_file,'rU')
-            for line in fp:
-                if line.startswith('#'): continue
-                fields = line.rstrip().split('\t')
-                sample_name = fields[0]
-                if self.__paired_end: sample_name = sample_name.replace('_paired','')
-                for sample in self.samples:
-                    if sample_name == sample.name:
-                        sample.addFilterStat('reads',fields[1])
-                        sample.addFilterStat('reads_post_filter',fields[2])
-                        sample.addFilterStat('diff_reads',fields[3])
-                        sample.addFilterStat('percent_filtered',fields[4])
-                        if self.__paired_end:
-                            sample.addFilterStat('reads_post_filter2',fields[5])
-                            sample.addFilterStat('diff_reads2',fields[6])
-                            sample.addFilterStat('percent_filtered2',fields[7])
-                        break
-            fp.close()
+            self.__stats = TabFile.TabFile(stats_file,first_line_is_header=True)
+            # Fix sample names for paired-end data
+            if self.__paired_end:
+                for line in self.__stats: line['File'] = line['File'].replace('_paired','')
         else:
             logging.error("Can't find stats file %s" % stats_file)
 
@@ -640,16 +626,17 @@ class SolidQCReporter(QCReporter):
                           "<th>Reads after filter</th>"
                           "<th># removed</th><th>% removed</th></tr>")
         for sample in self.samples:
+            stats = self.__stats.lookup('File',sample.name)[0]
             self.html.add("<tr>")
             self.html.add("<td><a href='#%s'>%s</a></td>" % (sample.name,sample.name))
-            self.html.add("<td>%s</td>" % sample.filterStat('reads'))
-            self.html.add("<td>%s</td>" % sample.filterStat('reads_post_filter'))
-            self.html.add("<td>%s</td>" % sample.filterStat('diff_reads'))
-            self.html.add("<td>%s</td>" % sample.filterStat('percent_filtered'))
+            self.html.add("<td>%s</td>" % stats['Reads'])
+            self.html.add("<td>%s</td>" % stats[2])
+            self.html.add("<td>%s</td>" % stats[3])
+            self.html.add("<td>%s</td>" % stats[4])
             if self.__paired_end:
-                self.html.add("<td>%s</td>" % sample.filterStat('reads_post_filter2'))
-                self.html.add("<td>%s</td>" % sample.filterStat('diff_reads2'))
-                self.html.add("<td>%s</td>" % sample.filterStat('percent_filtered2'))
+                self.html.add("<td>%s</td>" % stats[5])
+                self.html.add("<td>%s</td>" % stats[6])
+                self.html.add("<td>%s</td>" % stats[7])
             self.html.add("</tr>")
         self.html.add("</table>")
         if self.__paired_end:
@@ -684,24 +671,6 @@ class SolidQCSample(QCSample):
         """
         QCSample.__init__(self,name,qc_dir)
         self.__paired_end = paired_end
-        self.__filter_stats = {}
-
-    def addFilterStat(self,name,value):
-        """Associate a filtering statistic with the sample
-
-        Arguments:
-          name: name for the statistic
-          value: the value of the statistic
-        """
-        self.__filter_stats[name] = value
-
-    def filterStat(self,name):
-        """Return value associated with a statistic
-        """
-        try:
-            return self.__filter_stats[name]
-        except KeyError:
-            return None
 
     def report(self,html):
         """Write HTML report for this sample
