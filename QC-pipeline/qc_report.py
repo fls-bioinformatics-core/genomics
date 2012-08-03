@@ -32,6 +32,7 @@ SHARE_DIR = os.path.abspath(
 sys.path.append(SHARE_DIR)
 try:
     import Pipeline
+    import TabFile
 except ImportError, ex:
     print "Error importing modules: %s" % ex
     print "Check PYTHONPATH"
@@ -412,6 +413,47 @@ class IlluminaQCReporter(QCReporter):
             sample = rootname(data[0])
             self.addSample(IlluminaQCSample(sample,self.qc_dir))
             print "Sample: '%s'" % sample
+        # Summarise data from fastqc
+        self.__stats = TabFile.TabFile(column_names=('Sample',
+                                                     'Reads',
+                                                     'FastQC Failures',
+                                                     'FastQC Warnings'))
+        for sample in self.samples:
+            self.__stats.append(data=(sample.name,))
+            if sample.fastqc():
+                # Get the number of reads
+                # This is printed in the fastqc_data.txt file, e.g.:
+                #Total Sequences	25706792
+                fastqc_data_file = os.path.join(self.qc_dir,sample.fastqc(),"fastqc_data.txt")
+                reads = '?'
+                for line in open(fastqc_data_file,'rU'):
+                    if line.startswith('Total Sequences'):
+                        reads = line.split('\t')[1]
+                        break
+                self.__stats[-1]['Reads'] = reads
+                # Count warnings and failures from FastQC
+                # These are summarised in the summary.txt file, e.g.:
+                #PASS	Sequence Length Distribution	ZJ1.fastq.gz
+                #WARN	Sequence Duplication Levels	ZJ1.fastq.gz
+                #...
+                summary_file = os.path.join(self.qc_dir,sample.fastqc(),"summary.txt")
+                fastqc_failures = 0
+                fastqc_warnings = 0
+                for line in open(summary_file,'rU'):
+                    status = line.split('\t')[0]
+                    if status == 'WARN':
+                        fastqc_warnings += 1
+                    elif status == 'FAIL':
+                        fastqc_failures += 1
+                if fastqc_failures == 0: fastqc_failures = '&nbsp;'
+                if fastqc_warnings == 0: fastqc_warnings = '&nbsp;'
+                self.__stats[-1]['FastQC Failures'] = fastqc_failures
+                self.__stats[-1]['FastQC Warnings'] = fastqc_warnings
+            else:
+                # No fastqc results
+                self.__stats[-1]['Reads'] = '?'
+                self.__stats[-1]['FastQC Failures'] = '&nbsp;'
+                self.__stats[-1]['FastQC Warnings'] = '&nbsp;'
 
     def report(self):
         """Write the HTML report
@@ -429,10 +471,14 @@ class IlluminaQCReporter(QCReporter):
         # Index
         self.html.add("<p>Samples in %s</p>" % self.dirn)
         self.html.add("<table class='summary'>")
-        self.html.add("<tr><th>Sample</th></tr>")
-        for sample in self.samples:
+        self.html.add("<tr><th>Sample</th><th>Reads</th><th>FastQC Failures</th>"
+                      "<th>FastQC Warnings</th></tr>")
+        for sample in self.__stats:
             self.html.add("<tr>")
-            self.html.add("<td><a href='#%s'>%s</a></td>" % (sample.name,sample.name))
+            self.html.add("<td><a href='#%s'>%s</a></td>" % (sample['Sample'],sample['Sample']))
+            self.html.add("<td>%s</td>" % sample['Reads'])
+            self.html.add("<td>%s</td>" % sample['FastQC Failures'])
+            self.html.add("<td>%s</td>" % sample['FastQC Warnings'])
             self.html.add("</tr>")
         self.html.add("</table>")
         # Detailed data for each sample
