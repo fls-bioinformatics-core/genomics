@@ -1,3 +1,9 @@
+2012-08-03  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* QC-pipeline/qcreporter.py
+	- new utility to generate HTML reports for SOLiD and Illumina QC
+	  script runs
+
 2012-07-27  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* shared/TabFile.py
