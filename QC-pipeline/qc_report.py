@@ -185,7 +185,7 @@ class QCSample:
     HTML code specific to the pipeline in question.
     """
 
-    def __init__(self,name,qc_dir,solid_qual=None):
+    def __init__(self,name,qc_dir):
         """Create a new QCSample instance
 
         Note that the sample name is used as the base name for
@@ -194,7 +194,6 @@ class QCSample:
         Arguments:
           name: name for the sample
           qc_dir: path to QC directory
-          solid_qual: (optional) qual file name (for SOLiD data)
         """
         self.name = name
         self.qc_dir = qc_dir
@@ -214,11 +213,14 @@ class QCSample:
                 if f.endswith('_screen.png'):
                     self.addScreen(f)
             # Boxplots
-            if f.startswith(sample_name_dot) or f.startswith(sample_name_underscore):
-                if f.endswith('_boxplot.png'):
+            if f.endswith('_boxplot.png'):
+                if f.startswith(sample_name_dot) or f.startswith(sample_name_underscore):
                     self.addBoxplot(f)
-            elif solid_qual and f.startswith(solid_qual) and f.endswith('_boxplot.png'):
-                    self.addBoxplot(f)
+                else:
+                    # Try removing "_QV" from names to see if we can match
+                    if f.replace('_QV','').startswith(sample_name_underscore) or \
+                            f.replace('_QV','').startswith(sample_name_dot):
+                        self.addBoxplot(f)
             # FastQC
             if f == "%sfastqc" % sample_name_underscore:
                 self.addFastQC(f)
@@ -543,11 +545,10 @@ class SolidQCReporter(QCReporter):
             primary_data = Pipeline.GetSolidPairedEndFiles(self.dirn)
         for data in primary_data:
             sample = rootname(data[0])
-            qual = os.path.basename(data[1])
             if self.__paired_end:
                 # Strip trailing "_F3" from names
                 sample = sample.replace('_F3','')
-            self.addSample(SolidQCSample(sample,self.qc_dir,qual,self.__paired_end))
+            self.addSample(SolidQCSample(sample,self.qc_dir,self.__paired_end))
             print "Sample: '%s'" % sample
         # Filtering stats
         if os.path.exists(stats_file):
@@ -624,7 +625,7 @@ class SolidQCSample(QCSample):
     boxplots, quality filtering stats, and contamination screens.
     """
 
-    def __init__(self,name,qc_dir,qual,paired_end):
+    def __init__(self,name,qc_dir,paired_end):
         """Create a new SolidQCSample instance
 
         Note that the sample name is used as the base name for
@@ -633,10 +634,9 @@ class SolidQCSample(QCSample):
         Arguments:
           name: name for the sample
           qc_dir: path to QC directory
-          qual: qual file name
           paired_end: indicate if data is paired-end
         """
-        QCSample.__init__(self,name,qc_dir,solid_qual=qual)
+        QCSample.__init__(self,name,qc_dir)
         self.__paired_end = paired_end
         self.__filter_stats = {}
 
