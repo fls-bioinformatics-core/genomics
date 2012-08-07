@@ -27,6 +27,10 @@ The program was developed to work with MACS 1.4."""
 
 import os
 import sys
+import optparse
+import logging
+# Configure logging output
+logging.basicConfig(format="[%(levelname)s] %(message)s")
 # Put ../share onto Python search path for modules
 SHARE_DIR = os.path.abspath(
     os.path.normpath(
@@ -52,23 +56,23 @@ import Spreadsheet
 #######################################################################
 
 if __name__ == "__main__":
+    # Process command line
+    p = optparse.OptionParser(usage="%prog <MACS_OUTPUT> [ <XLS_OUT> ]",
+                              description=
+                              "Create an XLS spreadsheet from the output of the MACS peak "
+                              "caller. <MACS_OUTPUT> is the output '.xls' file from MACS; "
+                              "if supplied then <XLS_OUT> is the name to use for the output "
+                              "file, otherwise it will be called 'XLS_<MACS_OUTPUT>.xls'.")
+    options,args = p.parse_args()
     # Get input file name
-    if len(sys.argv) < 2 or len(sys.argv) > 3:
-        print "Usage: %s <macs_file> [ <xls_out> ]" % sys.argv[0]
-        print
-        print "Create an XLS spreadsheet from the output of the MACS peak caller."
-        print
-        print "The output XLS file will be written to <xls_out> if specified,"
-        print "otherwise the output file will be called XLS_<macs_file>.xls."
-        print
-        print "Works with output from MACS 1.4."
-        sys.exit(1)
-    macs_in = sys.argv[1]
+    if len(args) < 1 or len(args) > 2:
+        p.error("Wrong number of arguments")
+    macs_in = args[0]
 
     # Build output file name: if not explicitly supplied on the command
     # line then use "XLS_<input_name>.xls"
-    if len(sys.argv) == 3:
-        xls_out = sys.argv[2]
+    if len(args) == 2:
+        xls_out = args[1]
     else:
         # MACS output file might already have an .xls extension
         # but we'll add an explicit .xls extension
@@ -102,7 +106,7 @@ if __name__ == "__main__":
             macs_version = line.split()[8]
             break
     if macs_version is None:
-        print "ERROR couldn't detect MACS version"
+        logging.error("couldn't detect MACS version")
         sys.exit(1)
     else:
         print "Input file is from MACS %s" % macs_version
