@@ -1,3 +1,9 @@
+2012-08-07  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* ChIP-seq/make_macs_xls.py
+	- version 0.1.0: fixed to handle output from MACS 1.4.2 (backwards
+	  compatible with output from other version of MACS)
+
 2012-08-03  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* QC-pipeline/qcreporter.py
