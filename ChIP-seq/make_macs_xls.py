@@ -40,6 +40,12 @@ from TabFile import TabFile
 import Spreadsheet
 
 #######################################################################
+# Module metadata
+#######################################################################
+
+__version__ = '0.1.0'
+
+#######################################################################
 # Class definitions
 #######################################################################
 
@@ -58,6 +64,7 @@ import Spreadsheet
 if __name__ == "__main__":
     # Process command line
     p = optparse.OptionParser(usage="%prog <MACS_OUTPUT> [ <XLS_OUT> ]",
+                              version=__version__,
                               description=
                               "Create an XLS spreadsheet from the output of the MACS peak "
                               "caller. <MACS_OUTPUT> is the output '.xls' file from MACS; "
