@@ -1,15 +1,15 @@
 #!/bin/env python
 #
-#     macs_to_XLS.py: Convert MACS output file to XLS spreadsheet
-#     Copyright (C) University of Manchester 2011 Peter Briggs
+#     make_macs_xls.py: Convert MACS output file to XLS spreadsheet
+#     Copyright (C) University of Manchester 2011-2 Peter Briggs
 #
 ########################################################################
 #
-# macs_to_XLS.py
+# make_macs_xls.py
 #
 #########################################################################
 
-"""macs_to_XLS.py
+"""make_macs_xls.py
 
 Convert MACS output file to XLS spreadsheet
 
