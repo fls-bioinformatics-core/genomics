@@ -96,7 +96,7 @@ class QCReporter:
         # Add sample to list
         self.__samples.append(sample)
         # Sort sample list on name
-        self.__samples.sort(lambda s1,s2: cmp(s1.name,s2.name))
+        self.__samples.sort(lambda s1,s2: cmp_samples(s1.name,s2.name))
 
     def __init_html(self):
         """Internal: initialise and populate the HTMLPageWriter
@@ -829,7 +829,15 @@ def cmp_boxplots(b1,b2):
 def cmp_samples(s1,s2):
     """Compare the names of two samples for sorting purposes
     """
-    return cmp(s1.name,s2.name)
+    # Split names into leading part plus trailing number
+    l1,t1 = split_sample_name(s1)
+    l2,t2 = split_sample_name(s2)
+    if l1 != l2:
+        # Return string comparison
+        return cmp(s1,s2)
+    else:
+        # Compare trailing numbers
+        return cmp(t1,t2)
 
 def rootname(name):
     """Remove all extensions from name
@@ -840,6 +848,21 @@ def rootname(name):
     except ValueError:
         # No dot
         return name
+
+def split_sample_name(name):
+    """Split name into leading part plus trailing number
+
+    Returns (start,number)
+    """
+    i = len(name)
+    while i > 0 and name[i-1].isdigit(): i -= 1
+    if i > 0:
+        leading = name[:i]
+        trailing = int(name[i:])
+    else:
+        leading = name
+        trailing = None
+    return (leading,trailing)
 
 #######################################################################
 # Main program
