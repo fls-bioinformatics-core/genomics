@@ -884,15 +884,26 @@ if __name__ == "__main__":
     # Check arguments
     if len(arguments) < 1:
         p.error("Takes at least one argument (one or more directories)")
-    else:
-        for d in arguments:
-            print "Generating report for %s" % d
+
+    # Identify platform and run the appropriate reporter
+    for d in arguments:
+        platform = None
+        print "Generating report for %s" % d
+        try:
+            os.path.abspath(d).index('solid')
+            platform = 'solid'
+        except ValueError:
             try:
-                os.path.abspath(d).index('solid')
-                SolidQCReporter(d).zip()
+                os.path.abspath(d).index('ILLUMINA')
+                platform = 'illumina'
             except ValueError:
-                try:
-                   os.path.abspath(d).index('ILLUMINA')
-                   IlluminaQCReporter(d).zip()
-                except ValueError:
-                    logging.error("Unable to identify platform for %s" % d)
+                pass
+        if platform is None:
+            logging.error("Unable to identify platform for %s" % d)
+        elif platform == 'solid':
+            SolidQCReporter(d).zip()
+        elif platform == 'illumina':
+            IlluminaQCReporter(d).zip()
+        else:
+            logging.error("Unknown platform '%s'" % platform)
+            
