@@ -856,7 +856,7 @@ def split_sample_name(name):
     """
     i = len(name)
     while i > 0 and name[i-1].isdigit(): i -= 1
-    if i > 0:
+    if i > 0 and i < len(name):
         leading = name[:i]
         trailing = int(name[i:])
     else:
