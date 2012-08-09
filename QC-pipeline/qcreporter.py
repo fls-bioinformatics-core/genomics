@@ -469,7 +469,7 @@ class IlluminaQCReporter(QCReporter):
         self.html.addCSSRule("table.fastqc_summary td.FAIL { font-weight: bold;\n"
                              "                               color: red; }")
         # Index
-        self.html.add("<p>Samples in %s</p>" % self.dirn)
+        self.html.add("<p>%d samples in %s</p>" % (len(self.samples),self.dirn))
         self.html.add("<table class='summary'>")
         self.html.add("<tr><th>Sample</th><th>Reads</th><th>FastQC Failures</th>"
                       "<th>FastQC Warnings</th></tr>")
@@ -612,7 +612,7 @@ class SolidQCReporter(QCReporter):
         analysis directory.
         """
         # Index
-        self.html.add("<p>Samples in %s</p>" % self.dirn)
+        self.html.add("<p>%d samples in %s</p>" % (len(self.samples),self.dirn))
         self.html.add("<table class='summary'>")
         if not self.__paired_end:
             self.html.add("<tr><th>Sample</th><th>Reads</th><th>Reads after filter</th>"
