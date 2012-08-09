@@ -38,6 +38,9 @@ except ImportError, ex:
     print "Check PYTHONPATH"
     sys.exit(1)
 
+# Configure logging output
+logging.basicConfig(format="[%(levelname)s] %(message)s")
+
 #######################################################################
 # Base class definitions
 #######################################################################
@@ -451,9 +454,13 @@ class IlluminaQCReporter(QCReporter):
                 self.__stats[-1]['FastQC Warnings'] = fastqc_warnings
             else:
                 # No fastqc results
+                logging.warning("%s: no FastQC results found" % sample.name)
                 self.__stats[-1]['Reads'] = '?'
-                self.__stats[-1]['FastQC Failures'] = '&nbsp;'
+                self.__stats[-1]['FastQC Failures'] = 'No FastQC data'
                 self.__stats[-1]['FastQC Warnings'] = '&nbsp;'
+            # Check for fastq_screens
+            if len(sample.screens()) != 3:
+                logging.warning("%s: wrong number of screens" % sample.name)
 
     def report(self):
         """Write the HTML report
@@ -604,6 +611,16 @@ class SolidQCReporter(QCReporter):
                 for line in self.__stats: line['File'] = line['File'].replace('_paired','')
         else:
             logging.error("Can't find stats file %s" % stats_file)
+        # Check on boxplots and screens
+        for sample in self.samples:
+            if self.__paired_end:
+                if len(sample.boxplots()) != 4:
+                    logging.warning("%s: wrong number of boxplots" % sample.name)
+            else:
+                if len(sample.boxplots()) != 2:
+                    logging.warning("%s: wrong number of boxplots" % sample.name)
+            if len(sample.screens()) != 3:
+                logging.warning("%s: wrong number of screens" % sample.name)
 
     def report(self):
         """Write the HTML report
