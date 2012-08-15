@@ -1,3 +1,9 @@
+2012-08-15  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* illumina2cluster/update_sample_sheet.py
+	- new utility for editing Illumina GA2 SampleSheet.csv files before
+	  running bcl to fastq conversion
+
 2012-08-07  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* ChIP-seq/make_macs_xls.py
