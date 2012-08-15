@@ -267,7 +267,7 @@ function rsync_solid_to_cluster() {
 #
 # Collect and process arguments
 # NB strip any trailing '/' from the directory name
-solid_runs=${1%/}
+solid_dir=${1%/}
 if [ ! -z "$2" ] ; then
     REMOTE_USER=`echo $2 | cut -d@ -f1`
     REMOTE_HOST=`echo $2 | cut -d@ -f2 | cut -d: -f1`
@@ -276,11 +276,11 @@ fi
 EMAIL_ADDRESS=$3
 #
 # Do checks
-if [ -z "$solid_runs" ] ; then
+if [ -z "$solid_dir" ] ; then
     echo $usage
     exit 1
-elif [ ! -d "$solid_runs" ] ; then
-    echo "${solid_runs}: run not found"
+elif [ ! -d "$solid_dir" ] ; then
+    echo "${solid_dir}: run not found"
     exit 1
 fi
 if [ -z "$REMOTE_USER" ] || [ -z "$REMOTE_HOST" ] || [ -z "$REMOTE_DATADIR" ]
@@ -290,14 +290,22 @@ then
     exit 1
 fi
 #
-# Look for second SOLiD run dir
-if [ -d "${solid_runs}_2" ] ; then
-    prompt_user "Found partner directory ${solid_runs}_2. Also include?" 
-    response=$?
-    if [ $response == 1 ] ; then
-	solid_runs="${solid_runs} ${solid_runs}_2"
+# Collect SOLiD run dirs to transfer
+solid_runs=
+solid_run_base=`echo $solid_dir | sed "s/_BC$//g" | sed "s/_FRAG$//g" | sed "s/_PE$//g"`
+extensions="_FRAG _FRAG_BC _FRAG_2 _FRAG_BC_2 _PE_BC _PE_BC_2"
+for ext in $extensions ; do
+    solid_run_dir=${solid_run_base}${ext}
+    if [ "${solid_run_dir}" == "${solid_dir}" ] ; then
+	solid_runs="${solid_runs} ${solid_run_dir}"
+    elif [ -d "${solid_run_dir}" ] ; then
+	prompt_user "Include directory ${solid_run_dir}?" 
+	response=$?
+	if [ $response == 1 ] ; then
+	    solid_runs="${solid_runs} ${solid_run_dir}"
+	fi
     fi
-fi
+done
 #
 # Get email address for notifications, if not provided on command line
 if [ -z "$EMAIL_ADDRESS" ] ; then
