@@ -58,5 +58,9 @@ Options:
 
 Example:
 
+Read in the sample sheet file `SampleSheet.csv`, update the `SampleProject` and
+`SampleID` for lanes 1 and 8, and write the updated sample sheet to the file
+`SampleSheet2.csv`:
+
     update_sample_sheet.py -o SampleSheet2.csv --set-project=1,8:Control \
         --set-id=1:PhiX_10pM --set-id=8:PhiX_12pM SampleSheet.csv
