@@ -4,7 +4,7 @@ illumina2cluster
 Utilities for preparing data on the cluster from the Illumina instrument:
 
  *   `bclToFastq.sh`: generate FASTQ from BCL files
- *   `update_sample_sheet.py`: 
+ *   `update_sample_sheet.py`: edit SampleSheet.csv before generating FASTQ
 
 
 bclToFastq.sh
