@@ -113,6 +113,8 @@ fi
 run_fastq_screen $FASTQ
 #
 # Run FASTQC
+echo "Running FastQC command: ${FASTQC}"
+${FASTQC} --version
 ${FASTQC} --outdir qc $FASTQ
 #
 # Update permissions and group (if specified)
