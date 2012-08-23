@@ -22,6 +22,7 @@ about the run, and suggest a layout scheme for the analysis directories.
 import sys
 import os
 import string
+import shutil
 import logging
 logging.basicConfig(format="%(levelname)s %(message)s")
 
@@ -403,6 +404,53 @@ def print_md5sums(solid_runs):
                     except Exception,ex:
                         logging.error("FAILED for F5 qual: %s" % ex)
 
+def copy_data(solid_runs,library_defns):
+    """Copy selection of primary data files to current directory
+
+    Locates primary data files matching a sample/library specification
+    string of the form <sample_pattern>/<library_pattern>. The patterns
+    are matching against sample and library names, and can be either
+    exact or can include a trailing wildcard character (i.e. *) to match
+    multiple names. For example:
+
+    - 'SA_LH_POOL_49/LH1' matches the library called 'LH1' in the sample
+      'SA_LH_POOL_49';
+
+    - '*/LH1' matches all libraries called 'LH1' in any sample;
+
+    - '*/LH*' matches all libraries starting 'LH' in any sample;
+
+    - '*/*' matches all primary data files in all runs
+
+    The files are copied to the current directory.
+
+    Arguments:
+      solid_runs: list of populated SolidRun objects
+      library_defns: list of library definition strings (see above
+        for syntax/format)
+    """
+    for library_defn in library_defns:
+        sample = library_defn.split('/')[0]
+        library = library_defn.split('/')[1]
+        print "Copy: look for samples matching pattern %s" % library_defn
+        print "Data files will be copied to %s" % os.getcwd()
+        for run in solid_runs:
+            for lib in run.fetchLibraries(sample,library):
+                print "-> matched %s/%s" % (lib.parent_sample.name,lib.name)
+                primary_data_files =[]
+                primary_data_files.append(lib.csfasta)
+                primary_data_files.append(lib.qual)
+                if SolidData.is_paired_end(run):
+                    primary_data_files.append(lib.csfasta_f5)
+                    primary_data_files.append(lib.qual_f5)
+                for filn in primary_data_files:
+                    print "\tCopying .../%s" % os.path.basename(filn)
+                    dst = os.path.abspath(os.path.basename(filn))
+                    if os.path.exists(dst):
+                        logging.error("File %s already exists! Skipped" % dst)
+                    else:
+                        shutil.copy(filn,dst)
+
 def strip_prefix(path,prefix):
     """Strip the supplied prefix from a file name
     """
@@ -435,6 +483,8 @@ if __name__ == "__main__":
         print "  --rsync:  generate script for rsyncing data"
         print "  --spreadsheet[=<file>.xls]: write report to Excel spreadsheet"
         print "  --md5sum: calculate md5sums for primary data files"
+        print "  --copy=<sample>/<library>: copy data files from specific"
+        print "            library matching '<sample>/<library>' pattern to pwd"
         sys.exit()
 
     # Solid run directories
@@ -477,13 +527,22 @@ if __name__ == "__main__":
     if "--md5sum" in sys.argv[1:-1]:
         do_md5sum = True
 
+    do_copy = False
+    copy_libraries = []
+    for arg in sys.argv[1:-1]:
+        if arg.startswith("--copy"):
+            do_copy = True
+            i = arg.index("=")
+            copy_libraries.append(arg[i+1:])
+
     # Check there's at least one thing to do
     if not (do_report_run or 
             do_suggest_layout or 
             do_spreadsheet or 
             do_checks or
             do_suggest_rsync or
-            do_md5sum):
+            do_md5sum or
+            do_copy):
         do_report_run = True
 
     # Get the run information
@@ -522,6 +581,10 @@ if __name__ == "__main__":
             print_md5sums(solid_runs)
         except ImportError:
             logging.error("Unable to generate MD5 sums: %s" % ex)
+
+    # Copy specific primary data files
+    if do_copy:
+        copy_data(solid_runs,copy_libraries)
 
     # Do verification
     # Nb this should always be the last step
