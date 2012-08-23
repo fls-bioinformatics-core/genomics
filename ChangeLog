@@ -1,3 +1,10 @@
+2012-08-23  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* share/SolidData.py
+	- updated to handle situations where SOLiD run directory names
+	  differ from the run names (e.g. because the directory has been
+	  renamed)
+
 2012-08-15  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* illumina2cluster/update_sample_sheet.py
