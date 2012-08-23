@@ -106,20 +106,32 @@ class SolidRun:
             # Directory not found
             logging.info("SOLiD data dir '%s' not found" % solid_run_dir)
             return
-
         self.run_dir = os.path.abspath(solid_run_dir)
-        self.run_name = self.run_dir.strip(os.sep).split(os.sep)[-1]
-        self.run_info = SolidRunInfo(self.run_name)
 
         # Locate and process the run definition file
+        self.run_name = self.run_dir.strip(os.sep).split(os.sep)[-1]
         self.run_defn_filn = os.path.join(self.run_dir,
                                           self.run_name+"_run_definition.txt")
-        if os.path.isfile(self.run_defn_filn):
-            self.run_definition = SolidRunDefinition(self.run_defn_filn)
-        else:
+        if not os.path.isfile(self.run_defn_filn):
             # Unable to find run definition
-            logging.error("Unable to find run definition file for %s" % self.run_dir)
-            return
+            logging.warning("Unable to find run definition file for %s" % self.run_dir)
+            # Attempt to recover: look for other possible candidates
+            self.run_defn_filn = None
+            for f in os.listdir(self.run_dir):
+                if f.endswith("_run_definition.txt"):
+                    self.run_defn_filn = os.path.join(self.run_dir,f)
+                    logging.warning("Using run definition file %s" % self.run_defn_filn)
+                    break
+            # No other candidates found, abort
+            if self.run_defn_filn is None:
+                logging.error("No run definition files found for %s" % self.run_dir)
+                return
+        # Populate run definition object
+        self.run_definition = SolidRunDefinition(self.run_defn_filn)
+
+        # Get run name and info
+        self.run_name = self.run_definition.runName
+        self.run_info = SolidRunInfo(self.run_name)
 
         # Determine samples and libraries
         for i in range(0,self.run_definition.nSamples()):
