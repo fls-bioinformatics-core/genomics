@@ -1154,6 +1154,9 @@ class TestUtils:
     make_solid_dir: constructs a mock SOLiD run directory, including the
     run definition and barcode statistics files
 
+    make_solid_dir_paired_end: constructs a mock SOLiD run directory for a
+    paired-end run
+
     make_run_definition_file: constructs a mock run definition file
 
     make_run_definition_file_paired_end: constructs mock run definition file for
@@ -1170,9 +1173,11 @@ class TestUtils:
 
         Returns the name for the run definition file.
         """
+        # Default run name
+        run_name = "solid0123_20130426_FRAG_BC_2"
         run_definition_text = \
 """version	userId	runType	isMultiplexing	runName	runDesc	mask	protocol
-v0.0	user	FRAGMENT	TRUE	solid0123_20130426_FRAG_BC_2		1_spot_mask_sf	SOLiD4 Multiplex
+v0.0	user	FRAGMENT	TRUE	%s		1_spot_mask_sf	SOLiD4 Multiplex
 primerSet	baseLength
 BC	5
 F3	50
@@ -1189,13 +1194,16 @@ AB_CD_EF_pool		1	default primary	AB_A1M1	SingleTag	hg18	BC Kit Module 1-16	"3"
 AB_CD_EF_pool		1	default primary	AB_A1M2	SingleTag	hg18	BC Kit Module 1-16	"4"
 AB_CD_EF_pool		1	default primary	AB_A1M1_input	SingleTag	hg18	BC Kit Module 1-16	"1"
 AB_CD_EF_pool		1	default primary	AB_A1M2_input	SingleTag	hg18	BC Kit Module 1-16	"2"
-"""       
+"""
         if filename is None:
             # mkstemp returns a tuple
             tmpfile = tempfile.mkstemp()
             filename = tmpfile[1]
+        elif filename.endswith("_run_definition.txt"):
+            # Reset the run name by stripping '_run_definition.txt'
+            run_name = os.path.basename(filename[:(len(filename)-len("_run_definition.txt"))])
         fp = open(filename,'w')
-        fp.write(run_definition_text)
+        fp.write(run_definition_text % run_name)
         fp.close()
         return filename
 
@@ -1335,9 +1343,11 @@ All Beads	Totals	409927600	39452331	457541973
 
         Returns the name for the run definition file.
         """
+        # Default run name
+        run_name = "solid123_20130426_PE_BC"
         run_definition_text = \
 """version	userId	runType	isMultiplexing	runName	runDesc	mask	protocol
-v1.3	lab_user	PAIRED-END	TRUE	solid123_20130426_PE_BC		1_spot_mask_sf	SOLiD4 Multiplex
+v1.3	lab_user	PAIRED-END	TRUE	%s		1_spot_mask_sf	SOLiD4 Multiplex
 primerSet	baseLength
 BC	10
 F5-BC	35
@@ -1359,8 +1369,11 @@ AB_CD_pool		1	default primary	CD_SP6261	SingleTag	none	BC Kit Module 1-96	"2"
             # mkstemp returns a tuple
             tmpfile = tempfile.mkstemp()
             filename = tmpfile[1]
+        elif filename.endswith("_run_definition.txt"):
+            # Reset the run name by stripping '_run_definition.txt'
+            run_name = os.path.basename(filename[:(len(filename)-len("_run_definition.txt"))])
         fp = open(filename,'w')
-        fp.write(run_definition_text)
+        fp.write(run_definition_text % run_name)
         fp.close()
         return filename
 
