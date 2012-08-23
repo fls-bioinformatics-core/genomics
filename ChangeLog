@@ -11,6 +11,10 @@
 	- new option --copy can be used to copy selected primary data files from
 	  a run (useful if preparing data for transfer)
 
+	* illumina2cluster/build_illumina_analysis_dirs.py
+	- new utility to query/build analysis directories for Illumina GA2
+	  sequencing data post bcl-to-fastq conversion
+
 2012-08-15  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* illumina2cluster/update_sample_sheet.py

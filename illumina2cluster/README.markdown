@@ -4,6 +4,7 @@ illumina2cluster
 Utilities for preparing data on the cluster from the Illumina instrument:
 
  *   `bclToFastq.sh`: generate FASTQ from BCL files
+ *   `build_illumina_analysis_dir.py`: create and populate per-project analysis dirs
  *   `update_sample_sheet.py`: edit SampleSheet.csv before generating FASTQ
 
 
@@ -24,6 +25,37 @@ files).
 The script runs `configureBclToFastq.pl` from `CASAVA` to set up conversion scripts,
 then runs `make` to perform the actual conversion. It requires that `CASAVA` is available
 on the system.
+
+
+build_illumina_analysis_dirs.py
+-------------------------------
+
+Query/build per-project analysis directories for post-bcl-to-fastq data from Illumina GA2
+sequencer.
+
+Usage:
+
+build_illumina_analysis_dir.py OPTIONS illumina_data_dir
+
+Create per-project analysis directories for Illumina run. 'illumina_data_dir'
+is the top-level directory containing the 'Unaligned' directory with the
+fastq.gz files generated from the bcl files. For each 'Project_...' directory
+build_illumina_analysis_dir.py makes a new subdirectory and populates with
+links to the fastq.gz files for each sample under that project.
+
+Options:
+
+    -h, --help        show this help message and exit
+    -l, --list        list projects and samples without creating the analysis
+                      directories but don't actually do them
+    --dry-run         report operations that would be performed if creating the
+                      analysis directories but don't actually do them
+    --expt=EXPT_TYPE  specify experiment type (e.g. ChIP-seq) to append to the
+                      project name when creating analysis directories. The
+                      syntax for EXPT_TYPE is '<project>:<type>' e.g. --expt=NY
+                      :ChIP-seq will create directory 'NY_ChIP-seq'. Use
+                      multiple --expt=... to set the types for different
+                      projects
 
 
 update_sample_sheet.py
