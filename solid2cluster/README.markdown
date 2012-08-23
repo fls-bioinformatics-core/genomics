@@ -71,6 +71,8 @@ Options:
     --rsync:  generate script for rsyncing data
     --spreadsheet[=<file>.xls]: write report to Excel spreadsheet
     --md5sum: calculate md5sums for primary data files
+    --copy=<sample>/<library>: copy data files from specific
+             library matching '<sample>/<library>' pattern to pwd
 
 
 build_analysis_dir.py
