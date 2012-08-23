@@ -960,6 +960,47 @@ class SolidBarcodeStatistics:
 # Module Functions
 #######################################################################
 
+def list_run_directories(solid_run_dir):
+    """Return list of matching run directories
+
+    Given the name of a SOLiD run directory, find all the 'matching'
+    run directories based on the instrument name and date stamp.
+
+    For example, 'solid0127_20120123_FRAG_BC' and
+    'solid0127_20120123_FRAG_BC_2' would form a matching set, as would
+    'solid0127_20120123_PE_BC' etc.
+
+    Returns a list of matching directories which includes the input.
+
+    """
+    # Break up the input
+    base_dir = os.path.dirname(os.path.abspath(solid_run_dir))
+    run_name = os.path.basename(solid_run_dir)
+    # Get the run info from the name
+    base_run_info = SolidRunInfo(run_name)
+    # List all directories in the base dir and look for matches
+    dirs = []
+    for f in os.listdir(base_dir):
+        if os.path.isdir(os.path.join(base_dir,f)):
+            try:
+                # Check if instrument name and datestamp match
+                run_info = SolidRunInfo(f)
+                if run_info.instrument != base_run_info.instrument or \
+                        run_info.datestamp != base_run_info.datestamp:
+                    # Not a match
+                    continue
+            except Exception:
+                # Wrong format for name, not a match
+                continue
+            # Check for run definition file
+            if not os.path.exists(os.path.join(base_dir,f,f+'_run_definition.txt')):
+                continue          
+            # Must be a match, add to the list
+            dirs.append(os.path.join(base_dir,f))
+    # Sort and return directories
+    dirs.sort()
+    return dirs
+
 def is_paired_end(solid_run):
     """Determine if a SolidRun instance is a paired-end run
 
