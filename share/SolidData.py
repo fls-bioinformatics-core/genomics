@@ -977,7 +977,12 @@ def list_run_directories(solid_run_dir):
     base_dir = os.path.dirname(os.path.abspath(solid_run_dir))
     run_name = os.path.basename(solid_run_dir)
     # Get the run info from the name
-    base_run_info = SolidRunInfo(run_name)
+    try:
+        base_run_info = SolidRunInfo(run_name)
+    except Exception:
+        # Wrong format for name
+        logging.error("'%s' not a valid SOLiD run directory name" % solid_run_dir)
+        return []
     # List all directories in the base dir and look for matches
     dirs = []
     for f in os.listdir(base_dir):
