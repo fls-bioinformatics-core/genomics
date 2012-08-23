@@ -1,9 +1,11 @@
 2012-08-23  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* share/SolidData.py
-	- updated to handle situations where SOLiD run directory names
-	  differ from the run names (e.g. because the directory has been
+	- SolidRun class updated to handle situations where SOLiD run directory
+	  names differ from the run names (e.g. because the directory has been
 	  renamed)
+	- New function 'list_run_directories' gets matching SOLiD run directory
+	  names
 
 2012-08-15  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
