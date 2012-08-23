@@ -2038,6 +2038,26 @@ class TestSolidRunPairedEnd(unittest.TestCase):
             self.assertTrue(str(lib.name).startswith('AB_'))
             self.assertEqual(libraries.count(lib),1)
 
+class TestSolidRunDifferentDirName(unittest.TestCase):
+    """Unit tests for SolidRun class when directory name doesn't match run name.
+    """
+    def setUp(self):
+        # Set up a mock SOLiD directory structure
+        self.solid_test_dir = TestUtils().make_solid_dir('solid0123_20130426_FRAG_BC')
+        # Rename to something else
+        os.rename(self.solid_test_dir,self.solid_test_dir+"_different")
+        self.solid_test_dir = self.solid_test_dir+"_different"
+
+    def tearDown(self):
+        shutil.rmtree(self.solid_test_dir)
+
+    def test_solid_run(self):
+        # Create a SolidRun
+        self.solid_run = SolidRun(self.solid_test_dir)
+        self.assertTrue(self.solid_run)
+        # Check the run name
+        self.assertEqual(self.solid_run.run_name,'solid0123_20130426_FRAG_BC')
+
 class TestFunctions(unittest.TestCase):
     """Unit tests for module functions.
     """
