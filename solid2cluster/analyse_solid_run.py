@@ -488,12 +488,10 @@ if __name__ == "__main__":
         sys.exit()
 
     # Solid run directories
-    solid_dir_fc1 = sys.argv[-1]
-    solid_dir_fc2 = sys.argv[-1]+"_2"
-    if os.path.isdir(solid_dir_fc2):
-        solid_dirs = (solid_dir_fc1,solid_dir_fc2)
-    else:
-        solid_dirs = (solid_dir_fc1,)
+    solid_dirs = SolidData.list_run_directories(sys.argv[-1])
+    if not solid_dirs:
+        logging.error("No run directory %s" % sys.argv[-1])
+        sys.exit(1)
 
     # Other options
     do_report_run = False
