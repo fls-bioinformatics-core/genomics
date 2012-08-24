@@ -23,6 +23,7 @@ import sys
 import os
 import string
 import shutil
+import optparse
 import logging
 logging.basicConfig(format="%(levelname)s %(message)s")
 
@@ -467,97 +468,83 @@ def strip_prefix(path,prefix):
 #######################################################################
 
 if __name__ == "__main__":
-    # Get solid directories
-    if len(sys.argv) < 2:
-        print "Usage: %s [OPTIONS] <solid_run_dir>" % \
-            os.path.basename(sys.argv[0])
-        print ""
-        print "Various operations on a SOLiD run directory. Note that if"
-        print "<solid_run_dir>_2 also exists then this is automatically"
-        print "detected and included in the processing."
-        print ""
-        print "Options:"
-        print "  --report: print a report of the SOLiD run"
-        print "  --verify: do verification checks on SOLiD run directories"
-        print "  --layout: generate script for laying out analysis directories"
-        print "  --rsync:  generate script for rsyncing data"
-        print "  --spreadsheet[=<file>.xls]: write report to Excel spreadsheet"
-        print "  --md5sum: calculate md5sums for primary data files"
-        print "  --copy=<sample>/<library>: copy data files from specific"
-        print "            library matching '<sample>/<library>' pattern to pwd"
-        sys.exit()
+
+    # Set up command line parser
+    p = optparse.OptionParser(usage="%prog OPTIONS solid_run_dir [ solid_run_dir ... ]",
+                              description="Utility for performing various checks and "
+                              "operations on SOLiD run directories. If a single "
+                              "solid_run_dir is specified then %prog automatically finds "
+                              "and operates on all associated directories from the same "
+                              "instrument and with the same timestamp.")
+
+    p.add_option("--report",action="store_true",dest="report",
+                 help="print a report of the SOLiD run")
+    p.add_option("--xls",action="store_true",dest="xls",
+                 help="write report to Excel spreadsheet")
+    p.add_option("--verify",action="store_true",dest="verify",
+                 help="do verification checks on SOLiD run directories")
+    p.add_option("--layout",action="store_true",dest="layout",
+                 help="generate script for laying out analysis directories")
+    p.add_option("--md5sum",action="store_true",dest="md5sum",
+                 help="calculate md5sums for primary data files")
+    p.add_option("--rsync",action="store_true",dest="rsync",
+                 help="generate script for rsyncing data")
+    p.add_option("--copy",action="append",dest="copy_pattern",default=[],
+                 help="copy primary data files to pwd from specific library "
+                 "where names match COPY_PATTERN, which should be of the "
+                 "form '<sample>/<library>'")
+
+    # Process the command line
+    options,args = p.parse_args()
+
+    # Check inputs
+    if not len(args):
+        p.error("Expected at least one SOLiD run directory name")
 
     # Solid run directories
-    solid_dirs = SolidData.list_run_directories(sys.argv[-1])
-    if not solid_dirs:
-        logging.error("No run directory %s" % sys.argv[-1])
-        sys.exit(1)
+    for arg in args:
+        if not os.path.isdir(arg):
+            logging.error("'%s' not found or not a directory" % arg)
+            sys.exit(1)
+    if len(args) == 1:
+        # Single directory supplied
+        solid_dirs = SolidData.list_run_directories(args[0])
+    else:
+        # Use all supplied arguments
+        solid_dirs = args
+    print str(solid_dirs)
 
-    # Other options
-    do_report_run = False
-    if "--report" in sys.argv[1:-1]:
-        do_report_run = True
-
-    do_checks = False
-    if "--verify" in sys.argv[1:-1]:
-        do_checks = True
-
-    do_suggest_layout = False
-    if "--layout" in sys.argv[1:-1]:
-        do_suggest_layout = True
-
-    do_spreadsheet = False
-    for arg in sys.argv[1:-1]:
-        if arg.startswith("--spreadsheet"):
-            do_spreadsheet = True
-            try:
-                i = arg.index("=")
-                spreadsheet = arg[i+1:]
-            except IndexError:
-                spreadsheet = solid_dir_fc1+".xls"
-            print "Writing spreadsheet %s" % spreadsheet
-
-    do_suggest_rsync = False
-    if "--rsync" in sys.argv[1:-1]:
-        do_suggest_rsync = True
-
-    do_md5sum = False
-    if "--md5sum" in sys.argv[1:-1]:
-        do_md5sum = True
-
-    do_copy = False
-    copy_libraries = []
-    for arg in sys.argv[1:-1]:
-        if arg.startswith("--copy"):
-            do_copy = True
-            i = arg.index("=")
-            copy_libraries.append(arg[i+1:])
+    # Output spreadsheet name
+    if options.xls:
+        spreadsheet = os.path.splitext(os.path.basename(solid_dirs[0]))[0] + ".xls"
+        print "Writing spreadsheet %s" % spreadsheet
 
     # Check there's at least one thing to do
-    if not (do_report_run or 
-            do_suggest_layout or 
-            do_spreadsheet or 
-            do_checks or
-            do_suggest_rsync or
-            do_md5sum or
-            do_copy):
-        do_report_run = True
+    if not (options.report or 
+            options.layout or 
+            options.xls or 
+            options.verify or
+            options.rsync or
+            options.md5sum or
+            options.copy_pattern):
+        options.report = True
 
     # Get the run information
     solid_runs = []
     for solid_dir in solid_dirs:
         run = SolidData.SolidRun(solid_dir)
         if not run:
-            print "Error extracting run data for %s" % solid_dir
+            logging.error("Error extracting run data for %s" % solid_dir)
+            sys.exit(1)
         else:
             solid_runs.append(run)
 
     # Report the runs
-    if do_report_run:
+    if options.report:
         report_run(solid_runs)
 
     # Report the runs to a spreadsheet
-    if do_spreadsheet:
+    if options.xls:
         try:
             import Spreadsheet
             write_spreadsheet(solid_runs,spreadsheet)
@@ -565,15 +552,15 @@ if __name__ == "__main__":
             logging.error("Unable to write spreadsheet: %s" % ex)
 
     # Suggest a layout for analysis
-    if do_suggest_layout:
+    if options.layout:
         suggest_analysis_layout(solid_runs)
 
     # Generate script rsync
-    if do_suggest_rsync:   
+    if options.rsync:   
         suggest_rsync_command(solid_runs)
 
     # Generate md5sums
-    if do_md5sum:
+    if options.md5sum:
         try:
             import Md5sum
             print_md5sums(solid_runs)
@@ -581,12 +568,12 @@ if __name__ == "__main__":
             logging.error("Unable to generate MD5 sums: %s" % ex)
 
     # Copy specific primary data files
-    if do_copy:
-        copy_data(solid_runs,copy_libraries)
+    if options.copy_pattern:
+        copy_data(solid_runs,options.copy_pattern)
 
     # Do verification
     # Nb this should always be the last step
     # Use the verification return code as the exit status
-    if do_checks:
+    if options.verify:
         status = verify_runs(solid_dirs)
         sys.exit(status)
