@@ -477,6 +477,9 @@ if __name__ == "__main__":
                               "and operates on all associated directories from the same "
                               "instrument and with the same timestamp.")
 
+    p.add_option("--only",action="store_true",dest="only",
+                 help="only operate on the specified solid_run_dir, don't "
+                 "locate associated run directories")
     p.add_option("--report",action="store_true",dest="report",
                  help="print a report of the SOLiD run")
     p.add_option("--xls",action="store_true",dest="xls",
@@ -508,11 +511,14 @@ if __name__ == "__main__":
             sys.exit(1)
     if len(args) == 1:
         # Single directory supplied
-        solid_dirs = SolidData.list_run_directories(args[0])
+        if options.only:
+            solid_dirs = [args[0]]
+        else:
+            # Add associated directories
+            solid_dirs = SolidData.list_run_directories(args[0])
     else:
         # Use all supplied arguments
         solid_dirs = args
-    print str(solid_dirs)
 
     # Output spreadsheet name
     if options.xls:
