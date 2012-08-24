@@ -57,22 +57,29 @@ SOLiD run directory that is already in the logging file.
 analyse_solid_run.py
 --------------------
 
-Report on various aspects of the primary data directories from SOLiD runs.
+Utility for performing various checks and operations on SOLiD run directories.
+If a single solid_run_dir is specified then analyse_solid_run.py automatically
+finds and operates on all associated directories from the same instrument and
+with the same timestamp.
 
 Usage:
 
-    analyse_solid_run.py [OPTIONS] <solid_run_dir>
+    analyse_solid_run.py OPTIONS solid_run_dir [ solid_run_dir ... ]
 
 Options:
 
-    --report: print a report of the SOLiD run
-    --verify: do verification checks on SOLiD run directories
-    --layout: generate script for laying out analysis directories
-    --rsync:  generate script for rsyncing data
-    --spreadsheet[=<file>.xls]: write report to Excel spreadsheet
-    --md5sum: calculate md5sums for primary data files
-    --copy=<sample>/<library>: copy data files from specific
-             library matching '<sample>/<library>' pattern to pwd
+    -h, --help           show this help message and exit
+    --only               only operate on the specified solid_run_dir, don't
+                         locate associated run directories
+    --report             print a report of the SOLiD run
+    --xls                write report to Excel spreadsheet
+    --verify             do verification checks on SOLiD run directories
+    --layout             generate script for laying out analysis directories
+    --md5sum             calculate md5sums for primary data files
+    --rsync              generate script for rsyncing data
+    --copy=COPY_PATTERN  copy primary data files to pwd from specific library
+                         where names match COPY_PATTERN, which should be of the
+                         form '<sample>/<library>'
 
 
 build_analysis_dir.py
