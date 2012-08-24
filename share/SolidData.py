@@ -186,6 +186,22 @@ class SolidRun:
                 else:
                     logging.warning("%s: libraries directory '%s' is missing" %
                                     (self.run_name,libraries_dir))
+                # Locate and process 'unassigned' data
+                # These are csfasta/qual files in the directory
+                # <sample>/results.F1B1/libraries/unassigned
+                unassigned_dir = os.path.join(libraries_dir,"unassigned")
+                logging.debug("%s: 'unassigned' dir %s" % (sample.name,unassigned_dir))
+                if os.path.isdir(unassigned_dir):
+                    # Collect information on unassigned read data
+                    sample.unassigned = SolidLibrary("unassigned",parent_sample=sample)
+                    for d in os.listdir(unassigned_dir):
+                        reads_dir = os.path.join(unassigned_dir,d,"reads")
+                        logging.debug("%s: reads dir %s" % (sample.name,reads_dir))
+                        if os.path.isdir(reads_dir):
+                            csfasta,qual = get_primary_data_file_pair(reads_dir)
+                            if csfasta and qual:
+                                sample.unassigned.addPrimaryData(csfasta,qual)
+                                logging.debug("-----> Adding primary data (unassigned)")
                     
             # Store the library
             library = sample.addLibrary(library_name)
@@ -230,16 +246,7 @@ class SolidRun:
                             os.path.isdir(reports):
                         logging.debug("---> has all of reads, reject and reports")
                         # Check for csfasta and qual files
-                        csfasta = None
-                        qual = None
-                        csfasta_f5 = None
-                        qual_f5 = None
-                        for f in os.listdir(reads):
-                            ext = os.path.splitext(f)[1]
-                            if ext == ".csfasta":
-                                csfasta = os.path.abspath(os.path.join(reads,f))
-                            elif ext == ".qual":
-                                qual = os.path.abspath(os.path.join(reads,f))
+                        csfasta,qual = get_primary_data_file_pair(reads)
                         # Add to list of primary data
                         if csfasta and qual:
                             library.addPrimaryData(csfasta,qual)
@@ -336,6 +343,7 @@ class SolidSample:
       within the sample
     projects: a list of SolidProject objects representing groups of
       related libraries within the sample
+    unassigned: SolidProject object representing the 'unassigned' data
     barcode_stats: a SolidBarcodeStats object with data extracted from
       the BarcodeStatistics file (or None, if no file was available)
     parent_run: the parent SolidRun object, or None.
@@ -366,6 +374,7 @@ class SolidSample:
         self.libraries_dir = None
         self.barcode_stats = None
         self.projects = []
+        self.unassigned = None
         self.parent_run = parent_run
 
     def __repr__(self):
@@ -534,6 +543,8 @@ class SolidLibrary:
             logging.warning("Timestamps differ on CSFASTA/QUAL pair for %s" % self.name)
         # Append to the list of primary data files
         self.primary_data.append(primary_data)
+        # Sort into timestamp order (newest to older)
+        self.primary_data.sort(lambda a,b: cmp(b.timestamp,a.timestamp))
         # Return the SolidPrimaryData object
         return primary_data
 
@@ -581,6 +592,9 @@ class SolidPrimaryData:
         """Returns True if this is F5 data, False otherwise
         """
         return (self.type == 'F5')
+
+    def __repr__(self):
+        return self.timestamp
 
 class SolidProject:
     """Class to hold information about a SOLiD 'project'
@@ -1069,6 +1083,29 @@ def is_paired_end(solid_run):
     """
     return (solid_run.run_definition.runType == "PAIRED-END")
 
+def get_primary_data_file_pair(dirn):
+    """Return csfasta/qual file pair from specified directory
+
+    Arguments:
+      dirn: directory to search for csfasta/qual pair
+
+    Returns:
+      Tuple (csfasta,qual) with full path for each file, or
+      (None,None) if a pair wasn't located.
+    """
+    csfasta = None
+    qual = None
+    for filen in os.listdir(dirn):
+        ext = os.path.splitext(filen)[1]
+        if ext == ".csfasta":
+            csfasta = os.path.abspath(os.path.join(dirn,filen))
+        elif ext == ".qual":
+            qual = os.path.abspath(os.path.join(dirn,filen))
+    if csfasta and qual:
+        return (csfasta,qual)
+    else:
+        return (None,None)
+            
 def extract_library_timestamp(path):
     """Extract the timestamp string from a path
 
