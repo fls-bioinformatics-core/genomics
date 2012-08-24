@@ -56,23 +56,28 @@ def report_run(solid_runs):
       solid_runs: a list or tuple of SolidRun objects to report.
     """
     # Report the data for each run
+    first_run = True
     for run in solid_runs:
+        # Cosmetic: add separation between runs
+        if not first_run:
+            print
+        else:
+            first_run = False
         # Report overall slide layout
         slide_layout = run.slideLayout()
         title = "Flow Cell %s (%s)" % (str(run.run_info.flow_cell),
                                        str(slide_layout))
-        title = title + '\n' + "="*len(title)
-        print title
+        print "%s\n%s\n%s" % ('#'*len(title),title,'#'*len(title))
         print "I.D.   : %s" % (run.run_info.name)
         print "Date   : %s" % (run.run_info.date)
-        print "Samples: %d\n" % len(run.samples)
+        print "Samples: %d" % len(run.samples)
         if SolidData.is_paired_end(run):
-            print "Paired-end run\n"
+            print "\nPaired-end run"
         #
         # Report projects for each sample
         for sample in run.samples:
-            title = "Sample %s" % sample
-            title = title + '\n' + "-"*len(title)
+            title = "\nSample %s" % sample
+            title = title + '\n' + "="*len(title)
             print title
             for project in sample.projects:
                 libraries = project.prettyPrintLibraries()
@@ -84,9 +89,14 @@ def report_run(solid_runs):
                 print "Pattern: %s/%s" % (sample,project.getLibraryNamePattern())
                 # Report location of primary data
                 for library in project.libraries:
-                    print "%s\n%s" % (library.csfasta,library.qual)
+                    files = [library.csfasta,library.qual]
                     if SolidData.is_paired_end(run):
-                        print "%s\n%s" % (library.csfasta_f5,library.qual_f5)
+                        files.extend((library.csfasta_f5,library.qual_f5))
+                    for f in files:
+                        if f is not None:
+                            print "%s" % f
+                        else:
+                            print "Missing primary data for %s" % library.name
 
 def write_spreadsheet(solid_runs,spreadsheet):
     """Generate or append run data to an XLS-format spreadsheet
