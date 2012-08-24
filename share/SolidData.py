@@ -970,6 +970,9 @@ def list_run_directories(solid_run_dir):
     'solid0127_20120123_FRAG_BC_2' would form a matching set, as would
     'solid0127_20120123_PE_BC' etc.
 
+    For "nonstandard" names (e.g. 'solid0127_20120123_PE_BC_COPY', if
+    no matches are found then just the input is returned.
+
     Returns a list of matching directories which includes the input.
 
     """
@@ -1002,6 +1005,9 @@ def list_run_directories(solid_run_dir):
                 continue          
             # Must be a match, add to the list
             dirs.append(os.path.join(base_dir,f))
+    # Check that the original run is also included
+    if os.path.abspath(solid_run_dir) not in dirs:
+        dirs = [solid_run_dir]
     # Sort and return directories
     dirs.sort()
     return dirs
