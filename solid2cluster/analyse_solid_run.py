@@ -236,25 +236,25 @@ def suggest_analysis_layout(solid_runs):
     """
     print "#!/bin/sh\n#\n# Script commands to build analysis directory structure"
     for run in solid_runs:
-        build_analysis_dir_cmd = os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]),
-                                                              'build_analysis_dir.py'))
+        build_analysis_dir_cmd = 'build_analysis_dir.py'
         top_dir = os.path.abspath(os.path.join(os.getcwd(),os.path.basename(run.run_dir)))
-        cmd_line = [ build_analysis_dir_cmd,
-                     "--top-dir=%s_analysis" % top_dir,
-                     "--link=relative",
-                     "--naming-scheme=partial"]
         for sample in run.samples:
             for project in sample.projects:
                 # Create one experiment per project
+                cmd_line = []
                 expt = Experiment.Experiment()
                 expt.name = project.getProjectName()
                 expt.type = "expt"
                 expt.sample = project.getSample().name
                 expt.library = project.getLibraryNamePattern()
                 # Print the arguments for the layout
+                cmd_line.extend((build_analysis_dir_cmd,
+                                 "--top-dir=%s_analysis" % top_dir,
+                                 "--link=relative",
+                                 "--naming-scheme=partial"))
                 cmd_line.append(expt.describe())
-        cmd_line.append(run.run_dir)
-        print "#\n%s" % (' \\\n').join(cmd_line)
+                cmd_line.append(run.run_dir)
+                print "#\n%s" % (' \\\n').join(cmd_line)
 
 def suggest_rsync_command(solid_runs):
     """Generate a bash script to rsync data to another location
