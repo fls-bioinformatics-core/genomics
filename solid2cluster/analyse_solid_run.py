@@ -508,6 +508,8 @@ if __name__ == "__main__":
                  "form '<sample>/<library>'")
     p.add_option("--quiet",action="store_true",dest="quiet",
                  help="suppress warnings")
+    p.add_option("--debug",action="store_true",dest="debug",
+                 help="turn on debugging output (nb overrides --quiet)")
 
     # Process the command line
     options,args = p.parse_args()
@@ -516,8 +518,10 @@ if __name__ == "__main__":
     if not len(args):
         p.error("Expected at least one SOLiD run directory name")
 
-    # Reset logging level for --quiet
-    if options.quiet:
+    # Reset logging level for --debug and --quiet
+    if options.debug:
+        logging.getLogger().setLevel(logging.DEBUG)
+    elif options.quiet:
         logging.getLogger().setLevel(logging.ERROR)
 
     # Solid run directories
