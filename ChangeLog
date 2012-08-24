@@ -1,3 +1,11 @@
+2012-08-24  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* share/SolidData.py
+	- updates to SolidLibrary allows access to all primary data associated
+	  with a sample/library, via new SolidLibrary.primary_data property
+	  (which holds a list of SolidPrimaryData objects referencing CSFASTA
+	  QUAL file pairs plus timestamp information).
+
 2012-08-23  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* share/SolidData.py
