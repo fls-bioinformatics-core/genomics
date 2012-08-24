@@ -120,7 +120,8 @@ class SolidRun:
             for f in os.listdir(self.run_dir):
                 if f.endswith("_run_definition.txt"):
                     self.run_defn_filn = os.path.join(self.run_dir,f)
-                    logging.warning("Using run definition file %s" % self.run_defn_filn)
+                    logging.warning("%s: using run definition file %s" % 
+                                    (os.path.basename(self.run_dir),self.run_defn_filn))
                     break
             # No other candidates found, abort
             if self.run_defn_filn is None:
@@ -183,7 +184,8 @@ class SolidRun:
                                 SolidBarcodeStatistics(barcode_stats_filn)
                             break
                 else:
-                    logging.warning("Libraries directory '%s' is missing" % libraries_dir)
+                    logging.warning("%s: libraries directory '%s' is missing" %
+                                    (self.run_name,libraries_dir))
                     
             # Store the library
             library = sample.addLibrary(library_name)
@@ -214,9 +216,6 @@ class SolidRun:
                 this_library_dir = None
 
             # Locate the primary data
-            got_primary_data = False
-            got_primary_data_f5 = False
-            ambiguity_error = False
             if this_library_dir:
                 logging.debug("Library dir: %s..." % this_library_dir)
                 # Iterate over available directories
@@ -238,73 +237,35 @@ class SolidRun:
                         for f in os.listdir(reads):
                             ext = os.path.splitext(f)[1]
                             if ext == ".csfasta":
-                                csfasta = os.path.abspath( \
-                                    os.path.join(reads,f))
+                                csfasta = os.path.abspath(os.path.join(reads,f))
                             elif ext == ".qual":
-                                qual = os.path.abspath( \
-                                    os.path.join(reads,f))
-                        # Check barcoded samples
-                        if library.is_barcoded:
-                            if csfasta:
-                                if csfasta.rfind('_F5-BC_') > -1:
-                                    # F5 reads
-                                    csfasta_f5 = csfasta
-                                if csfasta.rfind('_F3_') < 0:
-                                    # Not a recognised name
-                                    csfasta = None
-                            if qual:
-                                if qual.rfind('_F5-BC_') > -1:
-                                    # F5 reads
-                                    qual_f5 = qual
-                                if qual.rfind('_F3_') < 0:
-                                    qual = None
-                        # Store primary data: F3 reads
+                                qual = os.path.abspath(os.path.join(reads,f))
+                        # Add to list of primary data
                         if csfasta and qual:
-                            if got_primary_data:
-                                ambiguity_error = True
-                                logging.warning("Located F3 primary data in multiple locations:\n"
-                                                "\t%s\n\t%s\nand\n\t%s\n\t%s",
-                                                library.csfasta,library.qual,
-                                                csfasta,qual)
-                                # Resolve by storing the most recent timestamp
-                                if (extract_library_timestamp(csfasta) >
-                                    extract_library_timestamp(library.csfasta)) and \
-                                    (extract_library_timestamp(qual) >
-                                     extract_library_timestamp(library.qual)):
-                                    library.csfasta = csfasta
-                                    library.qual = qual
-                            else:
-                                library.csfasta = csfasta
-                                library.qual = qual
-                                got_primary_data = True
-                                logging.debug("-----> Located primary data (F3)")
-                        # Store primary data: F5 reads
-                        if csfasta_f5 and qual_f5:
-                            if got_primary_data_f5:
-                                # More than one candidate for primary data
-                                ambiguity_error = True
-                                logging.warning("Located F5 primary data in multiple locations:\n"
-                                                "\t%s\n\t%s\nand\n\t%s\n\t%s",
-                                                library.csfasta_f5,
-                                                library.qual_f5,
-                                                csfasta_f5,qual_f5)
-                                # Resolve by storing the most recent
-                                if (os.path.getmtime(csfasta_f5) > 
-                                    os.path.getmtime(library.csfasta_f5)) \
-                                    and (os.path.getmtime(qual_f5) > 
-                                         os.path.getmtime(library.qual_f5)):
-                                    library.csfasta_f5 = csfasta_f5
-                                    library.qual_f5 = qual_f5
-                            else:
-                                library.csfasta_f5 = csfasta_f5
-                                library.qual_f5 = qual_f5
-                                got_primary_data_f5 = True
-                                logging.debug("-----> Located primary data (F5)")
-
-            if not got_primary_data:
-                logging.warning("Unable to locate some or all primary data for %s" % library)
-            elif ambiguity_error:
-                logging.warning("Ambigiuous location for some primary data for %s" % library)
+                            library.addPrimaryData(csfasta,qual)
+                            logging.debug("-----> Adding primary data")
+            # Finished locating primary data
+            if not len(library.primary_data):
+                # No primary data stored
+                logging.warning("%s: unable to locate any primary data for %s" %
+                                (self.run_name,library))
+            else:
+                # Assign "canonical" primary data files
+                f3_timestamp = None
+                f5_timestamp = None
+                for primary_data in library.primary_data:
+                    if primary_data.is_f3():
+                        if f3_timestamp is None or primary_data.timestamp > f3_timestamp:
+                            # This data has newer timestamp
+                            library.csfasta = primary_data.csfasta
+                            library.qual    = primary_data.qual
+                            f3_timestamp    = primary_data.timestamp
+                    elif primary_data.is_f5():
+                        if f5_timestamp is None or primary_data.timestamp > f5_timestamp:
+                            # This data has newer timestamp
+                            library.csfasta_f5 = primary_data.csfasta
+                            library.qual_f5    = primary_data.qual
+                            f5_timestamp       = primary_data.timestamp
 
     def fetchLibraries(self,sample_name='*',library_name='*'):
         """Retrieve libraries based on sample and library names
@@ -499,7 +460,14 @@ class SolidLibrary:
       will be None)
     qual_f5: full path to the F5 read (paired-end runs, otherwise will
       be None)
+    primary_data: list of SolidPrimaryData objects for all possible
+      primary data file pairs associated with the library
     parent_sample: parent SolidSample object, or None.
+
+    The following methods are also available:
+
+    addPrimaryData: creates a new SolidPrimaryData object and appends
+      to the list in the primary_data property
     """
 
     def __init__(self,name,parent_sample=None):
@@ -521,13 +489,53 @@ class SolidLibrary:
             self.index = int(self.index_as_string.lstrip('0'))
         # Barcoding
         self.is_barcoded = False
-        # Associated data files
+        # Associated canonical data files
         self.csfasta = None
         self.qual = None
         self.csfasta_f5 = None
         self.qual_f5 = None
+        # References to all primary data
+        self.primary_data = []
         # Parent sample
         self.parent_sample = parent_sample
+
+    def addPrimaryData(self,csfasta,qual):
+        """Add reference to primary data to the library
+
+        Creates and populates a new SolidPrimaryData instance
+        and adds it to the list of primary data objects
+        associated with this library.
+
+        Arguments:
+          csfasta: full path and name of the csfasta file
+          qual   : full path and name of the qual file
+
+        Returns:
+          The new SolidPrimaryData object
+        """
+        # Create and populate primary data object
+        primary_data = SolidPrimaryData()
+        primary_data.csfasta = csfasta
+        primary_data.qual = qual
+        # Deal with type (F3 or F5)
+        try:
+            csfasta.index('_F5-BC_')
+            primary_data.type = 'F5'
+        except ValueError:
+            pass
+        try:
+            csfasta.index('_F3_')
+            primary_data.type = 'F3'
+        except ValueError:
+            pass
+        # Deal with timestamp
+        primary_data.timestamp = extract_library_timestamp(csfasta)
+        if primary_data.timestamp != extract_library_timestamp(qual):
+            logging.warning("Timestamps differ on CSFASTA/QUAL pair for %s" % self.name)
+        # Append to the list of primary data files
+        self.primary_data.append(primary_data)
+        # Return the SolidPrimaryData object
+        return primary_data
 
     def __repr__(self):
         """Implement __repr__ built-in
@@ -535,6 +543,44 @@ class SolidLibrary:
         Return string representation for the SolidLibrary -
         i.e. the library name."""
         return str(self.name)
+
+class SolidPrimaryData:
+    """Class to store references to primary data files
+
+    This is a convenience class for storing references to csfasta/qual
+    file pairs within a SolidLibrary instance.
+
+    The class provides the following attributes:
+
+    csfasta:   full path to csfasta file
+    qual:      full path to qual file
+    timestamp: timestamp associated with the file pair
+    type:      string indicating 'F3' or 'F5', or None
+
+    The following methods are provided:
+
+    is_f3: indicates if data is F3
+    is_f5: indicates if data is F5
+
+    """
+    def __init__(self):
+        """Create a new SolidPrimaryData instance.
+
+        """
+        self.timestamp = None
+        self.csfasta = None
+        self.qual = None
+        self.type = None
+
+    def is_f3(self):
+        """Returns True if this is F3 data, False otherwise
+        """
+        return (self.type == 'F3')
+
+    def is_f5(self):
+        """Returns True if this is F5 data, False otherwise
+        """
+        return (self.type == 'F5')
 
 class SolidProject:
     """Class to hold information about a SOLiD 'project'
