@@ -5,6 +5,9 @@
 	  with a sample/library, via new SolidLibrary.primary_data property
 	  (which holds a list of SolidPrimaryData objects referencing CSFASTA
 	  QUAL file pairs plus timestamp information).
+	- added basic support for locating 'unassigned' read files for each
+	  sample: each SolidSample object has an associated unassigned
+	  SolidLibrary.
 
 2012-08-23  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
