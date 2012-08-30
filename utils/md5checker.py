@@ -135,7 +135,7 @@ def verify_md5sums(chksum_file,verbose=False):
     nmissing = len(missing)
     nbad = len(badlines)
     report("Summary:",verbose)
-    report("\t%d files checked" % (nsuccess + nfailed),verbose)
+    report("\t%d files checked" % (nsuccess + nfailed + nmissing),verbose)
     report("\t%d okay" % nsuccess,verbose)
     report("\t%d failed" % nfailed,verbose)
     report("\t%d not found" % nmissing,verbose) 
