@@ -170,6 +170,7 @@ def diff_directories(dirn1,dirn2,verbose=False):
     retval = 0
     nsuccess = 0
     failures = []
+    missing = []
     # Iterate over all files in the source directory
     for d in os.walk(dirn1):
         for f in d[2]:
@@ -178,9 +179,8 @@ def diff_directories(dirn1,dirn2,verbose=False):
             filen2 = filen1.replace(dirn1,dirn2,1)
             # Check that target exists
             if not os.path.isfile(filen2):
-                sys.stderr.write("%s: FAILED\n" % filen2)
-                sys.stderr.write("Missing file %s\n" % filen2)
-                failures.append(filen2)
+                sys.stderr.write("%s: FAILED (file not found)\n" % filen2)
+                missing.append(filen2)
             else:
                 try:
                     # Calculate and compare MD5 sums
@@ -201,9 +201,12 @@ def diff_directories(dirn1,dirn2,verbose=False):
                     retval = 1
     # Summarise
     nfailed = len(failures)
-    report("Summary: %d files checked, %d okay %d failed" % 
-           (nsuccess + nfailed,nsuccess,nfailed),
-           verbose)
+    nmissing = len(missing)
+    report("Summary:",verbose)
+    report("\t%d files checked" % (nsuccess + nfailed + nmissing),verbose)
+    report("\t%d okay" % nsuccess,verbose)
+    report("\t%d failed" % nfailed,verbose)
+    report("\t%d not found" % nmissing,verbose)
     # Return status
     return retval
 
