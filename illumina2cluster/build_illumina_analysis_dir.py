@@ -192,8 +192,7 @@ if __name__ == "__main__":
                               "%prog makes a new subdirectory and populates with links to "
                               "the fastq.gz files for each sample under that project.")
     p.add_option("-l","--list",action="store_true",dest="list",
-                 help="list projects and samples without creating the analysis directories "
-                 "but don't actually do them")
+                 help="list projects and samples without creating the analysis directories")
     p.add_option("--dry-run",action="store_true",dest="dry_run",
                  help="report operations that would be performed if creating the "
                  "analysis directories but don't actually do them")
