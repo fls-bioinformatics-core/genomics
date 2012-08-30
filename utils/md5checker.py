@@ -18,7 +18,7 @@ Utility for checking files and directories using md5 checksums.
 # Module metadata
 #######################################################################
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 
 #######################################################################
 # Import modules that this module depends on
@@ -171,14 +171,19 @@ def diff_directories(dirn1,dirn2,verbose=False):
     nsuccess = 0
     failures = []
     missing = []
+    broken = []
     # Iterate over all files in the source directory
     for d in os.walk(dirn1):
         for f in d[2]:
             # Get full paths for source and target files
             filen1 = os.path.normpath(os.path.join(d[0],f))
             filen2 = filen1.replace(dirn1,dirn2,1)
+            # Check that source exists
+            if not os.path.isfile(filen1):
+                sys.stderr.write("%s: FAILED (broken file)\n" % filen1)
+                broken.append(filen1)
             # Check that target exists
-            if not os.path.isfile(filen2):
+            elif not os.path.isfile(filen2):
                 sys.stderr.write("%s: FAILED (file not found)\n" % filen2)
                 missing.append(filen2)
             else:
@@ -202,10 +207,12 @@ def diff_directories(dirn1,dirn2,verbose=False):
     # Summarise
     nfailed = len(failures)
     nmissing = len(missing)
+    nbroken = len(broken)
     report("Summary:",verbose)
     report("\t%d files checked" % (nsuccess + nfailed + nmissing),verbose)
     report("\t%d okay" % nsuccess,verbose)
     report("\t%d failed" % nfailed,verbose)
+    report("\t%d broken files" % nbroken,verbose)
     report("\t%d not found" % nmissing,verbose)
     # Return status
     return retval
