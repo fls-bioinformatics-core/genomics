@@ -1,3 +1,10 @@
+2012-08-30  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* utils/md5checker.py
+	- version 0.2.0: -d/-diff mode now compares files in pairwise fashion
+	  and reports "missing" files as part of the total number of files
+	  checked.
+
 2012-08-24  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* share/SolidData.py
