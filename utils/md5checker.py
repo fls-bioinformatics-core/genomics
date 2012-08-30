@@ -350,6 +350,6 @@ if __name__ == "__main__":
         elif os.path.isfile(arguments[0]):
             status = compute_md5sum_for_file(arguments[0],output_file)
         else:
-            p.error("Supplied argument must be an existing directory or file")
+            p.error("Cannot generate checksums for '%s': not a directory or file" % arguments[0])
     # Finish
     sys.exit(status)
