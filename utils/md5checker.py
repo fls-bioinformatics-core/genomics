@@ -182,10 +182,12 @@ def diff_directories(dirn1,dirn2,verbose=False):
             if not os.path.isfile(filen1):
                 sys.stderr.write("%s: FAILED (broken file)\n" % filen1)
                 broken.append(filen1)
+                retval = 1
             # Check that target exists
             elif not os.path.isfile(filen2):
                 sys.stderr.write("%s: FAILED (file not found)\n" % filen2)
                 missing.append(filen2)
+                retval = 1
             else:
                 try:
                     # Calculate and compare MD5 sums
