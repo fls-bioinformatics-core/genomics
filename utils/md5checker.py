@@ -364,7 +364,8 @@ if __name__ == "__main__":
         target = os.path.abspath(arguments[1])
         if os.path.isdir(source) and os.path.isdir(target):
             # Compare two directories
-            report("Recursively copies of files in %s against originals in %s" % (target,source),
+            report("Recursively check copies of files in %s against originals in %s" %
+                   (target,source),
                    options.verbose)
             status = diff_directories(source,target,verbose=options.verbose)
         elif os.path.isfile(source) and os.path.isfile(target):
