@@ -332,6 +332,69 @@ class TestUtils:
         os.mkdir(subdir)
         return subdir
 
+    def make_test_directory(self):
+        """Create a template test directory structure
+
+        """
+        test_dir = TestUtils().make_dir(None)
+        fred = TestUtils().make_sub_dir(test_dir,"fred")
+        daphne = TestUtils().make_sub_dir(fred,"daphne")
+        thelma = TestUtils().make_sub_dir(test_dir,"thelma")
+        shaggy = TestUtils().make_sub_dir(test_dir,"shaggy")
+        scooby = TestUtils().make_sub_dir(shaggy,"scooby")
+        TestUtils().make_file("test.txt","This is a test file",basedir=test_dir)
+        for sub_dir in (fred,daphne,thelma,shaggy,scooby):
+            TestUtils().make_file("test.txt","This is another test file",basedir=sub_dir)
+        return test_dir
+
+class TestMd5sums(unittest.TestCase):
+    """Test computing and verifying MD5 sums via files
+
+    """
+    def setUp(self):
+        # Create and populate test directory
+        self.dir = TestUtils().make_test_directory()
+        # Make temporary area for input/ouput checksum files
+        self.md5sum_dir = tempfile.mkdtemp()
+        self.checksum_file = os.path.join(self.md5sum_dir,"checksums")
+        # Reference checksums for test directory
+        self.checksums = """0b26e313ed4a7ca6904b0e9369e5b957  test.txt
+d0914057907f9d04dd9e68b1c1e180f0  shaggy/test.txt
+d0914057907f9d04dd9e68b1c1e180f0  shaggy/scooby/test.txt
+d0914057907f9d04dd9e68b1c1e180f0  fred/test.txt
+d0914057907f9d04dd9e68b1c1e180f0  fred/daphne/test.txt
+d0914057907f9d04dd9e68b1c1e180f0  thelma/test.txt
+"""
+        # Store current dir and move to top level of test directory
+        self.pwd = os.getcwd()
+        os.chdir(self.dir)
+
+    def tearDown(self):
+        # Move back to original directory
+        os.chdir(self.pwd)
+        # Clean up test directory and checksum file
+        shutil.rmtree(self.dir)
+        shutil.rmtree(self.md5sum_dir)
+
+    def test_compute_md5sums(self):
+        # Compute md5sums for test directory
+        compute_md5sums('.',output_file=self.checksum_file)
+        checksums = open(self.checksum_file,'r').read()
+        self.assertEqual(self.checksums,checksums)
+
+    def test_verify_md5sums(self):
+        # Verify md5sums for test directory
+        fp = open(self.checksum_file,'w')
+        fp.write(self.checksums)
+        fp.close()
+        self.assertEqual(verify_md5sums(self.checksum_file),0)
+
+    def test_compute_md5sum_for_file(self):
+        # Compute md5sum for a single file
+        compute_md5sum_for_file('test.txt',output_file=self.checksum_file)
+        checksum = open(self.checksum_file,'r').read()
+        self.assertEqual("0b26e313ed4a7ca6904b0e9369e5b957  test.txt\n",checksum)
+
 class TestDiffFiles(unittest.TestCase):
     """Test checking pairs of files
 
@@ -360,41 +423,27 @@ class TestDiffDirectories(unittest.TestCase):
     """Test checking pairs of directories
 
     """
-    def make_test_directory(self):
-        """Create a template test directory structure
-
-        """
-        test_dir = TestUtils().make_dir(None)
-        fred = TestUtils().make_sub_dir(test_dir,"fred")
-        daphne = TestUtils().make_sub_dir(fred,"daphne")
-        thelma = TestUtils().make_sub_dir(test_dir,"thelma")
-        shaggy = TestUtils().make_sub_dir(test_dir,"shaggy")
-        scooby = TestUtils().make_sub_dir(shaggy,"scooby")
-        TestUtils().make_file("test.txt","This is a test file",basedir=test_dir)
-        for sub_dir in (fred,daphne,thelma,shaggy,scooby):
-            TestUtils().make_file("test.txt","This is another test file",basedir=sub_dir)
-        return test_dir
 
     def setUp(self):
         # Make test directories
-        self.dir1 = self.make_test_directory()
-        self.dir2 = self.make_test_directory()
+        self.dir1 = TestUtils().make_test_directory()
+        self.dir2 = TestUtils().make_test_directory()
         # Empty dirctories
-        self.empty_dir1 = self.make_test_directory()
-        self.empty_dir2 = self.make_test_directory()
+        self.empty_dir1 = TestUtils().make_test_directory()
+        self.empty_dir2 = TestUtils().make_test_directory()
         # Directory with extra file
-        self.extra_file_dir = self.make_test_directory()
+        self.extra_file_dir = TestUtils().make_test_directory()
         TestUtils().make_file("extra.txt","This is an extra test file",
                               basedir=self.extra_file_dir)
         # Directories with altered file
-        self.diff_file_dir1 = self.make_test_directory()
+        self.diff_file_dir1 = TestUtils().make_test_directory()
         TestUtils().make_file("diff.txt","This is one version of the file",
                               basedir=self.diff_file_dir1)
-        self.diff_file_dir2 = self.make_test_directory()
+        self.diff_file_dir2 = TestUtils().make_test_directory()
         TestUtils().make_file("diff.txt","This is another version of the file",
                               basedir=self.diff_file_dir2)
         # Directory with a broken link
-        self.broken_link_dir = self.make_test_directory()
+        self.broken_link_dir = TestUtils().make_test_directory()
         TestUtils().make_file("missing.txt","This is another test file",
                               basedir=self.broken_link_dir)
         os.symlink(os.path.join(self.broken_link_dir,"missing.txt"),
