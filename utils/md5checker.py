@@ -18,7 +18,7 @@ Utility for checking files and directories using md5 checksums.
 # Module metadata
 #######################################################################
 
-__version__ = "0.2.1"
+__version__ = "0.2.2"
 
 #######################################################################
 # Import modules that this module depends on
