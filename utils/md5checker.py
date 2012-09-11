@@ -27,7 +27,7 @@ __version__ = "0.2.1"
 import sys
 import os
 import optparse
-import tempfile
+import logging
 # Put ../share onto Python search path for modules
 SHARE_DIR = os.path.abspath(
     os.path.normpath(
@@ -71,8 +71,8 @@ def compute_md5sums(dirn,output_file=None):
                 fp.write("%s  %s\n" % (chksum,filen))
             except IOError, ex:
                 # Error accessing file, report and skip
-                sys.stderr.write("%s: error while generating MD5 sum: '%s'\n" % (filen,ex))
-                sys.stderr.write("%s: skipped\n" % filen)
+                logging.error("%s: error while generating MD5 sum: '%s'" % (filen,ex))
+                logging.error("%s: skipped" % filen)
                 retval = 1
     if output_file:
         fp.close()
@@ -106,8 +106,8 @@ def verify_md5sums(chksum_file,verbose=False):
     for line in open(chksum_file,'rU'):
         items = line.strip().split()
         if len(items) < 2:
-            sys.stderr.write("Unable to read MD5 sum from line (skipped):\n")
-            sys.stderr.write("%s" % line)
+            logging.error("Unable to read MD5 sum from line (skipped):")
+            logging.error("%s" % line)
             badlines.append(line)
             retval = 1
             continue
@@ -119,15 +119,15 @@ def verify_md5sums(chksum_file,verbose=False):
                 report("%s: OK" % chkfile,verbose)
                 nsuccess += 1
             else:
-                sys.stderr.write("%s: FAILED\n" % chkfile)
+                logging.error("%s: FAILED" % chkfile)
                 failures.append(chkfile)
                 retval = 1
         except IOError, ex:
             if not os.path.exists(chkfile):
-                sys.stderr.write("%s: FAILED (file not found)\n" % chkfile)
+                logging.error("%s: FAILED (file not found)" % chkfile)
                 missing.append(chkfile)
             else:
-                sys.stderr.write("%s: FAILED (%s)\n" % (chkfile,ex))
+                logging.error("%s: FAILED (%s)" % (chkfile,ex))
                 failures.append(chkfile)
             retval = 1
     # Summarise
@@ -180,12 +180,12 @@ def diff_directories(dirn1,dirn2,verbose=False):
             filen2 = filen1.replace(dirn1,dirn2,1)
             # Check that source exists
             if not os.path.isfile(filen1):
-                sys.stderr.write("%s: FAILED (broken file)\n" % filen1)
+                logging.error("%s: FAILED (broken file)" % filen1)
                 broken.append(filen1)
                 retval = 1
             # Check that target exists
             elif not os.path.isfile(filen2):
-                sys.stderr.write("%s: FAILED (file not found)\n" % filen2)
+                logging.error("%s: FAILED (file not found)" % filen2)
                 missing.append(filen2)
                 retval = 1
             else:
@@ -197,13 +197,13 @@ def diff_directories(dirn1,dirn2,verbose=False):
                         report("%s: OK" % filen2,verbose)
                         nsuccess += 1
                     else:
-                        sys.stderr.write("%s: FAILED\n" % filen2)
+                        logging.error("%s: FAILED" % filen2)
                         failures.append(filen2)
                         retval = 1
                 except IOError, ex:
                     # Error accessing one or both files, report and skip
-                    sys.stderr.write("%s: FAILED\n" % filen2)
-                    sys.stderr.write("Error while generating MD5 sums: '%s'\n" % ex)
+                    logging.error("%s: FAILED" % filen2)
+                    logging.error("Error while generating MD5 sums: '%s'" % ex)
                     failures.append(filen2)
                     retval = 1
     # Summarise
@@ -245,7 +245,7 @@ def compute_md5sum_for_file(filen,output_file=None):
         fp.write("%s  %s\n" % (chksum,filen))
     except IOError, ex:
         # Error accessing file, report and skip
-        sys.stderr.write("%s: error while generating MD5 sum: '%s'\n" % (filen,ex))
+        logging.error("%s: error while generating MD5 sum: '%s'" % (filen,ex))
         retval = 1
     if output_file:
         fp.close()
@@ -500,9 +500,13 @@ if __name__ == "__main__":
     # Process the command line
     options,arguments = p.parse_args()
 
+    # Set up logging output
+    logging.basicConfig(format='%(message)s')
+
     # Unit tests
     if options.run_tests:
         print "Running unit tests"
+        logging.getLogger().setLevel(logging.CRITICAL)
         suite = unittest.TestSuite(unittest.TestLoader().\
                                        discover(os.path.dirname(sys.argv[0]), \
                                                     pattern=os.path.basename(sys.argv[0])))
