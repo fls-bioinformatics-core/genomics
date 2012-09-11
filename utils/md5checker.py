@@ -287,8 +287,156 @@ def report(msg,verbose=False):
     if verbose: print "%s" % (msg)
 
 #######################################################################
+# Tests
+#######################################################################
+import unittest
+import tempfile
+import shutil
+
+class TestUtils:
+    """Utilities to help with setting up/running tests etc
+
+    """
+    def make_file(self,filename,text,basedir=None):
+        """Create test file
+        
+        """
+        if filename is None:
+            # mkstemp returns a tuple
+            tmpfile = tempfile.mkstemp(dir=basedir,text=True)
+            filename = tmpfile[1]
+        elif basedir is not None:
+            filename = os.path.join(basedir,filename)
+        fp = open(filename,'w')
+        fp.write(text)
+        fp.close()
+        return filename
+
+    def make_dir(self,dirname):
+        """Create test directory
+        
+        """
+        if dirname is None:
+            dirname = tempfile.mkdtemp()
+        else:
+            os.mkdir(dirname)
+        return dirname
+
+    def make_sub_dir(self,basedir,dirname):
+        """Create a subdirectory in an existing directory
+        
+        """
+        subdir = os.path.join(basedir,dirname)
+        os.mkdir(subdir)
+        return subdir
+
+class TestDiffFiles(unittest.TestCase):
+    """Test checking pairs of files
+
+    """
+    def setUp(self):
+        # Create a set of files to compare
+        self.file1 = TestUtils().make_file(None,"This is a test file")
+        self.file2 = TestUtils().make_file(None,"This is a test file")
+        self.file3 = TestUtils().make_file(None,"This is another test file")
+
+    def tearDown(self):
+        # Delete the test files
+        os.remove(self.file1)
+        os.remove(self.file2)
+        os.remove(self.file3)
+
+    def test_same_file(self):
+        # Check that identical files checksum to the same value
+        self.assertEqual(diff_files(self.file1,self.file2),0)
+
+    def test_different_files(self):
+        # Check that different files checksum to different values
+        self.assertNotEqual(diff_files(self.file1,self.file3),0)
+
+class TestDiffDirectories(unittest.TestCase):
+    """Test checking pairs of directories
+
+    """
+    def make_test_directory(self):
+        """Create a template test directory structure
+
+        """
+        test_dir = TestUtils().make_dir(None)
+        fred = TestUtils().make_sub_dir(test_dir,"fred")
+        daphne = TestUtils().make_sub_dir(fred,"daphne")
+        thelma = TestUtils().make_sub_dir(test_dir,"thelma")
+        shaggy = TestUtils().make_sub_dir(test_dir,"shaggy")
+        scooby = TestUtils().make_sub_dir(shaggy,"scooby")
+        TestUtils().make_file("test.txt","This is a test file",basedir=test_dir)
+        for sub_dir in (fred,daphne,thelma,shaggy,scooby):
+            TestUtils().make_file("test.txt","This is another test file",basedir=sub_dir)
+        return test_dir
+
+    def setUp(self):
+        # Make test directories
+        self.dir1 = self.make_test_directory()
+        self.dir2 = self.make_test_directory()
+        # Empty dirctories
+        self.empty_dir1 = self.make_test_directory()
+        self.empty_dir2 = self.make_test_directory()
+        # Directory with extra file
+        self.extra_file_dir = self.make_test_directory()
+        TestUtils().make_file("extra.txt","This is an extra test file",
+                              basedir=self.extra_file_dir)
+        # Directories with altered file
+        self.diff_file_dir1 = self.make_test_directory()
+        TestUtils().make_file("diff.txt","This is one version of the file",
+                              basedir=self.diff_file_dir1)
+        self.diff_file_dir2 = self.make_test_directory()
+        TestUtils().make_file("diff.txt","This is another version of the file",
+                              basedir=self.diff_file_dir2)
+        # Directory with a broken link
+        self.broken_link_dir = self.make_test_directory()
+        TestUtils().make_file("missing.txt","This is another test file",
+                              basedir=self.broken_link_dir)
+        os.symlink(os.path.join(self.broken_link_dir,"missing.txt"),
+                   os.path.join(self.broken_link_dir,"broken"))
+        os.remove(os.path.join(self.broken_link_dir,"missing.txt"))
+
+    def tearDown(self):
+        # Remove test directories
+        shutil.rmtree(self.dir1)
+        shutil.rmtree(self.dir2)
+        shutil.rmtree(self.empty_dir1)
+        shutil.rmtree(self.empty_dir2)
+        shutil.rmtree(self.extra_file_dir)
+        shutil.rmtree(self.diff_file_dir1)
+        shutil.rmtree(self.diff_file_dir2)
+        shutil.rmtree(self.broken_link_dir)
+
+    def test_same_dirs(self):
+        # Check that identical directories are identified as the same
+        self.assertEqual(diff_directories(self.empty_dir1,self.empty_dir2),0)
+        self.assertEqual(diff_directories(self.dir1,self.dir2),0)
+
+    def test_extra_file(self):
+        # Check when one directory contains an extra file
+        self.assertEqual(diff_directories(self.dir1,self.extra_file_dir),0)
+        self.assertNotEqual(diff_directories(self.extra_file_dir,self.dir1),0)
+
+    def test_different_file(self):
+        # Check when directories have a file that differs
+        self.assertNotEqual(diff_directories(self.diff_file_dir1,
+                                             self.diff_file_dir2),0)
+        self.assertNotEqual(diff_directories(self.diff_file_dir2,
+                                             self.diff_file_dir1),0)
+
+    def test_broken_links(self):
+        # Check when directories contain broken links
+        self.assertNotEqual(diff_directories(self.broken_link_dir,
+                                             self.dir1),0)
+        self.assertEqual(diff_directories(self.dir1,
+                                          self.broken_link_dir),0)
+
+#######################################################################
 # Main program
-#######################################################################    
+#######################################################################
 
 if __name__ == "__main__":
     usage = """
@@ -341,8 +489,24 @@ if __name__ == "__main__":
                                  "This option behaves the same as the Linux 'md5sum' tool.")
     p.add_option_group(group)
 
+    # Testing
+    group = optparse.OptionGroup(p,"Testing")
+    group.add_option('--test',action="store_true",dest="run_tests",default=False,
+                     help="run unit tests")
+    p.add_option_group(group)
+
     # Process the command line
     options,arguments = p.parse_args()
+
+    # Unit tests
+    if options.run_tests:
+        print "Running unit tests"
+        suite = unittest.TestSuite(unittest.TestLoader().\
+                                       discover(os.path.dirname(sys.argv[0]), \
+                                                    pattern=os.path.basename(sys.argv[0])))
+        unittest.TextTestRunner(verbosity=2).run(suite)
+        print "Tests finished"
+        sys.exit()
 
     # Figure out mode of operation
     if options.check:
