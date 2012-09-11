@@ -1,3 +1,9 @@
+2012-09-11  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* utils/md5checker.py
+	- version 0.2.2: added unit tests (run using --test option); fixed exit
+	  code for -d/--diff mode if broken or missing files are encountered.
+
 2012-08-30  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* utils/md5checker.py
