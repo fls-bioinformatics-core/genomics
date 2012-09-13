@@ -12,6 +12,10 @@
 	  sample directory
 	- new option --unaligned=... allows alternative name to be specified for the
 	  "Unaligned" subdirectory holding fastq.gz files.
+
+	* share/TabFile.py
+	- version 0.2.5: implement __nonzero__ built-in for TabDataLine to enable
+	  easy test for whether a line is blank.
 	
 2012-09-11  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
