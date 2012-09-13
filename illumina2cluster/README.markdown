@@ -50,6 +50,9 @@ Options:
                       directories but don't actually do them
     --dry-run         report operations that would be performed if creating the
                       analysis directories but don't actually do them
+    --unaligned=UNALIGNED_DIR
+                      specify an alternative name for the 'Unaligned'
+                      directory conatining the fastq.gz files
     --expt=EXPT_TYPE  specify experiment type (e.g. ChIP-seq) to append to the
                       project name when creating analysis directories. The
                       syntax for EXPT_TYPE is '<project>:<type>' e.g. --expt=NY
@@ -76,17 +79,19 @@ Options:
     -h, --help            show this help message and exit
     -o SAMPLESHEET_OUT    output new sample sheet to SAMPLESHEET_OUT
     -v, --view            view contents of sample sheet
+    --fix-spaces          replace spaces in SampleID and SampleProject fields
+                          with underscores
     --set-id=SAMPLE_ID    update/set the values in the 'SampleID' field;
                           SAMPLE_ID should be of the form '<lanes>:<name>',
                           where <lanes> is a single integer (e.g. 1), a set of
                           integers (e.g. 1,3,...), a range (e.g. 1-3), or a
-                          combination (e.g. 1,3-5,7).
+                          combination (e.g. 1,3-5,7)
     --set-project=SAMPLE_PROJECT
                           update/set values in the 'SampleProject' field;
                           SAMPLE_PROJECT should be of the form '<lanes>:<name>',
                           where <lanes> is a single integer (e.g. 1), a set of
                           integers (e.g. 1,3,...), a range (e.g. 1-3), or a
-                          combination (e.g. 1,3-5,7).
+                          combination (e.g. 1,3-5,7)
 
 Example:
 
