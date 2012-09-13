@@ -1,3 +1,18 @@
+2012-09-13  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* illumina2cluster/update_sample_sheet.py
+	- added checks for duplicated SampleID/SampleProject combinations & spaces
+	  in names, and refuse to write new SampleSheet containing either of these
+	  features.
+	- new option --fix-spaces will automatically replace spaces with underscores
+	  in SampleID and SampleProject fields.
+	
+	* illumina2cluster/build_illumina_analysis_dir.py
+	- updated to allow for possibility of more than one fastq.gz file per
+	  sample directory
+	- new option --unaligned=... allows alternative name to be specified for the
+	  "Unaligned" subdirectory holding fastq.gz files.
+	
 2012-09-11  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* utils/md5checker.py
