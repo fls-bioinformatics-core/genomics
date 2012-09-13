@@ -21,6 +21,7 @@ View and manipulate sample sheet files for Illumina GA2 sequencer.
 import os
 import sys
 import optparse
+import logging
 # Put ../share onto Python search path for modules
 SHARE_DIR = os.path.abspath(
     os.path.normpath(
@@ -73,6 +74,9 @@ def parse_name_expression(name_expr):
 #######################################################################
 
 if __name__ == "__main__":
+    # Set up logging output
+    logging.basicConfig(format="%(levelname)s %(message)s")
+
     # Set up option parser
     p = optparse.OptionParser(usage="%prog [OPTIONS] SampleSheet.csv",
                               description="Utility to view and edit SampleSheet file from "
@@ -82,16 +86,18 @@ if __name__ == "__main__":
                  help="output new sample sheet to SAMPLESHEET_OUT")
     p.add_option('-v','--view',action="store_true",dest="view",
 	         help="view contents of sample sheet")
+    p.add_option('--fix-spaces',action="store_true",dest="fix_spaces",
+                 help="replace spaces in SampleID and SampleProject fields with underscores")
     p.add_option('--set-id',action="append",dest="sample_id",default=[],
                  help="update/set the values in the 'SampleID' field; "
                  "SAMPLE_ID should be of the form '<lanes>:<name>', where <lanes> is a single "
                  "integer (e.g. 1), a set of integers (e.g. 1,3,...), a range (e.g. 1-3), or "
-                 "a combination (e.g. 1,3-5,7).")
+                 "a combination (e.g. 1,3-5,7)")
     p.add_option('--set-project',action="append",dest="sample_project",default=[],
                  help="update/set values in the 'SampleProject' field; "
                  "SAMPLE_PROJECT should be of the form '<lanes>:<name>', where <lanes> is a "
                  "single integer (e.g. 1), a set of integers (e.g. 1,3,...), a range (e.g. 1-3), "
-                 "or a combination (e.g. 1,3-5,7).")
+                 "or a combination (e.g. 1,3-5,7)")
     # Process command line
     options,args = p.parse_args()
     if len(args) != 1:
@@ -99,7 +105,7 @@ if __name__ == "__main__":
     # Get input sample sheet file
     samplesheet = args[0]
     if not os.path.isfile(samplesheet):
-        sys.stderr("Sample sheet '%s': not found" % samplesheet)
+        logging.error("sample sheet '%s': not found" % samplesheet)
         sys.exit(1)
     # Read in the data as CSV
     data = TabFile.TabFile(samplesheet,delimiter=',',first_line_is_header=False,
@@ -118,11 +124,40 @@ if __name__ == "__main__":
         for lane in lanes:
             print "Setting SampleProject for lane %d: '%s'" % (lane,name)
             data[lane]['SampleProject'] = name
+    # Fix spaces
+    if options.fix_spaces:
+        for lane in data:
+            lane['SampleID'] = lane['SampleID'].replace(' ','_')
+            lane['SampleProject'] = lane['SampleProject'].replace(' ','_')
     # Print transposed data in tab-delimited format
     if options.view:
         data.transpose().write(fp=sys.stdout,delimiter='\t')
+    # Check for non-unique id/project combinations and spaces
+    check_status = 0
+    id_project_names = []
+    for lane in data:
+        # Duplicated names
+        id_project_name = lane['SampleID'] + '/' + lane['SampleProject']
+        if id_project_name in id_project_names:
+            logging.warning("Duplicated SampleID/SampleProject in lane %s (%s)" % 
+                            (lane['Lane'],id_project_name))
+            check_status = 1
+        else:
+            id_project_names.append(id_project_name)
+        # Spaces in names
+        try:
+            id_project_name.index(' ')
+            logging.warning("Spaces in SampleID/SampleProject in lane %s (%s)" %
+                            (lane['Lane'],id_project_name))
+            check_status = 1
+        except ValueError:
+            pass
     # Write out new sample sheet
     if options.samplesheet_out:
-        data.write(options.samplesheet_out)
-    sys.exit()
+        if check_status:
+            logging.error("please fix above errors in sample sheet data")
+        else:
+            data.write(options.samplesheet_out)
+    # Finish
+    sys.exit(check_status)
     
