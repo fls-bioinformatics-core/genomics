@@ -48,19 +48,21 @@ class IlluminaData:
 
     """
 
-    def __init__(self,illumina_analysis_dir):
+    def __init__(self,illumina_analysis_dir,unaligned_dir="Unaligned"):
         """Create and populate a new IlluminaData object
 
         Arguments:
           illumina_analysis_dir: path to the analysis directory holding
             the fastq files (expected to be in a subdirectory called
             'Unaligned').
+          unaligned_dir: (optional) alternative name for the subdirectory
+            under illumina_analysis_dir holding the fastq files
 
         """
         self.analysis_dir = os.path.abspath(illumina_analysis_dir)
         self.projects = []
         # Look for "unaligned" data directory
-        self.unaligned_dir = os.path.join(illumina_analysis_dir,'Unaligned')
+        self.unaligned_dir = os.path.join(illumina_analysis_dir,unaligned_dir)
         if not os.path.exists(self.unaligned_dir):
             raise IlluminaDataError, "Missing data directory %s" % self.unaligned_dir
         # Look for projects
@@ -161,18 +163,18 @@ class IlluminaSample:
 
         """
         self.dirn = dirn
+        self.fastq = []
         # Get name by removing prefix
         self.sample_prefix = "Sample_"
         self.name = os.path.basename(dirn)[len(self.sample_prefix):]
         logging.debug("\tSample: %s" % self.name)
-        # Look for fastq file
-        self.fastq = None
+        # Look for fastq files
         for f in os.listdir(self.dirn):
             if f.endswith(".fastq.gz"):
-                self.fastq = f
-                logging.debug("\tFastq : %s" % self.fastq)
-        if self.fastq is None:
-            raise IlluminaDataError, "Unable to find fastq.gz file for %s" % \
+                self.fastq.append(f)
+                logging.debug("\tFastq : %s" % f)
+        if not self.fastq:
+            raise IlluminaDataError, "Unable to find fastq.gz files for %s" % \
                 self.name
 
 class IlluminaDataError(Exception):
@@ -196,6 +198,9 @@ if __name__ == "__main__":
     p.add_option("--dry-run",action="store_true",dest="dry_run",
                  help="report operations that would be performed if creating the "
                  "analysis directories but don't actually do them")
+    p.add_option("--unaligned",action="store",dest="unaligned_dir",default="Unaligned",
+                 help="specify an alternative name for the 'Unaligned' directory "
+                 "conatining the fastq.gz files")
     p.add_option("--expt",action="append",dest="expt_type",default=[],
                  help="specify experiment type (e.g. ChIP-seq) to append to the project name "
                  "when creating analysis directories. The syntax for EXPT_TYPE is "
@@ -211,14 +216,17 @@ if __name__ == "__main__":
     illumina_analysis_dir = os.path.abspath(args[0])
 
     # Populate Illumina data object
-    illumina_data = IlluminaData(illumina_analysis_dir)
+    illumina_data = IlluminaData(illumina_analysis_dir,unaligned_dir=options.unaligned_dir)
 
     # List option
     if options.list:
         for project in illumina_data.projects:
             print "Project: %s (%d samples)" % (project.name,len(project.samples))
             for sample in project.samples:
-                print "\t%s" % sample.name
+                if len(sample.fastq) == 1:
+                    print "\t%s" % sample.name
+                else:
+                    print "\t%s (%d fastqs)" % (sample.name,len(sample.fastq)) 
         sys.exit()
 
     # Assign experiment types
@@ -241,11 +249,12 @@ if __name__ == "__main__":
             if not options.dry_run: os.mkdir(project_dir)
         # Check for & create links to fastq files
         for sample in project.samples:
-            fastq = os.path.join(sample.dirn,sample.fastq)
-            fastq_ln = os.path.join(project_dir,sample.name+'.fastq.gz')
-            if os.path.exists(fastq_ln):
-                print "-> %s.fastq.gz already exists" % sample.name
-            else:
-                print "Linking to %s" % sample.fastq            
-                if not options.dry_run: os.symlink(fastq,fastq_ln)
+            for fastq in sample.fastq:
+                fastq_file = os.path.join(sample.dirn,fastq)
+                fastq_ln = os.path.join(project_dir,sample.name+'.fastq.gz')
+                if os.path.exists(fastq_ln):
+                    print "-> %s.fastq.gz already exists" % sample.name
+                else:
+                    print "Linking to %s" % sample.fastq            
+                    if not options.dry_run: os.symlink(fastq,fastq_ln)
 
