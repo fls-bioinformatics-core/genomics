@@ -9,7 +9,7 @@
 #
 #########################################################################
 
-__version__ = "0.2.4"
+__version__ = "0.2.5"
 
 """TabFile
 
@@ -219,6 +219,10 @@ class TabDataLine:
     e.g. for a comma-delimited line:
 
         line = TabDataLine("1,2,3",delimiter=',')
+
+    Check if a line is empty:
+
+        if not line: print "Blank line"
     
     """
     def __init__(self,line=None,column_names=None,delimiter='\t',lineno=None,):
@@ -318,6 +322,11 @@ class TabDataLine:
 
     def __len__(self):
         return len(self.data)
+
+    def __nonzero__(self):
+        for item in self.data:
+            if str(item).strip(): return True
+        return False
 
     def __convert(self,value):
         """Internal: convert a value to the correct type
