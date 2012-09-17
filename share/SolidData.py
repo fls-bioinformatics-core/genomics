@@ -274,6 +274,71 @@ class SolidRun:
                             library.qual_f5    = primary_data.qual
                             f5_timestamp       = primary_data.timestamp
 
+    def verify(self):
+        """Perform verification checks on the SOLiD run directory
+
+        Checks for the expected sample and library directories, and that
+        primary data files (csfasta and qual) have been assigned and exist.
+
+        Returns:
+          True if the checks pass, False if there is a problem.
+        """
+        if not self:
+            # Some error processing the basics
+            return False
+        # Check basic parameters: should have non-zero numbers of
+        # samples and libraries
+        if len(self.samples) == 0:
+            logging.warning("No sample data")
+            return False
+        # Check libraries in each sample
+        run_ok = True
+        for sample in self.samples:
+            if len(sample.libraries) == 0:
+                logging.warning("No libraries for sample %s" % sample.name)
+                run_ok = False
+            for library in sample.libraries:
+                # Check csfasta was found
+                if not library.csfasta:
+                    logging.warning("No F3 csfasta for %s/%s" % (sample.name,
+                                                                 library.name))
+                    run_ok = False
+                elif not os.path.exists(library.csfasta):
+                    logging.warning("Missing F3 csfasta for %s/%s" % (sample.name,
+                                                                      library.name))
+                    run_ok = False
+                # Check qual was found
+                if not library.qual:
+                    logging.warning("No F3 qual for %s/%s" % (sample.name,
+                                                              library.name))
+                    run_ok = False
+                elif not os.path.exists(library.qual):
+                    logging.warning("Missing F3 qual for %s/%s" % (sample.name,
+                                                                   library.name))
+                    run_ok = False
+                # Paired-end run: check F5 reads
+                if is_paired_end(self):
+                    # Check for F5 csfasta
+                    if not library.csfasta_f5:
+                        logging.warning("No F5 csfasta for %s/%s" % (sample.name,
+                                                                     library.name))
+                        run_ok = False
+                    elif not os.path.exists(library.csfasta_f5):
+                        logging.warning("Missing F5 csfasta for %s/%s" % (sample.name,
+                                                                          library.name))
+                        run_ok = False
+                    # Check for F5 qual
+                    if not library.qual_f5:
+                        logging.warning("No F5 qual for %s/%s" % (sample.name,
+                                                                  library.name))
+                        run_ok = False
+                    elif not os.path.exists(library.qual_f5):
+                        logging.warning("Missing F5 qual for %s/%s" % (sample.name,
+                                                                       library.name))
+                        run_ok = False
+        # Completed checks
+        return run_ok
+
     def fetchLibraries(self,sample_name='*',library_name='*'):
         """Retrieve libraries based on sample and library names
 
@@ -2204,6 +2269,61 @@ class TestSolidRunDifferentDirName(unittest.TestCase):
         self.assertTrue(self.solid_run)
         # Check the run name
         self.assertEqual(self.solid_run.run_name,'solid0123_20130426_FRAG_BC')
+
+class TestVerifySolidRun(unittest.TestCase):
+    """Unit tests for SolidRun.verify method
+    """
+    def setUp(self):
+        # Set up a mock SOLiD directory structure
+        self.solid_test_dir = TestUtils().make_solid_dir('solid0123_20130426_FRAG_BC')
+
+    def tearDown(self):
+        shutil.rmtree(self.solid_test_dir)
+
+    def test_verify(self):
+        self.assertTrue(SolidRun(self.solid_test_dir).verify())
+
+    def test_verify_missing_csfasta(self):
+        # Remove some files
+        solid_run = SolidRun(self.solid_test_dir)
+        os.remove(solid_run.samples[0].libraries[0].csfasta)
+        # Test
+        self.assertFalse(SolidRun(self.solid_test_dir).verify())
+
+    def test_verify_missing_qual(self):
+        # Remove some files
+        solid_run = SolidRun(self.solid_test_dir)
+        os.remove(solid_run.samples[0].libraries[0].qual)
+        # Test
+        self.assertFalse(SolidRun(self.solid_test_dir).verify())
+
+class TestVerifySolidRunPairedEnd(unittest.TestCase):
+    """Unit tests for SolidRun.verify method for paired-end data
+    """
+    def setUp(self):
+        # Set up a mock SOLiD directory structure
+        self.solid_test_dir = \
+            TestUtils().make_solid_dir_paired_end('solid0123_20130426_PE_BC')
+
+    def tearDown(self):
+        shutil.rmtree(self.solid_test_dir)
+
+    def test_verify(self):
+        self.assertTrue(SolidRun(self.solid_test_dir).verify())
+
+    def test_verify_missing_csfasta(self):
+        # Remove some files
+        solid_run = SolidRun(self.solid_test_dir)
+        os.remove(solid_run.samples[0].libraries[0].csfasta)
+        # Test
+        self.assertFalse(SolidRun(self.solid_test_dir).verify())
+
+    def test_verify_missing_qual(self):
+        # Remove some files
+        solid_run = SolidRun(self.solid_test_dir)
+        os.remove(solid_run.samples[0].libraries[0].qual)
+        # Test
+        self.assertFalse(SolidRun(self.solid_test_dir).verify())
 
 class TestFunctions(unittest.TestCase):
     """Unit tests for module functions.
