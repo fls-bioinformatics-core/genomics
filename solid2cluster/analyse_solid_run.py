@@ -306,65 +306,8 @@ def verify_runs(solid_dirs):
         # Initialise
         run_status = 0
         run = SolidData.SolidRun(solid_dir)
-        if not run:
-            # Some error processing the basics
+        if not run.verify():
             run_status = 1
-        else:
-            # Check basic parameters: should have non-zero numbers of
-            # samples and libraries
-            if len(run.samples) == 0:
-                logging.warning("No sample data")
-                run_status = 1
-            # Determine if run is paired-end
-            paired_end = SolidData.is_paired_end(run)
-            # Check libraries in each sample
-            for sample in run.samples:
-                if len(sample.libraries) == 0:
-                    logging.warning("No libraries for sample %s" % sample.name)
-                    run_status = 1
-                for library in sample.libraries:
-                    # Check csfasta was found
-                    if not library.csfasta:
-                        logging.warning("No F3 csfasta for %s/%s" %
-                                        (sample.name,library.name))
-                        run_status = 1
-                    else:
-                        if not os.path.exists(library.csfasta):
-                            logging.warning("Missing F3 csfasta for %s/%s" %
-                                            (sample.name,library.name))
-                            run_status = 1
-                    # Check qual was found
-                    if not library.qual:
-                        logging.warning("No F3 qual for %s/%s" %
-                                        (sample.name,library.name))
-                        run_status = 1
-                    else:
-                        if not os.path.exists(library.qual):
-                            logging.warning("Missing F3 qual for %s/%s" %
-                                            (sample.name,library.name))
-                            run_status = 1
-                    # Paired-end run: check F5 reads
-                    if paired_end:
-                        if not library.csfasta_f5:
-                            logging.warning("No F5 csfasta for %s/%s" %
-                                            (sample.name,library.name))
-                            run_status = 1
-                        else:
-                            if not os.path.exists(library.csfasta_f5):
-                                logging.warning("Missing F5 csfasta for %s/%s" %
-                                                (sample.name,library.name))
-                                run_status = 1
-                        # Check for F5 qual
-                        if not library.qual_f5:
-                            logging.warning("No F5 qual for %s/%s" %
-                                            (sample.name,library.name))
-                            run_status = 1
-                        else:
-                            if not os.path.exists(library.qual_f5):
-                                logging.warning("Missing F5 qual for %s/%s" %
-                                                (sample.name,library.name))
-                                run_status = 1
-        # Completed checks for run
         print "%s:" % run.run_name,
         if run_status == 0:
             print " [PASSED]"
