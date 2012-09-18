@@ -274,6 +274,12 @@ class SolidRun:
                             library.qual_f5    = primary_data.qual
                             f5_timestamp       = primary_data.timestamp
 
+    @property
+    def is_paired_end(self):
+        """Return True if run is paired end, False if not
+        """
+        return is_paired_end(self)
+
     def verify(self):
         """Perform verification checks on the SOLiD run directory
 
@@ -317,7 +323,7 @@ class SolidRun:
                                                                    library.name))
                     run_ok = False
                 # Paired-end run: check F5 reads
-                if is_paired_end(self):
+                if self.is_paired_end:
                     # Check for F5 csfasta
                     if not library.csfasta_f5:
                         logging.warning("No F5 csfasta for %s/%s" % (sample.name,
