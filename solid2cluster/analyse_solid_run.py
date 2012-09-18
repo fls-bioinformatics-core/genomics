@@ -23,6 +23,7 @@ import sys
 import os
 import string
 import shutil
+import gzip
 import optparse
 import logging
 logging.basicConfig(format="%(levelname)s %(message)s")
@@ -405,6 +406,58 @@ def copy_data(solid_runs,library_defns):
                     else:
                         shutil.copy(filn,dst)
 
+def gzip_data(solid_runs,library_defns):
+    """Make gzipped copies of a selection of primary data files in current directory
+
+    Locates primary data files matching a sample/library specification
+    string of the form <sample_pattern>/<library_pattern>. The patterns
+    are matching against sample and library names, and can be either
+    exact or can include a trailing wildcard character (i.e. *) to match
+    multiple names. For example:
+
+    - 'SA_LH_POOL_49/LH1' matches the library called 'LH1' in the sample
+      'SA_LH_POOL_49';
+
+    - '*/LH1' matches all libraries called 'LH1' in any sample;
+
+    - '*/LH*' matches all libraries starting 'LH' in any sample;
+
+    - '*/*' matches all primary data files in all runs
+
+    Gzipped copies of the files are made in the current directory.
+
+    Arguments:
+      solid_runs: list of populated SolidRun objects
+      library_defns: list of library definition strings (see above
+        for syntax/format)
+    """
+    for library_defn in library_defns:
+        sample = library_defn.split('/')[0]
+        library = library_defn.split('/')[1]
+        print "Copy: look for samples matching pattern %s" % library_defn
+        print "Gzipped copies will be created in %s" % os.getcwd()
+        for run in solid_runs:
+            for lib in run.fetchLibraries(sample,library):
+                print "-> matched %s/%s" % (lib.parent_sample.name,lib.name)
+                primary_data_files =[]
+                primary_data_files.append(lib.csfasta)
+                primary_data_files.append(lib.qual)
+                if run.is_paired_end:
+                    primary_data_files.append(lib.csfasta_f5)
+                    primary_data_files.append(lib.qual_f5)
+                for filn in primary_data_files:
+                    print "\tGzipping .../%s" % os.path.basename(filn)
+                    gzip_filn = os.path.abspath(os.path.basename(filn)+'.gz')
+                    if os.path.exists(gzip_filn):
+                        logging.error("File %s already exists! Skipped" % gzip_filn)
+                    else:
+                        fp = open(filn,'rU')
+                        fg = gzip.GzipFile(gzip_filn,'wb')
+                        for line in fp:
+                            fg.write(line)
+                        fg.close()
+                        fp.close()
+
 def strip_prefix(path,prefix):
     """Strip the supplied prefix from a file name
     """
@@ -448,6 +501,10 @@ if __name__ == "__main__":
     p.add_option("--copy",action="append",dest="copy_pattern",default=[],
                  help="copy primary data files to pwd from specific library "
                  "where names match COPY_PATTERN, which should be of the "
+                 "form '<sample>/<library>'")
+    p.add_option("--gzip",action="append",dest="gzip_pattern",default=[],
+                 help="make gzipped copies of primary data files in pwd from specific "
+                 "libraries where names match GZIP_PATTERN, which should be of the "
                  "form '<sample>/<library>'")
     p.add_option("--quiet",action="store_true",dest="quiet",
                  help="suppress warnings")
@@ -495,7 +552,8 @@ if __name__ == "__main__":
             options.verify or
             options.rsync or
             options.md5sum or
-            options.copy_pattern):
+            options.copy_pattern or
+            options.gzip_pattern):
         options.report = True
 
     # Get the run information
@@ -539,6 +597,10 @@ if __name__ == "__main__":
     # Copy specific primary data files
     if options.copy_pattern:
         copy_data(solid_runs,options.copy_pattern)
+
+    # Gzip specific primary data files
+    if options.gzip_pattern:
+        gzip_data(solid_runs,options.gzip_pattern)
 
     # Do verification
     # Nb this should always be the last step
