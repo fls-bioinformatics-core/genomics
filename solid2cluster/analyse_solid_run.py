@@ -71,7 +71,7 @@ def report_run(solid_runs):
         print "I.D.   : %s" % (run.run_info.name)
         print "Date   : %s" % (run.run_info.date)
         print "Samples: %d" % len(run.samples)
-        if SolidData.is_paired_end(run):
+        if run.is_paired_end:
             print "\nPaired-end run"
         #
         # Report projects for each sample
@@ -90,7 +90,7 @@ def report_run(solid_runs):
                 # Report location of primary data
                 for library in project.libraries:
                     files = [library.csfasta,library.qual]
-                    if SolidData.is_paired_end(run):
+                    if run.is_paired_end:
                         files.extend((library.csfasta_f5,library.qual_f5))
                     for f in files:
                         if f is not None:
@@ -346,7 +346,7 @@ def print_md5sums(solid_runs):
                                       strip_prefix(library.qual,os.getcwd()))
                 except Exception,ex:
                     logging.error("FAILED for F3 qual: %s" % ex)
-                if SolidData.is_paired_end(run):
+                if run.is_paired_end:
                     try:
                         print "%s  %s" % (Md5sum.md5sum(library.csfasta_f5),
                                           strip_prefix(library.csfasta_f5,os.getcwd()))
@@ -394,7 +394,7 @@ def copy_data(solid_runs,library_defns):
                 primary_data_files =[]
                 primary_data_files.append(lib.csfasta)
                 primary_data_files.append(lib.qual)
-                if SolidData.is_paired_end(run):
+                if run.is_paired_end:
                     primary_data_files.append(lib.csfasta_f5)
                     primary_data_files.append(lib.qual_f5)
                 for filn in primary_data_files:
