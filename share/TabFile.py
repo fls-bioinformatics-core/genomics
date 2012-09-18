@@ -9,7 +9,7 @@
 #
 #########################################################################
 
-__version__ = "0.2.5"
+__version__ = "0.2.6"
 
 """TabFile
 
@@ -598,22 +598,31 @@ class TabFile:
                 return idx
         raise IndexError,"No line number %d" % n
 
-    def append(self,data=None,tabdata=None):
+    def append(self,data=None,tabdata=None,tabdataline=None):
         """Create and append a new data line
 
         Creates a new data line object and appends it to the end of
         the list of lines.
 
         Optionally the 'data' or 'tabdata' arguments can specify
-        data items which will be used to populate the new line.
+        data items which will be used to populate the new line;
+        alternatively 'tabdataline' can provide a TabDataLine-based
+        object to be appended.
+
+        If none of these are specified then a default blank
+        TabDataLine-based object is created, appended and returned.
 
         Arguments:
           data: (optional) a list of data items
           tabdata: (optional) a string of tab-delimited data items
+          tabdataline: (optional) a TabDataLine-based object
 
         Returns:
           Appended data line object.
         """
+        if tabdataline:
+            self.__data.append(tabdataline)
+            return tabdataline
         if data:
             line = self.__delimiter.join([str(x) for x in data])
         elif tabdata:
@@ -625,7 +634,7 @@ class TabFile:
         self.__data.append(data_line)
         return data_line
 
-    def insert(self,i,data=None,tabdata=None):
+    def insert(self,i,data=None,tabdata=None,tabdataline=None):
         """Create and insert a new data line at a specified index
  
         Creates a new data line object and inserts it into the list
@@ -633,16 +642,22 @@ class TabFile:
         number).
 
         Optionally the 'data' or 'tabdata' arguments can specify
-        data items which will be used to populate the new line.
+        data items which will be used to populate the new line;
+        alternatively 'tabdataline' can provide a TabDataLine-based
+        object to be inserted.
 
         Arguments:
           i: index position to insert the line at
           data: (optional) a list of data items
           tabdata: (optional) a string of tab-delimited data items
+          tabdataline: (optional) a TabDataLine-based object
 
         Returns:
           New inserted data line object.
         """
+        if tabdataline:
+            self.__data.insert(i,tabdataline)
+            return tabdataline
         if data:
             line = '\t'.join([str(x) for x in data])
         elif tabdata:
@@ -919,6 +934,51 @@ chr2\t1234\t5678\t6.8
         # Look for a negative line number
         self.assertRaises(IndexError,tabfile.indexByLineNumber,99)
 
+    def test_append_empty_line(self):
+        """Append a blank line to a TabFile
+        """
+        tabfile = TabFile('test',self.fp)
+        self.assertEqual(len(tabfile),3)
+        line = tabfile.append()
+        self.assertEqual(len(tabfile),4)
+        # Check new line is empty
+        for i in range(len(line)):
+            self.assertTrue(str(line[i]) == '')
+
+    def test_append_line_with_data(self):
+        """Append line to a TabFile populated with data
+        """
+        data = ['chr1',678,901,6.1]
+        tabfile = TabFile('test',self.fp)
+        self.assertEqual(len(tabfile),3)
+        line = tabfile.append(data=data)
+        self.assertEqual(len(tabfile),4)
+        # Check new line is correct
+        for i in range(len(data)):
+            self.assertTrue(line[i] == data[i])
+
+    def test_append_line_with_tab_data(self):
+        """Append line to a TabFile populated from tabbed data
+        """
+        data = 'chr1\t10000\t20000\t+'
+        tabfile = TabFile('test',self.fp)
+        self.assertEqual(len(tabfile),3)
+        line = tabfile.append(tabdata=data)
+        self.assertEqual(len(tabfile),4)
+        # Check new line is correct
+        self.assertTrue(str(line) == data)
+
+    def test_append_tab_data_line(self):
+        """Append a TabDataLine to a TabFile
+        """
+        tabfile = TabFile('test',self.fp)
+        self.assertEqual(len(tabfile),3)
+        tabdataline = TabDataLine('chr1\t10000\t20000\t+')
+        line = tabfile.append(tabdataline=tabdataline)
+        self.assertEqual(len(tabfile),4)
+        # Check new line is correct
+        self.assertTrue(line is tabdataline)
+
     def test_insert_empty_line(self):
         """Insert a blank line into a TabFile
         """
@@ -952,6 +1012,17 @@ chr2\t1234\t5678\t6.8
         self.assertEqual(len(tabfile),4)
         # Check new line is correct
         self.assertTrue(str(line) == data)
+
+    def test_insert_tab_data_line(self):
+        """Insert a TabDataLine into a TabFile
+        """
+        tabfile = TabFile('test',self.fp)
+        self.assertEqual(len(tabfile),3)
+        tabdataline = TabDataLine('chr1\t10000\t20000\t+')
+        line = tabfile.insert(2,tabdataline=tabdataline)
+        self.assertEqual(len(tabfile),4)
+        # Check new line is correct
+        self.assertTrue(line is tabdataline)
 
     def test_append_column(self):
         """Append new column to a Tabfile
