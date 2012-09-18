@@ -4,6 +4,10 @@
 	- new option --gzip=... creates compressed versions of specified primary data
 	  files for transfer.
 
+	* share/TabFile.py
+	- version 0.2.6: TabFile.append and TabFile.insert methods updated to allow
+	  arbitrary TabDateLine objects to be added to the TabFile object.
+
 2012-09-17  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* share/SolidData.py
