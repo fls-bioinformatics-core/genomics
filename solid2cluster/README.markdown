@@ -80,6 +80,11 @@ Options:
     --copy=COPY_PATTERN  copy primary data files to pwd from specific library
                          where names match COPY_PATTERN, which should be of the
                          form '<sample>/<library>'
+    --gzip=GZIP_PATTERN  make gzipped copies of primary data files in pwd from
+                         specific libraries where names match GZIP_PATTERN,
+                         which should be of the form '<sample>/<library>'
+    --quiet              suppress warnings
+    --debug              turn on debugging output (nb overrides --quiet)
 
 
 build_analysis_dir.py
