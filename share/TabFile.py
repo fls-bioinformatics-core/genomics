@@ -225,7 +225,7 @@ class TabDataLine:
         if not line: print "Blank line"
     
     """
-    def __init__(self,line=None,column_names=None,delimiter='\t',lineno=None,):
+    def __init__(self,line=None,column_names=None,delimiter='\t',lineno=None):
         """Create a new TabFileLine object
 
         Arguments:
