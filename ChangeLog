@@ -1,3 +1,9 @@
+2012-09-18  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* solid2cluster/analyse_solid_run.py
+	- new option --gzip=... creates compressed versions of specified primary data
+	  files for transfer.
+
 2012-09-17  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* share/SolidData.py
