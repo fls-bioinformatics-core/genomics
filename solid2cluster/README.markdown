@@ -83,6 +83,9 @@ Options:
     --gzip=GZIP_PATTERN  make gzipped copies of primary data files in pwd from
                          specific libraries where names match GZIP_PATTERN,
                          which should be of the form '<sample>/<library>'
+    --md5=MD5_PATTERN    calculate md5sums for primary data files from specific
+                         libraries where names match MD5_PATTERN, which should
+                         be of the form '<sample>/<library>'
     --quiet              suppress warnings
     --debug              turn on debugging output (nb overrides --quiet)
 
