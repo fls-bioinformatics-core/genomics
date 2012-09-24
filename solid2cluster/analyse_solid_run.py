@@ -323,42 +323,6 @@ def verify_runs(solid_dirs):
         print " [FAILED]"
     return status
 
-def print_md5sums(solid_runs):
-    """Calculate and print md5sums for primary data files
-
-    This will generate a list of md5sums that can be passed to the
-    md5sum program to check against a copy of the the runs using
-
-    md5sum -c CHECKSUMS
-
-    Arguments:
-      solid_runs: list or tuple of SolidRun instances.
-    """
-    for run in solid_runs:
-        for sample in run.samples:
-            for library in sample.libraries:
-                try:
-                    print "%s  %s" % (Md5sum.md5sum(library.csfasta),
-                                      strip_prefix(library.csfasta,os.getcwd()))
-                except Exception,ex:
-                    logging.error("FAILED for F3 csfasta: %s" % ex)
-                try:
-                    print "%s  %s" % (Md5sum.md5sum(library.qual),
-                                      strip_prefix(library.qual,os.getcwd()))
-                except Exception,ex:
-                    logging.error("FAILED for F3 qual: %s" % ex)
-                if run.is_paired_end:
-                    try:
-                        print "%s  %s" % (Md5sum.md5sum(library.csfasta_f5),
-                                          strip_prefix(library.csfasta_f5,os.getcwd()))
-                    except Exception,ex:
-                        logging.error("FAILED for F5 csfasta: %s" % ex)
-                    try:
-                        print "%s  %s" % (Md5sum.md5sum(library.qual_f5),
-                                          strip_prefix(library.qual_f5,os.getcwd()))
-                    except Exception,ex:
-                        logging.error("FAILED for F5 qual: %s" % ex)
-
 def copy_data(solid_runs,library_defns):
     """Copy selection of primary data files to current directory
 
@@ -434,7 +398,7 @@ def gzip_data(solid_runs,library_defns):
     for library_defn in library_defns:
         sample = library_defn.split('/')[0]
         library = library_defn.split('/')[1]
-        print "Copy: look for samples matching pattern %s" % library_defn
+        print "Gzip: look for samples matching pattern %s" % library_defn
         print "Gzipped copies will be created in %s" % os.getcwd()
         for run in solid_runs:
             for lib in run.fetchLibraries(sample,library):
@@ -443,20 +407,96 @@ def gzip_data(solid_runs,library_defns):
                 primary_data_files.append(lib.csfasta)
                 primary_data_files.append(lib.qual)
                 if run.is_paired_end:
+                    # Add F5 data files for paired end run
                     primary_data_files.append(lib.csfasta_f5)
                     primary_data_files.append(lib.qual_f5)
                 for filn in primary_data_files:
                     print "\tGzipping .../%s" % os.path.basename(filn)
+                    # Check for final gz file
                     gzip_filn = os.path.abspath(os.path.basename(filn)+'.gz')
                     if os.path.exists(gzip_filn):
                         logging.error("File %s already exists! Skipped" % gzip_filn)
                     else:
-                        fp = open(filn,'rU')
-                        fg = gzip.GzipFile(gzip_filn,'wb')
-                        for line in fp:
-                            fg.write(line)
-                        fg.close()
+                        # Name for intermediate file
+                        gzip_filn_part = gzip_filn+'.part'
+                        # Buffered write to gzip file from original file
+                        fp = open(filn,'rb')
+                        fgz = gzip.GzipFile(gzip_filn_part,'wb')
+                        while True:
+                            data = fp.read(10240)
+                            if not data: break
+                            fgz.write(data)
                         fp.close()
+                        fgz.close()
+                        # Move to final file
+                        os.rename(gzip_filn_part,gzip_filn)
+
+def md5_checksums(solid_runs,library_defns):
+    """Generate md5 checksums for a selection of primary data files
+
+    Locates primary data files matching a sample/library specification
+    string of the form <sample_pattern>/<library_pattern>. The patterns
+    are matching against sample and library names, and can be either
+    exact or can include a trailing wildcard character (i.e. *) to match
+    multiple names. For example:
+
+    - 'SA_LH_POOL_49/LH1' matches the library called 'LH1' in the sample
+      'SA_LH_POOL_49';
+
+    - '*/LH1' matches all libraries called 'LH1' in any sample;
+
+    - '*/LH*' matches all libraries starting 'LH' in any sample;
+
+    - '*/*' matches all primary data files in all runs
+
+    Md5 sums are calculated and printed for each matching primary data file.
+
+    Arguments:
+      solid_runs: list of populated SolidRun objects
+      library_defns: list of library definition strings (see above
+        for syntax/format)
+    """
+    for library_defn in library_defns:
+        sample = library_defn.split('/')[0]
+        library = library_defn.split('/')[1]
+        for run in solid_runs:
+            for lib in run.fetchLibraries(sample,library):
+                print_md5sums(lib)
+
+def print_md5sums(library):
+    """Calculate and print md5sums for primary data files in library
+
+    This will generate a list of md5sums that can be passed to the
+    md5sum program to check against a copy of the the runs using
+
+    md5sum -c CHECKSUMS
+
+    Arguments:
+      library: SolidLibrary instance.
+    """
+    # F3 primary data
+    try:
+        print "%s  %s" % (Md5sum.md5sum(library.csfasta),
+                          strip_prefix(library.csfasta,os.getcwd()))
+    except Exception,ex:
+        logging.error("FAILED for F3 csfasta: %s" % ex)
+    try:
+        print "%s  %s" % (Md5sum.md5sum(library.qual),
+                          strip_prefix(library.qual,os.getcwd()))
+    except Exception,ex:
+        logging.error("FAILED for F3 qual: %s" % ex)
+    # F5 primary data
+    if library.parent_sample.parent_run.is_paired_end:
+        try:
+            print "%s  %s" % (Md5sum.md5sum(library.csfasta_f5),
+                              strip_prefix(library.csfasta_f5,os.getcwd()))
+        except Exception,ex:
+            logging.error("FAILED for F5 csfasta: %s" % ex)
+        try:
+            print "%s  %s" % (Md5sum.md5sum(library.qual_f5),
+                              strip_prefix(library.qual_f5,os.getcwd()))
+        except Exception,ex:
+            logging.error("FAILED for F5 qual: %s" % ex)
 
 def strip_prefix(path,prefix):
     """Strip the supplied prefix from a file name
@@ -506,6 +546,10 @@ if __name__ == "__main__":
                  help="make gzipped copies of primary data files in pwd from specific "
                  "libraries where names match GZIP_PATTERN, which should be of the "
                  "form '<sample>/<library>'")
+    p.add_option("--md5",action="append",dest="md5_pattern",default=[],
+                 help="calculate md5sums for primary data files from specific "
+                 "libraries where names match MD5_PATTERN, which should be of the "
+                 "form '<sample>/<library>'")
     p.add_option("--quiet",action="store_true",dest="quiet",
                  help="suppress warnings")
     p.add_option("--debug",action="store_true",dest="debug",
@@ -553,7 +597,8 @@ if __name__ == "__main__":
             options.rsync or
             options.md5sum or
             options.copy_pattern or
-            options.gzip_pattern):
+            options.gzip_pattern or
+            options.md5_pattern):
         options.report = True
 
     # Get the run information
@@ -586,14 +631,6 @@ if __name__ == "__main__":
     if options.rsync:   
         suggest_rsync_command(solid_runs)
 
-    # Generate md5sums
-    if options.md5sum:
-        try:
-            import Md5sum
-            print_md5sums(solid_runs)
-        except ImportError:
-            logging.error("Unable to generate MD5 sums: %s" % ex)
-
     # Copy specific primary data files
     if options.copy_pattern:
         copy_data(solid_runs,options.copy_pattern)
@@ -601,6 +638,23 @@ if __name__ == "__main__":
     # Gzip specific primary data files
     if options.gzip_pattern:
         gzip_data(solid_runs,options.gzip_pattern)
+
+    # Md5 checksums for primary data files
+
+    # Generate md5 checksums
+    if options.md5_pattern or options.md5sum:
+        if options.md5sum:
+            # Checksum everything
+            md5_pattern = ['*/*']
+        else:
+            # Only specified libraries
+            md5_pattern = options.md5_pattern
+        # Calculate checksums
+        try:
+            import Md5sum
+            md5_checksums(solid_runs,md5_pattern)
+        except ImportError:
+            logging.error("Unable to generate MD5 sums: %s" % ex)
 
     # Do verification
     # Nb this should always be the last step
