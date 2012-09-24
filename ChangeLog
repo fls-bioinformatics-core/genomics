@@ -1,3 +1,9 @@
+2012-09-24  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* solid2clusteranalyse_solid_run.py
+	- new option --md5=... generates checksums for specified primary data files
+	  (offering more fine-grained control than --md5sum option).
+
 2012-09-18  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* solid2cluster/analyse_solid_run.py
