@@ -14,28 +14,31 @@ function usage() {
     echo ""
     echo "<fastq> can be either fastq or fastq.gz file"
 }
+function import_functions() {
+    if [ -z "$1" ] ; then
+	echo ERROR no filename supplied to import_functions >2
+    else
+	if [ -f $1 ] ; then
+	    # Import local copy
+	    echo Sourcing `pwd`/$1
+	    . $1
+	else
+	    # Import version in share
+	    echo Sourcing `dirname $0`/../share/$1
+	    . `dirname $0`/../share/$1
+	fi
+    fi
+}
 #
 #===========================================================================
 # Import function libraries
 #===========================================================================
 #
 # General shell functions
-if [ -f functions.sh ] ; then
-    # Import local copy
-    . functions.sh
-else
-    # Import version in share
-    . `dirname $0`/../share/functions.sh
-fi
+import_functions functions.sh
 #
 # NGS-specific functions
-if [ -f ngs_utils.sh ] ; then
-    # Import local copy
-    . ngs_utils.sh
-else
-    # Import version in share
-    . `dirname $0`/../share/ngs_utils.sh
-fi
+import_functions ngs_utils.sh
 #
 #===========================================================================
 # Main script
