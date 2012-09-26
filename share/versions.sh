@@ -53,6 +53,9 @@ function get_version() {
 	esac
     fi
 }
+function report_program_info() {
+    echo $(basename $1) version $(get_version $1): $(find_program $1)
+}
 #
 # Tests: import into shell and do "run_tests"
 function run_tests() {
