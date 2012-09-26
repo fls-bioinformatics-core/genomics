@@ -194,30 +194,6 @@ function set_permissions_and_group() {
     fi
 }
 #
-# get_version(): extract and return version number
-#
-# e.g. version=$(get_version <name>)
-function get_version() {
-    get_version_exe=$(find_program $1)
-    if [ ! -z "$get_version_exe" ] ; then
-	get_version_name=$(baserootname $get_version_exe)
-	case "$get_version_name" in
-	    bowtie*)
-		echo `$get_version_exe --version 2>&1 | grep "bowtie" | grep "version" | cut -d" " -f3`
-		;;
-	    bfast)
-		echo `$get_version_exe 2>&1 | grep Version | cut -d" " -f2`
-		;;
-	    samtools)
-		echo `$get_version_exe 2>&1 | grep Version | cut -d" " -f2`
-		;;
-	    *)
-		echo
-		;;
-	esac
-    fi
-}
-#
 # Tests: import into shell and do "run_tests"
 function run_tests() {
     getextension file.txt
@@ -225,9 +201,7 @@ function run_tests() {
     baserootname /path/to/file.txt
     to_upper "testing_testing 123"
     find_program bowtie
-    get_version bowtie-build
-    get_version bfast
-    get_version samtools
 }
 ##
 #
+
