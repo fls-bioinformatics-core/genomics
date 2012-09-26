@@ -62,6 +62,9 @@ import_functions functions.sh
 # NGS-specific functions
 import_functions ngs_utils.sh
 #
+# Program version functions
+import_functions versions.sh
+#
 #===========================================================================
 # Main script
 #===========================================================================
@@ -139,6 +142,18 @@ elif [ "$paired_end" == "yes" ] ; then
 	exit 1
     fi
 fi
+#
+#############################################
+# Report program paths and versions
+#############################################
+#
+# Write to log
+echo "--------------------------------------------------------"
+echo Program versions and paths:
+report_program_info $FASTQ_SCREEN
+report_program_info $SOLID2FASTQ
+report_program_info $SOLID_PREPROCESS_FILTER
+echo "--------------------------------------------------------"
 #
 #############################################
 # FASTQ GENERATION
