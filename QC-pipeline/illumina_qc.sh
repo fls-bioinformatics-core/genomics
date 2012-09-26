@@ -40,6 +40,9 @@ import_functions functions.sh
 # NGS-specific functions
 import_functions ngs_utils.sh
 #
+# Program version functions
+import_functions versions.sh
+#
 #===========================================================================
 # Main script
 #===========================================================================
@@ -92,15 +95,30 @@ WORKING_DIR=`pwd`
 : ${FASTQC:=fastqc}
 #
 #############################################
+# Report program paths and versions
+#############################################
+#
+# Write to log
+echo "--------------------------------------------------------"
+echo Program versions and paths:
+report_program_info $FASTQ_SCREEN
+report_program_info $FASTQC
+echo "--------------------------------------------------------"
+#
+#############################################
 # FASTQ MANIPULATIONS
 #############################################
 #
 # Unpack gzipped fastq file
 ext=$(getextension $FASTQ)
 if [ "$ext" == "gz" ] ; then
-    echo Input FASTQ is gzipped, making unzipped version
     uncompressed_fastq=$(baserootname $FASTQ)
-    gzip -dc $FASTQ > $uncompressed_fastq
+    if [ ! -f $uncompressed_fastq ] ; then
+	echo Input FASTQ is gzipped, making ungzipped version
+	gzip -dc $FASTQ > $uncompressed_fastq
+    else
+	echo Ungzipped version of input FASTQ found
+    fi
 fi
 #
 #############################################
@@ -117,7 +135,7 @@ run_fastq_screen $FASTQ
 #
 # Run FASTQC
 echo "Running FastQC command: ${FASTQC}"
-${FASTQC} --version
+echo ${FASTQC} $(get_version $FASTQC)
 ${FASTQC} --outdir qc $FASTQ
 #
 # Update permissions and group (if specified)
