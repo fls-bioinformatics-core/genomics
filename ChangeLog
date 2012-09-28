@@ -1,3 +1,9 @@
+2012-09-28  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* utils/md5checker.py
+	- version 0.2.3: explicitly report if either of the inputs doesn't exist in
+	  -d/--diff mode.
+
 2012-09-24  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* solid2clusteranalyse_solid_run.py
