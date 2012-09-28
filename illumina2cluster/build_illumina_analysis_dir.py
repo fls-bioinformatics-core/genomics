@@ -255,6 +255,6 @@ if __name__ == "__main__":
                 if os.path.exists(fastq_ln):
                     print "-> %s.fastq.gz already exists" % sample.name
                 else:
-                    print "Linking to %s" % sample.fastq            
-                    if not options.dry_run: os.symlink(fastq,fastq_ln)
+                    print "Linking to %s" % fastq
+                    if not options.dry_run: os.symlink(fastq_file,fastq_ln)
 
