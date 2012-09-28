@@ -3,8 +3,12 @@
 	* utils/md5checker.py
 	- version 0.2.3: explicitly report if either of the inputs doesn't exist in
 	  -d/--diff mode.
+	
 	* solid2cluster/log_solid_run.sh
 	- renamed to log_seq_data.sh
+
+	* illumina2cluster/build_illumina_analysis_dir.py
+	- fix bug that resulted in broken links being generated.
 
 2012-09-24  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
