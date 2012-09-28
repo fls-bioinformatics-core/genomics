@@ -4,7 +4,7 @@ solid2cluster
 Utilities for transferring data from the SOLiD instrument to the cluster:
 
  *   `rsync_solid_to_cluster.sh`: perform transfer of primary data
- *   `log_solid_run.sh`: maintain logging file of transferred runs
+ *   `log_seq_data.sh`: maintain logging file of transferred runs and analysis data
  *   `analyse_solid_run.py`: report on the primary data directories from SOLiD runs
  *   `build_analysis_dir.py`: construct analysis directories for experiments
 
@@ -38,14 +38,14 @@ The output from each `rsync` is also captured in a timestamped log file. If an e
 on the command line then a copy of the logs will be mailed to this address.
 
 
-log_solid_run.sh
-----------------
+log_seq_data.sh
+---------------
 
 Script to add entries for transferred SOLiD run directories to a logging file.
 
 Usage:
 
-    log_solid_run.sh <logging_file> <solid_run_dir> [<description>]
+    log_seq_data.sh <logging_file> <solid_run_dir> [<description>]
 
 A new entry for the directory `<solid_run_dir>` will be added to `<logging_file>`, consisting of
 the full path to the directory, a UNIX timestamp, and the optional description.
