@@ -18,7 +18,7 @@ Utility for checking files and directories using md5 checksums.
 # Module metadata
 #######################################################################
 
-__version__ = "0.2.2"
+__version__ = "0.2.3"
 
 #######################################################################
 # Import modules that this module depends on
@@ -581,6 +581,9 @@ if __name__ == "__main__":
         # Get directories/files as absolute paths
         source = os.path.abspath(arguments[0])
         target = os.path.abspath(arguments[1])
+        for arg in (source,target):
+            if not os.path.exists(arg):
+                p.error("%s: not found" % arg)
         if os.path.isdir(source) and os.path.isdir(target):
             # Compare two directories
             report("Recursively check copies of files in %s against originals in %s" %
