@@ -1,3 +1,14 @@
+2012-10-01  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* QC-pipeline/qcreporter.py
+	- fixed bug for correctly allocating screens to samples
+	- added --platform option to explicitly specify platform type
+	- output HTML and ZIP file names now of the form qc_report.<run>.<name>
+
+	* solid2cluster/build_analysis_dir.py, illumina2cluster/build_illumina_analysis_dir.py
+	- create empty "ScriptCode" subdirectories for each analysis directory,
+	  for bioinformaticians to store project-specific scripts and code etc.
+
 2012-09-28  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* utils/md5checker.py
