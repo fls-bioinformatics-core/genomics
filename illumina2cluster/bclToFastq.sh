@@ -127,6 +127,9 @@ make
 status=$?
 echo make: finished exit code $status
 #
+# Change permissions on "Unaligned" directory
+chmod -R g+rwX $fastq_output_dir
+#
 # Finished
 echo $0: finished
 exit
