@@ -246,7 +246,9 @@ if __name__ == "__main__":
             print "-> %s already exists" % project_dir
         else:
             print "Making analysis directory for %s" % project.name
-            if not options.dry_run: os.mkdir(project_dir)
+            if not options.dry_run:
+                os.mkdir(project_dir)     
+                os.chmod(project_dir,0775)
         # Check for & create links to fastq files
         for sample in project.samples:
             for fastq in sample.fastq:
@@ -257,4 +259,14 @@ if __name__ == "__main__":
                 else:
                     print "Linking to %s" % fastq
                     if not options.dry_run: os.symlink(fastq_file,fastq_ln)
+        # Make an empty ScriptCode directory
+        scriptcode_dir = os.path.join(project_dir,"ScriptCode")
+        if os.path.exists(scriptcode_dir):
+            print "'ScriptCode' directory %s already exists" % scriptcode_dir
+        else:
+            print "Making 'ScriptCode' directory for %s" % project.name
+            if not options.dry_run:
+                os.mkdir(scriptcode_dir)     
+                os.chmod(scriptcode_dir,0775)
+        
 
