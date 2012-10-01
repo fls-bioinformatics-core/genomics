@@ -251,7 +251,17 @@ class ExperimentList:
                         except Exception, ex:
                             logging.error("Failed to link to some or all F5 primary data")
                             logging.error("Exception: %s" % ex)
-                        
+            # Make an empty ScriptCode directory
+            scriptcode_dir = os.path.join(expt_dir,"ScriptCode")
+            if os.path.exists(scriptcode_dir):
+                logging.warning("Directory %s already exists" % scriptcode_dir)
+            else:
+                if not dry_run:
+                    # Create directory
+                    mkdir(scriptcode_dir)
+                else:
+                    # Report what would have been done
+                    print "mkdir %s" % scriptcode_dir
     
     def __linkToFile(self,source,target,relative=True,dry_run=False):
         """Create symbolic link to a file
