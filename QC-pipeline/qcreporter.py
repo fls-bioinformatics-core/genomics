@@ -39,7 +39,14 @@ except ImportError, ex:
     sys.exit(1)
 
 # Configure logging output
-logging.basicConfig(format="[%(levelname)s] %(message)s")
+logging.basicConfig(format="%(levelname)s: %(message)s")
+
+#######################################################################
+# Module level constants
+#######################################################################
+
+# Names of fastq_screens
+FASTQ_SCREEN_NAMES=('model_organisms','other_organisms','rRNA')
 
 #######################################################################
 # Base class definitions
@@ -222,7 +229,10 @@ class QCSample:
             # Screens
             if f.startswith(sample_name_underscore):
                 if f.endswith('_screen.png'):
-                    self.addScreen(f)
+                    # Extract and check screen name
+                    screen_name = f.replace(sample_name_underscore,'').replace('_screen.png','')
+                    if screen_name in FASTQ_SCREEN_NAMES:
+                        self.addScreen(f)
             # Boxplots
             if f.endswith('_boxplot.png'):
                 if f.startswith(sample_name_dot) or f.startswith(sample_name_underscore):
@@ -283,17 +293,19 @@ class QCSample:
         """
         return self.__fastqc
 
-    def report_screens(self,html):
+    def report_screens(self,html,inline_pngs=True):
         """Write HTML code reporting the fastq screens
 
         Arguments:
           html: HTMLPageWriter instance to add the generated HTML to
+          inline_pngs: if set True then embed the PNG images as base64
+            encoded data; otherwise link to the original image file
         """
         html.add("<h3>Screens</h3>")
         if self.screens():
             for s in self.screens():
                 # Get name/description
-                for screen_name in ('model_organisms','other_organisms','rRNA'):
+                for screen_name in FASTQ_SCREEN_NAMES:
                     try:
                         s.index(screen_name)
                         description = screen_name.replace('_',' ').title()
@@ -301,8 +313,12 @@ class QCSample:
                         pass
                 html.add("<p>%s:</p>" % description)
                 # Add Images
-                pngdata = PNGBase64Encoder().encodePNG(os.path.join(self.qc_dir,s))
-                html_content="<a href='qc/%s'><img src='data:image/png;base64,%s' height=250 /></a>" % (s,pngdata)
+                if inline_pngs:
+                    pngdata = "data:image/png;base64," + \
+                        PNGBase64Encoder().encodePNG(os.path.join(self.qc_dir,s))
+                else:
+                    pngdata = os.path.join('qc',s)
+                html_content="<a href='qc/%s'><img src='%s' height=250 /></a>" % (s,pngdata)
                 html.add(html_content)
                 # Link to text files
                 screen_txt = os.path.splitext(s)[0] + '.txt'
@@ -311,11 +327,13 @@ class QCSample:
         else:
             html.add("No screens found")
 
-    def report_boxplots(self,html,paired_end=False):
+    def report_boxplots(self,html,paired_end=False,inline_pngs=True):
         """Write HTML code reporting the boxplots
 
         Arguments:
           html: HTMLPageWriter instance to add the generated HTML to
+          inline_pngs: if set True then embed the PNG images as base64
+            encoded data; otherwise link to the original image file
         """
         html.add("<h3>Boxplots</h3>")
         if self.boxplots():
@@ -335,10 +353,13 @@ class QCSample:
                         description += " (F3)"
                 html.add("<p>%s:</p>" % description)
                 # Add images
-                pngdata = PNGBase64Encoder().encodePNG(os.path.join(self.qc_dir,b))
+                if inline_pngs:
+                    pngdata = "data:image/png;base64," + \
+                        PNGBase64Encoder().encodePNG(os.path.join(self.qc_dir,b))
+                else:
+                    pngdata = os.path.join('qc',b)
                 html_content=\
-                    "<a href='qc/%s''><img src='data:image/png;base64,%s' height=250 /></a>" \
-                    % (b,pngdata)
+                    "<a href='qc/%s''><img src='%s' height=250 /></a>" % (b,pngdata)
                 html.add(html_content)
         else:
             html.add("No boxplots found")
@@ -900,6 +921,10 @@ if __name__ == "__main__":
                               "a 'qc_report.html' in DIR plus an archive 'qc_report.zip' "
                               "which contains the HTML plus all the necessary files for "
                               "unpacking and viewing elsewhere.")
+    p.add_option("--platform",action="store",dest="platform",default=None,
+                 choices=('solid','illumina'),
+                 help="explicitly set the type of sequencing platform")
+             
 
     # Deal with command line
     options,arguments = p.parse_args()
@@ -910,19 +935,22 @@ if __name__ == "__main__":
 
     # Identify platform and run the appropriate reporter
     for d in arguments:
-        platform = None
-        print "Generating report for %s" % d
-        try:
-            os.path.abspath(d).index('solid')
-            platform = 'solid'
-        except ValueError:
+        if options.platform is not None:
+            platform = options.platform
+        else:
+            platform = None
+            print "Generating report for %s" % d
             try:
-                os.path.abspath(d).index('ILLUMINA')
-                platform = 'illumina'
+                os.path.abspath(d).index('solid')
+                platform = 'solid'
             except ValueError:
-                pass
+                try:
+                    os.path.abspath(d).index('ILLUMINA')
+                    platform = 'illumina'
+                except ValueError:
+                    pass
         if platform is None:
-            logging.error("Unable to identify platform for %s" % d)
+            logging.error("Unable to identify platform for %s (use --platform option?)" % d)
         elif platform == 'solid':
             SolidQCReporter(d).zip()
         elif platform == 'illumina':
