@@ -427,7 +427,7 @@ class QCSample:
 def add_dir_to_zip(z,dirn):
     """Recursively add a directory and its contents to a zip archive
 
-    z is a zipfile.ZipFile object already opened for reading; this
+    z is a zipfile.ZipFile object already opened for writing; this
     function adds all files in directory dirn and its subdirectories
     to z.
     """
@@ -566,7 +566,7 @@ class IlluminaQCReporter(QCReporter):
 class IlluminaQCSample(QCSample):
     """Class for holding QC data for an Illumina sample
 
-    An Illumina QC run typically conists of contamination screens
+    An Illumina QC run typically consists of contamination screens
     and output from FastQC.
     """
 
@@ -715,7 +715,7 @@ class SolidQCReporter(QCReporter):
 class SolidQCSample(QCSample):
     """Class for holding QC data for a SOLiD sample
 
-    A SOLiD QC run typically conists of filtered and unfiltered
+    A SOLiD QC run typically consists of filtered and unfiltered
     boxplots, quality filtering stats, and contamination screens.
     """
 
