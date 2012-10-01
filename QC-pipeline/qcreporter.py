@@ -138,6 +138,13 @@ class QCReporter:
         html.addCSSRule("img { background-color: white; }")
         html.addCSSRule("p { font-size: 85%;\n"
                         "    color: #808080; }")
+        # Rules for printing
+        html.addCSSRule("@media print\n"
+                        "{\n"
+                        "a { color: black; text-decoration: none; }\n"
+                        ".sample { page-break-before: always; }\n"
+                        ".no_print { display: none; }\n"
+                        "}")
         return html
 
     def report(self):
@@ -299,8 +306,8 @@ class QCSample:
                 html.add(html_content)
                 # Link to text files
                 screen_txt = os.path.splitext(s)[0] + '.txt'
-                html.add("<p>(See original data for <a href='qc/%s'>%s</a>)</p>" % \
-                             (screen_txt,description))
+                html.add("<p class='no_print'>(See original data for <a href='qc/%s'>%s</a>)</p>" \
+                             % (screen_txt,description))
         else:
             html.add("No screens found")
 
@@ -362,8 +369,8 @@ class QCSample:
                     test_id += 1
                 html.add("</table>")
                 # Direct link to full report
-                html.add("<p><a href='%s'>Full FastQC report for %s</a></p>" % (fastqc_report,
-                                                                                self.name))
+                html.add("<p class='no_print'><a href='%s'>Full FastQC report for %s</a></p>" % \
+                             (fastqc_report,self.name))
         else:
             html.add("No FastQC report found")
 
