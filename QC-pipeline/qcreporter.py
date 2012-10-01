@@ -374,7 +374,6 @@ class QCSample:
         """
         raise NotImplementedError,"Subclass must implement 'report' method"
 
-
     def zip_includes(self):
         """Return list of files and directories to archive
         """
