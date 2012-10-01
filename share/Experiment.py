@@ -474,7 +474,10 @@ def commonprefix(path1,path2):
 def chmod(target,mode):
     """Change mode of file or directory"""
     logging.debug("Changing mode of %s to %s" % (target,mode))
-    try:
-        os.chmod(target,mode)
-    except OSError, ex:
-        logging.warning("Failed to change permissions on %s to %s: %s" % (target,mode,ex))
+    if not os.path.islink(target):
+        try:
+            os.chmod(target,mode)
+        except OSError, ex:
+            logging.warning("Failed to change permissions on %s to %s: %s" % (target,mode,ex))
+    else:
+        logging.warning("Skipped chmod for symbolic link")
