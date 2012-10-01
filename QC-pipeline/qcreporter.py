@@ -71,10 +71,27 @@ class QCReporter:
         self.__qc_dir = os.path.join(self.__dirn,'qc')
         if not os.path.isdir(self.__qc_dir):
             raise OSError, "QC dir %s not found" % self.qc_dir
+        # Run and experiment names
+        # Assume that the experiment name is the current dir and the
+        # run name is the parent directory
+        self.__name = self.__dirn.split(os.sep)[-1]
+        self.__run = self.__dirn.split(os.sep)[-2]
         # List of samples
         self.__samples = []
         # HTML document
         self.__html = self.__init_html()
+
+    @property
+    def name(self):
+        """Return name of experiment
+        """
+        return self.__name
+
+    @property
+    def run(self):
+        """Return name of run
+        """
+        return self.__run
 
     @property
     def dirn(self):
@@ -112,9 +129,9 @@ class QCReporter:
         """Internal: initialise and populate the HTMLPageWriter
         """
         # Set up HTML document
-        html = HTMLPageWriter("QC for %s" % os.path.basename(self.dirn))
+        html = HTMLPageWriter("%s/%s: QC report" % (self.run,self.name))
         # Title
-        html.add("<h1>QC for %s</h1>" % os.path.basename(self.dirn))
+        html.add("<h1>%s/%s: QC report</h1>" % (self.run,self.name))
         # Add CSS rules
         html.addCSSRule("h1 { background-color: #42AEC2;\n"
                         "     color: white;\n"
@@ -164,8 +181,8 @@ class QCReporter:
     def zip(self):
         """Make a zip file containing the report and the images
 
-        Generate the 'qc_report.html' file and make a zip file
-        'qc_report.zip' which contains the report plus the
+        Generate the 'qc_report.<run>.<name>.html' file and make a zip file
+        'qc_report.<run>.<name>.zip' which contains the report plus the
         associated image files etc. The archive can then be unpacked
         elsewhere for viewing.
         """
@@ -176,8 +193,8 @@ class QCReporter:
         os.chdir(self.dirn)
         # Create the zip file
         try:
-            z = zipfile.ZipFile('qc_report.zip','w')
-            z.write('qc_report.html')
+            z = zipfile.ZipFile('qc_report.%s.%s.zip' % (self.run,self.name),'w')
+            z.write('qc_report.%s.%s.html' % (self.run,self.name))
             for sample in self.samples:
                 for f in sample.zip_includes():
                     # Check if we're adding a file or a whole directory
@@ -492,7 +509,7 @@ class IlluminaQCReporter(QCReporter):
     def report(self):
         """Write the HTML report
 
-        Writes a HTML document 'qc_report.html' to the top-level
+        Writes a HTML document 'qc_report.<run>.<name>.html' to the top-level
         analysis directory.
         """
         # Add Illumina-specific CSS rules
@@ -518,13 +535,13 @@ class IlluminaQCReporter(QCReporter):
         # Detailed data for each sample
         for sample in self.samples:
             sample.report(self.html)
-        self.html.write(os.path.join(self.dirn,'qc_report.html'))
+        self.html.write(os.path.join(self.dirn,'qc_report.%s.%s.html' % (self.run,self.name)))
 
     def zip(self):
         """Make a zip file containing the report and the images
 
-        Generate the 'qc_report.html' file and make a zip file
-        'qc_report.zip' which contains the report plus the
+        Generate the 'qc_report.<run>.<name>.html' file and make a zip file
+        'qc_report.<run>.<name>.zip' which contains the report plus the
         associated image files, which can be unpacked elsewhere
         for viewing.
         """
@@ -532,8 +549,8 @@ class IlluminaQCReporter(QCReporter):
         cwd = os.getcwd()
         os.chdir(self.dirn)
         try:
-            z = zipfile.ZipFile('qc_report.zip','w')
-            z.write('qc_report.html')
+            z = zipfile.ZipFile('qc_report.%s.%s.zip' % (self.run,self.name),'w')
+            z.write('qc_report.%s.%s.html' % (self.run,self.name))
             for sample in self.samples:
                 for screen in sample.screens():
                     # Add screen files
@@ -652,7 +669,7 @@ class SolidQCReporter(QCReporter):
     def report(self):
         """Write the HTML report
 
-        Writes a HTML document 'qc_report.html' to the top-level
+        Writes a HTML document 'qc_report.<run>.<name>.html' to the top-level
         analysis directory.
         """
         # Index
@@ -693,7 +710,7 @@ class SolidQCReporter(QCReporter):
         # QC plots etc
         for sample in self.samples:
             sample.report(self.html)
-        self.html.write(os.path.join(self.dirn,'qc_report.html'))
+        self.html.write(os.path.join(self.dirn,'qc_report.%s.%s.html' % (self.run,self.name)))
 
 class SolidQCSample(QCSample):
     """Class for holding QC data for a SOLiD sample
@@ -918,9 +935,9 @@ if __name__ == "__main__":
                               description=
                               "Generate QC report for each directory DIR which contains the "
                               "outputs from a QC script (either SOLiD or Illumina). Creates "
-                              "a 'qc_report.html' in DIR plus an archive 'qc_report.zip' "
-                              "which contains the HTML plus all the necessary files for "
-                              "unpacking and viewing elsewhere.")
+                              "a 'qc_report.<run>.<name>html' in DIR plus an archive "
+                              "'qc_report.<run>.<name>.zip' which contains the HTML plus all "
+                              "the necessary files for unpacking and viewing elsewhere.")
     p.add_option("--platform",action="store",dest="platform",default=None,
                  choices=('solid','illumina'),
                  help="explicitly set the type of sequencing platform")
