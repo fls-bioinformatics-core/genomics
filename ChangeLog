@@ -1,3 +1,9 @@
+2012-10-02  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* QC-pipeline/qcreporter.py
+	- output ZIP file has run/sample-specific top-level directory; HTML
+	  report file name restored to 'qc_report.html'.
+
 2012-10-01  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* QC-pipeline/qcreporter.py
