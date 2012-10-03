@@ -776,7 +776,13 @@ class SolidQCReporter(QCReporter):
                           "<th>Reads after filter</th>"
                           "<th># removed</th><th>% removed</th></tr>")
         for sample in self.samples:
-            stats = self.__stats.lookup('File',sample.name)[0]
+            try:
+                stats = self.__stats.lookup('File',sample.name)[0]
+            except IndexError:
+                # Failed to locate sample so make a dummy stats dictionary
+                stats = {}
+                for i in ('Reads',2,3,4,5,6,7):
+                    stats[i] = 'n/a'
             self.html.add("<tr>")
             self.html.add("<td><a href='#%s'>%s</a></td>" % (sample.name,sample.name))
             self.html.add("<td>%s</td>" % stats['Reads'])
