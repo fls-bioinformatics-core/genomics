@@ -144,16 +144,30 @@ elif [ "$paired_end" == "yes" ] ; then
     fi
 fi
 #
+# Base name for script
+qc=$(baserootname $0)
+#
+# Base name for fastq
+if [ "$paired_end" == "no" ] ; then
+    fastq_base=$(baserootname $CSFASTA)
+else
+    fastq_base=`echo $(baserootname $CSFASTA) | sed 's/_F3//g'`_paired
+fi
+#
 #############################################
 # Report program paths and versions
 #############################################
 #
-# Write to log
+# Write to a file
+program_info=$fastq_base.$qc.programs
+echo "# Program versions and paths used for $fastq_base:" > $program_info
+report_program_info $FASTQ_SCREEN >> $program_info
+report_program_info $SOLID2FASTQ >> $program_info
+report_program_info $SOLID_PREPROCESS_FILTER >> $program_info
+#
+# Echo to log
 echo "--------------------------------------------------------"
-echo Program versions and paths:
-report_program_info $FASTQ_SCREEN
-report_program_info $SOLID2FASTQ
-report_program_info $SOLID_PREPROCESS_FILTER
+cat $program_info
 echo "--------------------------------------------------------"
 #
 #############################################
@@ -165,7 +179,7 @@ if [ "$paired_end" == "no" ] ; then
     echo Running single end pipeline
     # Single end data
     # Fastq generation (all reads)
-    fastq=$(baserootname $CSFASTA).fastq
+    fastq=$fastq_base.fastq
     run_solid2fastq ${CSFASTA} ${QUAL}
     # SOLiD_preprocess_filter
     solid_preprocess_filter --nofastq --nostats ${CSFASTA} ${QUAL}
@@ -182,7 +196,7 @@ else
     echo Running paired end pipeline
     # Paired end data
     # Fastq generation (all reads)
-    fastq=`echo $(baserootname $CSFASTA) | sed 's/_F3//g'`_paired.fastq
+    fastq=$fastq_base.fastq
     run_solid2fastq --separate-pairs ${CSFASTA} ${QUAL} ${CSFASTA_F5} ${QUAL_F5} $(rootname $fastq)
     # SOLiD_preprocess_filter on F3 and F5 separately
     solid_preprocess_filter --nofastq --nostats ${CSFASTA} ${QUAL}

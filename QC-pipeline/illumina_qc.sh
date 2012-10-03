@@ -95,15 +95,24 @@ WORKING_DIR=`pwd`
 : ${FASTQ_SCREEN_CONF_DIR:=}
 : ${FASTQC:=fastqc}
 #
+# Base name for script
+qc=$(baserootname $0)
+#
+# Base name for fastq files etc
+fastq_base=`basename ${FASTQ%%.*}`
+#
 #############################################
 # Report program paths and versions
 #############################################
 #
-# Write to log
+program_info=$fastq_base.$qc.programs
+echo "# Program versions and paths used for $fastq_base:" > $program_info
+report_program_info $FASTQ_SCREEN >> $program_info
+report_program_info $FASTQC >> $program_info
+#
+# Echo to log
 echo "--------------------------------------------------------"
-echo Program versions and paths:
-report_program_info $FASTQ_SCREEN
-report_program_info $FASTQC
+cat $program_info
 echo "--------------------------------------------------------"
 #
 #############################################
