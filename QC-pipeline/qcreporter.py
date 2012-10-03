@@ -301,10 +301,11 @@ class QCSample:
             if f == "%sfastqc" % sample_name_underscore:
                 self.addFastQC(f)
         # Program information
+        # This is in file one level up from the qc directory
         for f in os.listdir(os.path.join(self.qc_dir,"..")):
             if f.endswith('.programs') and \
                     (f.startswith(sample_name_dot) or f.startswith(sample_name_underscore)):
-                self.addProgramInfo(f)
+                self.addProgramInfo(os.path.join(self.qc_dir,"..",f))
 
     def screens(self):
         """Return list of screens for a sample
