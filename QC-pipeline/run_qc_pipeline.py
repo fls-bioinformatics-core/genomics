@@ -163,6 +163,8 @@ if __name__ == "__main__":
 
     # Advanced options
     group = optparse.OptionGroup(p,"Advanced Options")
+    group.add_option('--regexp',action='store',dest='pattern',default=None,
+                     help="regular expression to match input files against")
     group.add_option('--test',action='store',dest='max_total_jobs',default=0,type='int',
                      help="submit no more than MAX_TOTAL_JOBS (otherwise submit all jobs)")
     group.add_option('--runner',action='store',dest='runner',default=runner_type,
@@ -249,13 +251,13 @@ if __name__ == "__main__":
         # Get for this directory
         print "Collecting data from %s" % data_dir
         if options.input_type == "solid":
-            run_data = Pipeline.GetSolidDataFiles(data_dir)
+            run_data = Pipeline.GetSolidDataFiles(data_dir,pattern=options.pattern)
         elif options.input_type == "solid_paired_end":
-            run_data = Pipeline.GetSolidPairedEndFiles(data_dir)
+            run_data = Pipeline.GetSolidPairedEndFiles(data_dir,pattern=options.pattern)
         elif options.input_type == "fastq":
-            run_data = Pipeline.GetFastqFiles(data_dir)
+            run_data = Pipeline.GetFastqFiles(data_dir,pattern=options.pattern)
         elif options.input_type == "fastqgz":
-            run_data = Pipeline.GetFastqGzFiles(data_dir)
+            run_data = Pipeline.GetFastqGzFiles(data_dir,pattern=options.pattern)
         else:
             logging.error("Unknown input type: '%s'" % options.input_type)
             sys.exit(1)
