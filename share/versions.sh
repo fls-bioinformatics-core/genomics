@@ -54,7 +54,7 @@ function get_version() {
     fi
 }
 function report_program_info() {
-    echo $(basename $1) version $(get_version $1): $(find_program $1)
+    echo $(basename $1)$'\t'$(get_version $1)$'\t'$(find_program $1)
 }
 #
 # Tests: import into shell and do "run_tests"
