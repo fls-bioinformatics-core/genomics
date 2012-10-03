@@ -166,6 +166,15 @@ class QCReporter:
         html.addCSSRule("table.summary td { text-align: right; \n"
                         "                   padding: 2px 5px;\n"
                         "                   border-bottom: solid 1px lightgray; }")
+        html.addCSSRule("table.programs { border: solid 1px grey;\n"
+                        "                 background-color: white;\n"
+                        "                 font-size: 90% }")
+        html.addCSSRule("table.programs th { text-align: left;\n"
+                        "                    background-color: grey;\n"
+                        "                    color: white;"
+                        "                    padding: 2px 5px; }")
+        html.addCSSRule("table.programs td { padding: 2px 5px;\n"
+                        "                    border-bottom: solid 1px lightgray; }")
         html.addCSSRule("td { vertical-align: top; }")
         html.addCSSRule("img { background-color: white; }")
         html.addCSSRule("p { font-size: 85%;\n"
@@ -246,6 +255,7 @@ class QCSample:
         self.__screens = []
         self.__boxplots = []
         self.__fastqc = None
+        self.__programs = {}
         self.__zip_includes = []
         # Populate with data
         qc_files = os.listdir(self.qc_dir)
@@ -273,6 +283,11 @@ class QCSample:
             # FastQC
             if f == "%sfastqc" % sample_name_underscore:
                 self.addFastQC(f)
+        # Program information
+        for f in os.listdir(os.path.join(self.qc_dir,"..")):
+            if f.endswith('.programs') and \
+                    (f.startswith(sample_name_dot) or f.startswith(sample_name_underscore)):
+                self.addProgramInfo(f)
 
     def screens(self):
         """Return list of screens for a sample
@@ -304,10 +319,27 @@ class QCSample:
         # Add to the list of files to archive
         self.__zip_includes.append(os.path.join('qc',boxplot))
 
+    def addProgramInfo(self,programs):
+        """Collect program information from 'programs' file
+        """
+        fp = open(programs,'rU')
+        for line in fp:
+            if not line.startswith('#'):
+                # Programs file is tab-delimited: name/version/path
+                program_data = line.strip('\n').split('\t')
+                self.__programs[program_data[0]] = { 'version': program_data[1],
+                                                     'path': program_data[2] }
+
     def boxplots(self):
         """Return list of boxplots for a sample
         """
         return self.__boxplots
+
+    @property
+    def programs(self):
+        """Return data on programs
+        """
+        return self.__programs
 
     def addFastQC(self,fastqc_dir):
         """Associate a FastQC output directory with the sample
@@ -422,6 +454,21 @@ class QCSample:
                              (fastqc_report,self.name))
         else:
             html.add("No FastQC report found")
+
+    def report_programs(self,html):
+        """Write HTML code reporting the program information
+        """
+        html.add("<h3>Program versions</h3>")
+        if self.programs:
+            html.add("<table class='programs'>")
+            html.add("<tr><th>Program</th><th>Version</th><th>Path</th></tr>")
+            for name in self.programs:
+                html.add("<tr><td>%s</td><td>%s</td><td>%s</td></tr>" %
+                         (name,self.programs[name]['version'],
+                          self.programs[name]['path']))
+            html.add("</table>")
+        else:
+            html.add("<p>No information available</p>")
 
     def report(self):
         """Generate a HTML report
@@ -618,7 +665,11 @@ class IlluminaQCSample(QCSample):
         html.add("<td>")
         self.report_screens(html)
         html.add("</td>")
-        html.add("</tr></table>")
+        html.add("</tr>")
+        # Program information
+        html.add("<tr><td colspan='2'>")
+        self.report_programs(html)
+        html.add("<td></tr></table>")
         html.add("</div>")
 
 #######################################################################
@@ -767,7 +818,11 @@ class SolidQCSample(QCSample):
         html.add("<td>")
         self.report_screens(html)
         html.add("</td>")
-        html.add("</tr></table>")
+        html.add("</tr>")
+        # Program information
+        html.add("<tr><td colspan='2'>")
+        self.report_programs(html)
+        html.add("<td></tr></table>")
         html.add("</div>")
 # 
 class HTMLPageWriter:
