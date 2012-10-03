@@ -156,11 +156,12 @@ class QCReporter:
                         "          background-color: #ffe;\n"
                         "          border-top-left-radius: 25;\n"
                         "          border-bottom-right-radius: 25; }")
+        html.addCSSRule(".sample table { margin: 10 10; }")
         html.addCSSRule("table.summary { border: solid 1px grey;\n"
                         "                background-color: white;\n"
                         "                font-size: 90% }")
         html.addCSSRule("table.summary th { background-color: grey;\n"
-                        "                   color: white;"
+                        "                   color: white;\n"
                         "                   padding: 2px 5px; }")
         html.addCSSRule("table.summary td { text-align: right; \n"
                         "                   padding: 2px 5px;\n"
