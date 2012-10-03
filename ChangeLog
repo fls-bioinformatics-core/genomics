@@ -1,3 +1,8 @@
+2012-10-03  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* QC-pipeline/run_qc_pipeline.py
+	- added --regexp option to allow filtering of input file names.
+
 2012-10-02  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* QC-pipeline/qcreporter.py
