@@ -174,6 +174,7 @@ class QCReporter:
                         "{\n"
                         "a { color: black; text-decoration: none; }\n"
                         ".sample { page-break-before: always; }\n"
+                        "table th { border-bottom: solid 1px lightgray; }\n"
                         ".no_print { display: none; }\n"
                         "}")
         return html
