@@ -150,6 +150,8 @@ Outputs from Illumina QC Pipeline
 For each sample the `illumina_qc.sh` generates fastq_screen plots for model
 organisms, other organisms and rRNAs plus the report files from FASTQC.
 
+If the input files are `fastq.gz` then it will also produce gunzipped versions
+of the files.
 
 Pipeline runner: run_qc_pipeline.py
 -----------------------------------
