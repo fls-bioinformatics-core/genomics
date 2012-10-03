@@ -136,7 +136,7 @@ if __name__ == "__main__":
     # Set up command line parser
     p = optparse.OptionParser(usage="%prog [options] SCRIPT DIR [ DIR ...]",
                               description=
-                              "Execute SCRIPT on data in each directory DIR. By default"
+                              "Execute SCRIPT on data in each directory DIR. By default "
                               "the SCRIPT is executed on each CSFASTA/QUAL file pair "
                               "found in DIR, as 'SCRIPT CSFASTA QUAL'. Use the --input "
                               "option to run SCRIPT on different types of data (e.g. "
