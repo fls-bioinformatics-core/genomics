@@ -403,7 +403,7 @@ class QCSample:
                 html.add("<p class='no_print'>(See original data for <a href='qc/%s'>%s</a>)</p>" \
                              % (screen_txt,description))
         else:
-            html.add("No screens found")
+            html.add("<p>No screens found</p>")
 
     def report_boxplots(self,html,paired_end=False,inline_pngs=True):
         """Write HTML code reporting the boxplots
@@ -440,7 +440,7 @@ class QCSample:
                     "<a href='qc/%s''><img src='%s' height=250 /></a>" % (b,pngdata)
                 html.add(html_content)
         else:
-            html.add("No boxplots found")
+            html.add("<p>No boxplots found</p>")
 
     def report_fastqc(self,html):
         """Write HTML code reporting the results from FastQC
