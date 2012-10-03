@@ -75,6 +75,7 @@ echo Running in: `pwd`
 echo data dir  : $datadir
 echo fastq     : `basename $FASTQ`
 echo hostname  : $HOSTNAME
+echo job id    : $JOB_ID
 #
 # Set up environment
 QC_SETUP=`dirname $0`/qc.setup

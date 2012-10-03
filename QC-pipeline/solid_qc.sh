@@ -108,6 +108,7 @@ if [ "$paired_end" == "yes" ] ; then
     echo F5 qual   : `basename $QUAL_F5`
 fi
 echo hostname  : $HOSTNAME
+echo job id    : $JOB_ID
 #
 # Set up environment
 QC_SETUP=`dirname $0`/qc.setup
