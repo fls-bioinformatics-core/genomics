@@ -135,9 +135,13 @@ fi
 run_fastq_screen $FASTQ
 #
 # Run FASTQC
-echo "Running FastQC command: ${FASTQC}"
-echo ${FASTQC} $(get_version $FASTQC)
-${FASTQC} --outdir qc $FASTQ
+if [ ! -d qc/${fastq_base}_fastqc ] || [ ! -f qc/${fastq_base}_fastqc.zip ] ; then
+    echo "Running FastQC command: ${FASTQC}"
+    echo ${FASTQC} version $(get_version $FASTQC)
+    ${FASTQC} --outdir qc $FASTQ
+else
+    echo "FastQC output already exists: qc/${fastq_base}_fastqc(.zip)"
+fi
 #
 # Update permissions and group (if specified)
 set_permissions_and_group "$SET_PERMISSIONS" "$SET_GROUP"
