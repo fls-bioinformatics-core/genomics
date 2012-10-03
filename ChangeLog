@@ -3,6 +3,14 @@
 	* QC-pipeline/run_qc_pipeline.py
 	- added --regexp option to allow filtering of input file names.
 
+	* QC-pipeline/solid_qc.sh, illumina_qc.sh
+	- write data about underlying QC programs (including versions) to
+	  <sample>.programs output files.
+
+	* QC-pipeline/qcreporter.py
+	- report QC program information from <sample>.programs files (if
+	  available).
+
 2012-10-02  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* QC-pipeline/qcreporter.py
@@ -25,7 +33,7 @@
 	* utils/md5checker.py
 	- version 0.2.3: explicitly report if either of the inputs doesn't exist in
 	  -d/--diff mode.
-	
+
 	* solid2cluster/log_solid_run.sh
 	- renamed to log_seq_data.sh
 
@@ -64,7 +72,7 @@
 	  features.
 	- new option --fix-spaces will automatically replace spaces with underscores
 	  in SampleID and SampleProject fields.
-	
+
 	* illumina2cluster/build_illumina_analysis_dir.py
 	- updated to allow for possibility of more than one fastq.gz file per
 	  sample directory
@@ -74,7 +82,7 @@
 	* share/TabFile.py
 	- version 0.2.5: implement __nonzero__ built-in for TabDataLine to enable
 	  easy test for whether a line is blank.
-	
+
 2012-09-11  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* utils/md5checker.py
@@ -172,7 +180,7 @@
 
 	* share/TabFile.py
 	- version 0.2.1: TabDataLine now preserves the type of non-numeric
-	  data items (previously they were automatically converted to strings) 
+	  data items (previously they were automatically converted to strings)
 
 2012-06-22  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
@@ -190,12 +198,12 @@
 	- updated UniVec for build 7.0 (Dec. 5 2011)
 
 2012-06-01  Peter Briggs  <peter.briggs@manchester.ac.uk>
-	
+
 	* QC-pipeline/qc.sh
 	- updated to run in either 'single end' mode (operate on one F3 or
 	  F5 csfasta/qual pair) or 'paired end' mode (operate on F3
 	  csfasta/qual pair plus csfasta/qual F5 pair)
-	
+
 	* QC-pipeline/cleanup_qc.sh
 	- utility to clean up all QC products from current directory
 
