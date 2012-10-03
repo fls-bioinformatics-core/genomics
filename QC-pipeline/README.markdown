@@ -222,11 +222,11 @@ Advanced Options:
 
 *   Run the SOLiD QC pipeline on paired-end data:
 
-    `run_qc_pipeline.py solid_qc.sh --input=solid_paired_end <dir1> <dir2> ...`
+    `run_qc_pipeline.py --input=solid_paired_end solid_qc.sh <dir1> <dir2> ...`
 
 *   Run the Illumina QC pipeline on fastq.gz files in a set of directories:
 
-    `run_qc_pipeline.py illumina_qc.sh --input=fastqgz <dir1> <dir2> ...`
+    `run_qc_pipeline.py --input=fastqgz illumina_qc.sh <dir1> <dir2> ...`
 
 *   Generate gzipped fastq files only in a set of directories:
 
