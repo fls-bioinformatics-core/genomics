@@ -151,8 +151,68 @@ For each sample the `illumina_qc.sh` generates fastq_screen plots for model
 organisms, other organisms and rRNAs plus the report files from FASTQC.
 
 
-Pipeline recipes/examples
--------------------------
+Pipeline runner: run_qc_pipeline.py
+-----------------------------------
+
+### Overview ###
+
+The pipeline runner program `run_qc_pipeline.py` is designed to automate running
+a specified script for all available datasets in one or more directories.
+
+Datasets are assembled in an automated fashion by examining and grouping files in
+a given directory based on their file names and file extensions. The specified
+script is then run for each of the datasets, using the specified job runner to
+handle execution and monitoring for each run. The master pipeline runner performs
+overall monitoring, basic scheduling and reporting of jobs.
+
+*   The `--input` and `--regex` options control the assembly of datasets
+*   The `--runner` option controls which job runner is used
+*   The `--limit` and `--email` options control scheduling and reporting
+
+See below for more information on these options.
+
+### Usage and options ###
+
+Usage:
+
+     run_qc_pipeline.py [options] SCRIPT DIR [ DIR ...]
+
+Execute SCRIPT on data in each directory DIR. By default the SCRIPT is
+executed on each CSFASTA/QUAL file pair found in DIR, as 'SCRIPT CSFASTA
+QUAL'. Use the --input option to run SCRIPT on different types of data (e.g.
+FASTQ files). SCRIPT can be a quoted string to include command line options
+(e.g. 'run_solid2fastq.sh --gzip').
+
+Options:
+
+    -h, --help            show this help message and exit
+
+Basic Options:
+
+    --limit=MAX_CONCURRENT_JOBS
+                        queue no more than MAX_CONCURRENT_JOBS at one time
+                        (default 4)
+    --queue=GE_QUEUE    explicitly specify Grid Engine queue to use
+    --input=INPUT_TYPE  specify type of data to use as input for the script.
+                        INPUT_TYPE can be one of: 'solid' (CSFASTA/QUAL file
+                        pair, default), 'solid_paired_end' (CSFASTA/QUAL_F3
+                        and CSFASTA/QUAL_F5 quartet), 'fastq' (FASTQ file),
+                        'fastqgz' (gzipped FASTQ file)
+    --email=EMAIL_ADDR  send email to EMAIL_ADDR when each stage of the
+                        pipeline is complete
+
+Advanced Options:
+
+    --regexp=PATTERN    regular expression to match input files against
+    --test=MAX_TOTAL_JOBS
+                        submit no more than MAX_TOTAL_JOBS (otherwise submit
+                        all jobs)
+    --runner=RUNNER     specify how jobs are executed: ge = Grid Engine, drmma
+                        = Grid Engine via DRMAA interface, simple = use local
+                        system. Default is 'ge'
+    --debug             print debugging output
+
+### Pipeline recipes/examples ###
 
 *   Run the full SOLiD QC pipeline on a set of directories:
 
