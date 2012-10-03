@@ -53,6 +53,7 @@ __version__ = "0.1.0"
 
 import sys
 import os
+import re
 import time
 import Queue
 import logging
@@ -498,11 +499,14 @@ class SolidPipelineRunner(PipelineRunner):
 # Module Functions
 #######################################################################
 
-def GetSolidDataFiles(dirn):
+def GetSolidDataFiles(dirn,pattern=None):
     """Return list of csfasta/qual file pairs in target directory
 
     Note that files with names ending in '_T_F3' will be rejected
     as these are assumed to come from the preprocess filtering stage.
+
+    Optionally also specify a regular expression pattern that file
+    names must also match in order to be included.
     """
     # Check directory exists
     if not os.path.isdir(dirn):
@@ -513,7 +517,9 @@ def GetSolidDataFiles(dirn):
     data_files = []
     all_files = os.listdir(dirn)
     all_files.sort()
-
+    # Regular expression pattern
+    if pattern is not None:
+        regex = re.compile(pattern)
     # Look for csfasta and matching qual files
     for filen in all_files:
         logging.debug("Examining file %s" % filen)
@@ -537,17 +543,22 @@ def GetSolidDataFiles(dirn):
                 # QV not in name, try to match whole name
                 csfasta = root+".csfasta"
             if os.path.exists(os.path.join(dirn,csfasta)):
-                data_files.append((csfasta,qual))
+                # If a regex pattern is specified then also filter on it
+                if pattern is None or regex.search(csfasta):
+                    data_files.append((csfasta,qual))
             else:
                 logging.critical("Unable to get csfasta for %s" % filen)
     # Done - return file pairs
     return data_files
 
-def GetSolidPairedEndFiles(dirn):
+def GetSolidPairedEndFiles(dirn,pattern=None):
     """Return list of csfasta/qual file pairs for paired end data
+
+    Optionally also specify a regular expression pattern that file
+    names must also match in order to be included.
     """
     # Get list of pairs
-    file_pairs = GetSolidDataFiles(dirn)
+    file_pairs = GetSolidDataFiles(dirn,pattern=pattern)
     if not file_pairs:
         return []
     # Now match pairs of pairs: files with the same name except for
@@ -591,8 +602,11 @@ def GetSolidPairedEndFiles(dirn):
     # Done - return file list
     return data_files
 
-def GetFastqFiles(dirn):
+def GetFastqFiles(dirn,pattern=None):
     """Return list of fastq files in target directory
+
+    Optionally also specify a regular expression pattern that file
+    names must also match in order to be included.
     """
     # Check directory exists
     if not os.path.isdir(dirn):
@@ -603,18 +617,26 @@ def GetFastqFiles(dirn):
     data_files = []
     all_files = os.listdir(dirn)
     all_files.sort()
-
+    # Regular expression pattern
+    if pattern is not None:
+        regex = re.compile(pattern)
     # Look for csfasta and matching qual files
     for filen in all_files:
         logging.debug("Examining file %s" % filen)
         root = os.path.splitext(filen)[0]
         ext = os.path.splitext(filen)[1]
-        if ext == ".fastq": data_files.append((filen,))
+        if ext == ".fastq":
+            # If a regex pattern is specified then also filter on it
+            if pattern is None or regex.search(root):
+                data_files.append((filen,))
     # Done - return file list
     return data_files
 
-def GetFastqGzFiles(dirn):
+def GetFastqGzFiles(dirn,pattern=None):
     """Return list of fastq.gz files in target directory
+
+    Optionally also specify a regular expression pattern that file
+    names must also match in order to be included.
     """
     # Check directory exists
     if not os.path.isdir(dirn):
@@ -625,7 +647,9 @@ def GetFastqGzFiles(dirn):
     data_files = []
     all_files = os.listdir(dirn)
     all_files.sort()
-
+    # Regular expression pattern
+    if pattern is not None:
+        regex = re.compile(pattern)
     # Look for .fastq.gz
     for filen in all_files:
         logging.debug("Examining file %s" % filen)
@@ -633,7 +657,9 @@ def GetFastqGzFiles(dirn):
             # Ends with gz
             try:
                 if filen.split('.')[-2] == "fastq":
-                    data_files.append((filen,))
+                    # If a regex pattern is specified then also filter on it
+                    if pattern is None or regex.search(filen.split('.')[-3]):
+                        data_files.append((filen,))
             except IndexError:
                 # Ignore
                 pass
