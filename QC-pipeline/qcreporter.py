@@ -268,7 +268,9 @@ class QCSample:
             if f.startswith(sample_name_underscore):
                 if f.endswith('_screen.png'):
                     # Extract and check screen name
-                    screen_name = f.replace(sample_name_underscore,'').replace('_screen.png','')
+                    screen_name = f.replace(sample_name_underscore,'').\
+                        replace('paired_','').\
+                        replace('_screen.png','')
                     if screen_name in FASTQ_SCREEN_NAMES:
                         self.addScreen(f)
             # Boxplots
@@ -276,10 +278,25 @@ class QCSample:
                 if f.startswith(sample_name_dot) or f.startswith(sample_name_underscore):
                     self.addBoxplot(f)
                 else:
-                    # Try removing "_QV" from names to see if we can match
-                    if f.replace('_QV','').startswith(sample_name_underscore) or \
-                            f.replace('_QV','').startswith(sample_name_dot):
+                    # Try progressive manipulations looking for a match
+                    #
+                    # Removing "_QV" from names
+                    f1 = f.replace('_QV','')
+                    if f1.startswith(sample_name_underscore) or \
+                            f1.startswith(sample_name_dot):
                         self.addBoxplot(f)
+                    else:
+                        # Removing "_F3_" from names
+                        f1 = f1.replace('_F3_','_')
+                        if f1.startswith(sample_name_underscore) or \
+                                f1.startswith(sample_name_dot):
+                            self.addBoxplot(f)
+                        else:
+                            # Removing "_F5-BC_" from names
+                            f1 = f1.replace('_F5-BC_','_')
+                            if f1.startswith(sample_name_underscore) or \
+                                f1.startswith(sample_name_dot):
+                                self.addBoxplot(f)
             # FastQC
             if f == "%sfastqc" % sample_name_underscore:
                 self.addFastQC(f)
