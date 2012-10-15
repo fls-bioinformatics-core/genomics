@@ -26,6 +26,13 @@ The script runs `configureBclToFastq.pl` from `CASAVA` to set up conversion scri
 then runs `make` to perform the actual conversion. It requires that `CASAVA` is available
 on the system.
 
+Options:
+
+    -h, --help        display usage text
+    --use-bases-mask BASES_MASK
+                      specify a bases-mask string tell CASAVA how to use each cycle.
+		      The supplied value is passed directly to configureBcltoFastq.pl;
+		      see the CASAVA user guide for details of --use-bases-mask
 
 build_illumina_analysis_dirs.py
 -------------------------------

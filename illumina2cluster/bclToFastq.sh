@@ -25,6 +25,15 @@ the specified <output_dir>.
 Optionally a non-default <sample_sheet> file can also be specified,
 otherwise the SampleSheet.csv file in the BaseCalls directory will be
 used, if present.
+
+Options:
+
+  -h, --help        display usage text
+  --use-bases-mask BASES_MASK
+                    specify a bases-mask string tell CASAVA how to use each cycle.
+                    The supplied value is passed directly to configureBcltoFastq.pl
+                    (see the CASAVA user guide for details of how --use-bases-mask
+                    works)
 EOF
     exit
 fi
