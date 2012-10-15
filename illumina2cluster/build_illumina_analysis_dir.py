@@ -207,6 +207,8 @@ if __name__ == "__main__":
                  "'<project>:<type>' e.g. --expt=NY:ChIP-seq will create directory "
                  "'NY_ChIP-seq'. Use multiple --expt=... to set the types for different "
                  "projects")
+    p.add_option("--keep-names",action="store_true",dest="keep_names",default=False,
+                 help="preserve the full names of the source fastq files when creating links")
     # Parse command line
     options,args = p.parse_args()
 
@@ -253,7 +255,10 @@ if __name__ == "__main__":
         for sample in project.samples:
             for fastq in sample.fastq:
                 fastq_file = os.path.join(sample.dirn,fastq)
-                fastq_ln = os.path.join(project_dir,sample.name+'.fastq.gz')
+                if options.keep_names:
+                    fastq_ln = os.path.join(project_dir,fastq)
+                else:
+                    fastq_ln = os.path.join(project_dir,sample.name+'.fastq.gz')
                 if os.path.exists(fastq_ln):
                     print "-> %s.fastq.gz already exists" % sample.name
                 else:
