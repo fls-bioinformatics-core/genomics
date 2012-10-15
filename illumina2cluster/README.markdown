@@ -31,8 +31,10 @@ Options:
     -h, --help        display usage text
     --use-bases-mask BASES_MASK
                       specify a bases-mask string tell CASAVA how to use each cycle.
-		      The supplied value is passed directly to configureBcltoFastq.pl;
-		      see the CASAVA user guide for details of --use-bases-mask
+		      The supplied value is passed directly to configureBcltoFastq.pl
+		      (see the CASAVA user guide for details of how --use-bases-mask
+		      works)
+
 
 build_illumina_analysis_dirs.py
 -------------------------------
@@ -66,6 +68,11 @@ Options:
                       :ChIP-seq will create directory 'NY_ChIP-seq'. Use
                       multiple --expt=... to set the types for different
                       projects
+    --keep-names      preserve the full names of the source fastq files when
+                      creating links
+    --merge-replicates   
+                      create merged fastq files for each set of replicates
+                      detected
 
 
 update_sample_sheet.py
