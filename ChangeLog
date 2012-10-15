@@ -1,3 +1,13 @@
+2012-10-15  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* illumina2cluster/bclToFastq.sh
+	- added --use-bases-mask option (passes mask specification to the underlying
+	  configureBclToFastq.pl script in CASAVA).
+	* illumina2cluster/build_illumina_analysis_dir.py
+	- added new options --keep-names (preserve the full names of the source fastq
+	  files when creating links) and --merge-replicates (create merged fastq files
+	  for each set of replicates detected).
+
 2012-10-03  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* QC-pipeline/run_qc_pipeline.py
