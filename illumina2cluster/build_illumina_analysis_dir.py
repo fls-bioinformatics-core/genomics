@@ -177,6 +177,75 @@ class IlluminaSample:
             raise IlluminaDataError, "Unable to find fastq.gz files for %s" % \
                 self.name
 
+class IlluminaFastq:
+    """Class for extracting information about Fastq files
+
+    Given the name of a Fastq file from CASAVA/Illumina platform, extract
+    data about the sample name, barcode sequence, lane number, read number
+    and set number.
+
+    The format of the names follow the general form:
+
+    <sample_name>_<barcode_sequence>_L<lane_number>_R<read_number>_<set_number>.fastq.gz
+
+    e.g. for
+
+    NA10831_ATCACG_L002_R1_001.fastq.gz
+
+    sample_name = 'NA10831_ATCACG_L002_R1_001'
+    barcode_sequence = 'ATCACG'
+    lane_number = 2
+    read_number = 1
+    set_number = 1
+
+    Provides the follow attributes:
+
+    fastq:            the original fastq file name
+    sample_name:      name of the sample (leading part of the name)
+    barcode_sequence: barcode sequence (string or None)
+    lane_number:      integer
+    read_number:      integer
+    set_number:       integer
+
+    """
+    def __init__(self,fastq):
+        """Create and populate a new IlluminaFastq object
+
+        Arguments:
+          fastq: name of the fastq.gz (optionally can include leading path)
+
+        """
+        # Store name
+        self.fastq = fastq
+        # Values derived from the name
+        self.sample_name = None
+        barcode_sequence = None
+        lane_number = None
+        read_number = None
+        set_number = None
+        # Base name for sample (no leading path or extension)
+        fastq_base = os.path.basename(fastq)
+        try:
+            i = fastq_base.index('.')
+            fastq_base = fastq_base[:i]
+        except ValueError:
+            pass
+        # Identify which part of the name is which
+        fields = fastq_base.split('_')
+        nfields = len(fields)
+        # Set number: zero-padded 3 digit integer '001'
+        self.set_number = int(fields[-1])
+        # Read number: single integer digit 'R1'
+        self.read_number = int(fields[-2][1])
+        # Lane number: zero-padded 3 digit integer 'L001'
+        self.lane_number = int(fields[-3][1:])
+        # Barcode sequence: string (or None if 'NoIndex')
+        self.barcode_sequence = fields[-4]
+        if self.barcode_sequence == 'NoIndex':
+            self.barcode_sequence = None
+        # Sample name: whatever's left over
+        self.sample_name = '_'.join(fields[:-4])
+
 class IlluminaDataError(Exception):
     """Base class for errors with Illumina-related code"""
 
