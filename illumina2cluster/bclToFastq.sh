@@ -38,7 +38,15 @@ fi
 # Collect command line options to pass directly to CASAVA
 casava_options=
 while [ ! -z `echo $1 | grep "^-"` ] ; do
-    casava_options="$casava_options $1"
+    case $1 in
+	--use-bases-mask)
+	    shift
+	    casava_options="$casava_options --use-bases-mask $1"
+	    ;;
+	*)
+	    echo "Ignored option $1"
+	    ;;
+    esac
     shift
 done
 #
