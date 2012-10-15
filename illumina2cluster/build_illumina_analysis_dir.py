@@ -297,7 +297,9 @@ if __name__ == "__main__":
                 if len(sample.fastq) == 1:
                     print "\t%s" % sample.name
                 else:
-                    print "\t%s (%d fastqs)" % (sample.name,len(sample.fastq)) 
+                    print "\t%s (%d fastqs)" % (sample.name,len(sample.fastq))
+                for fastq in sample.fastq:
+                    print "\t\t%s" % fastq
         sys.exit()
 
     # Assign experiment types
