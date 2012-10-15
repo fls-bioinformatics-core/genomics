@@ -307,6 +307,12 @@ for ext in $extensions ; do
     fi
 done
 #
+# Check: did we get any runs?
+if [ -z "$solid_runs" ] ; then
+    echo "Warning: non-canonical run name $solid_dir"
+    solid_runs=$solid_dir
+fi
+#
 # Get email address for notifications, if not provided on command line
 if [ -z "$EMAIL_ADDRESS" ] ; then
     echo -n "Email address to send log file/notifications to? "
