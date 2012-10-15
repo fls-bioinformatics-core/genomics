@@ -27,6 +27,7 @@ import os
 import sys
 import optparse
 import logging
+import gzip
 
 class IlluminaData:
     """Class for examining Illumina data post bcl-to-fastq conversion
@@ -249,6 +250,56 @@ class IlluminaFastq:
 class IlluminaDataError(Exception):
     """Base class for errors with Illumina-related code"""
 
+
+#######################################################################
+# Functions
+#######################################################################
+
+def concatenate_fastq_files(merged_fastq,fastq_files):
+    """Create a single FASTQ file by concatenating one or more FASTQs
+
+    Given a list or tuple of FASTQ files (which can be compressed or
+    uncompressed or a combination), creates a single output FASTQ by
+    concatenating the contents.
+
+    Arguments:
+      merged_fastq: name of output FASTQ file (mustn't exist beforehand)
+      fastq_files:  list of FASTQ files to concatenate
+
+    """
+    print "Creating merged fastq file '%s'" % merged_fastq
+    # Check that initial file doesn't exist
+    if os.path.exists(merged_fastq):
+        logging.error("Target file '%s' already exists, stopping")
+        sys.exit(1)
+    # Create temporary name
+    merged_fastq_part = merged_fastq+'.part'
+    # Open final output file
+    fq_merged = open(merged_fastq_part,'wb')
+    # For each fastq, read data and append to output - simples!
+    for fastq in fastq_files:
+        print "Adding records from %s" % fastq
+        # Check it exists
+        if not os.path.exists(fastq):
+            logging.error("'%s' not found, stopping" % fastq)
+            sys.exit(1)
+        # Check if it's compressed i.e. gz extension?
+        gzipped = (os.path.splitext(fastq)[1] == ".gz")
+        # Open file for reading
+        if not gzipped:
+            fq = open(fastq,'rb')
+        else:
+            fq = gzip.GzipFile(fastq,'rb')
+        # Read and append data
+        while True:
+            data = fq.read(10240)
+            if not data: break
+            fq_merged.write(data)
+        fq.close()
+    # Finished, clean up
+    fq_merged.close()
+    os.rename(merged_fastq_part,merged_fastq)
+
 #######################################################################
 # Main program
 #######################################################################
@@ -278,6 +329,8 @@ if __name__ == "__main__":
                  "projects")
     p.add_option("--keep-names",action="store_true",dest="keep_names",default=False,
                  help="preserve the full names of the source fastq files when creating links")
+    p.add_option("--merge-replicates",action="store_true",dest="merge_replicates",default=False,
+                 help="create merged fastq files for each set of replicates detected")
     # Parse command line
     options,args = p.parse_args()
 
@@ -323,18 +376,44 @@ if __name__ == "__main__":
                 os.mkdir(project_dir)     
                 os.chmod(project_dir,0775)
         # Check for & create links to fastq files
-        for sample in project.samples:
-            for fastq in sample.fastq:
-                fastq_file = os.path.join(sample.dirn,fastq)
-                if options.keep_names:
-                    fastq_ln = os.path.join(project_dir,fastq)
-                else:
-                    fastq_ln = os.path.join(project_dir,sample.name+'.fastq.gz')
-                if os.path.exists(fastq_ln):
-                    print "-> %s.fastq.gz already exists" % sample.name
-                else:
-                    print "Linking to %s" % fastq
-                    if not options.dry_run: os.symlink(fastq_file,fastq_ln)
+        if not options.merge_replicates:
+            for sample in project.samples:
+                for fastq in sample.fastq:
+                    fastq_file = os.path.join(sample.dirn,fastq)
+                    if options.keep_names:
+                        fastq_ln = os.path.join(project_dir,fastq)
+                    else:
+                        fastq_ln = os.path.join(project_dir,sample.name+'.fastq.gz')
+                    if os.path.exists(fastq_ln):
+                        print "-> %s.fastq.gz already exists" % sample.name
+                    else:
+                        print "Linking to %s" % fastq
+                        if not options.dry_run: os.symlink(fastq_file,fastq_ln)
+        else:
+            # Merge files for replicates within each sample
+            for sample in project.samples:
+                replicates = {}
+                # Gather replicates to be merged
+                for fastq in sample.fastq:
+                    fastq_data = IlluminaFastq(fastq)
+                    name = "%s_%s_R%d" % (fastq_data.sample_name,
+                                          fastq_data.barcode_sequence,
+                                          fastq_data.read_number)
+                    if name not in replicates:
+                        replicates[name] = []
+                    replicates[name].append(os.path.join(sample.dirn,fastq))
+                    # Sort into order
+                    replicates[name].sort()
+                # Report detected replicates
+                print "Sample %s" % sample.name
+                for name in replicates:
+                    print "\tReplicate '%s'" % name
+                    for fastq in replicates[name]:
+                        print "\t\t%s" % fastq
+                # Do the merge
+                for name in replicates:
+                    merged_fastq = os.path.join(project_dir,name+'.fastq')
+                    concatenate_fastq_files(merged_fastq,replicates[name])
         # Make an empty ScriptCode directory
         scriptcode_dir = os.path.join(project_dir,"ScriptCode")
         if os.path.exists(scriptcode_dir):
