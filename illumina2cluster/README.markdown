@@ -106,6 +106,9 @@ Options:
                           where <lanes> is a single integer (e.g. 1), a set of
                           integers (e.g. 1,3,...), a range (e.g. 1-3), or a
                           combination (e.g. 1,3-5,7)
+    --ignore-warnings     ignore warnings about spaces and duplicated
+                          sampleID/sampleProject combinations when writing new
+                          samplesheet.csv file
 
 Example:
 
