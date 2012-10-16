@@ -98,6 +98,9 @@ if __name__ == "__main__":
                  "SAMPLE_PROJECT should be of the form '<lanes>:<name>', where <lanes> is a "
                  "single integer (e.g. 1), a set of integers (e.g. 1,3,...), a range (e.g. 1-3), "
                  "or a combination (e.g. 1,3-5,7)")
+    p.add_option('--ignore-warnings',action="store_true",dest="ignore_warnings",default=False,
+                 help="ignore warnings about spaces and duplicated sampleID/sampleProject "
+                 "combinations when writing new samplesheet.csv file")
     # Process command line
     options,args = p.parse_args()
     if len(args) != 1:
@@ -154,7 +157,7 @@ if __name__ == "__main__":
             pass
     # Write out new sample sheet
     if options.samplesheet_out:
-        if check_status:
+        if check_status and not options.ignore_warnings:
             logging.error("please fix above errors in sample sheet data")
         else:
             data.write(options.samplesheet_out)
