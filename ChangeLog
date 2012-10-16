@@ -1,8 +1,15 @@
+2012-10-16  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* illumina2cluster/update_sample_sheet.py
+	- added --ignore-warnings option (forces output sample sheet file to
+	  be written out even if there are errors)
+
 2012-10-15  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* illumina2cluster/bclToFastq.sh
 	- added --use-bases-mask option (passes mask specification to the underlying
 	  configureBclToFastq.pl script in CASAVA).
+	
 	* illumina2cluster/build_illumina_analysis_dir.py
 	- added new options --keep-names (preserve the full names of the source fastq
 	  files when creating links) and --merge-replicates (create merged fastq files
