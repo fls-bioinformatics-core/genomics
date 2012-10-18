@@ -186,7 +186,7 @@ function set_permissions_and_group() {
     local new_group=$2
     if [ ! -z "$permissions_mode" ] ; then
 	echo Recursively setting permissions to $permissions_mode
-	chmod -R $permissions_mode *
+	chmod -R --quiet $permissions_mode *
     fi
     if [ ! -z "$new_group" ] ; then
 	echo Recursively setting group to $new_group
