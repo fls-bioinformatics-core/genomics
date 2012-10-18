@@ -261,7 +261,7 @@ def suggest_analysis_layout(solid_runs):
                 # Print the arguments for the layout
                 cmd_line.extend((build_analysis_dir_cmd,
                                  "--top-dir=%s_analysis" % top_dir,
-                                 "--link=relative",
+                                 "--link=absolute",
                                  "--naming-scheme=partial"))
                 cmd_line.append(expt.describe())
                 cmd_line.append(run.run_dir)
