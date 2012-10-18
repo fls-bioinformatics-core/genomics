@@ -56,7 +56,7 @@ if __name__ == "__main__":
     top_dir = None
     pipeline_script = None
     link_naming_scheme = "partial"
-    link_type = "relative"
+    link_type = "absolute"
 
     # Process command line
     if len(sys.argv) < 2:
@@ -77,7 +77,7 @@ if __name__ == "__main__":
         print "      includes instrument name, datestamp and library name (default)"
         print "      or 'full' - same as source data file"
         print "    --link=<type>: type of links to create to primary data files,"
-        print "      either 'relative' (default) or 'absolute'"
+        print "      either 'absolute' (default) or 'relative'"
         print "    --run-pipeline=<script>: after creating analysis directories, run"
         print "      the specified <script> on SOLiD data file pairs in each"
         print ""
