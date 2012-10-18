@@ -111,7 +111,7 @@ General Options:
       includes instrument name, datestamp and library name (default)
       or 'full' - same as source data file
     --link=<type>: type of links to create to primary data files,
-      either 'relative' (default) or 'absolute'
+      either 'absolute' (default) or 'relative'
     --run-pipeline=<script>: after creating analysis directories, run
       the specified <script> on SOLiD data file pairs in each
 
