@@ -1,3 +1,12 @@
+2012-10-18  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* solid2cluster/analyse_solid_run.py
+	- --layout option now defaults to 'absolute' links to primary data in generated
+	  script.
+
+	* solid2cluster/build_analysis_dir.py
+	- default is now to make absolute links to primary data files
+
 2012-10-16  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* illumina2cluster/update_sample_sheet.py
