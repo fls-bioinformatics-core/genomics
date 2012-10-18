@@ -265,14 +265,7 @@ fi
 cd ..
 #
 # Set permissions and group (if specified)
-if [ ! -z "$SET_GROUP" ] ; then
-    echo Recursively setting group to $SET_GROUP
-    chgrp -R --quiet $SET_GROUP *
-fi
-if [ ! -z "$SET_PERMISSIONS" ] ; then
-    echo Recursively setting permissions to $SET_PERMISSIONS
-    chmod -R $SET_PERMISSIONS *
-fi
+set_permissions_and_group "$SET_PERMISSIONS" "$SET_GROUP"
 #
 echo SOLiD QC pipeline completed: `date`
 exit
