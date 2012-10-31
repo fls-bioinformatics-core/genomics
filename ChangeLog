@@ -1,3 +1,11 @@
+2012-10-31  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* illumina2cluster/update_sample_sheet.py
+	- new option --fix-duplicates automatically deals with duplicated
+	  SampleID/SampleProject combinations; using --fix-duplicates and
+	  --fix-spaces together should deal with most sample sheet problems
+	  without requiring further intervention.
+
 2012-10-18  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* solid2cluster/analyse_solid_run.py
@@ -39,7 +47,7 @@
 
 2012-10-02  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
-	* QC-pipeline/qcreporter.py
+ 	* QC-pipeline/qcreporter.py
 	- output ZIP file has run/sample-specific top-level directory; HTML
 	  report file name restored to 'qc_report.html'.
 
