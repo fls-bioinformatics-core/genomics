@@ -95,6 +95,8 @@ Options:
     -v, --view            view contents of sample sheet
     --fix-spaces          replace spaces in SampleID and SampleProject fields
                           with underscores
+    --fix-duplicates      append uniques indices to SampleIDs where original
+                          SampleID/SampleProject combination are duplicated
     --set-id=SAMPLE_ID    update/set the values in the 'SampleID' field;
                           SAMPLE_ID should be of the form '<lanes>:<name>',
                           where <lanes> is a single integer (e.g. 1), a set of
@@ -110,7 +112,7 @@ Options:
                           sampleID/sampleProject combinations when writing new
                           samplesheet.csv file
 
-Example:
+Examples:
 
 Read in the sample sheet file `SampleSheet.csv`, update the `SampleProject` and
 `SampleID` for lanes 1 and 8, and write the updated sample sheet to the file
@@ -118,3 +120,9 @@ Read in the sample sheet file `SampleSheet.csv`, update the `SampleProject` and
 
     update_sample_sheet.py -o SampleSheet2.csv --set-project=1,8:Control \
         --set-id=1:PhiX_10pM --set-id=8:PhiX_12pM SampleSheet.csv
+
+Automatically fix spaces and duplicated `sampleID`/`sampleProject` combinations
+and write out to `SampleSheet3.csv`:
+
+   update_sample_sheet.py --fix-spaces --fix-duplicates \
+        -o SampleSheet3.csv SampleSheet.csv
