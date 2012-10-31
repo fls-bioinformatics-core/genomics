@@ -88,6 +88,9 @@ if __name__ == "__main__":
 	         help="view contents of sample sheet")
     p.add_option('--fix-spaces',action="store_true",dest="fix_spaces",
                  help="replace spaces in SampleID and SampleProject fields with underscores")
+    p.add_option('--fix-duplicates',action="store_true",dest="fix_duplicates",
+                 help="append uniques indices to SampleIDs where original "
+                 "SampleID/SampleProject combination are duplicated")
     p.add_option('--set-id',action="append",dest="sample_id",default=[],
                  help="update/set the values in the 'SampleID' field; "
                  "SAMPLE_ID should be of the form '<lanes>:<name>', where <lanes> is a single "
@@ -132,6 +135,26 @@ if __name__ == "__main__":
         for lane in data:
             lane['SampleID'] = lane['SampleID'].replace(' ','_')
             lane['SampleProject'] = lane['SampleProject'].replace(' ','_')
+    # Fix duplicates
+    if options.fix_duplicates:
+        # Find duplicates
+        id_project_names = []
+        duplicates = []
+        for lane in data:
+            id_project_name = lane['SampleID']+'/'+ lane['SampleProject']
+            if id_project_name in id_project_names and id_project_name not in duplicates:
+                duplicates.append(id_project_name)
+            else:
+                id_project_names.append(id_project_name)
+        # Go round again and fix
+        duplicate_indexes = {}
+        for dup in duplicates:
+            duplicate_indexes[dup] = 0
+        for lane in data:
+            id_project_name = lane['SampleID']+'/'+ lane['SampleProject']
+            if id_project_name in duplicates:
+                duplicate_indexes[id_project_name] += 1
+                lane['SampleID'] = "%s_%d" % (lane['SampleID'],duplicate_indexes[id_project_name])
     # Print transposed data in tab-delimited format
     if options.view:
         data.transpose().write(fp=sys.stdout,delimiter='\t')
