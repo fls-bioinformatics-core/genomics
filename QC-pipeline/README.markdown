@@ -60,8 +60,8 @@ will be read automatically if it exists. Make a site-specific version by
 copying `qc.setup.sample` and editing it as appropriate to specify
 locations for the programs and data files.
 
-Outputs from SOLiD QC Pipeline
-------------------------------
+Outputs from SOLiD QC Pipeline (solid_qc.sh)
+--------------------------------------------
 
 For each sample the following output files will be produced by `solid_qc.sh`:
 
@@ -144,14 +144,16 @@ Boxplots are written to the `qc` subdirectory:
  * `PB.qual_seq-order_boxplot.*`: plot using all reads (PDF, PNG and PS formats)
  * `PB_T_F3_QV.qual_seq-order_boxplot.*`: plot using just the quality filtered reads
 
-Outputs from Illumina QC Pipeline
-----------------------------------
+Outputs from Illumina QC Pipeline (illumina_qc.sh)
+--------------------------------------------------
 
 For each sample the `illumina_qc.sh` generates fastq_screen plots for model
 organisms, other organisms and rRNAs plus the report files from FASTQC.
 
 If the input files are `fastq.gz` then it will also produce gunzipped versions
 of the files.
+
+This script can be run on data produced by the Illumina GAIIx and HiSeq platforms.
 
 Pipeline runner: run_qc_pipeline.py
 -----------------------------------
@@ -243,3 +245,36 @@ Advanced Options:
 *   To get an email notification on completion of the pipeline:
 
     `run_qc_pipeline.py --email=foo@bar.com ...`
+
+
+Reporting: qcreporter.py
+------------------------
+
+### Overview ###
+
+`qcreporter.py` generates HTML reports for QC. It can be run on the outputs from
+either `solid_qc.sh` or `illumina_qc.sh` scripts and will attempt the run type
+automatically.
+
+In some cases this automatic detection may fail, in which case the `--platform`
+and `--format` options can be used to explicit speciy the platform type and/or
+the type of input files that are expected.
+
+### Usage and options ###
+
+Usage:
+
+    qcreporter.py [options] DIR [ DIR ...]
+
+Generate QC report for each directory DIR which contains the outputs from a QC
+script (either SOLiD or Illumina). Creates a 'qc_report.<run>.<name>.html'
+file in DIR plus an archive 'qc_report.<run>.<name>.zip' which contains the
+HTML plus all the necessary files for unpacking and viewing elsewhere.
+
+Options:
+
+    -h, --help            show this help message and exit
+    --platform=PLATFORM   explicitly set the type of sequencing platform
+                          ('solid', 'illumina')
+    --format=DATA_FORMAT  explicitly set the format of files ('solid',
+                          'solid_paired_end', 'fastq', 'fastqgz')
