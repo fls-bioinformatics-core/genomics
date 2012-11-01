@@ -60,14 +60,16 @@ class QCReporter:
     subclassed from QCReporter and need to implement the 'report'
     method to generate the HTML output.
     """
-    def __init__(self,dirn):
+    def __init__(self,dirn,data_format=None):
         """Create a new QCReporter instance
 
         Arguments:
           dirn: top-level directory for the run
+          data_format: (optional) set format of files to acquire
         """
         # Basic information
         self.__dirn = os.path.abspath(dirn)
+        self.__data_format = data_format
         self.__qc_dir = os.path.join(self.__dirn,'qc')
         if not os.path.isdir(self.__qc_dir):
             raise OSError, "QC dir %s not found" % self.qc_dir
@@ -113,6 +115,12 @@ class QCReporter:
         return self.__qc_dir
 
     @property
+    def data_format(self):
+        """Return the format for the primary data files
+        """
+        return self.__data_format
+
+    @property
     def samples(self):
         """Return list of samples
         """
@@ -131,6 +139,27 @@ class QCReporter:
         self.__samples.append(sample)
         # Sort sample list on name
         self.__samples.sort(lambda s1,s2: cmp_samples(s1.name,s2.name))
+
+    def getPrimaryDataFiles(self):
+        """Return list of primary data file sets
+        """
+        primary_data = None
+        if self.data_format == 'solid':
+            primary_data = Pipeline.GetSolidDataFiles(self.dirn)
+        elif self.data_format == 'solid_paired_end':
+            primary_data = Pipeline.GetSolidPairedEndFiles(self.dirn)
+        elif self.data_format == 'fastq':
+            primary_data = Pipeline.GetFastqFiles(self.dirn)
+        elif self.data_format == 'fastqgz':
+            primary_data = Pipeline.GetFastqGzFiles(self.dirn)
+        else:
+            # Unrecognised data format
+            raise QCReporterError, "Unrecognised data type '%s'" % self.data_format
+        if not primary_data:
+            logging.warning("No primary data files of type '%s' found: try --format option?" %
+                            self.data_format)
+        # Return data file list
+        return primary_data
 
     def __init_html(self):
         """Internal: initialise and populate the HTMLPageWriter
@@ -521,6 +550,9 @@ def add_dir_to_zip(z,dirn,zip_top_dir=None):
             else:
                 z.write(f1,os.path.join(zip_top_dir,f1))
 
+class QCReporterError(Exception):
+    """Base class for errors with QCReporter-related code"""
+
 #######################################################################
 # Illumina-specific class definitions
 #######################################################################
@@ -533,11 +565,14 @@ class IlluminaQCReporter(QCReporter):
     results for quick review.
     """
     
-    def __init__(self,dirn):
+    def __init__(self,dirn,data_format=None):
+        # Set input file type if not explicitly specified
+        if data_format is None:
+            data_format = 'fastqgz'
         # Initialise base class
-        QCReporter.__init__(self,dirn)
+        QCReporter.__init__(self,dirn,data_format=data_format)
         # Locate input fastq.gz files
-        primary_data = Pipeline.GetFastqGzFiles(self.dirn)
+        primary_data = self.getPrimaryDataFiles()
         for data in primary_data:
             sample = rootname(data[0])
             self.addSample(IlluminaQCSample(sample,self.qc_dir))
@@ -702,7 +737,7 @@ class SolidQCReporter(QCReporter):
     results for quick review.
     """
 
-    def __init__(self,dirn):
+    def __init__(self,dirn,data_format=None):
         """Make a new SolidQCReporter instance
 
         The SolidQCReporter class checks the contents of the supplied
@@ -713,23 +748,27 @@ class SolidQCReporter(QCReporter):
         Arguments:
           dirn: top-level directory holding the QC run outputs
         """
-        # Initialise base class
-        QCReporter.__init__(self,dirn)
-        self.__paired_end = False
-        # Locate stats file and determine if we have paired end data
-        stats_file = os.path.join(self.dirn,"SOLiD_preprocess_filter.stats")
+        # Preprocess: locate stats file and determine if we have paired end data
+        paired_end = False
+        stats_file = os.path.join(os.path.abspath(dirn),"SOLiD_preprocess_filter.stats")
         if not os.path.exists(stats_file):
-            stats_file = os.path.join(self.dirn,"SOLiD_preprocess_filter_paired.stats")
+            stats_file = os.path.join(os.path.abspath(dirn),"SOLiD_preprocess_filter_paired.stats")
             if os.path.exists(stats_file):
-                self.__paired_end = True
+                paired_end = True
             else:
                 stats_file = None
-                logging.error("Can't find stats file in %s" % self.dirn)
+                logging.error("Can't find stats file in %s" % dirn)
+        # Determine input type if not explicitly set
+        if data_format is None:
+            if not paired_end:
+                data_format = 'solid'
+            else:
+                data_format = 'solid_paired_end'
+        # Initialise base class
+        QCReporter.__init__(self,dirn,data_format=data_format)
+        self.__paired_end = paired_end
         # Get primary data files
-        if not self.__paired_end:
-            primary_data = Pipeline.GetSolidDataFiles(self.dirn)
-        else:
-            primary_data = Pipeline.GetSolidPairedEndFiles(self.dirn)
+        primary_data = self.getPrimaryDataFiles()
         for data in primary_data:
             sample = rootname(data[0])
             if self.__paired_end:
@@ -1034,13 +1073,16 @@ if __name__ == "__main__":
                               description=
                               "Generate QC report for each directory DIR which contains the "
                               "outputs from a QC script (either SOLiD or Illumina). Creates "
-                              "a 'qc_report.<run>.<name>html' in DIR plus an archive "
+                              "a 'qc_report.<run>.<name>.html' file in DIR plus an archive "
                               "'qc_report.<run>.<name>.zip' which contains the HTML plus all "
                               "the necessary files for unpacking and viewing elsewhere.")
     p.add_option("--platform",action="store",dest="platform",default=None,
                  choices=('solid','illumina'),
-                 help="explicitly set the type of sequencing platform")
-             
+                 help="explicitly set the type of sequencing platform ('solid', 'illumina')")
+    p.add_option("--format",action="store",dest="data_format",default=None,
+                 choices=('solid','solid_paired_end','fastq','fastqgz'),
+                 help="explicitly set the format of files ('solid', 'solid_paired_end', "
+                 "'fastq', 'fastqgz')")
 
     # Deal with command line
     options,arguments = p.parse_args()
@@ -1049,8 +1091,9 @@ if __name__ == "__main__":
     if len(arguments) < 1:
         p.error("Takes at least one argument (one or more directories)")
 
-    # Identify platform and run the appropriate reporter
+    # Loop over input directories
     for d in arguments:
+        # Identify platform
         if options.platform is not None:
             platform = options.platform
         else:
@@ -1065,12 +1108,15 @@ if __name__ == "__main__":
                     platform = 'illumina'
                 except ValueError:
                     pass
+        # Format of input files
+        data_format = options.data_format
+        # Run the appropriate reporter
         if platform is None:
             logging.error("Unable to identify platform for %s (use --platform option?)" % d)
         elif platform == 'solid':
-            SolidQCReporter(d).zip()
+            SolidQCReporter(d,data_format=data_format).zip()
         elif platform == 'illumina':
-            IlluminaQCReporter(d).zip()
+            IlluminaQCReporter(d,data_format=data_format).zip()
         else:
             logging.error("Unknown platform '%s'" % platform)
             
