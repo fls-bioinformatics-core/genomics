@@ -1109,7 +1109,7 @@ def list_run_directories(solid_run_dir):
     """
     # Break up the input
     base_dir = os.path.dirname(os.path.abspath(solid_run_dir))
-    run_name = os.path.basename(solid_run_dir)
+    run_name = os.path.basename(solid_run_dir.rstrip(os.sep))
     # Get the run info from the name
     try:
         base_run_info = SolidRunInfo(run_name)
