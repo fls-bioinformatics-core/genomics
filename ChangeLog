@@ -1,8 +1,12 @@
 2012-11-01  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
+	* QC-pipeline/qcreporter.py
+	- added --format option (explicitly specify format of base input files if
+	  necessary) and updated automatic platform and data type detection.
+
 	* share/Spreadsheet.py
-	- Workbook class issues warning when appending to an existing XLS file
-	  (previously warned when creating a new file)
+	- version 0.1.6: Workbook class issues warning when appending to an existing
+	  XLS file (previously warned when creating a new file)
 
 2012-10-31  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
@@ -32,7 +36,7 @@
 	* illumina2cluster/bclToFastq.sh
 	- added --use-bases-mask option (passes mask specification to the underlying
 	  configureBclToFastq.pl script in CASAVA).
-	
+
 	* illumina2cluster/build_illumina_analysis_dir.py
 	- added new options --keep-names (preserve the full names of the source fastq
 	  files when creating links) and --merge-replicates (create merged fastq files
