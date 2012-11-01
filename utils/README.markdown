@@ -13,6 +13,7 @@ Place to put general utility scripts/tools.
  *  `make_mock_solid_dir.py`: create mock SOLiD directory structure for testing
  *  `md5checker.py`: check files and directories using MD5 sums
  *  `sam2soap.py`: convert from SAM file to SOAP format
+ *  `symlink_checker.py`: check and update symbolic links
 
 See below for more detailed usage documentation.
 
@@ -230,3 +231,24 @@ Options:
     -o SOAPFILE  Output SOAP file name
     --debug      Turn on debugging output
     --test       Run unit tests
+
+
+symlink_checker.py
+------------------
+Check and update symbolic links.
+
+Usage:
+
+    symlink_checker.py OPTIONS DIR
+
+Recursively check and optionally update symlinks found under directory DIR
+
+Options:
+
+    --version             show program's version number and exit
+    -h, --help            show this help message and exit
+    --broken              report broken symlinks
+    --find=REGEX_PATTERN  report links where the destination matches the
+                          supplied REGEX_PATTERN
+    --replace=NEW_STRING  update links found by --find options, by substituting
+                          REGEX_PATTERN with NEW_STRING
