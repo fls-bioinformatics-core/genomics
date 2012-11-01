@@ -1,3 +1,9 @@
+2012-11-01  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* share/Spreadsheet.py
+	- Workbook class issues warning when appending to an existing XLS file
+	  (previously warned when creating a new file)
+
 2012-10-31  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* illumina2cluster/update_sample_sheet.py
