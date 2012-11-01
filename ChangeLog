@@ -1,5 +1,8 @@
 2012-11-01  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
+	* utils/symlink_checker.py
+	- new utility for checking and updating (broken) symbolic links.
+
 	* QC-pipeline/qcreporter.py
 	- added --format option (explicitly specify format of base input files if
 	  necessary) and updated automatic platform and data type detection.
