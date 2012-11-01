@@ -7,7 +7,7 @@
 #
 #########################################################################
 
-__version__ = "0.1.5"
+__version__ = "0.1.6"
 
 """Spreadsheet.py
 
@@ -136,11 +136,9 @@ class Workbook:
         if not os.path.exists(self.name):
             # New spreadsheet
             self.workbook = xlwt.Workbook()
-            if self.name:
-                logging.warning("Specified XLS file '%s' not found" %
-                                self.name)
         else:
             # Spreadsheet already exists - convert into an xlwt workbook
+            logging.warning("Appending to XLS file '%s'" % self.name)
             rb = xlrd.open_workbook(self.name,formatting_info=True)
             self.workbook = xlutils.copy.copy(rb)
             # Collect the sheets in the workbook
