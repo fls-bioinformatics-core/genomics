@@ -29,6 +29,10 @@ used, if present.
 Options:
 
   -h, --help        display usage text
+  --nmismatches N   set number of mismatches to allow; recommended values are 0 for
+                    samples without multiplexing, 1 for multiplexed samples with tags
+                    of length 6 or longer (see the CASAVA user guide for details of
+                    the --nmismatches option)
   --use-bases-mask BASES_MASK
                     specify a bases-mask string tell CASAVA how to use each cycle.
                     The supplied value is passed directly to configureBcltoFastq.pl
@@ -44,6 +48,9 @@ if [ $# -lt 2 ] ; then
     exit 1
 fi
 #
+# Defaults
+n_mismatches=0
+#
 # Collect command line options to pass directly to CASAVA
 casava_options=
 while [ ! -z `echo $1 | grep "^-"` ] ; do
@@ -51,6 +58,10 @@ while [ ! -z `echo $1 | grep "^-"` ] ; do
 	--use-bases-mask)
 	    shift
 	    casava_options="$casava_options --use-bases-mask $1"
+	    ;;
+	--nmismatches)
+	    shift
+	    n_mismatches=$1
 	    ;;
 	*)
 	    echo "Ignored option $1"
@@ -70,7 +81,6 @@ if [ -z "$sample_sheet_file" ] ; then
     # Collect the default sample sheet
     sample_sheet_file=${basecalls_dir}/SampleSheet.csv
 fi
-n_mismatches=0
 force=
 #
 echo Illumina run directory: $illumina_run_dir

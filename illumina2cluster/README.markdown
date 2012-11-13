@@ -29,6 +29,10 @@ on the system.
 Options:
 
     -h, --help        display usage text
+    --nmismatches N   set number of mismatches to allow; recommended values are 0 for
+                      samples without multiplexing, 1 for multiplexed samples with tags
+                      of length 6 or longer (see the CASAVA user guide for details of
+                      the --nmismatches option)
     --use-bases-mask BASES_MASK
                       specify a bases-mask string tell CASAVA how to use each cycle.
 		      The supplied value is passed directly to configureBcltoFastq.pl

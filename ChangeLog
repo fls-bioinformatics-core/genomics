@@ -1,4 +1,10 @@
-2012-11-01  Peter Briggs  <peter.briggs@manchester.ac.uk>
+2012-11-13  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* illumina2cluster/bclToFastq.sh
+	- added --nmismatches options (passes number of allowed mismatches to
+	  the underlying configureBclToFastq.pl script in CASAVA).
+
+42012-11-01  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* utils/symlink_checker.py
 	- new utility for checking and updating (broken) symbolic links.
