@@ -1,3 +1,9 @@
+2012-11-16  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* utils/fastq_edit.py
+	- version 0.0.2: added --stats option to generate simple statistics
+	  about input FASTQ file.
+
 2012-11-13  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* illumina2cluster/bclToFastq.sh
