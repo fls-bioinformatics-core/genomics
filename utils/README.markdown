@@ -95,15 +95,16 @@ fastq_edit.py
 
 Usage: `fastq_edit.py [options] <fastq_file>`
 
-Read in FASTQ file, perform edit operations and write new version to stdout.
-
+Perform various operations on FASTQ file.
 Options:
 
     --version             show program's version number and exit
     -h, --help            show this help message and exit
+    --stats               Generate basic stats for input FASTQ
     --instrument-name=INSTRUMENT_NAME
                           Update the 'instrument name' in the sequence
-                          identifier part of each read record
+                          identifier part of each read record and write updated
+                          FASTQ file to stdout
 
 makeBinsFromBed.pl
 ------------------
