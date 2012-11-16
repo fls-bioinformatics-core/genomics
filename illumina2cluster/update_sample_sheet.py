@@ -133,8 +133,8 @@ if __name__ == "__main__":
     # Fix spaces
     if options.fix_spaces:
         for lane in data:
-            lane['SampleID'] = lane['SampleID'].replace(' ','_')
-            lane['SampleProject'] = lane['SampleProject'].replace(' ','_')
+            lane['SampleID'] = lane['SampleID'].strip(' ').replace(' ','_')
+            lane['SampleProject'] = lane['SampleProject'].strip(' ').replace(' ','_')
     # Fix duplicates
     if options.fix_duplicates:
         # Find duplicates
