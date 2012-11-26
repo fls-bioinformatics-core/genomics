@@ -99,7 +99,7 @@ WORKING_DIR=`pwd`
 qc=$(baserootname $0)
 #
 # Base name for fastq files etc
-fastq_base=`basename ${FASTQ%%.*}`
+fastq_base=`basename ${FASTQ%%.fastq*}`
 #
 #############################################
 # Report program paths and versions
