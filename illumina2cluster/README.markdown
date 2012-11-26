@@ -48,7 +48,7 @@ sequencer.
 
 Usage:
 
-build_illumina_analysis_dir.py OPTIONS illumina_data_dir
+    build_illumina_analysis_dir.py OPTIONS illumina_data_dir
 
 Create per-project analysis directories for Illumina run. 'illumina_data_dir'
 is the top-level directory containing the 'Unaligned' directory with the
@@ -77,6 +77,21 @@ Options:
     --merge-replicates   
                       create merged fastq files for each set of replicates
                       detected
+
+
+rsync_seq_data.sh
+-----------------
+
+Rsync a copy of a sequencing data directory to a local or remoted destination.
+
+Usage:
+
+    rsync_seq_data.sh OPTIONS SEQ_DATA_DIR TARGET_DIR
+
+Makes a copy of sequencing data directory SEQ_DATA_DIR under TARGET_DIR, and writes
+the rsync log both to STDOUT and to a timestamped log file (except for `--dry-run`).
+
+Options are passed directly to the `rsync` command.
 
 
 update_sample_sheet.py
