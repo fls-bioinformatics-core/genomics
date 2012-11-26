@@ -158,7 +158,7 @@ if __name__ == "__main__":
     # Print transposed data in tab-delimited format
     if options.view:
         data.transpose().write(fp=sys.stdout,delimiter='\t')
-    # Check for non-unique id/project combinations and spaces
+    # Check for non-unique id/project combinations, spaces and empty names
     check_status = 0
     id_project_names = []
     for lane in data:
@@ -178,6 +178,11 @@ if __name__ == "__main__":
             check_status = 1
         except ValueError:
             pass
+        # Empty names
+        if not len(lane['SampleID'].strip()) or not len(lane['SampleProject'].strip()):
+            logging.warning("Empty SampleID and/or SampleProject name in lane %s (%s)" %
+                            (lane['Lane'],id_project_name))
+            check_status = 1
     # Write out new sample sheet
     if options.samplesheet_out:
         if check_status and not options.ignore_warnings:
