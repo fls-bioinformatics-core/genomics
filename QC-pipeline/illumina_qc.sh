@@ -145,9 +145,9 @@ run_fastq_screen $FASTQ
 #
 # Run FASTQC
 if [ ! -d qc/${fastq_base}_fastqc ] || [ ! -f qc/${fastq_base}_fastqc.zip ] ; then
-    echo "Running FastQC command: ${FASTQC}"
+    echo "Running FastQC command: ${FASTQC} --nogroup"
     echo ${FASTQC} version $(get_version $FASTQC)
-    ${FASTQC} --outdir qc $FASTQ
+    ${FASTQC} --outdir qc --nogroup $FASTQ
 else
     echo "FastQC output already exists: qc/${fastq_base}_fastqc(.zip)"
 fi
