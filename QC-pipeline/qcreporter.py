@@ -60,17 +60,19 @@ class QCReporter:
     subclassed from QCReporter and need to implement the 'report'
     method to generate the HTML output.
     """
-    def __init__(self,dirn,data_format=None):
+    def __init__(self,dirn,data_format=None,qc_dir='qc'):
         """Create a new QCReporter instance
 
         Arguments:
           dirn: top-level directory for the run
           data_format: (optional) set format of files to acquire
+          qc_dir: (optional) name of qc subdirectory holding QC
+            outputs relative to the top-level (default is 'qc')
         """
         # Basic information
         self.__dirn = os.path.abspath(dirn)
         self.__data_format = data_format
-        self.__qc_dir = os.path.join(self.__dirn,'qc')
+        self.__qc_dir = os.path.join(self.__dirn,qc_dir)
         if not os.path.isdir(self.__qc_dir):
             raise OSError, "QC dir %s not found" % self.qc_dir
         # Run and experiment names
@@ -78,7 +80,9 @@ class QCReporter:
         # run name is the parent directory
         self.__name = self.__dirn.split(os.sep)[-1]
         self.__run = self.__dirn.split(os.sep)[-2]
-        self.__report_name = "qc_report.%s.%s" % (self.__name,self.__run)
+        self.__report_base_name = "%s_report" % os.path.basename(self.qc_dir)
+        self.__report_name = "%s_report.%s.%s" % (os.path.basename(self.qc_dir),
+                                                  self.__name,self.__run)
         # List of samples
         self.__samples = []
         # HTML document
@@ -98,9 +102,15 @@ class QCReporter:
 
     @property
     def report_name(self):
-        """Return the base name for the report
+        """Return the full name for the report
         """
         return self.__report_name
+
+    @property
+    def report_base_name(self):
+        """Return the base name for the report
+        """
+        return self.__report_base_name
 
     @property
     def dirn(self):
@@ -243,7 +253,8 @@ class QCReporter:
         # Create the zip file
         try:
             z = zipfile.ZipFile('%s.zip' % self.report_name,'w')
-            z.write('qc_report.html',os.path.join(zip_top_dir,'qc_report.html'))
+            z.write('qc_report.html',
+                    os.path.join(zip_top_dir,"%s.html" % self.report_base_name))
             for sample in self.samples:
                 for f in sample.zip_includes():
                     # Check if we're adding a file or a whole directory
@@ -350,9 +361,11 @@ class QCSample:
         # Add to the list and resort
         self.__screens.append(screen)
         self.__screens.sort()
+        # Relative path to qc dir
+        qc_dir = os.path.basename(self.qc_dir)
         # Add to the list of files to archive
-        self.__zip_includes.append(os.path.join('qc',screen))
-        self.__zip_includes.append(os.path.join('qc',os.path.splitext(screen)[0]+'.txt'))
+        self.__zip_includes.append(os.path.join(qc_dir,screen))
+        self.__zip_includes.append(os.path.join(qc_dir,os.path.splitext(screen)[0]+'.txt'))
 
     def addBoxplot(self,boxplot):
         """Associate a boxplot with the sample
@@ -363,8 +376,10 @@ class QCSample:
         # Add to the list and resort
         self.__boxplots.append(boxplot)
         self.__boxplots.sort(cmp_boxplots)
+        # Relative path to qc dir
+        qc_dir = os.path.basename(self.qc_dir)
         # Add to the list of files to archive
-        self.__zip_includes.append(os.path.join('qc',boxplot))
+        self.__zip_includes.append(os.path.join(qc_dir,boxplot))
 
     def addProgramInfo(self,programs):
         """Collect program information from 'programs' file
@@ -392,8 +407,10 @@ class QCSample:
         """Associate a FastQC output directory with the sample
         """
         self.__fastqc = fastqc_dir
+        # Relative path to qc dir
+        qc_dir = os.path.basename(self.qc_dir)
         # Add to the list of files to archive
-        self.__zip_includes.append(os.path.join('qc',fastqc_dir))
+        self.__zip_includes.append(os.path.join(qc_dir,fastqc_dir))
 
     def fastqc(self):
         """Return name of FastQC run dir
@@ -409,6 +426,8 @@ class QCSample:
             encoded data; otherwise link to the original image file
         """
         html.add("<h3>Screens</h3>")
+        # Relative path to qc dir
+        qc_dir = os.path.basename(self.qc_dir)
         if self.screens():
             for s in self.screens():
                 # Get name/description
@@ -424,7 +443,7 @@ class QCSample:
                     pngdata = "data:image/png;base64," + \
                         PNGBase64Encoder().encodePNG(os.path.join(self.qc_dir,s))
                 else:
-                    pngdata = os.path.join('qc',s)
+                    pngdata = os.path.join(qc_dir,s)
                 html_content="<a href='qc/%s'><img src='%s' height=250 /></a>" % (s,pngdata)
                 html.add(html_content)
                 # Link to text files
@@ -464,7 +483,7 @@ class QCSample:
                     pngdata = "data:image/png;base64," + \
                         PNGBase64Encoder().encodePNG(os.path.join(self.qc_dir,b))
                 else:
-                    pngdata = os.path.join('qc',b)
+                    pngdata = os.path.join(self.qc_dir,b)
                 html_content=\
                     "<a href='qc/%s''><img src='%s' height=250 /></a>" % (b,pngdata)
                 html.add(html_content)
@@ -478,9 +497,11 @@ class QCSample:
           html: HTMLPageWriter instance to add the generated HTML to
         """
         html.add("<h3>FastQC</h3>")
+        # Relative path to qc dir
+        qc_dir = os.path.basename(self.qc_dir)
         if self.__fastqc:
             # Link to the FastQC report HTML
-            fastqc_report = os.path.join('qc',self.__fastqc,'fastqc_report.html')
+            fastqc_report = os.path.join(qc_dir,self.__fastqc,'fastqc_report.html')
             # Add summary table
             fastqc_summary = os.path.join(self.qc_dir,self.__fastqc,'summary.txt')
             if os.path.exists(fastqc_summary):
@@ -565,12 +586,12 @@ class IlluminaQCReporter(QCReporter):
     results for quick review.
     """
     
-    def __init__(self,dirn,data_format=None):
+    def __init__(self,dirn,data_format=None,qc_dir='qc'):
         # Set input file type if not explicitly specified
         if data_format is None:
             data_format = 'fastqgz'
         # Initialise base class
-        QCReporter.__init__(self,dirn,data_format=data_format)
+        QCReporter.__init__(self,dirn,data_format=data_format,qc_dir=qc_dir)
         # Locate input fastq.gz files
         primary_data = self.getPrimaryDataFiles()
         for data in primary_data:
@@ -651,7 +672,7 @@ class IlluminaQCReporter(QCReporter):
         # Detailed data for each sample
         for sample in self.samples:
             sample.report(self.html)
-        self.html.write(os.path.join(self.dirn,'qc_report.html'))
+        self.html.write(os.path.join(self.dirn,"%s.html" % self.report_base_name))
 
     def zip(self):
         """Make a zip file containing the report and the images
@@ -666,20 +687,23 @@ class IlluminaQCReporter(QCReporter):
         os.chdir(self.dirn)
         # Top-level directory to create in the zip file
         zip_top_dir = self.report_name
+        # Relative path to qc results directory
+        qc_dir = os.path.basename(self.qc_dir)
         # Create the zip file
         try:
             z = zipfile.ZipFile('%s.zip' % (self.report_name),'w')
-            z.write('qc_report.html',os.path.join(zip_top_dir,'qc_report.html'))
+            z.write("%s.html" % self.report_base_name,
+                    os.path.join(zip_top_dir,"%s.html" % self.report_base_name))
             for sample in self.samples:
                 for screen in sample.screens():
                     # Add screen files
-                    z.write(os.path.join('qc',screen),
-                            os.path.join(zip_top_dir,'qc',screen))
-                    z.write(os.path.join('qc',os.path.splitext(screen)[0]+'.txt'),
-                            os.path.join(zip_top_dir,'qc',os.path.splitext(screen)[0]+'.txt'))
+                    z.write(os.path.join(qc_dir,screen),
+                            os.path.join(zip_top_dir,qc_dir,screen))
+                    z.write(os.path.join(qc_dir,os.path.splitext(screen)[0]+'.txt'),
+                            os.path.join(zip_top_dir,qc_dir,os.path.splitext(screen)[0]+'.txt'))
                 if sample.fastqc():
                     # Add all files in fastqc dir
-                    add_dir_to_zip(z,os.path.join('qc',sample.fastqc()),zip_top_dir=zip_top_dir)
+                    add_dir_to_zip(z,os.path.join(qc_dir,sample.fastqc()),zip_top_dir=zip_top_dir)
         except Exception, ex:
             print "Exception creating zip archive: %s" % ex
         os.chdir(cwd)
@@ -737,7 +761,7 @@ class SolidQCReporter(QCReporter):
     results for quick review.
     """
 
-    def __init__(self,dirn,data_format=None):
+    def __init__(self,dirn,data_format=None,qc_dir='qc'):
         """Make a new SolidQCReporter instance
 
         The SolidQCReporter class checks the contents of the supplied
@@ -765,7 +789,7 @@ class SolidQCReporter(QCReporter):
             else:
                 data_format = 'solid_paired_end'
         # Initialise base class
-        QCReporter.__init__(self,dirn,data_format=data_format)
+        QCReporter.__init__(self,dirn,data_format=data_format,qc_dir=qc_dir)
         self.__paired_end = paired_end
         # Get primary data files
         primary_data = self.getPrimaryDataFiles()
@@ -844,7 +868,7 @@ class SolidQCReporter(QCReporter):
         # QC plots etc
         for sample in self.samples:
             sample.report(self.html)
-        self.html.write(os.path.join(self.dirn,'qc_report.html'))
+        self.html.write(os.path.join(self.dirn,"%s.html" % self.report_base_name))
 
 class SolidQCSample(QCSample):
     """Class for holding QC data for a SOLiD sample
@@ -1083,6 +1107,9 @@ if __name__ == "__main__":
                  choices=('solid','solid_paired_end','fastq','fastqgz'),
                  help="explicitly set the format of files ('solid', 'solid_paired_end', "
                  "'fastq', 'fastqgz')")
+    p.add_option("--qc_dir",action="store",dest="qc_dir",default='qc',
+                 help="specify a different name for the QC results subdirectory (default is "
+                 "'qc')")
 
     # Deal with command line
     options,arguments = p.parse_args()
@@ -1114,9 +1141,9 @@ if __name__ == "__main__":
         if platform is None:
             logging.error("Unable to identify platform for %s (use --platform option?)" % d)
         elif platform == 'solid':
-            SolidQCReporter(d,data_format=data_format).zip()
+            SolidQCReporter(d,data_format=data_format,qc_dir=options.qc_dir).zip()
         elif platform == 'illumina':
-            IlluminaQCReporter(d,data_format=data_format).zip()
+            IlluminaQCReporter(d,data_format=data_format,qc_dir=options.qc_dir).zip()
         else:
             logging.error("Unknown platform '%s'" % platform)
             
