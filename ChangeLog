@@ -1,3 +1,8 @@
+2012-11-27  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* QC-pipeline/qcreporter.py
+	- added --qc_dir option to specify a non-default QC directory.
+
 2012-11-26  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* illumina2cluster/rsync_seq_data.sh
@@ -11,6 +16,10 @@
 	- add --nogroup option to FastQC invocation.
 	- remove ".fastq" from output log file names when running with fastq.gz
 	  input files.
+
+	* illumina2cluster/build_illumina_analysis_dirs.py
+	- make relative (rather than absolute) symbolic links to source fastq files
+	  when building analysis directories.
 
 2012-11-16  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
