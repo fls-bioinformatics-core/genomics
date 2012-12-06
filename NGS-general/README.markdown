@@ -3,6 +3,7 @@ NGS-general
 
 General NGS scripts that are used for both ChIP-seq and RNA-seq.
 
+  * `boxplotps2png.sh`: make PNGs of PS plots from `qc_boxplotter.sh`
   * `explain_sam_flag.sh`: decodes bit-wise flag from SAM file
   * `qc_boxplotter.sh`: generate QC boxplot from SOLiD qual file
   * `SamStats`: counts uniquely map reads per chromosome/contig
@@ -11,6 +12,19 @@ General NGS scripts that are used for both ChIP-seq and RNA-seq.
   * `remove_mispairs.py`: remove "singleton" reads from paired end fastq
   * `separate_paired_fastq.pl`: separate F3 and F5 reads from fastq
   * `trim_fastq.pl`: trim down sequences in fastq file from 5' end
+
+
+boxplotps2png.sh
+----------------
+Utility to generate PNGs from PS boxplots produced from `qc_boxplotter.sh`.
+
+Usage:
+
+    boxplotps2png.sh BOXPLOT1.ps [ BOXPLOT2.ps ... ]
+
+Outputs:
+
+PNG versions of the input postscript files as BOXPLOT1.png, BOXPLOT2.png etc.
 
 
 explain_sam_flag.sh
