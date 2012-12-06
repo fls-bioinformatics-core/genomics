@@ -772,6 +772,8 @@ class SolidQCReporter(QCReporter):
         Arguments:
           dirn: top-level directory holding the QC run outputs
         """
+        # SOLiD-specific attributes
+        self.__stats = None
         # Preprocess: locate stats file and determine if we have paired end data
         paired_end = False
         stats_file = os.path.join(os.path.abspath(dirn),"SOLiD_preprocess_filter.stats")
@@ -801,13 +803,14 @@ class SolidQCReporter(QCReporter):
             self.addSample(SolidQCSample(sample,self.qc_dir,self.__paired_end))
             print "Sample: '%s'" % sample
         # Filtering stats
-        if os.path.exists(stats_file):
+        if stats_file and os.path.exists(stats_file):
             self.__stats = TabFile.TabFile(stats_file,first_line_is_header=True)
             # Fix sample names for paired-end data
             if self.__paired_end:
                 for line in self.__stats: line['File'] = line['File'].replace('_paired','')
         else:
             logging.error("Can't find stats file %s" % stats_file)
+            self.__stats = TabFile.TabFile()
         # Check on boxplots and screens
         for sample in self.samples:
             if self.__paired_end:
@@ -846,6 +849,14 @@ class SolidQCReporter(QCReporter):
                 stats = {}
                 for i in ('Reads',2,3,4,5,6,7):
                     stats[i] = 'n/a'
+                # Try to get read count from csfasta file
+                csfasta = "%s.csfasta" % sample.name
+                print "Attempting to getting read count from %s" % csfasta
+                nreads = count_reads(csfasta)
+                if nreads is not None:
+                    stats['Reads'] = nreads
+                else:
+                    stats['Reads'] = "?"
             self.html.add("<tr>")
             self.html.add("<td><a href='#%s'>%s</a></td>" % (sample.name,sample.name))
             self.html.add("<td>%s</td>" % stats['Reads'])
@@ -1086,6 +1097,19 @@ def split_sample_name(name):
         leading = name
         trailing = None
     return (leading,trailing)
+
+def count_reads(csfasta_file):
+    """Count the number of reads in a CSFASTA file
+    
+    Returns number of reads, or None
+    """
+    if os.path.exists(csfasta_file):
+        nlines = 0
+        with open(csfasta_file) as fp:
+            for line in fp:
+                if not line.startswith('#'): nlines += 1
+        return nlines/2
+    return None
 
 #######################################################################
 # Main program
