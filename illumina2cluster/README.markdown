@@ -61,6 +61,8 @@ Options:
     -h, --help        show this help message and exit
     -l, --list        list projects and samples without creating the analysis
                       directories but don't actually do them
+    --report          report sample names and number of samples for each
+                      project
     --dry-run         report operations that would be performed if creating the
                       analysis directories but don't actually do them
     --unaligned=UNALIGNED_DIR

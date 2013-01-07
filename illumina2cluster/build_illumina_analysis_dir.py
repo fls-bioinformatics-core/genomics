@@ -353,7 +353,10 @@ if __name__ == "__main__":
                               "%prog makes a new subdirectory and populates with links to "
                               "the fastq.gz files for each sample under that project.")
     p.add_option("-l","--list",action="store_true",dest="list",
-                 help="list projects and samples without creating the analysis directories")
+                 help="list projects, samples and fastqs without creating the analysis "
+                 "directories")
+    p.add_option("--report",action="store_true",dest="report",
+                 help="report sample names and number of samples for each project")
     p.add_option("--dry-run",action="store_true",dest="dry_run",
                  help="report operations that would be performed if creating the "
                  "analysis directories but don't actually do them")
@@ -392,6 +395,17 @@ if __name__ == "__main__":
                     print "\t%s (%d fastqs)" % (sample.name,len(sample.fastq))
                 for fastq in sample.fastq:
                     print "\t\t%s" % fastq
+        sys.exit()
+
+    # Report option
+    if options.report:
+        for project in illumina_data.projects:
+            project_name = project.name
+            n_samples = len(project.samples)
+            sample_names = ', '.join([str(s.name) for s in project.samples])
+            print "Project %s: %s (%d samples)" % (project_name,
+                                                sample_names,
+                                                n_samples)
         sys.exit()
 
     # Assign experiment types
