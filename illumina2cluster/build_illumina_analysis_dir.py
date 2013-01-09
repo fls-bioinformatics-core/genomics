@@ -29,227 +29,13 @@ import optparse
 import logging
 import gzip
 
-class IlluminaData:
-    """Class for examining Illumina data post bcl-to-fastq conversion
-
-    Provides the following attributes:
-
-    analysis_dir:  top-level directory holding the 'Unaligned' subdirectory
-                   with the primary fastq.gz files
-    projects:      list of IlluminaProject objects (one for each project
-                   defined at the fastq creation stage, expected to be in
-                   subdirectories "Project_...")
-    unaligned_dir: full path to the 'Unaligned' directory holding the
-                   primary fastq.gz files
-
-    Provides the following methods:
-
-    get_project(): lookup and return an IlluminaProject object corresponding
-                   to the supplied project name
-
-    """
-
-    def __init__(self,illumina_analysis_dir,unaligned_dir="Unaligned"):
-        """Create and populate a new IlluminaData object
-
-        Arguments:
-          illumina_analysis_dir: path to the analysis directory holding
-            the fastq files (expected to be in a subdirectory called
-            'Unaligned').
-          unaligned_dir: (optional) alternative name for the subdirectory
-            under illumina_analysis_dir holding the fastq files
-
-        """
-        self.analysis_dir = os.path.abspath(illumina_analysis_dir)
-        self.projects = []
-        # Look for "unaligned" data directory
-        self.unaligned_dir = os.path.join(illumina_analysis_dir,unaligned_dir)
-        if not os.path.exists(self.unaligned_dir):
-            raise IlluminaDataError, "Missing data directory %s" % self.unaligned_dir
-        # Look for projects
-        for f in os.listdir(self.unaligned_dir):
-            dirn = os.path.join(self.unaligned_dir,f)
-            if f.startswith("Project_") and os.path.isdir(dirn):
-                logging.debug("Project dirn: %s" % f)
-                self.projects.append(IlluminaProject(dirn))
-        # Raise an exception if no projects found
-        if not self.projects:
-            raise IlluminaDataError, "No projects found"
-        # Sort projects on name
-        self.projects.sort(lambda a,b: cmp(a.name,b.name))
-
-    def get_project(self,name):
-        """Return project that matches 'name'
-
-        Arguments:
-          name: name of a project
-
-        Returns:
-          IlluminaProject object with the matching name; raises
-          'IlluminaDataError' exception if no match is found.
-
-        """
-        for project in self.projects:
-            if project.name == name: return project
-        raise IlluminaDataError, "No matching project for '%s'" % name
-
-class IlluminaProject:
-    """Class for storing information on a 'project' within an Illumina run
-
-    A project is a subset of fastq files from a run of the Illumina GA2
-    sequencer; in the first instance projects are defined within the
-    SampleSheet.csv file which is output by the sequencer.
-
-    Provides the following attributes:
-
-    name:      name of the project
-    dirn:      (full) path of the directory for the project
-    expt_type: the application type for the project e.g. RNA-seq, ChIP-seq
-               Initially set to None; should be explicitly set by the
-               calling subprogram
-    samples:   list of IlluminaSample objects for each sample within the
-               project
-
-    """
-
-    def __init__(self,dirn):
-        """Create and populate a new IlluminaProject object
-
-        Arguments:
-          dirn: path to the directory holding the samples within the
-                project (expected to be in subdirectories "Sample_...")
-        """
-        self.dirn = dirn
-        self.expt_type = None
-        self.samples = []
-        # Get name by removing prefix
-        self.project_prefix = "Project_"
-        if not os.path.basename(self.dirn).startswith(self.project_prefix):
-            raise IlluminaDataError, "Bad project name '%s'" % self.dirn
-        self.name = os.path.basename(self.dirn)[len(self.project_prefix):]
-        logging.debug("Project name: %s" % self.name)
-        # Look for samples
-        self.sample_prefix = "Sample_"
-        for f in os.listdir(self.dirn):
-            sample_dirn = os.path.join(self.dirn,f)
-            if f.startswith(self.sample_prefix) and os.path.isdir(sample_dirn):
-                self.samples.append(IlluminaSample(sample_dirn))
-        # Raise an exception if no samples found
-        if not self.samples:
-            raise IlluminaDataError, "No samples found for project %s" % \
-                project.name
-        # Sort samples on name
-        self.samples.sort(lambda a,b: cmp(a.name,b.name))
-
-class IlluminaSample:
-    """Class for storing information on a 'sample' within an Illumina project
-
-    A sample is a fastq file generated within an Illumina GA2 sequencer run.
-
-    Provides the following attributes:
-
-    name:  sample name
-    dirn:  (full) path of the directory for the sample
-    fastq: name of the fastq.gz file (without leading directory, join to
-           'dirn' to get full path)
-
-    """
-
-    def __init__(self,dirn):
-        """Create and populate a new IlluminaSample object
-
-        Arguments:
-          dirn: path to the directory holding the fastq.gz file for the
-                sample
-
-        """
-        self.dirn = dirn
-        self.fastq = []
-        # Get name by removing prefix
-        self.sample_prefix = "Sample_"
-        self.name = os.path.basename(dirn)[len(self.sample_prefix):]
-        logging.debug("\tSample: %s" % self.name)
-        # Look for fastq files
-        for f in os.listdir(self.dirn):
-            if f.endswith(".fastq.gz"):
-                self.fastq.append(f)
-                logging.debug("\tFastq : %s" % f)
-        if not self.fastq:
-            raise IlluminaDataError, "Unable to find fastq.gz files for %s" % \
-                self.name
-
-class IlluminaFastq:
-    """Class for extracting information about Fastq files
-
-    Given the name of a Fastq file from CASAVA/Illumina platform, extract
-    data about the sample name, barcode sequence, lane number, read number
-    and set number.
-
-    The format of the names follow the general form:
-
-    <sample_name>_<barcode_sequence>_L<lane_number>_R<read_number>_<set_number>.fastq.gz
-
-    e.g. for
-
-    NA10831_ATCACG_L002_R1_001.fastq.gz
-
-    sample_name = 'NA10831_ATCACG_L002_R1_001'
-    barcode_sequence = 'ATCACG'
-    lane_number = 2
-    read_number = 1
-    set_number = 1
-
-    Provides the follow attributes:
-
-    fastq:            the original fastq file name
-    sample_name:      name of the sample (leading part of the name)
-    barcode_sequence: barcode sequence (string or None)
-    lane_number:      integer
-    read_number:      integer
-    set_number:       integer
-
-    """
-    def __init__(self,fastq):
-        """Create and populate a new IlluminaFastq object
-
-        Arguments:
-          fastq: name of the fastq.gz (optionally can include leading path)
-
-        """
-        # Store name
-        self.fastq = fastq
-        # Values derived from the name
-        self.sample_name = None
-        barcode_sequence = None
-        lane_number = None
-        read_number = None
-        set_number = None
-        # Base name for sample (no leading path or extension)
-        fastq_base = os.path.basename(fastq)
-        try:
-            i = fastq_base.index('.')
-            fastq_base = fastq_base[:i]
-        except ValueError:
-            pass
-        # Identify which part of the name is which
-        fields = fastq_base.split('_')
-        nfields = len(fields)
-        # Set number: zero-padded 3 digit integer '001'
-        self.set_number = int(fields[-1])
-        # Read number: single integer digit 'R1'
-        self.read_number = int(fields[-2][1])
-        # Lane number: zero-padded 3 digit integer 'L001'
-        self.lane_number = int(fields[-3][1:])
-        # Barcode sequence: string (or None if 'NoIndex')
-        self.barcode_sequence = fields[-4]
-        if self.barcode_sequence == 'NoIndex':
-            self.barcode_sequence = None
-        # Sample name: whatever's left over
-        self.sample_name = '_'.join(fields[:-4])
-
-class IlluminaDataError(Exception):
-    """Base class for errors with Illumina-related code"""
-
+# Put ../share onto Python search path for modules
+SHARE_DIR = os.path.abspath(
+    os.path.normpath(
+        os.path.join(os.path.dirname(sys.argv[0]),'..','share')))
+sys.path.append(SHARE_DIR)
+import IlluminaData
+import bcf_utils
 
 #######################################################################
 # Functions
@@ -300,45 +86,6 @@ def concatenate_fastq_files(merged_fastq,fastq_files):
     fq_merged.close()
     os.rename(merged_fastq_part,merged_fastq)
 
-def mklink(target,link_name,relative=False):
-    """Make a symbolic link
-
-    Arguments:
-      target: the file or directory to link to
-      link_name: name of the link
-      relative: if True then make a relative link (if possible);
-        otherwise link to the target as given (default)"""
-    logging.debug("Linking to %s from %s" % (target,link_name))
-    target_path = target
-    if relative:
-        # Try to construct relative link to target
-        target_abs_path = os.path.abspath(target)
-        link_abs_path = os.path.abspath(link_name)
-        common_prefix = commonprefix(target_abs_path,link_abs_path)
-        if common_prefix:
-            # Use relpath to generate the relative path from the link
-            # to the target
-            target_path = os.path.relpath(target_abs_path,os.path.dirname(link_abs_path))
-    os.symlink(target_path,link_name)
-
-def commonprefix(path1,path2):
-    """Determine common prefix path for path1 and path2
-
-    Can't use os.path.commonprefix as it checks characters not
-    path components, so essentially it doesn't work as required.
-    """
-    path1_components = str(path1).split(os.sep)
-    path2_components = str(path2).split(os.sep)
-    common_components = []
-    ncomponents = min(len(path1_components),len(path2_components))
-    for i in range(ncomponents):
-        if path1_components[i] == path2_components[i]:
-            common_components.append(path1_components[i])
-        else:
-            break
-    commonprefix = "%s" % os.sep.join(common_components)
-    return commonprefix
-
 #######################################################################
 # Main program
 #######################################################################
@@ -382,7 +129,8 @@ if __name__ == "__main__":
     illumina_analysis_dir = os.path.abspath(args[0])
 
     # Populate Illumina data object
-    illumina_data = IlluminaData(illumina_analysis_dir,unaligned_dir=options.unaligned_dir)
+    illumina_data = IlluminaData.IlluminaData(illumina_analysis_dir,
+                                              unaligned_dir=options.unaligned_dir)
 
     # List option
     if options.list:
@@ -426,8 +174,7 @@ if __name__ == "__main__":
         else:
             print "Making analysis directory for %s" % project.name
             if not options.dry_run:
-                os.mkdir(project_dir)     
-                os.chmod(project_dir,0775)
+                bcf_utils.mkdir(project_dir,mode=0775)
         # Check for & create links to fastq files
         if not options.merge_replicates:
             for sample in project.samples:
@@ -441,7 +188,8 @@ if __name__ == "__main__":
                         print "-> %s.fastq.gz already exists" % sample.name
                     else:
                         print "Linking to %s" % fastq
-                        if not options.dry_run: mklink(fastq_file,fastq_ln,relative=True)
+                        if not options.dry_run:
+                            bcf_utils.mklink(fastq_file,fastq_ln,relative=True)
         else:
             # Merge files for replicates within each sample
             for sample in project.samples:
@@ -474,7 +222,6 @@ if __name__ == "__main__":
         else:
             print "Making 'ScriptCode' directory for %s" % project.name
             if not options.dry_run:
-                os.mkdir(scriptcode_dir)     
-                os.chmod(scriptcode_dir,0775)
+                bcf_utils.mkdir(scriptcode_dir,mode=0775)
         
 
