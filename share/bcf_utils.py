@@ -150,8 +150,8 @@ def extract_prefix(name):
     """
     return str(name).rstrip(string.digits)
 
-def extract_index(name):
-    """Return the library or sample name index
+def extract_index_as_string(name):
+    """Return the library or sample name index as a string
 
     Arguments:
       name: the name of a sample or library
@@ -171,6 +171,72 @@ def extract_index(name):
             break
     index.reverse()
     return ''.join(index)
+
+def extract_index(name):
+    """Return the library or sample name index as an integer
+
+    Arguments:
+      name: the name of a sample or library
+
+    Returns:
+      The index as an integer, or None if the index cannot be converted to
+      integer format.
+    """
+    if extract_index_as_string(name) == '':
+        return None
+    else:
+        return int(extract_index_as_string(name).lstrip('0'))
+
+def pretty_print_names(name_list):
+    """Given a list of library or sample names, format for pretty printing.
+
+    Arguments:
+      name_list: a list or tuple of library or sample names
+
+    Returns:
+      String with a condensed description of the library
+      names, for example:
+
+      ['DR1', 'DR2', 'DR3', DR4'] -> 'DR1-4'
+    """
+    # Create a list of string-type names sorted into prefix and index order
+    names = [str(x) for x in sorted(name_list,
+                                    key=lambda n: (extract_prefix(n),extract_index(n)))]
+    # Go through and group
+    groups = []
+    group = []
+    last_index = None
+    for name in names:
+        # Check if this is next in sequence
+        try:
+            if extract_index(name) == last_index+1:
+                # Next in sequence
+                group.append(name)
+                last_index = extract_index(name)
+                continue
+        except TypeError:
+            # One or both of the indexes was None
+            pass
+        # Current name is not next in previous sequence
+        # Tidy up and start new group
+        if group:
+            groups.append(group)
+        group = [name]
+        last_index = extract_index(name)
+    # Capture last group
+    if group:
+        groups.append(group)
+    # Pretty print
+    out = []
+    for group in groups:
+        if len(group) == 1:
+            # "group" of one
+            out.append(group[0])
+        else:
+            # Group with at least two members
+            out.append(group[0]+"-"+extract_index_as_string(group[-1]))
+    # Concatenate and return
+    return ', '.join(out)
 
 #######################################################################
 # Tests
@@ -201,9 +267,28 @@ class TestNameFunctions(unittest.TestCase):
     def test_extract_prefix(self):
         self.assertEqual('LD_C',extract_prefix('LD_C1'))
 
+    def test_extract_index_as_string(self):
+        self.assertEqual('1',extract_index_as_string('LD_C1'))
+        self.assertEqual('07',extract_index_as_string('DR07'))
+        self.assertEqual('',extract_index_as_string('DROHSEVEN'))
+
     def test_extract_index(self):
-        self.assertEqual('1',extract_index('LD_C1'))
-        self.assertEqual('07',extract_index('DR07'))
+        self.assertEqual(1,extract_index('LD_C1'))
+        self.assertEqual(7,extract_index('DR07'))
+        self.assertEqual(None,extract_index('DROHSEVEN'))
+
+    def test_pretty_print_names(self):
+        self.assertEqual('JC_SEQ26-29',pretty_print_names(('JC_SEQ26',
+                                                           'JC_SEQ27',
+                                                           'JC_SEQ28',
+                                                           'JC_SEQ29')))
+        self.assertEqual('JC_SEQ26',pretty_print_names(('JC_SEQ26',)))
+        self.assertEqual('JC_SEQ26, JC_SEQ28-29',pretty_print_names(('JC_SEQ26',
+                                                           'JC_SEQ28',
+                                                           'JC_SEQ29')))
+        self.assertEqual('JC_SEQ26, JC_SEQ28, JC_SEQ30',pretty_print_names(('JC_SEQ26',
+                                                           'JC_SEQ28',
+                                                           'JC_SEQ30')))
 
 #######################################################################
 # Main program

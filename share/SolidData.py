@@ -1,5 +1,5 @@
 #     SolidData.py: module for handling data about SOLiD sequencer runs
-#     Copyright (C) University of Manchester 2011 Peter Briggs
+#     Copyright (C) University of Manchester 2011-3 Peter Briggs
 #
 ########################################################################
 #
@@ -563,11 +563,8 @@ class SolidLibrary:
         # Name-based information
         self.initials = bcf_utils.extract_initials(self.name)
         self.prefix = bcf_utils.extract_prefix(self.name)
-        self.index_as_string = bcf_utils.extract_index(self.name)
-        if self.index_as_string == '':
-            self.index = None
-        else:
-            self.index = int(self.index_as_string.lstrip('0'))
+        self.index_as_string = bcf_utils.extract_index_as_string(self.name)
+        self.index = bcf_utils.extract_index(self.name)
         # Barcoding
         self.is_barcoded = False
         # Associated canonical data files
@@ -800,7 +797,7 @@ class SolidProject:
 
         Wraps a call to 'pretty_print_libraries' function.
         """
-        return pretty_print_libraries(self.libraries)
+        return bcf_utils.pretty_print_names(self.libraries)
 
     def getTimeStamps(self):
         """
@@ -1261,56 +1258,6 @@ def slide_layout(nsamples):
     else:
         logging.warning("Undefined layout for '%s' samples" % nsamples)
         return None
-
-def pretty_print_libraries(libraries):
-    """Given a list of libraries, format for pretty printing.
-
-    Arguments:
-      libraries: a list of SolidLibrary objects
-
-    Returns:
-      String with a condensed description of the library
-      names, for example:
-
-      ['DR1', 'DR2', 'DR3', DR4'] -> 'DR1-4'
-    """
-    # Split each library name into prefix and numeric suffix
-    libs = sorted(libraries, key=lambda l: (l.prefix,l.index))
-    # Go through and group
-    groups = []
-    group = []
-    last_index = None
-    for lib in libs:
-        # Check if this is next in sequence
-        try:
-            if lib.index == last_index+1:
-                # Next in sequence
-                group.append(lib)
-                last_index = lib.index
-                continue
-        except TypeError:
-            # One or both of the indexes was None
-            pass
-        # Current lib is not next in previous sequence
-        # Tidy up and start new group
-        if group:
-            groups.append(group)
-        group = [lib]
-        last_index = lib.index
-    # Capture last group
-    if group:
-        groups.append(group)
-    # Pretty print
-    out = []
-    for group in groups:
-        if len(group) == 1:
-            # "group" of one
-            out.append(group[0].name)
-        else:
-            # Group with at least two members
-            out.append(group[0].name+"-"+group[-1].index_as_string)
-    # Concatenate and return
-    return ', '.join(out)
 
 #######################################################################
 # Tests
@@ -2317,36 +2264,6 @@ class TestFunctions(unittest.TestCase):
         # Example of "bad" numbers of sample
         self.assertEqual(None,slide_layout(7))
         self.assertEqual(None,slide_layout("porkchops"))
-
-    def test_pretty_print_libraries(self):
-        """Test pretty printing of multiple library names
-        """
-        # Simple test
-        libraries = []
-        libraries.append(SolidLibrary('PB1'))
-        libraries.append(SolidLibrary('PB2'))
-        libraries.append(SolidLibrary('PB3'))
-        libraries.append(SolidLibrary('PB4'))
-        self.assertEqual("PB1-4",pretty_print_libraries(libraries))
-        # Sequence with gaps
-        libraries.append(SolidLibrary('PB7'))
-        libraries.append(SolidLibrary('PB8'))
-        self.assertEqual("PB1-4, PB7-8",pretty_print_libraries(libraries))
-        # Sequence with leading zeroes
-        libraries = []
-        libraries.append(SolidLibrary('PB_01'))
-        libraries.append(SolidLibrary('PB_02'))
-        libraries.append(SolidLibrary('PB_03'))
-        libraries.append(SolidLibrary('PB_04'))
-        self.assertEqual("PB_01-04",pretty_print_libraries(libraries))
-        # Not a sequence
-        libraries = []
-        libraries.append(SolidLibrary('PB_1ng'))
-        libraries.append(SolidLibrary('PB_10ng'))
-        libraries.append(SolidLibrary('PB_INPUT_1ng'))
-        libraries.append(SolidLibrary('PB_INPUT_10ng'))
-        self.assertEqual("PB_10ng, PB_1ng, PB_INPUT_10ng, PB_INPUT_1ng",
-                         pretty_print_libraries(libraries))
 
 #######################################################################
 # Main program
