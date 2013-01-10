@@ -72,10 +72,11 @@ Options:
     --only               only operate on the specified solid_run_dir, don't
                          locate associated run directories
     --report             print a report of the SOLiD run
+    --report-paths       in report mode, also print full paths to primary data
+                         files
     --xls                write report to Excel spreadsheet
     --verify             do verification checks on SOLiD run directories
     --layout             generate script for laying out analysis directories
-    --md5sum             calculate md5sums for primary data files
     --rsync              generate script for rsyncing data
     --copy=COPY_PATTERN  copy primary data files to pwd from specific library
                          where names match COPY_PATTERN, which should be of the
@@ -86,8 +87,10 @@ Options:
     --md5=MD5_PATTERN    calculate md5sums for primary data files from specific
                          libraries where names match MD5_PATTERN, which should
                          be of the form '<sample>/<library>'
-    --quiet              suppress warnings
-    --debug              turn on debugging output (nb overrides --quiet)
+    --md5sum             calculate md5sums for all primary data files
+                         (equivalent to --md5=*/*)
+    --no-warnings        suppress warning messages
+    --debug              turn on debugging output (nb overrides --no-warnings)
 
 
 build_analysis_dir.py
