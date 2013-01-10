@@ -19,6 +19,7 @@ Utility classes and functions shared between BCF codes.
 
 import os
 import logging
+import string
 
 #######################################################################
 # Class definitions
@@ -113,3 +114,103 @@ def commonprefix(path1,path2):
             break
     commonprefix = "%s" % os.sep.join(common_components)
     return commonprefix
+
+# Sample/library name utilities
+
+def extract_initials(name):
+    """Return leading initials from the library or sample name
+
+    Conventionaly the experimenter's initials are the leading characters
+    of the name e.g. 'DR' for 'DR1', 'EP' for 'EP_NCYC2669', 'CW' for
+    'CW_TI' etc
+
+    Arguments:
+      name: the name of a sample or library
+
+    Returns:
+      The leading initials from the name.
+    """
+    initials = []
+    for c in str(name):
+        if c.isalpha():
+            initials.append(c)
+        else:
+            break
+    return ''.join(initials)
+        
+def extract_prefix(name):
+    """Return the library or sample name prefix
+
+    Arguments:
+      name: the name of a sample or library
+
+    Returns:
+      The prefix consisting of the name with trailing numbers
+      removed, e.g. 'LD_C' for 'LD_C1'
+    """
+    return str(name).rstrip(string.digits)
+
+def extract_index(name):
+    """Return the library or sample name index
+
+    Arguments:
+      name: the name of a sample or library
+
+    Returns:
+      The index, consisting of the trailing numbers from the name. It is
+      returned as a string to preserve leading zeroes, e.g. '1' for
+      'LD_C1', '07' for 'DR07' etc
+    """
+    index = []
+    chars = [c for c in str(name)]
+    chars.reverse()
+    for c in chars:
+        if c.isdigit():
+            index.append(c)
+        else:
+            break
+    index.reverse()
+    return ''.join(index)
+
+#######################################################################
+# Tests
+#######################################################################
+import unittest
+
+class TestFileSystemFunctions(unittest.TestCase):
+    """Unit tests for file system wrapper and utility functions
+
+    """
+
+    def test_commonprefix(self):
+        self.assertEqual('/mnt/stuff',commonprefix('/mnt/stuff/dir1',
+                                                   '/mnt/stuff/dir2'))
+        self.assertEqual('',commonprefix('/mnt1/stuff/dir1',
+                                         '/mnt2/stuff/dir2'))
+
+class TestNameFunctions(unittest.TestCase):
+    """Unit tests for name handling utility functions
+
+    """
+
+    def test_extract_initials(self):
+        self.assertEqual('DR',extract_initials('DR1'))
+        self.assertEqual('EP',extract_initials('EP_NCYC2669'))
+        self.assertEqual('CW',extract_initials('CW_TI'))
+
+    def test_extract_prefix(self):
+        self.assertEqual('LD_C',extract_prefix('LD_C1'))
+
+    def test_extract_index(self):
+        self.assertEqual('1',extract_index('LD_C1'))
+        self.assertEqual('07',extract_index('DR07'))
+
+#######################################################################
+# Main program
+#######################################################################
+
+if __name__ == "__main__":
+    # Turn off most logging output for tests
+    logging.getLogger().setLevel(logging.CRITICAL)
+    # Run tests
+    unittest.main()

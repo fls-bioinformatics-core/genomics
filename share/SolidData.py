@@ -57,6 +57,7 @@ object holds data for a paired-end run.)
 import sys,os
 import string
 import logging
+import bcf_utils
 
 #######################################################################
 # Class definitions
@@ -560,9 +561,9 @@ class SolidLibrary:
         # Name
         self.name = str(name)
         # Name-based information
-        self.initials = extract_initials(self.name)
-        self.prefix = extract_prefix(self.name)
-        self.index_as_string = extract_index(self.name)
+        self.initials = bcf_utils.extract_initials(self.name)
+        self.prefix = bcf_utils.extract_prefix(self.name)
+        self.index_as_string = bcf_utils.extract_index(self.name)
         if self.index_as_string == '':
             self.index = None
         else:
@@ -800,6 +801,16 @@ class SolidProject:
         Wraps a call to 'pretty_print_libraries' function.
         """
         return pretty_print_libraries(self.libraries)
+
+    def getTimeStamps(self):
+        """
+        """
+        timestamps = []
+        for library in self.libraries:
+            for primary_data in library.primary_data:
+                if primary_data.timestamp not in timestamps:
+                    timestamps.append(primary_data.timestamp)
+        return timestamps
 
 class SolidRunInfo:
     """Extract data about a run from the run name
@@ -1200,61 +1211,6 @@ def extract_library_timestamp(path):
             return timestamp
     # Got to the end without locating the timestamp, return None
     return None
-
-def extract_initials(library):
-    """Return leading initials from the library name
-
-    The experimenter's initials are the leading characters of the
-    library name e.g. 'DR' for 'DR1', 'EP' for 'EP_NCYC2669', 'CW' for
-    'CW_TI' etc
-
-    Arguments:
-      library: a SolidLibrary object
-
-    Returns:
-      The leading initials from the library name.
-    """
-    initials = []
-    for c in str(library):
-        if c.isalpha():
-            initials.append(c)
-        else:
-            break
-    return ''.join(initials)
-        
-def extract_prefix(library):
-    """Return the library name prefix
-
-    Arguments:
-      library: a SolidLibrary object
-
-    Returns:
-      The prefix of the library name, consisting of the name with
-      trailing numbers removed, e.g. 'LD_C' for 'LD_C1'
-    """
-    return str(library).rstrip(string.digits)
-
-def extract_index(library):
-    """Return the library name index
-
-    Arguments:
-      library: a SolidLibrary object
-
-    Returns:
-      The index from the library name, consisting of the trailing
-      numbers from the name. It is returned as a string to preserve
-      leading zeroes, e.g. '1' for 'LD_C1', '07' for 'DR07' etc
-    """
-    index = []
-    chars = [c for c in str(library)]
-    chars.reverse()
-    for c in chars:
-        if c.isdigit():
-            index.append(c)
-        else:
-            break
-    index.reverse()
-    return ''.join(index)
 
 def match(pattern,word):
     """Check if a word matches pattern
@@ -2351,18 +2307,6 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(extract_library_timestamp("/path/to/data/solid0123_20120712_FRAG_BC/AB_CD_EF_POOL/results.F1B1/libraries/AB2/primary.20120705075541493/"),'20120705075541493')
         self.assertEqual(extract_library_timestamp("/path/to/data/solid0123_20120712_FRAG_BC/AB_CD_EF_POOL/results.F1B1/libraries/AB2/primary.20120705075541493/reads"),'20120705075541493')
         self.assertEqual(extract_library_timestamp("/path/to/data/solid0123_20120712_FRAG_BC/AB_CD_EF_POOL/results.F1B1/libraries/AB2"),None)
-
-    def test_extract_initials(self):
-        self.assertEqual('DR',extract_initials('DR1'))
-        self.assertEqual('EP',extract_initials('EP_NCYC2669'))
-        self.assertEqual('CW',extract_initials('CW_TI'))
-
-    def test_extract_prefix(self):
-        self.assertEqual('LD_C',extract_prefix('LD_C1'))
-
-    def test_extract_index(self):
-        self.assertEqual('1',extract_index('LD_C1'))
-        self.assertEqual('07',extract_index('DR07'))
 
     def test_slide_layout(self):
         """Check descriptions for slide layout based on number of samples
