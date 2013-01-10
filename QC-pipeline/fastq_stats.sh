@@ -109,7 +109,7 @@ else
 	    # Sort into order
 	    # Explicitly specify collation type (code point) so that comment
 	    # lines sort above other lines
-	    LC_COLLATE_LC=C sort -o ${stats_file} ${stats_file}
+	    LC_COLLATE=C sort -o ${stats_file} ${stats_file}
 	    # Release lock
 	    unlock_file ${stats_file}
 	else
