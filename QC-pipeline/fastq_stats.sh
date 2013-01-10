@@ -107,7 +107,9 @@ else
 	    # Write stats line
 	    echo $line | sed 's/ /\t/g' >> ${stats_file}
 	    # Sort into order
-	    sort -o ${stats_file} ${stats_file}
+	    # Explicitly specify collation type (code point) so that comment
+	    # lines sort above other lines
+	    LC_COLLATE_LC=C sort -o ${stats_file} ${stats_file}
 	    # Release lock
 	    unlock_file ${stats_file}
 	else
