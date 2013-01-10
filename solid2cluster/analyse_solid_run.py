@@ -46,7 +46,7 @@ import Experiment
 # Module Functions: program functions
 #######################################################################
 
-def report_run(solid_runs):
+def report_run(solid_runs,report_paths=False):
     """Print a brief report about SOLiD runs.
 
     This generates a brief screen report about the content of the
@@ -55,6 +55,8 @@ def report_run(solid_runs):
 
     Arguments:
       solid_runs: a list or tuple of SolidRun objects to report.
+      report_paths: if True then also report the full paths for the
+        primary data files for each library.
     """
     # Report the data for each run
     first_run = True
@@ -81,6 +83,7 @@ def report_run(solid_runs):
             title = title + '\n' + "="*len(title)
             print title
             for project in sample.projects:
+                # Libraries in project
                 libraries = project.prettyPrintLibraries()
                 title = "Project %s: %s (%d libraries)" % (project.name,
                                                            libraries,
@@ -88,16 +91,21 @@ def report_run(solid_runs):
                 title = '\n' + title + '\n' + "-"*len(title)
                 print title
                 print "Pattern: %s/%s" % (sample,project.getLibraryNamePattern())
+                # Timestamps for primary data
+                print "Timestamps:"
+                for timestamp in project.getTimeStamps():
+                    print "\t%s" % timestamp
                 # Report location of primary data
                 for library in project.libraries:
-                    files = [library.csfasta,library.qual]
-                    if run.is_paired_end:
-                        files.extend((library.csfasta_f5,library.qual_f5))
-                    for f in files:
-                        if f is not None:
-                            print "%s" % f
-                        else:
-                            print "Missing primary data for %s" % library.name
+                    if report_paths:
+                        files = [library.csfasta,library.qual]
+                        if run.is_paired_end:
+                            files.extend((library.csfasta_f5,library.qual_f5))
+                        for f in files:
+                            if f is not None:
+                                print "%s" % f
+                            else:
+                                print "Missing primary data for %s" % library.name
 
 def write_spreadsheet(solid_runs,spreadsheet):
     """Generate or append run data to an XLS-format spreadsheet
@@ -528,14 +536,14 @@ if __name__ == "__main__":
                  "locate associated run directories")
     p.add_option("--report",action="store_true",dest="report",
                  help="print a report of the SOLiD run")
+    p.add_option("--report-paths",action="store_true",dest="report_paths",default=False,
+                 help="in report mode, also print full paths to primary data files")
     p.add_option("--xls",action="store_true",dest="xls",
                  help="write report to Excel spreadsheet")
     p.add_option("--verify",action="store_true",dest="verify",
                  help="do verification checks on SOLiD run directories")
     p.add_option("--layout",action="store_true",dest="layout",
                  help="generate script for laying out analysis directories")
-    p.add_option("--md5sum",action="store_true",dest="md5sum",
-                 help="calculate md5sums for primary data files")
     p.add_option("--rsync",action="store_true",dest="rsync",
                  help="generate script for rsyncing data")
     p.add_option("--copy",action="append",dest="copy_pattern",default=[],
@@ -550,10 +558,13 @@ if __name__ == "__main__":
                  help="calculate md5sums for primary data files from specific "
                  "libraries where names match MD5_PATTERN, which should be of the "
                  "form '<sample>/<library>'")
-    p.add_option("--quiet",action="store_true",dest="quiet",
-                 help="suppress warnings")
+    p.add_option("--md5sum",action="store_true",dest="md5sum",
+                 help="calculate md5sums for all primary data files (equivalent to "
+                 "--md5=*/*)")
+    p.add_option("--no-warnings",action="store_true",dest="no_warnings",
+                 help="suppress warning messages")
     p.add_option("--debug",action="store_true",dest="debug",
-                 help="turn on debugging output (nb overrides --quiet)")
+                 help="turn on debugging output (nb overrides --no-warnings)")
 
     # Process the command line
     options,args = p.parse_args()
@@ -565,7 +576,7 @@ if __name__ == "__main__":
     # Reset logging level for --debug and --quiet
     if options.debug:
         logging.getLogger().setLevel(logging.DEBUG)
-    elif options.quiet:
+    elif options.no_warnings:
         logging.getLogger().setLevel(logging.ERROR)
 
     # Solid run directories
@@ -613,7 +624,7 @@ if __name__ == "__main__":
 
     # Report the runs
     if options.report:
-        report_run(solid_runs)
+        report_run(solid_runs,options.report_paths)
 
     # Report the runs to a spreadsheet
     if options.xls:
