@@ -3,9 +3,33 @@ illumina2cluster
 
 Utilities for preparing data on the cluster from the Illumina instrument:
 
+ *   `analyse_illumina_run.py`: reporting and manipulations of Illumina run data
  *   `bclToFastq.sh`: generate FASTQ from BCL files
  *   `build_illumina_analysis_dir.py`: create and populate per-project analysis dirs
  *   `update_sample_sheet.py`: edit SampleSheet.csv before generating FASTQ
+
+
+analyse_illumina_run.py
+-----------------------
+
+Utility for performing various checks and operations on Illumina data.
+
+Usage:
+
+    analyse_illumina_run.py OPTIONS illumina_data_dir
+
+`illumina_data_dir` is the top-level directory containing the `Unaligned` directory with
+the fastq.gz files produced by the BCL-to-FASTQ conversion step.
+
+Options:
+
+    -h, --help            show this help message and exit
+    --report              report sample names and number of samples for each
+                          project
+    -l, --list            list projects, samples and fastq files directories
+    --unaligned=UNALIGNED_DIR
+                          specify an alternative name for the 'Unaligned'
+                          directory conatining the fastq.gz files
 
 
 bclToFastq.sh
@@ -59,10 +83,6 @@ links to the fastq.gz files for each sample under that project.
 Options:
 
     -h, --help        show this help message and exit
-    -l, --list        list projects and samples without creating the analysis
-                      directories but don't actually do them
-    --report          report sample names and number of samples for each
-                      project
     --dry-run         report operations that would be performed if creating the
                       analysis directories but don't actually do them
     --unaligned=UNALIGNED_DIR

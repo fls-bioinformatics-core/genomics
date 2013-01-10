@@ -99,11 +99,6 @@ if __name__ == "__main__":
                               "generated from the bcl files. For each 'Project_...' directory "
                               "%prog makes a new subdirectory and populates with links to "
                               "the fastq.gz files for each sample under that project.")
-    p.add_option("-l","--list",action="store_true",dest="list",
-                 help="list projects, samples and fastqs without creating the analysis "
-                 "directories")
-    p.add_option("--report",action="store_true",dest="report",
-                 help="report sample names and number of samples for each project")
     p.add_option("--dry-run",action="store_true",dest="dry_run",
                  help="report operations that would be performed if creating the "
                  "analysis directories but don't actually do them")
@@ -131,30 +126,6 @@ if __name__ == "__main__":
     # Populate Illumina data object
     illumina_data = IlluminaData.IlluminaData(illumina_analysis_dir,
                                               unaligned_dir=options.unaligned_dir)
-
-    # List option
-    if options.list:
-        for project in illumina_data.projects:
-            print "Project: %s (%d samples)" % (project.name,len(project.samples))
-            for sample in project.samples:
-                if len(sample.fastq) == 1:
-                    print "\t%s" % sample.name
-                else:
-                    print "\t%s (%d fastqs)" % (sample.name,len(sample.fastq))
-                for fastq in sample.fastq:
-                    print "\t\t%s" % fastq
-        sys.exit()
-
-    # Report option
-    if options.report:
-        for project in illumina_data.projects:
-            project_name = project.name
-            n_samples = len(project.samples)
-            sample_names = ', '.join([str(s.name) for s in project.samples])
-            print "Project %s: %s (%d samples)" % (project_name,
-                                                sample_names,
-                                                n_samples)
-        sys.exit()
 
     # Assign experiment types
     for expt in options.expt_type:
