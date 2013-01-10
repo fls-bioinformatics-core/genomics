@@ -21,6 +21,7 @@ conventions.
 
 import os
 import logging
+import bcf_utils
 
 #######################################################################
 # Class definitions
@@ -138,6 +139,13 @@ class IlluminaProject:
         # Sort samples on name
         self.samples.sort(lambda a,b: cmp(a.name,b.name))
 
+    def prettyPrintSamples(self):
+        """Return a nicely formatted string describing the sample names
+
+        Wraps a call to 'pretty_print_names' function.
+        """
+        return bcf_utils.pretty_print_names(self.samples)
+
 class IlluminaSample:
     """Class for storing information on a 'sample' within an Illumina project
 
@@ -174,6 +182,13 @@ class IlluminaSample:
         if not self.fastq:
             raise IlluminaDataError, "Unable to find fastq.gz files for %s" % \
                 self.name
+
+    def __repr__(self):
+        """Implement __repr__ built-in
+
+        Return string representation for the IlluminaSample -
+        i.e. the sample name."""
+        return str(self.name)
 
 class IlluminaFastq:
     """Class for extracting information about Fastq files
