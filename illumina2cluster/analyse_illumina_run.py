@@ -82,7 +82,7 @@ if __name__ == "__main__":
         for project in illumina_data.projects:
             project_name = project.name
             n_samples = len(project.samples)
-            sample_names = ', '.join([str(s.name) for s in project.samples])
+            sample_names = project.prettyPrintSamples()
             print "Project %s: %s (%d samples)" % (project_name,
                                                    sample_names,
                                                    n_samples)
