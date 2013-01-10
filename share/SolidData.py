@@ -800,7 +800,10 @@ class SolidProject:
         return bcf_utils.pretty_print_names(self.libraries)
 
     def getTimeStamps(self):
-        """
+        """Return a list of timestamps for primary data
+
+        Returns a list of the unique timestamps associated with all
+        primary data files within the project.
         """
         timestamps = []
         for library in self.libraries:
