@@ -795,7 +795,7 @@ class SolidProject:
     def prettyPrintLibraries(self):
         """Return a nicely formatted string describing the library names
 
-        Wraps a call to 'pretty_print_libraries' function.
+        Wraps a call to 'pretty_print_names' function.
         """
         return bcf_utils.pretty_print_names(self.libraries)
 
