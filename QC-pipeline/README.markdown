@@ -253,12 +253,13 @@ Reporting: qcreporter.py
 ### Overview ###
 
 `qcreporter.py` generates HTML reports for QC. It can be run on the outputs from
-either `solid_qc.sh` or `illumina_qc.sh` scripts and will attempt the run type
-automatically.
+either `solid_qc.sh` or `illumina_qc.sh` scripts and will try to determine the
+platform and run type automatically.
 
 In some cases this automatic detection may fail, in which case the `--platform`
 and `--format` options can be used to explicit speciy the platform type and/or
-the type of input files that are expected.
+the type of input files that are expected; see the section on "Reporting
+recipes" below.
 
 ### Usage and options ###
 
@@ -278,3 +279,21 @@ Options:
                           ('solid', 'illumina')
     --format=DATA_FORMAT  explicitly set the format of files ('solid',
                           'solid_paired_end', 'fastq', 'fastqgz')
+
+### Reporting recipes ###
+
+The table below indicates the situations in which the reporter should work
+automatically, and which options to use in cases when it doesn't:
+
+    +==========+============+============+=============================+
+    | Platform | Data type  | QC mode    | Autodetect?                 |
+    +==========+============+============+=============================+
+    | SOLiD4   | Fragment   | Fragment   | Yes                         |
+    | SOLiD4   | Paired-end | Fragment   | Yes                         |
+    | SOLiD4   | Paired-end | Paired-end | Yes                         |
+    | GA2x     | Fastq.gz   | n/a        | Yes                         |
+    | GA2x     | Fastq      | n/a        | No: use --format=fastq      |
+    | HiSeq    | Fastq.gz   | n/a        | No: use --platform=illumina |
+    | HiSeq    | Fastq      | n/a        | No: use --platform=illumina |
+    |          |            |            |         --format=fastq      |
+    +==========+============+============+=============================+
