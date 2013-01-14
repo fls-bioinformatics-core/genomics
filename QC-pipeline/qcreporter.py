@@ -74,7 +74,7 @@ class QCReporter:
         self.__data_format = data_format
         self.__qc_dir = os.path.join(self.__dirn,qc_dir)
         if not os.path.isdir(self.__qc_dir):
-            raise OSError, "QC dir %s not found" % self.qc_dir
+            raise QCReporterError, "QC dir %s not found" % self.qc_dir
         # Run and experiment names
         # Assume that the experiment name is the current dir and the
         # run name is the parent directory
@@ -267,6 +267,16 @@ class QCReporter:
         except Exception, ex:
             print "Exception creating zip archive: %s" % ex
         os.chdir(cwd)
+
+    def verify(self):
+        """Check that the QC outputs are correct
+
+        Returns True if the QC appears to have run successfully, False if not.
+        """
+        status = True
+        for sample in self.samples:
+            status = (status and sample.verify())
+        return status
 
 class QCSample:
     """Base class for reporting QC for a single sample
@@ -549,6 +559,15 @@ class QCSample:
         """Return list of files and directories to archive
         """
         return self.__zip_includes
+
+    def verify(self):
+        """Verify expected QC products for the sample
+
+        This method must be implemented by the subclass. It should return
+        True if the QC appears to have run successfully for the sample, False
+        if not.
+        """
+        raise NotImplementedError,"Subclass must implement 'verify' method"
     
 def add_dir_to_zip(z,dirn,zip_top_dir=None):
     """Recursively add a directory and its contents to a zip archive
@@ -597,7 +616,7 @@ class IlluminaQCReporter(QCReporter):
         for data in primary_data:
             sample = rootname(data[0])
             self.addSample(IlluminaQCSample(sample,self.qc_dir))
-            print "Sample: '%s'" % sample
+            print "Processing sample: '%s'" % sample
         # Summarise data from fastqc
         self.__stats = TabFile.TabFile(column_names=('Sample',
                                                      'Reads',
@@ -749,6 +768,27 @@ class IlluminaQCSample(QCSample):
         html.add("<td></tr></table>")
         html.add("</div>")
 
+    def verify(self):
+        """Check QC products for this sample
+
+        Checks that fastq_screens and FastQC files were found. Returns True if the
+        QC products are present and False otherwise.
+        """
+        # Verification status
+        status = True
+        # Check fastq_screens
+        if not self.screens():
+            logging.warning("%s: no screens" % self.name)
+            status = False
+        else:
+            if len(self.screens()) != 3:
+                logging.warning("%s: wrong number of screens" % self.name)
+        # Check fastqc
+        if  self.fastqc is None:
+            logging.warning("%s: no FastQC results" % self.name)
+            status = False
+        return status
+
 #######################################################################
 # SOLiD-specific class definitions
 #######################################################################
@@ -775,6 +815,8 @@ class SolidQCReporter(QCReporter):
         # SOLiD-specific attributes
         self.__stats = None
         # Preprocess: locate stats file and determine if we have paired end data
+        # The name of the stats file tells us how the data was processed i.e.
+        # whether the "fragment" or "paired-end" QC pipeline was used
         paired_end = False
         stats_file = os.path.join(os.path.abspath(dirn),"SOLiD_preprocess_filter.stats")
         if not os.path.exists(stats_file):
@@ -786,10 +828,19 @@ class SolidQCReporter(QCReporter):
                 logging.error("Can't find stats file in %s" % dirn)
         # Determine input type if not explicitly set
         if data_format is None:
+            # Set data format based on whether paired-end pipeline was used
             if not paired_end:
                 data_format = 'solid'
             else:
                 data_format = 'solid_paired_end'
+        else:
+            # Data format overrides automatic detection
+            if data_format == 'solid':
+                paired_end = False
+            elif data_format == 'solid_paired_end':
+                paired_end = True
+            else:
+                logging.error("Ignoring unrecognised format '%s'" % data_format)
         # Initialise base class
         QCReporter.__init__(self,dirn,data_format=data_format,qc_dir=qc_dir)
         self.__paired_end = paired_end
@@ -801,13 +852,17 @@ class SolidQCReporter(QCReporter):
                 # Strip trailing "_F3" from names
                 sample = sample.replace('_F3','')
             self.addSample(SolidQCSample(sample,self.qc_dir,self.__paired_end))
-            print "Sample: '%s'" % sample
+            print "Processing sample '%s'" % sample
         # Filtering stats
         if stats_file and os.path.exists(stats_file):
             self.__stats = TabFile.TabFile(stats_file,first_line_is_header=True)
             # Fix sample names for paired-end data
             if self.__paired_end:
-                for line in self.__stats: line['File'] = line['File'].replace('_paired','')
+                try:
+                    for line in self.__stats: line['File'] = line['File'].replace('_paired','')
+                except KeyError:
+                    logging.error("Failed to process stats file %s" % stats_file)
+                    self.__stats = TabFile.TabFile()
         else:
             logging.error("Can't find stats file %s" % stats_file)
             self.__stats = TabFile.TabFile()
@@ -881,6 +936,94 @@ class SolidQCReporter(QCReporter):
             sample.report(self.html)
         self.html.write(os.path.join(self.dirn,"%s.html" % self.report_base_name))
 
+    def verify(self):
+        """Verify that SOLiD QC completed successfully for all samples
+        
+        Returns True if the QC appears to have run successfully, False if not.
+        """
+        # Run verification from base class
+        if self.__paired_end:
+            print "Verifying output of paired-end QC run"
+        else:
+            print "Verifying output of fragment QC run"
+        status = QCReporter.verify(self)
+        # Additional SOLiD-specific verifications
+        # Stats
+        if self.__stats is None:
+            logging.warning("No statistics found")
+            status = False
+        else:
+            # Check each sample has an entry in the stats file
+            for sample in self.samples:
+                try:
+                    self.__stats.lookup('File',sample.name)[0]
+                except KeyError:
+                    logging.warning("%s: missing statistics" % sample.name)
+                    status = False
+        # Check Fastq files
+        for sample in self.samples:
+            if not self.__paired_end:
+                # Unfiltered Fastq
+                fastq = os.path.join(self.dirn,"%s.fastq" % sample.name)
+                if not os.path.exists(fastq):
+                    logging.warning("%s: missing Fastq file" % sample.name)
+                    status = False
+                # Filtered files
+                filtered_csfasta = os.path.join(self.dirn,"%s_T_F3.csfasta" % sample.name)
+                filtered_qual = os.path.join(self.dirn,"%s_T_F3_QV.qual" % sample.name)
+                filtered_fastq = os.path.join(self.dirn,"%s_T_F3.fastq" % sample.name)
+                if not (os.path.exists(filtered_csfasta) and
+                        os.path.exists(filtered_qual) and
+                        os.path.exists(filtered_fastq)):         
+                    logging.warning("%s: missing one or more filtered data files" % sample.name)
+                    status = False
+            else:
+                # Unfiltered Fastqs
+                fastq = os.path.join(self.dirn,"%s_paired_F3_and_F5_filt.fastq" % sample.name)
+                fastq_f3 = os.path.join(self.dirn,"%s_paired_F3_and_F5_filt.F3.fastq" % sample.name)
+                fastq_f5 = os.path.join(self.dirn,"%s_paired_F3_and_F5_filt.F5.fastq" % sample.name)
+                if not (os.path.exists(fastq) and
+                        os.path.exists(fastq_f3) and
+                        os.path.exists(fastq_f5)):
+                    logging.warning("%s: missing one or more unfiltered Fastq files" % sample.name)
+                    status = False
+                # Filtered files
+                filtered_csfasta_f3 = os.path.join(self.dirn,"%s_F3_T_F3.csfasta" % sample.name)
+                filtered_qual_f3 = os.path.join(self.dirn,"%s_F3_T_F3_QV.qual" % sample.name)
+                filtered_csfasta_f5 = os.path.join(self.dirn,"%s_F5_T_F3.csfasta" % sample.name)
+                filtered_qual_f5 = os.path.join(self.dirn,"%s_F5_T_F3_QV.qual" % sample.name)
+                if not (os.path.exists(filtered_csfasta_f3) and
+                        os.path.exists(filtered_qual_f3) and
+                        os.path.exists(filtered_csfasta_f5) and
+                        os.path.exists(filtered_qual_f5)):
+                    logging.warning("%s: missing one or more filtered data files" % sample.name)
+                    status = False
+                # Lenient filtering and merging
+                lenient_fastq = os.path.join(self.dirn,"%s_paired_F3_filt.fastq" % sample.name)
+                lenient_fastq_f3 = os.path.join(self.dirn,"%s_paired_F3_filt.F3.fastq" \
+                                                    % sample.name)
+                lenient_fastq_f5 = os.path.join(self.dirn,"%s_paired_F3_filt.F5.fastq" \
+                                                    % sample.name)
+                if not (os.path.exists(lenient_fastq) and
+                        os.path.exists(lenient_fastq_f3) and
+                        os.path.exists(lenient_fastq_f5)):
+                    logging.warning("%s: missing one or more 'lenient' Fastq files" % sample.name)
+                    status = False
+                # Strict filtering and merging
+                strict_fastq = os.path.join(self.dirn,"%s_paired_F3_and_F5_filt.fastq" \
+                                                % sample.name)
+                strict_fastq_f3 = os.path.join(self.dirn,"%s_paired_F3_and_F5_filt.F3.fastq" \
+                                                   % sample.name)
+                strict_fastq_f5 = os.path.join(self.dirn,"%s_paired_F3_and_F5_filt.F5.fastq" \
+                                                   % sample.name)
+                if not (os.path.exists(strict_fastq) and
+                        os.path.exists(strict_fastq_f3) and
+                        os.path.exists(strict_fastq_f5)):
+                    logging.warning("%s: missing one or more 'strict' Fastq files" % sample.name)
+                    status = False
+        # Finished checks
+        return status
+
 class SolidQCSample(QCSample):
     """Class for holding QC data for a SOLiD sample
 
@@ -922,6 +1065,38 @@ class SolidQCSample(QCSample):
         self.report_programs(html)
         html.add("<td></tr></table>")
         html.add("</div>")
+
+    def verify(self):
+        """Check QC products for this sample
+
+        Checks that fastq_screens and boxplots were found. Returns True if the
+        QC products are present and False otherwise.
+        """
+        # Verification status
+        status = True
+        # Check boxplots
+        if not self.boxplots():
+            logging.warning("%s: no boxplots" % self.name)
+            status = False
+        else:
+            if self.__paired_end:
+                if len(self.boxplots()) != 4:
+                    logging.warning("%s: wrong number of boxplots (expected 4, found %d)" \
+                                        % (self.name,len(self.boxplots())))
+                    status = False
+            else:
+                if len(self.boxplots()) != 2:
+                    logging.warning("%s: wrong number of boxplots (expected 2, found %d)" \
+                                        % (self.name,len(self.boxplots())))
+                    status = False
+        # Check fastq_screens
+        if not self.screens():
+            logging.warning("%s: no screens" % self.name)
+            status = False
+        else:
+            if len(self.screens()) != 3:
+                logging.warning("%s: wrong number of screens" % self.name)
+        return status
 # 
 class HTMLPageWriter:
     """Generic HTML generation class
@@ -1134,6 +1309,8 @@ if __name__ == "__main__":
     p.add_option("--qc_dir",action="store",dest="qc_dir",default='qc',
                  help="specify a different name for the QC results subdirectory (default is "
                  "'qc')")
+    p.add_option("--verify",action="store_true",dest="verify",default=False,
+                 help="don't generate report, just verify the QC outputs")
 
     # Deal with command line
     options,arguments = p.parse_args()
@@ -1149,7 +1326,7 @@ if __name__ == "__main__":
             platform = options.platform
         else:
             platform = None
-            print "Generating report for %s" % d
+            print "Acquiring QC outputs for samples in %s" % d
             try:
                 os.path.abspath(d).index('solid')
                 platform = 'solid'
@@ -1161,13 +1338,34 @@ if __name__ == "__main__":
                     pass
         # Format of input files
         data_format = options.data_format
-        # Run the appropriate reporter
+        # Determine the appropriate reporter type
+        qcreporter_class = None
         if platform is None:
             logging.error("Unable to identify platform for %s (use --platform option?)" % d)
         elif platform == 'solid':
-            SolidQCReporter(d,data_format=data_format,qc_dir=options.qc_dir).zip()
+            qcreporter_class = SolidQCReporter
         elif platform == 'illumina':
-            IlluminaQCReporter(d,data_format=data_format,qc_dir=options.qc_dir).zip()
+            qcreporter_class = IlluminaQCReporter
         else:
             logging.error("Unknown platform '%s'" % platform)
-            
+        # Create and populate a reporter, if possible
+        qcreporter = None
+        if qcreporter_class is not None:
+            try:
+                qcreporter = qcreporter_class(d,data_format=data_format,qc_dir=options.qc_dir)
+            except QCReporterError,ex:
+                logging.error("Unable to extract data from %s: %s" % (d,ex))
+        # Perform required action
+        if qcreporter is not None:
+            if options.verify:
+                # Run verification
+                status = qcreporter.verify()
+                if not status:
+                    logging.error("QC failed for one or more samples in %s" % d)
+                else:
+                    print "QC verified for all samples in %s" % d
+            else:
+                # Generate report
+                print "Generating report for %s" % d
+                qcreporter.zip()
+
