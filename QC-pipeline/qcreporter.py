@@ -957,7 +957,7 @@ class SolidQCReporter(QCReporter):
             for sample in self.samples:
                 try:
                     self.__stats.lookup('File',sample.name)[0]
-                except KeyError:
+                except IndexError:
                     logging.warning("%s: missing statistics" % sample.name)
                     status = False
         # Check Fastq files
