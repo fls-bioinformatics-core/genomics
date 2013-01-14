@@ -616,7 +616,7 @@ class IlluminaQCReporter(QCReporter):
         for data in primary_data:
             sample = rootname(data[0])
             self.addSample(IlluminaQCSample(sample,self.qc_dir))
-            print "Processing sample: '%s'" % sample
+            print "Processing outputs for sample: '%s'" % sample
         # Summarise data from fastqc
         self.__stats = TabFile.TabFile(column_names=('Sample',
                                                      'Reads',
@@ -852,7 +852,7 @@ class SolidQCReporter(QCReporter):
                 # Strip trailing "_F3" from names
                 sample = sample.replace('_F3','')
             self.addSample(SolidQCSample(sample,self.qc_dir,self.__paired_end))
-            print "Processing sample '%s'" % sample
+            print "Processing outputs for sample '%s'" % sample
         # Filtering stats
         if stats_file and os.path.exists(stats_file):
             self.__stats = TabFile.TabFile(stats_file,first_line_is_header=True)
