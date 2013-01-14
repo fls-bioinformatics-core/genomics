@@ -279,6 +279,9 @@ Options:
                           ('solid', 'illumina')
     --format=DATA_FORMAT  explicitly set the format of files ('solid',
                           'solid_paired_end', 'fastq', 'fastqgz')
+    --qc_dir=QC_DIR       specify a different name for the QC results
+                          subdirectory (default is 'qc')
+    --verify              don't generate report, just verify the QC outputs
 
 ### Reporting recipes ###
 
