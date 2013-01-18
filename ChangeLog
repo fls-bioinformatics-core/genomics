@@ -1,3 +1,8 @@
+2013-01-18  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* utils/split_fasta.py
+	- new utility for splitting Fasta file into individual chromosomes.
+
 2013-01-14  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* QC-pipeline/qcreporter.py
