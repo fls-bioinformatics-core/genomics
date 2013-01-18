@@ -13,6 +13,7 @@ Place to put general utility scripts/tools.
  *  `make_mock_solid_dir.py`: create mock SOLiD directory structure for testing
  *  `md5checker.py`: check files and directories using MD5 sums
  *  `sam2soap.py`: convert from SAM file to SOAP format
+ *  `split_fasta.py`: extract individual chromosome sequences from fasta file
  *  `symlink_checker.py`: check and update symbolic links
 
 See below for more detailed usage documentation.
@@ -232,6 +233,26 @@ Options:
     -o SOAPFILE  Output SOAP file name
     --debug      Turn on debugging output
     --test       Run unit tests
+
+
+split_fasta.py
+--------------
+Extract individual chromosome sequences from a fasta file.
+
+Usage:
+
+    split_fasta.py OPTIONS fasta_file
+
+Split input FASTA file with multiple sequences into multiple files each
+containing sequences for a single chromosome.
+
+Options:
+
+    -h, --help  show this help message and exit
+
+For each chromosome CHROM found in the input Fasta file (delimited by a line
+`>CHROM`), outputs a file called `CHROM.fa` in the current directory
+containing just the sequence for that chromosome.
 
 
 symlink_checker.py
