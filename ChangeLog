@@ -1,3 +1,12 @@
+2013-01-21  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* utils/split_fasta.py
+	- version 0.1.0: substantial rewrite to enable the core functionality
+	  to be unit tested.
+
+	* utils/extract_reads.py
+	- version 0.1.2: cosmetic updates to comments etc only.
+
 2013-01-18  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* utils/split_fasta.py
