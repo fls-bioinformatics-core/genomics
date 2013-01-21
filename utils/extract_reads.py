@@ -1,19 +1,19 @@
 #!/bin/env python
 #
-#     extract_random.py: write random subsets of read records from input files
+#     extract_reads.py: write random subsets of read records from input files
 #     Copyright (C) University of Manchester 2012 Peter Briggs
 #
 ########################################################################
 #
-# extract_random.py
+# extract_reads.py
 #
 #########################################################################
 #
-"""extract_random.py
+"""extract_reads.py
 
 Pull random sets of read records from various files
 
-Usage: extract_random.py [-n <n_records> ] infile [infile ...]
+Usage: extract_reads.py [-n <n_records> ] infile [infile ...]
 
 If multiple infiles are specified then the same set of records from
 each file.
@@ -24,7 +24,7 @@ Recognises FASTQ, CSFASTA and QUAL files.
 # Module metadata
 #######################################################################
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 
 #######################################################################
 # Import modules
