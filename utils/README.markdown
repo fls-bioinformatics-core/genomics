@@ -248,7 +248,9 @@ containing sequences for a single chromosome.
 
 Options:
 
+    --version   show program's version number and exit
     -h, --help  show this help message and exit
+    --tests     Run unit tests
 
 For each chromosome CHROM found in the input Fasta file (delimited by a line
 `>CHROM`), outputs a file called `CHROM.fa` in the current directory
