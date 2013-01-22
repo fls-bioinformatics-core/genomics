@@ -7,7 +7,7 @@
 #
 #########################################################################
 
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 
 """FASTQFile
 
@@ -25,8 +25,10 @@ http://en.wikipedia.org/wiki/FASTQ_format
 # Import modules that this module depends on
 #######################################################################
 from collections import Iterator
+import os
 import re
 import logging
+import gzip
 
 #######################################################################
 # Constants/globals
@@ -58,10 +60,16 @@ class FastqIterator(Iterator):
     def __init__(self,fastq_file):
         """Create a new FastqIterator
 
+        The input FASTQ can be either a text file or a compressed (gzipped)
+        FASTQ.
+
         Arguments:
            fastq_file: name of the FASTQ file to iterate through
         """
-        self.__fp = open(fastq_file,'rU')
+        if os.path.splitext(fastq_file)[1] == '.gz':
+            self.__fp = gzip.open(fastq_file,'r')
+        else:
+            self.__fp = open(fastq_file,'rU')
 
     def next(self):
         """Return next record from FASTQ file as a FastqRead object
