@@ -1,3 +1,19 @@
+2013-01-23  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* share/IlluminaData.py
+	- new class CasavaSampleSheet for handling sample sheet files for input
+	  into CASAVA.
+	- new function convert_miseq_samplesheet_to_casava for creating CASAVA
+	  style sample sheet from one from a MiSEQ sequencer.
+
+	* illumina2cluster/update_sample_sheet.py
+	- updated to use the CasavaSampleSheet class from IlluminaData.py.
+
+2013-01-22  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* share/FASTQFile.py
+	- version 0.0.2: enable FastqIterator to operate on gzipped FASTQ input.
+
 2013-01-21  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* utils/split_fasta.py
