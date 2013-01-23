@@ -27,7 +27,11 @@ SHARE_DIR = os.path.abspath(
     os.path.normpath(
         os.path.join(os.path.dirname(sys.argv[0]),'..','share')))
 sys.path.append(SHARE_DIR)
-import TabFile
+import IlluminaData
+
+#######################################################################
+# Imports
+#######################################################################
 
 #######################################################################
 # Functions
@@ -114,10 +118,7 @@ if __name__ == "__main__":
         logging.error("sample sheet '%s': not found" % samplesheet)
         sys.exit(1)
     # Read in the data as CSV
-    data = TabFile.TabFile(samplesheet,delimiter=',',first_line_is_header=False,
-                           column_names=('FCID','Lane','SampleID','SampleRef',
-                                         'Index','Description','Control',
-                                         'Recipe','Operator','SampleProject'))
+    data = IlluminaData.CasavaSampleSheet(samplesheet)
     # Update the SampleID and SampleProject fields
     for sample_id in options.sample_id:
         lanes,name = parse_name_expression(sample_id)
@@ -127,62 +128,43 @@ if __name__ == "__main__":
     # Update the SampleProject field
     for sample_project in options.sample_project:
         lanes,name = parse_name_expression(sample_project)
-        for lane in lanes:
-            print "Setting SampleProject for lane %d: '%s'" % (lane,name)
-            data[lane]['SampleProject'] = name
+        for lane_number in lanes:
+            print "Setting SampleProject for lane %d: '%s'" % (lane_number,name)
+            for lane in data:
+                if lane['Lane'] == lane_number: lane['SampleProject'] = name
     # Fix spaces
     if options.fix_spaces:
-        for lane in data:
-            lane['SampleID'] = lane['SampleID'].strip(' ').replace(' ','_')
-            lane['SampleProject'] = lane['SampleProject'].strip(' ').replace(' ','_')
+        data.fix_illegal_names()
     # Fix duplicates
     if options.fix_duplicates:
-        # Find duplicates
-        id_project_names = []
-        duplicates = []
-        for lane in data:
-            id_project_name = lane['SampleID']+'/'+ lane['SampleProject']
-            if id_project_name in id_project_names and id_project_name not in duplicates:
-                duplicates.append(id_project_name)
-            else:
-                id_project_names.append(id_project_name)
-        # Go round again and fix
-        duplicate_indexes = {}
-        for dup in duplicates:
-            duplicate_indexes[dup] = 0
-        for lane in data:
-            id_project_name = lane['SampleID']+'/'+ lane['SampleProject']
-            if id_project_name in duplicates:
-                duplicate_indexes[id_project_name] += 1
-                lane['SampleID'] = "%s_%d" % (lane['SampleID'],duplicate_indexes[id_project_name])
+        data.fix_duplicated_names()
     # Print transposed data in tab-delimited format
     if options.view:
         data.transpose().write(fp=sys.stdout,delimiter='\t')
     # Check for non-unique id/project combinations, spaces and empty names
     check_status = 0
-    id_project_names = []
-    for lane in data:
-        # Duplicated names
-        id_project_name = lane['SampleID'] + '/' + lane['SampleProject']
-        if id_project_name in id_project_names:
-            logging.warning("Duplicated SampleID/SampleProject in lane %s (%s)" % 
-                            (lane['Lane'],id_project_name))
-            check_status = 1
-        else:
-            id_project_names.append(id_project_name)
-        # Spaces in names
-        try:
-            id_project_name.index(' ')
-            logging.warning("Spaces in SampleID/SampleProject in lane %s (%s)" %
-                            (lane['Lane'],id_project_name))
-            check_status = 1
-        except ValueError:
-            pass
-        # Empty names
-        if not len(lane['SampleID'].strip()) or not len(lane['SampleProject'].strip()):
-            logging.warning("Empty SampleID and/or SampleProject name in lane %s (%s)" %
-                            (lane['Lane'],id_project_name))
-            check_status = 1
+    # Duplicated names
+    duplicates = data.duplicated_names
+    if len(duplicates) > 0:
+        check_status = 1
+        for duplicate_set in duplicates:
+            for lane in duplicate_set:
+                logging.warning("Duplicated SampleID/SampleProject in lane %s (%s/%s)" % 
+                                (lane['Lane'],lane['SampleID'],lane['SampleProject']))
+    # Illegal characters/spaces in names
+    illegal_names = data.illegal_names
+    if len(illegal_names) > 0:
+        check_status = 1
+        for lane in illegal_names:
+            logging.warning("Spaces in SampleID/SampleProject in lane %s (%s/%s)" %
+                            (lane['Lane'],lane['SampleID'],lane['SampleProject']))
+    # Empty names
+    empty_names = data.empty_names
+    if len(empty_names) > 0:
+        check_status = 1
+        for lane in empty_names:
+            logging.warning("Empty SampleID and/or SampleProject name in lane %s (%s/%s)" %
+                            (lane['Lane'],lane['SampleID'],lane['SampleProject']))
     # Write out new sample sheet
     if options.samplesheet_out:
         if check_status and not options.ignore_warnings:
