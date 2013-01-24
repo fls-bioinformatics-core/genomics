@@ -47,7 +47,7 @@ if __name__ == "__main__":
                  help="list projects, samples and fastq files directories")
     p.add_option("--unaligned",action="store",dest="unaligned_dir",default="Unaligned",
                  help="specify an alternative name for the 'Unaligned' directory "
-                 "conatining the fastq.gz files")
+                 "containing the fastq.gz files")
     # Parse command line
     options,args = p.parse_args()
 
