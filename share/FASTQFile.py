@@ -7,7 +7,7 @@
 #
 #########################################################################
 
-__version__ = "0.0.2"
+__version__ = "0.1.0"
 
 """FASTQFile
 
@@ -34,11 +34,13 @@ import gzip
 # Constants/globals
 #######################################################################
 
-# Regular expression to match a "CASAVA" format sequence identifier
+# Regular expression to match an "ILLUMINA18" format sequence identifier
+# i.e. Illumina 1.8+
 # @EAS139:136:FC706VJ:2:2104:15343:197393 1:Y:18:ATCACG
-CASAVA_SEQID = re.compile(r"^@([^\:]+):([^\:]+):([^\:]+):([^\:]+):([^\:]+):([^\:]+):([^ ]+) ([^\:]+):([^\:]+):([^\:]+):([^\:]+)$")
+ILLUMINA18_SEQID = re.compile(r"^@([^\:]+):([^\:]+):([^\:]+):([^\:]+):([^\:]+):([^\:]+):([^ ]+) ([^\:]+):([^\:]+):([^\:]+):([^\:]+)$")
 
 # Regular expression to match a "ILLUMINA" format sequence identifier
+# i.e. Illumina 1.3+, 1.5+
 # @HWUSI-EAS100R:6:73:941:1973#0/1
 ILLUMINA_SEQID = re.compile(r"^@([^\:]+):([^\:]+):([^\:]+):([^\:]+):([^\#]+)#([^/])/(.+)$")
 
@@ -134,26 +136,26 @@ class SequenceIdentifier:
         self.__seqid = str(seqid).strip()
         self.format = None
         # There are at least two variants of the sequence id line, this is an
-        # example of what I'm calling "casava" format:
+        # example of Illumina 1.8+ format:
         # @EAS139:136:FC706VJ:2:2104:15343:197393 1:Y:18:ATCACG
         # The alternative is Illumina:
         # @HWUSI-EAS100R:6:73:941:1973#0/1
-        casava = CASAVA_SEQID.match(self.__seqid)
+        illumina18 = ILLUMINA18_SEQID.match(self.__seqid)
         illumina = ILLUMINA_SEQID.match(self.__seqid)
-        if casava:
-            self.format = 'casava'
-            self.instrument_name = casava.group(1)
-            self.run_id = casava.group(2)
-            self.flowcell_id = casava.group(3)
-            self.flowcell_lane = casava.group(4)
-            self.tile_no = casava.group(5)
-            self.x_coord = casava.group(6)
-            self.y_coord = casava.group(7)
+        if illumina18:
+            self.format = 'illumina18'
+            self.instrument_name = illumina18.group(1)
+            self.run_id = illumina18.group(2)
+            self.flowcell_id = illumina18.group(3)
+            self.flowcell_lane = illumina18.group(4)
+            self.tile_no = illumina18.group(5)
+            self.x_coord = illumina18.group(6)
+            self.y_coord = illumina18.group(7)
             self.multiplex_index_no = None
-            self.pair_id = casava.group(8)
-            self.bad_read = casava.group(9)
-            self.control_bit_flag = casava.group(10)
-            self.index_sequence = casava.group(11)
+            self.pair_id = illumina18.group(8)
+            self.bad_read = illumina18.group(9)
+            self.control_bit_flag = illumina18.group(10)
+            self.index_sequence = illumina18.group(11)
         elif illumina:
             self.format = 'illumina'
             self.instrument_name = illumina.group(1)
@@ -170,7 +172,7 @@ class SequenceIdentifier:
             self.index_sequence = None
         
     def __repr__(self):
-        if self.format == 'casava':
+        if self.format == 'illumina18':
             return "@%s:%s:%s:%s:%s:%s:%s %s:%s:%s:%s" % (self.instrument_name, 
                                                           self.run_id,
                                                           self.flowcell_id,
@@ -214,15 +216,15 @@ class TestSequenceIdentifier(unittest.TestCase):
     """Tests of the SequenceIdentifier class
     """
 
-    def test_read_casava_id(self):
-        """Process a 'casava'-style sequence identifier
+    def test_read_illumina18_id(self):
+        """Process a 'illumina18'-style sequence identifier
         """
         seqid_string = "@EAS139:136:FC706VJ:2:2104:15343:197393 1:Y:18:ATCACG"
         seqid = SequenceIdentifier(seqid_string)
         # Check we get back what we put in
         self.assertEqual(str(seqid),seqid_string)
         # Check the format
-        self.assertEqual('casava',seqid.format)
+        self.assertEqual('illumina18',seqid.format)
         # Check attributes were correctly extracted
         self.assertEqual('EAS139',seqid.instrument_name)
         self.assertEqual('136',seqid.run_id)
