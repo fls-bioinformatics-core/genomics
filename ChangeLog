@@ -1,3 +1,12 @@
+2013-01-24  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* share/FASTQFile.py
+	- version 0.1.0: "casava" format now renamed to "illumina18", for
+	  consistency with FASTQ information at
+	  http://en.wikipedia.org/wiki/FASTQ_format
+	- version 0.1.1: fixed failure to read Illumina 1.8+ files that are
+	  missing barcode sequences in the identifier string.
+
 2013-01-23  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* share/IlluminaData.py
