@@ -7,7 +7,7 @@
 #
 #########################################################################
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 """FASTQFile
 
@@ -37,7 +37,7 @@ import gzip
 # Regular expression to match an "ILLUMINA18" format sequence identifier
 # i.e. Illumina 1.8+
 # @EAS139:136:FC706VJ:2:2104:15343:197393 1:Y:18:ATCACG
-ILLUMINA18_SEQID = re.compile(r"^@([^\:]+):([^\:]+):([^\:]+):([^\:]+):([^\:]+):([^\:]+):([^ ]+) ([^\:]+):([^\:]+):([^\:]+):([^\:]+)$")
+ILLUMINA18_SEQID = re.compile(r"^@([^\:]+):([^\:]+):([^\:]+):([^\:]+):([^\:]+):([^\:]+):([^ ]+) ([^\:]+):([^\:]+):([^\:]+):([^\:]*)$")
 
 # Regular expression to match a "ILLUMINA" format sequence identifier
 # i.e. Illumina 1.3+, 1.5+
@@ -217,7 +217,7 @@ class TestSequenceIdentifier(unittest.TestCase):
     """
 
     def test_read_illumina18_id(self):
-        """Process a 'illumina18'-style sequence identifier
+        """Process an 'illumina18'-style sequence identifier
         """
         seqid_string = "@EAS139:136:FC706VJ:2:2104:15343:197393 1:Y:18:ATCACG"
         seqid = SequenceIdentifier(seqid_string)
@@ -237,6 +237,28 @@ class TestSequenceIdentifier(unittest.TestCase):
         self.assertEqual('Y',seqid.bad_read)
         self.assertEqual('18',seqid.control_bit_flag)
         self.assertEqual('ATCACG',seqid.index_sequence)
+
+    def test_read_illumina18_id_no_index_sequence(self):
+        """Process an 'illumina18'-style sequence id with no index sequence (barcode)
+        """
+        seqid_string = "@73D9FA:3:FC:1:1:7507:1000 1:N:0:"
+        seqid = SequenceIdentifier(seqid_string)
+        # Check we get back what we put in
+        self.assertEqual(str(seqid),seqid_string)
+        # Check the format
+        self.assertEqual('illumina18',seqid.format)
+        # Check attributes were correctly extracted
+        self.assertEqual('73D9FA',seqid.instrument_name)
+        self.assertEqual('3',seqid.run_id)
+        self.assertEqual('FC',seqid.flowcell_id)
+        self.assertEqual('1',seqid.flowcell_lane)
+        self.assertEqual('1',seqid.tile_no)
+        self.assertEqual('7507',seqid.x_coord)
+        self.assertEqual('1000',seqid.y_coord)
+        self.assertEqual('1',seqid.pair_id)
+        self.assertEqual('N',seqid.bad_read)
+        self.assertEqual('0',seqid.control_bit_flag)
+        self.assertEqual('',seqid.index_sequence)        
 
     def test_read_illumina_id(self):
         """Process an 'illumina'-style sequence identifier
