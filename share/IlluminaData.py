@@ -462,7 +462,7 @@ def convert_miseq_samplesheet_to_casava(samplesheet=None,fp=None):
     for line in miseq_fp:
         if line.startswith('[Data]'):
             # Feed the rest of the file to a TabFile
-            miseq_sample_sheet = TabFile.TabFile(fp=fp,delimiter=',',skip_first_line=True,
+            miseq_sample_sheet = TabFile.TabFile(fp=miseq_fp,delimiter=',',skip_first_line=True,
                                                  column_names=('Sample_ID','Sample_Name',
                                                                'Sample_Plate','Sample_Well',
                                                                'I7_Index_ID','index',
