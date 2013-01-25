@@ -482,6 +482,11 @@ def convert_miseq_samplesheet_to_casava(samplesheet=None,fp=None):
         casava_line['SampleProject'] = line['Sample_Project']
         casava_line['Index'] = line['index']
         casava_line['Description'] = line['Description']
+        # If no project name was found then set to the initials pulled
+        # from the sample name
+        if casava_line['SampleProject'] == '':
+            casava_line['SampleProject'] = \
+                bcf_utils.extract_initials(casava_line['SampleID'])
     return casava_sample_sheet
 
 #######################################################################
