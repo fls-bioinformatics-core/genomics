@@ -76,6 +76,7 @@ function run_tests() {
     get_version fastq_screen
     get_version fastqc
     get_version solid2fastq
+    get_version tophat
 }
 ##
 #
