@@ -23,6 +23,11 @@ function get_version() {
 		# Version: 0.7.0a git:Revision: undefined$
 		echo `$get_version_exe 2>&1 | grep Version | cut -d" " -f2`
 		;;
+	    cufflinks)
+		# cufflinks
+		# cufflinks v2.0.2
+		echo `$get_version_exe 2>&1 | grep "^cufflinks " | cut -d" " -f2`
+		;;
 	    fastq_screen)
 		# fastq_screen --version
 		# fastq_screen v0.3.1
@@ -47,6 +52,11 @@ function get_version() {
 		# solid2fastq 0.7.0a
 		echo `$get_version_exe 2>&1 | head -1 | cut -d" " -f2`
 		;;
+	    tophat)
+		# tophat --version
+		# TopHat v1.4.1
+		echo `$get_version_exe --version 2>&1 | cut -d" " -f2`
+		;;
 	    *)
 		echo
 		;;
@@ -60,6 +70,7 @@ function report_program_info() {
 # Tests: import into shell and do "run_tests"
 function run_tests() {
     get_version bowtie-build
+    get_version cufflinks
     get_version bfast
     get_version samtools
     get_version fastq_screen
