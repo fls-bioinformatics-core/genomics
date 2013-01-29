@@ -1,3 +1,19 @@
+2013-01-29  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* illumina2cluster/update_sample_sheet.py
+	- new option --miseq indicates input sample sheet is in MiSeq format,
+	  (which will be converted to CASAVA format on output).
+
+	* share/IlluminaData.py
+	- update convert_miseq_samplesheet_to_casava to handle paired-end MiSeq
+	  sample sheet.
+
+2013-01-25  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* share/IlluminaData.py
+	- fix bug in convert_miseq_samplesheet_to_casava (always wrote empty
+	  sample sheet).
+
 2013-01-24  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* share/FASTQFile.py
