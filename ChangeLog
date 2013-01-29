@@ -7,6 +7,11 @@
 	* share/IlluminaData.py
 	- update convert_miseq_samplesheet_to_casava to handle paired-end MiSeq
 	  sample sheet.
+	- add new attribute "paired_end" to IlluminaSample objects, to indicate
+	  whether the sample has paired end data.
+
+	* illumina2cluster/build_illumina_analysis_dir.py
+	- deal correctly with linking to paired end Fastq files.
 
 2013-01-25  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
