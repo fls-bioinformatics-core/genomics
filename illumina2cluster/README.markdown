@@ -134,6 +134,8 @@ Options:
     -h, --help            show this help message and exit
     -o SAMPLESHEET_OUT    output new sample sheet to SAMPLESHEET_OUT
     -v, --view            view contents of sample sheet
+    --miseq               convert input sample sheet MiSEQ to CASAVA-compatible
+                          format
     --fix-spaces          replace spaces in SampleID and SampleProject fields
                           with underscores
     --fix-duplicates      append uniques indices to SampleIDs where original
