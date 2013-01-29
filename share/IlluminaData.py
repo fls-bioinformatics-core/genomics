@@ -462,15 +462,17 @@ def convert_miseq_samplesheet_to_casava(samplesheet=None,fp=None):
     for line in miseq_fp:
         if line.startswith('[Data]'):
             # Feed the rest of the file to a TabFile
-            miseq_sample_sheet = TabFile.TabFile(fp=miseq_fp,delimiter=',',skip_first_line=True,
-                                                 column_names=('Sample_ID','Sample_Name',
-                                                               'Sample_Plate','Sample_Well',
-                                                               'I7_Index_ID','index',
-                                                               'Sample_Project','Description'))
+            miseq_sample_sheet = TabFile.TabFile(fp=miseq_fp,delimiter=',',
+                                                 first_line_is_header=True)
             break
     # Close file, if we opened it
     if fp is None:
         miseq_fp.close()
+    # Check for paired end data
+    if 'index2' in miseq_sample_sheet.header():
+        paired_end = True
+    else:
+        paired_end = False
     # Create an empty CASAVA-style sample sheet
     casava_sample_sheet = CasavaSampleSheet()
     # Reformat each line of the Miseq samplesheet into CASAVA format
@@ -479,14 +481,19 @@ def convert_miseq_samplesheet_to_casava(samplesheet=None,fp=None):
         casava_line['FCID'] = '660DMAAXX'
         casava_line['Lane'] = 1
         casava_line['SampleID'] = line['Sample_ID']
-        casava_line['SampleProject'] = line['Sample_Project']
-        casava_line['Index'] = line['index']
         casava_line['Description'] = line['Description']
-        # If no project name was found then set to the initials pulled
-        # from the sample name
+        # Deal with index sequences
+        if not paired_end:
+            casava_line['Index'] = line['index']
+        else:
+            casava_line['Index'] = "%s-%s" % (line['index'],line['index2'])
+        # Deal with project name
         if casava_line['SampleProject'] == '':
+            # No project name - try to use initials from sample name
             casava_line['SampleProject'] = \
                 bcf_utils.extract_initials(casava_line['SampleID'])
+        else:
+            casava_line['SampleProject'] = line['Sample_Project']
     return casava_sample_sheet
 
 #######################################################################
@@ -567,7 +574,7 @@ class TestCasavaSampleSheet(unittest.TestCase):
 class TestMiseqToCasavaConversion(unittest.TestCase):
 
     def setUp(self):
-        self.miseq_data = """[Header]
+        self.miseq_header = """[Header]
 IEMFileVersion,4
 Investigator Name,
 Project Name,
@@ -584,7 +591,9 @@ Chemistry,Default
 
 [Settings]
 
-[Data]
+[Data]"""
+        # Example of single end data
+        self.miseq_data = self.miseq_header + """
 Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,Sample_Project,Description
 PB1,,PB,A01,A001,ATCACG,PB,
 PB2,,PB,A02,A002,CGATGT,PB,
@@ -595,6 +604,14 @@ ID4,,PB,A06,A019,GTGAAA,ID,"""
         self.miseq_sample_ids = ['PB1','PB2','PB3','PB4','ID3','ID4']
         self.miseq_sample_projects = ['PB','PB','PB','PB','ID','ID']
         self.miseq_index_ids = ['ATCACG','CGATGT','GCCAAT','ACTTGA','CTTGTA','GTGAAA']
+        # Example of paired end data
+        self.miseq_data_paired_end = self.miseq_header + """
+Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_ID,index2,Sample_Project,Description,GenomeFolder
+PB1,,PB,A01,N701,TAAGGCGA,N501,TAGATCGC,,,
+ID2,,PB,A02,N702,CGTACTAG,N502,CTCTCTAT,,,"""
+        self.miseq_paired_end_sample_ids = ['PB1','ID2']
+        self.miseq_paired_end_sample_projects = ['PB','ID']
+        self.miseq_paired_end_index_ids = ['TAAGGCGA-TAGATCGC','CGTACTAG-CTCTCTAT']
 
     def test_convert_miseq_to_casava(self):
         """Convert MiSeq SampleSheet to CASAVA SampleSheet
@@ -610,6 +627,23 @@ ID4,,PB,A06,A019,GTGAAA,ID,"""
             self.assertEqual(sample_sheet[i]['SampleID'],self.miseq_sample_ids[i])
             self.assertEqual(sample_sheet[i]['SampleProject'],self.miseq_sample_projects[i])
             self.assertEqual(sample_sheet[i]['Index'],self.miseq_index_ids[i])
+
+    def test_convert_miseq_to_casava_paired_end(self):
+        """Convert MiSeq SampleSheet to CASAVA SampleSheet (paired end)
+        
+        """
+        # Make sample sheet from MiSEQ data
+        sample_sheet = convert_miseq_samplesheet_to_casava(
+            fp=cStringIO.StringIO(self.miseq_data_paired_end))
+        # Check contents
+        self.assertEqual(len(sample_sheet),2)
+        for i in range(0,2):
+            self.assertEqual(sample_sheet[i]['Lane'],1)
+            self.assertEqual(sample_sheet[i]['SampleID'],self.miseq_paired_end_sample_ids[i])
+            self.assertEqual(sample_sheet[i]['SampleProject'],
+                             self.miseq_paired_end_sample_projects[i])
+            self.assertEqual(sample_sheet[i]['Index'],
+                             self.miseq_paired_end_index_ids[i])
 
 #######################################################################
 # Main program
