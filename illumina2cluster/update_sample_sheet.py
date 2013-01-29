@@ -90,6 +90,8 @@ if __name__ == "__main__":
                  help="output new sample sheet to SAMPLESHEET_OUT")
     p.add_option('-v','--view',action="store_true",dest="view",
 	         help="view contents of sample sheet")
+    p.add_option('--miseq',action="store_true",dest="miseq",
+                 help="convert input sample sheet MiSEQ to CASAVA-compatible format")
     p.add_option('--fix-spaces',action="store_true",dest="fix_spaces",
                  help="replace spaces in SampleID and SampleProject fields with underscores")
     p.add_option('--fix-duplicates',action="store_true",dest="fix_duplicates",
@@ -118,7 +120,12 @@ if __name__ == "__main__":
         logging.error("sample sheet '%s': not found" % samplesheet)
         sys.exit(1)
     # Read in the data as CSV
-    data = IlluminaData.CasavaSampleSheet(samplesheet)
+    if options.miseq:
+        # Input sample sheet is from MiSEQ
+        data = IlluminaData.convert_miseq_samplesheet_to_casava(samplesheet)
+    else:
+        # Standard CASAVA sample sheet
+        data = IlluminaData.CasavaSampleSheet(samplesheet)
     # Update the SampleID and SampleProject fields
     for sample_id in options.sample_id:
         lanes,name = parse_name_expression(sample_id)
