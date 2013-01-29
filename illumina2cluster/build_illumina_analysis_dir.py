@@ -154,9 +154,17 @@ if __name__ == "__main__":
                     if options.keep_names:
                         fastq_ln = os.path.join(project_dir,fastq)
                     else:
-                        fastq_ln = os.path.join(project_dir,sample.name+'.fastq.gz')
+                        if not sample.paired_end:
+                            # Single end sample
+                            fastq_ln = os.path.join(project_dir,sample.name+'.fastq.gz')
+                        else:
+                            # Include the read number in the name for paired end data
+                            read_number = IlluminaData.IlluminaFastq(fastq).read_number
+                            fastq_ln = os.path.join(project_dir,
+                                                    "%s_R%d.fastq.gz" % (sample.name,read_number))
                     if os.path.exists(fastq_ln):
-                        print "-> %s.fastq.gz already exists" % sample.name
+                        logging.error("Failed to link to %s: %s already exists" %
+                                      (fastq_file,os.path.basename(fastq_ln)))
                     else:
                         print "Linking to %s" % fastq
                         if not options.dry_run:
