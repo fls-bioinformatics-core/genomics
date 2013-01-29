@@ -158,6 +158,7 @@ class IlluminaSample:
     dirn:  (full) path of the directory for the sample
     fastq: name of the fastq.gz file (without leading directory, join to
            'dirn' to get full path)
+    paired_end: boolean; indicates whether sample is paired end
 
     """
 
@@ -171,6 +172,7 @@ class IlluminaSample:
         """
         self.dirn = dirn
         self.fastq = []
+        self.paired_end = False
         # Get name by removing prefix
         self.sample_prefix = "Sample_"
         self.name = os.path.basename(dirn)[len(self.sample_prefix):]
@@ -183,6 +185,14 @@ class IlluminaSample:
         if not self.fastq:
             raise IlluminaDataError, "Unable to find fastq.gz files for %s" % \
                 self.name
+        # Sort fastq's into order
+        self.fastq.sort()
+        # Post-process and determine if we have paired-end data
+        for f in self.fastq:
+            fq = IlluminaFastq(f)
+            if fq.read_number == 2:
+                self.paired_end = True
+                break
 
     def __repr__(self):
         """Implement __repr__ built-in
