@@ -1,3 +1,8 @@
+2013-02-18  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* illumina2cluster/update_sample_sheet.py
+	- fix bug in --set-id option which misidentified lanes by their number.
+
 2013-01-29  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* illumina2cluster/update_sample_sheet.py
