@@ -129,16 +129,17 @@ if __name__ == "__main__":
     # Update the SampleID and SampleProject fields
     for sample_id in options.sample_id:
         lanes,name = parse_name_expression(sample_id)
-        for lane in lanes:
-            print "Setting SampleID for lane %d: '%s'" % (lane,name)
-            data[lane]['SampleID'] = name
+        for line in data:
+            if line['Lane'] in lanes:
+                print "Setting SampleID for lane %d: '%s'" % (line['Lane'],name)
+                line['SampleID'] = name
     # Update the SampleProject field
     for sample_project in options.sample_project:
         lanes,name = parse_name_expression(sample_project)
-        for lane_number in lanes:
-            print "Setting SampleProject for lane %d: '%s'" % (lane_number,name)
-            for lane in data:
-                if lane['Lane'] == lane_number: lane['SampleProject'] = name
+        for line in data:
+            if line['Lane'] in lanes:
+                print "Setting SampleProject for lane %d: '%s'" % (line['Lane'],name)
+                line['SampleProject'] = name
     # Fix spaces
     if options.fix_spaces:
         data.fix_illegal_names()
