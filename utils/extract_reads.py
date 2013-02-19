@@ -24,7 +24,7 @@ Recognises FASTQ, CSFASTA and QUAL files.
 # Module metadata
 #######################################################################
 
-__version__ = "0.1.2"
+__version__ = "0.1.3"
 
 #######################################################################
 # Import modules
@@ -63,7 +63,9 @@ class ReadExtractor:
         # Get number of records etc
         fp = open(self.__file_name,'rU')
         for line in fp:
-            if line.startswith('#'):
+            if self.__n_data_lines == 0 and line.startswith('#'):
+                # Assume header lines start with # symbol and
+                # only occur at the head of the file
                 self.__n_header_lines += 1
             else:
                 self.__n_data_lines += 1
