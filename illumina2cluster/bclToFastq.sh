@@ -48,6 +48,13 @@ if [ $# -lt 2 ] ; then
     exit 1
 fi
 #
+# Echo command line
+echo "=================================================================="
+echo `basename $0`
+echo "=================================================================="
+echo "Arguments: $@"
+echo 
+#
 # Defaults
 n_mismatches=0
 #
