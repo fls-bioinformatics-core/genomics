@@ -1,3 +1,9 @@
+2013-03-07  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* utils/fastq_sniffer.py
+	- new utility to identify likely FASTQ file format, quality encoding
+	  and equivalent Galaxy data type.
+
 2013-02-19  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* utils/extract_reads.py
