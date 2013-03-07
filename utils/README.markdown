@@ -8,6 +8,7 @@ Place to put general utility scripts/tools.
  *  `do.sh`: execute shell command iteratively with range of integer index values
  *  `extract_reads.py`: write out subsets of reads from input data files
  *  `fastq_edit.py`: edit FASTQ files and data
+ *  `fastq_sniffer.py`: "sniff" FASTQ file to determine quality encoding
  *  `makeBinsFromBed.pl`: create bin files for binning applications
  *  `makeRegularBinsFromGenomeTable.R`: make bin file from set of chromosomes
  *  `make_mock_solid_dir.py`: create mock SOLiD directory structure for testing
@@ -97,6 +98,7 @@ fastq_edit.py
 Usage: `fastq_edit.py [options] <fastq_file>`
 
 Perform various operations on FASTQ file.
+
 Options:
 
     --version             show program's version number and exit
@@ -106,6 +108,33 @@ Options:
                           Update the 'instrument name' in the sequence
                           identifier part of each read record and write updated
                           FASTQ file to stdout
+
+
+fastq_sniffer.py
+----------------
+
+Usage: `fastq_sniffer.py <fastq_file>`
+
+"Sniff" FASTQ file to try and determine likely format and quality encoding.
+
+Attempts to identify FASTQ format and quality encoding, and suggests likely datatype
+for import into Galaxy.
+
+Use the `--subset` option to only use a subset of reads from the file for the type
+determination (using a smaller set speeds up the process at the risk of not being able
+to accuracy determine the encoding convention).
+
+See [http://en.wikipedia.org/wiki/FASTQ_format]() for information on the different
+quality encoding standards used in different FASTQ formats.
+
+Options:
+
+    --version          show program's version number and exit
+    -h, --help         show this help message and exit
+    --subset=N_SUBSET  try to determine encoding from a subset of consisting of
+                       the first N_SUBSET reads. (Quicker than using all reads
+                       but may not be accurate if subset is not representative
+                       of the file as a whole.)
 
 makeBinsFromBed.pl
 ------------------
