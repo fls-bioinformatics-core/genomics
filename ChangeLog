@@ -1,3 +1,13 @@
+2013-03-13  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* share/JobRunner.py
+	- update GEJobRunner and DRMAAJobRunner classes to deal with suspended
+	  jobs.
+
+	* share/FASTQFile.py
+	- version 0.1.2: update FastqRead class to operate in a more efficient
+	  "lazy" fashion.
+
 2013-03-07  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* utils/fastq_sniffer.py
