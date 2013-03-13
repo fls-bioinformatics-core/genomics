@@ -429,8 +429,8 @@ class GEJobRunner(BaseJobRunner):
         # Process the output to get job ids
         job_ids = []
         for job_data in jobs:
-            # Check for state being 'r' (=running)
-            if job_data[4] == 'r':
+            # Check for state being 'r' (=running) or 'S' (=suspended)
+            if job_data[4] == 'r' or job_data[4] == 'S':
                 # Id is first item for each job
                 job_ids.append(job_data[0])
         return job_ids
@@ -601,7 +601,8 @@ class DRMAAJobRunner(BaseJobRunner):
         """
         job_ids = []
         for job in self.__names:
-            if self.__session.jobStatus(job) == drmaa.JobState.RUNNING:
+            if self.__session.jobStatus(job) == drmaa.JobState.RUNNING or \
+                    self.__session.jobStatus(job) == drmaa.JobState.SYSTEM_SUSPENDED:
                 job_ids.append(job)
         return job_ids
 
