@@ -7,7 +7,7 @@
 #
 #########################################################################
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 
 """FASTQFile
 
@@ -108,10 +108,18 @@ class FastqRead:
           optid: third line of the record
           quality: fourth line of the record
         """
-        self.seqid = SequenceIdentifier(seqid_line)
+        self.__raw_attributes = {}
+        self.__raw_attributes['seqid'] = seqid_line
         self.sequence = str(seq_line).strip()
         self.optid = str(optid_line.strip())
         self.quality = str(quality_line.strip())
+
+    @property
+    def seqid(self):
+        if 'seqid' in self.__raw_attributes:
+            self._seqid = SequenceIdentifier(self.__raw_attributes['seqid'])
+            del(self.__raw_attributes['seqid'])
+        return self._seqid
 
     def __repr__(self):
         return '\n'.join((str(self.seqid),
