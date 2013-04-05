@@ -1,3 +1,9 @@
+2013-04-05  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* QC-pipeline/qcreporter.py
+	- new --regexp option allows selection of a subset of samples based on
+	  regular expression pattern matching e.g. --regexp=SY[1-4]?_trim
+
 2013-03-13  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* share/JobRunner.py
