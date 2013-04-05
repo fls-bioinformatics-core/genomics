@@ -60,7 +60,7 @@ class QCReporter:
     subclassed from QCReporter and need to implement the 'report'
     method to generate the HTML output.
     """
-    def __init__(self,dirn,data_format=None,qc_dir='qc'):
+    def __init__(self,dirn,data_format=None,qc_dir='qc',regex_pattern=None):
         """Create a new QCReporter instance
 
         Arguments:
@@ -85,6 +85,8 @@ class QCReporter:
                                                   self.__name,self.__run)
         # List of samples
         self.__samples = []
+        # Regexp pattern for selecting sample subset
+        self.__regex_pattern = regex_pattern
         # HTML document
         self.__html = self.__init_html()
 
@@ -155,13 +157,13 @@ class QCReporter:
         """
         primary_data = None
         if self.data_format == 'solid':
-            primary_data = Pipeline.GetSolidDataFiles(self.dirn)
+            primary_data = Pipeline.GetSolidDataFiles(self.dirn,pattern=self.__regex_pattern)
         elif self.data_format == 'solid_paired_end':
-            primary_data = Pipeline.GetSolidPairedEndFiles(self.dirn)
+            primary_data = Pipeline.GetSolidPairedEndFiles(self.dirn,pattern=self.__regex_pattern)
         elif self.data_format == 'fastq':
-            primary_data = Pipeline.GetFastqFiles(self.dirn)
+            primary_data = Pipeline.GetFastqFiles(self.dirn,pattern=self.__regex_pattern)
         elif self.data_format == 'fastqgz':
-            primary_data = Pipeline.GetFastqGzFiles(self.dirn)
+            primary_data = Pipeline.GetFastqGzFiles(self.dirn,pattern=self.__regex_pattern)
         else:
             # Unrecognised data format
             raise QCReporterError, "Unrecognised data type '%s'" % self.data_format
@@ -605,12 +607,13 @@ class IlluminaQCReporter(QCReporter):
     results for quick review.
     """
     
-    def __init__(self,dirn,data_format=None,qc_dir='qc'):
+    def __init__(self,dirn,data_format=None,qc_dir='qc',regex_pattern=None):
         # Set input file type if not explicitly specified
         if data_format is None:
             data_format = 'fastqgz'
         # Initialise base class
-        QCReporter.__init__(self,dirn,data_format=data_format,qc_dir=qc_dir)
+        QCReporter.__init__(self,dirn,data_format=data_format,qc_dir=qc_dir,
+                            regex_pattern=regex_pattern)
         # Locate input fastq.gz files
         primary_data = self.getPrimaryDataFiles()
         for data in primary_data:
@@ -801,7 +804,7 @@ class SolidQCReporter(QCReporter):
     results for quick review.
     """
 
-    def __init__(self,dirn,data_format=None,qc_dir='qc'):
+    def __init__(self,dirn,data_format=None,qc_dir='qc',regex_pattern=None):
         """Make a new SolidQCReporter instance
 
         The SolidQCReporter class checks the contents of the supplied
@@ -842,7 +845,8 @@ class SolidQCReporter(QCReporter):
             else:
                 logging.error("Ignoring unrecognised format '%s'" % data_format)
         # Initialise base class
-        QCReporter.__init__(self,dirn,data_format=data_format,qc_dir=qc_dir)
+        QCReporter.__init__(self,dirn,data_format=data_format,qc_dir=qc_dir,
+                            regex_pattern=regex_pattern)
         self.__paired_end = paired_end
         # Get primary data files
         primary_data = self.getPrimaryDataFiles()
@@ -1311,6 +1315,8 @@ if __name__ == "__main__":
                  "'qc')")
     p.add_option("--verify",action="store_true",dest="verify",default=False,
                  help="don't generate report, just verify the QC outputs")
+    p.add_option('--regexp',action='store',dest='pattern',default=None,
+                 help="select subset of files which match regular expression PATTERN")
 
     # Deal with command line
     options,arguments = p.parse_args()
@@ -1352,7 +1358,8 @@ if __name__ == "__main__":
         qcreporter = None
         if qcreporter_class is not None:
             try:
-                qcreporter = qcreporter_class(d,data_format=data_format,qc_dir=options.qc_dir)
+                qcreporter = qcreporter_class(d,data_format=data_format,qc_dir=options.qc_dir,
+                                              regex_pattern=options.pattern)
             except QCReporterError,ex:
                 logging.error("Unable to extract data from %s: %s" % (d,ex))
         # Perform required action

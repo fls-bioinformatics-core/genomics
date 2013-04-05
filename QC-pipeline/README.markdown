@@ -282,6 +282,8 @@ Options:
     --qc_dir=QC_DIR       specify a different name for the QC results
                           subdirectory (default is 'qc')
     --verify              don't generate report, just verify the QC outputs
+    --regexp=PATTERN      select subset of files which match regular expression
+                          PATTERN
 
 ### Reporting recipes ###
 
