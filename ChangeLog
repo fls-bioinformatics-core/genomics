@@ -1,3 +1,12 @@
+2013-04-08  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* share/IlluminaData.py
+	- updated IlluminaProject class: allow "Undetermined_indices" dir to
+	  also be treated as a "project" within the class framework.
+
+	* illumina2cluster/analyse_illumina_run.py
+	- added --copy option, to copy specific FASTQ files to pwd.
+
 2013-04-05  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* QC-pipeline/qcreporter.py
