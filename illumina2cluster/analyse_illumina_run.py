@@ -16,6 +16,9 @@ Provides functionality for analysing data from an Illumina sequencer run.
 import os
 import sys
 import optparse
+import shutil
+import logging
+logging.basicConfig(format="%(levelname)s %(message)s")
 
 # Put ../share onto Python search path for modules
 SHARE_DIR = os.path.abspath(
@@ -28,7 +31,21 @@ import IlluminaData
 # Functions
 #######################################################################
 
-# No functions defined
+def name_matches(name,pattern):
+    """Simple wildcard matching of project and sample names
+    
+    Arguments
+      name: text to match against pattern
+      pattern: simple 'glob'-like pattern to match against
+
+    Returns
+      True if name matches pattern; False otherwise.
+    """
+    if not pattern.endswith('*'):
+        # Exact match required
+        return (name == pattern)
+    else:
+        return name.startswith(pattern.rstrip('*'))
 
 #######################################################################
 # Main program
@@ -48,6 +65,8 @@ if __name__ == "__main__":
     p.add_option("--unaligned",action="store",dest="unaligned_dir",default="Unaligned",
                  help="specify an alternative name for the 'Unaligned' directory "
                  "containing the fastq.gz files")
+    p.add_option("--copy",action="store",dest="copy_pattern",default=None,
+                 help="copy fastq.gz files matching COPY_PATTERN to current directory")
     # Parse command line
     options,args = p.parse_args()
 
@@ -86,3 +105,28 @@ if __name__ == "__main__":
             print "Project %s: %s (%d samples)" % (project_name,
                                                    sample_names,
                                                    n_samples)
+
+    # Copy fastq.gz files to the current directory
+    if options.copy_pattern is not None:
+        # Extract project and sample names/patterns
+        try:
+            project_pattern,sample_pattern = options.copy_pattern.split("/")
+            print "Copy: look for samples matching pattern %s" % options.copy_pattern
+            print "Data files will be copied to %s" % os.getcwd()
+        except ValueError:
+            logging.error("ERROR invalid pattern '%s'" % options.copy_pattern)
+            sys.exit(1)
+        # Loop through projects and samples looking for matches
+        for project in illumina_data.projects:
+            if name_matches(project.name,project_pattern):
+                # Loop through samples
+                for sample in project.samples:
+                    if name_matches(sample.name,sample_pattern):
+                        for fastq in sample.fastq:
+                            fastq_file = os.path.join(sample.dirn,fastq)
+                            print "\tCopying .../%s" % os.path.basename(fastq_file)
+                            dst = os.path.abspath(os.path.basename(fastq_file))
+                            if os.path.exists(dst):
+                                logging.error("File %s already exists! Skipped" % dst)
+                            else:
+                                shutil.copy(fastq_file,dst)

@@ -30,6 +30,8 @@ Options:
     --unaligned=UNALIGNED_DIR
                           specify an alternative name for the 'Unaligned'
                           directory conatining the fastq.gz files
+    --copy=COPY_PATTERN   copy fastq.gz files matching COPY_PATTERN to current
+                          directory
 
 
 bclToFastq.sh
