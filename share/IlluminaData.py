@@ -99,6 +99,11 @@ class IlluminaProject:
     sequencer; in the first instance projects are defined within the
     SampleSheet.csv file which is output by the sequencer.
 
+    Note that the "Undetermined_indices" directory (which holds fastq files
+    for each lane where any reads that couldn't be assigned to a barcode
+    during demultiplexing) is also considered as a project, and can be
+    processed using an IlluminaData object.
+
     Provides the following attributes:
 
     name:      name of the project
@@ -117,15 +122,22 @@ class IlluminaProject:
         Arguments:
           dirn: path to the directory holding the samples within the
                 project (expected to be in subdirectories "Sample_...")
+
         """
         self.dirn = dirn
         self.expt_type = None
         self.samples = []
         # Get name by removing prefix
         self.project_prefix = "Project_"
-        if not os.path.basename(self.dirn).startswith(self.project_prefix):
-            raise IlluminaDataError, "Bad project name '%s'" % self.dirn
-        self.name = os.path.basename(self.dirn)[len(self.project_prefix):]
+        if os.path.basename(self.dirn).startswith(self.project_prefix):
+            self.name = os.path.basename(self.dirn)[len(self.project_prefix):]
+        else:
+            # Check if this is the "Undetermined_indices" directory
+            if os.path.basename(self.dirn) == "Undetermined_indices":
+                self.name = os.path.basename(self.dirn)
+                self.project_prefix = ""
+            else:
+                raise IlluminaDataError, "Bad project name '%s'" % self.dirn
         logging.debug("Project name: %s" % self.name)
         # Look for samples
         self.sample_prefix = "Sample_"
