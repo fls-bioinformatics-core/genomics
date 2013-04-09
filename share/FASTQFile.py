@@ -1,5 +1,5 @@
 #     FASTQFile.py: read and manipulate FASTQ files and data
-#     Copyright (C) University of Manchester 2012 Peter Briggs
+#     Copyright (C) University of Manchester 2012-13 Peter Briggs
 #
 ########################################################################
 #
@@ -7,7 +7,7 @@
 #
 #########################################################################
 
-__version__ = "0.1.2"
+__version__ = "0.2.0"
 
 """FASTQFile
 
@@ -17,8 +17,7 @@ the data within them:
 * FastqIterator: enables looping through all read records in FASTQ file
 * FastqRead: provides access to a single FASTQ read record
 
-Information on the FASTQ file format:
-http://en.wikipedia.org/wiki/FASTQ_format
+Information on the FASTQ file format: http://en.wikipedia.org/wiki/FASTQ_format
 """
 
 #######################################################################
@@ -57,21 +56,36 @@ class FastqIterator(Iterator):
     Example looping over all reads
     >>> for read in FastqIterator(fastq_file):
     >>>    print read
+
+    Input FASTQ can be in gzipped format; FASTQ data can also be supplied
+    as a file-like object opened for reading, for example
+    >>> fp = open(fastq_file,'rU')
+    >>> for read in FastqIterator(fp=fp):
+    >>>    print read
+    >>> fp.close()
+
     """
 
-    def __init__(self,fastq_file):
+    def __init__(self,fastq_file=None,fp=None):
         """Create a new FastqIterator
 
         The input FASTQ can be either a text file or a compressed (gzipped)
-        FASTQ.
+        FASTQ, specified via a file name (using the 'fastq' argument), or a
+        file-like object opened for line reading (using the 'fp' argument).
 
         Arguments:
            fastq_file: name of the FASTQ file to iterate through
+           fp: file-like object opened for reading
+
         """
-        if os.path.splitext(fastq_file)[1] == '.gz':
-            self.__fp = gzip.open(fastq_file,'r')
+        self.__fastq_file = fastq_file
+        if fp is None:
+            if os.path.splitext(self.__fastq_file)[1] == '.gz':
+                self.__fp = gzip.open(self.__fastq_file,'r')
+            else:
+                self.__fp = open(self.__fastq_file,'rU')
         else:
-            self.__fp = open(fastq_file,'rU')
+            self.__fp = fp
 
     def next(self):
         """Return next record from FASTQ file as a FastqRead object
@@ -84,7 +98,8 @@ class FastqIterator(Iterator):
             return FastqRead(seqid_line,seq_line,optid_line,quality_line)
         else:
             # Reached EOF
-            self.__fp.close()
+            if self.__fastq_file is None:
+                self.__fp.close()
             raise StopIteration
 
 class FastqRead:
@@ -208,17 +223,107 @@ class SequenceIdentifier:
 # Functions
 #######################################################################
 
-def run_tests():
-    """Run the tests
+def nreads(fastq=None,fp=None):
+    """Return number of reads in a FASTQ file
+
+    Performs a simple-minded read count, by counting the number of lines
+    in the file and dividing by 4.
+
+    The FASTQ file can be specified either as a file name (using the 'fastq'
+    argument) or as a file-like object opened for line reading (using the
+    'fp' argument).
+
+    This function can handle gzipped FASTQ files supplied via the 'fastq'
+    argument.
+
+    Arguments:
+      fastq: fastq(.gz) file
+      fp: open file descriptor for fastq file
+
+    Returns:
+      Number of reads
+
     """
-    logging.getLogger().setLevel(logging.CRITICAL)
-    unittest.main()
+    nlines = 0
+    if fp is None:
+        if os.path.splitext(fastq)[1] == '.gz':
+            fp = gzip.open(fastq,'r')
+        else:
+            fp = open(fastq,'rU')
+    for line in fp:
+        nlines += 1
+    if fastq is not None:
+        fp.close()
+    if (nlines%4) != 0:
+        raise Exception,"Bad read count (not fastq file, or corrupted?)"
+    return nlines/4
 
 #######################################################################
 # Tests
 #######################################################################
 
 import unittest
+import cStringIO
+
+fastq_data = """@73D9FA:3:FC:1:1:7507:1000 1:N:0:
+NACAACCTGATTAGCGGCGTTGACAGATGTATCCAT
++
+#))))55445@@@@@C@@@@@@@@@:::::<<:::<
+@73D9FA:3:FC:1:1:15740:1000 1:N:0:
+NTCTTGCTGGTGGCGCCATGTCTAAATTGTTTGGAG
++
+#+.))/0200<<<<<:::::CC@@C@CC@@@22@@@
+@73D9FA:3:FC:1:1:8103:1000 1:N:0:
+NGACCGATTAGAGGCGTTTTATGATAATCCCAATGC
++
+#(,((,)*))/.0--2255282299@@@@@@@@@@@
+@73D9FA:3:FC:1:1:7488:1000 1:N:0:
+NTGATTGTCCAGTTGCATTTTAGTAAGCTCTTTTTG
++
+#,,,,33223CC@@@@@@@C@@@@@@@@C@CC@222
+@73D9FA:3:FC:1:1:6680:1000 1:N:0:
+NATAAATCACCTCACTTAAGTGGCTGGAGACAAATA
++
+#--,,55777@@@@@@@CC@@C@@@@@@@@:::::<
+"""
+
+class TestFastqIterator(unittest.TestCase):
+    """Tests of the FastqIterator class
+    """
+
+    def test_fastq_iterator(self):
+        """Check iteration over small FASTQ file
+        """
+        fp = cStringIO.StringIO(fastq_data)
+        fastq = FastqIterator(fp=fp)
+        nreads = 0
+        fastq_source = cStringIO.StringIO(fastq_data)
+        for read in fastq:
+            nreads += 1
+            self.assertTrue(isinstance(read.seqid,SequenceIdentifier))
+            self.assertEqual(str(read.seqid),fastq_source.readline().rstrip('\n'))
+            self.assertEqual(read.sequence,fastq_source.readline().rstrip('\n'))
+            self.assertEqual(read.optid,fastq_source.readline().rstrip('\n'))
+            self.assertEqual(read.quality,fastq_source.readline().rstrip('\n'))
+        self.assertEqual(nreads,5)
+
+class TestFastqRead(unittest.TestCase):
+    """Tests of the FastqRead class
+    """
+
+    def test_fastqread(self):
+        """Check FastqRead stores input correctly
+        """
+        seqid = "@HWI-ST1250:47:c0tr3acxx:4:1101:1283:2323 1:N:0:ACAGTGATTCTTTCCC\n"
+        seq = "GGTGTCTTCAAAAAGGCCAACCAGATAGGCCTCACTTGCCTCCTGCAAAGCACCGATAGCTGCGCTCTGGAAGCGCAGATCTGTTTTAAAGTCCTGAGCAA\n"
+        optid = "+\n"
+        quality = "=@@D;DDFFHDHHIJIIIIIIGIGIGDIHGGEIGICFGIGHIIGII@?FGIGIEI@EHEFFEEBAACD;@ACCDDBDBDDACCC3>CD>:ADCCDDD?C@\n"
+        read = FastqRead(seqid,seq,optid,quality)
+        self.assertTrue(isinstance(read.seqid,SequenceIdentifier))
+        self.assertEqual(str(read.seqid),seqid.rstrip('\n'))
+        self.assertEqual(read.sequence,seq.rstrip('\n'))
+        self.assertEqual(read.optid,optid.rstrip('\n'))
+        self.assertEqual(read.quality,quality.rstrip('\n'))
 
 class TestSequenceIdentifier(unittest.TestCase):
     """Tests of the SequenceIdentifier class
@@ -295,6 +400,22 @@ class TestSequenceIdentifier(unittest.TestCase):
         self.assertEqual(str(seqid),seqid_string)
         # Check the format
         self.assertEqual(None,seqid.format)
+
+class TestNReads(unittest.TestCase):
+    """Tests of the nreads function
+    """
+
+    def test_nreads(self):
+        """Check that nreads returns correct read count
+        """
+        fp = cStringIO.StringIO(fastq_data)
+        self.assertEqual(nreads(fp=fp),5)
+
+def run_tests():
+    """Run the tests
+    """
+    logging.getLogger().setLevel(logging.CRITICAL)
+    unittest.main()
 
 #######################################################################
 # Main program
