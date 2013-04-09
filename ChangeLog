@@ -1,3 +1,10 @@
+2013-04-09  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* share/FASTQFile.py
+	- version 0.2.0: added tests, new function "nreads" (counts reads in
+	  FASTQ), and enabled FastqIterator to read data from an open
+	  file-like object.
+
 2013-04-08  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* share/IlluminaData.py
