@@ -275,7 +275,11 @@ class CasavaSampleSheet(TabFile.TabFile):
                                                'Index','Description','Control',
                                                'Recipe','Operator','SampleProject'))
         # Characters that can't be used in SampleID and SampleProject names
-        self.illegal_characters = "?()[]/\=+<>:;\"',*^|&. \t" 
+        self.illegal_characters = "?()[]/\=+<>:;\"',*^|&. \t"
+        # Remove double quotes from values
+        for line in self:
+            for name in self.header():
+                line[name] = str(line[name]).strip('"')
 
     def write(self,filen=None,fp=None):
         """Output the sample sheet data to file or stream
