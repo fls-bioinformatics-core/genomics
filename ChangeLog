@@ -3,6 +3,8 @@
 	* QC-pipeline/qcreporter.py
 	- version 0.1.0: added version number, and write this to report header
 	  along with date and time of report generation.
+	- put the per-base quality boxplot from FastQC into the top-level
+	  report.
 
 2013-04-09  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
