@@ -515,7 +515,7 @@ class QCSample:
         else:
             html.add("<p>No boxplots found</p>")
 
-    def report_fastqc(self,html):
+    def report_fastqc(self,html,inline_pngs=True):
         """Write HTML code reporting the results from FastQC
 
         Arguments:
@@ -527,7 +527,24 @@ class QCSample:
         if self.__fastqc:
             # Link to the FastQC report HTML
             fastqc_report = os.path.join(qc_dir,self.__fastqc,'fastqc_report.html')
+            # Add quality boxplot image
+            html.add("<p>Per base quality boxplot:</p>")
+            quality_plot_link = fastqc_report + "#M1"
+            if inline_pngs:
+                pngdata = "data:image/png;base64," + \
+                    PNGBase64Encoder().encodePNG(os.path.join(self.qc_dir,
+                                                              self.__fastqc,
+                                                              'Images',
+                                                              'per_base_quality.png'))
+            else:
+                pngdata = os.path.join(qc_dir,
+                                       self.__fastqc,
+                                       'Images',
+                                       'per_base_quality.png')
+            html.add("<a href='%s''><img src='%s' height=250 width=480 /></a>" % \
+                         (quality_plot_link,pngdata))
             # Add summary table
+            html.add("<p>FastQC summary:</p>")
             fastqc_summary = os.path.join(self.qc_dir,self.__fastqc,'summary.txt')
             if os.path.exists(fastqc_summary):
                 html.add("<table class='fastqc_summary summary'>")
