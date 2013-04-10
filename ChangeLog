@@ -1,3 +1,9 @@
+2013-04-10  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* QC-pipeline/qcreporter.py
+	- version 0.1.0: added version number, and write this to report header
+	  along with date and time of report generation.
+
 2013-04-09  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* share/FASTQFile.py
