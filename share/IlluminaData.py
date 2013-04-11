@@ -320,7 +320,7 @@ class CasavaSampleSheet(TabFile.TabFile):
         """
         samples = {}
         for line in self:
-            name = ((line['SampleID'],line['SampleProject']))
+            name = ((line['SampleID'],line['SampleProject'],line['Index'],line['Lane']))
             if name not in samples:
                 samples[name] = [line]
             else:
