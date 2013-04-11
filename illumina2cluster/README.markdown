@@ -6,7 +6,9 @@ Utilities for preparing data on the cluster from the Illumina instrument:
  *   `analyse_illumina_run.py`: reporting and manipulations of Illumina run data
  *   `bclToFastq.sh`: generate FASTQ from BCL files
  *   `build_illumina_analysis_dir.py`: create and populate per-project analysis dirs
+ *   `demultiplex_undetermined_fastq.py`: demultiplex undetermined Illumina reads
  *   `prep_sample_sheet.py`: edit SampleSheet.csv before generating FASTQ
+ *   `rsync_seq_data.sh`: copy sequencing data using rsync
 
 
 analyse_illumina_run.py
@@ -103,25 +105,38 @@ Options:
                       detected
 
 
-rsync_seq_data.sh
------------------
+demultiplex_undetermined_fastq.py
+---------------------------------
 
-Rsync a copy of a sequencing data directory to a local or remoted destination.
+Demultiplex undetermined Illumina reads output from CASAVA.
 
 Usage:
 
-    rsync_seq_data.sh OPTIONS SEQ_DATA_DIR TARGET_DIR
+    demultiplex_undetermined_fastq.py OPTIONS DIR
 
-Makes a copy of sequencing data directory SEQ_DATA_DIR under TARGET_DIR, and writes
-the rsync log both to STDOUT and to a timestamped log file (except for `--dry-run`).
+Reassign reads with undetermined index sequences. (i.e. barcodes). DIR is the
+name (including any leading path) of the 'Undetermined_indices' directory
+produced by CASAVA, which contains the FASTQ files with the undetermined reads
+from each lane.
 
-Options are passed directly to the `rsync` command.
+Options:
+
+    --version             show program's version number and exit
+    -h, --help            show this help message and exit
+    --barcode=BARCODE_INFO
+                          specify barcode sequence and corresponding sample name
+                          as BARCODE_INFO. The syntax is
+                          '<name>:<barcode>:<lane>' e.g. --barcode=PB1:ATTAGA:3
+    --samplesheet=SAMPLE_SHEET
+                          specify SampleSheet.csv file to read barcodes, sample
+                          names and lane assignments from (as an alternative to
+                          --barcode).
 
 
 prep_sample_sheet.py
 --------------------
 
-View and manipulate sample sheet files for Illumina GA2 sequencer.
+Prepare sample sheet files for Illumina sequencers for input into CASAVA.
 
 Usage:
 
@@ -171,5 +186,20 @@ Read in the sample sheet file `SampleSheet.csv`, update the `SampleProject` and
 Automatically fix spaces and duplicated `sampleID`/`sampleProject` combinations
 and write out to `SampleSheet3.csv`:
 
-   prep_sample_sheet.py --fix-spaces --fix-duplicates \
+    prep_sample_sheet.py --fix-spaces --fix-duplicates \
         -o SampleSheet3.csv SampleSheet.csv
+
+
+rsync_seq_data.sh
+-----------------
+
+Rsync a copy of a sequencing data directory to a local or remote destination.
+
+Usage:
+
+    rsync_seq_data.sh OPTIONS SEQ_DATA_DIR TARGET_DIR
+
+Makes a copy of sequencing data directory SEQ_DATA_DIR under TARGET_DIR, and writes
+the rsync log both to STDOUT and to a timestamped log file (except for `--dry-run`).
+
+Options are passed directly to the `rsync` command.
