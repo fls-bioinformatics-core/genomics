@@ -6,7 +6,7 @@ Utilities for preparing data on the cluster from the Illumina instrument:
  *   `analyse_illumina_run.py`: reporting and manipulations of Illumina run data
  *   `bclToFastq.sh`: generate FASTQ from BCL files
  *   `build_illumina_analysis_dir.py`: create and populate per-project analysis dirs
- *   `update_sample_sheet.py`: edit SampleSheet.csv before generating FASTQ
+ *   `prep_sample_sheet.py`: edit SampleSheet.csv before generating FASTQ
 
 
 analyse_illumina_run.py
@@ -118,14 +118,14 @@ the rsync log both to STDOUT and to a timestamped log file (except for `--dry-ru
 Options are passed directly to the `rsync` command.
 
 
-update_sample_sheet.py
-----------------------
+prep_sample_sheet.py
+--------------------
 
 View and manipulate sample sheet files for Illumina GA2 sequencer.
 
 Usage:
 
-    update_sample_sheet.py [OPTIONS] SampleSheet.csv
+    prep_sample_sheet.py [OPTIONS] SampleSheet.csv
 
 Utility to view and edit SampleSheet file from Illumina GA2 sequencer. Can be
 used to update sample IDs and project names before running BCL to FASTQ
@@ -165,11 +165,11 @@ Read in the sample sheet file `SampleSheet.csv`, update the `SampleProject` and
 `SampleID` for lanes 1 and 8, and write the updated sample sheet to the file
 `SampleSheet2.csv`:
 
-    update_sample_sheet.py -o SampleSheet2.csv --set-project=1,8:Control \
+    prep_sample_sheet.py -o SampleSheet2.csv --set-project=1,8:Control \
         --set-id=1:PhiX_10pM --set-id=8:PhiX_12pM SampleSheet.csv
 
 Automatically fix spaces and duplicated `sampleID`/`sampleProject` combinations
 and write out to `SampleSheet3.csv`:
 
-   update_sample_sheet.py --fix-spaces --fix-duplicates \
+   prep_sample_sheet.py --fix-spaces --fix-duplicates \
         -o SampleSheet3.csv SampleSheet.csv
