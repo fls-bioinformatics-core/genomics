@@ -9,6 +9,8 @@ Provides functionality for analysing data from an Illumina sequencer run.
 
 """
 
+__version__ = "0.1.0"
+
 #######################################################################
 # Import modules
 #######################################################################
@@ -54,6 +56,7 @@ def name_matches(name,pattern):
 if __name__ == "__main__":
     # Create command line parser
     p = optparse.OptionParser(usage="%prog OPTIONS illumina_data_dir",
+                              version="%prog "+__version__,
                               description="Utility for performing various checks and "
                               "operations on Illumina data. 'illumina_data_dir' is the "
                               "top-level directory containing the 'Unaligned' directory "
@@ -67,6 +70,8 @@ if __name__ == "__main__":
                  "containing the fastq.gz files")
     p.add_option("--copy",action="store",dest="copy_pattern",default=None,
                  help="copy fastq.gz files matching COPY_PATTERN to current directory")
+    p.add_option("--verify",action="store",dest="sample_sheet",default=None,
+                 help="check CASAVA outputs against those expected for SAMPLE_SHEET")
     # Parse command line
     options,args = p.parse_args()
 
@@ -81,7 +86,8 @@ if __name__ == "__main__":
 
     # Check there's at least one thing to do
     if not (options.report or 
-            options.list):
+            options.list or
+            options.sample_sheet):
         options.report = True
 
     # List option
@@ -130,3 +136,55 @@ if __name__ == "__main__":
                                 logging.error("File %s already exists! Skipped" % dst)
                             else:
                                 shutil.copy(fastq_file,dst)
+
+    # Verify against sample sheet
+    if options.sample_sheet is not None:
+        # Get predicted outputs
+        predicted_projects = IlluminaData.\
+            CasavaSampleSheet(options.sample_sheet).predict_output()
+        # Loop through projects and check that predicted outputs exist
+        status = 0
+        for proj in predicted_projects:
+            # Locate project directory
+            proj_dir = os.path.join(illumina_data.unaligned_dir,proj)
+            if os.path.isdir(proj_dir):
+                predicted_samples = predicted_projects[proj]
+                for smpl in predicted_samples:
+                    # Locate sample directory
+                    smpl_dir = os.path.join(proj_dir,smpl)
+                    if os.path.isdir(smpl_dir):
+                        # Check for output files
+                        predicted_names = predicted_samples[smpl]
+                        for name in predicted_names:
+                            # Look for R1 file
+                            f = os.path.join(smpl_dir,"%s_R1_001.fastq.gz" % name)
+                            if not os.path.exists(f):
+                                logging.warning("Verify: missing R1 file '%s'" % f)
+                                status = 1
+                            # Look for R2 file (paired end only)
+                            if illumina_data.paired_end:
+                                f = os.path.join(smpl_dir,"%s_R2_001.fastq.gz" % name)
+                                if not os.path.exists(f):
+                                    logging.warning("Verify: missing R2 file '%s'" % f)
+                                    status = 1
+                    else:
+                        # Sample directory not found
+                        logging.warning("Verify: missing %s" % smpl_dir)
+                        status = 1
+            else:
+                # Project directory not found
+                logging.warning("Verify: missing %s" % proj_dir)
+                status = 1
+        # Finished
+        if status == 0:
+            print "Verification against sample sheet '%s': OK" % \
+                options.sample_sheet
+        else:
+            logging.error("Verification against sample sheet '%s': FAILED" %
+                          options.sample_sheet)
+        sys.exit(status)
+                            
+                
+                
+                                    
+        

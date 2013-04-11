@@ -34,6 +34,9 @@ Options:
                           directory conatining the fastq.gz files
     --copy=COPY_PATTERN   copy fastq.gz files matching COPY_PATTERN to current
                           directory
+    --verify=SAMPLE_SHEET
+                          check CASAVA outputs against those expected for
+                          SAMPLE_SHEET
 
 
 bclToFastq.sh
