@@ -127,9 +127,9 @@ Usage:
 
     prep_sample_sheet.py [OPTIONS] SampleSheet.csv
 
-Utility to view and edit SampleSheet file from Illumina GA2 sequencer. Can be
-used to update sample IDs and project names before running BCL to FASTQ
-conversion.
+Utility to prepare SampleSheet files from Illumina sequencers. Can be used to
+view, validate and update or fix information such as sample IDs and project
+names before running BCL to FASTQ conversion.
 
 Options:
 

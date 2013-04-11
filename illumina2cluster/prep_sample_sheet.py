@@ -1,18 +1,21 @@
 #!/bin/env python
 #
-#     update_sample_sheet.py: edit sample sheet files from Illumina sequencer
-#     Copyright (C) University of Manchester 2012 Peter Briggs
+#     prep_sample_sheet.py: prepare sample sheet file for Illumina sequencers
+#     Copyright (C) University of Manchester 2012-3 Peter Briggs
 #
 ########################################################################
 #
-# update_sample_sheet.py
+# prep_sample_sheet.py
 #
 #########################################################################
 
-"""update_sample_sheet.py
+"""prep_sample_sheet.py
 
-View and manipulate sample sheet files for Illumina GA2 sequencer.
+Prepare sample sheet file for Illumina sequencers.
+
 """
+
+__version__ = "0.1.0"
 
 #######################################################################
 # Imports
@@ -83,9 +86,11 @@ if __name__ == "__main__":
 
     # Set up option parser
     p = optparse.OptionParser(usage="%prog [OPTIONS] SampleSheet.csv",
-                              description="Utility to view and edit SampleSheet file from "
-                              "Illumina GA2 sequencer. Can be used to update sample IDs and "
-                              "project names before running BCL to FASTQ conversion.")
+                              version="%prog "+__version__,
+                              description="Utility to prepare SampleSheet files from "
+                              "Illumina sequencers. Can be used to view, validate and "
+                              "update or fix information such as sample IDs and project "
+                              "names before running BCL to FASTQ conversion.")
     p.add_option('-o',action="store",dest="samplesheet_out",default=None,
                  help="output new sample sheet to SAMPLESHEET_OUT")
     p.add_option('-v','--view',action="store_true",dest="view",
