@@ -1,3 +1,11 @@
+2013-04-11  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* illumina2cluster/prep_sample_sheet.py
+	- version 0.1.0: renamed from 'update_sample_sheet.py'
+	
+	* illumina2cluster/update_sample_sheet.py
+	- renamed to 'prep_sample_sheet.py'
+
 2013-04-10  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* QC-pipeline/qcreporter.py
@@ -6,6 +14,10 @@
 	- put the per-base quality boxplot from FastQC into the top-level
 	  report.
 
+	* share/IlluminaData.py
+	- CasavaSampleSheet class: automatically remove double quotes from
+	  around sample sheet values upon reading.
+	
 2013-04-09  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* share/FASTQFile.py
