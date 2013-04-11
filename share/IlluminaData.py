@@ -40,6 +40,7 @@ class IlluminaData:
                    subdirectories "Project_...")
     unaligned_dir: full path to the 'Unaligned' directory holding the
                    primary fastq.gz files
+    paired_end:    True if all projects are paired end, False otherwise
 
     Provides the following methods:
 
@@ -61,6 +62,7 @@ class IlluminaData:
         """
         self.analysis_dir = os.path.abspath(illumina_analysis_dir)
         self.projects = []
+        self.paired_end = True
         # Look for "unaligned" data directory
         self.unaligned_dir = os.path.join(illumina_analysis_dir,unaligned_dir)
         if not os.path.exists(self.unaligned_dir):
@@ -76,6 +78,9 @@ class IlluminaData:
             raise IlluminaDataError, "No projects found"
         # Sort projects on name
         self.projects.sort(lambda a,b: cmp(a.name,b.name))
+        # Determine whether data is paired end
+        for p in self.projects:
+            self.paired_end = (self.paired_end and p.paired_end)
 
     def get_project(self,name):
         """Return project that matches 'name'
@@ -113,6 +118,7 @@ class IlluminaProject:
                calling subprogram
     samples:   list of IlluminaSample objects for each sample within the
                project
+    paired_end: True if all samples are paired end, False otherwise
 
     """
 
@@ -127,6 +133,7 @@ class IlluminaProject:
         self.dirn = dirn
         self.expt_type = None
         self.samples = []
+        self.paired_end = True
         # Get name by removing prefix
         self.project_prefix = "Project_"
         if os.path.basename(self.dirn).startswith(self.project_prefix):
@@ -151,13 +158,19 @@ class IlluminaProject:
                 project.name
         # Sort samples on name
         self.samples.sort(lambda a,b: cmp(a.name,b.name))
+        # Determine whether project is paired end
+        for s in self.samples:
+            self.paired_end = (self.paired_end and s.paired_end)
 
     def prettyPrintSamples(self):
         """Return a nicely formatted string describing the sample names
 
         Wraps a call to 'pretty_print_names' function.
         """
-        return bcf_utils.pretty_print_names(self.samples)
+        pp = bcf_utils.pretty_print_names(self.samples)
+        if self.paired_end:
+            pp += " (paired-end)"
+        return pp
 
 class IlluminaSample:
     """Class for storing information on a 'sample' within an Illumina project
