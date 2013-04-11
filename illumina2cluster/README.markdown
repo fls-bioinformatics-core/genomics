@@ -140,8 +140,10 @@ Options:
                           format
     --fix-spaces          replace spaces in SampleID and SampleProject fields
                           with underscores
-    --fix-duplicates      append uniques indices to SampleIDs where original
+    --fix-duplicates      append unique indices to SampleIDs where original
                           SampleID/SampleProject combination are duplicated
+    --fix-empty-projects  create SampleProject names where these are blank in
+                          the original sample sheet
     --set-id=SAMPLE_ID    update/set the values in the 'SampleID' field;
                           SAMPLE_ID should be of the form '<lanes>:<name>',
                           where <lanes> is a single integer (e.g. 1), a set of

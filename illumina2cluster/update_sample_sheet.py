@@ -97,6 +97,9 @@ if __name__ == "__main__":
     p.add_option('--fix-duplicates',action="store_true",dest="fix_duplicates",
                  help="append unique indices to SampleIDs where original "
                  "SampleID/SampleProject combination are duplicated")
+    p.add_option('--fix-empty-projects',action="store_true",dest="fix_empty_projects",
+                 help="create SampleProject names where these are blank in the original "
+                 "sample sheet")
     p.add_option('--set-id',action="append",dest="sample_id",default=[],
                  help="update/set the values in the 'SampleID' field; "
                  "SAMPLE_ID should be of the form '<lanes>:<name>', where <lanes> is a single "
@@ -143,6 +146,11 @@ if __name__ == "__main__":
     # Fix spaces
     if options.fix_spaces:
         data.fix_illegal_names()
+    # Fix empty projects
+    if options.fix_empty_projects:
+        for line in data:
+            if not line['SampleProject']:
+                line['SampleProject'] = line['SampleID']
     # Fix duplicates
     if options.fix_duplicates:
         data.fix_duplicated_names()
