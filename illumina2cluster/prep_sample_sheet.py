@@ -15,7 +15,7 @@ Prepare sample sheet file for Illumina sequencers.
 
 """
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 #######################################################################
 # Imports
@@ -186,6 +186,17 @@ if __name__ == "__main__":
         for lane in empty_names:
             logging.warning("Empty SampleID and/or SampleProject name in lane %s (%s/%s)" %
                             (lane['Lane'],lane['SampleID'],lane['SampleProject']))
+    # Predict outputs
+    if check_status == 0 or options.ignore_warnings:
+        projects = data.predict_output()
+        print "Predicted output:"
+        for project in projects:
+            print "%s (%d samples)" % (project,len(projects[project]))
+            for sample in projects[project]:
+                print "\t%s" % sample
+                for sub_sample in projects[project][sample]:
+                    print "\t\t%s" % sub_sample
+
     # Write out new sample sheet
     if options.samplesheet_out:
         if check_status and not options.ignore_warnings:
