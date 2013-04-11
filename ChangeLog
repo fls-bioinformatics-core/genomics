@@ -1,8 +1,23 @@
 2013-04-11  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
+	* illumina2cluster/analyse_illumina_run.py
+	- version 0.1.0: new option --verify=SAMPLE_SHEET, verifies outputs
+	  against those predicted by the named sample sheet.
+
+	* share/IlluminaData.py
+	- CasavaSampleSheet class:
+	  1. In "duplicated_names" method, now considers index and lane number
+	     as well as SampleID and SampleProject in determining uniqueness.
+	  2. New method "predict_output", returns a data structure describing
+	     the expected project/sample/base file name hierarchy that would be
+	     created using the sample sheet.
+	  3. Added 'paired_end' attribute to the IlluminaData and
+	     IlluminaProject classes.
+
 	* illumina2cluster/prep_sample_sheet.py
 	- version 0.1.0: renamed from 'update_sample_sheet.py'
-	
+	- version 0.1.1: print predicted outputs for the input sample sheet.
+
 	* illumina2cluster/update_sample_sheet.py
 	- renamed to 'prep_sample_sheet.py'
 
@@ -22,7 +37,7 @@
 	* share/IlluminaData.py
 	- CasavaSampleSheet class: automatically remove double quotes from
 	  around sample sheet values upon reading.
-	
+
 2013-04-09  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* share/FASTQFile.py
