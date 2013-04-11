@@ -95,7 +95,7 @@ if __name__ == "__main__":
     p.add_option('--fix-spaces',action="store_true",dest="fix_spaces",
                  help="replace spaces in SampleID and SampleProject fields with underscores")
     p.add_option('--fix-duplicates',action="store_true",dest="fix_duplicates",
-                 help="append uniques indices to SampleIDs where original "
+                 help="append unique indices to SampleIDs where original "
                  "SampleID/SampleProject combination are duplicated")
     p.add_option('--set-id',action="append",dest="sample_id",default=[],
                  help="update/set the values in the 'SampleID' field; "
