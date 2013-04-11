@@ -382,6 +382,45 @@ class CasavaSampleSheet(TabFile.TabFile):
                 line['SampleID'] = line['SampleID'].strip().replace(c,'_').strip('_')
                 line['SampleProject'] = line['SampleProject'].strip().replace(c,'_').strip('_')
 
+    def predict_output(self):
+        """Predict the expected outputs from the sample sheet content
+
+        Constructs and returns a simple dictionary-based data structure
+        which predicts the output data structure that will produced by
+        running CASAVA using the sample sheet data.
+
+        The structure is:
+
+        { 'project_1': {
+                         'sample_1': [name1,name2...],
+                         'sample_2': [...],
+                         ... }
+          'project_2': {
+                         'sample_3': [...],
+                         ... }
+          ... }
+
+        """
+        projects = {}
+        for line in self:
+            project = "Project_%s" % line['SampleProject']
+            sample = "Sample_%s" % line['SampleID']
+            if project not in projects:
+                samples = {}
+            else:
+                samples = projects[project]
+            if sample not in samples:
+                samples[sample] = []
+            if line['Index'].strip() == "":
+                indx = "NoIndex"
+            else:
+                indx = line['Index']
+            samples[sample].append("%s_%s_L%03d" % (line['SampleID'],
+                                                    indx,
+                                                    line['Lane']))
+            projects[project] = samples
+        return projects
+
 class IlluminaFastq:
     """Class for extracting information about Fastq files
 
