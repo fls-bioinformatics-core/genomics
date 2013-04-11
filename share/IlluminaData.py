@@ -64,7 +64,7 @@ class IlluminaData:
         self.projects = []
         self.paired_end = True
         # Look for "unaligned" data directory
-        self.unaligned_dir = os.path.join(illumina_analysis_dir,unaligned_dir)
+        self.unaligned_dir = os.path.join(self.analysis_dir,unaligned_dir)
         if not os.path.exists(self.unaligned_dir):
             raise IlluminaDataError, "Missing data directory %s" % self.unaligned_dir
         # Look for projects
