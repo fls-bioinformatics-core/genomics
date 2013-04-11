@@ -6,6 +6,11 @@
 	* illumina2cluster/update_sample_sheet.py
 	- renamed to 'prep_sample_sheet.py'
 
+	* illumina2cluster/demultiplex_undetermined_fastq.py
+	- new program: reassign reads with undetermined index sequences (i.e.
+	  barcodes) from the FASTQ files in the 'Undetermined_indices'
+	  output directory from CASAVA.
+
 2013-04-10  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* QC-pipeline/qcreporter.py
