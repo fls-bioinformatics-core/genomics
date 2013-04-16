@@ -235,9 +235,9 @@ if __name__ == "__main__":
     if options.runner == 'simple':
         runner = JobRunner.SimpleJobRunner()
     elif options.runner == 'ge':
-        runner = JobRunner.GEJobRunner(queue=ge_queue)
+        runner = JobRunner.GEJobRunner(queue=options.ge_queue)
     elif options.runner == 'drmaa':
-        runner = JobRunner.DRMAAJobRunner(queue=ge_queue)
+        runner = JobRunner.DRMAAJobRunner(queue=options.ge_queue)
     else:
         logging.error("Unknown job runner: '%s'" % options.runner)
         sys.exit(1)
