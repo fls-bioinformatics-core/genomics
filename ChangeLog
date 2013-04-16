@@ -1,3 +1,9 @@
+2013-04-16  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* QC-pipeline/run_qc_pipeline.py
+	- fix bug with --queue option which meant queue specification was not
+	  being honoured by the program.
+
 2013-04-11  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* illumina2cluster/analyse_illumina_run.py
