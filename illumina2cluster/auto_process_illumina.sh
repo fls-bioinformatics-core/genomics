@@ -61,7 +61,7 @@ function store_info() {
     local KEY="$1"
     local VALUE="$2"
     # Remove existing value
-    grep -v "^${KEY}"$'\t' processing.info > tmp.processing.info
+    grep -v "^${KEY}"$'\t' processing.info > tmp.processing.info 2>/dev/null
     /bin/mv tmp.processing.info processing.info
     # Write key-value pair
     echo ${KEY}$'\t'${VALUE} >> processing.info
@@ -136,14 +136,17 @@ function setup() {
     # Locate initial sample sheet
     sample_sheet=
     for f in $(ls $DATA_DIR/*.csv) ; do
+	log_step Setup INFO "Found CSV file: $f"
 	if [ ! -z "$sample_sheet" ] ; then
 	    echo WARNING Multiple csv files found
 	    log_step Setup WARNING "Multiple csv files found"
-	    if [ $f == "SampleSheet.csv" ] ; then
+	    if [ "$f" == "SampleSheet.csv" ] ; then
 		sample_sheet=
 	    fi
 	fi
-	sample_sheet=$f
+	if [ -z "$sample_sheet" ] ; then
+	    sample_sheet=$f
+	fi
     done
     if [ -z "$sample_sheet" ] ; then
 	log_step Setup ERROR "No sample sheet found"
