@@ -4,6 +4,7 @@ illumina2cluster
 Utilities for preparing data on the cluster from the Illumina instrument:
 
  *   `analyse_illumina_run.py`: reporting and manipulations of Illumina run data
+ *   `auto_process_illumina.sh`: automatically process Illumina-based sequencing run
  *   `bclToFastq.sh`: generate FASTQ from BCL files
  *   `build_illumina_analysis_dir.py`: create and populate per-project analysis dirs
  *   `demultiplex_undetermined_fastq.py`: demultiplex undetermined Illumina reads
@@ -37,6 +38,35 @@ Options:
     --verify=SAMPLE_SHEET
                           check CASAVA outputs against those expected for
                           SAMPLE_SHEET
+
+
+auto_process_illumina.sh
+------------------------
+
+Automatically process data from an Illumina-based sequencing platform
+
+Usage:
+
+    auto_process_illumina.sh COMMAND [ PLATFORM DATA_DIR ]
+
+COMMAND can be one of:
+
+    setup: prepares a new analysis directory. This step must be
+           done first and requires that PLATFORM and DATA_DIR 
+           arguments are also supplied (these do not have to be
+           specified for other commands).
+           This creates an analysis directory in the current dir
+           with a custom_SampleSheet.csv file; this should be
+           examined and edited before running the subsequent 
+           steps.
+
+    make_fastqs: runs CASAVA to generate Fastq files from the
+           raw bcls.
+
+    run_qc: runs the QC pipeline and generates reports.
+
+The make_fastqs and run_qc commands must be executed from the
+analysis directory created by the setup command.
 
 
 bclToFastq.sh
