@@ -31,11 +31,20 @@ fi
 #
 set +o noclobber
 #
+# Internal functions
+# 
 function log_step() {
-    timestamp=`date`
-    step_name=$1
-    step_status=$2
-    msg="$3"
+    # Write a line to the logging file
+    #
+    # Usage: log_step STEP STATUS [ MESSAGE ]
+    #
+    # STEP:    name of the step e.g. Setup
+    # STATUS:  e.g. STARTED, ERROR, FINISHED
+    # MESSAGE: message text
+    local timestamp=`date`
+    local step_name=$1
+    local step_status=$2
+    local msg="$3"
     if [ ! -f processing.log ] ; then
 	touch processing.log
     fi
@@ -45,20 +54,51 @@ function log_step() {
     fi
 }
 #
+function store_info() {
+    # Store key-value pair in info file
+    #
+    # Usage: store_info KEY VALUE
+    local KEY="$1"
+    local VALUE="$2"
+    # Remove existing value
+    grep -v "^${KEY}"$'\t' processing.info > tmp.processing.info
+    /bin/mv tmp.processing.info processing.info
+    # Write key-value pair
+    echo ${KEY}$'\t'${VALUE} >> processing.info
+}
+#
+function get_info() {
+    # Retrieve value associated with key
+    #
+    # Usage: get_info KEY
+    #
+    # Returns the value(s) extracted from the info file
+    local KEY="$1"
+    echo $(grep ^${KEY}$'\t' processing.info | cut -f2)
+}
+#
 function get_bases_mask() {
+    # Read RunInfo.xml and return CASAVA-style bases mask string
+    #
+    # Usage: get_bases_mask RUN_INFO_XML
+    #
+    # RUN_INFO_XML: full path and name of RunInfo.xml file to read
+    #
+    # Returns a bases mask string for use in bcl to fastq
+    # conversion e.g. y250,I8,I8,y250
     local run_info_xml=$1
     local bases_mask=
     while read line ; do
-	read=`echo $line | grep "<Read "`
+	read=$(echo $line | grep "<Read ")
 	if [ ! -z "$read" ] ; then
 	    numcycles=
 	    indexread=
 	    for field in $read ; do
 		if [ -z "$numcycles" ] ; then
-		    numcycles=`echo $field | sed 's/\"//g' | grep "^NumCycles=" | cut -d= -f2`
+		    numcycles=$(echo $field | sed 's/\"//g' | grep "^NumCycles=" | cut -d= -f2)
 		fi
 		if [ -z "$indexread" ] ; then
-		    indexread=`echo $field | sed 's/\"//g' | grep "^IsIndexedRead=" | cut -d= -f2`
+		    indexread=$(echo $field | sed 's/\"//g' | grep "^IsIndexedRead=" | cut -d= -f2)
 		fi
 	    done
 	    if [ "$indexread" == "N" ] ; then
@@ -75,6 +115,8 @@ function get_bases_mask() {
     echo $bases_mask
 }
 #
+# Functions for processing stages
+#
 function setup() {
     # Prepares data for processing
     # Make analysis dir
@@ -86,15 +128,14 @@ function setup() {
     cd $ANALYSIS_DIR
     log_step Setup STARTED "*** Setting up analysis directory ***"
     # Write info file
-    echo DATA_DIR$'\t'$DATA_DIR > processing.info
-    echo PLATFORM$'\t'$PLATFORM >> processing.info
-    echo ANALYSIS_DIR$'\t'$ANALYSIS_DIR >> processing.info
+    store_info DATA_DIR $DATA_DIR
+    store_info PLATFORM $PLATFORM
+    store_info ANALYSIS_DIR $ANALYSIS_DIR
     log_step Setup INFO "Data dir $DATA_DIR"
     log_step Setup INFO "Platform $PLATFORM"
     # Locate initial sample sheet
-    csv_files=`ls $DATA_DIR/*.csv`
     sample_sheet=
-    for f in $csv_files ; do
+    for f in $(ls $DATA_DIR/*.csv) ; do
 	if [ ! -z "$sample_sheet" ] ; then
 	    echo WARNING Multiple csv files found
 	    log_step Setup WARNING "Multiple csv files found"
@@ -109,7 +150,7 @@ function setup() {
 	exit 1
     fi
     log_step Setup INFO "Source sample sheet: $sample_sheet"
-    echo SAMPLE_SHEET$'\t'$sample_sheet >> processing.info
+    store_info SAMPLE_SHEET $sample_sheet
     # Create cleaned-up copy of sample sheet
     sample_sheet_cmd="prep_sample_sheet.py --fix-spaces --fix-duplicates --fix-empty-projects"
     if [ $PLATFORM == "miseq" ] ; then
@@ -128,11 +169,11 @@ function setup() {
 	log_step Setup ERROR "No file $run_info_xml"
 	exit 1
     else
-	echo RUN_INFO_XML$'\t'$run_info_xml >> processing.info
+	store_info RUN_INFO_XML $run_info_xml
 	log_step Setup INFO "Getting bases mask from $run_info_xml"
         bases_mask=$(get_bases_mask $run_info_xml)
-	echo BASES_MASK$'\t'$bases_mask >> processing.info
-	log_step Setup INFO "Bases mask: $bases_mask"
+	store_info BASES_MASK $bases_mask
+	log_step Setup INFO "Bases mask from RunInfo.xml: $bases_mask"
     fi
     # Finish this step
     log_step Setup FINISHED "Setup completed ok"
@@ -142,16 +183,16 @@ function make_fastqs() {
     # Generates fastq files with CASAVA
     log_step Make_fastqs STARTED "*** Generating fastq files ***"
     # Check for CASAVA/configureBclToFastq.pl etc
-    got_casava=`which configureBclToFastq.pl 2>&1 | grep "which: no configureBclToFastq.pl in "`
+    got_casava=$(which configureBclToFastq.pl 2>&1 | grep "which: no configureBclToFastq.pl in ")
     if [ ! -z "$got_casava" ] ; then
 	log_step Make_fastqs ERROR "configureBclToFastq.pl not found"
 	exit 1
     fi
     # Set "Unaligned" directory
     unaligned_dir=Unaligned
-    echo UNALIGNED_DIR$'\t'$unaligned_dir >> processing.info
+    store_info UNALIGNED_DIR $unaligned_dir
     # Collect bases mask
-    bases_mask=`grep ^BASES_MASK processing.info | cut -f2`
+    bases_mask=$(get_info BASES_MASK)
     if [ -z "$bases_mask" ] ; then
 	log_step Make_fastqs ERROR "No bases mask"
 	exit 1
@@ -203,10 +244,9 @@ function run_qc() {
 	exit 1
     fi
     # Get list of analysis directories
-    project_dirs=`ls -d Unaligned/Project_*`
     projects=
-    for p in $project_dirs ; do
-	proj=`echo $p | sed 's/^Unaligned\/Project_//g'`
+    for p in $(ls -d Unaligned/Project_*) ; do
+	proj=$(echo $p | sed 's/^Unaligned\/Project_//g')
 	if [ ! -d $proj ] ; then
 	    log_step Run_qc ERROR "Unable to locate project dir $proj"
 	    exit 1
@@ -250,20 +290,20 @@ function run_qc() {
 # Main script
 #
 # Check if platform and data dir info is already available
-if [ -f processing.info ] ; then
-    # Acquire from processing.info file
-    PLATFORM=`grep ^PLATFORM processing.info | cut -f2`
-    DATA_DIR=`grep ^DATA_DIR processing.info | cut -f2`
-elif [ "$1" == "setup" ] ; then
-    # Special case: run the setup step and exit
+if [ "$1" == "setup" ] ; then
+    # Get platform and data dir from command line
     PLATFORM=$2
     DATA_DIR=$3
     # Set up analysis directory name
-    ANALYSIS_DIR=`basename ${DATA_DIR}`_analysis
+    ANALYSIS_DIR=$(basename ${DATA_DIR})_analysis
     echo Analysis dir $ANALYSIS_DIR
     # Run setup and exit
     setup
     exit 0
+else
+    # Acquire from processing.info file
+    PLATFORM=$(get_info PLATFORM)
+    DATA_DIR=$(get_info DATA_DIR)
 fi
 #
 # Check that we have basic information
