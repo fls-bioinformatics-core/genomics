@@ -541,7 +541,7 @@ class QCSample:
                                        self.__fastqc,
                                        'Images',
                                        'per_base_quality.png')
-            html.add("<a href='%s''><img src='%s' height=250 width=480 /></a>" % \
+            html.add("<a href='%s'><img src='%s' height=250 width=480 /></a>" % \
                          (quality_plot_link,pngdata))
             # Add summary table
             html.add("<p>FastQC summary:</p>")
