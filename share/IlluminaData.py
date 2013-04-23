@@ -38,6 +38,10 @@ class IlluminaData:
     projects:      list of IlluminaProject objects (one for each project
                    defined at the fastq creation stage, expected to be in
                    subdirectories "Project_...")
+    undetermined:  IlluminaProject object for the "Undetermined_indices"
+                   subdirectory in the 'Unaligned' directry (or None if
+                   no "Undetermined_indices" subdirectory was found e.g.
+                   if the run wasn't multiplexed)
     unaligned_dir: full path to the 'Unaligned' directory holding the
                    primary fastq.gz files
     paired_end:    True if all projects are paired end, False otherwise
@@ -62,6 +66,7 @@ class IlluminaData:
         """
         self.analysis_dir = os.path.abspath(illumina_analysis_dir)
         self.projects = []
+        self.undetermined = None
         self.paired_end = True
         # Look for "unaligned" data directory
         self.unaligned_dir = os.path.join(self.analysis_dir,unaligned_dir)
@@ -73,6 +78,9 @@ class IlluminaData:
             if f.startswith("Project_") and os.path.isdir(dirn):
                 logging.debug("Project dirn: %s" % f)
                 self.projects.append(IlluminaProject(dirn))
+            elif f == "Undetermined_indices":
+                logging.debug("Undetermined dirn: %s" %f)
+                self.undetermined = IlluminaProject(dirn)
         # Raise an exception if no projects found
         if not self.projects:
             raise IlluminaDataError, "No projects found"
