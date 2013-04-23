@@ -175,10 +175,7 @@ class IlluminaProject:
 
         Wraps a call to 'pretty_print_names' function.
         """
-        pp = bcf_utils.pretty_print_names(self.samples)
-        if self.paired_end:
-            pp += " (paired-end)"
-        return pp
+        return bcf_utils.pretty_print_names(self.samples)
 
 class IlluminaSample:
     """Class for storing information on a 'sample' within an Illumina project
