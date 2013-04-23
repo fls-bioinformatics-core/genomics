@@ -9,7 +9,7 @@ Provides functionality for analysing data from an Illumina sequencer run.
 
 """
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 #######################################################################
 # Import modules
@@ -28,10 +28,41 @@ SHARE_DIR = os.path.abspath(
         os.path.join(os.path.dirname(sys.argv[0]),'..','share')))
 sys.path.append(SHARE_DIR)
 import IlluminaData
+import FASTQFile
 
 #######################################################################
 # Functions
 #######################################################################
+
+def describe_project(illumina_project):
+    """Generate description string for samples in a project
+
+    Description string gives the project name and a human-readable
+    summary of the sample names, plus number of samples and whether
+    the data is paired end.
+
+    Example output: "Project Control: PhiX_1-2  (2 samples)"
+
+    Arguments
+      illumina_project: IlluminaProject instance
+
+    Returns
+      Description string.
+
+    """
+    n_samples = len(illumina_project.samples)
+    sample_names = project.prettyPrintSamples()
+    description = "Project %s: %s" % (illumina_project.name,
+                                      illumina_project.prettyPrintSamples())
+    if illumina_project.paired_end:
+        description += " (paired end, "
+    else:
+        description += " ("
+    if n_samples == 1:
+        description += "1 sample)"
+    else:
+        description += "%d samples)" % n_samples
+    return "%s" % description
 
 def name_matches(name,pattern):
     """Simple wildcard matching of project and sample names
@@ -72,6 +103,8 @@ if __name__ == "__main__":
                  help="copy fastq.gz files matching COPY_PATTERN to current directory")
     p.add_option("--verify",action="store",dest="sample_sheet",default=None,
                  help="check CASAVA outputs against those expected for SAMPLE_SHEET")
+    p.add_option("--stats",action="store_true",dest="stats",
+                 help="Report statistics (read counts etc) for fastq files")
     # Parse command line
     options,args = p.parse_args()
 
@@ -105,12 +138,23 @@ if __name__ == "__main__":
     # Report the names of the samples in each project
     if options.report:
         for project in illumina_data.projects:
-            project_name = project.name
-            n_samples = len(project.samples)
-            sample_names = project.prettyPrintSamples()
-            print "Project %s: %s (%d samples)" % (project_name,
-                                                   sample_names,
-                                                   n_samples)
+            print "%s" % describe_project(project)
+            # Report statistics for fastq files
+            if options.stats:
+                # Print number of reads for each file
+                for sample in project.samples:
+                    for fq in sample.fastq:
+                        nreads = FASTQFile.nreads(os.path.join(sample.dirn,fq))
+                        print "%s\t%d" % (fq,nreads)
+
+    # Print number of undetermined reads
+    if options.stats and illumina_data.undetermined.samples is not None:
+        print "Undetermined indices"
+        for lane in illumina_data.undetermined.samples:
+            print "Lane %s" % lane.name
+            for fq in lane.fastq:
+                nreads = FASTQFile.nreads(os.path.join(lane.dirn,fq))
+                print "%s\t%d" % (fq,nreads)
 
     # Copy fastq.gz files to the current directory
     if options.copy_pattern is not None:

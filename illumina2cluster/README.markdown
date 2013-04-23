@@ -38,6 +38,7 @@ Options:
     --verify=SAMPLE_SHEET
                           check CASAVA outputs against those expected for
                           SAMPLE_SHEET
+    --stats               Report statistics (read counts etc) for fastq files
 
 
 auto_process_illumina.sh
