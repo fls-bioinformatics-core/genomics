@@ -1,3 +1,8 @@
+2013-04-24  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* share/bcf_utils.py
+	- fix bug in extract_index (failed for names ending with 0 e.g. 'PJB0').
+
 2013-04-23  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* ilumina2cluster/analyse_illumina_run.py
