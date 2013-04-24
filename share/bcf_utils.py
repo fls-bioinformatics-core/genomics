@@ -182,10 +182,11 @@ def extract_index(name):
       The index as an integer, or None if the index cannot be converted to
       integer format.
     """
-    if extract_index_as_string(name) == '':
+    indx = extract_index_as_string(name)
+    if indx == '':
         return None
     else:
-        return int(extract_index_as_string(name).lstrip('0'))
+        return int(indx)
 
 def pretty_print_names(name_list):
     """Given a list of library or sample names, format for pretty printing.
@@ -276,6 +277,7 @@ class TestNameFunctions(unittest.TestCase):
         self.assertEqual(1,extract_index('LD_C1'))
         self.assertEqual(7,extract_index('DR07'))
         self.assertEqual(None,extract_index('DROHSEVEN'))
+        self.assertEqual(0,extract_index('HUES1A0'))
 
     def test_pretty_print_names(self):
         self.assertEqual('JC_SEQ26-29',pretty_print_names(('JC_SEQ26',
