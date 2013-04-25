@@ -2,6 +2,8 @@
 #
 # Automatically process Illumina-based sequencing run
 #
+AUTO_PROCESS_VERSION="0.1.0"
+#
 if [ $# -lt 1 ] || [ "$1" == "-h" ] || [ "$1" == "--help" ] ; then
     echo "Usage: $0 COMMAND [ PLATFORM DATA_DIR ]"
     echo ""
@@ -115,6 +117,38 @@ function get_bases_mask() {
     echo $bases_mask
 }
 #
+function get_nmismatches() {
+    # Determine optimum number of mismatches from bases mask
+    #
+    # Usage: get_mismatches BASES_MASK
+    #
+    # BASES_MASK is a string of the form y101,I8,I8,y85
+    #
+    # Returns 1 for index tags > 6, 0 otherwise
+    local bases_mask=$1
+    local tag_length=0
+    # Loop over comma-separated elements in bases mask
+    for mask in $(echo $bases_mask | sed 's/,/ /g') ; do
+	# Is it an index read?
+	index_read=$(echo $mask | grep I 2>/dev/null)
+	if [ ! -z "$index_read" ] ; then
+	    # Extract number of cycles/bases by deleting 'I'
+	    test_tag_length=$(echo $index_read | sed 's/I//g')
+	    if [ $test_tag_length -gt $tag_length ] ; then
+		tag_length=$test_tag_length
+	    fi
+	fi
+    done
+    #
+    if [ $tag_length -ge 6 ] ; then
+	# One mismatch allowed
+	echo 1
+    else
+	# No mismatches
+	echo 0
+    fi
+}
+#
 # Functions for processing stages
 #
 function setup() {
@@ -127,6 +161,7 @@ function setup() {
     mkdir $ANALYSIS_DIR
     cd $ANALYSIS_DIR
     log_step Setup STARTED "*** Setting up analysis directory ***"
+    log_step Setup INFO "$0 version $AUTO_PROCESS_VERSION"
     # Write info file
     store_info DATA_DIR $DATA_DIR
     store_info PLATFORM $PLATFORM
@@ -135,12 +170,12 @@ function setup() {
     log_step Setup INFO "Platform $PLATFORM"
     # Locate initial sample sheet
     sample_sheet=
+    multiple_sample_sheets=
     for f in $(ls $DATA_DIR/*.csv) ; do
 	log_step Setup INFO "Found CSV file: $f"
 	if [ ! -z "$sample_sheet" ] ; then
-	    echo WARNING Multiple csv files found
-	    log_step Setup WARNING "Multiple csv files found"
-	    if [ "$f" == "SampleSheet.csv" ] ; then
+	    multiple_sample_sheets=yes
+	    if [ $(basename $f) == "SampleSheet.csv" ] ; then
 		sample_sheet=
 	    fi
 	fi
@@ -152,6 +187,9 @@ function setup() {
 	log_step Setup ERROR "No sample sheet found"
 	exit 1
     fi
+    if [ ! -z "$multiple_sample_sheets" ] ; then
+	log_step Setup WARNING "Multiple csv files found"
+    fi
     log_step Setup INFO "Source sample sheet: $sample_sheet"
     store_info SAMPLE_SHEET $sample_sheet
     # Create cleaned-up copy of sample sheet
@@ -160,7 +198,7 @@ function setup() {
 	sample_sheet_cmd="$sample_sheet_cmd --miseq"
     fi
     sample_sheet_cmd="$sample_sheet_cmd -o custom_SampleSheet.csv $sample_sheet"
-    log_step  INFO "Running command: $sample_sheet_cmd"
+    log_step INFO "Running command: $sample_sheet_cmd"
     $sample_sheet_cmd
     if [ ! -f "custom_SampleSheet.csv" ] ; then
 	log_step Setup ERROR "Failed to create sample sheet copy"
@@ -185,6 +223,7 @@ function setup() {
 function make_fastqs() {
     # Generates fastq files with CASAVA
     log_step Make_fastqs STARTED "*** Generating fastq files ***"
+    log_step Make_fastqs INFO "$0 version $AUTO_PROCESS_VERSION"
     # Check for CASAVA/configureBclToFastq.pl etc
     got_casava=$(which configureBclToFastq.pl 2>&1 | grep "which: no configureBclToFastq.pl in ")
     if [ ! -z "$got_casava" ] ; then
@@ -194,17 +233,22 @@ function make_fastqs() {
     # Set "Unaligned" directory
     unaligned_dir=Unaligned
     store_info UNALIGNED_DIR $unaligned_dir
-    # Collect bases mask
+    # Collect bases mask and nmismatches
     bases_mask=$(get_info BASES_MASK)
+    nmismatches=$(get_info NMISMATCHES)
     if [ -z "$bases_mask" ] ; then
 	log_step Make_fastqs ERROR "No bases mask"
 	exit 1
     fi
     log_step Make_fastqs INFO "Bases mask: $bases_mask"
+    # Determine nmismatches from bases mask
+    nmismatches=$(get_nmismatches $bases_mask)
+    log_step Make_fastqs INFO "Number of mismatches (determined from bases mask): $nmismatches"
+    store_info NMISMATCHES $nmismatches
     # Use qsub -sync y to wait for qsubbed job to finish
-    qsub_cmd="qsub -terse -q serial.q -sync y -b y -cwd -V bclToFastq.sh --use-bases-mask $bases_mask --nmismatches 1 $DATA_DIR $unaligned_dir custom_SampleSheet.csv"
+    qsub_cmd="qsub -terse -q serial.q -sync y -b y -cwd -V bclToFastq.sh --use-bases-mask $bases_mask --nmismatches $nmismatches $DATA_DIR $unaligned_dir custom_SampleSheet.csv"
     log_step Make_fastqs INFO "Running command: $qsub_cmd"
-    qsub_id=`$qsub_cmd`
+    qsub_id=$($qsub_cmd | head -n 1)
     status=$?
     log_step Make_fastqs INFO "Qsub job id: $qsub_id"
     if [ ! -d $unaligned_dir ] ; then
@@ -213,6 +257,13 @@ function make_fastqs() {
     fi
     if [ $status -ne 0 ] ; then
 	log_step Make_fastqs ERROR "bclToFastq step finished with code $status"
+	exit 1
+    fi
+    # Check output status from CASAVA log file
+    casava_exit_code=$(grep "make: finished exit code " bclToFastq.sh.o$qsub_id 2>/dev/null | cut -d" " -f5)
+    log_step Make_fastqs INFO "CASAVA exit code: $casava_exit_code"
+    if [ $casava_exit_code -ne 0 ] ; then
+	log_step Make_fastqs ERROR "CASAVA make step finished with exit code $casava_exit_code"
 	exit 1
     fi
     # Check that the outputs match expectations
@@ -224,12 +275,31 @@ function make_fastqs() {
 	exit 1
     fi
     log_step Make_fastqs INFO "Fastq outputs verified against sample sheet"
-    log_step Make_fastqs FINISHED "Fastq generated completed ok"
+    # Generate summary and statistics
+    log_step Make_fastqs INFO "Generating summary statistics"
+    qsub_cmd="qsub -terse -q serial.q -sync y -b y -cwd -V -N analyse_illumina_run analyse_illumina_run.py --stats ."
+    log_step Make_fastqs INFO "Running command: $qsub_cmd"
+    qsub_id=$($qsub_cmd | head -n 1)
+    log_step Make_fastqs INFO "Qsub job id: $qsub_id"
+    if [ -f analyse_illumina_run.o${qsub_id} ] ; then
+	make_fastqs_summary="make_fastqs.summary"
+	if [ -f $make_fastqs_summary ] ; then
+	    /bin/rm $make_fastqs_summary
+	fi
+	ln -s analyse_illumina_run.o${qsub_id} $make_fastqs_summary
+	cat $make_fastqs_summary
+	log_step Make_fastqs INFO "Summary stats written to $make_fastqs_summary"
+    else
+	log_step Make_fastqs ERROR "Failed to generate summary stats"
+	exit 1
+    fi
+    log_step Make_fastqs FINISHED "Fastq generation completed ok"
 }
 #
 function run_qc() {
     # Does QC generation
     log_step Run_qc STARTED "*** Running QC ***"
+    log_step Run_qc INFO "$0 version $AUTO_PROCESS_VERSION"
     # Check that outputs match sample sheet
     analyse_illumina_run.py --verify=custom_SampleSheet.csv .
     status=$?
@@ -238,11 +308,11 @@ function run_qc() {
 	log_step Run_qc ERROR "Unable to verify fastq outputs against sample sheet"
 	exit 1
     fi
-    log_step Make_fastqs INFO "Fastq outputs verified against sample sheet"
+    log_step Run_qc INFO "Fastq outputs verified against sample sheet"
     # Set up analysis directories
     build_illumina_analysis_dir.py .
     status=$?
-    if [  $status -ne 0 ] ; then
+    if [ $status -ne 0 ] ; then
 	log_step Run_qc ERROR "Build_illumina_analysis_dir finished with code $status"
 	exit 1
     fi
@@ -278,7 +348,7 @@ function run_qc() {
 	    report_cmd="qcreporter.py --platform=illumina $p"
 	    log_step Run_qc INFO "Running command: $report_cmd"
 	    $report_cmd
-	    log_step Run_qc INFO "Generated QC report"
+	    log_step Run_qc INFO "Generated QC report for $p"
 	fi  
     done
     if [ ! -z "$qc_error" ] ; then
