@@ -84,6 +84,30 @@ def chmod(target,mode):
     else:
         logging.warning("Skipped chmod for symbolic link")
 
+def format_file_size(fsize):
+    """Format a file size from bytes to human-readable form
+
+    Takes a file size in bytes and returns a human-readable
+    string, e.g. 4.0K, 186M, 1.5G.
+
+    Arguments:
+      fsize: size in bytes
+
+    Returns:
+      Human-readable version of file size.
+
+    """
+    # Return size in human readable form
+    fsize = float(fsize)/1024
+    units = 'K'
+    if fsize > 1024:
+        fsize = fsize/1024
+        units = 'M'
+        if fsize > 1024:
+            fsize = fsize/1024
+            units = 'G'
+    return "%.1f%s" % (fsize,units)
+            
 def commonprefix(path1,path2):
     """Determine common prefix path for path1 and path2
 
@@ -254,6 +278,21 @@ class TestFileSystemFunctions(unittest.TestCase):
                                                    '/mnt/stuff/dir2'))
         self.assertEqual('',commonprefix('/mnt1/stuff/dir1',
                                          '/mnt2/stuff/dir2'))
+
+class TestFormatFileSize(unittest.TestCase):
+    """Unit tests for formatting file sizes
+
+    """
+
+    def test_bytes_to_kb(self):
+        self.assertEqual("0.9K",format_file_size(900))
+        self.assertEqual("4.0K",format_file_size(4096))
+
+    def test_bytes_to_mb(self):
+        self.assertEqual("186.0M",format_file_size(195035136))
+
+    def test_bytes_to_gb(self):
+        self.assertEqual("1.6G",format_file_size(1717986919))
 
 class TestNameFunctions(unittest.TestCase):
     """Unit tests for name handling utility functions
