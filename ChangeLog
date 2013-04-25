@@ -1,3 +1,17 @@
+2013-04-25  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* illumina2cluster/auto_process_illumina.sh
+	- version 0.1.0: significant updates to improve robustness, automatically
+	  acquire mismatches and generate statistics report.
+
+	* ilumina2cluster/analyse_illumina_run.py
+	- version 0.1.2: also report file sizes as well as number of reads for
+	  Fastq files using --stats option.
+
+	* share/bcf_utils.py
+	- new function "format_file_size" (converts file size supplied in bytes
+	  into human-readable form e.g. 4.0K, 186.0M, 1.6G).
+
 2013-04-24  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* share/bcf_utils.py
