@@ -9,7 +9,7 @@ Provides functionality for analysing data from an Illumina sequencer run.
 
 """
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 
 #######################################################################
 # Import modules
@@ -29,6 +29,7 @@ SHARE_DIR = os.path.abspath(
 sys.path.append(SHARE_DIR)
 import IlluminaData
 import FASTQFile
+import bcf_utils
 
 #######################################################################
 # Functions
@@ -137,24 +138,36 @@ if __name__ == "__main__":
 
     # Report the names of the samples in each project
     if options.report:
+        # Build report text as a list of lines
+        report = []
         for project in illumina_data.projects:
-            print "%s" % describe_project(project)
+            report.append("%s" % describe_project(project))
             # Report statistics for fastq files
             if options.stats:
-                # Print number of reads for each file
+                # Print number of reads for each file, and file size
                 for sample in project.samples:
-                    for fq in sample.fastq:
-                        nreads = FASTQFile.nreads(os.path.join(sample.dirn,fq))
-                        print "%s\t%d" % (fq,nreads)
+                    for fastq in sample.fastq:
+                        fq = os.path.join(sample.dirn,fastq)
+                        nreads = FASTQFile.nreads(fq)
+                        fsize = os.path.getsize(fq)
+                        report.append("%s\t%s\t%d" % (fastq,
+                                                      bcf_utils.format_file_size(fsize),
+                                                      nreads))
+                report.append("")
+        # Print report
+        print "%s" % '\n'.join(report).strip()
 
     # Print number of undetermined reads
     if options.stats and illumina_data.undetermined.samples is not None:
-        print "Undetermined indices"
+        print "\nUndetermined indices"
         for lane in illumina_data.undetermined.samples:
-            print "Lane %s" % lane.name
-            for fq in lane.fastq:
-                nreads = FASTQFile.nreads(os.path.join(lane.dirn,fq))
-                print "%s\t%d" % (fq,nreads)
+            for fastq in lane.fastq:
+                fq = os.path.join(lane.dirn,fastq)
+                nreads = FASTQFile.nreads(fq)
+                fsize = os.path.getsize(fq)
+                print "%s\t%s\t%d" % (fastq,
+                                  bcf_utils.format_file_size(fsize),
+                                  nreads)
 
     # Copy fastq.gz files to the current directory
     if options.copy_pattern is not None:
