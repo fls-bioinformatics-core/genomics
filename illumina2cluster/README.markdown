@@ -69,6 +69,82 @@ COMMAND can be one of:
 The make_fastqs and run_qc commands must be executed from the
 analysis directory created by the setup command.
 
+### Standard protocol ###
+
+The `auto_process_illumina.sh` script is intended to automate the major
+steps in generating FASTQ files from raw Illumina BCL data.
+
+The standard protocol for using the automated script is:
+
+ 1. Run the `setup` step to create a new analysis directory
+ 2. Move into the analysis directory
+ 3. **Check and if necessary edit the generated sample sheet, based on
+    the predicted output projects and samples**
+ 4. **Check and if necessary edit the bases mask setting in the
+    `DEFINE_RUN` line in the `processing.info` file**
+ 5. Run the `make_fastqs` step
+ 6. Inspect the summary file which lists the generated FASTQ files
+    along with their sizes and number of reads (and number of
+    undetermined reads)
+ 7. Run the `run_qc` step
+
+The critical step is to check and edit the sample sheet, as this is used
+to determine which samples are assigned to which project. After editing
+the sample sheet it is a good idea to check the predicted outputs by
+running:
+
+    prep_sample_sheet.py SAMPLE_SHEET
+
+and ensure that this is what was actually intended, before running the
+next steps.
+
+To change the settings used by CASAVA's BCL to FASTQ conversion, it is
+also necessary to edit the `DEFINE_RUN` line in the `processing.info`
+file. This line typically looks like:
+
+    DEFINE_RUN	custom_SampleSheet.csv:Unaligned:y68,I7
+
+The colon-delimited values are:
+
+ * Sample sheet name in the analysis directory (default:
+   `custom_SampleSheet.csv`)
+ * The output directory where CASAVA will write the output data file
+   (default: `Unaligned`)
+ * The bases mask that will be used by CASAVA (default will be
+   determined automatically from the `RunInfo.xml` file in the
+   source data directory)
+
+Optionally a fourth colon-delimited value can be supplied:
+
+ * The number of allowed mismatches when demultiplexing (default will
+   be determined from the bases mask value)
+
+### Multiple samplesheets ###
+
+In some cases it might be necessary to split the BCL to FASTQ processing
+across multiple sample sheets.
+
+In this case the protocol would be:
+
+ 1. Run the `setup` step
+ 2. Move into the analysis directory
+ 3. **Create multiple sample sheets as required**
+ 4. **Edit the `processing.info` file to add `DEFINE_RUN` for each
+    sample sheet**
+ 5. Run the `make_fastqs` step, which will automatically run a separate
+    BCL to FASTQ conversion for each `DEFINE_RUN` line
+ 6. For each BCL to FASTQ conversion, inspect the summary file which
+    lists the generated FASTQ files along with their sizes and number of
+    reads (and number of undetermined reads)
+ 7. Run the `run_qc` step, which will automatically run a separate QC on
+    the outputs of each BCL to FASTQ conversion
+
+The previous section has  more detail on the format and content of the
+`DEFINE_RUN` line. In the case of multiple `DEFINE_RUN` lines, it is
+advised to specify distinct output directories, e.g.
+
+    DEFINE_RUN	pjbriggs_SampleSheet.csv:Unaligned_pjbriggs:y68,I7
+
 
 bclToFastq.sh
 -------------

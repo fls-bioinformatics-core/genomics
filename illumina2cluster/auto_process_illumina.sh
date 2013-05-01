@@ -2,7 +2,7 @@
 #
 # Automatically process Illumina-based sequencing run
 #
-AUTO_PROCESS_VERSION="0.1.0"
+AUTO_PROCESS_VERSION="0.2.0"
 #
 if [ $# -lt 1 ] || [ "$1" == "-h" ] || [ "$1" == "--help" ] ; then
     echo "Usage: $0 COMMAND [ PLATFORM DATA_DIR ]"
@@ -216,6 +216,8 @@ function setup() {
 	store_info BASES_MASK $bases_mask
 	log_step Setup INFO "Bases mask from RunInfo.xml: $bases_mask"
     fi
+    # Define the default processing run
+    store_info DEFINE_RUN custom_SampleSheet.csv:Unaligned:$bases_mask
     # Finish this step
     log_step Setup FINISHED "Setup completed ok"
 }
@@ -230,23 +232,40 @@ function make_fastqs() {
 	log_step Make_fastqs ERROR "configureBclToFastq.pl not found"
 	exit 1
     fi
-    # Set "Unaligned" directory
-    unaligned_dir=Unaligned
-    store_info UNALIGNED_DIR $unaligned_dir
-    # Collect bases mask and nmismatches
-    bases_mask=$(get_info BASES_MASK)
-    nmismatches=$(get_info NMISMATCHES)
-    if [ -z "$bases_mask" ] ; then
-	log_step Make_fastqs ERROR "No bases mask"
-	exit 1
-    fi
+    # Collect processing runs and iterate over them
+    for run in $(get_info DEFINE_RUN) ; do
+	# Extract run information
+	sample_sheet=$(echo $run | cut -d: -f1)
+	unaligned_dir=$(echo $run | cut -d: -f2)
+	bases_mask=$(echo $run | cut -d: -f3)
+	nmismatches=$(echo $run | cut -d: -f4)
+	# Generate fastq files for this run
+	make_fastqs_for_run $sample_sheet $unaligned_dir $bases_mask $nmismatches
+    done
+    log_step Make_fastqs FINISHED "Fastq generation completed ok"
+}
+#
+function make_fastqs_for_run() {
+    # Generate fastq files for a single run
+    #
+    # Usage: make_fastqs_for_run SAMPLE_SHEET UNALIGNED_DIR BASES_MASK [NMISMATCHES]
+    local sample_sheet=$1
+    local unaligned_dir=$2
+    local bases_mask=$3
+    local nmismatches=$4
+    log_step Make_fastqs INFO "*** Generating fastq files for $sample_sheet ***"
+    log_step Make_fastqs INFO "Sample sheet: $sample_sheet"
+    log_step Make_fastqs INFO "Output dir: $unaligned_dir"
     log_step Make_fastqs INFO "Bases mask: $bases_mask"
-    # Determine nmismatches from bases mask
-    nmismatches=$(get_nmismatches $bases_mask)
-    log_step Make_fastqs INFO "Number of mismatches (determined from bases mask): $nmismatches"
-    store_info NMISMATCHES $nmismatches
+    # Determine nmismatches from bases mask if not found in definition
+    if [ -z "$nmismatches" ] ; then
+	nmismatches=$(get_nmismatches $bases_mask)
+	log_step Make_fastqs INFO "Number of mismatches (determined from bases mask): $nmismatches"
+    else
+	log_step Make_fastqs INFO "Number of mismatches: $nmismatches"
+    fi
     # Use qsub -sync y to wait for qsubbed job to finish
-    qsub_cmd="qsub -terse -q serial.q -sync y -b y -cwd -V bclToFastq.sh --use-bases-mask $bases_mask --nmismatches $nmismatches $DATA_DIR $unaligned_dir custom_SampleSheet.csv"
+    qsub_cmd="qsub -terse -q serial.q -sync y -b y -cwd -V bclToFastq.sh --use-bases-mask $bases_mask --nmismatches $nmismatches $DATA_DIR $unaligned_dir $sample_sheet"
     log_step Make_fastqs INFO "Running command: $qsub_cmd"
     qsub_id=$($qsub_cmd | head -n 1)
     status=$?
@@ -267,7 +286,7 @@ function make_fastqs() {
 	exit 1
     fi
     # Check that the outputs match expectations
-    verify_cmd="analyse_illumina_run.py --verify=custom_SampleSheet.csv ."
+    verify_cmd="analyse_illumina_run.py --unaligned=$unaligned_dir --verify=$sample_sheet ."
     log_step Make_fastqs INFO "Running command: $verify_cmd"
     status=$?
     if [  $status -ne 0 ] ; then
@@ -277,12 +296,12 @@ function make_fastqs() {
     log_step Make_fastqs INFO "Fastq outputs verified against sample sheet"
     # Generate summary and statistics
     log_step Make_fastqs INFO "Generating summary statistics"
-    qsub_cmd="qsub -terse -q serial.q -sync y -b y -cwd -V -N analyse_illumina_run analyse_illumina_run.py --stats ."
+    qsub_cmd="qsub -terse -q serial.q -sync y -b y -cwd -V -N analyse_illumina_run analyse_illumina_run.py --unaligned=$unaligned_dir --stats ."
     log_step Make_fastqs INFO "Running command: $qsub_cmd"
     qsub_id=$($qsub_cmd | head -n 1)
     log_step Make_fastqs INFO "Qsub job id: $qsub_id"
     if [ -f analyse_illumina_run.o${qsub_id} ] ; then
-	make_fastqs_summary="make_fastqs.summary"
+	make_fastqs_summary="make_fastqs.$unaligned_dir.summary"
 	if [ -f $make_fastqs_summary ] ; then
 	    /bin/rm $make_fastqs_summary
 	fi
@@ -293,15 +312,34 @@ function make_fastqs() {
 	log_step Make_fastqs ERROR "Failed to generate summary stats"
 	exit 1
     fi
-    log_step Make_fastqs FINISHED "Fastq generation completed ok"
+    log_step Make_fastqs INFO "Fastq generation completed for $sample_sheet"
 }
 #
 function run_qc() {
-    # Does QC generation
+    # Do QC generation for all processing runs
     log_step Run_qc STARTED "*** Running QC ***"
     log_step Run_qc INFO "$0 version $AUTO_PROCESS_VERSION"
+    for run in $(get_info DEFINE_RUN) ; do
+	# Extract run information
+	sample_sheet=$(echo $run | cut -d: -f1)
+	unaligned_dir=$(echo $run | cut -d: -f2)
+	# Do QC for this run
+	do_qc_for_run $sample_sheet $unaligned_dir
+    done
+    log_step Run_qc FINISHED "QC completed ok"
+}
+#
+function do_qc_for_run() {
+    # Do QC generation
+    #
+    # Usage: run_qc_for_run SAMPLE_SHEET UNALIGNED_DIR BASES_MASK [NMISMATCHES]
+    local sample_sheet=$1
+    local unaligned_dir=$2
+    log_step Run_qc STARTED "*** Running QC for $sample_sheet ***"
+    log_step Run_qc INFO "Sample sheet: $sample_sheet"
+    log_step Run_qc INFO "Output dir: $unaligned_dir"
     # Check that outputs match sample sheet
-    analyse_illumina_run.py --verify=custom_SampleSheet.csv .
+    analyse_illumina_run.py --unaligned=$unaligned_dir --verify=$sample_sheet .
     status=$?
     if [  $status -ne 0 ] ; then
 	echo ERROR Unable to verify fastq outputs
@@ -310,7 +348,7 @@ function run_qc() {
     fi
     log_step Run_qc INFO "Fastq outputs verified against sample sheet"
     # Set up analysis directories
-    build_illumina_analysis_dir.py .
+    build_illumina_analysis_dir.py --unaligned=$unaligned_dir .
     status=$?
     if [ $status -ne 0 ] ; then
 	log_step Run_qc ERROR "Build_illumina_analysis_dir finished with code $status"
@@ -318,8 +356,8 @@ function run_qc() {
     fi
     # Get list of analysis directories
     projects=
-    for p in $(ls -d Unaligned/Project_*) ; do
-	proj=$(echo $p | sed 's/^Unaligned\/Project_//g')
+    for p in $(ls -d $unaligned_dir/Project_*) ; do
+	proj=$(echo $p | sed 's/^'$unaligned_dir'\/Project_//g')
 	if [ ! -d $proj ] ; then
 	    log_step Run_qc ERROR "Unable to locate project dir $proj"
 	    exit 1
@@ -329,7 +367,7 @@ function run_qc() {
     echo Projects: $projects
     # Set up QC run command
     qc_cmd="run_qc_pipeline.py --debug --limit=8 --queue=serial.q --input=fastqgz illumina_qc.sh $projects"
-    run_qc_pipeline_log=run_qc_pipeline.$$.log
+    run_qc_pipeline_log=run_qc_pipeline.$unaligned_dir.$$.log
     log_step Run_qc INFO "Running command: $qc_cmd"
     log_step Run_qc INFO "Output will be written to $run_qc_pipeline_log"
     $qc_cmd > $run_qc_pipeline_log 2>&1
