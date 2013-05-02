@@ -2,7 +2,7 @@
 #
 # Automatically process Illumina-based sequencing run
 #
-AUTO_PROCESS_VERSION="0.2.0"
+AUTO_PROCESS_VERSION="0.2.1"
 #
 if [ $# -lt 1 ] || [ "$1" == "-h" ] || [ "$1" == "--help" ] ; then
     echo "Usage: $0 COMMAND [ PLATFORM DATA_DIR ]"
@@ -162,6 +162,17 @@ function setup() {
     cd $ANALYSIS_DIR
     log_step Setup STARTED "*** Setting up analysis directory ***"
     log_step Setup INFO "$0 version $AUTO_PROCESS_VERSION"
+    # Create standard subdirectories
+    log_step Setup INFO "Making logs directory"
+    mkdir logs
+    cat > logs/README <<EOF
+Directory holding logs from $0
+EOF
+    log_step Setup INFO "Making ScriptCode directory"
+    mkdir ScriptCode
+    cat > ScriptCode/README <<EOF
+Directory holding custome scripts etc
+EOF
     # Write info file
     store_info DATA_DIR $DATA_DIR
     store_info PLATFORM $PLATFORM
@@ -265,7 +276,7 @@ function make_fastqs_for_run() {
 	log_step Make_fastqs INFO "Number of mismatches: $nmismatches"
     fi
     # Use qsub -sync y to wait for qsubbed job to finish
-    qsub_cmd="qsub -terse -q serial.q -sync y -b y -cwd -V bclToFastq.sh --use-bases-mask $bases_mask --nmismatches $nmismatches $DATA_DIR $unaligned_dir $sample_sheet"
+    qsub_cmd="qsub -terse -q serial.q -sync y -b y -cwd -o logs -N bclToFastq.$unaligned_dir -V bclToFastq.sh --use-bases-mask $bases_mask --nmismatches $nmismatches $DATA_DIR $unaligned_dir $sample_sheet"
     log_step Make_fastqs INFO "Running command: $qsub_cmd"
     qsub_id=$($qsub_cmd | head -n 1)
     status=$?
@@ -279,7 +290,7 @@ function make_fastqs_for_run() {
 	exit 1
     fi
     # Check output status from CASAVA log file
-    casava_exit_code=$(grep "make: finished exit code " bclToFastq.sh.o$qsub_id 2>/dev/null | cut -d" " -f5)
+    casava_exit_code=$(grep "make: finished exit code " logs/bclToFastq.sh.o$qsub_id 2>/dev/null | cut -d" " -f5)
     log_step Make_fastqs INFO "CASAVA exit code: $casava_exit_code"
     if [ $casava_exit_code -ne 0 ] ; then
 	log_step Make_fastqs ERROR "CASAVA make step finished with exit code $casava_exit_code"
@@ -289,23 +300,23 @@ function make_fastqs_for_run() {
     verify_cmd="analyse_illumina_run.py --unaligned=$unaligned_dir --verify=$sample_sheet ."
     log_step Make_fastqs INFO "Running command: $verify_cmd"
     status=$?
-    if [  $status -ne 0 ] ; then
+    if [ $status -ne 0 ] ; then
 	log_step Make_fastqs ERROR "Predicted and actual outputs don't match"
 	exit 1
     fi
     log_step Make_fastqs INFO "Fastq outputs verified against sample sheet"
     # Generate summary and statistics
     log_step Make_fastqs INFO "Generating summary statistics"
-    qsub_cmd="qsub -terse -q serial.q -sync y -b y -cwd -V -N analyse_illumina_run analyse_illumina_run.py --unaligned=$unaligned_dir --stats ."
+    qsub_cmd="qsub -terse -q serial.q -sync y -b y -cwd -o logs -V -N stats.$unaligned_dir analyse_illumina_run.py --unaligned=$unaligned_dir --stats ."
     log_step Make_fastqs INFO "Running command: $qsub_cmd"
     qsub_id=$($qsub_cmd | head -n 1)
     log_step Make_fastqs INFO "Qsub job id: $qsub_id"
-    if [ -f analyse_illumina_run.o${qsub_id} ] ; then
-	make_fastqs_summary="make_fastqs.$unaligned_dir.summary"
+    if [ -f logs/stats.$unaligned_dir.o${qsub_id} ] ; then
+	make_fastqs_summary="$unaligned_dir.summary"
 	if [ -f $make_fastqs_summary ] ; then
 	    /bin/rm $make_fastqs_summary
 	fi
-	ln -s analyse_illumina_run.o${qsub_id} $make_fastqs_summary
+	ln -s logs/stats.$unaligned_dir.o${qsub_id} $make_fastqs_summary
 	cat $make_fastqs_summary
 	log_step Make_fastqs INFO "Summary stats written to $make_fastqs_summary"
     else
@@ -367,7 +378,7 @@ function do_qc_for_run() {
     echo Projects: $projects
     # Set up QC run command
     qc_cmd="run_qc_pipeline.py --debug --limit=8 --queue=serial.q --input=fastqgz illumina_qc.sh $projects"
-    run_qc_pipeline_log=run_qc_pipeline.$unaligned_dir.$$.log
+    run_qc_pipeline_log=logs/run_qc_pipeline.$unaligned_dir.$$.log
     log_step Run_qc INFO "Running command: $qc_cmd"
     log_step Run_qc INFO "Output will be written to $run_qc_pipeline_log"
     $qc_cmd > $run_qc_pipeline_log 2>&1
