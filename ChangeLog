@@ -1,3 +1,13 @@
+2013-05-02  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* illumina2cluster/auto_process_illumina.sh
+	- version 0.2.1: write log files to "logs" subdirectory.
+
+2013-05-01  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* illumina2cluster/auto_process_illumina.sh
+	- version 0.2.0: updated to work with multiple sample sheets.
+
 2013-04-25  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* illumina2cluster/auto_process_illumina.sh
