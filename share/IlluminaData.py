@@ -631,8 +631,13 @@ class TestCasavaSampleSheet(unittest.TestCase):
         """
         # Set up
         sample_sheet = CasavaSampleSheet(fp=cStringIO.StringIO(self.sample_sheet_text))
-        # Check for duplicates (should be four sets)
-        self.assertEqual(len(sample_sheet.duplicated_names),4)
+        # Shouldn't find any duplicates when lanes are different
+        self.assertEqual(len(sample_sheet.duplicated_names),0)
+        # Create 3 duplicates by resetting lane numbers
+        sample_sheet[4]['Lane'] = 2
+        sample_sheet[5]['Lane'] = 3
+        sample_sheet[6]['Lane'] = 4
+        self.assertEqual(len(sample_sheet.duplicated_names),3)
         # Fix and check again (should be none)
         sample_sheet.fix_duplicated_names()
         self.assertEqual(sample_sheet.duplicated_names,[])
