@@ -659,6 +659,25 @@ class TestCasavaSampleSheet(unittest.TestCase):
         self.assertEqual(sample_sheet[3]['SampleID'],'886_1')
         self.assertEqual(sample_sheet[4]['SampleProject'],"AR")
 
+    def test_remove_quotes(self):
+        """Remove double quotes from values
+
+        """
+        # Set up
+        sample_sheet = CasavaSampleSheet(fp=cStringIO.StringIO("""FCID,Lane,SampleID,SampleRef,Index,Description,Control,Recipe,Operator,SampleProject
+"D190HACXX",1,"PB","PB","CGATGT","RNA-seq","N",,,"Peter Briggs"
+"""))
+        self.assertEqual(sample_sheet[0]['FCID'],'D190HACXX')
+        self.assertEqual(sample_sheet[0]['Lane'],1)
+        self.assertEqual(sample_sheet[0]['SampleID'],'PB')
+        self.assertEqual(sample_sheet[0]['SampleRef'],'PB')
+        self.assertEqual(sample_sheet[0]['Index'],'CGATGT')
+        self.assertEqual(sample_sheet[0]['Description'],'RNA-seq')
+        self.assertEqual(sample_sheet[0]['Control'],'N')
+        self.assertEqual(sample_sheet[0]['Recipe'],'')
+        self.assertEqual(sample_sheet[0]['Operator'],'')
+        self.assertEqual(sample_sheet[0]['SampleProject'],'Peter Briggs')
+
 class TestMiseqToCasavaConversion(unittest.TestCase):
 
     def setUp(self):
