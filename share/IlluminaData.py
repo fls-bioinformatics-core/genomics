@@ -298,6 +298,10 @@ class CasavaSampleSheet(TabFile.TabFile):
         for line in self:
             for name in self.header():
                 line[name] = str(line[name]).strip('"')
+        # Remove lines that appear to be commented, after quote removal
+        for i,line in enumerate(self):
+            if str(line).startswith('#'):
+                del(self[i])
 
     def write(self,filen=None,fp=None):
         """Output the sample sheet data to file or stream
@@ -677,6 +681,17 @@ class TestCasavaSampleSheet(unittest.TestCase):
         self.assertEqual(sample_sheet[0]['Recipe'],'')
         self.assertEqual(sample_sheet[0]['Operator'],'')
         self.assertEqual(sample_sheet[0]['SampleProject'],'Peter Briggs')
+
+    def test_remove_quotes_and_comments(self):
+        """Remove double quotes from values along with comment lines
+
+        """
+        # Set up
+        sample_sheet = CasavaSampleSheet(fp=cStringIO.StringIO("""FCID,Lane,SampleID,SampleRef,Index,Description,Control,Recipe,Operator,SampleProject
+"D190HACXX",1,"PB","PB","CGATGT","RNA-seq","N",,,"Peter Briggs"
+"#D190HACXX",2,"PB","PB","ACTGAT","RNA-seq","N",,,"Peter Briggs"
+"""))
+        self.assertEqual(len(sample_sheet),1)
 
 class TestMiseqToCasavaConversion(unittest.TestCase):
 
