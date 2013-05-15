@@ -2,7 +2,7 @@
 #
 # Automatically process Illumina-based sequencing run
 #
-AUTO_PROCESS_VERSION="0.2.1"
+AUTO_PROCESS_VERSION="0.2.2"
 #
 if [ $# -lt 1 ] || [ "$1" == "-h" ] || [ "$1" == "--help" ] ; then
     echo "Usage: $0 COMMAND [ PLATFORM DATA_DIR ]"
