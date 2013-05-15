@@ -1,3 +1,9 @@
+2013-05-15  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* illumina2cluster/auto_process_illumina.sh
+	- version 0.2.2: fix automatic determination of number of allowed
+	  mismatches from the bases mask, to deal with e.g. 'I6n'
+
 2013-05-02  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* illumina2cluster/auto_process_illumina.sh
