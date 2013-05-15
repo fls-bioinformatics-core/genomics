@@ -133,7 +133,8 @@ function get_nmismatches() {
 	index_read=$(echo $mask | grep I 2>/dev/null)
 	if [ ! -z "$index_read" ] ; then
 	    # Extract number of cycles/bases by deleting 'I'
-	    test_tag_length=$(echo $index_read | sed 's/I//g')
+	    # Also remove any trailing 'n' e.g. from I6n
+	    test_tag_length=$(echo $index_read | sed 's/I//g' | sed 's/n[0-9]*//g')
 	    if [ $test_tag_length -gt $tag_length ] ; then
 		tag_length=$test_tag_length
 	    fi
