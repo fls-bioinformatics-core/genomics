@@ -9,7 +9,7 @@ Provides functionality for analysing data from an Illumina sequencer run.
 
 """
 
-__version__ = "0.1.2"
+__version__ = "0.1.3"
 
 #######################################################################
 # Import modules
@@ -115,8 +115,12 @@ if __name__ == "__main__":
     illumina_analysis_dir = os.path.abspath(args[0])
 
     # Populate Illumina data object
-    illumina_data = IlluminaData.IlluminaData(illumina_analysis_dir,
-                                              unaligned_dir=options.unaligned_dir)
+    try:
+        illumina_data = IlluminaData.IlluminaData(illumina_analysis_dir,
+                                                  unaligned_dir=options.unaligned_dir)
+    except IlluminaData.IlluminaDataError, ex:
+        logging.error("Failed to collect data: %s",ex)
+        sys.exit(1)
 
     # Check there's at least one thing to do
     if not (options.report or 
