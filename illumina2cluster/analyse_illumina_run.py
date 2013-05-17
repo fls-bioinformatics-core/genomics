@@ -9,7 +9,7 @@ Provides functionality for analysing data from an Illumina sequencer run.
 
 """
 
-__version__ = "0.1.3"
+__version__ = "0.1.4"
 
 #######################################################################
 # Import modules
@@ -142,10 +142,8 @@ if __name__ == "__main__":
 
     # Report the names of the samples in each project
     if options.report:
-        # Build report text as a list of lines
-        report = []
         for project in illumina_data.projects:
-            report.append("%s" % describe_project(project))
+            print "%s" % describe_project(project)
             # Report statistics for fastq files
             if options.stats:
                 # Print number of reads for each file, and file size
@@ -154,16 +152,14 @@ if __name__ == "__main__":
                         fq = os.path.join(sample.dirn,fastq)
                         nreads = FASTQFile.nreads(fq)
                         fsize = os.path.getsize(fq)
-                        report.append("%s\t%s\t%d" % (fastq,
-                                                      bcf_utils.format_file_size(fsize),
-                                                      nreads))
-                report.append("")
-        # Print report
-        print "%s" % '\n'.join(report).strip()
+                        print "%s\t%s\t%d" % (fastq,
+                                              bcf_utils.format_file_size(fsize),
+                                              nreads)
+            print ""
 
     # Print number of undetermined reads
     if options.stats and illumina_data.undetermined.samples is not None:
-        print "\nUndetermined indices"
+        print "Undetermined indices"
         for lane in illumina_data.undetermined.samples:
             for fastq in lane.fastq:
                 fq = os.path.join(lane.dirn,fastq)
