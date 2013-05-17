@@ -7,7 +7,7 @@
 #
 #########################################################################
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 
 """FASTQFile
 
@@ -236,6 +236,9 @@ def nreads(fastq=None,fp=None):
     This function can handle gzipped FASTQ files supplied via the 'fastq'
     argument.
 
+    Line counting uses a variant of the "buf count" method outlined here:
+    http://stackoverflow.com/a/850962/579925
+
     Arguments:
       fastq: fastq(.gz) file
       fp: open file descriptor for fastq file
@@ -247,11 +250,15 @@ def nreads(fastq=None,fp=None):
     nlines = 0
     if fp is None:
         if os.path.splitext(fastq)[1] == '.gz':
-            fp = gzip.open(fastq,'r')
+            fp = gzip.open(fastq)
         else:
-            fp = open(fastq,'rU')
-    for line in fp:
-        nlines += 1
+            fp = open(fastq)
+    buf_size = 1024 * 1024
+    read_fp = fp.read # optimise the loop
+    buf = read_fp(buf_size)
+    while buf:
+        nlines += buf.count('\n')
+        buf = read_fp(buf_size)
     if fastq is not None:
         fp.close()
     if (nlines%4) != 0:
