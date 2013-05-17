@@ -2,7 +2,7 @@
 #
 # Automatically process Illumina-based sequencing run
 #
-AUTO_PROCESS_VERSION="0.2.2"
+AUTO_PROCESS_VERSION="0.2.3"
 #
 if [ $# -lt 1 ] || [ "$1" == "-h" ] || [ "$1" == "--help" ] ; then
     echo "Usage: $0 COMMAND [ PLATFORM DATA_DIR ]"
@@ -291,11 +291,15 @@ function make_fastqs_for_run() {
 	exit 1
     fi
     # Check output status from CASAVA log file
-    casava_exit_code=$(grep "make: finished exit code " logs/bclToFastq.sh.o$qsub_id 2>/dev/null | cut -d" " -f5)
-    log_step Make_fastqs INFO "CASAVA exit code: $casava_exit_code"
-    if [ $casava_exit_code -ne 0 ] ; then
-	log_step Make_fastqs ERROR "CASAVA make step finished with exit code $casava_exit_code"
-	exit 1
+    casava_exit_code=$(grep "make: finished exit code " logs/bclToFastq.${unaligned_dir}.o${qsub_id} 2>/dev/null | cut -d" " -f5)
+    if [ -z "$casava_exit_code" ] ; then
+	log_step Make_fastqs WARNING "Unable to get CASAVA exit code"
+    else
+	log_step Make_fastqs INFO "CASAVA exit code: $casava_exit_code"
+	if [ $casava_exit_code -ne 0 ] ; then
+	    log_step Make_fastqs ERROR "CASAVA make step finished with exit code $casava_exit_code"
+	    exit 1
+	fi
     fi
     # Check that the outputs match expectations
     verify_cmd="analyse_illumina_run.py --unaligned=$unaligned_dir --verify=$sample_sheet ."
@@ -314,10 +318,13 @@ function make_fastqs_for_run() {
     log_step Make_fastqs INFO "Qsub job id: $qsub_id"
     if [ -f logs/stats.$unaligned_dir.o${qsub_id} ] ; then
 	make_fastqs_summary="$unaligned_dir.summary"
+	# Remove link to existing stats file
 	if [ -f $make_fastqs_summary ] ; then
 	    /bin/rm $make_fastqs_summary
 	fi
+	# Make link to latest stats file
 	ln -s logs/stats.$unaligned_dir.o${qsub_id} $make_fastqs_summary
+	# Echo to stdout
 	cat $make_fastqs_summary
 	log_step Make_fastqs INFO "Summary stats written to $make_fastqs_summary"
     else
