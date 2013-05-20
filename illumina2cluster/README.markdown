@@ -176,6 +176,10 @@ Options:
 		      The supplied value is passed directly to configureBcltoFastq.pl
 		      (see the CASAVA user guide for details of how --use-bases-mask
 		      works)
+    --nprocessors N   set the number of processors to use (defaults to 1).
+                      This is passed to the -j option of the 'make' step after running
+                      configureBcltoFastq.pl (see the CASAVA user guide for details of
+                      how -j works)
 
 
 build_illumina_analysis_dirs.py

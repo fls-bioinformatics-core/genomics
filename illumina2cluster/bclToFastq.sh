@@ -38,6 +38,10 @@ Options:
                     The supplied value is passed directly to configureBcltoFastq.pl
                     (see the CASAVA user guide for details of how --use-bases-mask
                     works)
+  --nprocessors N   set the number of processors to use (defaults to 1).
+                    This is passed to the -j option of the 'make' step after running
+                    configureBcltoFastq.pl (see the CASAVA user guide for details of
+                    how -j works)
 EOF
     exit
 fi
@@ -57,6 +61,7 @@ echo
 #
 # Defaults
 n_mismatches=0
+n_processors=1
 #
 # Collect command line options to pass directly to CASAVA
 casava_options=
@@ -69,6 +74,10 @@ while [ ! -z `echo $1 | grep "^-"` ] ; do
 	--nmismatches)
 	    shift
 	    n_mismatches=$1
+	    ;;
+	--nprocessors)
+	    shift
+	    n_processors=$1
 	    ;;
 	*)
 	    echo "Ignored option $1"
@@ -95,6 +104,7 @@ echo BaseCalls directory   : $basecalls_dir
 echo SampleSheet.csv file  : $sample_sheet_file
 echo Fastq output directory: $fastq_output_dir
 echo Number of mismatches  : $n_mismatches
+echo Number of processors  : $n_processors
 echo Additional options    : $casava_options
 #
 # Check input directory
@@ -157,7 +167,7 @@ fi
 #
 # Run the 'make' step
 echo Running make
-make
+make -j $n_processors
 status=$?
 echo make: finished exit code $status
 #
