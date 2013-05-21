@@ -210,19 +210,25 @@ class IlluminaSample:
         # Look for fastq files
         for f in os.listdir(self.dirn):
             if f.endswith(".fastq.gz"):
-                self.fastq.append(f)
+                self.add_fastq(f)
                 logging.debug("\tFastq : %s" % f)
         if not self.fastq:
-            raise IlluminaDataError, "Unable to find fastq.gz files for %s" % \
-                self.name
+            logging.debug("\tUnable to find fastq.gz files for %s" % self.name)
+
+    def add_fastq(self,fastq):
+        """Add a reference to a fastq file in the sample
+
+        Arguments:
+          fastq: name of the fastq file
+        """
+        self.fastq.append(fastq)
         # Sort fastq's into order
         self.fastq.sort()
-        # Post-process and determine if we have paired-end data
-        for f in self.fastq:
-            fq = IlluminaFastq(f)
+        # Check paired-end status
+        if not self.paired_end:
+            fq = IlluminaFastq(fastq)
             if fq.read_number == 2:
                 self.paired_end = True
-                break
 
     def __repr__(self):
         """Implement __repr__ built-in
@@ -498,6 +504,16 @@ class IlluminaFastq:
             self.barcode_sequence = None
         # Sample name: whatever's left over
         self.sample_name = '_'.join(fields[:-4])
+
+    def __repr__(self):
+        """Implement __repr__ built-in
+
+        """
+        return "%s_%s_L%03d_R%d_%03d" % (self.sample_name,
+                                         'NoIndex' if self.barcode_sequence is None else self.barcode_sequence,
+                                         self.lane_number,
+                                         self.read_number,
+                                         self.set_number)
 
 class IlluminaDataError(Exception):
     """Base class for errors with Illumina-related code"""
