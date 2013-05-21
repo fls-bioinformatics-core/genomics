@@ -77,7 +77,8 @@ def get_unique_fastqs(sample):
                     if t == "NAME":
                         name.append(fq.sample_name)
                     elif t == "TAG":
-                        name.append(fq.barcode_sequence)
+                        if fq.barcode_sequence is not None:
+                            name.append(fq.barcode_sequence)
                     elif t == "LANE":
                         name.append("L%03d" % fq.lane_number)
                 # Add the read number for paired end data
