@@ -1,3 +1,36 @@
+2013-05-21  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* illumina2cluster/auto_process_illumina.sh
+	- version 0.2.4: use multiple cores for bcl-to-fastq conversion.
+
+	* share/IlluminaData.py
+	- IlluminaSample class no longer raises an exception if no fastq
+	  files are found, so IlluminaData objects can be populated from
+	  an incomplete CASAVA run.
+
+	* illumina2cluster/build_illumina_analysis_dir.py
+	- automatically determine the set of shortest unique link names
+	  to use for fastqs in each project.
+
+2013-05-20  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* illumina2cluster/bclToFastq.sh
+	- New option --nprocessors allows specification of number of
+	  cores to utilise when performing bcl to Fastq conversion.
+
+2013-05-17  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* illumina2cluster/auto_process_illumina.sh
+	- version 0.2.3: fix bug with extracting the exit code from the
+	  CASAVA/bcl2fastq step.
+
+	* share/FASTQFile.py
+	- version 0.2.1: implement more efficient line counting in nreads
+	  function.
+
+	* illumina2cluster/analyse_illumina_run.py
+	- version 0.1.4: print results from --stats option in real time.
+
 2013-05-15  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* illumina2cluster/auto_process_illumina.sh
