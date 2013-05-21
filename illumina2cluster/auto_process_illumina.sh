@@ -2,7 +2,7 @@
 #
 # Automatically process Illumina-based sequencing run
 #
-AUTO_PROCESS_VERSION="0.2.3"
+AUTO_PROCESS_VERSION="0.2.4"
 #
 if [ $# -lt 1 ] || [ "$1" == "-h" ] || [ "$1" == "--help" ] ; then
     echo "Usage: $0 COMMAND [ PLATFORM DATA_DIR ]"
@@ -277,7 +277,7 @@ function make_fastqs_for_run() {
 	log_step Make_fastqs INFO "Number of mismatches: $nmismatches"
     fi
     # Use qsub -sync y to wait for qsubbed job to finish
-    qsub_cmd="qsub -terse -q serial.q -sync y -b y -cwd -o logs -N bclToFastq.$unaligned_dir -V bclToFastq.sh --use-bases-mask $bases_mask --nmismatches $nmismatches $DATA_DIR $unaligned_dir $sample_sheet"
+    qsub_cmd="qsub -terse -q smp.q -sync y -b y -cwd -o logs -N bclToFastq.$unaligned_dir -V bclToFastq.sh --use-bases-mask $bases_mask --nmismatches $nmismatches --nprocessors 12 $DATA_DIR $unaligned_dir $sample_sheet"
     log_step Make_fastqs INFO "Running command: $qsub_cmd"
     qsub_id=$($qsub_cmd | head -n 1)
     status=$?
