@@ -1,7 +1,7 @@
 #!/bin/env python
 #
 #     build_illumina_analysis_dir.py: build analysis dir with links to fastq files
-#     Copyright (C) University of Manchester 2012 Peter Briggs
+#     Copyright (C) University of Manchester 2012-2013 Peter Briggs
 #
 """build_illumina_analysis_dir.py
 
@@ -40,6 +40,60 @@ import bcf_utils
 #######################################################################
 # Functions
 #######################################################################
+
+def get_unique_fastqs(sample):
+    """Generate mapping of full fastq names to shorter unique names
+    
+    Given an IlluminaSample object, return a dictionary mapping the
+    full fastq file names to their shortest unique versions within
+    the sample.
+
+    Arguments:
+      sample: a populated IlluminaSample object.
+
+    Returns:
+      Dictionary mapping fastq names to shortest unique versions
+  
+    """
+    # Define a set of templates of increasing complexity,
+    # from which to generate shortened names
+    templates = [ "NAME",
+                  "NAME TAG",
+                  "NAME TAG LANE",
+                  "FULL" ]
+    # Try each template in turn to see if it can generate
+    # a unique set of short names
+    for template in templates:
+        name_mapping = {}
+        unique_names = []
+        # Process each fastq file name
+        for fastq in sample.fastq:
+            fq = IlluminaData.IlluminaFastq(fastq)
+            name = []
+            if template == "FULL":
+                name.append(str(fq))
+            else:
+                for t in template.split():
+                    if t == "NAME":
+                        name.append(fq.sample_name)
+                    elif t == "TAG":
+                        name.append(fq.barcode_sequence)
+                    elif t == "LANE":
+                        name.append("L%03d" % fq.lane_number)
+                # Add the read number for paired end data
+                if sample.paired_end:
+                    name.append("R%d" % fq.read_number)
+            name = '_'.join(name) + ".fastq.gz"
+            # Store the name
+            if name not in unique_names:
+                name_mapping[fastq] = name
+                unique_names.append(name)
+        # If the number of unique names matches total number
+        # of files then we have a unique set
+        if len(unique_names) == len(sample.fastq):
+            return name_mapping
+    # Failed to make a unique set of names
+    raise Exception,"Failed to make a set of unique fastq names"
 
 def concatenate_fastq_files(merged_fastq,fastq_files):
     """Create a single FASTQ file by concatenating one or more FASTQs
@@ -149,19 +203,13 @@ if __name__ == "__main__":
         # Check for & create links to fastq files
         if not options.merge_replicates:
             for sample in project.samples:
+                fastq_names = get_unique_fastqs(sample)
                 for fastq in sample.fastq:
                     fastq_file = os.path.join(sample.dirn,fastq)
                     if options.keep_names:
                         fastq_ln = os.path.join(project_dir,fastq)
                     else:
-                        if not sample.paired_end:
-                            # Single end sample
-                            fastq_ln = os.path.join(project_dir,sample.name+'.fastq.gz')
-                        else:
-                            # Include the read number in the name for paired end data
-                            read_number = IlluminaData.IlluminaFastq(fastq).read_number
-                            fastq_ln = os.path.join(project_dir,
-                                                    "%s_R%d.fastq.gz" % (sample.name,read_number))
+                        fastq_ln = os.path.join(project_dir,fastq_names[fastq])
                     if os.path.exists(fastq_ln):
                         logging.error("Failed to link to %s: %s already exists" %
                                       (fastq_file,os.path.basename(fastq_ln)))
@@ -175,7 +223,7 @@ if __name__ == "__main__":
                 replicates = {}
                 # Gather replicates to be merged
                 for fastq in sample.fastq:
-                    fastq_data = IlluminaFastq(fastq)
+                    fastq_data = IlluminaData.IlluminaFastq(fastq)
                     name = "%s_%s_R%d" % (fastq_data.sample_name,
                                           fastq_data.barcode_sequence,
                                           fastq_data.read_number)
