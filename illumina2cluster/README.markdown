@@ -304,6 +304,33 @@ and write out to `SampleSheet3.csv`:
         -o SampleSheet3.csv SampleSheet.csv
 
 
+rsync_seq_data.py
+-----------------
+
+Rsync sequencing data to archive location, inserting the correct 'year' and
+'platform' subdirectories.
+
+Usage:
+
+    rsync_seq_data.py [OPTIONS] DIR BASE_DIR
+
+Wrapper to rsync sequencing data: DIR will be rsync'ed to a subdirectory of
+BASE_DIR constructed from the year and platform i.e. BASE_DIR/YEAR/PLATFORM/.
+YEAR will be the current year (over-ride using the --year option), PLATFORM
+will be inferred from the DIR name (over-ride using the --platform option).
+The output from rsync is written to a file rsync.DIR.log.
+
+    Options:
+      --version            show program's version number and exit
+      -h, --help           show this help message and exit
+      --platform=PLATFORM  explicitly specify the sequencer type
+      --year=YEAR          explicitly specify the year (otherwise current year is
+                           assumed)
+      --dry-run            run rsync with --dry-run option
+      --chmod=CHMOD        change file permissions using --chmod option of rsync
+                           (e.g 'u-w,g-w,o-w'
+
+
 rsync_seq_data.sh
 -----------------
 
