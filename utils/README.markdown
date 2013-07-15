@@ -5,6 +5,7 @@ Place to put general utility scripts/tools.
 
  *  `annotate_probesets.py`: annotate probe set list based on probe set names
  *  `cd_set_umask.sh`: setup script to automagically set umask for specific directory
+ *  `cluster_load.py`: report Grid Engine usage via qstat wrapper
  *  `do.sh`: execute shell command iteratively with range of integer index values
  *  `extract_reads.py`: write out subsets of reads from input data files
  *  `fastq_edit.py`: edit FASTQ files and data
@@ -69,6 +70,40 @@ will execute:
     ...
     ln -s /blah/blah43/myfile43.ext ./myfile43.ext
 
+
+cluster_load.py
+---------------
+Report current Grid Engine utilisation by wrapping the `qstat` utility.
+
+Usage:
+
+    cluster_load.py
+
+Outputs a report of the form:
+
+    6 jobs running (r)
+    44 jobs queued (q)
+    0 jobs suspended (S)
+    0 jobs pending deletion (d)
+    
+    Jobs by queue:
+        queue1.q    1 (0/0)
+        queue2.q    5 (0/0)
+	...
+
+    Jobs by user:
+                 	Total   r	q	S	d
+            user1       2	1	1	0	0
+            user2       15      1	14      0	0
+            user3       32	4	28	0	0
+            ...
+
+    Jobs by node:
+                 	Total   queue1.q        queue2.q
+                             r (S/d)         r (S/d)
+          node01    1        0 (0/0)         1 (0/0)
+          node02    1        0 (0/0)         1 (0/0)
+          ...
 
 extract_reads.py
 ----------------
