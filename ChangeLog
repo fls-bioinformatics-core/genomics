@@ -1,3 +1,16 @@
+2013-07-15  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* illumina2cluster/rsync_seq_data.sh
+	- removed, replaced by rsync_seq_data.py.
+
+	* illumina2cluster/rsync_seq_data.py
+	- version 0.0.1: new program for rsync'ing sequencing data to
+	  the appropriate location in the archive.
+
+	* utils/cluster_load.py
+	- new utility for reporting current Grid Engine utilisation by
+	  wrapping the qstat program.
+
 2013-05-21  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* illumina2cluster/auto_process_illumina.sh
