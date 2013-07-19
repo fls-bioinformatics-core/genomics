@@ -331,16 +331,3 @@ The output from rsync is written to a file rsync.DIR.log.
                            (e.g 'u-w,g-w,o-w'
 
 
-rsync_seq_data.sh
------------------
-
-Rsync a copy of a sequencing data directory to a local or remote destination.
-
-Usage:
-
-    rsync_seq_data.sh OPTIONS SEQ_DATA_DIR TARGET_DIR
-
-Makes a copy of sequencing data directory SEQ_DATA_DIR under TARGET_DIR, and writes
-the rsync log both to STDOUT and to a timestamped log file (except for `--dry-run`).
-
-Options are passed directly to the `rsync` command.
