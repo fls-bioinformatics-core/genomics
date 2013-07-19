@@ -120,6 +120,12 @@ if __name__ == "__main__":
     else:
         print "Input file is from MACS %s" % macs_version
 
+    # Don't try to convert output from MACS 1.*
+    if macs_version.startswith("1."):
+        logging.error("input XLS comes from MACS %s, this version only handles 2.0" %
+                      macs_version)
+        sys.exit(1)
+
     # Sort into order by fold_enrichment and then by -log10(pvalue) column
     data.sort(lambda line: line['fold_enrichment'],reverse=True)
     data.sort(lambda line: line['-log10(pvalue)'],reverse=True)
