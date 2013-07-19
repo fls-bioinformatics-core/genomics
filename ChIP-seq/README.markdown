@@ -48,11 +48,17 @@ Extract N random records from fastq file (4-line records):
 
 Usage: `getRandomTags_index_fastq.pl in.fastq N out.fastq`
 
-make_macs_xls.py
-----------------
+make_macs_xls.py/make_macs2_xls.py
+----------------------------------
 Convert a MACS tab-delimited output file into an Excel (XLS) spreadsheet.
 
-Usage: `make_macs_xls.py <macs_output_file>.xls`
+Usage:
+
+    make_macs[2]_xls.py <macs_output_file>.xls
+
+To process output from MACS 1.4.2 and earlier use `make_macs_xls.py`; for MACS2
+(i.e. version 2.0.10 and higher, which has a different format from that output
+by earlier versions), use `make_macs2_xls.py`.
 
 Creates an XLS spreadsheet called `<macs_output_file>_XLS.xls`
 
