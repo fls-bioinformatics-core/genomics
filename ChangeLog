@@ -1,3 +1,9 @@
+2013-07-19  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* ChIP-seq/make_macs2_xls.py
+	- modified version of make_macs_xls.py to convert XLS output
+	  files from MACS 2.0.10 (contributed by Ian Donaldson).
+
 2013-07-15  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* illumina2cluster/rsync_seq_data.sh
