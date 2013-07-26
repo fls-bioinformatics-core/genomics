@@ -1,3 +1,10 @@
+2013-07-26  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* illumina2cluster/rsync_seq_data.py
+	- version 0.0.2: add --mirror option, runs rsync with
+	  --delete-after option to remove files from target directory
+	  which are no longer present in the source.
+
 2013-07-19  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* ChIP-seq/make_macs2_xls.py
