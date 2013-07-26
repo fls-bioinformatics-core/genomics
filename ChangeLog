@@ -5,6 +5,10 @@
 	  --delete-after option to remove files from target directory
 	  which are no longer present in the source.
 
+	* share/Spreadsheet.py
+	- version 0.1.7: fixed bug which meant formulae generation
+	  failed for columns after 'Z' (i.e. 'AA', 'AB' etc).
+
 2013-07-19  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* ChIP-seq/make_macs2_xls.py
