@@ -500,7 +500,15 @@ class Worksheet:
         'A', 'B', 'AA', 'BA' etc).
 
         """
-        return string.uppercase[i]
+        name = ''
+        try:
+            while i >= 0:
+                name += string.uppercase[i%26]
+                i = i/26-1
+            return name[::-1]
+        except IndexError, ex:
+            print "Exception getting column name for index %d: %s" % (i,ex)
+            raise
 
     def save(self):
         """Write the new data to the spreadsheet.
@@ -894,6 +902,9 @@ class TestWorksheet(unittest.TestCase):
         ws = self.wb.addSheet("test sheet")
         self.assertEqual(ws.column_id_from_index(0),'A')
         self.assertEqual(ws.column_id_from_index(25),'Z')
+        self.assertEqual(ws.column_id_from_index(26),'AA')
+        self.assertEqual(ws.column_id_from_index(27),'AB')
+        self.assertEqual(ws.column_id_from_index(32),'AG')
 
 class TestWorksheetInsertColumn(unittest.TestCase):
     """Tests specifically for inserting columns of data
