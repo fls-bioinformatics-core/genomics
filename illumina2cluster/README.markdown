@@ -329,5 +329,8 @@ The output from rsync is written to a file rsync.DIR.log.
       --dry-run            run rsync with --dry-run option
       --chmod=CHMOD        change file permissions using --chmod option of rsync
                            (e.g 'u-w,g-w,o-w'
+      --mirror             mirror the source directory at the destination (update
+                           files that have changed and remove any that have been
+                           deleted i.e. rsync --delete-after)
 
 

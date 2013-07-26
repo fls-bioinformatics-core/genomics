@@ -19,7 +19,7 @@ Wrapper for rsync for moving sequencing into the data storage area.
 # Modules metadata
 #######################################################################
 
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 
 # Dictionary matching sequencing platforms to regexp patterns
 # for specific instruments
@@ -66,7 +66,8 @@ def get_platform_from_name(sequencer_name):
             return PLATFORMS[pattern]
     return None
 
-def run_rsync(source,target,dry_run=False,chmod=None,log=None,err=None):
+def run_rsync(source,target,dry_run=False,mirror=False,chmod=None,
+              log=None,err=None):
     """Wrapper for running the rsync command
 
     Create and execute an rsync command line to recursive copy/sync
@@ -81,6 +82,9 @@ def run_rsync(source,target,dry_run=False,chmod=None,log=None,err=None):
       target: the directory the source will be copied into
       dry_run: run rsync using --dry-run option i.e. no files will
         be copied/sync'ed, just reported
+      mirror: if True then run rsync in 'mirror' mode i.e. with
+        --delete-after option (to remove files from the target
+        that have also been removed from the source)
       chmod: optional, mode specification to be applied to the copied
         files e.g. chmod='u+rwX,g+rwX,o-w
       log: optional, name of a log file to record stdout from rsync;
@@ -96,6 +100,8 @@ def run_rsync(source,target,dry_run=False,chmod=None,log=None,err=None):
     rsync_cmd = ['rsync','-av']
     if dry_run:
         rsync_cmd.append('--dry-run')
+    if mirror:
+        rsync_cmd.append('--delete-after')
     if re.compile(r'^([^@]*@)?[^:]*:').match(target):
         # Remote destination, requires ssh
         rsync_cmd.extend(['-e','ssh'])
@@ -144,7 +150,11 @@ if __name__ == '__main__':
                  help="run rsync with --dry-run option")
     p.add_option('--chmod',action='store',dest="chmod",default=None,
                  help="change file permissions using --chmod option of rsync (e.g "
-                 "'u-w,g-w,o-w'")
+                 "'u-w,g-w,o-w')")
+    p.add_option('--mirror',action='store_true',dest="mirror",default=False,
+                 help="mirror the source directory at the destination (update files "
+                 "that have changed and remove any that have been deleted i.e. "
+                 "rsync --delete-after)")
     options,args = p.parse_args()
     if len(args) != 2:
         p.error("input is a source directory and a destination")
@@ -174,9 +184,10 @@ if __name__ == '__main__':
     print "Platform   : %s" % platform
     print "Destination: %s" % destination
     print "Log file   : %s" % log_file
+    print "Mirror mode: %s" % options.mirror
     # Run rsync
     status = run_rsync(data_dir,destination,dry_run=options.dry_run,
-                       log=log_file,chmod=options.chmod)
+                       log=log_file,chmod=options.chmod,mirror=options.mirror)
     print "Rsync returncode: %s" % status
     if status != 0:
         logging.error("Rsync failure")
