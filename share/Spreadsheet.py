@@ -487,10 +487,20 @@ class Worksheet:
         """
         try:
             i = self.data[0].split('\t').index(name)
-            return string.uppercase[i]
+            return self.column_id_from_index(i)
         except IndexError:
             # Column name not found
             raise IndexError, "Column '%s' not found" % name
+
+    def column_id_from_index(self,i):
+        """Get XLS column id from index of column
+
+        cindex is the zero-based column index (an integer); this
+        method returns the matching XLS column identifier (i.e.
+        'A', 'B', 'AA', 'BA' etc).
+
+        """
+        return string.uppercase[i]
 
     def save(self):
         """Write the new data to the spreadsheet.
@@ -537,14 +547,14 @@ class Worksheet:
                     # while XLS starts from 1
                     formula = formula.replace('?',str(self.current_row+1))
                     # Substitute '#' with current column
-                    formula = formula.replace('#',string.uppercase[cindex])
+                    formula = formula.replace('#',self.column_id_from_index(cindex))
                     # Create the item
                     try:
                         item = xlwt.Formula(formula)
                     except Exception, ex:
                         logging.warning("Error writing formula '%s' to cell %s%s: %s",
                                         formula,
-                                        string.uppercase[cindex],
+                                        self.column_id_from_index(cindex),
                                         self.current_row+1,
                                         ex)
                         item = "FORMULA_ERROR"
@@ -877,6 +887,13 @@ class TestWorksheet(unittest.TestCase):
         new_data = ["","","\t7"]
         for i in range(1):
             self.assertEqual(new_data[i],ws.data[i])
+
+    def test_get_column_id_from_index(self):
+        """Check column id ('A','B',...,'AB' etc) for index
+        """
+        ws = self.wb.addSheet("test sheet")
+        self.assertEqual(ws.column_id_from_index(0),'A')
+        self.assertEqual(ws.column_id_from_index(25),'Z')
 
 class TestWorksheetInsertColumn(unittest.TestCase):
     """Tests specifically for inserting columns of data
