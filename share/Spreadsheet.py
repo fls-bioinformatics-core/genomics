@@ -1,5 +1,5 @@
 #     Spreadsheet.py: write simple Excel spreadsheets
-#     Copyright (C) University of Manchester 2011 Peter Briggs
+#     Copyright (C) University of Manchester 2011-3 Peter Briggs
 #
 ########################################################################
 #
@@ -7,7 +7,7 @@
 #
 #########################################################################
 
-__version__ = "0.1.6"
+__version__ = "0.1.7"
 
 """Spreadsheet.py
 
