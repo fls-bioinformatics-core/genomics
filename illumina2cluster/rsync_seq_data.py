@@ -19,13 +19,14 @@ Wrapper for rsync for moving sequencing into the data storage area.
 # Modules metadata
 #######################################################################
 
-__version__ = "0.0.2"
+__version__ = "0.0.3"
 
 # Dictionary matching sequencing platforms to regexp patterns
 # for specific instruments
 PLATFORMS = {
     '^.*_ILLUMINA-73D9FA_.*$': 'illumina-ga2x',
     '^.*_SN7001250_.*$': 'hiseq',
+    '^.*_SN700511R_.*$': 'hiseq',
     '^.*_M00879_.*$': 'miseq',
     '^solid0127_.*$': 'solid4',
     }
