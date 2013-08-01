@@ -1,3 +1,9 @@
+2013-08-01  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* illumina2cluster/rsync_seq_data.py
+	- version 0.0.3: added new hiseq sequencer pattern to
+	  PLATFORMS.
+
 2013-07-26  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* illumina2cluster/rsync_seq_data.py
