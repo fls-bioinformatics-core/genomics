@@ -68,7 +68,7 @@ def get_platform_from_name(sequencer_name):
     return None
 
 def run_rsync(source,target,dry_run=False,mirror=False,chmod=None,
-              log=None,err=None):
+              log=None,err=None,excludes=None):
     """Wrapper for running the rsync command
 
     Create and execute an rsync command line to recursive copy/sync
@@ -92,6 +92,8 @@ def run_rsync(source,target,dry_run=False,mirror=False,chmod=None,
         if None then write to stdout.
       err: optional, name of a log file to record stderr from rsync;
         if None then write to stderr.
+      excludes: optional, a list of rsync filter patterns specifying
+        files and directories to be excluded from the rsync
 
     Returns:
       The exit code from rsync (should be 0 if there were no errors).
@@ -108,6 +110,9 @@ def run_rsync(source,target,dry_run=False,mirror=False,chmod=None,
         rsync_cmd.extend(['-e','ssh'])
     if chmod is not None:
         rsync_cmd.append('--chmod=%s' % chmod)
+    if excludes is not None:
+        for exclude in excludes:
+            rsync_cmd.append('--exclude=%s' % exclude)
     rsync_cmd.extend([source,target])
     print "Rsync command: %s" % ' '.join(rsync_cmd)
     if log is None:
@@ -158,6 +163,9 @@ if __name__ == '__main__':
     p.add_option('--chmod',action='store',dest="chmod",default=None,
                  help="change file permissions using --chmod option of rsync (e.g "
                  "'u-w,g-w,o-w')")
+    p.add_option('--exclude',action='append',dest="exclude_pattern",default=[],
+                 help="specify a pattern which will exclude any matching files or "
+                 "directories from the rsync")
     p.add_option('--mirror',action='store_true',dest="mirror",default=False,
                  help="mirror the source directory at the destination (update files "
                  "that have changed and remove any that have been deleted i.e. "
@@ -199,7 +207,8 @@ if __name__ == '__main__':
     print "Mirror mode: %s" % options.mirror
     # Run rsync
     status = run_rsync(data_dir,destination,dry_run=options.dry_run,
-                       log=log_file,chmod=options.chmod,mirror=options.mirror)
+                       log=log_file,chmod=options.chmod,mirror=options.mirror,
+                       excludes=options.exclude_pattern)
     print "Rsync returncode: %s" % status
     if status != 0:
         logging.error("Rsync failure")
