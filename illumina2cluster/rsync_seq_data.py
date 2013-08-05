@@ -19,17 +19,7 @@ Wrapper for rsync for moving sequencing into the data storage area.
 # Modules metadata
 #######################################################################
 
-__version__ = "0.0.4"
-
-# Dictionary matching sequencing platforms to regexp patterns
-# for specific instruments
-PLATFORMS = {
-    '^.*_ILLUMINA-73D9FA_.*$': 'illumina-ga2x',
-    '^.*_SN7001250_.*$': 'hiseq',
-    '^.*_SN700511R_.*$': 'hiseq',
-    '^.*_M00879_.*$': 'miseq',
-    '^solid0127_.*$': 'solid4',
-    }
+__version__ = "0.0.5"
 
 #######################################################################
 # Import modules that this module depends on
@@ -43,29 +33,16 @@ import logging
 import optparse
 import subprocess
 
+# Put ../share onto Python search path for modules
+SHARE_DIR = os.path.abspath(
+    os.path.normpath(
+        os.path.join(os.path.dirname(sys.argv[0]),'..','share')))
+sys.path.append(SHARE_DIR)
+import platforms
+
 #######################################################################
 # Functions
 #######################################################################
-
-def get_platform_from_name(sequencer_name):
-    """Attempt to determine platform from sequencer name
-
-    Checks the supplied sequencer name against the patterns in
-    PLATFORMS and returns the first match (or None if no match
-    is found).
-
-    Arguments:
-      sequencer_name: sequencer name (can include a leading
-        directory path)
-
-    Returns:
-      Matching sequencer platform, or None.
-    """
-    name = os.path.split(sequencer_name)[-1]
-    for pattern in PLATFORMS:
-        if re.compile(pattern).match(name):
-            return PLATFORMS[pattern]
-    return None
 
 def run_rsync(source,target,dry_run=False,mirror=False,chmod=None,
               log=None,err=None,excludes=None):
@@ -182,7 +159,7 @@ if __name__ == '__main__':
         sys.exit(1)
     # Determine platform
     if options.platform is None:
-        platform = get_platform_from_name(data_dir)
+        platform = platforms.get_sequencer_platform(data_dir)
         if platform is None:
             logging.error("Can't determine platform: use --platform option?")
             sys.exit(1)
