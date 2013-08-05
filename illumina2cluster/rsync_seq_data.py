@@ -124,8 +124,14 @@ def run_rsync(source,target,dry_run=False,mirror=False,chmod=None,
         fperr = open(err,'w')
         print "Writing stderr to %s" % err
     # Execute rsync command and wait for finish
-    p = subprocess.Popen(rsync_cmd,stdout=fpout,stderr=fperr)
-    returncode = p.wait()
+    try:
+        p = subprocess.Popen(rsync_cmd,stdout=fpout,stderr=fperr)
+        returncode = p.wait()
+    except KeyboardInterrupt,ex:
+        # Handle keyboard interrupt while rsync is running
+        print "KeyboardInterrupt: stopping rsync process"
+        p.kill()
+        returncode = -1
     return returncode
 
 #######################################################################
