@@ -1,3 +1,12 @@
+2013-08-05  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* illumina2cluster/rsync_seq_data.py
+	- version 0.0.4: new options --no-log (write rsync ouput
+	  directly to stdout) and --exclude (specify rsync filter
+	  patterns to exclude files from transfer).
+	- explicitly handle keyboard interrupt (i.e. ctrl-C) during
+	  rsync operation.
+
 2013-08-01  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* illumina2cluster/rsync_seq_data.py
