@@ -162,6 +162,8 @@ if __name__ == '__main__':
                  help="mirror the source directory at the destination (update files "
                  "that have changed and remove any that have been deleted i.e. "
                  "rsync --delete-after)")
+    p.add_option('--no-log',action='store_true',dest="no_log",default=False,
+                 help="write rsync output directly stdout, don't create a log file")
     options,args = p.parse_args()
     if len(args) != 2:
         p.error("input is a source directory and a destination")
@@ -185,7 +187,10 @@ if __name__ == '__main__':
         year = options.year
     destination = os.path.join(args[1],year,platform)
     # Log file
-    log_file = "rsync.%s.log" % os.path.split(data_dir)[-1]
+    if not options.no_log:
+        log_file = "rsync.%s.log" % os.path.split(data_dir)[-1]
+    else:
+        log_file = None
     # Report settings
     print "Data dir   : %s" % data_dir
     print "Platform   : %s" % platform
