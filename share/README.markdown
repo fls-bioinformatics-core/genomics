@@ -15,10 +15,15 @@ Shell function libraries
 Python modules
 --------------
 
+*   `bcf_utils.py`: utility classes and functions shared between BCF codes.
+
 *   `Experiment.py`: classes for defining SOLiD sequencing experiments (i.e. collections
     of related primary data).
 
 *   `FASTQFile.py`: classes for iterating through records in FASTQ files.
+
+*   `IlluminaData.py`: classes for extracting data about runs from Illumina-based
+    sequencing platforms.
 
 *   `JobRunner.py`: classes providing generic interface for starting and managing job
     runs.
