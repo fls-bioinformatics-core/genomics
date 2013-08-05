@@ -30,6 +30,8 @@ Python modules
 
 *   `Pipeline.py`: classes for running jobs iteratively
 
+*   `platforms.py`: utilities and data to identify NGS sequencer platforms
+
 *   `SolidData.py`: classes for extracting data about SOLiD runs from directory structure,
     data files and naming conventions.
 
