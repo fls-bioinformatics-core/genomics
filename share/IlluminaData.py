@@ -21,12 +21,141 @@ conventions.
 
 import os
 import logging
+import platforms
 import bcf_utils
 import TabFile
 
 #######################################################################
 # Class definitions
 #######################################################################
+
+class IlluminaRun:
+    """Class for examining 'raw' Illumina data directory.
+
+    Provides the following properties:
+
+    run_dir           : name and full path to the top-level data directory
+    basecalls_dir     : name and full path to the subdirectory holding bcl files
+    sample_sheet_csv  : full path of the SampleSheet.csv file
+    runinfo_xml       : full path of the RunInfo.xml file
+    platform          : platform e.g. 'miseq'
+    bcl_extension     : file extension for bcl files (either "bcl" or "bcl.gz")
+
+    """
+
+    def __init__(self,illumina_run_dir):
+        """Create and populate a new IlluminaRun object
+
+        Arguments:
+          illumina_run_dir: path to the top-level directory holding
+            the 'raw' sequencing data
+
+        """
+        # Top-level directory
+        self.run_dir = os.path.abspath(illumina_run_dir)
+        # Platform
+        self.platform = platforms.get_sequencer_platform(self.run_dir)
+        if self.platform is None:
+            raise Exception("Can't determine platform for %s" % self.run_dir)
+        elif self.platform not in ('illumina-ga2x','hiseq','miseq'):
+            raise Exception("%s: not an Illumina sequencer?" % self.run_dir)
+        # Basecalls subdirectory
+        self.basecalls_dir = os.path.join(self.run_dir,
+                                          'Data','Intensities','BaseCalls')
+        if os.path.isdir(self.basecalls_dir):
+            # Locate sample sheet
+            self.sample_sheet_csv = os.path.join(self.basecalls_dir,'SampleSheet.csv')
+            if not os.path.isfile(self.sample_sheet_csv):
+                self.sample_sheet_csv = None
+        else:
+            self.basecalls_dir = None
+        # RunInfo.xml
+        self.runinfo_xml = os.path.join(self.run_dir,'RunInfo.xml')
+        if not os.path.isfile(self.runinfo_xml):
+            self.runinfo_xml = None
+
+    @property
+    def bcl_extension(self):
+        """Get extension of bcl files
+
+        Returns either 'bcl' or 'bcl.gz'.
+
+        """
+        # Locate the directory for the first cycle in the first
+        # lane, which should always be present
+        lane1_cycle1 = os.path.join(self.basecalls_dir,'L001','C1.1')
+        # Examine filename extensions
+        for f in os.listdir(lane1_cycle1):
+            if str(f).endswith('.bcl'):
+                return 'bcl'
+            elif str(f).endswith('.bcl.gz'):
+                return 'bcl.gz'
+        # Failed to match any known extension, raise exception
+        raise Exception("No bcl files found in %s" % lane1_cycle1)
+
+class IlluminaRunInfo:
+    """Class for examining Illumina RunInfo.xml file
+
+    Extracts basic information from a RunInfo.xml file:
+
+    run_id     : the run id e.g.'130805_PJ600412T_0012_ABCDEZXDYY'
+    run_number : the run numer e.g. '12'
+    bases_mask : bases mask string derived from the read information
+                 e.g. 'y101,6I,y101'
+    reads      : a list of Python dictionaries (one per read)
+
+    Each dictionary in the 'reads' list has the following keys:
+
+    number          : the read number (1,2,3,...)
+    num_cycles      : the number of cycles in the read e.g. 101
+    is_indexed_read : whether the read is an index (i.e. barcode)
+                      Either 'Y' or 'N'
+
+    """
+
+    def __init__(self,runinfo_xml):
+        """Create and populate a new IlluminaRun object
+
+        Arguments:
+          illumina_run_dir: path to the top-level directory holding
+            the 'raw' sequencing data
+
+        """
+        self.runinfo_xml = runinfo_xml
+        self.run_id = None
+        self.run_number = None
+        self.reads = []
+        # Process contents
+        #
+        doc = xml.dom.minidom.parse(self.runinfo_xml)
+        run_tag = doc.getElementsByTagName('Run')[0]
+        self.run_id = run_tag.getAttribute('Id')
+        self.run_number = run_tag.getAttribute('Number')
+        read_tags = doc.getElementsByTagName('Read')
+        for read_tag in read_tags:
+            self.reads.append({'number': read_tag.getAttribute('Number'),
+                               'num_cycles': read_tag.getAttribute('NumCycles'),
+                               'is_indexed_read': read_tag.getAttribute('IsIndexedRead')})
+
+    @property
+    def bases_mask(self):
+        """Generate bases mask string from read information
+
+        Returns a bases mask string of the form e.g. 'y68,I6' for input
+        into bclToFastq, based on the read information.
+
+        """
+        bases_mask = []
+        for read in self.reads:
+            num_cycles = int(read['num_cycles'])
+            if read['is_indexed_read'] == 'N':
+                bases_mask.append("y%d" % num_cycles)
+            elif read['is_indexed_read'] == 'Y':
+                bases_mask.append("I%d" % num_cycles)
+            else:
+                raise Exception("Unrecognised value for is_indexed_read: '%s'"
+                                % read['is_indexed_read'])
+        return ','.join(bases_mask)
 
 class IlluminaData:
     """Class for examining Illumina data post bcl-to-fastq conversion
