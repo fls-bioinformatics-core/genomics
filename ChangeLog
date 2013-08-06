@@ -1,11 +1,22 @@
 2013-08-05  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
+	* share/IlluminaData.py
+	- new classes IlluminaRun (extracts data from a directory
+	  with the "raw" data from a sequencer run) and
+	  IlluminRunInfo (extracts data from a RunInfo.xml file).
+
+	* share/platforms.py
+	- new Python module with utilities and data to identify NGS
+	  sequencer platforms
+	
 	* illumina2cluster/rsync_seq_data.py
+	- version 0.0.5: moved sequencer platform identification
+	  code to share/platforms.py
 	- version 0.0.4: new options --no-log (write rsync ouput
 	  directly to stdout) and --exclude (specify rsync filter
-	  patterns to exclude files from transfer).
-	- explicitly handle keyboard interrupt (i.e. ctrl-C) during
-	  rsync operation.
+	  patterns to exclude files from transfer); explicitly
+	  handle keyboard interrupt (i.e. ctrl-C) during rsync
+	  operation.
 
 2013-08-01  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
