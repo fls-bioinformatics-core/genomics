@@ -9,7 +9,7 @@ Provides functionality for analysing data from an Illumina sequencer run.
 
 """
 
-__version__ = "0.1.4"
+__version__ = "0.1.5"
 
 #######################################################################
 # Import modules
@@ -51,18 +51,29 @@ def describe_project(illumina_project):
       Description string.
 
     """
+    # Gather information
+    paired_end = illumina_project.paired_end
     n_samples = len(illumina_project.samples)
+    multiple_fastqs_per_sample = False
+    for s in illumina_project.samples:
+        n_fastqs = len(s.fastq)
+        if (paired_end and n_fastqs > 2) or (not paired_end and n_fastqs > 1):
+            multiple_fastqs_per_sample = True
+            break
+    # Build description
+    description = "%s: %s" % (illumina_project.name,
+                              illumina_project.prettyPrintSamples())
     sample_names = project.prettyPrintSamples()
-    description = "Project %s: %s" % (illumina_project.name,
-                                      illumina_project.prettyPrintSamples())
-    if illumina_project.paired_end:
-        description += " (paired end, "
-    else:
-        description += " ("
+    description += " (%d " % n_samples
+    if paired_end:
+        description += "paired end "
     if n_samples == 1:
-        description += "1 sample)"
+        description += "sample"
     else:
-        description += "%d samples)" % n_samples
+        description += "samples"
+    if multiple_fastqs_per_sample:
+        description += ", multiple fastqs per sample"
+    description += ")"
     return "%s" % description
 
 def name_matches(name,pattern):
