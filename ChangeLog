@@ -1,3 +1,10 @@
+2013-08-08  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* illumina2cluster/analyse_illumina_run.py
+	- version 0.1.7: --summary option generates a one-line
+	  description of projects and numbers of samples, suitable
+	  for logging file entries.
+
 2013-08-05  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* share/IlluminaData.py
