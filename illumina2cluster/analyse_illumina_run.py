@@ -9,7 +9,7 @@ Provides functionality for analysing data from an Illumina sequencer run.
 
 """
 
-__version__ = "0.1.6"
+__version__ = "0.1.7"
 
 #######################################################################
 # Import modules
@@ -75,6 +75,29 @@ def describe_project(illumina_project):
         description += ", multiple fastqs per sample"
     description += ")"
     return "%s" % description
+
+def summarise_projects(illumina_data):
+    """Short summary of projects, suitable for logging file
+
+    The summary description is a one line summary of the project names
+    along with the number of samples in each, and an indication if the
+    run was paired-ended.
+
+    Arguments:
+      illumina_data: a populated IlluminaData directory
+
+    Returns:
+      Summary description.
+
+    """
+    summary = ""
+    project_summaries = []
+    if illumina_data.paired_end:
+        summary = "Paired end: "
+    for project in illumina_data.projects:
+        project_summaries.append("%s (%d samples)" % (project.name,len(project.samples)))
+    summary += "; ".join(project_summaries)
+    return summary
 
 def verify_run_against_sample_sheet(illumina_data,sample_sheet):
     """Checks existence of predicted outputs from a sample sheet
@@ -157,6 +180,8 @@ if __name__ == "__main__":
                               "with the fastq.gz files.")
     p.add_option("--report",action="store_true",dest="report",
                  help="report sample names and number of samples for each project")
+    p.add_option("--summary",action="store_true",dest="summary",
+                 help="short report of samples (suitable for logging file)")
     p.add_option("-l","--list",action="store_true",dest="list",
                  help="list projects, samples and fastq files directories")
     p.add_option("--unaligned",action="store",dest="unaligned_dir",default="Unaligned",
@@ -185,7 +210,8 @@ if __name__ == "__main__":
         sys.exit(1)
 
     # Check there's at least one thing to do
-    if not (options.report or 
+    if not (options.report or
+            options.summary or
             options.list or
             options.sample_sheet):
         options.report = True
@@ -218,6 +244,10 @@ if __name__ == "__main__":
                                               bcf_utils.format_file_size(fsize),
                                               nreads)
             print ""
+
+    # Summary: short report suitable for logging file
+    if options.summary:
+        print "%s" % summarise_projects(illumina_data)
 
     # Print number of undetermined reads
     if options.stats and illumina_data.undetermined.samples is not None:

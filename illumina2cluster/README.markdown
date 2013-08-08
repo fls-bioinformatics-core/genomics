@@ -26,9 +26,11 @@ the fastq.gz files produced by the BCL-to-FASTQ conversion step.
 
 Options:
 
+    --version             show program's version number and exit
     -h, --help            show this help message and exit
     --report              report sample names and number of samples for each
                           project
+    --summary             short report of samples (suitable for logging file)
     -l, --list            list projects, samples and fastq files directories
     --unaligned=UNALIGNED_DIR
                           specify an alternative name for the 'Unaligned'
