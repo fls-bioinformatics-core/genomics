@@ -9,7 +9,7 @@ Provides functionality for analysing data from an Illumina sequencer run.
 
 """
 
-__version__ = "0.1.5"
+__version__ = "0.1.6"
 
 #######################################################################
 # Import modules
@@ -75,6 +75,57 @@ def describe_project(illumina_project):
         description += ", multiple fastqs per sample"
     description += ")"
     return "%s" % description
+
+def verify_run_against_sample_sheet(illumina_data,sample_sheet):
+    """Checks existence of predicted outputs from a sample sheet
+
+    Arguments:
+      illumina_data: a populated IlluminaData directory
+      sample_sheet : path and name of a CSV sample sheet
+
+    Returns:
+      True if all the predicted outputs from the sample sheet are
+      found, False otherwise.
+
+    """
+    # Get predicted outputs
+    predicted_projects = IlluminaData.\
+        CasavaSampleSheet(sample_sheet).predict_output()
+    # Loop through projects and check that predicted outputs exist
+    verified = True
+    for proj in predicted_projects:
+        # Locate project directory
+        proj_dir = os.path.join(illumina_data.unaligned_dir,proj)
+        if os.path.isdir(proj_dir):
+            predicted_samples = predicted_projects[proj]
+            for smpl in predicted_samples:
+                # Locate sample directory
+                smpl_dir = os.path.join(proj_dir,smpl)
+                if os.path.isdir(smpl_dir):
+                    # Check for output files
+                    predicted_names = predicted_samples[smpl]
+                    for name in predicted_names:
+                        # Look for R1 file
+                        f = os.path.join(smpl_dir,"%s_R1_001.fastq.gz" % name)
+                        if not os.path.exists(f):
+                            logging.warning("Verify: missing R1 file '%s'" % f)
+                            verified = False
+                        # Look for R2 file (paired end only)
+                        if illumina_data.paired_end:
+                            f = os.path.join(smpl_dir,"%s_R2_001.fastq.gz" % name)
+                            if not os.path.exists(f):
+                                logging.warning("Verify: missing R2 file '%s'" % f)
+                                verified = False
+                else:
+                    # Sample directory not found
+                    logging.warning("Verify: missing %s" % smpl_dir)
+                    verified = False
+        else:
+            # Project directory not found
+            logging.warning("Verify: missing %s" % proj_dir)
+            verified = False
+    # Return verification status
+    return verified
 
 def name_matches(name,pattern):
     """Simple wildcard matching of project and sample names
@@ -207,52 +258,12 @@ if __name__ == "__main__":
 
     # Verify against sample sheet
     if options.sample_sheet is not None:
-        # Get predicted outputs
-        predicted_projects = IlluminaData.\
-            CasavaSampleSheet(options.sample_sheet).predict_output()
-        # Loop through projects and check that predicted outputs exist
-        status = 0
-        for proj in predicted_projects:
-            # Locate project directory
-            proj_dir = os.path.join(illumina_data.unaligned_dir,proj)
-            if os.path.isdir(proj_dir):
-                predicted_samples = predicted_projects[proj]
-                for smpl in predicted_samples:
-                    # Locate sample directory
-                    smpl_dir = os.path.join(proj_dir,smpl)
-                    if os.path.isdir(smpl_dir):
-                        # Check for output files
-                        predicted_names = predicted_samples[smpl]
-                        for name in predicted_names:
-                            # Look for R1 file
-                            f = os.path.join(smpl_dir,"%s_R1_001.fastq.gz" % name)
-                            if not os.path.exists(f):
-                                logging.warning("Verify: missing R1 file '%s'" % f)
-                                status = 1
-                            # Look for R2 file (paired end only)
-                            if illumina_data.paired_end:
-                                f = os.path.join(smpl_dir,"%s_R2_001.fastq.gz" % name)
-                                if not os.path.exists(f):
-                                    logging.warning("Verify: missing R2 file '%s'" % f)
-                                    status = 1
-                    else:
-                        # Sample directory not found
-                        logging.warning("Verify: missing %s" % smpl_dir)
-                        status = 1
-            else:
-                # Project directory not found
-                logging.warning("Verify: missing %s" % proj_dir)
-                status = 1
-        # Finished
-        if status == 0:
+        if verify_run_against_sample_sheet(illumina_data,options.sample_sheet):
             print "Verification against sample sheet '%s': OK" % \
                 options.sample_sheet
+            status = 0
         else:
             logging.error("Verification against sample sheet '%s': FAILED" %
                           options.sample_sheet)
+            status = 1
         sys.exit(status)
-                            
-                
-                
-                                    
-        
