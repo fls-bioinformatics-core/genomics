@@ -80,10 +80,7 @@ class FastqIterator(Iterator):
         """
         self.__fastq_file = fastq_file
         if fp is None:
-            if os.path.splitext(self.__fastq_file)[1] == '.gz':
-                self.__fp = gzip.open(self.__fastq_file,'r')
-            else:
-                self.__fp = open(self.__fastq_file,'rU')
+            self.__fp = get_fastq_file_handle(self.__fastq_file)
         else:
             self.__fp = fp
 
@@ -222,6 +219,24 @@ class SequenceIdentifier:
 #######################################################################
 # Functions
 #######################################################################
+
+def get_fastq_file_handle(fastq):
+    """Return a file handle opened for reading for a FASTQ file
+
+    Deals with both compressed (gzipped) and uncompressed FASTQ
+    files.
+
+    Arguments:
+      fastq: name (including path, if required) of FASTQ file.
+        The file can be gzipped (must have '.gz' extension)
+
+    Returns:
+      File handle that can be used for read operations.
+    """
+    if os.path.splitext(fastq)[1] == '.gz':
+        return gzip.open(fastq,'r')
+    else:
+        return open(fastq,'rU')
 
 def nreads(fastq=None,fp=None):
     """Return number of reads in a FASTQ file
