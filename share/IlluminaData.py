@@ -21,6 +21,7 @@ conventions.
 
 import os
 import logging
+import xml.dom.minidom
 import platforms
 import bcf_utils
 import TabFile
