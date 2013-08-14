@@ -1,7 +1,7 @@
 #!/bin/env python
 #
 #     JobRunner.py: classes for starting and managing job runs
-#     Copyright (C) University of Manchester 2011 Peter Briggs
+#     Copyright (C) University of Manchester 2011-3 Peter Briggs
 #
 ########################################################################
 #
@@ -153,16 +153,28 @@ class SimpleJobRunner(BaseJobRunner):
     command, and jobs are terminated using 'kill -9'.
     """
 
-    def __init__(self):
+    def __init__(self,log_dir=None):
         """Create a new SimpleJobRunner instance
+
+        Arguments:
+          log_dir: Directory to write log files to (set to 'None' to use
+                   cwd)
         """
         # Store a list of job ids (= pids) managed by this class
         self.__job_list = []
         # Base log id
         self.__log_id = int(time.time())
+        # Directory for log files
+        self.__log_dir = log_dir
         # Keep track of log files etc
         self.__log_files = {}
         self.__err_files = {}
+
+    def log_dir(self,log_dir):
+        """(Re)set the directory to write log files to
+
+        """
+        self.__log_dir = log_dir
 
     def run(self,name,working_dir,script,args):
         """Run a command and return the PID (=job id)
@@ -180,6 +192,7 @@ class SimpleJobRunner(BaseJobRunner):
         logging.debug("SimpleJobRunner: submitting job")
         logging.debug("Name       : %s" % name)
         logging.debug("Working_dir: %s" % working_dir)
+        logging.debug("Log dir    : %s" % self.__log_dir)
         logging.debug("Script     : %s" % script)
         logging.debug("Arguments  : %s" % str(args))
         # Build command to be submitted
@@ -289,6 +302,9 @@ class SimpleJobRunner(BaseJobRunner):
         timestamp = self.__log_id
         log_file = "%s.o%s" % (name,timestamp)
         error_file = "%s.e%s" % (name,timestamp)
+        if self.__log_dir is not None:
+            log_file = os.path.join(self.__log_dir,log_file)
+            error_file = os.path.join(self.__log_dir,error_file)
         self.__log_id += 1
         return (log_file,error_file)
 
@@ -303,14 +319,28 @@ class GEJobRunner(BaseJobRunner):
     queue on initialisation.
     """
 
-    def __init__(self,queue=None):
+    def __init__(self,queue=None,log_dir=None):
         """Create a new GEJobRunner instance
 
         Arguments:
-          queue: Name of GE queue to use (set to 'None' to use default queue)
+          queue:   Name of GE queue to use (set to 'None' to use default queue)
+          log_dir: Directory to write log files to (set to 'None' to use cwd)
         """
         self.__queue = queue
+        self.__log_dir = log_dir
         self.__names = {}
+
+    def queue(self,queue):
+        """(Re)set the name of GE queue to use
+
+        """
+        self.__queue = queue
+
+    def log_dir(self,log_dir):
+        """(Re)set the directory to write log files to
+
+        """
+        self.__log_dir = log_dir
 
     def run(self,name,working_dir,script,args):
         """Submit a script or command to the cluster via 'qsub'
@@ -328,6 +358,7 @@ class GEJobRunner(BaseJobRunner):
         logging.debug("GEJobRunner: submitting job")
         logging.debug("Name       : %s" % name)
         logging.debug("Queue      : %s" % self.__queue)
+        logging.debug("Log dir    : %s" % self.__log_dir)
         logging.debug("Working_dir: %s" % working_dir)
         logging.debug("Script     : %s" % script)
         logging.debug("Arguments  : %s" % str(args))
@@ -339,6 +370,8 @@ class GEJobRunner(BaseJobRunner):
         qsub = ['qsub','-b','y','-V','-N',name]
         if self.__queue:
             qsub.extend(('-q',self.__queue))
+        if self.__log_dir:
+            qsub.extend(('-o',self.__log_dir))
         if not working_dir:
             qsub.append('-cwd')
         else:
@@ -387,14 +420,20 @@ class GEJobRunner(BaseJobRunner):
 
         The name should be '<name>.o<job_id>'
         """
-        return "%s.o%s" % (self.__names[job_id],job_id)
+        log_file = "%s.o%s" % (self.__names[job_id],job_id)
+        if self.__log_dir is not None:
+            log_file = os.path.join(self.__log_dir,log_file)
+        return log_file
 
     def errFile(self,job_id):
         """Return the error file name for a job
 
         The name should be '<name>.e<job_id>'
         """
-        return "%s.e%s" % (self.__names[job_id],job_id)
+        err_file = "%s.e%s" % (self.__names[job_id],job_id)
+        if self.__log_dir is not None:
+            err_file = os.path.join(self.__log_dir,err_file)
+        return err_file
 
     def errorState(self,job_id):
         """Check if the job is in an error state
