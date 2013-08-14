@@ -7,7 +7,7 @@
 #
 #########################################################################
 
-__version__ = "0.2.1"
+__version__ = "0.2.3"
 
 """FASTQFile
 
@@ -16,6 +16,8 @@ the data within them:
 
 * FastqIterator: enables looping through all read records in FASTQ file
 * FastqRead: provides access to a single FASTQ read record
+* SequenceIdentifier: provides access to sequence identifier info in a read
+* FastqAttributes: provides access to gross attributes of FASTQ file
 
 Information on the FASTQ file format: http://en.wikipedia.org/wiki/FASTQ_format
 """
@@ -215,6 +217,48 @@ class SequenceIdentifier:
         else:
             # Return what was put in
             return self.__seqid
+
+class FastqAttributes:
+    """Class to provide access to gross attributes of a FASTQ file
+
+    Given a FASTQ file (can be uncompressed or gzipped), enables
+    various attributes to be queried via the following properties:
+
+    nreads: number of reads in the FASTQ file
+    fsize:  size of the file (in bytes)
+    
+
+    """
+    def __init__(self,fastq_file=None,fp=None):
+        """Create a new FastqAttributes object
+
+        Arguments:
+           fastq_file: name of the FASTQ file to iterate through
+           fp: file-like object opened for reading
+          
+        """
+        self.__fastq_file = fastq_file
+        if fp is None:
+            self.__fp = get_fastq_file_handle(self.__fastq_file)
+        else:
+            self.__fp = fp
+        self.__nreads = None
+
+    @property
+    def nreads(self):
+        """Return number of reads in the FASTQ file
+
+        """
+        if self.__nreads is None:
+            self.__nreads = nreads(fastq=self.__fastq_file,fp=self.__fp)
+        return self.__nreads
+
+    @property
+    def fsize(self):
+        """Return size of the FASTQ file (bytes)
+        
+        """
+        return os.path.getsize(self.__fastq_file)
 
 #######################################################################
 # Functions
@@ -422,6 +466,17 @@ class TestSequenceIdentifier(unittest.TestCase):
         self.assertEqual(str(seqid),seqid_string)
         # Check the format
         self.assertEqual(None,seqid.format)
+
+class TestFastqAttributes(unittest.TestCase):
+    """Tests of the FastqAttributes class
+    """
+
+    def test_nreads(self):
+        """Check number of reads
+        """
+        fp = cStringIO.StringIO(fastq_data)
+        attrs = FastqAttributes(fp=fp)
+        self.assertEqual(attrs.nreads,5)
 
 class TestNReads(unittest.TestCase):
     """Tests of the nreads function
