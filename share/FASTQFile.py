@@ -7,7 +7,7 @@
 #
 #########################################################################
 
-__version__ = "0.2.3"
+__version__ = "0.2.4"
 
 """FASTQFile
 
@@ -104,13 +104,23 @@ class FastqIterator(Iterator):
 class FastqRead:
     """Class to store a FASTQ record with information about a read
 
-    Provides the following properties:
+    Provides the following properties for accessing the read data:
 
     seqid: the "sequence identifier" information (first line of the read record)
       as a SequenceIdentifier object
     sequence: the raw sequence (second line of the record)
     optid: the optional sequence identifier line (third line of the record)
     quality: the quality values (fourth line of the record)
+
+    Additional properties:
+
+    seqlen: length of the sequence
+    maxquality: maximum quality value (in character representation)
+    minquality: minimum quality value (in character representation)
+
+    (Note that quality scores can only be obtained from character representations
+    once the encoding scheme is known)
+
     """
 
     def __init__(self,seqid_line=None,seq_line=None,optid_line=None,quality_line=None):
@@ -134,6 +144,30 @@ class FastqRead:
             self._seqid = SequenceIdentifier(self.__raw_attributes['seqid'])
             del(self.__raw_attributes['seqid'])
         return self._seqid
+
+    @property
+    def seqlen(self):
+        return len(self.sequence)
+
+    @property
+    def maxquality(self):
+        maxqual = None
+        for q in self.quality:
+            if maxqual is None:
+                maxqual = ord(q)
+            else:
+                maxqual = max(maxqual,ord(q))
+        return chr(maxqual)
+
+    @property
+    def minquality(self):
+        minqual = None
+        for q in self.quality:
+            if minqual is None:
+                minqual = ord(q)
+            else:
+                minqual = min(minqual,ord(q))
+        return chr(minqual)
 
     def __repr__(self):
         return '\n'.join((str(self.seqid),
@@ -390,6 +424,9 @@ class TestFastqRead(unittest.TestCase):
         self.assertEqual(read.sequence,seq.rstrip('\n'))
         self.assertEqual(read.optid,optid.rstrip('\n'))
         self.assertEqual(read.quality,quality.rstrip('\n'))
+        self.assertEqual(read.seqlen,len(seq.rstrip('\n')))
+        self.assertEqual(read.maxquality,'J')
+        self.assertEqual(read.minquality,'3')
 
 class TestSequenceIdentifier(unittest.TestCase):
     """Tests of the SequenceIdentifier class
