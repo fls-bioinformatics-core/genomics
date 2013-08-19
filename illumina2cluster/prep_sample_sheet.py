@@ -15,7 +15,7 @@ Prepare sample sheet file for Illumina sequencers.
 
 """
 
-__version__ = "0.1.1"
+__version__ = "0.2.0"
 
 #######################################################################
 # Imports
@@ -31,10 +31,6 @@ SHARE_DIR = os.path.abspath(
         os.path.join(os.path.dirname(sys.argv[0]),'..','share')))
 sys.path.append(SHARE_DIR)
 import IlluminaData
-
-#######################################################################
-# Imports
-#######################################################################
 
 #######################################################################
 # Functions
@@ -95,8 +91,6 @@ if __name__ == "__main__":
                  help="output new sample sheet to SAMPLESHEET_OUT")
     p.add_option('-v','--view',action="store_true",dest="view",
 	         help="view contents of sample sheet")
-    p.add_option('--miseq',action="store_true",dest="miseq",
-                 help="convert input sample sheet MiSEQ to CASAVA-compatible format")
     p.add_option('--fix-spaces',action="store_true",dest="fix_spaces",
                  help="replace spaces in SampleID and SampleProject fields with underscores")
     p.add_option('--fix-duplicates',action="store_true",dest="fix_duplicates",
@@ -118,22 +112,26 @@ if __name__ == "__main__":
     p.add_option('--ignore-warnings',action="store_true",dest="ignore_warnings",default=False,
                  help="ignore warnings about spaces and duplicated sampleID/sampleProject "
                  "combinations when writing new samplesheet.csv file")
+    deprecated_options = optparse.OptionGroup(p,"Deprecated options")
+    deprecated_options.add_option('--miseq',action="store_true",dest="miseq",
+                                  help="convert input MiSEQ sample sheet to CASAVA-compatible "
+                                  "format (deprecated; conversion is performed automatically "
+                                  "if required)")
+    p.add_option_group(deprecated_options)
     # Process command line
     options,args = p.parse_args()
     if len(args) != 1:
         p.error("input is a single SampleSheet.csv file")
+    if options.miseq:
+        logging.warning("--miseq option no longer necessary; MiSEQ-style sample sheets "
+                        "are now converted automatically")
     # Get input sample sheet file
     samplesheet = args[0]
     if not os.path.isfile(samplesheet):
         logging.error("sample sheet '%s': not found" % samplesheet)
         sys.exit(1)
     # Read in the data as CSV
-    if options.miseq:
-        # Input sample sheet is from MiSEQ
-        data = IlluminaData.convert_miseq_samplesheet_to_casava(samplesheet)
-    else:
-        # Standard CASAVA sample sheet
-        data = IlluminaData.CasavaSampleSheet(samplesheet)
+    data = IlluminaData.get_casava_sample_sheet(samplesheet)
     # Update the SampleID and SampleProject fields
     for sample_id in options.sample_id:
         lanes,name = parse_name_expression(sample_id)

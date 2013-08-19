@@ -267,8 +267,6 @@ Options:
     -h, --help            show this help message and exit
     -o SAMPLESHEET_OUT    output new sample sheet to SAMPLESHEET_OUT
     -v, --view            view contents of sample sheet
-    --miseq               convert input sample sheet MiSEQ to CASAVA-compatible
-                          format
     --fix-spaces          replace spaces in SampleID and SampleProject fields
                           with underscores
     --fix-duplicates      append unique indices to SampleIDs where original
@@ -289,6 +287,12 @@ Options:
     --ignore-warnings     ignore warnings about spaces and duplicated
                           sampleID/sampleProject combinations when writing new
                           samplesheet.csv file
+  
+    Deprecated options:
+    --miseq               convert MiSEQ input sample sheet to CASAVA-compatible
+                          format (deprecated; conversion is performed
+                          automatically if required)
+
 
 Examples:
 
