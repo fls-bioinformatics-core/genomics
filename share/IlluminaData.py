@@ -7,6 +7,8 @@
 #
 #########################################################################
 
+__version__ = "1.0.0"
+
 """IlluminaData
 
 Provides classes for extracting data about runs of Illumina-based sequencers

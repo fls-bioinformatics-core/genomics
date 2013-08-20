@@ -9,6 +9,8 @@
 #
 #########################################################################
 
+__version__ = "1.0.0"
+
 """JobRunner
 
 Classes for starting, stopping and managing jobs.
