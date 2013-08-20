@@ -9,7 +9,7 @@
 #
 ########################################################################
 
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 
 """fastq_sniffer.py
 
@@ -64,19 +64,10 @@ if __name__ == "__main__":
     print "\nData from first read:"
     for read in FASTQFile.FastqIterator(fastq_file):
         fastq_format = read.seqid.format
-        if fastq_format is None:
-            # Check if it looks like colorspace
-            if read.sequence.startswith('T'):
-                fastq_format = 'colorspace'
-                for c in read.sequence[1:]:
-                    if c not in '.0123':
-                        fastq_format = None
-                        break
+        if fastq_format is None and read.is_colorspace:
+            fastq_format = 'colorspace'
         print "\tHeader format:\t%s" % str(fastq_format)
-        if fastq_format == 'colorspace':
-            print "\tSeq length:\t%d" % (len(read.sequence)-1)
-        else:
-            print "\tSeq length:\t%d" % len(read.sequence)
+        print "\tSeq length:\t%d" % read.seqlen
         break
 
     # Determine the quality score range (and count reads)
@@ -88,14 +79,11 @@ if __name__ == "__main__":
     min_max_qual = (None,None)
     for read in FASTQFile.FastqIterator(fastq_file):
         n_reads += 1
-        for value in read.quality:
-            # Convert to integer
-            quality_score = ord(value)
-            if min_max_qual == (None,None):
-                min_max_qual = (quality_score,quality_score)
-            else:
-                min_max_qual = (min(min_max_qual[0],quality_score),
-                                max(min_max_qual[1],quality_score))
+        if min_max_qual == (None,None):
+            min_max_qual = (ord(read.minquality),ord(read.maxquality))
+        else:
+            min_max_qual = (min(min_max_qual[0],ord(read.minquality)),
+                            max(min_max_qual[1],ord(read.maxquality)))
         if n_subset is not None and n_reads == n_subset:
             break
 
