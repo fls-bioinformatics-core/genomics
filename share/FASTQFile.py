@@ -7,7 +7,7 @@
 #
 #########################################################################
 
-__version__ = "0.2.5"
+__version__ = "0.2.6"
 
 """FASTQFile
 
@@ -121,7 +121,7 @@ class FastqRead:
     (Note that quality scores can only be obtained from character representations
     once the encoding scheme is known)
 
-    is_colorspace: returns True if the read looks lik a colorspace read, False
+    is_colorspace: returns True if the read looks like a colorspace read, False
       otherwise
 
     """
@@ -150,7 +150,10 @@ class FastqRead:
 
     @property
     def seqlen(self):
-        return len(self.sequence)
+        if self.is_colorspace:
+            return len(self.sequence) - 1
+        else:
+            return len(self.sequence)
 
     @property
     def maxquality(self):
