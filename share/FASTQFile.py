@@ -7,7 +7,7 @@
 #
 #########################################################################
 
-__version__ = "0.2.4"
+__version__ = "0.2.5"
 
 """FASTQFile
 
@@ -121,6 +121,9 @@ class FastqRead:
     (Note that quality scores can only be obtained from character representations
     once the encoding scheme is known)
 
+    is_colorspace: returns True if the read looks lik a colorspace read, False
+      otherwise
+
     """
 
     def __init__(self,seqid_line=None,seq_line=None,optid_line=None,quality_line=None):
@@ -168,6 +171,22 @@ class FastqRead:
             else:
                 minqual = min(minqual,ord(q))
         return chr(minqual)
+
+    @property
+    def is_colorspace(self):
+        if self.seqid.format is None:
+            # Check if it looks like colorspace
+            # Sequence starts with 'T' and only contains characters
+            # 0-3 or '.'
+            sequence = self.sequence
+            if sequence.startswith('T'):
+                for c in sequence[1:]:
+                    if c not in '.0123':
+                        return False
+                # Passed colorspace tests
+                return True
+        # Not colorspace
+        return False
 
     def __repr__(self):
         return '\n'.join((str(self.seqid),
@@ -427,6 +446,16 @@ class TestFastqRead(unittest.TestCase):
         self.assertEqual(read.seqlen,len(seq.rstrip('\n')))
         self.assertEqual(read.maxquality,'J')
         self.assertEqual(read.minquality,'3')
+        self.assertFalse(read.is_colorspace)
+
+    def test_is_colorspace(self):
+        """Check FastqRead detects colorspace correctly
+        """
+        read = FastqRead("@1_14_622",
+                         "T221.0033033232320030021103233332300123110201010031",
+                         "+",
+                         "BBA!>AA,B>;;=A%39%B8====>0?-?%9A2<)3?(4*36%A%4&+9%")
+        self.assertTrue(read.is_colorspace)
 
 class TestSequenceIdentifier(unittest.TestCase):
     """Tests of the SequenceIdentifier class
