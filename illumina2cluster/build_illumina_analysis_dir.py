@@ -3,6 +3,9 @@
 #     build_illumina_analysis_dir.py: build analysis dir with links to fastq files
 #     Copyright (C) University of Manchester 2012-2013 Peter Briggs
 #
+
+__version__ = "1.0.0"
+
 """build_illumina_analysis_dir.py
 
 Query and build per-project analysis directories for post-bcl-to-fastq
@@ -148,6 +151,7 @@ def concatenate_fastq_files(merged_fastq,fastq_files):
 if __name__ == "__main__":
     # Create command line parser
     p = optparse.OptionParser(usage="%prog OPTIONS illumina_data_dir",
+                              version="%prog "+__version__,
                               description="Create per-project analysis directories for "
                               "Illumina run. 'illumina_data_dir' is the top-level directory "
                               "containing the 'Unaligned' directory with the fastq.gz files "
