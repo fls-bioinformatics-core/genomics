@@ -7,6 +7,8 @@
 #
 #########################################################################
 
+__version__ = "1.0.0"
+
 """bcf_utils
 
 Utility classes and functions shared between BCF codes.
