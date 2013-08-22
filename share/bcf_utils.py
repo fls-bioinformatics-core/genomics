@@ -7,11 +7,31 @@
 #
 #########################################################################
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 
 """bcf_utils
 
 Utility classes and functions shared between BCF codes.
+
+Basic file system wrappers and utilities:
+
+  mkdir
+  mklink
+  chmod
+  format_file_size
+  commonprefix
+
+Sample name utilities:
+
+  extract_initials
+  extract_prefix
+  extract_index_as_string
+  extract_index
+  pretty_print_names
+
+File manipulations:
+
+  concatenate_fastq_files
 
 """
 
@@ -22,6 +42,7 @@ Utility classes and functions shared between BCF codes.
 import os
 import logging
 import string
+import gzip
 
 #######################################################################
 # Class definitions
@@ -264,6 +285,57 @@ def pretty_print_names(name_list):
             out.append(group[0]+"-"+extract_index_as_string(group[-1]))
     # Concatenate and return
     return ', '.join(out)
+
+# File manipulations
+
+def concatenate_fastq_files(merged_fastq,fastq_files,bufsize=10240):
+    """Create a single FASTQ file by concatenating one or more FASTQs
+
+    Given a list or tuple of FASTQ files (which can be compressed or
+    uncompressed or a combination), creates a single output FASTQ by
+    concatenating the contents.
+
+    Arguments:
+      merged_fastq: name of output FASTQ file (mustn't exist beforehand)
+      fastq_files:  list of FASTQ files to concatenate
+      bufsize: (optional) size of buffer to use for copying data
+
+    """
+    print "Creating merged fastq file '%s'" % merged_fastq
+    # Check that initial file doesn't exist
+    if os.path.exists(merged_fastq):
+        raise OSError, "Target file '%s' already exists, stopping" % merged_fastq
+    # Create temporary name
+    merged_fastq_part = merged_fastq+'.part'
+    # Open for writing
+    if os.path.splitext(merged_fastq)[1] == ".gz":
+        # Output file is gzipped
+        fq_merged = gzip.GzipFile(merged_fastq_part,'wb')
+    else:
+        # Assume regular file
+        fq_merged = open(merged_fastq_part,'wb')
+    # For each fastq, read data and append to output - simples!
+    for fastq in fastq_files:
+        print "Adding records from %s" % fastq
+        # Check it exists
+        if not os.path.exists(fastq):
+            raise OSError, "'%s' not found, stopping" % fastq
+        # Check if it's compressed i.e. gz extension?
+        gzipped = (os.path.splitext(fastq)[1] == ".gz")
+        # Open file for reading
+        if not gzipped:
+            fq = open(fastq,'rb')
+        else:
+            fq = gzip.GzipFile(fastq,'rb')
+        # Read and append data
+        while True:
+            data = fq.read(10240)
+            if not data: break
+            fq_merged.write(data)
+        fq.close()
+    # Finished, clean up
+    fq_merged.close()
+    os.rename(merged_fastq_part,merged_fastq)
 
 #######################################################################
 # Tests
