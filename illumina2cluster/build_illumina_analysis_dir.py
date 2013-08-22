@@ -4,7 +4,7 @@
 #     Copyright (C) University of Manchester 2012-2013 Peter Briggs
 #
 
-__version__ = "1.0.1"
+__version__ = "1.0.2"
 
 """build_illumina_analysis_dir.py
 
@@ -43,61 +43,6 @@ import bcf_utils
 #######################################################################
 # Functions
 #######################################################################
-
-def get_unique_fastqs(sample):
-    """Generate mapping of full fastq names to shorter unique names
-    
-    Given an IlluminaSample object, return a dictionary mapping the
-    full fastq file names to their shortest unique versions within
-    the sample.
-
-    Arguments:
-      sample: a populated IlluminaSample object.
-
-    Returns:
-      Dictionary mapping fastq names to shortest unique versions
-  
-    """
-    # Define a set of templates of increasing complexity,
-    # from which to generate shortened names
-    templates = [ "NAME",
-                  "NAME TAG",
-                  "NAME TAG LANE",
-                  "FULL" ]
-    # Try each template in turn to see if it can generate
-    # a unique set of short names
-    for template in templates:
-        name_mapping = {}
-        unique_names = []
-        # Process each fastq file name
-        for fastq in sample.fastq:
-            fq = IlluminaData.IlluminaFastq(fastq)
-            name = []
-            if template == "FULL":
-                name.append(str(fq))
-            else:
-                for t in template.split():
-                    if t == "NAME":
-                        name.append(fq.sample_name)
-                    elif t == "TAG":
-                        if fq.barcode_sequence is not None:
-                            name.append(fq.barcode_sequence)
-                    elif t == "LANE":
-                        name.append("L%03d" % fq.lane_number)
-                # Add the read number for paired end data
-                if sample.paired_end:
-                    name.append("R%d" % fq.read_number)
-            name = '_'.join(name) + ".fastq.gz"
-            # Store the name
-            if name not in unique_names:
-                name_mapping[fastq] = name
-                unique_names.append(name)
-        # If the number of unique names matches total number
-        # of files then we have a unique set
-        if len(unique_names) == len(sample.fastq):
-            return name_mapping
-    # Failed to make a unique set of names
-    raise Exception,"Failed to make a set of unique fastq names"
 
 def create_analysis_dir(project,
                         top_dir=None,
@@ -151,7 +96,7 @@ def create_analysis_dir(project,
     # Check for & create links to fastq files
     if not merge_replicates:
         for sample in project.samples:
-            fastq_names = IlluminaData.get_unique_fastqs_names(sample.fastqs)
+            fastq_names = IlluminaData.get_unique_fastq_names(sample.fastq)
             for fastq in sample.fastq:
                 fastq_file = os.path.join(sample.dirn,fastq)
                 if keep_names:
@@ -189,54 +134,9 @@ def create_analysis_dir(project,
             # Do the merge
             for name in replicates:
                 merged_fastq = os.path.join(project_dir,name+'.fastq')
-                concatenate_fastq_files(merged_fastq,replicates[name])
+                bcf_utils.concatenate_fastq_files(merged_fastq,replicates[name])
     # Return directory name
     return project_dir
-
-def concatenate_fastq_files(merged_fastq,fastq_files):
-    """Create a single FASTQ file by concatenating one or more FASTQs
-
-    Given a list or tuple of FASTQ files (which can be compressed or
-    uncompressed or a combination), creates a single output FASTQ by
-    concatenating the contents.
-
-    Arguments:
-      merged_fastq: name of output FASTQ file (mustn't exist beforehand)
-      fastq_files:  list of FASTQ files to concatenate
-
-    """
-    print "Creating merged fastq file '%s'" % merged_fastq
-    # Check that initial file doesn't exist
-    if os.path.exists(merged_fastq):
-        logging.error("Target file '%s' already exists, stopping")
-        sys.exit(1)
-    # Create temporary name
-    merged_fastq_part = merged_fastq+'.part'
-    # Open final output file
-    fq_merged = open(merged_fastq_part,'wb')
-    # For each fastq, read data and append to output - simples!
-    for fastq in fastq_files:
-        print "Adding records from %s" % fastq
-        # Check it exists
-        if not os.path.exists(fastq):
-            logging.error("'%s' not found, stopping" % fastq)
-            sys.exit(1)
-        # Check if it's compressed i.e. gz extension?
-        gzipped = (os.path.splitext(fastq)[1] == ".gz")
-        # Open file for reading
-        if not gzipped:
-            fq = open(fastq,'rb')
-        else:
-            fq = gzip.GzipFile(fastq,'rb')
-        # Read and append data
-        while True:
-            data = fq.read(10240)
-            if not data: break
-            fq_merged.write(data)
-        fq.close()
-    # Finished, clean up
-    fq_merged.close()
-    os.rename(merged_fastq_part,merged_fastq)
 
 #######################################################################
 # Main program
