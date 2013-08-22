@@ -1,3 +1,75 @@
+2013-08-22  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* share/bcf_utils.py:
+	- version 1.0.1: added new function 'concatenate_fastq_files'
+	  (concatenates a list of fastq files).
+
+	* illumina2cluster/analyse_illumina_run.py
+	- version 0.1.8: new option --merge-fastqs, creates
+	  concatenated fastq files for each sample.
+
+	* share/IlluminaData.py
+	- version 1.0.1: new property 'full_name' for IlluminaData,
+	  (returns name suitable for analysis subdirectory); new
+	  function 'get_unique_fastq_names' (generates mapping of
+	  full Illumina-style fastq file names to shortest unique
+	  version).
+
+	* illumina2cluster/build_illumina_analysis_dir.py
+	- version 1.0.1: move analysis directory creation code from
+	  __main__ to new 'create_analysis_dir' function.
+
+2013-08-21  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* share/bcf_utils.py
+	- added baseline version number (1.0.0)
+
+	* illumina2cluster/build_illumina_analysis_dir.py
+	- added baseline version number (1.0.0)
+
+2013-08-20  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* share/IlluminaData.py, JobRunner.py
+	- added version numbers (baseline 1.0.0)
+
+	* share/FASTQFile.py
+	- version 0.2.6: fix sequence length returned for
+	  colorspace reads by FastqRead.seqlen
+	- version 0.2.5: added is_colorspace property to FastqRead
+
+2013-08-19  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* illumina2cluster/prep_sample_sheet.py:
+	- version 0.2.0: --miseq option is deprecated as it's no
+	  longer necessary; sample sheet conversion is performed
+	  automatically if required.
+
+	* illumina2cluster/IlluminaData.py:
+	- new function 'get_casava_sample_sheet' produces a
+	  CasavaSampleSheet object from sample sheet CSV file
+	  regardless of format. 'convert_miseq_samplesheet_to_casava'
+	  is deprecated as it is now just a wrapper to the more
+	  genral function.
+
+	* share/FASTQFile.py
+	- version 0.2.4: added new properties to FastqRead: seqlen
+	  (return sequence length), maxquality and minquality (max
+	  and min encoded quality scores).
+
+2013-08-14  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* share/FASTQFile.py
+	- version 0.2.3: new FastqAttributes class provides
+	  access to "gross" attributes of FASTQ file (e.g. read
+	  count, file size).
+
+	* share/JobRunner.py
+	- SimpleJobRunner and GEJobRunner classes allow destination
+	  directory for log files to be specified explicitly, and
+	  to be changed after instantiation via new 'log_dir' methods.
+	- GEJobRunner class has new 'queue' method allowing GE queue
+	  to be changed after instantiation.
+
 2013-08-08  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* illumina2cluster/analyse_illumina_run.py
