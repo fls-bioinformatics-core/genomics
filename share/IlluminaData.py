@@ -7,12 +7,12 @@
 #
 #########################################################################
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 
 """IlluminaData
 
 Provides classes for extracting data about runs of Illumina-based sequencers
-(e.g. GA2x or HiSeq)from directory structure, data files and naming
+(e.g. GA2x or HiSeq) from directory structure, data files and naming
 conventions.
 
 """
@@ -301,6 +301,22 @@ class IlluminaProject:
         # Determine whether project is paired end
         for s in self.samples:
             self.paired_end = (self.paired_end and s.paired_end)
+
+    @property
+    def full_name(self):
+        """Return full name for project
+
+        The full name is "<name>_<expt_type>" (e.g. "PJB_miRNA"), but
+        reverts to just "<name>" if no experiment type is set (e.g. "PJB").
+
+        The full name is typically used as the name of the analysis
+        subdirectory for the project in the analysis pipeline.
+
+        """
+        if self.expt_type is not None:
+            return "%s_%s" % (self.name,self.expt_type)
+        else:
+            return self.name
 
     def prettyPrintSamples(self):
         """Return a nicely formatted string describing the sample names
@@ -808,6 +824,74 @@ def convert_miseq_samplesheet_to_casava(samplesheet=None,fp=None):
     return get_casava_sample_sheet(samplesheet=samplesheet,fp=fp,
                                    FCID_default='660DMAAXX')
 
+
+def get_unique_fastq_names(fastqs):
+    """Generate mapping of full fastq names to shorter unique names
+    
+    Given an iterable list of Illumina file fastq names, return a
+    dictionary mapping each name to its shortest unique form within
+    the list.
+
+    Arguments:
+      fastqs: an iterable list of fastq names
+
+    Returns:
+      Dictionary mapping fastq names to shortest unique versions
+    
+    """
+    
+    # Define a set of templates of increasing complexity,
+    # from which to generate shortened names
+    templates = ( "NAME",
+                  "NAME LANE",
+                  "NAME TAG",
+                  "NAME TAG LANE",
+                  "FULL" )
+    # Check for paired end fastq set
+    got_R1 = False
+    got_R2 = False
+    for fastq in fastqs:
+        fq = IlluminaFastq(fastq)
+        if fq.read_number == 1:
+            got_R1 = True
+        elif fq.read_number == 2:
+            got_R2 = True
+    paired_end = got_R1 and got_R2
+    # Try each template in turn to see if it can generate
+    # a unique set of short names
+    for template in templates:
+        name_mapping = {}
+        unique_names = []
+        # Process each fastq file name
+        for fastq in fastqs:
+            fq = IlluminaFastq(fastq)
+            name = []
+            if template == "FULL":
+                name.append(str(fq))
+            else:
+                for t in template.split():
+                    if t == "NAME":
+                        name.append(fq.sample_name)
+                    elif t == "TAG":
+                        if fq.barcode_sequence is not None:
+                            name.append(fq.barcode_sequence)
+                    elif t == "LANE":
+                        name.append("L%03d" % fq.lane_number)
+                # Add the read number for paired end data
+                if paired_end:
+                    name.append("R%d" % fq.read_number)
+            name = '_'.join(name) + ".fastq.gz"
+            # Store the name
+            if name not in unique_names:
+                name_mapping[fastq] = name
+                unique_names.append(name)
+        # If the number of unique names matches total number
+        # of files then we have a unique set
+        if len(unique_names) == len(fastqs):
+            return name_mapping
+    # Failed to make a unique set of names
+    raise Exception,"Failed to make a set of unique fastq names"
+
 #######################################################################
 # Tests
 #######################################################################
@@ -1052,6 +1136,71 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,Sample_Pro
             self.assertEqual(sample_sheet[i]['SampleID'],self.hiseq_sample_ids[i])
             self.assertEqual(sample_sheet[i]['SampleProject'],self.hiseq_sample_projects[i])
             self.assertEqual(sample_sheet[i]['Index'],self.hiseq_index_ids[i])
+
+class TestUniqueFastqNames(unittest.TestCase):
+
+    def test_unique_names_single_fastq(self):
+        """Check name for a single fastq
+
+        """
+        fastqs = ['PJB-E_GCCAAT_L001_R1_001.fastq.gz']
+        mapping = get_unique_fastq_names(fastqs)
+        self.assertEqual(mapping['PJB-E_GCCAAT_L001_R1_001.fastq.gz'],
+                         'PJB-E.fastq.gz')
+
+    def test_unique_names_single_sample_paired_end(self):
+        """Check names for paired end fastqs from single sample
+        
+        """
+        fastqs = ['PJB-E_GCCAAT_L001_R1_001.fastq.gz',
+                  'PJB-E_GCCAAT_L001_R2_001.fastq.gz']
+        mapping = get_unique_fastq_names(fastqs)
+        self.assertEqual(mapping['PJB-E_GCCAAT_L001_R1_001.fastq.gz'],
+                        'PJB-E_R1.fastq.gz')
+        self.assertEqual(mapping['PJB-E_GCCAAT_L001_R2_001.fastq.gz'],
+                         'PJB-E_R2.fastq.gz')
+
+    def test_unique_names_single_sample_multiple_lanes(self):
+        """Check names for multiple fastqs from single sample
+        
+        """
+        fastqs = ['PJB-E_GCCAAT_L001_R1_001.fastq.gz',
+                  'PJB-E_GCCAAT_L002_R1_001.fastq.gz']
+        mapping = get_unique_fastq_names(fastqs)
+        self.assertEqual(mapping['PJB-E_GCCAAT_L001_R1_001.fastq.gz'],
+                         'PJB-E_L001.fastq.gz')
+        self.assertEqual(mapping['PJB-E_GCCAAT_L002_R1_001.fastq.gz'],
+                         'PJB-E_L002.fastq.gz')
+
+    def test_unique_names_single_sample_multiple_lanes_paired_end(self):
+        """Check names for multiple fastqs from single paired-end sample
+        
+        """
+        fastqs = ['PJB-E_GCCAAT_L001_R1_001.fastq.gz',
+                  'PJB-E_GCCAAT_L001_R2_001.fastq.gz',
+                  'PJB-E_GCCAAT_L002_R1_001.fastq.gz',
+                  'PJB-E_GCCAAT_L002_R2_001.fastq.gz']
+        mapping = get_unique_fastq_names(fastqs)
+        self.assertEqual(mapping['PJB-E_GCCAAT_L001_R1_001.fastq.gz'],
+                         'PJB-E_L001_R1.fastq.gz')
+        self.assertEqual(mapping['PJB-E_GCCAAT_L001_R2_001.fastq.gz'],
+                         'PJB-E_L001_R2.fastq.gz')
+        self.assertEqual(mapping['PJB-E_GCCAAT_L002_R1_001.fastq.gz'],
+                         'PJB-E_L002_R1.fastq.gz')
+        self.assertEqual(mapping['PJB-E_GCCAAT_L002_R2_001.fastq.gz'],
+                         'PJB-E_L002_R2.fastq.gz')
+
+    def test_unique_names_multiple_samples_single_fastq(self):
+        """Check names for multiple samples each with single fastq
+        
+        """
+        fastqs = ['PJB-E_GCCAAT_L001_R1_001.fastq.gz',
+                  'PJB-A_AGTCAA_L001_R1_001.fastq.gz']
+        mapping = get_unique_fastq_names(fastqs)
+        self.assertEqual(mapping['PJB-E_GCCAAT_L001_R1_001.fastq.gz'],
+                         'PJB-E.fastq.gz')
+        self.assertEqual(mapping['PJB-A_AGTCAA_L001_R1_001.fastq.gz'],
+                         'PJB-A.fastq.gz')
 
 #######################################################################
 # Main program
