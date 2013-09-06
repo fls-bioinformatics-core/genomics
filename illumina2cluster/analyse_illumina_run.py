@@ -9,7 +9,7 @@ Provides functionality for analysing data from an Illumina sequencer run.
 
 """
 
-__version__ = "0.1.8"
+__version__ = "0.1.9"
 
 #######################################################################
 # Import modules
@@ -95,7 +95,10 @@ def summarise_projects(illumina_data):
     if illumina_data.paired_end:
         summary = "Paired end: "
     for project in illumina_data.projects:
-        project_summaries.append("%s (%d samples)" % (project.name,len(project.samples)))
+        n_samples = len(project.samples)
+        project_summaries.append("%s (%d sample%s)" % (project.name,
+                                                       n_samples,
+                                                       's' if n_samples != 1 else ''))
     summary += "; ".join(project_summaries)
     return summary
 
@@ -221,13 +224,28 @@ if __name__ == "__main__":
     # List option
     if options.list:
         for project in illumina_data.projects:
-            print "Project: %s (%d samples)" % (project.name,len(project.samples))
+            n_samples = len(project.samples)
+            print "Project: %s (%d sample%s)" % (project.name,
+                                                 n_samples,
+                                                 's' if n_samples != 1 else '')
             for sample in project.samples:
-                if len(sample.fastq) == 1:
-                    print "\t%s" % sample.name
+                if sample.paired_end:
+                    n_fastq_pairs = len(sample.fastq_subset(read_number=1))
+                    if n_fastq_pairs == 1:
+                        print "\t%s (R1/R2 pair)" % sample.name
+                    else:
+                        print "\t%s (%d fastq R1/R2 pairs)" % \
+                            (sample.name,n_fastq_pairs)
                 else:
-                    print "\t%s (%d fastqs)" % (sample.name,len(sample.fastq))
-                for fastq in sample.fastq:
+                    n_fastqs = len(sample.fastq)
+                    if n_fastqs == 1:
+                        print "\t%s" % sample.name
+                    else:
+                        print "\t%s (%d fastqs)" % (sample.name,n_fastqs)
+                # Print fastq names
+                fastqs = sample.fastq_subset(read_number=1) + \
+                         sample.fastq_subset(read_number=2)
+                for fastq in fastqs:
                     print "\t\t%s" % fastq
 
     # Report the names of the samples in each project
