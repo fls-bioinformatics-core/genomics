@@ -7,7 +7,7 @@
 #
 #########################################################################
 
-__version__ = "1.0.1"
+__version__ = "1.0.2"
 
 """IlluminaData
 
@@ -377,6 +377,35 @@ class IlluminaSample:
             fq = IlluminaFastq(fastq)
             if fq.read_number == 2:
                 self.paired_end = True
+
+    def fastq_subset(self,read_number=None,full_path=False):
+        """Return a subset of fastq files from the sample
+
+        Arguments:
+          read_number: select subset based on read_number (1 or 2)
+          full_path  : if True then fastq files will be returned
+            with the full path, if False (default) then as file
+            names only.
+
+        Returns:
+          List of fastq files matching the selection criteria.
+
+        """
+        # Build list of fastqs that match the selection criteria
+        fastqs = []
+        for fastq in self.fastq:
+            fq = IlluminaFastq(fastq)
+            if fq.read_number is None:
+                raise IlluminaDataException, \
+                    "Unable to determine read number for %s" % fastq
+            if fq.read_number == read_number:
+                if full_path:
+                    fastqs.append(os.path.join(self.dirn,fastq))
+                else:
+                    fastqs.append(fastq)
+        # Sort into dictionary order and return
+        fastqs.sort()
+        return fastqs
 
     def __repr__(self):
         """Implement __repr__ built-in
