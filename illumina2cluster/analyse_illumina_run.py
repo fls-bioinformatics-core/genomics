@@ -9,7 +9,7 @@ Provides functionality for analysing data from an Illumina sequencer run.
 
 """
 
-__version__ = "0.1.9"
+__version__ = "0.1.10"
 
 #######################################################################
 # Import modules
@@ -270,7 +270,7 @@ if __name__ == "__main__":
         print "%s" % summarise_projects(illumina_data)
 
     # Print number of undetermined reads
-    if options.stats and illumina_data.undetermined.samples is not None:
+    if options.stats and illumina_data.undetermined is not None:
         print "Undetermined indices"
         for lane in illumina_data.undetermined.samples:
             for fastq in lane.fastq:
