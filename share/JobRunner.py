@@ -164,10 +164,12 @@ class SimpleJobRunner(BaseJobRunner):
         """
         # Store a list of job ids (= pids) managed by this class
         self.__job_list = []
+        # Names
+        self.__names = {}
         # Base log id
         self.__log_id = int(time.time())
         # Directory for log files
-        self.__log_dir = log_dir
+        self.log_dir(log_dir)
         # Keep track of log files etc
         self.__log_files = {}
         self.__err_files = {}
@@ -176,7 +178,7 @@ class SimpleJobRunner(BaseJobRunner):
         """(Re)set the directory to write log files to
 
         """
-        self.__log_dir = log_dir
+        self.__log_dir = os.path.abspath(log_dir)
 
     def run(self,name,working_dir,script,args):
         """Run a command and return the PID (=job id)
@@ -229,6 +231,9 @@ class SimpleJobRunner(BaseJobRunner):
         if working_dir:
             # Move to working directory
             os.chdir(current_dir)
+        # Store name against job id
+        if job_id is not None:
+            self.__names[job_id] = name
         # Return the job id
         return job_id
 
@@ -250,6 +255,11 @@ class SimpleJobRunner(BaseJobRunner):
         else:
             logging.error("Failed to delete job %s" % job_id)
             return False
+
+    def name(self,job_id):
+        """Return the name for a job
+        """
+        return self.__names[job_id]
 
     def logFile(self,job_id):
         """Return the log file name for a job
@@ -329,8 +339,11 @@ class GEJobRunner(BaseJobRunner):
           log_dir: Directory to write log files to (set to 'None' to use cwd)
         """
         self.__queue = queue
-        self.__log_dir = log_dir
+        # Directory for log files
+        self.log_dir(log_dir)
+        # Keep track of names and log dirs for each job
         self.__names = {}
+        self.__log_dirs = {}
 
     def queue(self,queue):
         """(Re)set the name of GE queue to use
@@ -342,7 +355,12 @@ class GEJobRunner(BaseJobRunner):
         """(Re)set the directory to write log files to
 
         """
-        self.__log_dir = log_dir
+        self.__log_dir = os.path.abspath(log_dir)
+
+    def name(self,job_id):
+        """Return the name for a job
+        """
+        return self.__names[job_id]
 
     def run(self,name,working_dir,script,args):
         """Submit a script or command to the cluster via 'qsub'
@@ -400,9 +418,10 @@ class GEJobRunner(BaseJobRunner):
             if line.startswith('Your job'):
                 job_id = line.split()[2]
         logging.debug("QsubScript: done - job id = %s" % job_id)
-        # Store name against job id
+        # Store name and log dir against job id
         if job_id is not None:
             self.__names[job_id] = name
+            self.__log_dirs[job_id] = self.__log_dir
         # Return the job id
         return job_id
 
@@ -423,8 +442,8 @@ class GEJobRunner(BaseJobRunner):
         The name should be '<name>.o<job_id>'
         """
         log_file = "%s.o%s" % (self.__names[job_id],job_id)
-        if self.__log_dir is not None:
-            log_file = os.path.join(self.__log_dir,log_file)
+        if self.__log_dirs[job_id] is not None:
+            log_file = os.path.join(self.__log_dirs[job_id],log_file)
         return log_file
 
     def errFile(self,job_id):
@@ -433,8 +452,8 @@ class GEJobRunner(BaseJobRunner):
         The name should be '<name>.e<job_id>'
         """
         err_file = "%s.e%s" % (self.__names[job_id],job_id)
-        if self.__log_dir is not None:
-            err_file = os.path.join(self.__log_dir,err_file)
+        if self.__log_dirs[job_id] is not None:
+            err_file = os.path.join(self.__log_dirs[job_id],err_file)
         return err_file
 
     def errorState(self,job_id):
