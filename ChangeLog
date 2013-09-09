@@ -20,6 +20,13 @@
 	* illumina2cluster/check_paired_fastqs.py
 	- Removed: replaced by 'verify_paired.py'.
 
+	* share/JobRunner.py
+	- version 1.0.1: updates to SimpleJobRunner and GEJobRunner classes
+	  (store names associated with each job, and enable lookup via 'name'
+	  method; ensure stored log directory is an absolute path, and that
+	  log and error file names can be retrieved correctly even if log dir
+	  is subsequently changed).
+
 2013-09-06  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* illumina2cluster/analyse_illumina_run.py
