@@ -7,7 +7,7 @@
 #
 #########################################################################
 
-__version__ = "0.2.6"
+__version__ = "0.3.0"
 
 """FASTQFile
 
@@ -30,20 +30,7 @@ import os
 import re
 import logging
 import gzip
-
-#######################################################################
-# Constants/globals
-#######################################################################
-
-# Regular expression to match an "ILLUMINA18" format sequence identifier
-# i.e. Illumina 1.8+
-# @EAS139:136:FC706VJ:2:2104:15343:197393 1:Y:18:ATCACG
-ILLUMINA18_SEQID = re.compile(r"^@([^\:]+):([^\:]+):([^\:]+):([^\:]+):([^\:]+):([^\:]+):([^ ]+) ([^\:]+):([^\:]+):([^\:]+):([^\:]*)$")
-
-# Regular expression to match a "ILLUMINA" format sequence identifier
-# i.e. Illumina 1.3+, 1.5+
-# @HWUSI-EAS100R:6:73:941:1973#0/1
-ILLUMINA_SEQID = re.compile(r"^@([^\:]+):([^\:]+):([^\:]+):([^\:]+):([^\#]+)#([^/])/(.+)$")
+import itertools
 
 #######################################################################
 # Class definitions
@@ -114,6 +101,8 @@ class FastqRead:
 
     Additional properties:
 
+    raw_seqid: the original sequence identifier string supplied when the
+               object was created
     seqlen: length of the sequence
     maxquality: maximum quality value (in character representation)
     minquality: minimum quality value (in character representation)
@@ -135,18 +124,18 @@ class FastqRead:
           optid: third line of the record
           quality: fourth line of the record
         """
-        self.__raw_attributes = {}
-        self.__raw_attributes['seqid'] = seqid_line
+        self.raw_seqid = seqid_line
         self.sequence = str(seq_line).strip()
         self.optid = str(optid_line.strip())
         self.quality = str(quality_line.strip())
 
     @property
     def seqid(self):
-        if 'seqid' in self.__raw_attributes:
-            self._seqid = SequenceIdentifier(self.__raw_attributes['seqid'])
-            del(self.__raw_attributes['seqid'])
-        return self._seqid
+        try:
+            return self._seqid
+        except AttributeError:
+            self._seqid = SequenceIdentifier(self.raw_seqid)
+            return self._seqid
 
     @property
     def seqlen(self):
@@ -213,41 +202,73 @@ class SequenceIdentifier:
         """
         self.__seqid = str(seqid).strip()
         self.format = None
-        # There are at least two variants of the sequence id line, this is an
-        # example of Illumina 1.8+ format:
-        # @EAS139:136:FC706VJ:2:2104:15343:197393 1:Y:18:ATCACG
-        # The alternative is Illumina:
-        # @HWUSI-EAS100R:6:73:941:1973#0/1
-        illumina18 = ILLUMINA18_SEQID.match(self.__seqid)
-        illumina = ILLUMINA_SEQID.match(self.__seqid)
-        if illumina18:
-            self.format = 'illumina18'
-            self.instrument_name = illumina18.group(1)
-            self.run_id = illumina18.group(2)
-            self.flowcell_id = illumina18.group(3)
-            self.flowcell_lane = illumina18.group(4)
-            self.tile_no = illumina18.group(5)
-            self.x_coord = illumina18.group(6)
-            self.y_coord = illumina18.group(7)
-            self.multiplex_index_no = None
-            self.pair_id = illumina18.group(8)
-            self.bad_read = illumina18.group(9)
-            self.control_bit_flag = illumina18.group(10)
-            self.index_sequence = illumina18.group(11)
-        elif illumina:
-            self.format = 'illumina'
-            self.instrument_name = illumina.group(1)
-            self.run_id = None
-            self.flowcell_id = None
-            self.flowcell_lane = illumina.group(2)
-            self.tile_no = illumina.group(3)
-            self.x_coord = illumina.group(4)
-            self.y_coord = illumina.group(5)
-            self.multiplex_index_no = illumina.group(6)
-            self.pair_id = illumina.group(7)
-            self.bad_read = None
-            self.control_bit_flag = None
-            self.index_sequence = None
+        # Identify sequence id line elements
+        if seqid.startswith('@'):
+            # example of Illumina 1.8+ format:
+            # @EAS139:136:FC706VJ:2:2104:15343:197393 1:Y:18:ATCACG
+            try:
+                fields = self.__seqid[1:].split(':')
+                self.instrument_name = fields[0]
+                self.run_id = fields[1]
+                self.flowcell_id = fields[2]
+                self.flowcell_lane = fields[3]
+                self.tile_no = fields[4]
+                self.x_coord = fields[5]
+                self.y_coord = fields[6].split(' ')[0]
+                self.multiplex_index_no = None
+                self.pair_id = fields[6].split(' ')[1]
+                self.bad_read = fields[7]
+                self.control_bit_flag = fields[8]
+                self.index_sequence = fields[9]
+                self.format = 'illumina18'
+                return
+            except IndexError:
+                pass
+            # Example of earlier Illumina format (1.3/1.5):
+            # @HWUSI-EAS100R:6:73:941:1973#0/1
+            try:
+                fields = self.__seqid[1:].split(':')
+                self.instrument_name = fields[0]
+                self.run_id = None
+                self.flowcell_id = None
+                self.flowcell_lane = fields[1]
+                self.tile_no = fields[2]
+                self.x_coord = fields[3]
+                self.y_coord = fields[4].split('#')[0]
+                self.multiplex_index_no = fields[4].split('#')[1].split('/')[0]
+                self.pair_id = fields[4].split('#')[1].split('/')[1]
+                self.bad_read = None
+                self.control_bit_flag = None
+                self.index_sequence = None
+                self.format = 'illumina'
+                return
+            except IndexError:
+                pass
+
+    def is_pair_of(self,seqid):
+        """Check if this forms a pair with another SequenceIdentifier
+
+        """
+        # Check we have r1/r2
+        read_indices = [int(self.pair_id),int(seqid.pair_id)]
+        read_indices.sort()
+        if read_indices != [1,2]:
+            return False
+        # Check all other attributes match
+        try:
+            return (self.instrument_name  == seqid.instrument_name and
+                    self.run_id           == seqid.run_id and
+                    self.flowcell_id      == seqid.flowcell_id and
+                    self.flowcell_lane    == seqid.flowcell_lane and
+                    self.tile_no          == seqid.tile_no and
+                    self.x_coord          == seqid.x_coord and
+                    self.y_coord          == seqid.y_coord and
+                    self.multiplex_index_no == seqid.multiplex_index_no and
+                    self.bad_read         == seqid.bad_read and
+                    self.control_bit_flag == seqid.control_bit_flag and
+                    self.index_sequence   == seqid.index_sequence)
+        except Exception:
+            return False
         
     def __repr__(self):
         if self.format == 'illumina18':
@@ -380,6 +401,36 @@ def nreads(fastq=None,fp=None):
         raise Exception,"Bad read count (not fastq file, or corrupted?)"
     return nlines/4
 
+def fastqs_are_pair(fastq1=None,fastq2=None,verbose=True,fp1=None,fp2=None):
+    """Check that two FASTQs form an R1/R2 pair
+
+    Arguments:
+      fastq1: first FASTQ
+      fastq2: second FASTQ
+
+    Returns:
+      True if each read in fastq1 forms an R1/R2 pair with the equivalent
+      read (i.e. in the same position) in fastq2, otherwise False if
+      any do not form an R1/R2 (or if there are more reads in one than
+      than the other).
+
+    """
+    # Use itertools.izip_longest, which will return None if either of
+    # the fastqs is exhausted before the other
+    i = 0
+    for r1,r2 in itertools.izip_longest(FastqIterator(fastq_file=fastq1,fp=fp1),
+                                        FastqIterator(fastq_file=fastq2,fp=fp2)):
+        i += 1
+        if verbose:
+            if i%100000 == 0:
+                print "Examining pair #%d" % i
+        if not r1.seqid.is_pair_of(r2.seqid):
+            if verbose:
+                print "Unpaired headers for read position #%d:" % i
+                print "%s\n%s" % (r1.seqid,r2.seqid)
+            return False
+    return True
+
 #######################################################################
 # Tests
 #######################################################################
@@ -404,6 +455,28 @@ NTGATTGTCCAGTTGCATTTTAGTAAGCTCTTTTTG
 +
 #,,,,33223CC@@@@@@@C@@@@@@@@C@CC@222
 @73D9FA:3:FC:1:1:6680:1000 1:N:0:
+NATAAATCACCTCACTTAAGTGGCTGGAGACAAATA
++
+#--,,55777@@@@@@@CC@@C@@@@@@@@:::::<
+"""
+
+fastq_data2 = """@73D9FA:3:FC:1:1:7507:1000 2:N:0:
+NACAACCTGATTAGCGGCGTTGACAGATGTATCCAT
++
+#))))55445@@@@@C@@@@@@@@@:::::<<:::<
+@73D9FA:3:FC:1:1:15740:1000 2:N:0:
+NTCTTGCTGGTGGCGCCATGTCTAAATTGTTTGGAG
++
+#+.))/0200<<<<<:::::CC@@C@CC@@@22@@@
+@73D9FA:3:FC:1:1:8103:1000 2:N:0:
+NGACCGATTAGAGGCGTTTTATGATAATCCCAATGC
++
+#(,((,)*))/.0--2255282299@@@@@@@@@@@
+@73D9FA:3:FC:1:1:7488:1000 2:N:0:
+NTGATTGTCCAGTTGCATTTTAGTAAGCTCTTTTTG
++
+#,,,,33223CC@@@@@@@C@@@@@@@@C@CC@222
+@73D9FA:3:FC:1:1:6680:1000 2:N:0:
 NATAAATCACCTCACTTAAGTGGCTGGAGACAAATA
 +
 #--,,55777@@@@@@@CC@@C@@@@@@@@:::::<
@@ -443,6 +516,7 @@ class TestFastqRead(unittest.TestCase):
         read = FastqRead(seqid,seq,optid,quality)
         self.assertTrue(isinstance(read.seqid,SequenceIdentifier))
         self.assertEqual(str(read.seqid),seqid.rstrip('\n'))
+        self.assertEqual(read.raw_seqid,seqid)
         self.assertEqual(read.sequence,seq.rstrip('\n'))
         self.assertEqual(read.optid,optid.rstrip('\n'))
         self.assertEqual(read.quality,quality.rstrip('\n'))
@@ -536,11 +610,24 @@ class TestSequenceIdentifier(unittest.TestCase):
         # Check the format
         self.assertEqual(None,seqid.format)
 
+    def test_is_pair_of(self):
+        """Check that paired sequence identifiers are recognised as such
+        """
+        seqid1 = "@HWI-700511R:183:D2C8UACXX:1:1101:1115:2123 1:N:0:GCCAAT"
+        seqid2 = "@HWI-700511R:183:D2C8UACXX:1:1101:1115:2123 2:N:0:GCCAAT"
+        seqid3 = "@HWI-700511R:183:D2C8UACXX:5:1101:1496:2199 2:N:0:GCCAAT"
+        self.assertTrue(SequenceIdentifier(seqid1).is_pair_of(SequenceIdentifier(seqid2)))
+        self.assertTrue(SequenceIdentifier(seqid2).is_pair_of(SequenceIdentifier(seqid1)))
+        self.assertFalse(SequenceIdentifier(seqid1).is_pair_of(SequenceIdentifier(seqid1)))
+        self.assertFalse(SequenceIdentifier(seqid2).is_pair_of(SequenceIdentifier(seqid2)))
+        self.assertFalse(SequenceIdentifier(seqid1).is_pair_of(SequenceIdentifier(seqid1)))
+        self.assertFalse(SequenceIdentifier(seqid3).is_pair_of(SequenceIdentifier(seqid1)))
+
 class TestFastqAttributes(unittest.TestCase):
     """Tests of the FastqAttributes class
     """
 
-    def test_nreads(self):
+    def test_fastq_attributes_nreads(self):
         """Check number of reads
         """
         fp = cStringIO.StringIO(fastq_data)
@@ -556,6 +643,17 @@ class TestNReads(unittest.TestCase):
         """
         fp = cStringIO.StringIO(fastq_data)
         self.assertEqual(nreads(fp=fp),5)
+
+class TestFastqsArePair(unittest.TestCase):
+    """Tests of the fastqs_are_pair function
+    """
+    
+    def test_fastqs_are_pair(self):
+        """Check that fastq pair is recognised as such
+        """
+        fp1 = cStringIO.StringIO(fastq_data)
+        fp2 = cStringIO.StringIO(fastq_data2)
+        self.assertTrue(fastqs_are_pair(fp1=fp1,fp2=fp2,verbose=False))
 
 def run_tests():
     """Run the tests
