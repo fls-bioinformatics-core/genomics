@@ -1,8 +1,38 @@
+2013-09-09  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* share/FASTQFile.py
+	- version 0.3.0: attempt to improve performance of
+	  SequenceIdentifier class (use string parsing instead of
+	  regular expressions), and added new method 'is_pair_of'
+	  (can be used to check if another SequenceIdentifier forms
+	  an R1/2 pair with this one). FastqRead class has new attribute
+	  'raw_seqid' (returns original sequence id header supplied on
+	  instantiation). New function 'fastqs_are_pair' checks that
+	  corresponding read headers match between two FASTQ files.
+
+	* illumina2cluster/verify_paired.py
+	- version 1.0.0: new utility to check that two fastq files form
+	  an R1/R2 pair.
+
+2013-09-06  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* illumina2cluster/analyse_illumina_run.py
+	- version 0.1.9: improvements to reporting options when using
+	  --summary and --list options.
+	- version 0.1.10: fix bug for runs that don't have undetermined
+	  indices.
+
+	* share/IlluminaData.py
+	- version 1.0.2: new method 'fastq_subset' for IlluminaSample
+	  (returns subset of fastq files based on read number).
+
 2013-08-22  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* share/bcf_utils.py:
 	- version 1.0.1: added new function 'concatenate_fastq_files'
 	  (concatenates a list of fastq files).
+	- version 1.0.2: updated 'concatenate_fastq_files' to improve
+	  performance, and added tests.
 
 	* illumina2cluster/analyse_illumina_run.py
 	- version 0.1.8: new option --merge-fastqs, creates
@@ -18,6 +48,8 @@
 	* illumina2cluster/build_illumina_analysis_dir.py
 	- version 1.0.1: move analysis directory creation code from
 	  __main__ to new 'create_analysis_dir' function.
+	- version 1.0.2: remove redundant functions and switch to
+	  versions in bcf_utils module.
 
 2013-08-21  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
