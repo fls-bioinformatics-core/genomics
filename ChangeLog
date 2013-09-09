@@ -14,6 +14,12 @@
 	- version 1.0.0: new utility to check that two fastq files form
 	  an R1/R2 pair.
 
+	* illumina2cluster/analyse_illumina_run.py
+	- version 0.1.11: updated implementation of --merge-fastqs option.
+
+	* illumina2cluster/check_paired_fastqs.py
+	- Removed: replaced by 'verify_paired.py'.
+
 2013-09-06  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* illumina2cluster/analyse_illumina_run.py
