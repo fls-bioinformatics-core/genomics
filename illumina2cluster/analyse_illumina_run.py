@@ -9,7 +9,7 @@ Provides functionality for analysing data from an Illumina sequencer run.
 
 """
 
-__version__ = "0.1.10"
+__version__ = "0.1.11"
 
 #######################################################################
 # Import modules
@@ -218,7 +218,8 @@ if __name__ == "__main__":
     if not (options.report or
             options.summary or
             options.list or
-            options.sample_sheet):
+            options.sample_sheet or
+            options.merge_fastqs):
         options.report = True
 
     # List option
@@ -322,30 +323,16 @@ if __name__ == "__main__":
     if options.merge_fastqs:
         for project in illumina_data.projects:
             for sample in project.samples:
-                # Examine fastq names and divide into R1/R2 sets
-                r1_fqs = []
-                r2_fqs = []
-                for fastq in sample.fastq:
-                    fq = IlluminaData.IlluminaFastq(fastq)
-                    if fq.read_number == 1:
-                        r1_fqs.append(os.path.join(sample.dirn,fastq))
-                    elif fq.read_number == 2:
-                        r2_fqs.append(os.path.join(sample.dirn,fastq))
-                    else:
-                        raise Exception, "Unable to determine read number for %s" % fastq
-                # Concatenate fastqs for R1
-                fastq_merged = sample.name
-                if sample.paired_end:
-                    fastq_merged += "_R1"
-                fastq_merged += ".fastq.gz"
-                bcf_utils.concatenate_fastq_files(fastq_merged,r1_fqs,
-                                                  bufsize=1024*1024)
-                # Concatenate fastqs for R2
-                fastq_merged = sample.name
-                if sample.paired_end:
-                    fastq_merged += "_R2"
-                fastq_merged += ".fastq.gz"
-                bcf_utils.concatenate_fastq_files(fastq_merged,r2_fqs,
-                                                  bufsize=1024*1024)
+                for read in (1,2):
+                    # Concatenate fastqs for this read
+                    fastq_merged = sample.name
+                    if sample.paired_end:
+                        fastq_merged += "_R%d" % read
+                    fastq_merged += ".fastq.gz"
+                    bcf_utils.concatenate_fastq_files(fastq_merged,
+                                                      sample.fastq_subset(read_number=read,
+                                                                          full_path=True),
+                                                      bufsize=1024*1024)
+
 
                     
