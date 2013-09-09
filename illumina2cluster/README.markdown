@@ -10,6 +10,7 @@ Utilities for preparing data on the cluster from the Illumina instrument:
  *   `demultiplex_undetermined_fastq.py`: demultiplex undetermined Illumina reads
  *   `prep_sample_sheet.py`: edit SampleSheet.csv before generating FASTQ
  *   `rsync_seq_data.sh`: copy sequencing data using rsync
+ *   `verify_paired.py`: utility to check FASTQs form R1/R2 pair
 
 
 analyse_illumina_run.py
@@ -344,4 +345,21 @@ The output from rsync is written to a file rsync.DIR.log.
       --no-log              write rsync output directly stdout, don't create a log
                             file
 
+
+verify_paired.py
+----------------
+
+Utility to verify that two fastq files form an R1/R2 pair.
+
+Usage:
+
+    verify_paired.py OPTIONS R1.fastq R2.fastq
+
+Check that read headers for R1 and R2 fastq files are in agreement, and that
+the files form an R1/2 pair.
+
+Options:
+
+    --version   show program's version number and exit
+    -h, --help  show this help message and exit
 
