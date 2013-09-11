@@ -7,7 +7,7 @@
 #
 #########################################################################
 
-__version__ = "1.1.0"
+__version__ = "1.1.1"
 
 """IlluminaData
 
@@ -803,16 +803,22 @@ def get_casava_sample_sheet(samplesheet=None,fp=None,FCID_default='FC1'):
         sample_sheet = CasavaSampleSheet()
         for line in data:
             sample_sheet_line = sample_sheet.append()
+            # Set the lane
             try:
                 lane = line['Lane']
             except KeyError:
                 # No lane column (e.g. MiSEQ)
                 lane = 1
+            # Set the index tag (if any)
             try:
                 index_tag = "%s-%s" % (line['index'],line['index2'])
             except KeyError:
                 # Assume not dual-indexed (no index2)
-                index_tag = line['index']
+                try:
+                    index_tag = line['index']
+                except KeyError:
+                    # No index
+                    index_tag = ''
             sample_sheet_line['FCID'] = FCID_default
             sample_sheet_line['Lane'] = lane
             sample_sheet_line['Index'] = index_tag
@@ -1673,6 +1679,13 @@ ID2,,PB,A02,N702,CGTACTAG,N502,CTCTCTAT,,,"""
         self.miseq_dual_indexed_sample_ids = ['PB1','ID2']
         self.miseq_dual_indexed_sample_projects = ['PB','ID']
         self.miseq_dual_indexed_index_ids = ['TAAGGCGA-TAGATCGC','CGTACTAG-CTCTCTAT']
+        # Example of no-index data
+        self.miseq_data_no_index = self.miseq_header + """
+Sample_ID,Sample_Name,Sample_Plate,Sample_Well,Sample_Project,Description
+PB2,PB2,,,PB,"""
+        self.miseq_no_index_sample_ids = ['PB2']
+        self.miseq_no_index_sample_projects = ['PB']
+        self.miseq_no_index_index_ids = ['']
 
     def test_convert_miseq_to_casava(self):
         """Convert MiSeq SampleSheet to CASAVA SampleSheet
@@ -1705,6 +1718,22 @@ ID2,,PB,A02,N702,CGTACTAG,N502,CTCTCTAT,,,"""
                              self.miseq_dual_indexed_sample_projects[i])
             self.assertEqual(sample_sheet[i]['Index'],
                              self.miseq_dual_indexed_index_ids[i])
+
+    def test_convert_miseq_to_casava_no_index(self):
+        """Convert MiSeq SampleSheet to CASAVA SampleSheet (no index)
+        
+        """
+        # Make sample sheet from MiSEQ data
+        sample_sheet = convert_miseq_samplesheet_to_casava(
+            fp=cStringIO.StringIO(self.miseq_data_no_index))
+        self.assertEqual(len(sample_sheet),1)
+        for i in range(0,1):
+            self.assertEqual(sample_sheet[i]['Lane'],1)
+            self.assertEqual(sample_sheet[i]['SampleID'],self.miseq_no_index_sample_ids[i])
+            self.assertEqual(sample_sheet[i]['SampleProject'],
+                             self.miseq_no_index_sample_projects[i])            
+            self.assertEqual(sample_sheet[i]['Index'],
+                             self.miseq_no_index_index_ids[i])
 
 class TestHiseqToCasavaConversion(unittest.TestCase):
 
