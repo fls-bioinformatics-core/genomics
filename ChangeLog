@@ -1,3 +1,15 @@
+2013-09-11  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* share/IlluminaData.py
+	- version 1.1.1: update get_casava_sample_sheet function to
+	  handle "Experimental Manager"-type sample sheet files when
+	  there are no barcode indexes.
+
+	* share/JobRunner.py
+	- version 1.0.1: fix and standardise handling of log and error
+	  files for SimpleJobRunner and GEJobRunner classes; also added
+	  minimal unit tests for these classes.
+
 2013-09-09  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* share/FASTQFile.py
