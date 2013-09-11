@@ -9,7 +9,7 @@
 #
 #########################################################################
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 
 """JobRunner
 
@@ -178,7 +178,10 @@ class SimpleJobRunner(BaseJobRunner):
         """(Re)set the directory to write log files to
 
         """
-        self.__log_dir = os.path.abspath(log_dir)
+        if log_dir is not None:
+            self.__log_dir = os.path.abspath(log_dir)
+        else:
+            self.__log_dir = None
 
     def run(self,name,working_dir,script,args):
         """Run a command and return the PID (=job id)
@@ -215,7 +218,7 @@ class SimpleJobRunner(BaseJobRunner):
             logging.error("RunScript: cwd doesn't exist!")
             return None
         # Set up log files
-        lognames = self.__assign_log_files(name)
+        lognames = self.__assign_log_files(name,working_dir)
         log = open(lognames[0],'w')
         err = open(lognames[1],'w')
         # Start the subprocess
@@ -305,7 +308,7 @@ class SimpleJobRunner(BaseJobRunner):
                 pass
         return jobs
 
-    def __assign_log_files(self,name):
+    def __assign_log_files(self,name,working_dir):
         """Internal: return log file names for stdout and stderr
 
         Since the job id isn't known before the job starts, create
@@ -314,9 +317,12 @@ class SimpleJobRunner(BaseJobRunner):
         timestamp = self.__log_id
         log_file = "%s.o%s" % (name,timestamp)
         error_file = "%s.e%s" % (name,timestamp)
-        if self.__log_dir is not None:
-            log_file = os.path.join(self.__log_dir,log_file)
-            error_file = os.path.join(self.__log_dir,error_file)
+        if self.__log_dir is None:
+            log_dir = os.getcwd()
+        else:
+            log_dir = self.__log_dir
+        log_file = os.path.join(log_dir,log_file)
+        error_file = os.path.join(log_dir,error_file)
         self.__log_id += 1
         return (log_file,error_file)
 
@@ -355,7 +361,10 @@ class GEJobRunner(BaseJobRunner):
         """(Re)set the directory to write log files to
 
         """
-        self.__log_dir = os.path.abspath(log_dir)
+        if log_dir is not None:
+            self.__log_dir = os.path.abspath(log_dir)
+        else:
+            self.__log_dir = None
 
     def name(self,job_id):
         """Return the name for a job
@@ -421,7 +430,10 @@ class GEJobRunner(BaseJobRunner):
         # Store name and log dir against job id
         if job_id is not None:
             self.__names[job_id] = name
-            self.__log_dirs[job_id] = self.__log_dir
+            if self.__log_dir is None:
+                self.__log_dirs[job_id] = working_dir
+            else:
+                self.__log_dirs[job_id] = self.__log_dir
         # Return the job id
         return job_id
 
@@ -667,24 +679,82 @@ class DRMAAJobRunner(BaseJobRunner):
         return job_ids
 
 #######################################################################
+# Tests
+#######################################################################
+
+import unittest
+import tempfile
+import shutil
+
+class TestSimpleJobRunner(unittest.TestCase):
+
+    def setUp(self):
+        # Create a temporary directory to work in
+        self.working_dir = tempfile.mkdtemp()
+
+    def cleanUp(self):
+        shutil.rmtree(self.working_dir)
+
+    def test_simple_job_runner(self):
+        """Run 'echo' shell command using SimpleJobRunner
+
+        """
+        # Create a runner and execute the echo command
+        runner = SimpleJobRunner()
+        jobid = runner.run('test',self.working_dir,'echo','this is a test')
+        while runner.isRunning(jobid):
+            # Wait for job to finish
+            pass
+        # Check outputs
+        self.assertEqual(runner.name(jobid),'test')
+        self.assertTrue(os.path.isfile(runner.logFile(jobid)))
+        self.assertTrue(os.path.isfile(runner.errFile(jobid)))
+        # Check log files are in the working directory
+        self.assertEqual(os.path.dirname(runner.logFile(jobid)),self.working_dir)
+        self.assertEqual(os.path.dirname(runner.errFile(jobid)),self.working_dir)
+
+class TestGEJobRunner(unittest.TestCase):
+
+    def setUp(self):
+        # Create a temporary directory to work in
+        self.working_dir = tempfile.mkdtemp(dir=os.getcwd())
+
+    def cleanUp(self):
+        shutil.rmtree(self.working_dir)
+
+    def test_ge_job_runner(self):
+        """Run 'echo' shell command using GEJobRunner
+
+        """
+        # Create a runner and execute the echo command
+        runner = GEJobRunner()
+        try:
+            jobid = runner.run('test',self.working_dir,'echo','this is a test')
+        except OSError:
+            self.cleanUp() # Not sure why but should do clean up manually
+            self.fail("Unable to run GE job")
+        poll_interval = 5
+        ntries = 0
+        while runner.isRunning(jobid) or not os.path.exists(runner.logFile(jobid)):
+            # Wait for job to finish
+            ntries += 1
+            if ntries > 30:
+                self.cleanUp() # Not sure why but should do clean up manually
+                self.fail("Timed out waiting for test job")
+            else:
+                time.sleep(poll_interval)
+        # Check outputs
+        self.assertEqual(runner.name(jobid),'test')
+        self.assertTrue(os.path.isfile(runner.logFile(jobid)))
+        # Check log files are in the working directory
+        self.assertEqual(os.path.dirname(runner.logFile(jobid)),self.working_dir)
+
+#######################################################################
 # Main program
 #######################################################################
 
 if __name__ == "__main__":
-    # Example of usage
-    import sys
-    logging.getLogger().setLevel(logging.DEBUG)
-    if len(sys.argv) < 2:
-        print "Supply script and arguments to run"
-        sys.exit()
-    args = sys.argv[1:]
-    runner = SimpleJobRunner()
-    ##runner = GEJobRunner()
-    ##runner = DRMAAJobRunner()
-    pid = runner.run(os.path.basename(sys.argv[1]),None,args)
-    print "Submitted job: %s" % pid
-    print "Outputs: %s %s" % (runner.logFile(pid),runner.errFile(pid))
-    print "%s" % runner.list()
-    while runner.isRunning(pid):
-        time.sleep(10)
-    print "Finished"
+    # Turn off most logging output for tests
+    logging.getLogger().setLevel(logging.CRITICAL)
+    # Run tests
+    unittest.main()
