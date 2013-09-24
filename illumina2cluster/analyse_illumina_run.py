@@ -9,7 +9,7 @@ Provides functionality for analysing data from an Illumina sequencer run.
 
 """
 
-__version__ = "0.1.11"
+__version__ = "0.1.11.1"
 
 #######################################################################
 # Import modules
@@ -153,22 +153,6 @@ def verify_run_against_sample_sheet(illumina_data,sample_sheet):
     # Return verification status
     return verified
 
-def name_matches(name,pattern):
-    """Simple wildcard matching of project and sample names
-    
-    Arguments
-      name: text to match against pattern
-      pattern: simple 'glob'-like pattern to match against
-
-    Returns
-      True if name matches pattern; False otherwise.
-    """
-    if not pattern.endswith('*'):
-        # Exact match required
-        return (name == pattern)
-    else:
-        return name.startswith(pattern.rstrip('*'))
-
 #######################################################################
 # Main program
 #######################################################################
@@ -294,10 +278,10 @@ if __name__ == "__main__":
             sys.exit(1)
         # Loop through projects and samples looking for matches
         for project in illumina_data.projects:
-            if name_matches(project.name,project_pattern):
+            if bcf_utils.name_matches(project.name,project_pattern):
                 # Loop through samples
                 for sample in project.samples:
-                    if name_matches(sample.name,sample_pattern):
+                    if bcf_utils.name_matches(sample.name,sample_pattern):
                         for fastq in sample.fastq:
                             fastq_file = os.path.join(sample.dirn,fastq)
                             print "\tCopying .../%s" % os.path.basename(fastq_file)

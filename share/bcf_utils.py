@@ -7,7 +7,7 @@
 #
 #########################################################################
 
-__version__ = "1.0.2"
+__version__ = "1.0.2.1"
 
 """bcf_utils
 
@@ -29,6 +29,7 @@ Sample name utilities:
   extract_index_as_string
   extract_index
   pretty_print_names
+  name_matches
 
 File manipulations:
 
@@ -300,6 +301,22 @@ def pretty_print_names(name_list):
     # Concatenate and return
     return ', '.join(out)
 
+def name_matches(name,pattern):
+    """Simple wildcard matching of project and sample names
+    
+    Arguments
+      name: text to match against pattern
+      pattern: simple 'glob'-like pattern to match against
+
+    Returns
+      True if name matches pattern; False otherwise.
+    """
+    if not pattern.endswith('*'):
+        # Exact match required
+        return (name == pattern)
+    else:
+        return name.startswith(pattern.rstrip('*'))
+
 # File manipulations
 
 def concatenate_fastq_files(merged_fastq,fastq_files,bufsize=10240,
@@ -445,6 +462,17 @@ class TestNameFunctions(unittest.TestCase):
         self.assertEqual('JC_SEQ26, JC_SEQ28, JC_SEQ30',pretty_print_names(('JC_SEQ26',
                                                            'JC_SEQ28',
                                                            'JC_SEQ30')))
+
+    def test_name_matches(self):
+        # Cases which should match
+        self.assertTrue(name_matches('PJB','PJB'))
+        self.assertTrue(name_matches('PJB','PJB*'))
+        self.assertTrue(name_matches('PJB123','PJB*'))
+        self.assertTrue(name_matches('PJB456','PJB*'))
+        self.assertTrue(name_matches('PJB','*'))
+        # Cases which shouldn't match
+        self.assertFalse(name_matches('PJB123','PJB'))
+        self.assertFalse(name_matches('PJB','IDJ'))
 
 class TestConcatenateFastqFiles(unittest.TestCase):
     """Unit tests for concatenate_fastq_files
