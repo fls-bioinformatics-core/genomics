@@ -7,7 +7,11 @@
 #
 #########################################################################
 
+<<<<<<< HEAD
 __version__ = "1.1.1"
+=======
+__version__ = "1.1.0.1"
+>>>>>>> share/IlluminaData.py: version 1.1.0.1
 
 """IlluminaData
 
@@ -105,7 +109,7 @@ class IlluminaRunInfo:
     run_id     : the run id e.g.'130805_PJ600412T_0012_ABCDEZXDYY'
     run_number : the run numer e.g. '12'
     bases_mask : bases mask string derived from the read information
-                 e.g. 'y101,6I,y101'
+                 e.g. 'y101,I6,y101'
     reads      : a list of Python dictionaries (one per read)
 
     Each dictionary in the 'reads' list has the following keys:
@@ -927,6 +931,46 @@ def get_unique_fastq_names(fastqs):
             return name_mapping
     # Failed to make a unique set of names
     raise Exception,"Failed to make a set of unique fastq names"
+
+def fix_bases_mask(bases_mask,barcode_sequence):
+    """Adjust input bases mask to match actual barcode sequence lengths
+
+    Updates the bases mask string extracted from RunInfo.xml so that the
+    index read masks correspond to the index barcode sequence lengths
+    given e.g. in the SampleSheet.csv file.
+
+    For example: if the bases mask is 'y101,I7,y101' (i.e. assigning 7
+    cycles to the index read) but the barcode sequence is 'CGATGT' (i.e.
+    only 6 bases) then the adjusted bases mask should be 'y101,I6n,y101'.
+
+    Arguments:
+      bases_mask: bases mask string e.g. 'y101,I7,y101','y250,I8,I8,y250'
+      barcode_sequence: index barcode sequence e.g. 'CGATGT' (single
+      index), 'TAAGGCGA-TAGATCGC' (dual index)
+
+    Returns:
+      Updated bases mask string.
+
+    """
+    # Split barcode sequence string into components
+    indexes = barcode_sequence.split('-')
+    # Check input reads
+    reads = []
+    i = 0
+    for read in bases_mask.split(','):
+        new_read = read
+        if read.startswith('I'):
+            input_index_length = int(read[1:])
+            actual_index_length = len(indexes[i])
+            if input_index_length > actual_index_length:
+                # Actual index sequence is shorter so adjust
+                # bases mask and pad with 'n's
+                new_read = "I%d" % actual_index_length + \
+                           'n'*(input_index_length-actual_index_length)
+            i += 1
+        reads.append(new_read)
+    # Assemble and return updated index tags
+    return ','.join(reads)
 
 #######################################################################
 # Tests
@@ -1860,6 +1904,23 @@ class TestUniqueFastqNames(unittest.TestCase):
                          'PJB-E.fastq.gz')
         self.assertEqual(mapping['PJB-A_AGTCAA_L001_R1_001.fastq.gz'],
                          'PJB-A.fastq.gz')
+
+class TestFixBasesMask(unittest.TestCase):
+
+    def test_fix_bases_mask_single_index(self):
+        """Check fix_bases_mask for single index data
+
+        """
+        self.assertEqual(fix_bases_mask('y50,I6','ACAGTG'),'y50,I6')
+        self.assertEqual(fix_bases_mask('y101,I7,y101','CGATGT'),'y101,I6n,y101')
+
+    def test_fix_bases_mask_dual_index(self):
+        """Check fix_bases_mask for dual index data
+        """
+        self.assertEqual(fix_bases_mask('y250,I8,I8,y250','TAAGGCGA-TAGATCGC'),
+                         'y250,I8,I8,y250')
+        self.assertEqual(fix_bases_mask('y250,I8,I8,y250','TAAGGC-GATCGC'),
+                         'y250,I6nn,I6nn,y250')
 
 #######################################################################
 # Main program
