@@ -101,11 +101,16 @@ qc=$(baserootname $0)
 # Base name for fastq files etc
 fastq_base=`basename ${FASTQ%%.fastq*}`
 #
+# Create 'qc' subdirectory
+if [ ! -d "qc" ] ; then
+    mkdir qc
+fi
+#
 #############################################
 # Report program paths and versions
 #############################################
 #
-program_info=$fastq_base.$qc.programs
+program_info=qc/$fastq_base.$qc.programs
 echo "# Program versions and paths used for $fastq_base:" > $program_info
 report_program_info $FASTQ_SCREEN >> $program_info
 report_program_info $FASTQC >> $program_info
@@ -134,11 +139,6 @@ fi
 #############################################
 # QC
 #############################################
-#
-# Create 'qc' subdirectory
-if [ ! -d "qc" ] ; then
-    mkdir qc
-fi
 #
 # Run fastq_screen
 run_fastq_screen $FASTQ

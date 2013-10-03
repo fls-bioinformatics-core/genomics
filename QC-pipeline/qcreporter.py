@@ -14,7 +14,7 @@
 Generate HTML reports for an NGS QC pipeline runs.
 """
 
-__version__ = "0.1.0"
+__version__ = "0.1.0.1"
 
 #######################################################################
 # Import modules that this module depends on
@@ -366,11 +366,14 @@ class QCSample:
             if f == "%sfastqc" % sample_name_underscore:
                 self.addFastQC(f)
         # Program information
-        # This is in file one level up from the qc directory
-        for f in os.listdir(os.path.join(self.qc_dir,"..")):
-            if f.endswith('.programs') and \
-                    (f.startswith(sample_name_dot) or f.startswith(sample_name_underscore)):
-                self.addProgramInfo(os.path.join(self.qc_dir,"..",f))
+        # Info files can be in qc dir or one level up (for older
+        # qc scripts)
+        dirs = (self.qc_dir,os.path.join(self.qc_dir,".."))
+        for d in dirs:
+            for f in os.listdir(d):
+                if f.endswith('.programs') and \
+                   (f.startswith(sample_name_dot) or f.startswith(sample_name_underscore)):
+                    self.addProgramInfo(os.path.join(d,f))
 
     def screens(self):
         """Return list of screens for a sample
