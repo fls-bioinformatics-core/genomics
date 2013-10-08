@@ -45,7 +45,7 @@ system. So typical usage might look like:
 # Module metadata
 #######################################################################
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 #######################################################################
 # Import modules that this module depends on
@@ -467,6 +467,25 @@ class PipelineRunner:
                                                            (job.end_time - job.start_time),
                                                            job.status())
         return report
+
+    def __del__(self):
+        """Deal with deletion of the pipeline
+
+        If the pipeline object is deleted while still running
+        then terminate all running jobs.
+
+        """
+        # Empty the queue
+        while not self.jobs.empty():
+            self.jobs.get()
+        # Terminate the running jobs
+        for job in self.running:
+            logging.debug("Terminating job %s" % job.job_id)
+            print "Terminating job %s" % job.job_id
+            try:
+                job.terminate()
+            except Exception, ex:
+                logging.error("Failed to terminate job %s: %s" % (job.job_id,ex))
 
 class SolidPipelineRunner(PipelineRunner):
     """Class to run and manage multiple jobs for Solid data pipelines
