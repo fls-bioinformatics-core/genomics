@@ -23,6 +23,12 @@ class TestFileSystemFunctions(unittest.TestCase):
         self.assertFalse(is_gzipped_file('hello.gz.part'))
         self.assertFalse(is_gzipped_file('hellogz'))
 
+    def test_rootname(self):
+        self.assertEqual('name',rootname('name'))
+        self.assertEqual('name',rootname('name.fastq'))
+        self.assertEqual('name',rootname('name.fastq.gz'))
+        self.assertEqual('/path/to/name',rootname('/path/to/name.fastq.gz'))
+
 class TestFormatFileSize(unittest.TestCase):
     """Unit tests for formatting file sizes
 

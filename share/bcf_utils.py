@@ -7,7 +7,7 @@
 #
 #########################################################################
 
-__version__ = "1.0.2.1"
+__version__ = "1.0.2.2"
 
 """bcf_utils
 
@@ -176,6 +176,24 @@ def is_gzipped_file(filename):
 
     """
     return os.path.splitext(filename)[1] == '.gz'
+
+def rootname(name):
+    """Remove all extensions from name
+
+    Arguments:
+      name: name of a file
+
+    Returns:
+      Leading part of name up to first dot, i.e. name without any
+      trailing extensions.
+
+    """
+    try:
+        i = name.index('.')
+        return name[0:i]
+    except ValueError:
+        # No dot
+        return name
 
 # Sample/library name utilities
 
