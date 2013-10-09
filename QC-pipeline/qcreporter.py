@@ -14,7 +14,7 @@
 Generate HTML reports for an NGS QC pipeline runs.
 """
 
-__version__ = "0.1.0.1"
+__version__ = "0.1.0.2"
 
 #######################################################################
 # Import modules that this module depends on
@@ -36,6 +36,7 @@ sys.path.append(SHARE_DIR)
 try:
     import Pipeline
     import TabFile
+    import bcf_utils
 except ImportError, ex:
     print "Error importing modules: %s" % ex
     print "Check PYTHONPATH"
@@ -160,16 +161,19 @@ class QCReporter:
         """
         primary_data = None
         if self.data_format == 'solid':
-            primary_data = Pipeline.GetSolidDataFiles(self.dirn,pattern=self.__regex_pattern)
+            finder = Pipeline.GetSolidDataFiles
         elif self.data_format == 'solid_paired_end':
-            primary_data = Pipeline.GetSolidPairedEndFiles(self.dirn,pattern=self.__regex_pattern)
+            finder = Pipeline.GetSolidPairedEndFiles
         elif self.data_format == 'fastq':
-            primary_data = Pipeline.GetFastqFiles(self.dirn,pattern=self.__regex_pattern)
+            finder = Pipeline.GetFastqFiles
         elif self.data_format == 'fastqgz':
-            primary_data = Pipeline.GetFastqGzFiles(self.dirn,pattern=self.__regex_pattern)
+            finder = Pipeline.GetFastqGzFiles
         else:
             # Unrecognised data format
             raise QCReporterError, "Unrecognised data type '%s'" % self.data_format
+        for dirn in (os.path.join(self.dirn,'fastqs'),self.dirn):
+            primary_data = finder(dirn,pattern=self.__regex_pattern)
+            if primary_data: break
         if not primary_data:
             logging.warning("No primary data files of type '%s' found: try --format option?" %
                             self.data_format)
@@ -251,6 +255,10 @@ class QCReporter:
         'qc_report.<run>.<name>.zip' which contains the report plus the
         associated image files etc. The archive can then be unpacked
         elsewhere for viewing.
+
+        Returns:
+          Name of the zip file with the report.
+
         """
         # Generate the HTML report
         self.report()
@@ -276,6 +284,7 @@ class QCReporter:
         except Exception, ex:
             print "Exception creating zip archive: %s" % ex
         os.chdir(cwd)
+        return '%s.zip' % self.report_name
 
     def report_version(self):
         """Return version of this module
@@ -650,9 +659,9 @@ class IlluminaQCReporter(QCReporter):
         # Locate input fastq.gz files
         primary_data = self.getPrimaryDataFiles()
         for data in primary_data:
-            sample = rootname(data[0])
+            sample = bcf_utils.rootname(os.path.basename(data[0]))
             self.addSample(IlluminaQCSample(sample,self.qc_dir))
-            print "Processing outputs for sample: '%s'" % sample
+            logging.debug("Processing outputs for sample: '%s'" % sample)
         # Summarise data from fastqc
         self.__stats = TabFile.TabFile(column_names=('Sample',
                                                      'Reads',
@@ -736,6 +745,10 @@ class IlluminaQCReporter(QCReporter):
         'qc_report.<run>.<name>.zip' which contains the report plus the
         associated image files, which can be unpacked elsewhere
         for viewing.
+
+        Returns:
+          Name of the zip file with the report.
+
         """
         self.report()
         cwd = os.getcwd()
@@ -762,6 +775,7 @@ class IlluminaQCReporter(QCReporter):
         except Exception, ex:
             print "Exception creating zip archive: %s" % ex
         os.chdir(cwd)
+        return '%s.zip' % self.report_name
 
 class IlluminaQCSample(QCSample):
     """Class for holding QC data for an Illumina sample
@@ -819,6 +833,7 @@ class IlluminaQCSample(QCSample):
         else:
             if len(self.screens()) != 3:
                 logging.warning("%s: wrong number of screens" % self.name)
+                status = False
         # Check fastqc
         if  self.fastqc is None:
             logging.warning("%s: no FastQC results" % self.name)
@@ -884,7 +899,7 @@ class SolidQCReporter(QCReporter):
         # Get primary data files
         primary_data = self.getPrimaryDataFiles()
         for data in primary_data:
-            sample = rootname(data[0])
+            sample = bcf_utils.rootname(os.path.basename(data[0]))
             if self.__paired_end:
                 # Strip trailing "_F3" from names
                 sample = sample.replace('_F3','')
@@ -1284,16 +1299,6 @@ def cmp_samples(s1,s2):
     else:
         # Compare trailing numbers
         return cmp(t1,t2)
-
-def rootname(name):
-    """Remove all extensions from name
-    """
-    try:
-        i = name.index('.')
-        return name[0:i]
-    except ValueError:
-        # No dot
-        return name
 
 def split_sample_name(name):
     """Split name into leading part plus trailing number
