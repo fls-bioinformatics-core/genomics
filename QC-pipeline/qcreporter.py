@@ -14,7 +14,7 @@
 Generate HTML reports for an NGS QC pipeline runs.
 """
 
-__version__ = "0.1.0.2"
+__version__ = "0.1.0.4"
 
 #######################################################################
 # Import modules that this module depends on
@@ -158,6 +158,7 @@ class QCReporter:
 
     def getPrimaryDataFiles(self):
         """Return list of primary data file sets
+
         """
         primary_data = None
         if self.data_format == 'solid':
@@ -171,9 +172,12 @@ class QCReporter:
         else:
             # Unrecognised data format
             raise QCReporterError, "Unrecognised data type '%s'" % self.data_format
+        # Look in 'fastq' subdirectory of the analysis directory first,
+        # then if nothing is found look in the top level
         for dirn in (os.path.join(self.dirn,'fastqs'),self.dirn):
-            primary_data = finder(dirn,pattern=self.__regex_pattern)
-            if primary_data: break
+            if os.path.exists(dirn):
+                primary_data = finder(dirn,pattern=self.__regex_pattern)
+                if primary_data: break
         if not primary_data:
             logging.warning("No primary data files of type '%s' found: try --format option?" %
                             self.data_format)
