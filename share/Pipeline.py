@@ -45,7 +45,7 @@ system. So typical usage might look like:
 # Module metadata
 #######################################################################
 
-__version__ = "0.1.1"
+__version__ = "0.1.1.1"
 
 #######################################################################
 # Import modules that this module depends on
@@ -621,20 +621,35 @@ def GetSolidPairedEndFiles(dirn,pattern=None):
     # Done - return file list
     return data_files
 
-def GetFastqFiles(dirn,pattern=None):
+def GetFastqFiles(dirn,pattern=None,file_list=None):
     """Return list of fastq files in target directory
 
     Optionally also specify a regular expression pattern that file
     names must also match in order to be included.
+
+    Arguments:
+      dirn: name/path of directory to look for files in
+      pattern: optional, regular expression pattern to filter names with
+      file_list: optional, a list of file names to use instead of
+       fetching a list of files from the specified directory
+
+    Returns:
+      List of file-pair tuples.
+
     """
-    # Check directory exists
-    if not os.path.isdir(dirn):
-        logging.error("'%s' not a directory: unable to collect fastq files" % dirn)
-        return []
-    # Gather data files
-    logging.debug("Collecting fastq files in %s" % dirn)
     data_files = []
-    all_files = os.listdir(dirn)
+    if file_list is not None:
+        # Used supplied file list
+        logging.debug("Ignoring dirn argument and using supplied file list")
+        all_files = file_list
+    else:
+        # Check directory exists
+        if not os.path.isdir(dirn):
+            logging.error("'%s' not a directory: unable to collect fastq files" % dirn)
+            return []
+        # Gather data files
+        logging.debug("Collecting fastq files in %s" % dirn)
+        all_files = os.listdir(dirn)
     all_files.sort()
     # Regular expression pattern
     if pattern is not None:
@@ -651,20 +666,35 @@ def GetFastqFiles(dirn,pattern=None):
     # Done - return file list
     return data_files
 
-def GetFastqGzFiles(dirn,pattern=None):
+def GetFastqGzFiles(dirn,pattern=None,file_list=None):
     """Return list of fastq.gz files in target directory
 
     Optionally also specify a regular expression pattern that file
     names must also match in order to be included.
+
+    Arguments:
+      dirn: name/path of directory to look for files in
+      pattern: optional, regular expression pattern to filter names with
+      file_list: optional, a list of file names to use instead of
+       fetching a list of files from the specified directory
+
+    Returns:
+      List of file-pair tuples.
+
     """
-    # Check directory exists
-    if not os.path.isdir(dirn):
-        logging.error("'%s' not a directory: unable to collect fastq.gz files" % dirn)
-        return []
-    # Gather data files
-    logging.debug("Collecting fastq.gz files in %s" % dirn)
     data_files = []
-    all_files = os.listdir(dirn)
+    if file_list is not None:
+        # Used supplied file list
+        logging.debug("Ignoring dirn argument and using supplied file list")
+        all_files = file_list
+    else:
+        # Check directory exists
+        if not os.path.isdir(dirn):
+            logging.error("'%s' not a directory: unable to collect fastq.gz files" % dirn)
+            return []
+        # Gather data files
+        logging.debug("Collecting fastq.gz files in %s" % dirn)
+        all_files = os.listdir(dirn)
     all_files.sort()
     # Regular expression pattern
     if pattern is not None:
