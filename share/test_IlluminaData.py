@@ -76,7 +76,7 @@ class MockIlluminaData:
         """Name of the mock data
 
         """
-        return name
+        return self.__name
 
     @property
     def dirn(self):
