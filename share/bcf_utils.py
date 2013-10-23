@@ -7,7 +7,7 @@
 #
 #########################################################################
 
-__version__ = "1.0.2.2"
+__version__ = "1.0.2.3"
 
 """bcf_utils
 
@@ -18,6 +18,7 @@ Basic file system wrappers and utilities:
   mkdir
   mklink
   chmod
+  touch
   format_file_size
   commonprefix
   is_gzipped_file
@@ -109,6 +110,15 @@ def chmod(target,mode):
             logging.warning("Failed to change permissions on %s to %s: %s" % (target,mode,ex))
     else:
         logging.warning("Skipped chmod for symbolic link")
+
+def touch(filename):
+    """Create a new empty file
+
+    Arguments:
+      filename: name of the file to create (can include leading path)
+
+    """
+    open(filename,'wb+').close()
 
 def format_file_size(fsize):
     """Format a file size from bytes to human-readable form

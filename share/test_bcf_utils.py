@@ -2,6 +2,9 @@
 # Tests for bcf_utils.py module
 #######################################################################
 import unittest
+import os
+import tempfile
+import shutil
 from bcf_utils import *
 
 class TestFileSystemFunctions(unittest.TestCase):
@@ -28,6 +31,24 @@ class TestFileSystemFunctions(unittest.TestCase):
         self.assertEqual('name',rootname('name.fastq'))
         self.assertEqual('name',rootname('name.fastq.gz'))
         self.assertEqual('/path/to/name',rootname('/path/to/name.fastq.gz'))
+
+class TestTouchFunction(unittest.TestCase):
+    """Unit tests for the 'touch' function
+
+    """
+
+    def setUp(self):
+        self.test_dir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        if os.path.exists(self.test_dir):
+            shutil.rmtree(self.test_dir)
+
+    def test_touch(self):
+        filen = os.path.join(self.test_dir,'touch.test')
+        self.assertFalse(os.path.exists(filen))
+        touch(filen)
+        self.assertTrue(os.path.isfile(filen))
 
 class TestFormatFileSize(unittest.TestCase):
     """Unit tests for formatting file sizes
