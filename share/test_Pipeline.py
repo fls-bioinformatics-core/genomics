@@ -4,6 +4,156 @@
 import unittest
 from Pipeline import *
 
+class TestGetSolidDataFiles(unittest.TestCase):
+    """Unit tests for GetSolidDataFiles function
+
+    """
+
+    def test_get_solid_files(self):
+        file_list = ['solid0123_20131023_PB1.csfasta',
+                     'solid0123_20131023_PB1_QV.qual',
+                     'solid0123_20131023_PB2.csfasta',
+                     'solid0123_20131023_PB2_QV.qual',
+                     'out.log',
+                     'README']
+        expected = [('solid0123_20131023_PB1.csfasta','solid0123_20131023_PB1_QV.qual'),
+                    ('solid0123_20131023_PB2.csfasta','solid0123_20131023_PB2_QV.qual')]
+        data_files = GetSolidDataFiles('test',file_list=file_list)
+        self.assertEqual(len(expected),len(data_files))
+        for filepair1,filepair2 in zip(expected,data_files):
+            self.assertEqual(filepair1,filepair2)
+
+    def test_get_solid_files_old_qual_naming(self):
+        file_list = ['solid0123_20131023_PB1.csfasta',
+                     'solid0123_20131023_QV_PB1.qual',
+                     'solid0123_20131023_PB2.csfasta',
+                     'solid0123_20131023_QV_PB2.qual',
+                     'out.log',
+                     'README']
+        expected = [('solid0123_20131023_PB1.csfasta','solid0123_20131023_QV_PB1.qual'),
+                    ('solid0123_20131023_PB2.csfasta','solid0123_20131023_QV_PB2.qual')]
+        data_files = GetSolidDataFiles('test',file_list=file_list)
+        self.assertEqual(len(expected),len(data_files))
+        for filepair1,filepair2 in zip(expected,data_files):
+            self.assertEqual(filepair1,filepair2)
+
+    def test_get_solid_files_ignore_filtered_files(self):
+        file_list = ['solid0123_20131023_PB1.csfasta',
+                     'solid0123_20131023_PB1_QV.qual',
+                     'solid0123_20131023_PB1_T_F3.csfasta',
+                     'solid0123_20131023_PB1_T_F3_QV.qual',
+                     'solid0123_20131023_PB2.csfasta',
+                     'solid0123_20131023_PB2_QV.qual',
+                     'solid0123_20131023_PB2_T_F3.csfasta',
+                     'solid0123_20131023_PB2_T_F3_QV.qual',
+                     'out.log',
+                     'README']
+        expected = [('solid0123_20131023_PB1.csfasta','solid0123_20131023_PB1_QV.qual'),
+                    ('solid0123_20131023_PB2.csfasta','solid0123_20131023_PB2_QV.qual')]
+        data_files = GetSolidDataFiles('test',file_list=file_list)
+        self.assertEqual(len(expected),len(data_files))
+        for filepair1,filepair2 in zip(expected,data_files):
+            self.assertEqual(filepair1,filepair2)
+
+    def test_get_solid_files_short_names(self):
+        file_list = ['PB1.csfasta',
+                     'PB1.qual',
+                     'PB2.csfasta',
+                     'PB2.qual',
+                     'out.log',
+                     'README']
+        expected = [('PB1.csfasta','PB1.qual'),
+                    ('PB2.csfasta','PB2.qual')]
+        data_files = GetSolidDataFiles('test',file_list=file_list)
+        self.assertEqual(len(expected),len(data_files))
+        for filepair1,filepair2 in zip(expected,data_files):
+            self.assertEqual(filepair1,filepair2)
+
+class TestGetSolidPairedEndFiles(unittest.TestCase):
+    """Unit tests for GetSolidPairedEndFiles function
+
+    """
+
+    def test_get_solid_files_paired_end(self):
+        file_list = ['solid0123_20131023_F3_PB1.csfasta',
+                     'solid0123_20131023_F3_PB1_QV.qual',
+                     'solid0123_20131023_F5-BC_PB1.csfasta',
+                     'solid0123_20131023_F5-BC_PB1_QV.qual',
+                     'solid0123_20131023_F3_PB2.csfasta',
+                     'solid0123_20131023_F3_PB2_QV.qual',
+                     'solid0123_20131023_F5-BC_PB2.csfasta',
+                     'solid0123_20131023_F5-BC_PB2_QV.qual',
+                     'out.log',
+                     'README']
+        expected = [('solid0123_20131023_F3_PB1.csfasta',
+                     'solid0123_20131023_F3_PB1_QV.qual',
+                     'solid0123_20131023_F5-BC_PB1.csfasta',
+                     'solid0123_20131023_F5-BC_PB1_QV.qual'),
+                    ('solid0123_20131023_F3_PB2.csfasta',
+                     'solid0123_20131023_F3_PB2_QV.qual',
+                     'solid0123_20131023_F5-BC_PB2.csfasta',
+                     'solid0123_20131023_F5-BC_PB2_QV.qual')]
+        data_files = GetSolidPairedEndFiles('test',file_list=file_list)
+        self.assertEqual(len(expected),len(data_files))
+        for fileset1,fileset2 in zip(expected,data_files):
+            self.assertEqual(fileset1,fileset2)
+
+    def test_get_solid_files_paired_end_ignore_filtered_files(self):
+        file_list = ['solid0123_20131023_PB1_F3.csfasta',
+                     'solid0123_20131023_PB1_F3_QV.qual',
+                     'solid0123_20131023_PB1_F5.csfasta',
+                     'solid0123_20131023_PB1_F5_QV.qual',
+                     'solid0123_20131023_PB2_F3.csfasta',
+                     'solid0123_20131023_PB2_F3_QV.qual',
+                     'solid0123_20131023_PB2_F5.csfasta',
+                     'solid0123_20131023_PB2_F5_QV.qual',
+                     'solid0123_20131023_PB1_F3_T_F3.csfasta',
+                     'solid0123_20131023_PB1_F3_T_F3_QV.qual',
+                     'solid0123_20131023_PB1_F5_T_F3.csfasta',
+                     'solid0123_20131023_PB1_F5_T_F3_QV.qual',
+                     'solid0123_20131023_PB2_F3_T_F3.csfasta',
+                     'solid0123_20131023_PB2_F3_T_F3_QV.qual',
+                     'solid0123_20131023_PB2_F5_T_F3.csfasta',
+                     'solid0123_20131023_PB2_F5_T_F3_QV.qual',
+                     'out.log',
+                     'README']
+        expected = [('solid0123_20131023_PB1_F3.csfasta',
+                     'solid0123_20131023_PB1_F3_QV.qual',
+                     'solid0123_20131023_PB1_F5.csfasta',
+                     'solid0123_20131023_PB1_F5_QV.qual'),
+                    ('solid0123_20131023_PB2_F3.csfasta',
+                     'solid0123_20131023_PB2_F3_QV.qual',
+                     'solid0123_20131023_PB2_F5.csfasta',
+                     'solid0123_20131023_PB2_F5_QV.qual')]
+        data_files = GetSolidPairedEndFiles('test',file_list=file_list)
+        self.assertEqual(len(expected),len(data_files))
+        for fileset1,fileset2 in zip(expected,data_files):
+            self.assertEqual(fileset1,fileset2)
+
+    def test_get_solid_files_paired_end_shortened_names(self):
+        file_list = ['solid0123_20131023_PB1_F3.csfasta',
+                     'solid0123_20131023_PB1_F3_QV.qual',
+                     'solid0123_20131023_PB1_F5.csfasta',
+                     'solid0123_20131023_PB1_F5_QV.qual',
+                     'solid0123_20131023_PB2_F3.csfasta',
+                     'solid0123_20131023_PB2_F3_QV.qual',
+                     'solid0123_20131023_PB2_F5.csfasta',
+                     'solid0123_20131023_PB2_F5_QV.qual',
+                     'out.log',
+                     'README']
+        expected = [('solid0123_20131023_PB1_F3.csfasta',
+                     'solid0123_20131023_PB1_F3_QV.qual',
+                     'solid0123_20131023_PB1_F5.csfasta',
+                     'solid0123_20131023_PB1_F5_QV.qual'),
+                    ('solid0123_20131023_PB2_F3.csfasta',
+                     'solid0123_20131023_PB2_F3_QV.qual',
+                     'solid0123_20131023_PB2_F5.csfasta',
+                     'solid0123_20131023_PB2_F5_QV.qual')]
+        data_files = GetSolidPairedEndFiles('test',file_list=file_list)
+        self.assertEqual(len(expected),len(data_files))
+        for fileset1,fileset2 in zip(expected,data_files):
+            self.assertEqual(fileset1,fileset2)
+
 class TestGetFastqFiles(unittest.TestCase):
     """Unit tests for GetFastqFiles function
 

@@ -45,7 +45,7 @@ system. So typical usage might look like:
 # Module metadata
 #######################################################################
 
-__version__ = "0.1.1.1"
+__version__ = "0.1.1.2"
 
 #######################################################################
 # Import modules that this module depends on
@@ -518,7 +518,7 @@ class SolidPipelineRunner(PipelineRunner):
 # Module Functions
 #######################################################################
 
-def GetSolidDataFiles(dirn,pattern=None):
+def GetSolidDataFiles(dirn,pattern=None,file_list=None):
     """Return list of csfasta/qual file pairs in target directory
 
     Note that files with names ending in '_T_F3' will be rejected
@@ -526,15 +526,30 @@ def GetSolidDataFiles(dirn,pattern=None):
 
     Optionally also specify a regular expression pattern that file
     names must also match in order to be included.
+
+    Arguments:
+      dirn: name/path of directory to look for files in
+      pattern: optional, regular expression pattern to filter names with
+      file_list: optional, a list of file names to use instead of
+       fetching a list of files from the specified directory
+
+    Returns:
+      List of tuples consisting of two csfasta-qual file pairs (F3 and F5).
+
     """
-    # Check directory exists
-    if not os.path.isdir(dirn):
-        logging.error("'%s' not a directory: unable to collect SOLiD files" % dirn)
-        return []
-    # Gather data files
-    logging.debug("Collecting csfasta/qual file pairs in %s" % dirn)
     data_files = []
-    all_files = os.listdir(dirn)
+    if file_list is not None:
+        # Used supplied file list
+        logging.debug("Ignoring dirn argument and using supplied file list")
+        all_files = file_list
+    else:
+        # Check directory exists
+        if not os.path.isdir(dirn):
+            logging.error("'%s' not a directory: unable to collect SOLiD files" % dirn)
+            return []
+        # Gather data files
+        logging.debug("Collecting csfasta/qual file pairs in %s" % dirn)
+        all_files = os.listdir(dirn)
     all_files.sort()
     # Regular expression pattern
     if pattern is not None:
@@ -561,7 +576,7 @@ def GetSolidDataFiles(dirn,pattern=None):
             except ValueError:
                 # QV not in name, try to match whole name
                 csfasta = root+".csfasta"
-            if os.path.exists(os.path.join(dirn,csfasta)):
+            if csfasta in all_files:
                 # If a regex pattern is specified then also filter on it
                 if pattern is None or regex.search(csfasta):
                     data_files.append((csfasta,qual))
@@ -570,34 +585,46 @@ def GetSolidDataFiles(dirn,pattern=None):
     # Done - return file pairs
     return data_files
 
-def GetSolidPairedEndFiles(dirn,pattern=None):
+def GetSolidPairedEndFiles(dirn,pattern=None,file_list=None):
     """Return list of csfasta/qual file pairs for paired end data
 
     Optionally also specify a regular expression pattern that file
     names must also match in order to be included.
+
+    Arguments:
+      dirn: name/path of directory to look for files in
+      pattern: optional, regular expression pattern to filter names with
+      file_list: optional, a list of file names to use instead of
+       fetching a list of files from the specified directory
+
+    Returns:
+      List of csfasta-qual pair tuples.
+
     """
     # Get list of pairs
-    file_pairs = GetSolidDataFiles(dirn,pattern=pattern)
+    file_pairs = GetSolidDataFiles(dirn,pattern=pattern,file_list=file_list)
     if not file_pairs:
         return []
     # Now match pairs of pairs: files with the same name except for
     # 'F3' and 'F5' or 'F5-BC'
     logging.debug("Matching F3 csfasta/qual file pairs with F5 counterparts")
+    key_list = []
     matched_files = dict()
     for pair in file_pairs:
         # Remove _F3, _F5 and _F5-BC components from csfasta to
         # use as a key
         key = pair[0].replace('_F3','').replace('_F5-BC','').replace('_F5','')
         logging.debug("Key: %s for %s" % (key,pair))
-        if key in matched_files:
+        if key in key_list:
             # Already has an entry
             matched_files[key].append(pair)
         else:
             # New key
+            key_list.append(key)
             matched_files[key] = [pair]
     # Check pairs of pairs
     data_files = []
-    for key in matched_files:
+    for key in key_list:
         if len(matched_files[key]) != 2:
             logging.debug("discarding pairs: %s" % matched_files[key])
         else:
