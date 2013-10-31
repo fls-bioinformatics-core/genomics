@@ -7,6 +7,61 @@ import tempfile
 import shutil
 from bcf_utils import *
 
+class TestOrderedDictionary(unittest.TestCase):
+    """Unit tests for the OrderedDictionary class
+    """
+
+    def test_get_and_set(self):
+        """Add and retrieve data
+        """
+        d = OrderedDictionary()
+        self.assertEqual(len(d),0)
+        d['hello'] = 'goodbye'
+        self.assertEqual(d['hello'],'goodbye')
+
+    def test_insert(self):
+        """Insert items
+        """
+        d = OrderedDictionary()
+        d['hello'] = 'goodbye'
+        self.assertEqual(d.keys(),['hello'])
+        self.assertEqual(len(d),1)
+        # Insert at start of list
+        d.insert(0,'stanley','fetcher')
+        self.assertEqual(d.keys(),['stanley','hello'])
+        self.assertEqual(len(d),2)
+        self.assertEqual(d['stanley'],'fetcher')
+        self.assertEqual(d['hello'],'goodbye')
+        # Insert in middle
+        d.insert(1,'monty','python')
+        self.assertEqual(d.keys(),['stanley','monty','hello'])
+        self.assertEqual(len(d),3)
+        self.assertEqual(d['stanley'],'fetcher')
+        self.assertEqual(d['monty'],'python')
+        self.assertEqual(d['hello'],'goodbye')
+
+    def test_keeps_things_in_order(self):
+        """Check that items are returned in same order as added
+        """
+        d = OrderedDictionary()
+        d['hello'] = 'goodbye'
+        d['stanley'] = 'fletcher'
+        d['monty'] = 'python'
+        self.assertEqual(d.keys(),['hello','stanley','monty'])
+
+    def test_iteration_over_keys(self):
+        """Check iterating over keys
+        """
+        d = OrderedDictionary()
+        d['hello'] = 'goodbye'
+        d['stanley'] = 'fletcher'
+        d['monty'] = 'python'
+        try:
+            for i in d:
+                pass
+        except KeyError:
+            self.fail("Iteration over OrderedDictionary failed")
+
 class TestFileSystemFunctions(unittest.TestCase):
     """Unit tests for file system wrapper and utility functions
 
