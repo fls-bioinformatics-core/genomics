@@ -7,6 +7,50 @@ import tempfile
 import shutil
 from bcf_utils import *
 
+class TestAttributeDictionary(unittest.TestCase):
+    """Tests for the AttributeDictionary class
+    """
+
+    def test_set_get_items(self):
+        """Test 'set' and 'get' using dictionary notation
+        """
+        d = AttributeDictionary()
+        self.assertEqual(len(d),0)
+        d['salutation'] = 'hello'
+        self.assertEqual(len(d),1)
+        self.assertEqual(d["salutation"],"hello")
+
+    def test_get_attrs(self):
+        """Test 'get' using attribute notation
+        """
+        d = AttributeDictionary()
+        self.assertEqual(len(d),0)
+        d['salutation'] = 'hello'
+        self.assertEqual(len(d),1)
+        self.assertEqual(d.salutation,"hello")
+
+    def test_init(self):
+        """Test initialising like a standard dictionary
+        """
+        d = AttributeDictionary(salutation='hello',valediction='goodbye')
+        self.assertEqual(len(d),2)
+        self.assertEqual(d.salutation,"hello")
+        self.assertEqual(d.valediction,"goodbye")
+
+    def test_iter(self):
+        """Test iteration over items
+        """
+        d = AttributeDictionary()
+        self.assertEqual(len(d),0)
+        d['salutation'] = 'hello'
+        d['valediction'] = 'goodbye'
+        self.assertEqual(len(d),2)
+        self.assertEqual(d.salutation,"hello")
+        self.assertEqual(d.valediction,"goodbye")
+        for key in d:
+            self.assertTrue(key in ('salutation','valediction'),
+                            "%s not in list" % key)
+
 class TestOrderedDictionary(unittest.TestCase):
     """Unit tests for the OrderedDictionary class
     """

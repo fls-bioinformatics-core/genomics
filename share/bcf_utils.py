@@ -7,7 +7,7 @@
 #
 #########################################################################
 
-__version__ = "1.0.2.4"
+__version__ = "1.0.2.5"
 
 """bcf_utils
 
@@ -15,7 +15,8 @@ Utility classes and functions shared between BCF codes.
 
 Classes:
 
-  OrderedDictionary  
+  AttributeDictionary
+  OrderedDictionary
 
 File system wrappers and utilities:
 
@@ -56,6 +57,55 @@ import copy
 #######################################################################
 # Class definitions
 #######################################################################
+
+class AttributeDictionary:
+    """Dictionary-like object with items accessible as attributes
+
+    AttributeDict provides a dictionary-like object where the value
+    of items can also be accessed as attributes of the object.
+
+    For example:
+
+    >>> d = AttributeDict()
+    >>> d['salutation'] = "hello"
+    >>> d.salutation
+    ... "hello"
+
+    Attributes can only be assigned by using dictionary item assignment
+    notation i.e. d['key'] = value. d.key = value doesn't work.
+
+    If the attribute doesn't match a stored item then an
+    AttributeError exception is raised.
+
+    len(d) returns the number of stored items.
+
+    The AttributeDict behaves like a dictionary for iterations, for
+    example:
+
+    >>> for attr in d:
+    >>>    print "%s = %s" % (attr,d[attr])
+
+    """
+    def __init__(self,**args):
+        self.__dict = dict(args)
+
+    def __getattr__(self,attr):
+        try:
+            return self.__dict[attr]
+        except KeyError:
+            raise AttributeError, "No attribute '%s'" % attr
+
+    def __getitem__(self,key):
+        return self.__dict[key]
+
+    def __setitem__(self,key,value):
+        self.__dict[key] = value
+
+    def __iter__(self):
+        return iter(self.__dict)
+
+    def __len__(self):
+        return len(self.__dict)
 
 class OrderedDictionary:
     """Augumented dictionary which keeps keys in order
