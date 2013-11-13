@@ -55,10 +55,11 @@ function setup_chlamyR() {
     set_species "Green alga"
     set_build   "2009"
     set_info    ""
-    set_mirror  ftp://ftp.jgi-psf.org/pub/JGI_data/phytozome/v7.0/Creinhardtii/assembly
+    set_mirror  ftp://ftp.jgi-psf.org/pub/compgen/phytozome/v7.0/Creinhardtii/assembly
     set_archive Creinhardtii_169.fa.gz
     set_ext     fa
     set_md5sum  27c4e0cdc13ab3727f784bf667ae3c08
+    add_comment "Original URL for downloading was ftp://ftp.jgi-psf.org/pub/JGI_data/phytozome/v7.0/Creinhardtii/assembly; updated 13th Nov 2013."
 }
 #
 # Dictystelium discoideum
