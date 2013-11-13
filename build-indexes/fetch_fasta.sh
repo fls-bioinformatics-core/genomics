@@ -168,6 +168,18 @@ function setup_mm9() {
     set_md5sum  bd0bc0969bd08667f475c5df2b13ca49
 }
 #
+# mm10: mouse
+function setup_mm10() {
+    set_name    "Mus musculus"
+    set_species "Mouse"
+    set_build   "GRCm38/mm10 Dec 2010"
+    set_info    "Base chr. (1 to 19, X, Y), chrN_random, chrM and chrUn_random - unmasked"
+    set_mirror  http://hgdownload.cse.ucsc.edu/goldenPath/mm10/bigZips
+    set_archive chromFa.tar.gz
+    set_ext     fa
+    set_md5sum  1de1b607b1b85bef91d24647c55f4f4c
+}
+#
 # ncrassa
 function setup_Ncrassa() {
     set_name    "Neurospora crassa OR74A"
@@ -210,6 +222,18 @@ function setup_rn4() {
     add_processing_step "Put chromosome files in cwd" "mv */*.fa ."
 }
 #
+# sacCer1: yeast
+function setup_sacCer1() {
+    set_name    "Saccharomyces cerevisiae"
+    set_species "Yeast"
+    set_build   "sacCer1 1 Oct. 2003"
+    set_info    ""
+    set_mirror  http://hgdownload.cse.ucsc.edu/goldenPath/sacCer1/bigZips
+    set_archive chromFa.zip
+    set_ext     fa
+    set_md5sum  190368c985c508b28cf7fa86236b3364
+}
+#
 # sacCer2: yeast
 function setup_sacCer2() {
     set_name    "Saccharomyces cerevisiae"
@@ -220,6 +244,18 @@ function setup_sacCer2() {
     set_archive chromFa.tar.gz
     set_ext     fa
     set_md5sum  c5a5bc8634dcbccb4c153541146e713b
+}
+#
+# sacCer3: yeast
+function setup_sacCer3() {
+    set_name    "Saccharomyces cerevisiae"
+    set_species "Yeast"
+    set_build   "sacCer3 April 2011"
+    set_info    ""
+    set_mirror  http://hgdownload.cse.ucsc.edu/goldenPath/sacCer3/bigZips
+    set_archive chromFa.tar.gz
+    set_ext     fa
+    set_md5sum  64d5e97395c71b2f577eddad296ca5d3
 }
 #
 # SacBay: yeast
