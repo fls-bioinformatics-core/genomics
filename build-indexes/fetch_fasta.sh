@@ -471,9 +471,9 @@ function unpack_archive() {
 # If <save_as> is specified then save to that name rather
 # than the name of the target in the URL
 function fetch_url() {
-    echo Fetching URL: $url
-    filen=`basename $url`
-    wget_cmd="wget -nv $url"
+    echo Fetching URL: $1
+    filen=`basename $1`
+    wget_cmd="wget -nv $1"
     if [ ! -z "$2" ] ; then
 	wget_cmd="$wget_cmd -O $2"
 	filen=$2
