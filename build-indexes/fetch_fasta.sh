@@ -209,7 +209,8 @@ function setup_PhiX() {
     set_mirror  ftp://ftp.ncbi.nih.gov/genomes/Viruses/Enterobacteria_phage_phiX174_sensu_lato_uid14015
     set_archive NC_001422.fna --save-as NC_001422.fa
     set_ext     fa
-    set_md5sum  2283fcba1718adb63c1075b0bc08b638
+    set_md5sum  ca8cef43762a8f244b1b5389cb9d9456
+    add_comment "14/11/2013: updated checksum to accommodate minor change to fasta header."
 }
 #
 # rn4: rat
