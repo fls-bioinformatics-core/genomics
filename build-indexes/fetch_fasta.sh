@@ -267,9 +267,9 @@ function setup_sacCer3() {
 #
 # SacBay: yeast
 function setup_sacBay() {
-    set_name    "Saccharomyces bayanus var. uvarum (CBS 7001)"
+    set_name    "Saccharomyces bayanus var. uvarum"
     set_species "Yeast"
-    set_build   ""
+    set_build   "CBS 7001"
     set_info    "See http://www.saccharomycessensustricto.org/cgi-bin/s3?data=Assemblies&version=current"
     set_mirror  http://www.saccharomycessensustricto.org/SaccharomycesSensuStrictoResources/current/Sbay
     set_archive Sbay.ultrascaf,Sbay.unplaced
@@ -290,7 +290,7 @@ function setup_SpR6() {
     set_mirror  ftp://ftp.ncbi.nih.gov/genomes/Bacteria/Streptococcus_pneumoniae_R6_uid57859
     set_archive NC_003098.fna --save-as NC_003098.fa
     set_ext     fa
-    set_md5sum  155392253284ba995186204579f61ca8
+    set_md5sum  4653d8b02db12e95c48f17d150b21a0b
 }
 #
 # UniVec
