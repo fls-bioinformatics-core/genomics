@@ -89,7 +89,7 @@ function setup_e_coli() {
 }
 #
 # dm3: fly
-function setup_dm3() {
+function setup_dm3_het_chrM_chrU() {
     set_name    "Drosophila melanogaster"
     set_species "Fruit fly"
     set_build   "DM3, BDGP Release 5 April 2006"
