@@ -149,11 +149,11 @@ function setup_hg18_random_chrM() {
 }
 #
 # hg19: human
-function setup_hg19() {
+function setup_hg19_GRCh37_random_chrM() {
     set_name    "Homo sapiens"
     set_species "Human"
-    set_build   "hg19 GRCh37 - Feb. 2009 (GCA_000001405.1)"
-    set_info    "Base chr. (1 to 22, X, Y), 'random' and chrM - unmasked"
+    set_build   "hg19 GRCh37 Feb. 2009 GCA_000001405.1"
+    set_info    "Base chr. (1 to 22, X, Y), 'random' and chrM, no haplotypes - unmasked"
     set_mirror  http://hgdownload.cse.ucsc.edu/goldenPath/hg19/bigZips
     set_archive chromFa.tar.gz
     set_ext     fa
