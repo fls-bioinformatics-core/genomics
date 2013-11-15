@@ -163,7 +163,7 @@ function setup_hg19_GRCh37_random_chrM() {
 }
 #
 # mm9: mouse
-function setup_mm9() {
+function setup_mm9_random_chrM_chrUn() {
     set_name    "Mus musculus"
     set_species "Mouse"
     set_build   "MM9/NCBI37 July 2007"
@@ -175,7 +175,7 @@ function setup_mm9() {
 }
 #
 # mm10: mouse
-function setup_mm10() {
+function setup_mm10_random_chrM_chrUn() {
     set_name    "Mus musculus"
     set_species "Mouse"
     set_build   "GRCm38/mm10 Dec 2010"
