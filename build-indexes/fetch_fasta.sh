@@ -135,11 +135,11 @@ function setup_ws201() {
 }
 #
 # hg18: human
-function setup_hg18() {
+function setup_hg18_random_chrM() {
     set_name    "Homo sapiens"
     set_species "Human"
     set_build   "HG18/NCBI36.1 March 2006"
-    set_info    "Base chr. (1 to 22, X, Y), 'random' and chrM - unmasked"
+    set_info    "Base chr. (1 to 22, X, Y), 'random' and chrM, no haplotypes - unmasked"
     set_mirror  http://hgdownload.cse.ucsc.edu/goldenPath/hg18/bigZips
     set_archive chromFa.zip
     set_ext     fa
