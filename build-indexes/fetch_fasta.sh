@@ -62,18 +62,18 @@ function setup_Creinhardtii169() {
     add_comment "13/11/2014: original URL for downloading was ftp://ftp.jgi-psf.org/pub/JGI_data/phytozome/v7.0/Creinhardtii/assembly; updated 13th Nov 2013."
 }
 #
-# Dictystelium discoideum
-# Original download of masked genome from http://dictygenome.bcm.tmc/~anup/RNAseq
-# doesn't appear to be available any more so get locally hosted copy
-function setup_dicty() {
-    set_name    "Dictystelium discoideum"
+# Dictyostelium discoideum
+function setup_dictyostelium() {
+    set_name    "Dictyostelium discoideum"
     set_species "Social amoeba"
-    set_build   ""
+    set_build   "09.05.13"
     set_info    "Masked genome from http://dictygenome.bcm.tmc.edu/~anup/RNAseq/  Supplement, edited to make the chr notation of chromosomes DDB"
-    set_mirror  http://galaxy.smith.man.ac.uk/sequences
-    set_archive dd_masked_09.05.13.fasta.gz
+    set_mirror  https://dl.dropboxusercontent.com/s/ec1icwq48huj8mi/
+    set_archive "dd_masked_09.05.13.fasta.gz?dl=1&token_hash=AAHedZVH0i3NHnGLxpOc3Hh7SHEkDe5HB1JUeX_3pI5jFA" --save-as dd_masked_09.05.13.fasta.gz
     set_ext     fasta
     set_md5sum  f277579acf122eeb3932f99ca97a9a61
+    add_comment "14/11/2013: original download of masked genome from http://dictygenome.bcm.tmc/~anup/RNAseq no longer available"
+    add_comment "14/11/2013: fasta file hosted on Dropbox: https://dl.dropboxusercontent.com/s/ec1icwq48huj8mi/dd_masked_09.05.13.fasta.gz?dl=1&token_hash=AAHedZVH0i3NHnGLxpOc3Hh7SHEkDe5HB1JUeX_3pI5jFA"
 }
 #
 # E.coli
