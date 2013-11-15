@@ -1,8 +1,23 @@
+2013-11-15  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* build-indexes/fetch_fasta.sh
+	- various builds renamed to longer & more accurate names:
+	  * hg18    -> hg18_random_chrM
+	  * hg19    -> hg19_GRCh37_random_chrM
+	  * mm9     -> mm9_random_chrM_chrUn
+	  * mm10    -> mm10_random_chrM_chrUn
+	  * dm3     -> dm3_het_chrM_chrU
+	  * ecoli   -> e_coli
+	  * dicty   -> dictyostelium
+	  * chlamyR -> Creinhardtii169
+	- updates to broken download URLs and checksums for some
+	  genome builds.
+
 2013-11-13  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* build-indexes/fetch_fasta.sh
 	- updated to include sacCer1, sacCer3 and mm10 sequences.
-	- updated URL for C. reinhardtii
+	- updated URL for C. reinhardtii.
 	- fixed minor bug in 'fetch_url' function.
 
 2013-09-11  Peter Briggs  <peter.briggs@manchester.ac.uk>
