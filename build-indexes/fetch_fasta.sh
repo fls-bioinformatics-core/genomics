@@ -297,14 +297,20 @@ function setup_SpR6() {
 function setup_UniVec() {
     set_name    "UniVec"
     set_species "Vectors"
-    set_build   "UniVec build #7.0 (Dec. 5, 2011)"
-    set_info    "See http://www.ncbi.nlm.nih.gov/VecScreen/UniVec.html"
+    set_build   "UniVec build #7.1 Oct. 22, 2012"
+    set_info    "UniVec is a non-redundant database of sequences commonly attached to
+cDNA or genomic DNA during the cloning process"
     set_mirror  ftp://ftp.ncbi.nih.gov/pub/UniVec
     set_archive UniVec
     set_ext     fa
-    set_md5sum  5dee49d4467a98762b356f855b016c05
+    set_md5sum  0b6fb7f5d8f760b9785add693125c71f
     # Rename the downloaded file
     add_processing_step "Rename download to give it fa extension" "mv UniVec UniVec_fasta.fa"
+    # Add comments
+    add_comment "See http://www.ncbi.nlm.nih.gov/VecScreen/UniVec.html for information"
+    add_comment "Files aren't versioned; checksums are:"
+    add_comment "Build #7.0 (Dec. 5, 2011)   5dee49d4467a98762b356f855b016c05"
+    add_comment "Build #7.1 (Oct. 22, 2012)  0b6fb7f5d8f760b9785add693125c71f"
 }
 #
 # ===============================================================
