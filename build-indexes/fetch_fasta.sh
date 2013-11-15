@@ -112,10 +112,12 @@ function setup_ws200() {
     set_species "Worm"
     set_build   "WS200 February 24 2009"
     set_info    "C.Elegans WS200"
-    set_mirror  ftp://ftp.sanger.ac.uk/pub/wormbase/FROZEN_RELEASES/WS200/genomes/c_elegans/sequences/dna
-    set_archive c_elegans.WS200.dna.fa.gz
+    set_mirror  ftp://ftp.wormbase.org/pub/wormbase/releases/WS200/species/c_elegans/
+    set_archive c_elegans.WS200.genomic.fa.gz
     set_ext     fa
     set_md5sum  4a06dec987c26922d98c2ff4a17a18c4
+    # Comments
+    add_comment "15/11/2013: updated as URL for archive has changed (originally at ftp://ftp.sanger.ac.uk/pub/wormbase/FROZEN_RELEASES/WS200/genomes/c_elegans/sequences/dna/c_elegans.WS200.dna.fa.gz)"
 }
 #
 # WS201: worm
@@ -124,9 +126,12 @@ function setup_ws201() {
     set_species "Worm"
     set_build   "WS201 March 25 2009"
     set_info    "C.Elegans WS201"
-    set_mirror  ftp://ftp.wormbase.org/pub/wormbase/genomes/c_elegans/sequences/dna
-    set_archive c_elegans.WS201.dna.fa.gz
+    set_mirror  ftp://ftp.wormbase.org/pub/wormbase/releases/WS201/species/c_elegans
+    set_archive c_elegans.WS201.genomic.fa.gz
     set_ext     fa
+    set_md5sum  b1be6f9aeb0bcb3742a373a30e4ea4ad
+    # Comments
+    add_comment "15/11/2013: updated as URL for archive has changed (originally at ftp://ftp.wormbase.org/pub/wormbase/genomes/c_elegans/sequences/dna/c_elegans.WS201.dna.fa.gz)"
 }
 #
 # hg18: human
