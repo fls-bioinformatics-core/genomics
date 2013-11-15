@@ -682,9 +682,13 @@ function usage() {
     names=$(available_names)
     for name in $names ; do
 	setup_${name} > /dev/null
-	echo "  ${name}"$'\t'$'\t'"${NAME} (${BUILD})"
+	echo "  ${name}"$'\t'"${SPECIES}"$'\t'$'\t'"${NAME} (${BUILD})"
 	reset_settings
     done
+    echo ""
+    echo "Alternatively specify 'all' to download all the defined"
+    echo "sequences and put them into subdirectories of the current"
+    echo "directory."
 }
 #
 # available_names
@@ -710,6 +714,29 @@ function check_organism() {
     return 1
 }
 #
+# fetch_all
+#
+# Download sequences for all the defined organisms/builds
+# Each sequence is put into its own subdirectory
+function fetch_all() {
+    status=0
+    genomes=$(available_names)
+    for genome in $genomes ; do
+	echo -n $genome ...
+	mkdir $genome
+	cd $genome
+	$0 $genome 2>&1 >/dev/null
+	if [ $? -ne 0 ] ; then
+	    echo FAILED
+	    status=1
+	else
+	    echo OK
+	fi
+	cd ..
+    done
+    return $status
+}
+#
 # ===============================================================
 # Main script
 # ===============================================================
@@ -719,8 +746,15 @@ if [ -z "$1" ] ; then
     usage
     exit
 fi
-# Get organism name and check it's available
+# Get organism name
 ORGANISM=$1
+# If 'all' then get everything
+if [ $ORGANISM == all ] ; then
+    echo Fetching all fasta sequences
+    fetch_all
+    exit $?
+fi
+# Check organism is available
 if ! check_organism $ORGANISM ; then
     echo "$ORGANISM not available"
     exit 1
