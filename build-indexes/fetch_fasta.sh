@@ -77,7 +77,7 @@ function setup_dictyostelium() {
 }
 #
 # E.coli
-function setup_ecoli() {
+function setup_e_coli() {
     set_name    "Escherichia coli"
     set_species "Ecoli"
     set_build   "NC_008253"
