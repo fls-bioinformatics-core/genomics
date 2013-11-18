@@ -4,6 +4,13 @@
 	- Neurospora crassa (Ncrassa) updated to June 25th 2013
 	  version.
 
+	* build-indexes/bowtie2_build_indexes.sh
+	- New: wrapper script to build bowtie2 indexes from a
+	  fasta file.
+
+	* buil-indexes/build_indexes.sh
+	- remove bfast indexes & add bowtie2.
+
 2013-11-15  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* build-indexes/fetch_fasta.sh
