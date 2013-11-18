@@ -4,8 +4,8 @@
 #
 # Build indexes for all programs from input fasta file
 #
-# Runs scripts to generate bowtie, bfast and srma indexes
-# and place them in "bowtie" and "bfast" subdirectories
+# Runs scripts to generate bowtie, bowtie2 and srma indexes
+# and place them in "bowtie" and "bowtie2" subdirectories
 # of the current directory
 #
 # Usage: build_indexes.sh <genome>.fa
@@ -45,20 +45,20 @@ echo ${SCRIPT_DIR}/bowtie_build_indexes.sh ${FASTA}
 ${SCRIPT_DIR}/bowtie_build_indexes.sh ${FASTA}
 cd ..
 #
-# Bfast indexes
+# Bowtie2 indexes
 #
-# Make bfast directory
-BFAST_DIR=`pwd`/bfast
-if [ ! -d ${BFAST_DIR} ] ; then
-    echo "Making ${BFAST_DIR}"
-    mkdir -p $BFAST_DIR
+# Make bowtie2 directory
+BOWTIE2_DIR=`pwd`/bowtie2
+if [ ! -d ${BOWTIE2_DIR} ] ; then
+    echo "Making ${BOWTIE2_DIR}"
+    mkdir -p $BOWTIE2_DIR
 fi
 #
-# Descend into bfast dir and run the build script
+# Descend into bowtie2 dir and run the build script
 # Index files will be created here
-cd bfast
-echo ${SCRIPT_DIR}/bfast_build_indexes.sh -d 1 -w 14 ${FASTA}
-${SCRIPT_DIR}/bfast_build_indexes.sh -d 1 -w 14 ${FASTA}
+cd bowtie2
+echo ${SCRIPT_DIR}/bowtie2_build_indexes.sh ${FASTA}
+${SCRIPT_DIR}/bowtie2_build_indexes.sh ${FASTA}
 cd ..
 #
 # SRMA indexes
