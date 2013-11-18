@@ -1,3 +1,9 @@
+2013-11-18  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* build-indexes/fetch_fasta.sh
+	- Neurospora crassa (Ncrassa) updated to June 25th 2013
+	  version.
+
 2013-11-15  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* build-indexes/fetch_fasta.sh
@@ -10,8 +16,9 @@
 	  * ecoli   -> e_coli
 	  * dicty   -> dictyostelium
 	  * chlamyR -> Creinhardtii169
-	- updates to broken download URLs and checksums for some
-	  genome builds.
+	- updates to broken download URLs and checksums for PhiX,
+	  sacBay, ws200 and ws201 genome builds.
+	- UniVec updated to build #7.1.
 
 2013-11-13  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
