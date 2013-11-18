@@ -190,14 +190,18 @@ function setup_mm10_random_chrM_chrUn() {
 function setup_Ncrassa() {
     set_name    "Neurospora crassa OR74A"
     set_species "Bread mold"
-    set_build   "Release 3"
+    set_build   "Release 3 assembly 7 (11th March 2013)"
     set_info    "See http://www.broadinstitute.org/annotation/genome/neurospora/MultiDownloads.html"
     set_mirror  http://www.broadinstitute.org/annotation/genome/neurospora/download
-    set_archive "?sp=ZH4sIAAAAAAAAAE2Pv07DQAzGnTYMgEC0zGysXGFmQkClSuGPlO7ITdxwKLkc50ubdKjUmZWFgTdg4yHYWXkG3oFcGhAebMn%2B6fP3vX3DBhs4ijC9zwsl5jQRTGYmI2Jxkc9VmmMcrhe3aDAjS2b41HsPnr%2BKDnQD2EZmyiZpNYrZwl7wgDMcFFamg0CyPQ2gF%2BWZNsQscxUW06ksLfTXWIoqGYTWSJXU4E7c%2FhtXmvgRluCVuja371jhJMWZMVg53XL1efDyga9d8Ebgs1xQqQGgM%2FfrvmXBvz4%2FObaw6cbd1Wh8Uz%2F1xULqRtdBXoN6SwOHv%2BHb4MJQSsj0l9%2F5gbb6AKWB3caSsy8uVZH9P2oLvbDQZKJcWZnwENli%2BQM9lWagaAEAAA%3D%3D" --save-as neurospora_data.zip
+    set_archive "?sp=ZH4sIAAAAAAAAAE2Pv07DQAzGnTYMgEC0zGysXICVCQGVKoU%2FUrojN3HDoeRynC9N0qESMysLA2%2FAxkOws%2FIMvANJGhAebMn%2B6fP3vX3DGhs4CDG5y3IlCpoKJjOXIbE4zwqVZBgFq8UNGkzJkhk9Dd7956%2B8B30fNpGZ0mlSjSO2sOPf4xy93MrE8yXbEx8GYZZqQ8wyU0E%2Bm8nSwnCFJahiL7BGqrgGt6Lu36TSxA%2BwBKfUtbndhhWNpDg1BqtGt3z83Hv5wNc%2BOGNwWS6o1ADQK9y6b1hwr86Oji2s1%2BPw9nI8ua6fumIhdavbQE6LOksD%2B7%2Fhu%2BDCUELI9Je%2F8QNdDQFKA9utpca%2BuFB5%2Bv%2BoLQyCXJMJM2VlzCNki%2BUPj5zWe2gBAAA%3D" --save-as neurospora_data.zip
     set_ext     fasta
-    set_md5sum  8dee52a5101dc686a9862306002d513a
+    set_md5sum  75038c30986109bf3e151e63e805801c
     # Add comments
     add_comment "Download 'All Assemblies'/'supercontigs.fasta' from http://www.broadinstitute.org/annotation/genome/neurospora/MultiDownloads.html to neurospora_data.zip, which contains 'neurospora_crassa_or74a__finished__10_supercontigs.fasta' and 'neurospora_crassa_or74a_mito_10_supercontigs.fasta'"
+    add_comment "Concatenate the two fasta files to make a single fasta"
+    add_comment "Files aren't versioned; checksums are:"
+    add_comment "25th Jun 2011 assembly   8dee52a5101dc686a9862306002d513a"
+    add_comment "11th Mar 2013 assembly   0b6fb7f5d8f760b9785add693125c71f"
 }
 #
 # PhiX
