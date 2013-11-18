@@ -7,6 +7,7 @@ Scripts for setting up genome indexes for various programs:
  *  `build_indexes.sh`: build all indexes from a FASTA file
  *  `bfast_build_indexes.sh`: build bfast color-space indexes
  *  `bowtie_build_indexes.sh`: build color- and base-space bowtie indexes
+ *  `bowtie2_build_indexes.sh`: build indexes for bowtie2
  *  `srma_build_indexes.sh`: build indexes for srma
  *  `setup_genome_indexes.sh`: automatically and reproducibly set up genome indexes
  *  `build_rRNA_bowtie_indexes.sh`: create indexes and fastq_screen.conf for rRNA
@@ -58,7 +59,7 @@ See the comments in the head of the script along with the existing
 
 build_indexes.sh
 ----------------
-Builds all indexes (bfast, bowtie, SRMA) within a standard directory
+Builds all indexes (bowtie, bowtie2, SRMA) within a standard directory
 structure from a FASTA file, by running the scripts for building the
 individual indexes.
 
@@ -143,6 +144,20 @@ Index files are created in the directory the script was run in.
 
 * Nucleotide indexes as `<genome_name>.*.ebwt`
 * Color space indexes as `<genome_name>_c.*.ebwt`
+
+bowtie2_build_indexes.sh
+-----------------------
+Builds the indexes for bowtie2 (letter space only; bowtie2 doesn't
+support colorspace) from the reference FASTA file.
+
+### Usage ###
+
+    bowtie2_build_indexes.sh <genome_fasta_file>
+
+### Outputs ###
+
+Index files are created in the directory the script was run in,
+with the names `<genome_name>.*.bt2`.
 
 srma_build_indexes.sh
 ---------------------
