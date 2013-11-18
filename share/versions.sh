@@ -13,6 +13,11 @@ function get_version() {
     if [ ! -z "$get_version_exe" ] ; then
 	get_version_name=$(baserootname $get_version_exe)
 	case "$get_version_name" in
+	    bowtie2*)
+		# bowtie2 --version
+		# .../bowtie2-align version 2.1.0
+		echo `$get_version_exe --version 2>&1 | grep "bowtie2" | grep "version" | cut -d" " -f3`
+		;;
 	    bowtie*)
 		# bowtie --version
 		# bowtie version 0.12.7
