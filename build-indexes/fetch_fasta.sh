@@ -200,7 +200,7 @@ function setup_Ncrassa() {
     add_comment "Download 'All Assemblies'/'supercontigs.fasta' from http://www.broadinstitute.org/annotation/genome/neurospora/MultiDownloads.html to neurospora_data.zip, which contains 'neurospora_crassa_or74a__finished__10_supercontigs.fasta' and 'neurospora_crassa_or74a_mito_10_supercontigs.fasta'"
     add_comment "Concatenate the two fasta files to make a single fasta"
     add_comment "Files aren't versioned; checksums are:"
-    add_comment "25th Jun 2011 assembly   8dee52a5101dc686a9862306002d513a"
+    add_comment "25th Jun 2010 assembly   8dee52a5101dc686a9862306002d513a"
     add_comment "11th Mar 2013 assembly   0b6fb7f5d8f760b9785add693125c71f"
 }
 #
