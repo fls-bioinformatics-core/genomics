@@ -9,7 +9,7 @@
 #
 #########################################################################
 
-__version__ = "1.0.1.1"
+__version__ = "1.0.1.2"
 
 """JobRunner
 
@@ -337,12 +337,13 @@ class GEJobRunner(BaseJobRunner):
     queue on initialisation.
     """
 
-    def __init__(self,queue=None,log_dir=None):
+    def __init__(self,queue=None,log_dir=None,ge_extra_args=None):
         """Create a new GEJobRunner instance
 
         Arguments:
           queue:   Name of GE queue to use (set to 'None' to use default queue)
           log_dir: Directory to write log files to (set to 'None' to use cwd)
+          ge_extra_args: Arbitrary additional arguments to supply to qsub
         """
         self.__queue = queue
         # Directory for log files
@@ -350,6 +351,7 @@ class GEJobRunner(BaseJobRunner):
         # Keep track of names and log dirs for each job
         self.__names = {}
         self.__log_dirs = {}
+        self.__ge_extra_args = ge_extra_args
 
     def queue(self,queue):
         """(Re)set the name of GE queue to use
@@ -387,6 +389,7 @@ class GEJobRunner(BaseJobRunner):
         logging.debug("GEJobRunner: submitting job")
         logging.debug("Name       : %s" % name)
         logging.debug("Queue      : %s" % self.__queue)
+        logging.debug("Extra args : %s" % self.__ge_extra_args)
         logging.debug("Log dir    : %s" % self.__log_dir)
         logging.debug("Working_dir: %s" % working_dir)
         logging.debug("Script     : %s" % script)
@@ -405,6 +408,8 @@ class GEJobRunner(BaseJobRunner):
             qsub.append('-cwd')
         else:
             qsub.extend(('-wd',working_dir))
+        if self.__ge_extra_args:
+            qsub.extend(self.__ge_extra_args)
         qsub.append(cmd)
         logging.debug("QsubScript: qsub command: %s" % qsub)
         # Run the qsub job in the current directory
