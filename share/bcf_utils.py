@@ -442,6 +442,15 @@ def pretty_print_names(name_list):
 
 def name_matches(name,pattern):
     """Simple wildcard matching of project and sample names
+
+    Matching options are:
+
+    - exact match of a single name e.g. pattern 'PJB' matches 'PJB'
+    - match start of a name using trailing '*' e.g. pattern 'PJ*' matches
+      'PJB','PJBriggs' etc
+    - match using multiple patterns by separating with comma e.g. pattern
+      'PJB,IJD' matches 'PJB' or 'IJD'. Subpatterns can include trailing
+      '*' character to match more names.
     
     Arguments
       name: text to match against pattern
@@ -450,11 +459,16 @@ def name_matches(name,pattern):
     Returns
       True if name matches pattern; False otherwise.
     """
-    if not pattern.endswith('*'):
-        # Exact match required
-        return (name == pattern)
+    for subpattern in pattern.split(','):
+        if not subpattern.endswith('*'):
+            # Exact match required
+            if name == subpattern:
+                return True
+        else:
+            if name.startswith(subpattern.rstrip('*')):
+                return True
     else:
-        return name.startswith(pattern.rstrip('*'))
+        return False
 
 # File manipulations
 

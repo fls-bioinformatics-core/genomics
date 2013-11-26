@@ -211,6 +211,10 @@ class TestNameFunctions(unittest.TestCase):
         # Cases which shouldn't match
         self.assertFalse(name_matches('PJB123','PJB'))
         self.assertFalse(name_matches('PJB','IDJ'))
+        # Cases with multiple matches
+        self.assertTrue(name_matches('PJB','PJB,IJD'))
+        self.assertTrue(name_matches('IJD','PJB,IJD'))
+        self.assertFalse(name_matches('LJZ','PJB,IJD'))
 
 class TestConcatenateFastqFiles(unittest.TestCase):
     """Unit tests for concatenate_fastq_files
