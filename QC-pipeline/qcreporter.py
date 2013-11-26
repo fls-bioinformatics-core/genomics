@@ -14,7 +14,7 @@
 Generate HTML reports for an NGS QC pipeline runs.
 """
 
-__version__ = "0.1.0.4"
+__version__ = "0.1.0.5"
 
 #######################################################################
 # Import modules that this module depends on
@@ -453,6 +453,7 @@ class QCSample:
         # Add to the list of files to archive
         self.__zip_includes.append(os.path.join(qc_dir,fastqc_dir))
 
+    @property
     def fastqc(self):
         """Return name of FastQC run dir
         """
@@ -673,11 +674,11 @@ class IlluminaQCReporter(QCReporter):
                                                      'FastQC Warnings'))
         for sample in self.samples:
             self.__stats.append(data=(sample.name,))
-            if sample.fastqc():
+            if sample.fastqc:
                 # Get the number of reads
                 # This is printed in the fastqc_data.txt file, e.g.:
                 #Total Sequences	25706792
-                fastqc_data_file = os.path.join(self.qc_dir,sample.fastqc(),"fastqc_data.txt")
+                fastqc_data_file = os.path.join(self.qc_dir,sample.fastqc,"fastqc_data.txt")
                 reads = '?'
                 for line in open(fastqc_data_file,'rU'):
                     if line.startswith('Total Sequences'):
@@ -689,7 +690,7 @@ class IlluminaQCReporter(QCReporter):
                 #PASS	Sequence Length Distribution	ZJ1.fastq.gz
                 #WARN	Sequence Duplication Levels	ZJ1.fastq.gz
                 #...
-                summary_file = os.path.join(self.qc_dir,sample.fastqc(),"summary.txt")
+                summary_file = os.path.join(self.qc_dir,sample.fastqc,"summary.txt")
                 fastqc_failures = 0
                 fastqc_warnings = 0
                 for line in open(summary_file,'rU'):
@@ -773,9 +774,9 @@ class IlluminaQCReporter(QCReporter):
                             os.path.join(zip_top_dir,qc_dir,screen))
                     z.write(os.path.join(qc_dir,os.path.splitext(screen)[0]+'.txt'),
                             os.path.join(zip_top_dir,qc_dir,os.path.splitext(screen)[0]+'.txt'))
-                if sample.fastqc():
+                if sample.fastqc:
                     # Add all files in fastqc dir
-                    add_dir_to_zip(z,os.path.join(qc_dir,sample.fastqc()),zip_top_dir=zip_top_dir)
+                    add_dir_to_zip(z,os.path.join(qc_dir,sample.fastqc),zip_top_dir=zip_top_dir)
         except Exception, ex:
             print "Exception creating zip archive: %s" % ex
         os.chdir(cwd)
@@ -839,7 +840,7 @@ class IlluminaQCSample(QCSample):
                 logging.warning("%s: wrong number of screens" % self.name)
                 status = False
         # Check fastqc
-        if  self.fastqc is None:
+        if self.fastqc is None:
             logging.warning("%s: no FastQC results" % self.name)
             status = False
         return status
