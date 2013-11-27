@@ -9,7 +9,7 @@
 #
 #########################################################################
 
-__version__ = "1.0.1.2"
+__version__ = "1.0.1.3"
 
 """JobRunner
 
@@ -506,9 +506,9 @@ class GEJobRunner(BaseJobRunner):
         # Process the output to get job ids
         job_ids = []
         for job_data in jobs:
-            # Check for state being 'r' (=running) or 'S' (=suspended)
-            # or 'qw'(=queued, waiting)
-            if job_data[4] in ('r','S','qw'):
+            # Check for state being 'r' (=running), or 'S' (=suspended),
+            # or 'qw'(=queued, waiting), or 't' (=transferring)
+            if job_data[4] in ('r','S','qw','t'):
                 # Id is first item for each job
                 job_ids.append(job_data[0])
         return job_ids
