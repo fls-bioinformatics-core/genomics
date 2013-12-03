@@ -45,7 +45,7 @@ system. So typical usage might look like:
 # Module metadata
 #######################################################################
 
-__version__ = "0.1.1.3"
+__version__ = "0.1.1.4"
 
 #######################################################################
 # Import modules that this module depends on
@@ -423,7 +423,7 @@ class PipelineRunner:
                     logging.warning("Terminating job %s in error state" % job.job_id)
                     job.terminate()
         # Submit new jobs to GE queue
-        while not self.jobs.empty() and len(self.__runner.list()) < self.max_concurrent_jobs:
+        while not self.jobs.empty() and self.nRunning() < self.max_concurrent_jobs:
             next_job = self.jobs.get()
             next_job.start()
             self.running.append(next_job)
