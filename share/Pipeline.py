@@ -45,7 +45,7 @@ system. So typical usage might look like:
 # Module metadata
 #######################################################################
 
-__version__ = "0.1.1.2"
+__version__ = "0.1.1.3"
 
 #######################################################################
 # Import modules that this module depends on
@@ -231,6 +231,15 @@ class Job:
                 return "Running"
         else:
             return "Waiting"
+
+    def wait(self):
+        """Wait for job to complete
+
+        Block calling process until the job has finished running.
+        """
+        while self.isRunning():
+            time.sleep(1)
+        return
 
 # PipelineRunner: class to set up and run multiple jobs
 class PipelineRunner:
