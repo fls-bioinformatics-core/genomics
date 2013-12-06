@@ -117,19 +117,39 @@ for screen in $SCREENS ; do
 	    # Conf file not found
 	    echo WARNING conf file $fastq_screen_conf not found, skipped
 	else
+	    # Names for output files
+	    fastq_screen_txt=${fastq_base}_screen.txt
+	    fastq_screen_png=${fastq_base}_screen.png
+	    # Check for and remove exisiting outputs
+	    if [ -f "${fastq_screen_txt}" ] ; then
+		echo "Removing old ${fastq_screen_txt}"
+		/bin/rm ${fastq_screen_txt}
+	    fi
+	    if [ -f "${fastq_screen_png}" ] ; then
+		echo "Removing old ${fastq_screen_png}"
+		/bin/rm ${fastq_screen_png}
+	    fi
+	    if [ -f "${screen_base}.txt" ] ; then
+		echo "Removing old ${screen_base}.txt"
+		/bin/rm ${screen_base}.txt
+	    fi
+	    if [ -f "${screen_base}.png" ] ; then
+		echo "Removing old ${screen_base}.png"
+		/bin/rm ${screen_base}.png
+	    fi
 	    # Run the screen
 	    cmd="${FASTQ_SCREEN} ${FASTQ_SCREEN_OPTIONS} --outdir . --conf ${fastq_screen_conf} ${datadir}/${fastq}"
 	    echo $cmd
 	    $cmd
 	    # Move the screen files
-	    if [ -f "${fastq_base}_screen.txt" ] ; then
-		/bin/mv ${fastq_base}_screen.txt ${screen_base}.txt
+	    if [ -f "${fastq_screen_txt}" ] ; then
+		/bin/mv ${fastq_screen_txt} ${screen_base}.txt
 		echo Output .txt: ${screen_base}.txt
 	    else
 		echo WARNING failed to generate ${screen_base}.txt
 	    fi
-	    if [ -f "${fastq_base}_screen.png" ] ; then
-		/bin/mv ${fastq_base}_screen.png ${screen_base}.png
+	    if [ -f "${fastq_screen_png}" ] ; then
+		/bin/mv ${fastq_screen_png} ${screen_base}.png
 		echo Output .png: ${screen_base}.png
 	    else
 		echo WARNING failed to generate ${screen_base}.png
