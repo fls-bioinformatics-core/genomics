@@ -7,7 +7,7 @@
 #
 #########################################################################
 
-__version__ = "0.1.7"
+__version__ = "0.1.8"
 
 """Spreadsheet.py
 
@@ -267,6 +267,9 @@ class Worksheet:
     border=<style> (sets the cell border style to 'thin', 'medium', 'thick' etc)
     wrap (specifies that text should wrap)
     number_format=<format_string> (specifies how to display numbers, see below)
+    font_height=<height> (sets font size in points)
+    centre (specifies that text should be centred)
+    shrink_to_fit (specifies that cells should shrink to fit their contents)
 
     For example <style font=bold bgcolor=gray25>...</style>
 
@@ -526,6 +529,9 @@ class Worksheet:
                 border_style = None
                 style_match = self.re_style.match(item)
                 num_format_str = None
+                font_size = None
+                centre = False
+                shrink_to_fit = False
                 if style_match:
                     item = style_match.group(2)
                     styles = style_match.group(1)
@@ -542,9 +548,17 @@ class Worksheet:
                             wrap = True
                         elif style.strip().startswith('number_format='):
                             num_format_str = style.split('=')[1].strip()
+                        elif style.strip().startswith('font_size='):
+                            font_size = style.split('=')[1].strip()
+                        elif style.strip() == 'centre':
+                            centre = True
+                        elif style.strip() == 'shrink_to_fit':
+                            shrink_to_fit = True
                 style = self.styles.getXfStyle(bold=bold,color=color,bg_color=bg_color,
                                                wrap=wrap,border_style=border_style,
-                                               num_format_str=num_format_str)
+                                               num_format_str=num_format_str,
+                                               font_size=font_size,centre=centre,
+                                               shrink_to_fit=shrink_to_fit)
                 # Deal with the item
                 if str(item).startswith('='):
                     # Formula item
@@ -620,7 +634,8 @@ class Styles:
         self.styles = {}
 
     def getXfStyle(self,bold=False,wrap=False,color=None,bg_color=None,
-                   border_style=None,num_format_str=None):
+                   border_style=None,num_format_str=None,font_size=None,
+                   centre=False,shrink_to_fit=False):
         """Return EasyXf object to apply styles to spreadsheet cells.
 
         Arguments:
@@ -629,12 +644,16 @@ class Styles:
           color: set text colo(u)r
           bg_color: set colo(u)r for cell background.
           border_style: set line type for cell borders (thin, medium, thick, etc)
+          font_size: font size (in points)
+          centre: centre the cell content horizontally
+          shrink_to_fit: shrink cell to fit contents
 
         Note that colours must be a valid name as recognised by xlwt.
         """
         # Make a key to represent the style
-        style_key = "%s:%s:%s:%s:%s:%s" % \
-            (bold,wrap,color,bg_color,border_style,num_format_str)
+        style_key = "%s:%s:%s:%s:%s:%s:%s:%s:%s" % \
+            (bold,wrap,color,bg_color,border_style,num_format_str,
+             font_size,centre,shrink_to_fit)
 
         # Check whether we already have an EasyXf object for this
         try:
@@ -659,6 +678,12 @@ class Styles:
         if border_style:
             for border in ('left','right','top','bottom'):
                 style['borders'].append('%s %s' % (border,border_style))
+        if font_size:
+            style['font'].append('height %s' % (int(font_size)*20))
+        if centre:
+            style['alignment'].append('horizontal centre')
+        if shrink_to_fit:
+            style['alignment'].append('shrink_to_fit True')
         # Build easyfx object to apply styles
         easyxf_style = ''
         for key in style.keys():
