@@ -99,7 +99,7 @@ if [ ! -e "${FASTA_GENOME}.fai" ] ; then
 fi
 #
 # Picard tools .dict index
-picard_tools_cmd="java -jar $CREATE_SEQ_DICT_JAR R=${FASTA_GENOME} O=${DICT_GENOME}"
+picard_tools_cmd="java -mx8g -jar $CREATE_SEQ_DICT_JAR R=${FASTA_GENOME} O=${DICT_GENOME}"
 echo $picard_tools_cmd
 $picard_tools_cmd
 if [ ! -e "${DICT_GENOME}" ] ; then
