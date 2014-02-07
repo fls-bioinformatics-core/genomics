@@ -130,7 +130,8 @@ if [ "$ext" == "gz" ] ; then
     uncompressed_fastq=$(baserootname $FASTQ)
     if [ ! -f $uncompressed_fastq ] ; then
 	echo Input FASTQ is gzipped, making ungzipped version
-	gzip -dc $FASTQ > $uncompressed_fastq
+	gzip -dc $FASTQ > $uncompressed_fastq.part
+	mv $uncompressed_fastq.part $uncompressed_fastq
     else
 	echo Ungzipped version of input FASTQ found
     fi
