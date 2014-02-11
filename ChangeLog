@@ -1,3 +1,57 @@
+2014-02-11  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* share/JobRunner.py
+	- version 1.0.2
+	- SimpleJobRunner: 'join_dirs' option joins stderr to stdout
+	- GEJobRunner: jobs in 't' (transferring) and 'qw'
+	  (queued-waiting) states counted as "running"
+	- GEJobRunner: arbitrary qsub arguments can be specified via
+	  'ge_extra_args' option
+
+	* share/SpreadSheet.py
+	- version 0.1.8: add support for additional style options
+	  ('font_height', 'centre', 'shrink_to_fit')
+
+	* share/bcf_utils.py
+	- version 1.0.3
+	- New function 'find_program' (locate file on PATH)
+	- New function 'name_matches' (simple pattern matching for project
+	  and sample names, moved from analyse_illumina_data.py)
+	- New class 'AttributeDictionary'
+	- New class 'OrderedDictionary'
+	- New function 'touch' (creates new empty file)
+
+	* QC-pipeline/illumina_qc.sh
+	- Gunzip fastq.gz files via temporary name, to avoid partial
+	  fastqs left behind if script terminates prematurely
+	- Write program version information to 'qc' subdirectory
+
+	* QC-pipeline/fastq_screen.sh
+	- Clean up existing files from previous incomplete run
+
+	* QC-pipeline/qcreporter.py
+	- version 0.1.1
+	- QCSample: 'fastqc' method made into a property
+
+	* share/Pipeline.py
+	- version 0.1.2
+	- Job class: add 'wait' method (waits for job to complete)
+	- PipelineRunner: 'max_concurrent_jobs' now applies only to
+	  pipeline instance (i.e. not across all pipelines)
+	- PipelineRunner: implemented __del__ method to clean up
+	  running pipeline instance (i.e. terminate running jobs)
+
+	* share/IlluminaData.py
+	- version 1.1.2
+	- New function 'fix_bases_mask' (adjust bases mask to match
+	  actual barcode sequence lengths, for bclToFastq)
+
+	* ChIP-seq/make_macs_xls.sh
+	- Removed (redundant wrapper script to make_macs_xls.py)
+
+	* Unit tests
+	- Python unit tests moved into separate files in 'share'
+
 2013-11-18  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* build-indexes/fetch_fasta.sh
