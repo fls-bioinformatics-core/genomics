@@ -9,7 +9,7 @@
 #
 #########################################################################
 
-__version__ = "1.0.1.3"
+__version__ = "1.0.1.4"
 
 """JobRunner
 
@@ -155,12 +155,15 @@ class SimpleJobRunner(BaseJobRunner):
     command, and jobs are terminated using 'kill -9'.
     """
 
-    def __init__(self,log_dir=None):
+    def __init__(self,log_dir=None,join_logs=False):
         """Create a new SimpleJobRunner instance
 
         Arguments:
           log_dir: Directory to write log files to (set to 'None' to use
                    cwd)
+          join_logs: Combine stderr and stdout into a single log file (by
+                   default stdout and stderr have their own log files)
+
         """
         # Store a list of job ids (= pids) managed by this class
         self.__job_list = []
@@ -170,6 +173,8 @@ class SimpleJobRunner(BaseJobRunner):
         self.__log_id = int(time.time())
         # Directory for log files
         self.log_dir(log_dir)
+        # Join stderr to stdout
+        self.__join_logs = join_logs
         # Keep track of log files etc
         self.__log_files = {}
         self.__err_files = {}
@@ -200,6 +205,7 @@ class SimpleJobRunner(BaseJobRunner):
         logging.debug("Name       : %s" % name)
         logging.debug("Working_dir: %s" % working_dir)
         logging.debug("Log dir    : %s" % self.__log_dir)
+        logging.debug("Join logs  : %s" % self.__join_logs)
         logging.debug("Script     : %s" % script)
         logging.debug("Arguments  : %s" % str(args))
         # Build command to be submitted
@@ -220,7 +226,10 @@ class SimpleJobRunner(BaseJobRunner):
         # Set up log files
         lognames = self.__assign_log_files(name,working_dir)
         log = open(lognames[0],'w')
-        err = open(lognames[1],'w')
+        if not self.__join_logs:
+            err = open(lognames[1],'w')
+        else:
+            err = subprocess.STDOUT
         # Start the subprocess
         p = subprocess.Popen(cmd,cwd=cwd,stdout=log,stderr=err)
         # Capture the job id from the output
@@ -229,7 +238,10 @@ class SimpleJobRunner(BaseJobRunner):
         # Do internal house keeping
         self.__job_list.append(job_id)
         self.__log_files[job_id] = lognames[0]
-        self.__err_files[job_id] = lognames[1]
+        if not self.__join_logs:
+            self.__err_files[job_id] = lognames[1]
+        else:
+            self.__err_files[job_id] = None
         # Return to original dir if necessary
         if working_dir:
             # Move to working directory
@@ -702,7 +714,7 @@ class TestSimpleJobRunner(unittest.TestCase):
         shutil.rmtree(self.working_dir)
 
     def test_simple_job_runner(self):
-        """Run 'echo' shell command using SimpleJobRunner
+        """Test SimpleJobRunner with basic shell command
 
         """
         # Create a runner and execute the echo command
@@ -719,6 +731,23 @@ class TestSimpleJobRunner(unittest.TestCase):
         self.assertEqual(os.path.dirname(runner.logFile(jobid)),self.working_dir)
         self.assertEqual(os.path.dirname(runner.errFile(jobid)),self.working_dir)
 
+    def test_simple_job_runner_join_logs(self):
+        """Test SimpleJobRunner joining stderr to stdout
+
+        """
+        # Create a runner and execute the echo command
+        runner = SimpleJobRunner(join_logs=True)
+        jobid = runner.run('test',self.working_dir,'echo','this is a test')
+        while runner.isRunning(jobid):
+            # Wait for job to finish
+            pass
+        # Check outputs
+        self.assertEqual(runner.name(jobid),'test')
+        self.assertTrue(os.path.isfile(runner.logFile(jobid)))
+        self.assertEqual(runner.errFile(jobid),None)
+        # Check log file is in the working directory
+        self.assertEqual(os.path.dirname(runner.logFile(jobid)),self.working_dir)
+
 class TestGEJobRunner(unittest.TestCase):
 
     def setUp(self):
@@ -731,7 +760,7 @@ class TestGEJobRunner(unittest.TestCase):
         shutil.rmtree(self.working_dir)
 
     def test_ge_job_runner(self):
-        """Run 'echo' shell command using GEJobRunner
+        """Test GEJobRunner with basic shell command
 
         """
         # Create a runner and execute the echo command
