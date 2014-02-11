@@ -7,7 +7,7 @@
 #
 #########################################################################
 
-__version__ = "1.1.1.1"
+__version__ = "1.1.1.2"
 
 """IlluminaData
 
@@ -699,6 +699,37 @@ class IlluminaDataError(Exception):
 #######################################################################
 # Module Functions
 #######################################################################
+
+def split_run_name(dirname):
+    """Split an Illumina directory run name into components
+
+    Given a directory for an Illumina run, e.g.
+
+    140210_M00879_0031_000000000-A69NA
+
+    split the name into components and return as a tuple:
+
+    (date_stamp,instrument_name,run_number)
+
+    e.g.
+
+    ('140210','M00879','0031')
+
+    """
+    date_stamp = None
+    instrument_name = None
+    run_number = None
+    fields = os.path.basename(dirname).split('_')
+    if len(fields) > 3 and len(fields[0]) == 6 and fields[0].isdigit:
+        date_stamp = fields[0]
+    if len(fields) >= 2:
+        instrument_name = fields[1]
+    if len(fields) >= 3 and fields[2].isdigit:
+        run_number = fields[2]
+    if date_stamp and instrument_name and run_number:
+        return (date_stamp,instrument_name,run_number)
+    else:
+        return (None,None,None)
 
 def get_casava_sample_sheet(samplesheet=None,fp=None,FCID_default='FC1'):
     """Load data into a 'standard' CASAVA sample sheet CSV file

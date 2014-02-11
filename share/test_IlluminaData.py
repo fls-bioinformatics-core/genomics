@@ -948,6 +948,32 @@ class TestFixBasesMask(unittest.TestCase):
         self.assertEqual(fix_bases_mask('y250,I8,I8,y250','TAAGGC-GATCGC'),
                          'y250,I6nn,I6nn,y250')
 
+class TestSplitRunName(unittest.TestCase):
+
+    def test_split_run_name(self):
+        """Check split_run_name for various cases
+
+        """
+        self.assertEqual(split_run_name('140210_M00879_0031_000000000-A69NA'),
+                         ('140210','M00879','0031'))
+        self.assertEqual(split_run_name('/mnt/data/140210_M00879_0031_000000000-A69NA'),
+                         ('140210','M00879','0031'))
+
+    def test_split_run_name_with_leading_path(self):
+        """Check split_run_name with 'bad' names
+
+        """
+        self.assertEqual(split_run_name('this_is_nonesense'),(None,None,None))
+        self.assertEqual(split_run_name('140210'),(None,None,None))
+        self.assertEqual(split_run_name('14021_M00879_0031_000000000-A69NA'),
+                         (None,None,None))
+        self.assertEqual(split_run_name('140210_M00879'),
+                         (None,None,None))
+        self.assertEqual(split_run_name('140210_M00879_0031'),
+                         (None,None,None))
+        self.assertEqual(split_run_name('1402100_M00879_XYZ'),
+                         (None,None,None))
+
 #######################################################################
 # Main program
 #######################################################################
