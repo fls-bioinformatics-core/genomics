@@ -7,7 +7,7 @@
 #
 #########################################################################
 
-__version__ = "1.0.2.5"
+__version__ = "1.0.2.6"
 
 """bcf_utils
 
@@ -27,6 +27,8 @@ File system wrappers and utilities:
   format_file_size
   commonprefix
   is_gzipped_file
+  rootname
+  find_program
 
 Sample name utilities:
 
@@ -315,6 +317,19 @@ def rootname(name):
     except ValueError:
         # No dot
         return name
+
+def find_program(name):
+    """Find a program on the PATH
+
+    Search the current PATH for the specified program name and return
+    the full path, or None if not found.
+
+    """
+    for path in os.environ['PATH'].split(os.pathsep):
+        name_path = os.path.abspath(os.path.join(path,name))
+        if os.path.isfile(name_path):
+            return name_path
+    return None
 
 # Sample/library name utilities
 

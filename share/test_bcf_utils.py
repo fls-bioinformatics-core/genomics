@@ -283,6 +283,20 @@ NATAAATCACCTCACTTAAGTGGCTGGAGACAAATA
         merged_fastq_data = gzip.GzipFile(self.merged_fastq,'r').read()
         self.assertEqual(merged_fastq_data,self.fastq_data1+self.fastq_data2)
 
+class TestFindProgram(unittest.TestCase):
+    """Unit tests for find_program function
+
+    """
+
+    def test_find_program_that_exists(self):
+        self.assertEqual(find_program('sh'),'/usr/bin/sh')
+
+    def test_find_program_with_full_path(self):
+        self.assertEqual(find_program('/usr/bin/sh'),'/usr/bin/sh')
+
+    def test_dont_find_program_that_does_exist(self):
+        self.assertEqual(find_program('/this/doesnt/exist/sh'),None)
+
 #######################################################################
 # Main program
 #######################################################################
