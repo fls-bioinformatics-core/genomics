@@ -14,7 +14,7 @@
 Generate HTML reports for an NGS QC pipeline runs.
 """
 
-__version__ = "0.1.0.5"
+__version__ = "0.1.1"
 
 #######################################################################
 # Import modules that this module depends on

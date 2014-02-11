@@ -45,7 +45,7 @@ system. So typical usage might look like:
 # Module metadata
 #######################################################################
 
-__version__ = "0.1.1.4"
+__version__ = "0.1.2"
 
 #######################################################################
 # Import modules that this module depends on
