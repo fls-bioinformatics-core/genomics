@@ -9,7 +9,7 @@
 #
 #########################################################################
 
-__version__ = "0.2.6"
+__version__ = "0.2.7"
 
 """TabFile
 
@@ -190,6 +190,8 @@ TabFile object, for example for a comma-delimited file:
 
 >>> data = TabFile('data.txt',delimiter=',')
 """
+
+import logging
 
 class TabDataLine:
     """Class to store a line of data from a tab-delimited file
@@ -535,6 +537,9 @@ class TabFile:
             if self.__ncols > 0:
                 if len(data_line) != self.__ncols:
                     # Inconsistent lines are an error
+                    logging.error("Line %d has wrong number of data items" % line_no)
+                    logging.error("Line: %s" % data_line)
+                    logging.error("Expected %d, got %d" % (self.__ncols,len(data_line)))
                     raise IndexError, "wrong number of data items in line %d" % line_no
             else:
                 # Set number of columns
