@@ -5,12 +5,15 @@
 # Usage: illumina_qc.sh <fastq>
 #
 function usage() {
-    echo "Usage: illumina_qc.sh <fastq>"
+    echo "Usage: illumina_qc.sh <fastq> [--no-ungzip]"
     echo ""
     echo "Run QC pipeline for Illumina data:"
     echo ""
     echo "* check for contamination using fastq_screen"
     echo "* generate QC metrics using FASTQC"
+    echo "* create uncompressed copies of fastq file (if"
+    echo "  input is fastq.gz and --no-ungzip option is"
+    echo "  not specified)"
     echo ""
     echo "<fastq> can be either fastq or fastq.gz file"
 }
@@ -48,7 +51,7 @@ import_functions versions.sh
 #===========================================================================
 #
 # Check command line
-if [ $# -ne 1 ] || [ "$1" == "-h" ] || [ "$1" == "--help" ] ; then
+if [ $# -lt 1 ] || [ "$1" == "-h" ] || [ "$1" == "--help" ] ; then
     usage
     exit
 fi
@@ -63,6 +66,20 @@ if [ ! -f "$FASTQ" ] ; then
     exit 1
 fi
 #
+# Check for additional options
+do_ungzip=yes
+while [ ! -z "$2" ] ; do
+    case "$2" in
+	--no-ungzip)
+	    do_ungzip=no
+	    ;;
+	*)
+	    echo "Unrecognised option: $2"
+	    exit 1
+	    ;;
+    esac    
+done
+#
 # Get the data directory i.e. location of the input file
 datadir=`dirname $FASTQ`
 #
@@ -74,6 +91,7 @@ echo Started   : `date`
 echo Running in: `pwd`
 echo data dir  : $datadir
 echo fastq     : `basename $FASTQ`
+echo ungzip fastq: $do_ungzip
 echo hostname  : $HOSTNAME
 echo job id    : $JOB_ID
 #
@@ -126,7 +144,7 @@ echo "--------------------------------------------------------"
 #
 # Unpack gzipped fastq file
 ext=$(getextension $FASTQ)
-if [ "$ext" == "gz" ] ; then
+if [ "$ext" == "gz" ] && [ "$do_gunzip" == "yes" ] ; then
     uncompressed_fastq=$(baserootname $FASTQ)
     if [ ! -f $uncompressed_fastq ] ; then
 	echo Input FASTQ is gzipped, making ungzipped version
