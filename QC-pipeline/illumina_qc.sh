@@ -62,7 +62,7 @@ umask 0002
 # Get the input fastq file
 FASTQ=$(abs_path $1)
 if [ ! -f "$FASTQ" ] ; then
-    echo "fastq file not found"
+    echo "$FASTQ: fastq file not found"
     exit 1
 fi
 #
@@ -77,7 +77,8 @@ while [ ! -z "$2" ] ; do
 	    echo "Unrecognised option: $2"
 	    exit 1
 	    ;;
-    esac    
+    esac
+    shift
 done
 #
 # Get the data directory i.e. location of the input file
