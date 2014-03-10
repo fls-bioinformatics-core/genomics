@@ -14,7 +14,7 @@
 Generate HTML reports for an NGS QC pipeline runs.
 """
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 
 #######################################################################
 # Import modules that this module depends on
@@ -705,13 +705,13 @@ class IlluminaQCReporter(QCReporter):
                 self.__stats[-1]['FastQC Warnings'] = fastqc_warnings
             else:
                 # No fastqc results
-                logging.warning("%s: no FastQC results found" % sample.name)
+                logging.debug("%s: no FastQC results found" % sample.name)
                 self.__stats[-1]['Reads'] = '?'
                 self.__stats[-1]['FastQC Failures'] = 'No FastQC data'
                 self.__stats[-1]['FastQC Warnings'] = '&nbsp;'
             # Check for fastq_screens
             if len(sample.screens()) != 3:
-                logging.warning("%s: wrong number of screens" % sample.name)
+                logging.debug("%s: wrong number of screens" % sample.name)
 
     def report(self):
         """Write the HTML report
