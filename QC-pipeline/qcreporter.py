@@ -14,7 +14,7 @@
 Generate HTML reports for an NGS QC pipeline runs.
 """
 
-__version__ = "0.1.2"
+__version__ = "0.1.3"
 
 #######################################################################
 # Import modules that this module depends on
@@ -303,7 +303,7 @@ class QCReporter:
         """
         status = True
         for sample in self.samples:
-            status = (status and sample.verify())
+            status = (sample.verify() and status)
         return status
 
 class QCSample:
