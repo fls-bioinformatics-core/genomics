@@ -145,7 +145,7 @@ echo "--------------------------------------------------------"
 #
 # Unpack gzipped fastq file
 ext=$(getextension $FASTQ)
-if [ "$ext" == "gz" ] && [ "$do_gunzip" == "yes" ] ; then
+if [ "$ext" == "gz" ] && [ "$do_ungzip" == "yes" ] ; then
     uncompressed_fastq=$(baserootname $FASTQ)
     if [ ! -f $uncompressed_fastq ] ; then
 	echo Input FASTQ is gzipped, making ungzipped version
