@@ -7,7 +7,7 @@
 #
 #########################################################################
 
-__version__ = "1.0.3"
+__version__ = "1.0.4"
 
 """bcf_utils
 
@@ -248,14 +248,13 @@ def format_file_size(fsize):
     """
     # Return size in human readable form
     fsize = float(fsize)/1024
-    units = 'K'
-    if fsize > 1024:
-        fsize = fsize/1024
-        units = 'M'
+    units = 'KMGT'
+    for unit in units:
         if fsize > 1024:
             fsize = fsize/1024
-            units = 'G'
-    return "%.1f%s" % (fsize,units)
+        else:
+            break
+    return "%.1f%s" % (fsize,unit)
             
 def commonprefix(path1,path2):
     """Determine common prefix path for path1 and path2

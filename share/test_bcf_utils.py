@@ -164,6 +164,9 @@ class TestFormatFileSize(unittest.TestCase):
     def test_bytes_to_gb(self):
         self.assertEqual("1.6G",format_file_size(1717986919))
 
+    def test_bytes_to_tb(self):
+        self.assertEqual("4.4T",format_file_size(4831838208091))
+
 class TestNameFunctions(unittest.TestCase):
     """Unit tests for name handling utility functions
 
