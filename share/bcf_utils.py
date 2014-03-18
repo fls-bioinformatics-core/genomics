@@ -7,7 +7,7 @@
 #
 #########################################################################
 
-__version__ = "1.0.4"
+__version__ = "1.0.5"
 
 """bcf_utils
 
@@ -233,27 +233,40 @@ def touch(filename):
     """
     open(filename,'wb+').close()
 
-def format_file_size(fsize):
+def format_file_size(fsize,units=None):
     """Format a file size from bytes to human-readable form
 
     Takes a file size in bytes and returns a human-readable
     string, e.g. 4.0K, 186M, 1.5G.
 
+    Alternatively specify the required units via the 'units'
+    arguments.
+
     Arguments:
       fsize: size in bytes
+      units: (optional) specify output in kb ('K'), Mb ('M'),
+             Gb ('G') or Tb ('T')
 
     Returns:
       Human-readable version of file size.
 
     """
     # Return size in human readable form
+    if units is not None:
+        units = units.upper()
     fsize = float(fsize)/1024
-    units = 'KMGT'
-    for unit in units:
-        if fsize > 1024:
-            fsize = fsize/1024
+    unit_list = 'KMGT'
+    for unit in unit_list:
+        if units is None:
+            if fsize > 1024:
+                fsize = fsize/1024
+            else:
+                break
         else:
-            break
+            if units != unit:
+                fsize = fsize/1024
+            else:
+                break
     return "%.1f%s" % (fsize,unit)
             
 def commonprefix(path1,path2):
