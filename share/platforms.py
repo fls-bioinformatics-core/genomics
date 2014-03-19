@@ -21,6 +21,8 @@ PLATFORMS = {
     'hiseq': "Illumina HiSEQ",
     'miseq': "Illumina MiSEQ",
     'solid4': "SOLiD 4",
+    'solid5500': "SOLiD 5500",
+    'other': "Unknown/external"
 }
 
 # Dictionary matching sequencing platforms to regexp patterns
@@ -32,6 +34,12 @@ SEQUENCERS = {
     '^.*_M00879_.*$': 'miseq',
     '^solid0127_.*$': 'solid4',
     }
+
+def list_platforms():
+    """Return list of known platform names
+
+    """
+    return [x for x in PLATFORMS.keys()]
 
 def get_sequencer_platform(sequencer_name):
     """Attempt to determine platform from sequencer name
