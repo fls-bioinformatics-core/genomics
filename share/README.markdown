@@ -39,6 +39,8 @@ Python modules
 *   `JobRunner.py`: classes providing generic interface for starting and managing job
     runs
 
+*   `mock_data.py`: classes and functions for setting up test data directories
+
 *   `Pipeline.py`: classes for running jobs iteratively
 
 ### Handling files ###
