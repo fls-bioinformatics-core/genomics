@@ -95,6 +95,13 @@ class TestUtils:
         os.symlink(target,link_name)
         return link_name
 
+    @classmethod
+    def remove_dir(self,dirname):
+        """Remove directory
+
+        """
+        shutil.rmtree(dirname)
+
 # Base class for making test data directories
 class BaseExampleDir:
     """Base class for making test data directories
@@ -139,9 +146,13 @@ class BaseExampleDir:
 
     def add_dir(self,path):
         if path not in self.dirs:
-            self.dirs.append(path)
-            if self.dirn is not None:
-                TestUtils.make_sub_dir(self.dirn,path)
+            dirpath = path
+            while dirpath:
+                if dirpath not in self.dirs:
+                    self.dirs.append(dirpath)
+                dirpath = os.path.dirname(dirpath)
+        if self.dirn is not None:
+            TestUtils.make_sub_dir(self.dirn,path)
 
     def add_file(self,path,content=''):
         self.files.append(path)
@@ -163,14 +174,16 @@ class BaseExampleDir:
         else:
             return filen
 
-    def filelist(self,include_links=True,full_path=True):
+    def filelist(self,include_links=True,include_dirs=False,full_path=True):
         filelist = copy.copy(self.files)
         if include_links:
             for link in self.links:
                 resolved_link = os.path.join(os.path.dirname(self.path(link)),
                                              os.readlink(self.path(link)))
-                if not os.path.isdir(resolved_link):
+                if not os.path.isdir(resolved_link) or include_dirs:
                     filelist.append(link)
+        if include_dirs:
+            filelist.extend(copy.copy(self.dirs))
         filelist.sort()
         if full_path:
             filelist = [self.path(x) for x in filelist]
