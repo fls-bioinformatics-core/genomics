@@ -106,6 +106,128 @@ class TestOrderedDictionary(unittest.TestCase):
         except KeyError:
             self.fail("Iteration over OrderedDictionary failed")
 
+class TestPathInfo(unittest.TestCase):
+    """Unit tests for the PathInfo utility class
+
+    """
+    def setUp(self):
+        """Build directory with test data
+
+        """
+        self.example_dir = ExampleDirLinks()
+        self.wd = self.example_dir.create_directory()
+        self.example_dir.add_file("unreadable.txt")
+        self.example_dir.add_file("group_unreadable.txt")
+        self.example_dir.add_file("program.exe")
+        os.chmod(self.example_dir.path("unreadable.txt"),0044)
+        os.chmod(self.example_dir.path("group_unreadable.txt"),0604)
+        os.chmod(self.example_dir.path("program.exe"),0755)
+        self.example_dir.add_link("program","program.exe")
+
+    def tearDown(self):
+        """Remove directory with test data
+
+        """
+        os.chmod(self.example_dir.path("unreadable.txt"),0644)
+        os.chmod(self.example_dir.path("group_unreadable.txt"),0644)
+        os.chmod(self.example_dir.path("program.exe"),0644)
+        self.example_dir.delete_directory()
+
+    def test_is_readable(self):
+        """PathInfo.is_readable checks if file, directory and link is readable
+
+        """
+        self.assertTrue(PathInfo(self.example_dir.path("spider.txt")).is_readable)
+        self.assertTrue(PathInfo(self.example_dir.path("web")).is_readable)
+        self.assertTrue(PathInfo(self.example_dir.path("itsy-bitsy.txt")).is_readable)
+        self.assertTrue(PathInfo(self.example_dir.path("broken.txt")).is_readable)
+        self.assertFalse(PathInfo(self.example_dir.path("not_there.txt")).is_readable)
+        self.assertFalse(PathInfo(self.example_dir.path("unreadable.txt")).is_readable)
+        self.assertTrue(PathInfo(self.example_dir.path("group_unreadable.txt")).is_readable)
+
+    def test_deepest_accessible_parent(self):
+        """PathInfo.deepest_accessible_parent returns correct parent dir
+
+        """
+        d = self.example_dir
+        self.assertEqual(PathInfo(d.path("spider.txt")).deepest_accessible_parent,d.dirn)
+        self.assertEqual(PathInfo(d.path("web")).deepest_accessible_parent,d.dirn)
+
+    def test_is_group_readable(self):
+        """PathInfo.is_group_readable checks if file, directory and link is group readable
+
+        """
+        self.assertTrue(PathInfo(self.example_dir.path("spider.txt")).is_group_readable)
+        self.assertTrue(PathInfo(self.example_dir.path("web")).is_group_readable)
+        self.assertTrue(PathInfo(self.example_dir.path("itsy-bitsy.txt")).is_group_readable)
+        self.assertTrue(PathInfo(self.example_dir.path("broken.txt")).is_group_readable)
+        self.assertFalse(PathInfo(self.example_dir.path("not_there.txt")).is_group_readable)
+        self.assertTrue(PathInfo(self.example_dir.path("unreadable.txt")).is_group_readable)
+        self.assertFalse(PathInfo(self.example_dir.path("group_unreadable.txt")).is_group_readable)
+
+    def test_user(self):
+        """PathInfo.user returns correct user name (trivial test)
+
+        """
+        current_user = pwd.getpwuid(os.getuid()).pw_name
+        self.assertEqual(PathInfo(self.example_dir.path("spider.txt")).user,current_user)
+        self.assertEqual(PathInfo(self.example_dir.path("itsy-bitsy.txt")).user,current_user)
+        self.assertEqual(PathInfo(self.example_dir.path("web")).user,current_user)
+
+    def test_group(self):
+        """PathInfo.group returns correct group name (trivial test)
+
+        """
+        current_user = pwd.getpwuid(os.getuid()).pw_name
+        current_group = grp.getgrgid(pwd.getpwnam(current_user).pw_gid).gr_name
+        self.assertEqual(PathInfo(self.example_dir.path("spider.txt")).group,current_group)
+        self.assertEqual(PathInfo(self.example_dir.path("itsy-bitsy.txt")).group,current_group)
+        self.assertEqual(PathInfo(self.example_dir.path("web")).group,current_group)
+
+    def test_is_link(self):
+        """PathInfo.is_link correctly identifies symbolic links
+
+        """
+        self.assertFalse(PathInfo(self.example_dir.path("spider.txt")).is_link)
+        self.assertFalse(PathInfo(self.example_dir.path("web")).is_link)
+        self.assertTrue(PathInfo(self.example_dir.path("web2")).is_link)
+        self.assertTrue(PathInfo(self.example_dir.path("itsy-bitsy.txt")).is_link)
+        self.assertTrue(PathInfo(self.example_dir.path("broken.txt")).is_link)
+        self.assertFalse(PathInfo(self.example_dir.path("not_there.txt")).is_link)
+
+    def test_is_file(self):
+        """PathInfo.is_file correctly identifies files
+
+        """
+        self.assertTrue(PathInfo(self.example_dir.path("spider.txt")).is_file)
+        self.assertFalse(PathInfo(self.example_dir.path("web")).is_file)
+        self.assertFalse(PathInfo(self.example_dir.path("web2")).is_file)
+        self.assertFalse(PathInfo(self.example_dir.path("itsy-bitsy.txt")).is_file)
+        self.assertFalse(PathInfo(self.example_dir.path("broken.txt")).is_file)
+        self.assertFalse(PathInfo(self.example_dir.path("not_there.txt")).is_file)
+
+    def test_is_dir(self):
+        """PathInfo.is_dir correctly identifies directories
+
+        """
+        self.assertFalse(PathInfo(self.example_dir.path("spider.txt")).is_dir)
+        self.assertTrue(PathInfo(self.example_dir.path("web")).is_dir)
+        self.assertFalse(PathInfo(self.example_dir.path("web2")).is_dir)
+        self.assertFalse(PathInfo(self.example_dir.path("itsy-bitsy.txt")).is_dir)
+        self.assertFalse(PathInfo(self.example_dir.path("broken.txt")).is_dir)
+        self.assertFalse(PathInfo(self.example_dir.path("not_there.txt")).is_dir)
+
+    def test_is_executable(self):
+        """PathInfo.is_executable correctly identifies executable files
+
+        """
+        self.assertTrue(PathInfo(self.example_dir.path("program.exe")).is_executable)
+        self.assertTrue(PathInfo(self.example_dir.path("program")).is_executable)
+        self.assertFalse(PathInfo(self.example_dir.path("spider.txt")).is_executable)
+        self.assertFalse(PathInfo(self.example_dir.path("itsy-bitsy.txt")).is_executable)
+        self.assertFalse(PathInfo(self.example_dir.path("web")).is_executable)
+        
+
 class TestFileSystemFunctions(unittest.TestCase):
     """Unit tests for file system wrapper and utility functions
 
@@ -450,13 +572,13 @@ class TestFindProgram(unittest.TestCase):
     """
 
     def test_find_program_that_exists(self):
-        self.assertEqual(find_program('sh'),'/usr/bin/sh')
+        self.assertEqual(find_program('ls'),'/usr/bin/ls')
 
     def test_find_program_with_full_path(self):
-        self.assertEqual(find_program('/usr/bin/sh'),'/usr/bin/sh')
+        self.assertEqual(find_program('/usr/bin/ls'),'/usr/bin/ls')
 
     def test_dont_find_program_that_does_exist(self):
-        self.assertEqual(find_program('/this/doesnt/exist/sh'),None)
+        self.assertEqual(find_program('/this/doesnt/exist/ls'),None)
 
 #######################################################################
 # Main program

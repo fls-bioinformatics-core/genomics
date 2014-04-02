@@ -7,7 +7,7 @@
 #
 #########################################################################
 
-__version__ = "1.1.0"
+__version__ = "1.2.0"
 
 """bcf_utils
 
@@ -20,6 +20,7 @@ General utility classes:
 
 File system wrappers and utilities:
 
+  PathInfo
   mkdir
   mklink
   chmod
@@ -60,6 +61,10 @@ import string
 import gzip
 import shutil
 import copy
+import stat
+import pwd
+import grp
+import datetime
 
 #######################################################################
 # General utility classes
@@ -175,6 +180,177 @@ class OrderedDictionary:
 #######################################################################
 # File system wrappers and utilities
 #######################################################################
+
+class PathInfo:
+    """Collect and report information on a file
+
+    The PathInfo class provides an interface to getting general
+    information on a path, which may point to a file, directory, link
+    or non-existent location.
+
+    The properties provide information on whether the path is
+    readable (i.e. accessible) by the current user, whether it is
+    readable by members of the same group, who is the owner and
+    what group does it belong to, when was it last modified etc.
+
+    """
+    def __init__(self,path,basedir=None):
+        """
+        """
+        self.__basedir = basedir
+        if self.__basedir is not None:
+            self.__path = os.path.join(self.__basedir,path)
+        else:
+            self.__path = path
+        try:
+            self.__st = os.lstat(self.__path)
+        except OSError:
+            self.__st = None
+
+    @property
+    def is_readable(self):
+        """Return True if the path exists and is readable by the owner
+
+        Paths may be reported as unreadable for various reasons,
+        e.g. the target doesn't exist, or doesn't have permission
+        for this user to read it, or if part of the path doesn't
+        allow the user to read the file.
+
+        """
+        if self.__st is None:
+            return False
+        return bool(self.__st.st_mode & stat.S_IRUSR)
+
+    @property
+    def is_group_readable(self):
+        """Return True if the path exists and is group-readable
+
+        Paths may be reported as unreadable for various reasons,
+        e.g. the target doesn't exist, or doesn't have permission
+        for this user to read it, or if part of the path doesn't
+        allow the user to read the file.
+
+        """
+        if self.__st is None:
+            return False
+        return bool(self.__st.st_mode & stat.S_IRGRP)
+
+    @property
+    def deepest_accessible_parent(self):
+        """Return longest accessible directory that leads to path
+
+        Tries to find the longest parent directory above path
+        which is accessible by the current user.
+
+        If it's not possible to find a parent that is accessible
+        then raise an exception.
+
+        """
+        path = os.path.dirname(os.path.abspath(self.__path))
+        while path != os.sep:
+            if os.access(path,os.R_OK):
+                return path
+            path = os.path.dirname(path)
+        raise OSError,"Unable to find readable parent for %s" % self.__path
+
+    @property
+    def user(self):
+        """Return user name of path owner
+
+        Attempts to return the user name associated with the path.
+        If the name can't be found then tries to return the UID
+        instead.
+
+        If neither pieces of information can be found then returns
+        None.
+
+        """
+        if self.__st is None:
+            return None
+        try:
+            return pwd.getpwuid(self.__st.st_uid).pw_name
+        except KeyError:
+            return self.__st.st_uid
+
+    @property
+    def group(self):
+        """Return group name of path
+
+        Attempts to return the group name associated with the path.
+        If the name can't be found then tries to return the GID
+        instead.
+
+        If neither pieces of information can be found then returns
+        None.
+
+        """
+        if self.__st is None:
+            return None
+        try:
+            return grp.getgrgid(self.__st.st_gid).gr_name
+        except KeyError:
+            return self.__st.st_gid
+
+    @property
+    def is_link(self):
+        """Return True if path refers to a symbolic link
+
+        """
+        return os.path.islink(self.__path)
+
+    @property
+    def is_file(self):
+        """Return True if path refers to a file
+
+        """
+        if not self.is_link:
+            return os.path.isfile(self.__path)
+        else:
+            return False
+
+    @property
+    def is_dir(self):
+        """Return True if path refers to a directory
+
+        """
+        if not self.is_link:
+            return os.path.isdir(self.__path)
+        else:
+            return False
+
+    @property
+    def is_executable(self):
+        """Return True if path refers to an executable file
+
+        """
+        if self.__st is None:
+            return False
+        if self.is_link:
+            return PathInfo(Symlink(self.__path).resolve_target()).is_executable
+        return bool(self.__st.st_mode & stat.S_IXUSR) and self.is_file
+
+    @property
+    def mtime(self):
+        """Return last modification timestamp for path
+
+        """
+        if self.__st is None:
+            return None
+        return self.__st.st_mtime
+
+    @property
+    def datetime(self):
+        """Return last modification time as datetime object
+
+        """
+        if self.mtime is None:
+            return None
+        return datetime.datetime.fromtimestamp(self.mtime)
+
+    def __repr__(self):
+        """Implements the built-in __repr__ function
+        """
+        return str(self.__path)
 
 def mkdir(dirn,mode=None):
     """Make a directory
@@ -340,9 +516,11 @@ def find_program(name):
     the full path, or None if not found.
 
     """
+    if os.path.isabs(name) and PathInfo(name).is_executable:
+        return name
     for path in os.environ['PATH'].split(os.pathsep):
         name_path = os.path.abspath(os.path.join(path,name))
-        if os.path.isfile(name_path):
+        if PathInfo(name_path).is_executable:
             return name_path
     return None
 
