@@ -186,6 +186,145 @@ class TestFormatFileSize(unittest.TestCase):
         self.assertEqual("0.0T",format_file_size(195035136,units='T'))
         self.assertEqual("0.2T",format_file_size(171798691900,units='T'))
 
+from mock_data import ExampleDirSpiders
+class ExampleDirLinks(ExampleDirSpiders):
+    """Extended example dir for testing symbolic link handling
+
+    """
+    def __init__(self):
+        ExampleDirSpiders.__init__(self)
+    def create_directory(self):
+        ExampleDirSpiders.create_directory(self)
+        # Add an absolute link
+        self.add_link("absolute.txt",self.path("fly.txt"))
+        # Add a broken absolute link
+        self.add_link("absolutely_broken.txt",self.path("absolutely_missing.txt"))
+        # Add a relative link with '..'
+        self.add_link("web/relative.txt","../spider.txt")
+        # Add a link to a directory
+        self.add_link("web2","web")
+
+class TestSymlink(unittest.TestCase):
+    """Tests for the 'Symlink' class
+
+    """
+    def setUp(self):
+        """Build directory with test data
+
+        """
+        self.example_dir = ExampleDirLinks()
+        self.wd = self.example_dir.create_directory()
+
+    def tearDown(self):
+        """Remove directory with test data
+
+        """
+        self.example_dir.delete_directory()
+
+    def test_not_a_link(self):
+        """Symlink raises exception if path is not a link
+
+        """
+        self.assertRaises(Exception,Symlink,self.example_dir.path("spider.txt"))
+
+    def test_target(self):
+        """Symlink.target returns correct target
+
+        """
+        self.assertEqual(Symlink(self.example_dir.path("itsy-bitsy.txt")).target,
+                         "spider.txt")
+        self.assertEqual(Symlink(self.example_dir.path("broken.txt")).target,
+                         "missing.txt")
+        self.assertEqual(Symlink(self.example_dir.path("absolute.txt")).target,
+                         self.example_dir.path("fly.txt"))
+        self.assertEqual(Symlink(self.example_dir.path("absolutely_broken.txt")).target,
+                         self.example_dir.path("absolutely_missing.txt"))
+        self.assertEqual(Symlink(self.example_dir.path("web/relative.txt")).target,
+                         "../spider.txt")
+        self.assertEqual(Symlink(self.example_dir.path("web2")).target,"web")
+
+    def test_is_absolute(self):
+        """Symlink.is_absolute correctly identifies absolute links
+
+        """
+        self.assertTrue(Symlink(self.example_dir.path("absolute.txt")).is_absolute)
+        self.assertTrue(Symlink(self.example_dir.path("absolutely_broken.txt")).is_absolute)
+        self.assertFalse(Symlink(self.example_dir.path("itsy-bitsy.txt")).is_absolute)
+        self.assertFalse(Symlink(self.example_dir.path("broken.txt")).is_absolute)
+        self.assertFalse(Symlink(self.example_dir.path("web/relative.txt")).is_absolute)
+        self.assertFalse(Symlink(self.example_dir.path("web2")).is_absolute)
+
+    def test_is_broken(self):
+        """Symlink.is_broken correctly identifies broken links
+
+        """
+        self.assertFalse(Symlink(self.example_dir.path("absolute.txt")).is_broken)
+        self.assertTrue(Symlink(self.example_dir.path("absolutely_broken.txt")).is_broken)
+        self.assertFalse(Symlink(self.example_dir.path("itsy-bitsy.txt")).is_broken)
+        self.assertTrue(Symlink(self.example_dir.path("broken.txt")).is_broken)
+        self.assertFalse(Symlink(self.example_dir.path("web/relative.txt")).is_broken)
+        self.assertFalse(Symlink(self.example_dir.path("web2")).is_broken)
+
+    def test_resolve_target(self):
+        """Symlink.resolve_target() correctly resolves full link target paths
+
+        """
+        self.assertEqual(Symlink(self.example_dir.path("itsy-bitsy.txt")).resolve_target(),
+                         self.example_dir.path("spider.txt"))
+        self.assertEqual(Symlink(self.example_dir.path("absolute.txt")).resolve_target(),
+                         self.example_dir.path("fly.txt"))
+        self.assertEqual(Symlink(self.example_dir.path("web/relative.txt")).resolve_target(),
+                         self.example_dir.path("spider.txt"))
+        self.assertEqual(Symlink(self.example_dir.path("web2")).resolve_target(),
+                         self.example_dir.path("web"))
+
+    def test_update_target(self):
+        """Symlink.update_target() updates the link target path
+
+        """
+        symlink = Symlink(self.example_dir.path("itsy-bitsy.txt"))
+        self.assertEqual(symlink.target,"spider.txt")
+        symlink.update_target("spider2.txt")
+        self.assertEqual(symlink.target,"spider2.txt")
+
+class TestLinksFunction(unittest.TestCase):
+    """Tests for the 'links' function
+
+    """
+    def setUp(self):
+        """Build directory with test data
+
+        """
+        self.example_dir = ExampleDirLinks()
+        self.wd = self.example_dir.create_directory()
+        self.links = []
+        for l in ("itsy-bitsy.txt",
+                  "itsy-bitsy2.txt",
+                  "broken.txt",
+                  "broken2.txt",
+                  "absolute.txt",
+                  "absolutely_broken.txt",
+                  "web/relative.txt",
+                  "web2"):
+            self.links.append(self.example_dir.path(l))
+
+    def tearDown(self):
+        """Remove directory with test data
+
+        """
+        self.example_dir.delete_directory()
+
+    def test_links(self):
+        """links function yields all symlinks
+
+        """
+        # Walk the example directory and check all yielded files
+        # are in the list of links
+        for l in links(self.example_dir.dirn):
+            self.assertTrue(l in self.links,"%s not in link list" % l)
+            self.links.remove(l)
+        self.assertEqual(len(self.links),0,"Some links not found: %s" % ",".join(self.links))
+
 class TestNameFunctions(unittest.TestCase):
     """Unit tests for name handling utility functions
 

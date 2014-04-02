@@ -7,13 +7,13 @@
 #
 #########################################################################
 
-__version__ = "1.0.5"
+__version__ = "1.1.0"
 
 """bcf_utils
 
 Utility classes and functions shared between BCF codes.
 
-Classes:
+General utility classes:
 
   AttributeDictionary
   OrderedDictionary
@@ -29,6 +29,11 @@ File system wrappers and utilities:
   is_gzipped_file
   rootname
   find_program
+
+Symbolic link handling:
+
+  Symlink
+  links
 
 Sample name utilities:
 
@@ -57,7 +62,7 @@ import shutil
 import copy
 
 #######################################################################
-# Class definitions
+# General utility classes
 #######################################################################
 
 class AttributeDictionary:
@@ -168,10 +173,8 @@ class OrderedDictionary:
             raise KeyError, "Key '%s' already exists" % key
 
 #######################################################################
-# Module Functions
-#######################################################################
-
 # File system wrappers and utilities
+#######################################################################
 
 def mkdir(dirn,mode=None):
     """Make a directory
@@ -343,7 +346,125 @@ def find_program(name):
             return name_path
     return None
 
+#######################################################################
+# Symbolic link handling
+#######################################################################
+
+class Symlink:
+    """Class for interrogating and modifying symbolic links
+
+    The Symlink class provides an interface for getting information
+    about a symbolic link.
+
+    To create a new Symlink instance do e.g.:
+
+    >>> l = Symlink('my_link.lnk')
+
+    Information about the link can be obtained via the various
+    properties:
+
+    - target = returns the link target
+    - is_absolute = reports if the target represents an absolute link
+    - is_broken = reports if the target doesn't exist
+
+    There are also methods:
+
+    - resolve_target() = returns the normalise absolute path to the 
+      target
+    - update_target() = updates the target to a new location
+
+    """
+    def __init__(self,path):
+        """Create a new Symlink instance
+
+        Raises an exception if the supplied path doesn't point to
+        a link instance.
+
+        Arguments:
+          path: path to the link
+
+        """
+        if not os.path.islink(path):
+            raise Exception("%s is not a link" % path)
+        self.__path = path
+        self.__abspath = os.path.abspath(self.__path)
+
+    @property
+    def target(self):
+        """Return the target of the symlink
+
+        """
+        return os.readlink(self.__abspath)
+
+    @property
+    def is_absolute(self):
+        """Return True if the link target is an absolute link
+
+        """
+        return os.path.isabs(self.target)
+
+    @property
+    def is_broken(self):
+        """Return True if the link target doesn't exist i.e. link is broken
+
+        """
+        return not os.path.exists(self.resolve_target())
+
+    def resolve_target(self):
+        """Return the normalised absolute path to the link target
+
+        """
+        if self.is_absolute:
+            path = self.target
+        else:
+            path = os.path.abspath(os.path.join(os.path.dirname(self.__abspath),
+                                                self.target))
+        return os.path.normpath(path)
+
+    def update_target(self,new_target):
+        """Replace the current link target with new_target
+
+        Arguments:
+          new_target: path to replace the existing target with
+
+        """
+        os.unlink(self.__abspath)
+        os.symlink(new_target,self.__abspath)
+
+    def __repr__(self):
+        """Implement the __repr__ built-in
+
+        """
+        return self.__path
+
+def links(dirn):
+    """Traverse and return all symbolic links in under a directory
+
+    Given a starting directory, traverses the structure underneath
+    and yields the path for each symlink that is found.
+
+    Arguments:
+      dirn: name of the top-level directory
+
+    Returns:
+      Yields the name and full path for each symbolic link under 'dirn'.
+
+    """
+    for d in os.walk(dirn):
+        if os.path.islink(d[0]):
+            yield d[0]
+        for sd in d[1]:
+            path = os.path.join(d[0],sd)
+            if os.path.islink(path):
+                yield path
+        for f in d[2]:
+            path = os.path.join(d[0],f)
+            if os.path.islink(path):
+                yield path
+
+#######################################################################
 # Sample/library name utilities
+#######################################################################
 
 def extract_initials(name):
     """Return leading initials from the library or sample name
@@ -497,7 +618,9 @@ def name_matches(name,pattern):
     else:
         return False
 
+#######################################################################
 # File manipulations
+#######################################################################
 
 def concatenate_fastq_files(merged_fastq,fastq_files,bufsize=10240,
                             overwrite=False,verbose=True):
