@@ -14,7 +14,7 @@ MD5 checksums for files."""
 class TestHexify(unittest.TestCase):
 
     def test_hexify(self):
-        """Test hexify function
+        """hexify function generates correct hex representations
         """
         self.assertEqual(hexify("hello!"),'68656c6c6f21')
         self.assertEqual(hexify("goodbye"),'676f6f64627965')
@@ -33,13 +33,13 @@ class TestMd5sum(unittest.TestCase):
         os.remove(self.filen)
 
     def test_md5sum(self):
-        """Test generation of md5sum
+        """md5sum function generates correct MD5 hash
         """
         self.assertEqual(md5sum(self.filen),
                          '08a6facee51e5435b9ef3744bd4dd5dc')
 
     def test_no_file_name(self):
-        """Test handling of file name 'None'
+        """md5sum function handles 'None' as input file name
         """
         self.assertRaises(Exception,md5sum,None)
 
