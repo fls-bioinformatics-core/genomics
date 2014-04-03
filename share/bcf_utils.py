@@ -7,7 +7,7 @@
 #
 #########################################################################
 
-__version__ = "1.4.1"
+__version__ = "1.4.2"
 
 """bcf_utils
 
@@ -414,6 +414,9 @@ class PathInfo:
         change the owner if the current process is not
         owned by root ***
 
+        This is actually a wrapper to the os.lchmod
+        function, so it doesn't follow symbolic links.
+
         """
         if user is None and group is None:
             # Nothing to do
@@ -427,7 +430,7 @@ class PathInfo:
         group = int(group)
         # Do chown - note this will fail if the user
         # performing the operation is not root
-        os.chown(self.__path,user,group)
+        os.lchown(self.__path,user,group)
         # Update the stat information
         try:
             self.__st = os.lstat(self.__path)
@@ -477,27 +480,30 @@ def mklink(target,link_name,relative=False):
 def chmod(target,mode):
     """Change mode of file or directory
 
+    This a wrapper for the os.lchmod function, which
+    doesn't follow symbolic links.
+
     Arguments:
       target: file or directory to apply new mode to
       mode: a valid mode specifier e.g. 0775 or 0664
+
     """
     logging.debug("Changing mode of %s to %s" % (target,mode))
-    if not os.path.islink(target):
-        try:
-            os.chmod(target,mode)
-        except OSError, ex:
-            logging.warning("Failed to change permissions on %s to %s: %s" % (target,mode,ex))
-    else:
-        logging.warning("Skipped chmod for symbolic link")
+    try:
+        os.lchmod(target,mode)
+    except OSError, ex:
+        logging.warning("Failed to change permissions on %s to %s: %s" % (target,mode,ex))
 
 def touch(filename):
-    """Create a new empty file
+    """Create new empty file, or update modification time if already exists
 
     Arguments:
       filename: name of the file to create (can include leading path)
 
     """
-    open(filename,'wb+').close()
+    if not os.path.exists(filename):
+        open(filename,'wb+').close()
+    os.utime(filename,None)
 
 def format_file_size(fsize,units=None):
     """Format a file size from bytes to human-readable form
