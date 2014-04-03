@@ -7,7 +7,7 @@
 #
 #########################################################################
 
-__version__ = "1.2.0"
+__version__ = "1.3.0"
 
 """bcf_utils
 
@@ -236,6 +236,20 @@ class PathInfo:
         return bool(self.__st.st_mode & stat.S_IRGRP)
 
     @property
+    def is_group_writable(self):
+        """Return True if the path exists and is group-writable
+
+        Paths may be reported as unwritable for various reasons,
+        e.g. the target doesn't exist, or doesn't have permission
+        for this user to write to it, or if part of the path
+        doesn't allow the user to read the file.
+
+        """
+        if self.__st is None:
+            return False
+        return bool(self.__st.st_mode & stat.S_IWGRP)
+
+    @property
     def deepest_accessible_parent(self):
         """Return longest accessible directory that leads to path
 
@@ -254,8 +268,22 @@ class PathInfo:
         raise OSError,"Unable to find readable parent for %s" % self.__path
 
     @property
+    def uid(self):
+        """Return associated UID (user ID)
+
+        Attempts to return the UID (user ID) number associated with
+        the path.
+
+        If the UID can't be found then returns None.
+
+        """
+        if self.__st is None:
+            return None
+        return self.__st.st_uid
+
+    @property
     def user(self):
-        """Return user name of path owner
+        """Return associated user name
 
         Attempts to return the user name associated with the path.
         If the name can't be found then tries to return the UID
@@ -268,13 +296,27 @@ class PathInfo:
         if self.__st is None:
             return None
         try:
-            return pwd.getpwuid(self.__st.st_uid).pw_name
+            return pwd.getpwuid(self.uid).pw_name
         except KeyError:
-            return self.__st.st_uid
+            return self.uid
+
+    @property
+    def gid(self):
+        """Return associated GID (group ID)
+
+        Attempts to return the GID (group ID) number associated with
+        the path.
+
+        If the GID can't be found then returns None.
+
+        """
+        if self.__st is None:
+            return None
+        return self.__st.st_gid
 
     @property
     def group(self):
-        """Return group name of path
+        """Return associated group name
 
         Attempts to return the group name associated with the path.
         If the name can't be found then tries to return the GID
@@ -287,9 +329,9 @@ class PathInfo:
         if self.__st is None:
             return None
         try:
-            return grp.getgrgid(self.__st.st_gid).gr_name
+            return grp.getgrgid(self.gid).gr_name
         except KeyError:
-            return self.__st.st_gid
+            return self.gid
 
     @property
     def is_link(self):

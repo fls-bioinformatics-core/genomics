@@ -118,9 +118,11 @@ class TestPathInfo(unittest.TestCase):
         self.wd = self.example_dir.create_directory()
         self.example_dir.add_file("unreadable.txt")
         self.example_dir.add_file("group_unreadable.txt")
+        self.example_dir.add_file("group_unwritable.txt")
         self.example_dir.add_file("program.exe")
         os.chmod(self.example_dir.path("unreadable.txt"),0044)
-        os.chmod(self.example_dir.path("group_unreadable.txt"),0604)
+        os.chmod(self.example_dir.path("group_unreadable.txt"),0624)
+        os.chmod(self.example_dir.path("group_unwritable.txt"),0644)
         os.chmod(self.example_dir.path("program.exe"),0755)
         self.example_dir.add_link("program","program.exe")
 
@@ -130,6 +132,7 @@ class TestPathInfo(unittest.TestCase):
         """
         os.chmod(self.example_dir.path("unreadable.txt"),0644)
         os.chmod(self.example_dir.path("group_unreadable.txt"),0644)
+        os.chmod(self.example_dir.path("group_unwritable.txt"),0644)
         os.chmod(self.example_dir.path("program.exe"),0644)
         self.example_dir.delete_directory()
 
@@ -162,17 +165,52 @@ class TestPathInfo(unittest.TestCase):
         self.assertTrue(PathInfo(self.example_dir.path("itsy-bitsy.txt")).is_group_readable)
         self.assertTrue(PathInfo(self.example_dir.path("broken.txt")).is_group_readable)
         self.assertFalse(PathInfo(self.example_dir.path("not_there.txt")).is_group_readable)
-        self.assertTrue(PathInfo(self.example_dir.path("unreadable.txt")).is_group_readable)
         self.assertFalse(PathInfo(self.example_dir.path("group_unreadable.txt")).is_group_readable)
+        self.assertTrue(PathInfo(self.example_dir.path("group_unwritable.txt")).is_group_readable)
+
+    def test_is_group_writable(self):
+        """PathInfo.is_group_writeable checks if file, directory and link is group writable
+
+        """
+        self.assertTrue(PathInfo(self.example_dir.path("spider.txt")).is_group_writable)
+        self.assertTrue(PathInfo(self.example_dir.path("web")).is_group_writable)
+        self.assertTrue(PathInfo(self.example_dir.path("itsy-bitsy.txt")).is_group_writable)
+        self.assertTrue(PathInfo(self.example_dir.path("broken.txt")).is_group_writable)
+        self.assertFalse(PathInfo(self.example_dir.path("not_there.txt")).is_group_writable)
+        self.assertTrue(PathInfo(self.example_dir.path("group_unreadable.txt")).is_group_writable)
+        self.assertFalse(PathInfo(self.example_dir.path("group_unwritable.txt")).is_group_writable)
+
+    def test_uid(self):
+        """PathInfo.uid returns correct UID (trivial test)
+
+        """
+        current_uid = os.getuid()
+        self.assertNotEqual(None,current_uid)
+        self.assertEqual(PathInfo(self.example_dir.path("spider.txt")).uid,current_uid)
+        self.assertEqual(PathInfo(self.example_dir.path("itsy-bitsy.txt")).uid,current_uid)
+        self.assertEqual(PathInfo(self.example_dir.path("web")).uid,current_uid)
 
     def test_user(self):
         """PathInfo.user returns correct user name (trivial test)
 
         """
         current_user = pwd.getpwuid(os.getuid()).pw_name
+        self.assertNotEqual(None,current_user)
         self.assertEqual(PathInfo(self.example_dir.path("spider.txt")).user,current_user)
         self.assertEqual(PathInfo(self.example_dir.path("itsy-bitsy.txt")).user,current_user)
         self.assertEqual(PathInfo(self.example_dir.path("web")).user,current_user)
+
+    def test_gid(self):
+        """PathInfo.gid returns correct GID (trivial test)
+
+        """
+        current_uid = os.getuid()
+        current_gid = pwd.getpwnam(pwd.getpwuid(current_uid).pw_name).pw_gid
+        self.assertNotEqual(None,current_uid)
+        self.assertNotEqual(None,current_gid)
+        self.assertEqual(PathInfo(self.example_dir.path("spider.txt")).gid,current_gid)
+        self.assertEqual(PathInfo(self.example_dir.path("itsy-bitsy.txt")).gid,current_gid)
+        self.assertEqual(PathInfo(self.example_dir.path("web")).gid,current_gid)
 
     def test_group(self):
         """PathInfo.group returns correct group name (trivial test)
@@ -180,6 +218,8 @@ class TestPathInfo(unittest.TestCase):
         """
         current_user = pwd.getpwuid(os.getuid()).pw_name
         current_group = grp.getgrgid(pwd.getpwnam(current_user).pw_gid).gr_name
+        self.assertNotEqual(None,current_user)
+        self.assertNotEqual(None,current_group)
         self.assertEqual(PathInfo(self.example_dir.path("spider.txt")).group,current_group)
         self.assertEqual(PathInfo(self.example_dir.path("itsy-bitsy.txt")).group,current_group)
         self.assertEqual(PathInfo(self.example_dir.path("web")).group,current_group)
