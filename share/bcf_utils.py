@@ -7,7 +7,7 @@
 #
 #########################################################################
 
-__version__ = "1.3.0"
+__version__ = "1.4.0"
 
 """bcf_utils
 
@@ -30,6 +30,10 @@ File system wrappers and utilities:
   is_gzipped_file
   rootname
   find_program
+  get_user_from_uid
+  get_uid_from_user
+  get_group_from_gid
+  get_gid_from_group
 
 Symbolic link handling:
 
@@ -295,9 +299,10 @@ class PathInfo:
         """
         if self.__st is None:
             return None
-        try:
-            return pwd.getpwuid(self.uid).pw_name
-        except KeyError:
+        user = get_user_from_uid(self.uid)
+        if user is not None:
+            return user
+        else:
             return self.uid
 
     @property
@@ -328,9 +333,10 @@ class PathInfo:
         """
         if self.__st is None:
             return None
-        try:
-            return grp.getgrgid(self.gid).gr_name
-        except KeyError:
+        group = get_group_from_gid(self.gid)
+        if group is not None:
+            return group
+        else:
             return self.gid
 
     @property
@@ -565,6 +571,58 @@ def find_program(name):
         if PathInfo(name_path).is_executable:
             return name_path
     return None
+
+def get_user_from_uid(uid):
+    """Return user name from UID
+
+    Looks up user name matching the supplied UID;
+    returns None if no matching name can be found.
+
+    """
+    try:
+        return pwd.getpwuid(int(uid)).pw_name
+    except (KeyError,ValueError,OverflowError):
+        return None
+
+def get_uid_from_user(user):
+    """Return UID from user name
+
+    Looks up UID matching the supplied user name;
+    returns None if no matching name can be found.
+
+    NB returned UID will be an integer.
+
+    """
+    try:
+        return pwd.getpwnam(str(user)).pw_uid
+    except KeyError:
+        return None
+
+def get_group_from_gid(gid):
+    """Return group name from GID
+
+    Looks up group name matching the supplied GID;
+    returns None if no matching name can be found.
+
+    """
+    try:
+        return grp.getgrgid(int(gid)).gr_name
+    except (KeyError,ValueError,OverflowError):
+        return None
+
+def get_gid_from_group(group):
+    """Return GID from group name
+
+    Looks up GID matching the supplied group name;
+    returns None if no matching name can be found.
+
+    NB returned GID will be an integer.
+
+    """
+    try:
+        return grp.getgrnam(group).gr_gid
+    except KeyError,ex:
+        return None
 
 #######################################################################
 # Symbolic link handling
