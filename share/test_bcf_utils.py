@@ -12,7 +12,7 @@ class TestAttributeDictionary(unittest.TestCase):
     """
 
     def test_set_get_items(self):
-        """Test 'set' and 'get' using dictionary notation
+        """AttributeDictionary 'set' and 'get' using dictionary notation
         """
         d = AttributeDictionary()
         self.assertEqual(len(d),0)
@@ -21,7 +21,7 @@ class TestAttributeDictionary(unittest.TestCase):
         self.assertEqual(d["salutation"],"hello")
 
     def test_get_attrs(self):
-        """Test 'get' using attribute notation
+        """AttributeDictionary 'get' using attribute notation
         """
         d = AttributeDictionary()
         self.assertEqual(len(d),0)
@@ -30,7 +30,7 @@ class TestAttributeDictionary(unittest.TestCase):
         self.assertEqual(d.salutation,"hello")
 
     def test_init(self):
-        """Test initialising like a standard dictionary
+        """AttributeDictionary initialised like a standard dictionary
         """
         d = AttributeDictionary(salutation='hello',valediction='goodbye')
         self.assertEqual(len(d),2)
@@ -38,7 +38,7 @@ class TestAttributeDictionary(unittest.TestCase):
         self.assertEqual(d.valediction,"goodbye")
 
     def test_iter(self):
-        """Test iteration over items
+        """AttributeDictionary iteration over items
         """
         d = AttributeDictionary()
         self.assertEqual(len(d),0)
@@ -56,7 +56,7 @@ class TestOrderedDictionary(unittest.TestCase):
     """
 
     def test_get_and_set(self):
-        """Add and retrieve data
+        """OrderedDictionary add and retrieve data
         """
         d = OrderedDictionary()
         self.assertEqual(len(d),0)
@@ -64,7 +64,7 @@ class TestOrderedDictionary(unittest.TestCase):
         self.assertEqual(d['hello'],'goodbye')
 
     def test_insert(self):
-        """Insert items
+        """OrderedDictionary insert items
         """
         d = OrderedDictionary()
         d['hello'] = 'goodbye'
@@ -85,7 +85,7 @@ class TestOrderedDictionary(unittest.TestCase):
         self.assertEqual(d['hello'],'goodbye')
 
     def test_keeps_things_in_order(self):
-        """Check that items are returned in same order as added
+        """OrderedDictionary returns items in same order as added
         """
         d = OrderedDictionary()
         d['hello'] = 'goodbye'
@@ -94,7 +94,7 @@ class TestOrderedDictionary(unittest.TestCase):
         self.assertEqual(d.keys(),['hello','stanley','monty'])
 
     def test_iteration_over_keys(self):
-        """Check iterating over keys
+        """OrderedDictionary iterating over keys
         """
         d = OrderedDictionary()
         d['hello'] = 'goodbye'
@@ -277,6 +277,8 @@ class TestFormatFileSize(unittest.TestCase):
     """
 
     def test_bytes_to_kb(self):
+        """format_file_size converts bytes to Kb
+        """
         self.assertEqual("0.9K",format_file_size(900))
         self.assertEqual("0.9K",format_file_size(900,units='K'))
         self.assertEqual("0.9K",format_file_size(900,units='k'))
@@ -285,6 +287,8 @@ class TestFormatFileSize(unittest.TestCase):
         self.assertEqual("4.0K",format_file_size(4096,units='k'))
 
     def test_bytes_to_mb(self):
+        """format_file_size converts bytes to Mb
+        """
         self.assertEqual("186.0M",format_file_size(195035136))
         self.assertEqual("186.0M",format_file_size(195035136,units='M'))
         self.assertEqual("186.0M",format_file_size(195035136,units='m'))
@@ -292,6 +296,8 @@ class TestFormatFileSize(unittest.TestCase):
         self.assertEqual("0.0M",format_file_size(4096,units='M'))
 
     def test_bytes_to_gb(self):
+        """format_file_size converts bytes to Gb
+        """
         self.assertEqual("1.6G",format_file_size(1717986919))
         self.assertEqual("1.6G",format_file_size(1717986919,units='G'))
         self.assertEqual("1.6G",format_file_size(1717986919,units='g'))
@@ -300,6 +306,8 @@ class TestFormatFileSize(unittest.TestCase):
         self.assertEqual("0.2G",format_file_size(195035136,units='G'))
 
     def test_bytes_to_tb(self):
+        """format_file_size converts bytes to Tb
+        """
         self.assertEqual("4.4T",format_file_size(4831838208091))
         self.assertEqual("4.4T",format_file_size(4831838208091,units='T'))
         self.assertEqual("4.4T",format_file_size(4831838208091,units='t'))
