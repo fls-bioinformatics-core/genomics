@@ -410,6 +410,10 @@ class PathInfo:
         numbers (or None to leave the current values
         unchanged).
 
+        *** Note that chown will fail attempting to
+        change the owner if the current process is not
+        owned by root ***
+
         """
         if user is None and group is None:
             # Nothing to do
@@ -421,7 +425,8 @@ class PathInfo:
         # Convert to ints
         user = int(user)
         group = int(group)
-        # Do chmod
+        # Do chown - note this will fail if the user
+        # performing the operation is not root
         os.chown(self.__path,user,group)
         # Update the stat information
         try:
