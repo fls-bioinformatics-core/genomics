@@ -120,6 +120,8 @@ class TestPathInfo(unittest.TestCase):
         self.example_dir.add_file("group_unreadable.txt")
         self.example_dir.add_file("group_unwritable.txt")
         self.example_dir.add_file("program.exe")
+        os.chmod(self.example_dir.path("spider.txt"),0664)
+        os.chmod(self.example_dir.path("web"),0775)
         os.chmod(self.example_dir.path("unreadable.txt"),0044)
         os.chmod(self.example_dir.path("group_unreadable.txt"),0624)
         os.chmod(self.example_dir.path("group_unwritable.txt"),0644)
@@ -267,8 +269,68 @@ class TestPathInfo(unittest.TestCase):
         self.assertFalse(PathInfo(self.example_dir.path("itsy-bitsy.txt")).is_executable)
         self.assertFalse(PathInfo(self.example_dir.path("web")).is_executable)
 
+    def test_relpath(self):
+        """PathInfo.relpath returns expected relative paths
+
+        """
+        self.assertEqual(PathInfo("/a/test/path").relpath("/a/test/path"),".")
+        self.assertEqual(PathInfo("/a/test/path").relpath("/a/test"),"path")
+        self.assertEqual(PathInfo("/a/test/path").relpath("/a"),"test/path")
+        self.assertEqual(PathInfo("/a/test/path").relpath("/"),"a/test/path")
+        self.assertEqual(PathInfo("/a/test/path").relpath("/b"),"../a/test/path")
+
+    def test_chown_user(self):
+        """PathInfo.chown can change user
+
+        """
+        path = PathInfo(self.example_dir.path("spider.txt"))
+        # Ensure file can be removed by anyone i.e. write permission for all
+        os.chmod(self.example_dir.path("spider.txt"),0666)
+        # Will always fail for non-root user?
+        current_user = pwd.getpwuid(os.getuid()).pw_name
+        if current_user != "root":
+            raise unittest.SkipTest("always fails for non-root user")
+        # Get a list of users
+        users = [u.pw_uid for u in pwd.getpwall()]
+        if len(users) < 2:
+            raise unittest.SkipTest("must have at least two users on the system")
+        # Get a second user
+        new_uid = None
+        for user in users:
+            if user != path.uid:
+                new_uid = user
+                break
+        print "Resetting owner to %s (%s)" % (new_uid,get_user_from_uid(new_uid))
+        self.assertNotEqual(new_uid,path.uid)
+        # Reset the user
+        path.chown(user=new_uid)
+        self.assertEqual(path.uid,new_uid,"Failed to reset owner to %s (%s)" %
+                         (new_uid,get_user_from_uid(new_uid)))
+
+    def test_chown_group(self):
+        """PathInfo.chown can change group
+
+        """
+        path = PathInfo(self.example_dir.path("spider.txt"))
+        # Get a list of groups
+        current_user = pwd.getpwuid(os.getuid()).pw_name
+        groups = [g.gr_gid for g in grp.getgrall() if current_user in g.gr_mem]
+        if len(groups) < 2:
+            raise unittest.SkipTest("user '%s' must be in at least two groups" % current_user)
+        # Get a second group
+        new_gid = None
+        for group in groups:
+            if group != path.gid:
+                new_gid = group
+                break
+        self.assertNotEqual(new_gid,path.gid)
+        # Reset the group
+        path.chown(group=new_gid)
+        self.assertEqual(path.gid,new_gid,"Failed to reset group to %s (%s)" %
+                         (new_gid,get_group_from_gid(new_gid)))
+
 class TestUserAndGroupNameFunctions(unittest.TestCase):
-    """
+    """Tests for the functions fetching user and group names and IDs
 
     """
     def test_get_user_from_uid(self):

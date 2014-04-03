@@ -7,7 +7,7 @@
 #
 #########################################################################
 
-__version__ = "1.4.0"
+__version__ = "1.4.1"
 
 """bcf_utils
 
@@ -394,6 +394,40 @@ class PathInfo:
         if self.mtime is None:
             return None
         return datetime.datetime.fromtimestamp(self.mtime)
+
+    def relpath(self,dirn):
+        """Return part of path relative to a directory
+
+        Wrapper for os.path.relpath(...).
+        
+        """
+        return os.path.relpath(self.__path,dirn)
+
+    def chown(self,user=None,group=None):
+        """Change associated owner and group
+
+        'user' and 'group' must be supplied as UID/GID
+        numbers (or None to leave the current values
+        unchanged).
+
+        """
+        if user is None and group is None:
+            # Nothing to do
+            return
+        if user is None:
+            user = -1
+        if group is None:
+            group = -1
+        # Convert to ints
+        user = int(user)
+        group = int(group)
+        # Do chmod
+        os.chown(self.__path,user,group)
+        # Update the stat information
+        try:
+            self.__st = os.lstat(self.__path)
+        except OSError:
+            self.__st = None
 
     def __repr__(self):
         """Implements the built-in __repr__ function
