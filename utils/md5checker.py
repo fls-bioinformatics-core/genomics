@@ -11,7 +11,11 @@
 
 """md5checker
 
-Utilities for checking files and directories using md5 checksums.
+Utility for checking files and directories using md5 checksums.
+
+Uses the 'Md5Checker' and 'Md5Reporter' classes from the Md5sum module
+to perform the underlying operations.
+
 """
 
 #######################################################################
