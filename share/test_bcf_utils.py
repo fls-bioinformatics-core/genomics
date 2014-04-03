@@ -138,6 +138,14 @@ class TestPathInfo(unittest.TestCase):
         os.chmod(self.example_dir.path("program.exe"),0644)
         self.example_dir.delete_directory()
 
+    def test_path(self):
+        """PathInfo.path returns correct path
+
+        """
+        self.assertEqual(PathInfo("file1.txt").path,"file1.txt")
+        self.assertEqual(PathInfo("/path/to/file1.txt").path,"/path/to/file1.txt")
+        self.assertEqual(PathInfo("file1.txt",basedir="/path/to").path,"/path/to/file1.txt")
+
     def test_is_readable(self):
         """PathInfo.is_readable checks if file, directory and link is readable
 
@@ -225,6 +233,17 @@ class TestPathInfo(unittest.TestCase):
         self.assertEqual(PathInfo(self.example_dir.path("spider.txt")).group,current_group)
         self.assertEqual(PathInfo(self.example_dir.path("itsy-bitsy.txt")).group,current_group)
         self.assertEqual(PathInfo(self.example_dir.path("web")).group,current_group)
+
+    def test_exists(self):
+        """PathInfo.exists correctly reports path existence
+
+        """
+        self.assertTrue(PathInfo(self.example_dir.path("spider.txt")).exists)
+        self.assertTrue(PathInfo(self.example_dir.path("web")).exists)
+        self.assertTrue(PathInfo(self.example_dir.path("web2")).exists)
+        self.assertTrue(PathInfo(self.example_dir.path("itsy-bitsy.txt")).exists)
+        self.assertTrue(PathInfo(self.example_dir.path("broken.txt")).exists)
+        self.assertFalse(PathInfo(self.example_dir.path("not_there.txt")).exists)
 
     def test_is_link(self):
         """PathInfo.is_link correctly identifies symbolic links

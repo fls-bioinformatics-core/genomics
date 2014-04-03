@@ -7,7 +7,7 @@
 #
 #########################################################################
 
-__version__ = "1.4.2"
+__version__ = "1.4.3"
 
 """bcf_utils
 
@@ -199,7 +199,14 @@ class PathInfo:
 
     """
     def __init__(self,path,basedir=None):
-        """
+        """Create a new PathInfo object
+
+        Arguments:
+          path: a filesystem path, which can be relative or
+            absolute, or point to a non-existent location
+          basedir: (optional) if supplied then prepended to
+            the supplied path
+
         """
         self.__basedir = basedir
         if self.__basedir is not None:
@@ -210,6 +217,13 @@ class PathInfo:
             self.__st = os.lstat(self.__path)
         except OSError:
             self.__st = None
+
+    @property
+    def path(self):
+        """Return the filesystem path
+
+        """
+        return self.__path
 
     @property
     def is_readable(self):
@@ -338,6 +352,16 @@ class PathInfo:
             return group
         else:
             return self.gid
+
+    @property
+    def exists(self):
+        """Return True if the path refers to an existing location
+
+        Note that this is a wrapper to os.path.lexists so it reports
+        the existence of symbolic links rather than their targets.
+
+        """
+        return os.path.lexists(self.__path)
 
     @property
     def is_link(self):
