@@ -1,7 +1,7 @@
 #!/bin/env python
 #
 #     bowtie_mapping_stats.py: write Bowtie mapping stats to a spreadsheet
-#     Copyright (C) University of Manchester 2011-2013 Peter Briggs
+#     Copyright (C) University of Manchester 2011-2014 Peter Briggs
 #
 ########################################################################
 #
@@ -591,10 +591,10 @@ if __name__ == "__main__":
                               description=
                               "Extract mapping statistics for each sample referenced in "
                               "the input bowtie log files and summarise the data in an XLS "
-                              "spreadsheet.")
+                              "spreadsheet. Handles output from both Bowtie and Bowtie2.")
 
     p.add_option('-o',action="store",dest="stats_xls",metavar="xls_file",default=None,
-                 help="specify name of the output XLS file (otherwise defaults to"
+                 help="specify name of the output XLS file (otherwise defaults to "
                  "'mapping_summary.xls').")
     p.add_option('-t',action="store_true",dest="tab_file",metavar="tab_file",default=False,
                  help="write data to tab-delimited file in addition to the XLS file. The tab "
