@@ -45,6 +45,9 @@ Python modules
 
 *   `FASTQFile.py`: classes for iterating through records in FASTQ files.
 
+*   `simple_xls.py`: classes and functions provide a nicer programmatic interface to XLS
+    spreadsheet generation (built on top of `Spreadsheet.py`).
+
 *   `Spreadsheet.py`: classes for creating and updating XLS format spreadsheets (requires
     the 3rd-party `xlwt`, `xlrd` and `xlutil` Python packages).
 
