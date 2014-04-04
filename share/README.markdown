@@ -15,25 +15,35 @@ Shell function libraries
 Python modules
 --------------
 
-*   `bcf_utils.py`: utility classes and functions shared between BCF codes.
+### General utilities ###
+
+*   `bcf_utils.py`: general utility classes and functions shared between BCF codes
+
+*   `platforms.py`: utilities and data to identify NGS sequencer platforms
+
+### SOLiD data ###
 
 *   `Experiment.py`: classes for defining SOLiD sequencing experiments (i.e. collections
     of related primary data).
 
-*   `FASTQFile.py`: classes for iterating through records in FASTQ files.
+*   `SolidData.py`: classes for extracting data about SOLiD runs from directory structure,
+    data files and naming conventions.
+
+### Illumina data ###
 
 *   `IlluminaData.py`: classes for extracting data about runs from Illumina-based
     sequencing platforms.
 
+### Job execution and management ###
+
 *   `JobRunner.py`: classes providing generic interface for starting and managing job
-    runs.
+    runs
 
 *   `Pipeline.py`: classes for running jobs iteratively
 
-*   `platforms.py`: utilities and data to identify NGS sequencer platforms
+### Handling files ###
 
-*   `SolidData.py`: classes for extracting data about SOLiD runs from directory structure,
-    data files and naming conventions.
+*   `FASTQFile.py`: classes for iterating through records in FASTQ files.
 
 *   `Spreadsheet.py`: classes for creating and updating XLS format spreadsheets (requires
     the 3rd-party `xlwt`, `xlrd` and `xlutil` Python packages).
