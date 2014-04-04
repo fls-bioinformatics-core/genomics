@@ -11,8 +11,9 @@ Scripts and tools for RNA-seq specific tasks.
 
 bowtie_mapping_stats.py
 -----------------------
-Extract mapping statistics from one or more bowtie log files and summarise them in an XLS
-spreadsheet.
+Extract mapping statistics for each sample referenced in the input bowtie log
+files and summarise the data in an XLS spreadsheet. Handles output from both
+Bowtie and Bowtie2.
 
 Usage:
 
@@ -25,10 +26,11 @@ Options:
 
     --version    show program's version number and exit
     -h, --help   show this help message and exit
-    -o xls_file  specify name of the output XLS file (otherwise defaults
-                 to 'mapping_summary.xls').
-    -t           write data to tab-delimited file (same name as XLS file with
-                 .txt extension).
+    -o xls_file  specify name of the output XLS file (otherwise defaults to
+                 'mapping_summary.xls').
+    -t           write data to tab-delimited file in addition to the XLS file.
+                 The tab file will have the same name as the XLS file, with the
+                 extension replaced by .txt
 
 ### Input bowtie log file ###
 
