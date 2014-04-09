@@ -15,6 +15,13 @@ class TestXLSWorkSheet(unittest.TestCase):
         self.assertEqual(ws.title,'Test Worksheet')
         self.assertEqual(ws.last_column,'A')
         self.assertEqual(ws.last_row,1)
+    def test_work_sheet_truncate_long_title(self):
+        short_title = "Short"
+        ws = XLSWorkSheet(short_title)
+        self.assertEqual(ws.title,short_title)
+        long_title = "This is a very very very very very very long title"
+        ws = XLSWorkSheet(long_title)
+        self.assertEqual(ws.title,long_title[0:31])
     def test_insert_single_items(self):
         ws = self.ws
         self.assertEqual(ws['A1'],None)
@@ -26,6 +33,155 @@ class TestXLSWorkSheet(unittest.TestCase):
         self.assertEqual(ws['A1'],'Updated data')
         ws['A']['1'] = 'Updated again'
         self.assertEqual(ws['A']['1'],'Updated again')
+    def test_del_single_item(self):
+        ws = self.ws
+        self.assertEqual(ws['B4'],None)
+        ws['B4'] = 'Some data'
+        self.assertEqual(ws['B4'],'Some data')
+        del(ws['B4'])
+        self.assertEqual(ws['B4'],None)
+    def test_last_column_and_row(self):
+        ws = self.ws
+        ws['A1'] = 'Some data'
+        self.assertEqual(ws.last_column,'A')
+        self.assertEqual(ws.last_row,1)
+        ws['A4'] = 'More data'
+        self.assertEqual(ws.last_column,'A')
+        self.assertEqual(ws.last_row,4)
+        ws['D2'] = 'Even more data'
+        self.assertEqual(ws.last_column,'D')
+        self.assertEqual(ws.last_row,4)
+        ws['E11'] = 'More data again'
+        self.assertEqual(ws.last_column,'E')
+        self.assertEqual(ws.last_row,11)
+        del(ws['E11'])
+        self.assertEqual(ws.last_column,'D')
+        self.assertEqual(ws.last_row,4)
+    def test_column_is_empty(self):
+        ws = self.ws
+        self.assertTrue(ws.column_is_empty('A'))
+        self.assertTrue(ws.column_is_empty('D'))
+        ws['A1'] = 'Some data'
+        self.assertFalse(ws.column_is_empty('A'))
+        self.assertTrue(ws.column_is_empty('D'))
+        ws['D3'] = 'More data'
+        self.assertFalse(ws.column_is_empty('A'))
+        self.assertFalse(ws.column_is_empty('D'))
+    def test_row_is_empty(self):
+        ws = self.ws
+        self.assertTrue(ws.row_is_empty(1))
+        self.assertTrue(ws.row_is_empty(3))
+        ws['A1'] = 'Some data'
+        self.assertFalse(ws.row_is_empty(1))
+        self.assertTrue(ws.row_is_empty(3))
+        ws['D3'] = 'More data'
+        self.assertFalse(ws.row_is_empty(1))
+        self.assertFalse(ws.row_is_empty(3))
+    def test_columnof(self):
+        ws = self.ws
+        ws.insert_row_data(1,('hello','goodbye','whatev'))
+        self.assertEqual(ws.columnof('hello'),'A')
+        self.assertEqual(ws.columnof('goodbye'),'B')
+        self.assertEqual(ws.columnof('whatev'),'C')
+        self.assertRaises(LookupError,ws.columnof,'nowhere')
+    def test_insert_column(self):
+        ws = self.ws
+        ws.insert_row_data(1,('hello','goodbye','whatev'))
+        self.assertEqual(ws['A1'],'hello')
+        self.assertEqual(ws['B1'],'goodbye')
+        self.assertEqual(ws['C1'],'whatev')
+        self.assertEqual(ws.last_column,'C')
+        ws.insert_column('A',text='bonjour')
+        self.assertEqual(ws.last_column,'D')
+        self.assertEqual(ws['A1'],'bonjour')
+        self.assertEqual(ws['B1'],'hello')
+        self.assertEqual(ws['C1'],'goodbye')
+        self.assertEqual(ws['D1'],'whatev')
+        ws.insert_column('C',data=('au revoir',))
+        self.assertEqual(ws.last_column,'E')
+        self.assertEqual(ws['A1'],'bonjour')
+        self.assertEqual(ws['B1'],'hello')
+        self.assertEqual(ws['C1'],'au revoir')
+        self.assertEqual(ws['D1'],'goodbye')
+        self.assertEqual(ws['E1'],'whatev')
+        ws.insert_column('H',data=('hola',))
+        self.assertEqual(ws.last_column,'H')
+        self.assertEqual(ws['A1'],'bonjour')
+        self.assertEqual(ws['B1'],'hello')
+        self.assertEqual(ws['C1'],'au revoir')
+        self.assertEqual(ws['D1'],'goodbye')
+        self.assertEqual(ws['E1'],'whatev')
+        self.assertEqual(ws['F1'],None)
+        self.assertEqual(ws['G1'],None)
+        self.assertEqual(ws['H1'],'hola')
+        ws.insert_column('G',data=('adios',))
+        self.assertEqual(ws.last_column,'I')
+        self.assertEqual(ws['A1'],'bonjour')
+        self.assertEqual(ws['B1'],'hello')
+        self.assertEqual(ws['C1'],'au revoir')
+        self.assertEqual(ws['D1'],'goodbye')
+        self.assertEqual(ws['E1'],'whatev')
+        self.assertEqual(ws['F1'],None)
+        self.assertEqual(ws['G1'],'adios')
+        self.assertEqual(ws['H1'],None)
+        self.assertEqual(ws['I1'],'hola')
+    def test_append_column(self):
+        ws = self.ws
+        ws.insert_row_data(1,('hello','goodbye','whatev'))
+        self.assertEqual(ws['A1'],'hello')
+        self.assertEqual(ws['B1'],'goodbye')
+        self.assertEqual(ws['C1'],'whatev')
+        ws.append_column(data=('au revoir',))
+        self.assertEqual(ws['A1'],'hello')
+        self.assertEqual(ws['B1'],'goodbye')
+        self.assertEqual(ws['C1'],'whatev')
+        self.assertEqual(ws['D1'],'au revoir')
+    def test_write_column_with_list(self):
+        ws = self.ws
+        col_data = ['hello','goodbye','whatev']
+        exp_cell = ['B1','B2','B3']
+        ws.write_column('B',data=col_data)
+        self.assertEqual(ws.last_column,'B')
+        self.assertEqual(ws.last_row,3)
+        for i in xrange(3):
+            self.assertEqual(ws[exp_cell[i]],col_data[i])
+        exp_cell = ['C3','C4','C5']
+        ws.write_column('C',data=col_data,from_row=3)
+        self.assertEqual(ws.last_column,'C')
+        self.assertEqual(ws.last_row,5)
+        for i in xrange(3):
+            self.assertEqual(ws[exp_cell[i]],col_data[i])
+    def test_write_column_with_text(self):
+        ws = self.ws
+        col_data = ['hello','goodbye','whatev']
+        exp_cell = ['A1','A2','A3']
+        ws.write_column('A',text="hello\ngoodbye\nwhatev")
+        self.assertEqual(ws.last_column,'A')
+        self.assertEqual(ws.last_row,3)
+        for i in xrange(3):
+            self.assertEqual(ws[exp_cell[i]],col_data[i])
+        exp_cell = ['M7','M8','M9']
+        ws.write_column('M',text="hello\ngoodbye\nwhatev",
+                        from_row=7)
+        self.assertEqual(ws.last_column,'M')
+        self.assertEqual(ws.last_row,9)
+        for i in xrange(3):
+            self.assertEqual(ws[exp_cell[i]],col_data[i])
+    def test_write_column_with_fill(self):
+        ws = self.ws
+        # Add some data first, then fill
+        ws.write_column('A',data=['some','random','items'])
+        ws.write_column('L',fill="50")
+        self.assertEqual(ws.last_column,'L')
+        self.assertEqual(ws.last_row,3)
+        for idx in ('L1','L2','L3'):
+            self.assertEqual(ws[idx],"50")
+        ws.write_column('M',fill="50",from_row=2)
+        self.assertEqual(ws.last_column,'M')
+        self.assertEqual(ws.last_row,3)
+        self.assertEqual(ws['M1'],None)
+        for idx in ('M2','M3'):
+            self.assertEqual(ws[idx],"50")
     def test_insert_column_data(self):
         ws = self.ws
         col_data = ['hello','goodbye','whatev']
@@ -37,6 +193,78 @@ class TestXLSWorkSheet(unittest.TestCase):
         ws.insert_column_data('C',col_data,start=3)
         for i in xrange(3):
             self.assertEqual(ws[exp_cell[i]],col_data[i])
+    def test_insert_row(self):
+        ws = self.ws
+        ws.insert_column_data('A',('hello','goodbye','whatev'))
+        self.assertEqual(ws['A1'],'hello')
+        self.assertEqual(ws['A2'],'goodbye')
+        self.assertEqual(ws['A3'],'whatev')
+        self.assertEqual(ws.last_row,3)
+        ws.insert_row(1,text='bonjour')
+        self.assertEqual(ws.last_row,4)
+        self.assertEqual(ws['A1'],'bonjour')
+        self.assertEqual(ws['A2'],'hello')
+        self.assertEqual(ws['A3'],'goodbye')
+        self.assertEqual(ws['A4'],'whatev')
+        ws.insert_row(3,data=('au revoir',))
+        self.assertEqual(ws.last_row,5)
+        self.assertEqual(ws['A1'],'bonjour')
+        self.assertEqual(ws['A2'],'hello')
+        self.assertEqual(ws['A3'],'au revoir')
+        self.assertEqual(ws['A4'],'goodbye')
+        self.assertEqual(ws['A5'],'whatev')
+        ws.insert_row(8,data=('hola',))
+        self.assertEqual(ws.last_row,8)
+        self.assertEqual(ws['A1'],'bonjour')
+        self.assertEqual(ws['A2'],'hello')
+        self.assertEqual(ws['A3'],'au revoir')
+        self.assertEqual(ws['A4'],'goodbye')
+        self.assertEqual(ws['A5'],'whatev')
+        self.assertEqual(ws['A6'],None)
+        self.assertEqual(ws['A7'],None)
+        self.assertEqual(ws['A8'],'hola')
+        ws.insert_row(7,data=('adios',))
+        self.assertEqual(ws.last_row,9)
+        self.assertEqual(ws['A1'],'bonjour')
+        self.assertEqual(ws['A2'],'hello')
+        self.assertEqual(ws['A3'],'au revoir')
+        self.assertEqual(ws['A4'],'goodbye')
+        self.assertEqual(ws['A5'],'whatev')
+        self.assertEqual(ws['A6'],None)
+        self.assertEqual(ws['A7'],'adios')
+        self.assertEqual(ws['A8'],None)
+        self.assertEqual(ws['A9'],'hola')
+    def test_write_row_with_list(self):
+        ws = self.ws
+        row_data = ['Dozy','Beaky','Mick','Titch']
+        exp_cell = ['A4','B4','C4','D4']
+        ws.write_row(4,data=row_data)
+        self.assertEqual(ws.last_column,'D')
+        self.assertEqual(ws.last_row,4)
+        for i in xrange(4):
+            self.assertEqual(ws[exp_cell[i]],row_data[i])
+        exp_cell = ['E5','F5','G5','H5']
+        ws.write_row(5,data=row_data,from_column='E')
+        self.assertEqual(ws.last_column,'H')
+        self.assertEqual(ws.last_row,5)
+        for i in xrange(4):
+            self.assertEqual(ws[exp_cell[i]],row_data[i])
+    def test_write_row_with_text(self):
+        ws = self.ws
+        row_data = ['Dozy','Beaky','Mick','Titch']
+        row_text = "Dozy\tBeaky\tMick\tTitch"
+        exp_cell = ['A4','B4','C4','D4']
+        ws.write_row(4,text=row_text)
+        self.assertEqual(ws.last_column,'D')
+        self.assertEqual(ws.last_row,4)
+        for i in xrange(4):
+            self.assertEqual(ws[exp_cell[i]],row_data[i])
+        exp_cell = ['E5','F5','G5','H5']
+        ws.write_row(5,text=row_text,from_column='E')
+        self.assertEqual(ws.last_column,'H')
+        self.assertEqual(ws.last_row,5)
+        for i in xrange(4):
+            self.assertEqual(ws[exp_cell[i]],row_data[i])
     def test_insert_row_data(self):
         ws = self.ws
         row_data = ['Dozy','Beaky','Mick','Titch']
@@ -171,12 +399,37 @@ class TestColumnIntegerToIndex(unittest.TestCase):
         self.assertEqual(column_integer_to_index(27),'AB')
         self.assertEqual(column_integer_to_index(51),'AZ')
 
+class TestIncrCol(unittest.TestCase):
+    """
+    """
+    def test_incr_col(self):
+        self.assertEqual(incr_col('A'),'B')
+        self.assertEqual(incr_col('C',2),'E')
+        self.assertEqual(incr_col('C',-1),'B')
+        self.assertEqual(incr_col('C',-2),'A')
+        self.assertEqual(incr_col('Z'),'AA')
+        self.assertEqual(incr_col('AA',-1),'Z')
+
 class TestColumnRange(unittest.TestCase):
     """
     """
     def test_column_range(self):
         for expected,actual in itertools.izip(['A','B','C'],
                                               ColumnRange('A','C')):
+            self.assertEqual(expected,actual)
+    def test_column_range_implicit_start(self):
+        for expected,actual in itertools.izip(['A','B','C'],
+                                              ColumnRange('C')):
+            self.assertEqual(expected,actual)
+    def test_column_range_dont_include_end(self):
+        for expected,actual in itertools.izip(['A','B','C'],
+                                              ColumnRange('A','D',
+                                                          include_end=False)):
+            self.assertEqual(expected,actual)
+    def test_column_range_reverse(self):
+        for expected,actual in itertools.izip(['C','B','A'],
+                                              ColumnRange('A','C',
+                                                          reverse=True)):
             self.assertEqual(expected,actual)
 
 class TestXLSStyle(unittest.TestCase):

@@ -7,7 +7,7 @@
 #
 #########################################################################
 
-__version__ = "0.0.3"
+__version__ = "0.0.7"
 
 """
 simple_xls.py
@@ -270,7 +270,7 @@ class XLSWorkSheet:
           title: title string for the worksheet
 
         """
-        self.title = title
+        self.title = title[:Spreadsheet.MAX_LEN_WORKSHEET_TITLE]
         self.data = {}
         self.styles = {}
         self.rows = []
@@ -289,7 +289,7 @@ class XLSWorkSheet:
         self.columns.sort(cmp=cmp_column_indices)
         if idx.row not in self.rows:
             self.rows.append(idx.row)
-        self.rows.sort(cmp=lambda x,y: cmp(int(x),int(y)))
+        self.rows.sort()
 
     def __getitem__(self,idx):
         """Implement 'value = x[idx]'
@@ -302,6 +302,20 @@ class XLSWorkSheet:
                 return self.data[idx]
             except Exception,ex:
                 return None
+
+    def __delitem__(self,idx):
+        """Implement 'del(x[idx])'
+
+        """
+        try:
+            del(self.data[idx])
+        except KeyError:
+            pass
+        idx = CellIndex(idx)
+        if self.column_is_empty(idx.column):
+            self.columns.remove(idx.column)
+        if self.row_is_empty(idx.row):
+            self.rows.remove(idx.row)
 
     @property
     def last_column(self):
@@ -343,6 +357,191 @@ class XLSWorkSheet:
         else:
             return 1
 
+    def column_is_empty(self,col):
+        """Determine whether a column is empty
+
+        Returns False if any cells in the column are populated,
+        otherwise returns True.
+
+        """
+        if col not in self.columns:
+            return True
+        for row in self.rows:
+            if self[cell(col,row)] is not None:
+                return False
+        return True
+
+    def row_is_empty(self,row):
+        """Determine whether a row is empty
+
+        Returns False if any cells in the row are populated,
+        otherwise returns True.
+
+        """
+        if row not in self.rows:
+            return True
+        for col in self.columns:
+            if self[cell(col,row)] is not None:
+                return False
+        return True
+
+    def columnof(self,s,row=1):
+        """Return column index for cell which matches string
+
+        Return index of first column where the content matches
+        the specified string 's'.
+
+        Arguments:
+          s: string to search for
+          row: row to search in (defaults to 1)
+
+        Returns:
+          Column index of first matching cell. Raises LookUpError
+          if no match is found.
+
+        """
+        for col in self.columns:
+            if self[cell(col,row)] == s:
+                return col
+        raise LookupError,"No match for '%s' in row %d" % (s,row)
+
+    def insert_column(self,position,data=None,text=None,fill=None,from_row=None,style=None):
+        """Create a new column at the specified column position
+
+        Inserts a new column at the specified column position,
+        pushing up the column currently at that position plus all
+        higher positioned columns.
+
+        By default the inserted column is empty, however data can
+        be specified to populate the column.
+
+        Arguments:
+          position: column index specifying position to insert the
+            column at
+          data: optional, list of data items to populate the
+            inserted column
+          text: optional, tab-delimited string of text to be used
+            to populate the inserted column
+          fill: optional, single data item to be repeated to fill
+            the inserted column
+          from_row: optional, if specified then inserted column is
+            populated from that row onwards
+          style: optional, an XLSStyle object to associate with the
+            data being inserted
+
+        Returns:
+          The index of the inserted column.
+
+        """
+        # Get list of all columns we want to move (in reverse order)
+        columns_to_bump = []
+        try:
+            i = self.columns.index(position)
+            columns_to_bump = self.columns[i:][::-1]
+        except ValueError:
+            for col in self.columns:
+                if cmp_column_indices(col,position) > -1:
+                    i = self.columns.index(col)
+                    columns_to_bump = self.columns[i:][::-1]
+                    break
+        # Shift columns, if required
+        for col in columns_to_bump:
+            next_col = column_integer_to_index(column_index_to_integer(col)+1)
+            for row in range(1,self.last_row+1):
+                # Get cell index
+                idx = cell(col,row)
+                if idx in self.data:
+                    # Copy contents to next column
+                    self.data[cell(next_col,row)] = self.data[idx]
+                    # Remove this cell
+                    del(self.data[idx])
+        # Append a new last column index to list of columns
+        self.columns.append(self.next_column)
+        # Remove the inserted column index from the list of columns
+        if position in self.columns:
+            self.columns.remove(position)
+        # Now insert data at the new position
+        self.write_column(position,data=data,text=text,fill=fill,from_row=from_row,style=style)
+        return position
+
+    def append_column(self,data=None,text=None,fill=None,from_row=None,style=None):
+        """Create a new column at the end of the sheet
+
+        Appends a new column at the end of the worksheet i.e. in the
+        first available empty column.
+
+        By default the appended column is empty, however data can
+        be specified to populate the column.
+
+        Arguments:
+          data: optional, list of data items to populate the
+            inserted column
+          text: optional, tab-delimited string of text to be used
+            to populate the inserted column
+          fill: optional, single data item to be repeated to fill
+            the inserted column
+          from_row: optional, if specified then inserted column is
+            populated from that row onwards
+          style: optional, an XLSStyle object to associate with the
+            data being inserted
+
+        Returns:
+          The index of the appended column.
+
+        """
+        new_col = self.next_column
+        # Now insert data into the new position
+        self.write_column(new_col,data=data,text=text,fill=fill,from_row=from_row,style=style)
+        return new_col
+
+    def write_column(self,col,data=None,text=None,fill=None,from_row=None,style=None):
+        """Write data to rows in a column
+
+        Data can be specified as a list, a newline-delimited string, or
+        as a single repeated data item.
+
+        Arguments:
+          data: optional, list of data items to populate the
+            inserted column
+          text: optional, newline-delimited string of text to be used
+            to populate the inserted column
+          fill: optional, single data item to be repeated to fill
+            the inserted column
+          from_row: optional, if specified then inserted column is
+            populated from that row onwards
+          style: optional, an XLSStyle object to associate with the
+            data being inserted
+
+        """
+        # Set initial row
+        if from_row is None:
+            from_row = 1
+        # Write in data from a list
+        if data is not None:
+            items = data
+        elif text is not None:
+            items = text.split('\n')
+        elif fill is not None:
+            items = [fill for i in range(from_row,self.last_row+1)]
+        else:
+            # Nothing to do
+            return
+        # Add column index to list of columns
+        if col not in self.columns:
+            self.columns.append(col)
+        # Write data items to cells
+        row = from_row
+        for item in items:
+            self.data[cell(col,row)] = item
+            if row not in self.rows:
+                self.rows.append(row)
+            if style is not None:
+                self.set_style(style,cell(col,row))
+            row += 1
+        # Sort the column and row indices
+        self.columns.sort(cmp=cmp_column_indices)
+        self.rows.sort()
+
     def insert_column_data(self,col,data,start=None,style=None):
         """Insert list of data into a column
 
@@ -370,6 +569,160 @@ class XLSWorkSheet:
             if style is not None:
                 self.set_style(style,cell(col,i))
             i += 1
+
+    def rowof(self,s,column='A'):
+        """Return row index for cell which matches string
+
+        Return index of first row where the content matches
+        the specified string 's'.
+
+        Arguments:
+          s: string to search for
+          column: column to search in (defaults to 'A')
+
+        Returns:
+          Row index of first matching cell. Raises LookUpError
+          if no match is found.
+
+        """
+        # Get row where cell in row matches 'name'
+        # i.e. look up a row index
+        for row in range(1,self.last_row+1):
+            if self[cell(column,row)] == s:
+                return row
+        raise LookupError,"No match for '%s' in column '%s'" % (s,column)
+
+    def insert_row(self,position,data=None,text=None,fill=None,from_column=None,style=None):
+        """Create a new row at the specified row position
+
+        Inserts a new row at the specified row position,
+        pushing up the row currently at that position plus all
+        higher positioned row.
+
+        By default the inserted row is empty, however data can
+        be specified to populate the column.
+
+        Arguments:
+          position: row index specifying position to insert the
+            row at
+          data: optional, list of data items to populate the
+            inserted row
+          text: optional, newline-delimited string of text to be used
+            to populate the inserted row
+          fill: optional, single data item to be repeated to fill
+            the inserted row
+          from_row: optional, if specified then inserted row is
+            populated from that column onwards
+          style: optional, an XLSStyle object to associate with the
+            data being inserted
+
+        Returns:
+          The index of the inserted row.
+
+        """
+        # Create a new row before the specified row
+        # All rows above it move up one position
+        # 'New' row position is actually 'before_row'
+        # Bump all rows up one position
+        # Get list of all rows we want to move (in reverse order)
+        row_list = list(range(self.last_row,position-1,-1))
+        for row in row_list:
+            print "Row %s" % row
+            next_row = row + 1
+            for col in self.columns:
+                # Get cell index
+                idx = cell(col,row)
+                if idx in self.data:
+                    # Copy contents to next row
+                    self.data[cell(col,next_row)] = self.data[idx]
+                    # Remove this cell
+                    del(self.data[idx])
+        # Add a new last row index to the list of rows
+        self.rows.append(self.next_row)
+        # Remove the inserted row index from the list
+        if position in self.rows:
+            self.rows.remove(position)
+        # Now insert data at the new position
+        self.write_row(position,data=data,text=text,fill=fill,from_column=from_column,style=style)
+        return position
+
+    def append_row(self,data=None,text=None,fill=None,from_column=None,style=None):
+        """Create a new row at the end of the sheet
+
+        Appends a new row at the end of the worksheet i.e. in the
+        first available empty row.
+
+        By default the appended row is empty, however data can
+        be specified to populate the row.
+
+        Arguments:
+          data: optional, list of data items to populate the
+            inserted row
+          text: optional, newline-delimited string of text to be used
+            to populate the inserted row
+          fill: optional, single data item to be repeated to fill
+            the inserted row
+          from_row: optional, if specified then inserted row is
+            populated from that column onwards
+          style: optional, an XLSStyle object to associate with the
+            data being inserted
+
+        Returns:
+          The index of the inserted row.
+
+        """
+        # Create a new row at the end of the sheet
+        new_row = self.next_row
+        # Now insert data into the new position
+        self.write_row(new_row,data=data,text=text,fill=fill,from_column=from_column,style=style)
+        return new_row
+
+    def write_row(self,row,data=None,text=None,fill=None,from_column=None,style=None):
+        """Write data to rows in a column
+
+        Data can be specified as a list, a tab-delimited string, or
+        as a single repeated data item.
+
+        Arguments:
+          row: row index specifying which row
+          data: optional, list of data items to populate the
+            inserted row
+          text: optional, tab-delimited string of text to be used
+            to populate the inserted row
+          from_column: optional, if specified then inserted row is
+            populated from that column onwards
+          style: optional, an XLSStyle object to associate with the
+            data being inserted
+
+        """
+        # Set initial column
+        if from_column is None:
+            from_column = 'A'
+        # Write in data from a list
+        if data is not None:
+            items = data
+        elif text is not None:
+            items = text.split('\t')
+        elif fill is not None:
+            items = [fill for i in range(from_row,self.last_row+1)]
+        else:
+            # Nothing to do
+            return
+        # Add row index to list of rows
+        if row not in self.rows:
+            self.rows.append(row)
+        # Write data items to cells
+        col = from_column
+        for item in items:
+            self.data[cell(col,row)] = item
+            if col not in self.columns:
+                self.columns.append(col)
+            if style is not None:
+                self.set_style(style,cell(col,row))
+            col = incr_col(col)
+        # Sort the column and row indices
+        self.columns.sort(cmp=cmp_column_indices)
+        self.rows.sort()
 
     def insert_row_data(self,row,data,start=None,style=None):
         """Insert list of data into a row
@@ -412,7 +765,6 @@ class XLSWorkSheet:
         arguments.
 
         Arguments:
-          row: index of row to insert the data into (e.g. 1, 112)
           data: block of tab- and newline-delimited data
           col: (optional) first column to insert data into
           row: (optional) first row to insert data into
@@ -745,7 +1097,7 @@ class ColumnRange(Iterator):
     ...   print c
 
     """
-    def __init__(self,i,j=None,include_end=True):
+    def __init__(self,i,j=None,include_end=True,reverse=False):
         """Create an iterator for a range of column indices
 
         Acts like 'range' i.e.:
@@ -762,23 +1114,29 @@ class ColumnRange(Iterator):
           j: defines end column (if not None)
           include_end: if True then the end column is also
              included; otherwise it is omitted.
+          reverse: if True then the columns are returned in
+             descending order
 
         """
+        self.incr = 1
         if j is None:
             self.start = column_index_to_integer('A')
             self.end = column_index_to_integer(i)
         else:
             self.start = column_index_to_integer(i)
             self.end = column_index_to_integer(j)
-        self.column = self.start-1
+        if reverse:
+            self.end,self.start = self.start,self.end
+            self.incr = -1
+        self.column = self.start-self.incr
         if include_end:
-            self.end += 1
+            self.end += self.incr
 
     def next(self):
         """Implements Iterator subclass 'next' method
 
         """
-        self.column = self.column + 1
+        self.column = self.column + self.incr
         if self.column == self.end:
             raise StopIteration
         return column_integer_to_index(self.column)
@@ -899,12 +1257,8 @@ def cmp_column_indices(x,y):
     greater than y, and 0 if it's equal.
 
     """
-    if len(x) > len(y):
-        return 1
-    elif len(x) < len(y):
-        return -1
-    else:
-        return cmp(x,y)
+    # Do string comparision on reverse of column indices
+    return cmp(x[::-1],y[::-1])
 
 def cell(col,row):
     """Return XLS cell index for column and row
@@ -913,6 +1267,17 @@ def cell(col,row):
 
     """
     return "%s%s" % (col,row)
+
+def incr_col(col,incr=1):
+    """Return column index incremented by specific number of positions
+
+    Arguments:
+      col: index of column to be incremented
+      incr: optional, number of cells to shift by. Can be negative
+        to go backwards. Defaults to 1 i.e. next column along.
+
+    """
+    return column_integer_to_index(column_index_to_integer(col)+incr)
 
 def column_index_to_integer(col):
     """Convert XLS-style column index into equivalent integer
