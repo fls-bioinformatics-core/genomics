@@ -56,7 +56,7 @@ Python modules xlwt, xlrd and xlutils.
 # Module metadata
 #######################################################################
 
-__version__ = "1.1.3"
+__version__ = "1.1.4"
 
 #######################################################################
 # Import
@@ -79,7 +79,6 @@ sys.path.append(SHARE_DIR)
 
 # Get local modules and functions
 try:
-    import Spreadsheet
     from simple_xls import cell,XLSWorkBook,XLSStyle,column_integer_to_index,NumberFormats
 except ImportError,ex:
     logging.error("Failed to import local modules: %s" % ex)
@@ -88,7 +87,7 @@ except ImportError,ex:
     logging.error("https://github.com/fls-bioinformatics-core/genomics/blob/master/share/Spreadsheet.py")
     logging.error("and ensure that the underlying xlwt, xlrd and xlutils libraries are "
                   "also installed")
-    sys.exit(1)
+    raise ex
 
 #######################################################################
 # Classes
@@ -208,23 +207,7 @@ class BowtieMappingStats:
           XLSWorkBook object.
 
         """
-        # Create spreadsheet
-        wb = XLSWorkBook()
-        mapping = wb.add_work_sheet("mapping")
-        mapping.insert_column_data('A',
-                                   ["MAPPING STATS",
-                                    '',
-                                    "Sample",
-                                    '',
-                                    "total reads",
-                                    "didn't align",
-                                    "total mapped reads",
-                                    "  % of all reads",
-                                    "uniquely mapped",
-                                    "  % of all reads",
-                                    "  % of mapped reads"])
-        mapping.set_style(XLSStyle(bold=True),'A1','A11')
-        # Set up spreadsheet styles
+        # Set up reusable spreadsheet styles
         reads_style = XLSStyle(bgcolor='ivory',border='medium',
                                number_format=NumberFormats.THOUSAND_SEPARATOR,
                                centre=True)
@@ -233,32 +216,47 @@ class BowtieMappingStats:
                                centre=True)
         headr_style = XLSStyle(color='red',bgcolor='ivory',border='medium')
         table_style = XLSStyle(bgcolor='ivory',border='medium',centre=True)
+        # Create spreadsheet
+        wb = XLSWorkBook()
+        mapping = wb.add_work_sheet("mapping")
+        mapping.insert_column('A',data=["Sample",
+                                        '',
+                                        "total reads",
+                                        "didn't align",
+                                        "total mapped reads",
+                                        "  % of all reads",
+                                        "uniquely mapped",
+                                        "  % of all reads",
+                                        "  % of mapped reads"],
+                              from_row=3)
+        mapping['A1'] = "MAPPING STATS"
+        mapping.set_style(XLSStyle(bold=True),'A1','A11')
         # Build spreadsheet
         for sample in self.samples:
-            col = mapping.next_column
             sample_name = sample.name
             # Add input file names to sample ids if there were multiple input files
             if len(self.files) > 1 and sample.filen is not None:
                 sample_name += " (" + sample.filen + ")"
             # Insert data into the spreadsheet
-            mapping.insert_column_data(col,
-                                       [sample_name,
-                                        '',
-                                        sample.total_reads,
-                                        sample.didnt_align,
-                                        "=#5-#6",
-                                        "=#7/#5",
-                                        sample.uniquely_mapped,
-                                        "=#9/#5",
-                                        "=#9/#7"],
-                                       start=3)
+            col = mapping.append_column(data=[sample_name,
+                                              '',
+                                              sample.total_reads,
+                                              sample.didnt_align,
+                                              "=#5-#6",
+                                              "=#7/#5",
+                                              sample.uniquely_mapped,
+                                              "=#9/#5",
+                                              "=#9/#7"],
+                                        from_row=3)
             mapping.set_style(headr_style,cell(col,3))
             mapping.set_style(table_style,cell(col,4))
             mapping.set_style(reads_style,cell(col,5),cell(col,7))
             mapping.set_style(pcent_style,cell(col,8))
             mapping.set_style(reads_style,cell(col,9))
             mapping.set_style(pcent_style,cell(col,10),cell(col,11))
+        # Header
         mapping['C1'] = "Mapped with Bowtie"
+        mapping.set_style(XLSStyle(centre=True),'C1')
         # Finished
         if xls_out is not None:
             print "Writing statistics to XLS file %s" % xls_out
