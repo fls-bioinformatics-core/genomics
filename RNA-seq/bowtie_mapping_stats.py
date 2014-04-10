@@ -29,7 +29,8 @@ Reported 2737588 alignments to 1 output stream(s)
 Time searching: 00:10:27
 Overall time: 00:10:27
 
-For Bowtie2 the expected input is multiple blocks of the form:
+For Bowtie2 (single end data) the expected input is multiple blocks
+of the form:
 
 Multiseed full-index search: 00:20:27
 117279034 reads; of these:
@@ -40,6 +41,24 @@ Multiseed full-index search: 00:20:27
 98.35% overall alignment rate
 Time searching: 00:21:01
 Overall time: 00:21:02
+
+For Bowtie2 (paired end data) the expected input is multiple blocks
+of the form:
+
+85570063 reads; of these:
+  85570063 (100.00%) were paired; of these:
+    56052776 (65.51%) aligned concordantly 0 times
+    22792207 (26.64%) aligned concordantly exactly 1 time
+    6725080 (7.86%) aligned concordantly >1 times
+    ----
+    56052776 pairs aligned concordantly 0 times; of these:
+      6635276 (11.84%) aligned discordantly 1 time
+    ----
+    49417500 pairs aligned 0 times concordantly or discordantly; of these:
+      98835000 mates make up the pairs; of these:
+        93969575 (95.08%) aligned 0 times
+        1622693 (1.64%) aligned exactly 1 time
+        3242732 (3.28%) aligned >1 times
 
 In both cases any extraneous lines are ignored.
 
@@ -56,7 +75,7 @@ Python modules xlwt, xlrd and xlutils.
 # Module metadata
 #######################################################################
 
-__version__ = "1.1.4"
+__version__ = "1.1.5"
 
 #######################################################################
 # Import
@@ -153,6 +172,7 @@ class BowtieMappingStats:
           Number of samples acquired from this file.
 
         """
+        sample = None
         n_samples = self.n_samples
         self.files.append(filen)
         if fp is None:
@@ -166,12 +186,7 @@ class BowtieMappingStats:
                 sample = BowtieSample(i,bowtie_log=filen,bowtie_version='1')
                 sample.total_reads = int(line.strip().split()[-1])
                 self.samples.append(sample)
-            elif line.startswith("# reads that failed to align: "):
-                # Lines of the form "# reads that failed to align: 33721722 (84.71%)"
-                sample.didnt_align = int(line.strip().split()[-2])
-            elif line.startswith("# reads with at least one reported alignment: "):
-                # Lines of the form "# reads with at least one reported alignment: 2737588 (6.88%)"
-                sample.uniquely_mapped = int(line.strip().split()[-2])
+                continue
             elif line.strip().endswith(" reads; of these:"):
                 # Bowtie 2.* outputs
                 # Lines of the form "117279034 reads; of these:"
@@ -180,12 +195,37 @@ class BowtieMappingStats:
                 sample = BowtieSample(i,bowtie_log=filen,bowtie_version='2')
                 sample.total_reads = int(line.strip().split()[0])
                 self.samples.append(sample)
-            elif line.strip().endswith(" aligned 0 times"):
-                # Lines of the form "    1937614 (1.65%) aligned 0 times"
-                sample.didnt_align = int(line.strip().split()[0])
-            elif line.strip().endswith(" aligned exactly 1 time"):
-                # Lines of the form "    115341420 (98.35%) aligned exactly 1 time"
-                sample.uniquely_mapped = int(line.strip().split()[0])
+                continue
+            if sample is None:
+                # No more processing of this line
+                continue
+            if sample.bowtie_version == '1':
+                if line.startswith("# reads that failed to align: "):
+                    # Lines of the form "# reads that failed to align: 33721722 (84.71%)"
+                    sample.didnt_align = int(line.strip().split()[-2])
+                elif line.startswith("# reads with at least one reported alignment: "):
+                    # Lines of the form "# reads with at least one reported alignment: 2737588 (6.88%)"
+                    sample.uniquely_mapped = int(line.strip().split()[-2])
+            elif sample.bowtie_version == '2':
+                if line.strip().endswith(" were paired; of these:"):
+                    # Indicates bowtie2 paired-end
+                    sample.paired_end = True
+                elif not sample.paired_end:
+                    # Single-end data
+                    if line.strip().endswith(" aligned exactly 1 time"):
+                        # Lines of the form "    115341420 (98.35%) aligned exactly 1 time"
+                        sample.uniquely_mapped = int(line.strip().split()[0])
+                    elif line.strip().endswith(" aligned 0 times"):
+                        # Lines of the form "    1937614 (1.65%) aligned 0 times"
+                        sample.didnt_align = int(line.strip().split()[0])
+                else:
+                    # Paired-end data
+                    if line.strip().endswith(" aligned concordantly exactly 1 time"):
+                        # Lines of the form "    22792207 (26.64%) aligned concordantly exactly 1 time"
+                        sample.uniquely_mapped = int(line.strip().split()[0])
+                    elif line.strip().endswith(" aligned concordantly 0 times"):
+                        # Lines of the form "   56052776 (65.51%) aligned concordantly 0 times"
+                        sample.didnt_align = int(line.strip().split()[0])
         return self.n_samples - n_samples
 
     def xls(self,xls_out=None):
@@ -310,6 +350,7 @@ class BowtieSample:
     uniquely_mapped: number of reads that mapped exactly once
     filen          : file name that the data was read from
     bowtie_version : version of bowtie (1 or 2, or None)
+    paired_end     : True if output is for paired-end data
 
     """
     def __init__(self,name,bowtie_log=None,bowtie_version=''):
@@ -329,6 +370,7 @@ class BowtieSample:
         self.total_reads = None
         self.didnt_align = None
         self.uniquely_mapped = None
+        self.paired_end = False
         bowtie_verison = str(bowtie_version)
         if bowtie_version not in ("1","2"):
             bowtie_version = ''
@@ -367,6 +409,7 @@ Overall time: 00:10:27
         self.assertEqual(sample.didnt_align,33721722)
         self.assertEqual(sample.uniquely_mapped,2737588)
         self.assertEqual(sample.bowtie_version,'1')
+        self.assertFalse(sample.paired_end)
         # Check outputs
         tab_data = stats.tab_file()
         self.assertEqual(tab_data,"""Sample	1
@@ -447,6 +490,7 @@ Overall time: 00:33:26
             self.assertEqual(sample.didnt_align,expected_didnt_align[i])
             self.assertEqual(sample.uniquely_mapped,expected_uniquely_mapped[i])
             self.assertEqual(sample.bowtie_version,'1')
+            self.assertFalse(sample.paired_end)
         # Check outputs
         tab_data = stats.tab_file()
         self.assertEqual(tab_data,"""Sample	1	2	3	4
@@ -531,6 +575,7 @@ Overall time: 00:33:26
             self.assertEqual(sample.didnt_align,expected_didnt_align[i])
             self.assertEqual(sample.uniquely_mapped,expected_uniquely_mapped[i])
             self.assertEqual(sample.bowtie_version,'1')
+            self.assertFalse(sample.paired_end)
         # Check outputs
         tab_data = stats.tab_file()
         self.assertEqual(tab_data,"""Sample	1 (log1)	2 (log1)	3 (log2)	4 (log2)
@@ -544,7 +589,7 @@ uniquely mapped	2737588	4087382	3094671	10086835
   % of mapped reads	45.0%	46.9%	43.7%	42.3%""")
 
     def test_bowtie2_sample_single_sample(self):
-        """Process output from bowtie2 for single sample 
+        """Process output from bowtie2 for single sample
         """
         fp = cStringIO.StringIO("""Multiseed full-index search: 00:20:27
 117279034 reads; of these:
@@ -566,6 +611,7 @@ Overall time: 00:21:02
         self.assertEqual(sample.didnt_align,1937614)
         self.assertEqual(sample.uniquely_mapped,115341420)
         self.assertEqual(sample.bowtie_version,'2')
+        self.assertFalse(sample.paired_end)
         # Check outputs
         tab_data = stats.tab_file()
         self.assertEqual(tab_data,"""Sample	1
@@ -577,6 +623,51 @@ total mapped reads	115341420
 uniquely mapped	115341420
   % of all reads	98.3%
   % of mapped reads	100.0%""")
+
+    def test_bowtie2_sample_single_PE_sample(self):
+        """Process output from bowtie2 for single paired-end sample
+        """
+        fp = cStringIO.StringIO("""Multiseed full-index search: 01:45:33
+85570063 reads; of these:
+  85570063 (100.00%) were paired; of these:
+    56052776 (65.51%) aligned concordantly 0 times
+    22792207 (26.64%) aligned concordantly exactly 1 time
+    6725080 (7.86%) aligned concordantly >1 times
+    ----
+    56052776 pairs aligned concordantly 0 times; of these:
+      6635276 (11.84%) aligned discordantly 1 time
+    ----
+    49417500 pairs aligned 0 times concordantly or discordantly; of these:
+      98835000 mates make up the pairs; of these:
+        93969575 (95.08%) aligned 0 times
+        1622693 (1.64%) aligned exactly 1 time
+        3242732 (3.28%) aligned >1 times
+45.09% overall alignment rate
+Time searching: 01:46:03
+Overall time: 01:46:03
+""")
+        stats = BowtieMappingStats()
+        n_added = stats.add_samples(filen='log1',fp=fp)
+        self.assertEqual(n_added,1)
+        self.assertEqual(stats.n_samples,1)
+        sample = stats.samples[0]
+        self.assertEqual(sample.name,'1')
+        self.assertEqual(sample.total_reads,85570063)
+        self.assertEqual(sample.didnt_align,56052776)
+        self.assertEqual(sample.uniquely_mapped,22792207)
+        self.assertEqual(sample.bowtie_version,'2')
+        self.assertTrue(sample.paired_end)
+        # Check outputs
+        tab_data = stats.tab_file()
+        self.assertEqual(tab_data,"""Sample	1
+	
+total reads	85570063
+didn't align	56052776
+total mapped reads	29517287
+  % of all reads	34.5%
+uniquely mapped	22792207
+  % of all reads	26.6%
+  % of mapped reads	77.2%""")
 
 #######################################################################
 # Main program
@@ -635,6 +726,7 @@ if __name__ == "__main__":
         if n_samples > 0:
             print "\tFound %d samples (total %d)" % (n_samples,stats.n_samples)
             print "\tBowtie version %s" % (stats.samples[-1].bowtie_version)
+            print "\t%s" % ('Paired end' if stats.samples[-1].paired_end else 'Single end')
         else:
             logging.warning("No samples found in %s" % bowtie_log)
 
