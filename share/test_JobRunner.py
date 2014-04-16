@@ -20,7 +20,7 @@ class TestSimpleJobRunner(unittest.TestCase):
             shutil.rmtree(self.log_dir)
 
     def make_tmp_dir(self):
-        return tempfile.mkdtemp(dir=os.getcwd())
+        return tempfile.mkdtemp()
 
     def run_job(self,runner,*args):
         return runner.run(*args)
