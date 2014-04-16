@@ -9,7 +9,7 @@
 #
 #########################################################################
 
-__version__ = "1.0.2"
+__version__ = "1.0.3"
 
 """JobRunner
 
@@ -415,7 +415,7 @@ class GEJobRunner(BaseJobRunner):
         if self.__queue:
             qsub.extend(('-q',self.__queue))
         if self.__log_dir:
-            qsub.extend(('-o',self.__log_dir))
+            qsub.extend(('-o',self.__log_dir,'-e',self.__log_dir))
         if not working_dir:
             qsub.append('-cwd')
         else:
