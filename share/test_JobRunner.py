@@ -45,7 +45,7 @@ class TestSimpleJobRunner(unittest.TestCase):
         """
         # Create a runner and execute the echo command
         runner = SimpleJobRunner()
-        jobid = self.run_job(runner,'test',self.working_dir,'echo','this is a test')
+        jobid = self.run_job(runner,'test',self.working_dir,'echo',('this is a test',))
         self.wait_for_jobs(runner,jobid)
         # Check outputs
         self.assertEqual(runner.name(jobid),'test')
@@ -61,7 +61,7 @@ class TestSimpleJobRunner(unittest.TestCase):
         """
         # Create a runner and execute the echo command
         runner = SimpleJobRunner(join_logs=True)
-        jobid = self.run_job(runner,'test',self.working_dir,'echo','this is a test')
+        jobid = self.run_job(runner,'test',self.working_dir,'echo',('this is a test',))
         self.wait_for_jobs(runner,jobid)
         # Check outputs
         self.assertEqual(runner.name(jobid),'test')
@@ -79,8 +79,8 @@ class TestSimpleJobRunner(unittest.TestCase):
         # Create a runner and execute the echo command
         runner = SimpleJobRunner()
         # Reset the log directory
-        runner.log_dir(self.log_dir)
-        jobid = self.run_job(runner,'test',self.working_dir,'echo','this is a test')
+        runner.set_log_dir(self.log_dir)
+        jobid = self.run_job(runner,'test',self.working_dir,'echo',('this is a test',))
         self.wait_for_jobs(runner,jobid)
         # Check outputs
         self.assertEqual(runner.name(jobid),'test')
@@ -99,14 +99,14 @@ class TestSimpleJobRunner(unittest.TestCase):
         # Create a runner and execute the echo command
         runner = SimpleJobRunner()
         # Reset the log directory
-        runner.log_dir(self.log_dir)
-        jobid1 = self.run_job(runner,'test1',self.working_dir,'echo','this is a test')
+        runner.set_log_dir(self.log_dir)
+        jobid1 = self.run_job(runner,'test1',self.working_dir,'echo',('this is a test',))
         # Rest the log directory again and run second job
-        runner.log_dir(self.working_dir)
-        jobid2 = self.run_job(runner,'test2',self.working_dir,'echo','this is a test')
+        runner.set_log_dir(self.working_dir)
+        jobid2 = self.run_job(runner,'test2',self.working_dir,'echo',('this is a test',))
         # Rest the log directory again and run 3rd job
-        runner.log_dir(self.log_dir)
-        jobid3 = self.run_job(runner,'test3',self.working_dir,'echo','this is a test')
+        runner.set_log_dir(self.log_dir)
+        jobid3 = self.run_job(runner,'test3',self.working_dir,'echo',('this is a test',))
         # Wait for jobs to finish
         self.wait_for_jobs(runner,jobid1,jobid2,jobid3)
         # Check outputs
@@ -174,7 +174,7 @@ class TestGEJobRunner(unittest.TestCase):
         """
         # Create a runner and execute the echo command
         runner = GEJobRunner()
-        jobid = self.run_job(runner,'test',self.working_dir,'echo','this is a test')
+        jobid = self.run_job(runner,'test',self.working_dir,'echo',('this is a test',))
         self.wait_for_jobs(runner,jobid)
         # Check outputs
         self.assertEqual(runner.name(jobid),'test')
@@ -190,7 +190,7 @@ class TestGEJobRunner(unittest.TestCase):
         """
         # Create a runner and execute the echo command
         runner = GEJobRunner(ge_extra_args=['-j','y'])
-        jobid = self.run_job(runner,'test',self.working_dir,'echo','this is a test')
+        jobid = self.run_job(runner,'test',self.working_dir,'echo',('this is a test',))
         self.wait_for_jobs(runner,jobid)
         # Check outputs
         self.assertEqual(runner.name(jobid),'test')
@@ -208,7 +208,7 @@ class TestGEJobRunner(unittest.TestCase):
         # Create a runner and execute the echo command
         runner = GEJobRunner()
         # Reset the log directory
-        runner.log_dir(self.log_dir)
+        runner.set_log_dir(self.log_dir)
         jobid = self.run_job(runner,'test',self.working_dir,'echo','this is a test')
         self.wait_for_jobs(runner,jobid)
         # Check outputs
@@ -228,14 +228,14 @@ class TestGEJobRunner(unittest.TestCase):
         # Create a runner and execute the echo command
         runner = GEJobRunner()
         # Reset the log directory
-        runner.log_dir(self.log_dir)
-        jobid1 = self.run_job(runner,'test1',self.working_dir,'echo','this is a test')
+        runner.set_log_dir(self.log_dir)
+        jobid1 = self.run_job(runner,'test1',self.working_dir,'echo',('this is a test',))
         # Rest the log directory again and run second job
-        runner.log_dir(self.working_dir)
-        jobid2 = self.run_job(runner,'test2',self.working_dir,'echo','this is a test')
+        runner.set_log_dir(self.working_dir)
+        jobid2 = self.run_job(runner,'test2',self.working_dir,'echo',('this is a test',))
         # Rest the log directory again and run 3rd job
-        runner.log_dir(self.log_dir)
-        jobid3 = self.run_job(runner,'test3',self.working_dir,'echo','this is a test')
+        runner.set_log_dir(self.log_dir)
+        jobid3 = self.run_job(runner,'test3',self.working_dir,'echo',('this is a test',))
         self.wait_for_jobs(runner,jobid1,jobid2,jobid3)
         # Check outputs
         self.assertEqual(runner.name(jobid1),'test1')
