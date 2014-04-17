@@ -7,7 +7,7 @@
 #
 #########################################################################
 
-__version__ = "0.0.7"
+__version__ = "0.0.8"
 
 """
 simple_xls.py
@@ -134,6 +134,12 @@ BAD_REF="## !REF ##"
 class NumberFormats:
     THOUSAND_SEPARATOR=0
     PERCENTAGE=1
+
+# Spreadsheet limits
+class Limits:
+    MAX_LEN_WORKSHEET_TITLE = 31 # Max worksheet title length
+    MAX_LEN_WORKSHEET_CELL_VALUE = 250 # Maximum no. of characters in cell
+    MAX_NUMBER_ROWS_PER_WORKSHEET = 65536 # Max number of rows per worksheet
 
 #######################################################################
 # Class definitions
