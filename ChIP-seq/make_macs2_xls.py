@@ -48,7 +48,7 @@ import profile
 # Module metadata
 #######################################################################
 
-__version__ = '0.3.0'
+__version__ = '0.3.1'
 
 #######################################################################
 # Class definitions
@@ -352,13 +352,25 @@ def xls_for_macs2(macs_xls):
         data.insert_column('E',text="chr")
         data.write_column('E',fill="=B?",from_row=2)
 
-    # notes = the header data
+    # Build the 'notes' sheet with the header data
     notes = xls.add_work_sheet('notes',"Notes")
     notes.write_row(1,text="MACS RUN NOTES:",style=boldstyle)
     notes.write_column('A',macs_xls.header,from_row=notes.next_row)
     notes.append_row(text="ADDITIONAL NOTES:",style=boldstyle)
     notes.append_row(text="By default regions are sorted by fold enrichment "
                      "(in descending order)")
+
+    # Check for and address too-long "Command line" cell i.e. if it
+    # exceeds maximum size for a spreadsheet cell
+    char_limit = simple_xls.Limits.MAX_LEN_WORKSHEET_CELL_VALUE
+    for row in range(1,notes.last_row+1):
+        if notes['A'][row].startswith("# Command line:"):
+            command_line = notes['A'][row]
+            if len(command_line) > char_limit:
+                # Chop up command line string over multiple cells
+                logging.warning("Splitting command line over multiple cells")
+                row_data = chunk(command_line,char_limit,delimiter=' ')
+                notes.write_row(row,data=row_data)
         
     # Build the 'legends' sheet based on content of 'data'
     legends = xls.add_work_sheet('legends',"Legends")
@@ -372,6 +384,38 @@ def xls_for_macs2(macs_xls):
 
     # Return spreadsheet object
     return xls
+
+def chunk(line,chunksize,delimiter=None):
+    """Chop a string into 'chunks' no greater than a specified size
+
+    Given a string, return a list where each item is a substring
+    no longer than the specified 'chunksize'.
+
+    If delimiter is not None then the chunking will attempt to
+    chop the substrings on that delimiter. If a delimiter can't be
+    located (or not is specified) then the substrings will all
+    be of length 'chunksize'.
+
+    """
+    chunks = []
+    # Loop over and chop up string until the remainder is shorter
+    # than chunksize
+    while len(line) > chunksize:
+        if delimiter is not None:
+            try:
+                # Locate nearest delimiter before the chunksize limit
+                i = line[:chunksize].rindex(' ')
+            except ValueError:
+                # Unable to locate delimiter so split on the chunksize
+                # limit
+                i = chunksize
+        else:
+            i = chunksize
+        chunks.append(line[:i])
+        line = line[i:]
+    # Append the remainder and return
+    chunks.append(line)
+    return chunks
 
 #######################################################################
 # Tests
@@ -813,6 +857,23 @@ class TestXlsForMacs2Function(unittest.TestCase):
         """
         macsxls = MacsXLS(fp=cStringIO.StringIO(MACS140beta_data))
         self.assertRaises(Exception,xls_for_macs2,macsxls)
+
+class TestChunkFunction(unittest.TestCase):
+    def test_chunk_no_delimiter(self):
+        """Test chunk function with no delimiter
+        """
+        self.assertEqual(chunk("This is some text",5),
+                         ["This ","is so","me te","xt"])
+    def test_chunk_with_delimiter(self):
+        """Test chunk function with delimiter (space)
+        """
+        self.assertEqual(chunk("This is some text",8,delimiter=' '),
+                         ["This is"," some"," text"])
+    def test_chunk_shorter_than_limit(self):
+        """Test chunk function when string is shorter than limit
+        """
+        self.assertEqual(chunk("This is some text",100),
+                         ["This is some text"])
 
 #######################################################################
 # Main program
