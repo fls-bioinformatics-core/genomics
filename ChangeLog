@@ -1,3 +1,33 @@
+2014-04-17  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* ChIP-seq/make_macs2_xls.py
+	- version 0.3.2
+	- Only sort output on fold enrichment
+	- Handle output from --broad option of MACS2
+	- Split data over multiple sheets if row limit is exceeded
+	  (approx 64k records)
+	- Prevent reported command line being truncated if maximum
+	  cell size is exceeded (approx 250 characters)
+	- Refactored internals to make more robust, added unit
+	  tests and switched to use simple_xls module for
+	  spreadsheet generation.
+
+2014-04-10  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* RNA-seq/bowtie_mapping_stats.py
+	- version 1.1.5
+	- Updated to handle paired-end output from Bowtie2
+
+2014-04-09  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* share/simple_xls.py
+	- version 0.0.7
+	- New methods for inserting and appending columns and rows,
+	  which better mimic operations that would be used within a
+	  graphical spreadsheet program.
+	- Significant updates to handling internal book-keeping to
+	  improve performance.
+
 2014-04-04  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* RNA-seq/bowtie_mapping_stats.py
