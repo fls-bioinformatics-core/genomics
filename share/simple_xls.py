@@ -55,17 +55,30 @@ the documentation for the XLSWorkSheet class.
 Data can be added cell-wise (i.e. referencing individual cells as above),
 row-wise, column-wise and block-wise.
 
-Column-wise, inserting a set of distinct values ('insert_column') and a
-single repeating value ('fill_column') respectively:
+Column-wise operations include inserting a column (shifting columns above
+it along one to make space):
 
->>> data.insert_column_data('B',['hello','goodbye','whatev'])
->>> data.fill_column('D','single value')
+>>> data.insert_column('B',data=['hello','goodbye','whatev'])
 
-Row-wise:
+Append a column (writing data to the first empty column at the end of
+the sheet):
 
->>> data.insert_row_data(4,['Dozy','Beaky','Mick','Titch'])
+>>> data.append_column(data=['hello','goodbye','whatev'])
 
-Block-data:
+Write data to a column, overwriting any existing values:
+
+>>> data.write_column(data=['hello','goodbye','whatev'])
+
+Data can be specified as a list, text or as a single value which is
+repeated for each cell (i.e. a "fill" value).
+
+Similar row-wise operations also exist:
+
+>>> data.insert_row(4,data=['Dozy','Beaky','Mick','Titch'])
+>>> data.append_row(data=['Dozy','Beaky','Mick','Titch'])
+>>> data.write_row(4,data=['Dozy','Beaky','Mick','Titch'])
+
+Block-wise data can be added via a tab and newline-delimited string:
 
 >>> data.insert_block_data("This\tis\t\tsome\n\trandom\n\tdata")
 >>> data.insert_block_data("This\tis\t\tsome\n\tMORE\trandom\n\tdata",
@@ -551,6 +564,10 @@ class XLSWorkSheet:
         By default items are inserted starting from row 1, unless a
         starting row is explicitly specified via the 'start' argument.
 
+        *** THIS METHOD IS DEPRECATED ***
+
+        Consider using insert_column, append_column or write_data.
+
         Arguments:
           col: index of column to insert the data into (e.g. 'A','MZ')
           data: list of data items
@@ -733,6 +750,10 @@ class XLSWorkSheet:
         By default items are inserted starting from column 'A', unless a
         starting column is explicitly specified via the 'start' argument.
 
+        *** THIS METHOD IS DEPRECATED ***
+
+        Consider using insert_row, append_row or write_row.
+
         Arguments:
           row: index of row to insert the data into (e.g. 1, 112)
           data: list of data items
@@ -800,6 +821,10 @@ class XLSWorkSheet:
         column which have at least one data item already in any column
         in the worksheet. A different range of rows can be specified
         via the 'start' and 'end' arguments.
+
+        *** THIS METHOD IS DEPRECATED ***
+
+        Consider using insert_column, append_column or write_data.
 
         Arguments:
           column: index of column to insert the item into  (e.g. 'A','MZ')
