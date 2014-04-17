@@ -48,7 +48,7 @@ import profile
 # Module metadata
 #######################################################################
 
-__version__ = '0.3.1'
+__version__ = '0.3.2'
 
 #######################################################################
 # Class definitions
@@ -278,11 +278,13 @@ class MacsXLS:
 # Functions
 #######################################################################
 
-def xls_for_macs2(macs_xls):
+def xls_for_macs2(macs_xls,row_limit=None):
     """Create and return XLS workbook object for MACS2 output
 
     Arguments:
       macs_xls: populated MacsXLS object (must be from MACS2)
+      row_limit: explicitly specify maximum number of rows per
+        output sheet
 
     Returns:
       simple_xls.XLSWorkBook
@@ -295,6 +297,12 @@ def xls_for_macs2(macs_xls):
 
     # Sort into order by fold_enrichment column
     macs_xls.sort_on('fold_enrichment',reverse=True)
+
+    # Maximum number of rows per data sheet
+    if row_limit is None:
+        row_limit = simple_xls.Limits.MAX_NUMBER_ROWS_PER_WORKSHEET
+    if len(macs_xls.data) > row_limit:
+        logging.warning("Data will be split over multiple worksheets on output")
 
     # Legend descriptions for all possible columns
     legends_text = { 'order': "Sorting order FE",
@@ -321,36 +329,54 @@ def xls_for_macs2(macs_xls):
     # Set up styles
     boldstyle = simple_xls.XLSStyle(bold=True)
 
-    # Create and populate the 'data' sheet
-    data = xls.add_work_sheet('data',macs_xls.name)
-    data.write_row(1,data=macs_xls.columns_as_xls_header)
+    # Create and populate the 'data' sheet(s)
+    # If there are more records than will fit into a single spreadsheet
+    # then make multiple sheets
+    data_sheets = []
+    sheet_number = 1
+    data = xls.add_work_sheet("data",macs_xls.name)
     for line in macs_xls.data:
+        # If we've reached the row limit then make a new sheet
+        if data.last_row == row_limit:
+            sheet_number += 1
+            name = "data%d" % sheet_number
+            title = "%s(%d)" % (macs_xls.name[:simple_xls.Limits.MAX_LEN_WORKSHEET_TITLE-4],
+                                sheet_number)
+            print "Making additional data sheet '%s'" % title
+            data = xls.add_work_sheet(name,title)
+        # If this is an empty sheet add the column titles and
+        # store in the list of data sheets
+        if data.next_row == 1:
+            data.write_row(1,data=macs_xls.columns_as_xls_header)
+            data_sheets.append(data)
+        # Write data to sheet
         data.append_row(line)
     
-    # Insert and populate formulae columns
-    if not macs_xls.with_broad_option:
-        # Copy of chr column
-        data.insert_column('E',text="chr")
-        data.write_column('E',fill="=B?",from_row=2)
-        # Summit-100
-        data.insert_column('F',text="abs_summit-100")
-        data.write_column('F',fill="=L?-100",from_row=2)
-        # Summit+100
-        data.insert_column('G',text="abs_summit+100")
-        data.write_column('G',fill="=L?+100",from_row=2)
-        # Copy of chr column
-        data.insert_column('H',text="chr")
-        data.write_column('H',fill="=B?",from_row=2)
-        # Summit-1
-        data.insert_column('I',text="summit-1")
-        data.write_column('I',fill="=L?-1",from_row=2)
-        # Summit
-        data.insert_column('J',text="summit")
-        data.write_column('J',fill="=L?",from_row=2)
-    else:
-        # Copy of chr column
-        data.insert_column('E',text="chr")
-        data.write_column('E',fill="=B?",from_row=2)
+    # Insert and populate formulae columns for each data sheet
+    for data in data_sheets:
+        if not macs_xls.with_broad_option:
+            # Copy of chr column
+            data.insert_column('E',text="chr")
+            data.write_column('E',fill="=B?",from_row=2)
+            # Summit-100
+            data.insert_column('F',text="abs_summit-100")
+            data.write_column('F',fill="=L?-100",from_row=2)
+            # Summit+100
+            data.insert_column('G',text="abs_summit+100")
+            data.write_column('G',fill="=L?+100",from_row=2)
+            # Copy of chr column
+            data.insert_column('H',text="chr")
+            data.write_column('H',fill="=B?",from_row=2)
+            # Summit-1
+            data.insert_column('I',text="summit-1")
+            data.write_column('I',fill="=L?-1",from_row=2)
+            # Summit
+            data.insert_column('J',text="summit")
+            data.write_column('J',fill="=L?",from_row=2)
+        else:
+            # Copy of chr column
+            data.insert_column('E',text="chr")
+            data.write_column('E',fill="=B?",from_row=2)
 
     # Build the 'notes' sheet with the header data
     notes = xls.add_work_sheet('notes',"Notes")
@@ -373,6 +399,7 @@ def xls_for_macs2(macs_xls):
                 notes.write_row(row,data=row_data)
         
     # Build the 'legends' sheet based on content of 'data'
+    data = data_sheets[0]
     legends = xls.add_work_sheet('legends',"Legends")
     for col in simple_xls.ColumnRange(data.last_column):
         name = data[col][1].lstrip('#')
@@ -851,6 +878,76 @@ class TestXlsForMacs2Function(unittest.TestCase):
         self.assertEqual(data['I4'],4.28339)
         self.assertEqual(data['I5'],3.82006)
         self.assertEqual(data['I6'],2.84289)
+
+    def test_xls_for_macs2_with_2010_20131216_multiple_sheets(self):
+        """Generate XLSWorkBook with data split over multiple sheets
+
+        """
+        macsxls = MacsXLS(fp=cStringIO.StringIO(MACS2010_20131216_data))
+        xls = xls_for_macs2(macsxls,row_limit=4)
+        for sheet,title in zip(xls.worksheet,('data','data2','notes','legends')):
+            self.assertEqual(sheet,title)
+        # Check first sheet
+        data = xls.worksheet['data']
+        # Check header
+        self.assertEqual(data['A1'],'#order')
+        self.assertEqual(data['B1'],'chr')
+        self.assertEqual(data['C1'],'start')
+        self.assertEqual(data['D1'],'end')
+        self.assertEqual(data['E1'],'chr')
+        self.assertEqual(data['F1'],'abs_summit-100')
+        self.assertEqual(data['G1'],'abs_summit+100')
+        self.assertEqual(data['H1'],'chr')
+        self.assertEqual(data['I1'],'summit-1')
+        self.assertEqual(data['J1'],'summit')
+        self.assertEqual(data['K1'],'length')
+        self.assertEqual(data['L1'],'abs_summit')
+        self.assertEqual(data['M1'],'pileup')
+        self.assertEqual(data['N1'],'-log10(pvalue)')
+        self.assertEqual(data['O1'],'fold_enrichment')
+        self.assertEqual(data['P1'],'-log10(qvalue)')
+        # Check first line of data in first sheet
+        self.assertEqual(data['A2'],1)
+        self.assertEqual(data['B2'],'chr1')
+        self.assertEqual(data['C2'],6214126)
+        self.assertEqual(data['D2'],6215036)
+        self.assertEqual(data.render_cell('E2'),'=B2')
+        self.assertEqual(data.render_cell('F2'),'=L2-100')
+        self.assertEqual(data.render_cell('G2'),'=L2+100')
+        self.assertEqual(data.render_cell('H2'),'=B2')
+        self.assertEqual(data.render_cell('I2'),'=L2-1')
+        self.assertEqual(data.render_cell('J2'),'=L2')
+        self.assertEqual(data['K2'],911)
+        self.assertEqual(data['L2'],6214792)
+        self.assertEqual(data['M2'],56.00)
+        self.assertEqual(data['N2'],47.04091)
+        self.assertEqual(data['O2'],12.64636)
+        self.assertEqual(data['P2'],43.11036)
+        # Check order of fold enrichment column in first sheet
+        self.assertEqual(data['O2'],12.64636)
+        self.assertEqual(data['O3'],7.09971)
+        self.assertEqual(data['O4'],6.65598)
+        # Check last line of data in second sheet
+        data1 = xls.worksheet['data2']
+        self.assertEqual(data1['A3'],5)
+        self.assertEqual(data1['B3'],'chr1')
+        self.assertEqual(data1['C3'],4858211)
+        self.assertEqual(data1['D3'],4858495)
+        self.assertEqual(data1.render_cell('E3'),'=B3')
+        self.assertEqual(data1.render_cell('F3'),'=L3-100')
+        self.assertEqual(data1.render_cell('G3'),'=L3+100')
+        self.assertEqual(data1.render_cell('H3'),'=B3')
+        self.assertEqual(data1.render_cell('I3'),'=L3-1')
+        self.assertEqual(data1.render_cell('J3'),'=L3')
+        self.assertEqual(data1['K3'],285)
+        self.assertEqual(data1['L3'],4858423)
+        self.assertEqual(data1['M3'],18.00)
+        self.assertEqual(data1['N3'],8.17111)
+        self.assertEqual(data1['O3'],4.21545)
+        self.assertEqual(data1['P3'],5.55648)
+        # Check order of fold enrichment column in second sheet
+        self.assertEqual(data1['O2'],4.88105)
+        self.assertEqual(data1['O3'],4.21545)
 
     def test_xls_for_macs2_with_140beta(self):
         """Check 'xls_for_macs2' raises exception for MACS14 data
