@@ -48,7 +48,7 @@ import profile
 # Module metadata
 #######################################################################
 
-__version__ = '0.2.3'
+__version__ = '0.3.0'
 
 #######################################################################
 # Class definitions
@@ -293,29 +293,27 @@ def xls_for_macs2(macs_xls):
     if macs_xls.macs_version.startswith("1."):
         raise Exception,"Only handles output from MACS 2.0*"
 
-    # Check --broad not specified
-    if macs_xls.with_broad_option:
-        raise Exception,"Handling --broad output not implemented"
-
     # Sort into order by fold_enrichment column
     macs_xls.sort_on('fold_enrichment',reverse=True)
 
-    # Legnds text
-    legends_text = """order\tSorting order FE
-chr\tChromosome location of binding region
-start\tStart coordinate of binding region
-end\tEnd coordinate of binding region
-summit-100\tSummit - 100bp
-summit+100\tSummit + 100bp
-summit-1\tSummit of binding region - 1
-summit\tSummit of binding region
-length\tLength of binding region
-abs_summit\tCoordinate of region summit
-pileup\tNumber of non-degenerate and position corrected reads at summit
--LOG10(pvalue)\tTransformed Pvalue -log10(Pvalue) for the binding region (e.g. if Pvalue=1e-10, then this value should be 10)
-fold_enrichment\tFold enrichment for this region against random Poisson distribution with local lambda
--LOG10(qvalue)\tTransformed Qvalue -log10(Pvalue) for the binding region (e.g. if Qvalue=0.05, then this value should be 1.3)
-"""
+    # Legend descriptions for all possible columns
+    legends_text = { 'order': "Sorting order FE",
+                     'chr': "Chromosome location of binding region",
+                     'start': "Start coordinate of binding region",
+                     'end': "Start coordinate of binding region",
+                     'summit+100': "Summit + 100bp",
+                     'summit-1': "Summit of binding region - 1",
+                     'summit': "Summit of binding region",
+                     'abs_summit+100': "Summit + 100bp",
+                     'abs_summit-100': "Summit of binding region - 100bp",
+                     'abs_summit': "Summit of binding region",
+                     'length': "Length of binding region",
+                     'abs_summit': "Coordinate of region summit",
+                     'pileup': "Number of non-degenerate and position corrected reads at summit",
+                     '-log10(pvalue)': "Transformed Pvalue -log10(Pvalue) for the binding region (e.g. if Pvalue=1e-10, then this value should be 10)",
+                     'fold_enrichment': "Fold enrichment for this region against random Poisson distribution with local lambda",
+                     '-log10(qvalue)': "Transformed Qvalue -log10(Pvalue) for the binding region (e.g. if Qvalue=0.05, then this value should be 1.3)"
+                 }
 
     # Create a new spreadsheet
     xls = simple_xls.XLSWorkBook()
@@ -323,11 +321,37 @@ fold_enrichment\tFold enrichment for this region against random Poisson distribu
     # Set up styles
     boldstyle = simple_xls.XLSStyle(bold=True)
 
-    # Create the sheets
-    #
-    # data = the actual data from MACS
+    # Create and populate the 'data' sheet
     data = xls.add_work_sheet('data',macs_xls.name)
-    #
+    data.write_row(1,data=macs_xls.columns_as_xls_header)
+    for line in macs_xls.data:
+        data.append_row(line)
+    
+    # Insert and populate formulae columns
+    if not macs_xls.with_broad_option:
+        # Copy of chr column
+        data.insert_column('E',text="chr")
+        data.write_column('E',fill="=B?",from_row=2)
+        # Summit-100
+        data.insert_column('F',text="abs_summit-100")
+        data.write_column('F',fill="=L?-100",from_row=2)
+        # Summit+100
+        data.insert_column('G',text="abs_summit+100")
+        data.write_column('G',fill="=L?+100",from_row=2)
+        # Copy of chr column
+        data.insert_column('H',text="chr")
+        data.write_column('H',fill="=B?",from_row=2)
+        # Summit-1
+        data.insert_column('I',text="summit-1")
+        data.write_column('I',fill="=L?-1",from_row=2)
+        # Summit
+        data.insert_column('J',text="summit")
+        data.write_column('J',fill="=L?",from_row=2)
+    else:
+        # Copy of chr column
+        data.insert_column('E',text="chr")
+        data.write_column('E',fill="=B?",from_row=2)
+
     # notes = the header data
     notes = xls.add_work_sheet('notes',"Notes")
     notes.write_row(1,text="MACS RUN NOTES:",style=boldstyle)
@@ -335,35 +359,16 @@ fold_enrichment\tFold enrichment for this region against random Poisson distribu
     notes.append_row(text="ADDITIONAL NOTES:",style=boldstyle)
     notes.append_row(text="By default regions are sorted by fold enrichment "
                      "(in descending order)")
-
-    # legends = static text explaining the column headers
+        
+    # Build the 'legends' sheet based on content of 'data'
     legends = xls.add_work_sheet('legends',"Legends")
-    legends.write_column('A',text=legends_text)
-
-    # Add data to the "data" sheet
-    data.write_row(1,data=macs_xls.columns_as_xls_header)
-    for line in macs_xls.data:
-        data.append_row(line)
-
-    # Insert and populate formulae columns
-    # Copy of chr column
-    data.insert_column('E',text="chr")
-    data.write_column('E',fill="=B?",from_row=2)
-    # Summit-100
-    data.insert_column('F',text="abs_summit-100")
-    data.write_column('F',fill="=L?-100",from_row=2)
-    # Summit+100
-    data.insert_column('G',text="abs_summit+100")
-    data.write_column('G',fill="=L?+100",from_row=2)
-    # Copy of chr column
-    data.insert_column('H',text="chr")
-    data.write_column('H',fill="=B?",from_row=2)
-    # Summit-1
-    data.insert_column('I',text="summit-1")
-    data.write_column('I',fill="=L?-1",from_row=2)
-    # Summit
-    data.insert_column('J',text="summit")
-    data.write_column('J',fill="=L?",from_row=2)
+    for col in simple_xls.ColumnRange(data.last_column):
+        name = data[col][1].lstrip('#')
+        try:
+            legends.append_row(data=(name,legends_text[name]))
+        except KeyError:
+            logging.warning("No legend description found for column '%s'" % name)
+            legends.append_row(data=(name,name.title()))
 
     # Return spreadsheet object
     return xls
@@ -756,10 +761,52 @@ class TestXlsForMacs2Function(unittest.TestCase):
         self.assertEqual(data['O6'],4.21545)
 
     def test_xls_for_macs2_with_2010_20131216_broad(self):
-        """Check 'xls_for_macs2' raises exception for MACS2.0.10.20131216 (--broad) data
+        """Generate XLSWorkBook for MACS2.0.10.20131216 data with --broad option
         """
         macsxls = MacsXLS(fp=cStringIO.StringIO(MACS2010_20131216_broad_data))
-        self.assertRaises(Exception,xls_for_macs2,macsxls)
+        xls = xls_for_macs2(macsxls)
+        for sheet,title in zip(xls.worksheet,('data','notes','legends')):
+            self.assertEqual(sheet,title)
+        data = xls.worksheet['data']
+        # Check header
+        self.assertEqual(data['A1'],'#order')
+        self.assertEqual(data['B1'],'chr')
+        self.assertEqual(data['C1'],'start')
+        self.assertEqual(data['D1'],'end')
+        self.assertEqual(data['E1'],'chr')
+        self.assertEqual(data['F1'],'length')
+        self.assertEqual(data['G1'],'pileup')
+        self.assertEqual(data['H1'],'-log10(pvalue)')
+        self.assertEqual(data['I1'],'fold_enrichment')
+        self.assertEqual(data['J1'],'-log10(qvalue)')
+        # Check first line of data
+        self.assertEqual(data['A2'],1)
+        self.assertEqual(data['B2'],'chr1')
+        self.assertEqual(data['C2'],6214118)
+        self.assertEqual(data['D2'],6215462)
+        self.assertEqual(data.render_cell('E2'),'=B2')
+        self.assertEqual(data['F2'],1345)
+        self.assertEqual(data['G2'],25.10)
+        self.assertEqual(data['H2'],15.08276)
+        self.assertEqual(data['I2'],5.78500)
+        self.assertEqual(data['J2'],12.23221)
+        # Check last line of data
+        self.assertEqual(data['A6'],5)
+        self.assertEqual(data['B6'],'chr1')
+        self.assertEqual(data['C6'],4571604)
+        self.assertEqual(data['D6'],4572035)
+        self.assertEqual(data.render_cell('E6'),'=B6')
+        self.assertEqual(data['F6'],432)
+        self.assertEqual(data['G6'],11.81)
+        self.assertEqual(data['H6'],4.00624)
+        self.assertEqual(data['I6'],2.84289)
+        self.assertEqual(data['J6'],1.70591)
+        # Check order of fold enrichment column
+        self.assertEqual(data['I2'],5.78500)
+        self.assertEqual(data['I3'],4.45015)
+        self.assertEqual(data['I4'],4.28339)
+        self.assertEqual(data['I5'],3.82006)
+        self.assertEqual(data['I6'],2.84289)
 
     def test_xls_for_macs2_with_140beta(self):
         """Check 'xls_for_macs2' raises exception for MACS14 data
@@ -784,20 +831,27 @@ def main(macs_file,xls_out):
     """
 
     # Load the data from the file
+    print "Reading data...",
     macs_xls = MacsXLS(macs_file)
+    print "done"
     if macs_xls.macs_version is None:
         logging.error("couldn't detect MACS version")
         sys.exit(1)
-    else:
-        print "Input file is from MACS %s" % macs_xls.macs_version
+    print "Input file is from MACS %s" % macs_xls.macs_version
+    print "Found %d records" % len(macs_xls.data)
+    if macs_xls.macs_version.startswith('2.'):
+        if macs_xls.with_broad_option:
+            print "MACS was run with --broad option"
 
     # Create XLS file
+    print "Generating XLS file"
     try:
         xls = xls_for_macs2(macs_xls)
     except Exception,ex:
         logging.error("failed to convert to XLS: %s" % ex)
         sys.exit(1)
     xls.save_as_xls(xls_out)
+    print "Finished"
 
 if __name__ == "__main__":
     # Process command line
@@ -814,7 +868,8 @@ if __name__ == "__main__":
     if len(args) < 1 or len(args) > 2:
         p.error("Wrong number of arguments")
     macs_in = args[0]
-
+    # Report version
+    print "%s %s" % (os.path.basename(sys.argv[0]),__version__)
     # Build output file name: if not explicitly supplied on the command
     # line then use "XLS_<input_name>.xls"
     if len(args) == 2:
