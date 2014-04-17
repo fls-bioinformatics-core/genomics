@@ -48,7 +48,7 @@ import profile
 # Module metadata
 #######################################################################
 
-__version__ = '0.2.1'
+__version__ = '0.2.2'
 
 #######################################################################
 # Class definitions
@@ -316,7 +316,6 @@ pileup\tNumber of non-degenerate and position corrected reads at summit
 -LOG10(pvalue)\tTransformed Pvalue -log10(Pvalue) for the binding region (e.g. if Pvalue=1e-10, then this value should be 10)
 fold_enrichment\tFold enrichment for this region against random Poisson distribution with local lambda
 -LOG10(qvalue)\tTransformed Qvalue -log10(Pvalue) for the binding region (e.g. if Qvalue=0.05, then this value should be 1.3)
-FDR(%)\tFalse discovery rate (FDR) as a percentage
 """
 
     # Create a new spreadsheet
