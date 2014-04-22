@@ -272,7 +272,7 @@ class SimpleJobRunner(BaseJobRunner):
         kill=('kill','-9',job_id)
         p = subprocess.Popen(kill)
         p.wait()
-        if not Pstat().hasJob(job_id):
+        if job_id not in self.list():
             logging.debug("KillJob: deleted job %s" % job_id)
             return True
         else:
