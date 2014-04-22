@@ -154,6 +154,8 @@ class TestGEJobRunner(unittest.TestCase):
         # Create a temporary directory to work in
         self.working_dir = self.make_tmp_dir()
         self.log_dir = None
+        # Extra arguments: edit this for local setup requirements
+        self.ge_extra_args = ['-l','short']
 
     def cleanUp(self):
         shutil.rmtree(self.working_dir)
@@ -183,6 +185,10 @@ class TestGEJobRunner(unittest.TestCase):
                 # All jobs finished
                 return
         # At this point we've reach the timeout limit
+        for jobid in args:
+            # Terminate jobs
+            if runner.isRunning(jobid):
+                runner.terminate(jobid)
         self.cleanUp() # Not sure why but should do clean up manually
         self.fail("Timed out waiting for test job")
 
@@ -191,7 +197,7 @@ class TestGEJobRunner(unittest.TestCase):
 
         """
         # Create a runner and execute the echo command
-        runner = GEJobRunner()
+        runner = GEJobRunner(ge_extra_args=self.ge_extra_args)
         jobid = self.run_job(runner,'test',self.working_dir,'echo',('this is a test',))
         self.wait_for_jobs(runner,jobid)
         # Check outputs
@@ -207,7 +213,8 @@ class TestGEJobRunner(unittest.TestCase):
 
         """
         # Create a runner and execute the echo command
-        runner = GEJobRunner(ge_extra_args=['-j','y'])
+        self.ge_extra_args.extend(('-j','y'))
+        runner = GEJobRunner(ge_extra_args=self.ge_extra_args)
         jobid = self.run_job(runner,'test',self.working_dir,'echo',('this is a test',))
         self.wait_for_jobs(runner,jobid)
         # Check outputs
@@ -224,7 +231,7 @@ class TestGEJobRunner(unittest.TestCase):
         # Create a temporary log directory
         self.log_dir = self.make_tmp_dir()
         # Create a runner and execute the echo command
-        runner = GEJobRunner()
+        runner = GEJobRunner(ge_extra_args=self.ge_extra_args)
         # Reset the log directory
         runner.set_log_dir(self.log_dir)
         jobid = self.run_job(runner,'test',self.working_dir,'echo','this is a test')
@@ -244,7 +251,7 @@ class TestGEJobRunner(unittest.TestCase):
         # Create a temporary log directory
         self.log_dir = self.make_tmp_dir()
         # Create a runner and execute the echo command
-        runner = GEJobRunner()
+        runner = GEJobRunner(ge_extra_args=self.ge_extra_args)
         # Reset the log directory
         runner.set_log_dir(self.log_dir)
         jobid1 = self.run_job(runner,'test1',self.working_dir,'echo',('this is a test',))
