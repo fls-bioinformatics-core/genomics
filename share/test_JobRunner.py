@@ -208,6 +208,24 @@ class TestGEJobRunner(unittest.TestCase):
         self.assertEqual(os.path.dirname(runner.logFile(jobid)),self.working_dir)
         self.assertEqual(os.path.dirname(runner.errFile(jobid)),self.working_dir)
 
+    def test_ge_job_runner_termination(self):
+        """Test GEJobRunner can terminate a running job
+
+        """
+        # Create a runner and execute the sleep command
+        runner = GEJobRunner(ge_extra_args=self.ge_extra_args)
+        jobid = self.run_job(runner,'test',self.working_dir,'sleep',('60s',))
+        # Wait for job to start
+        ntries = 0
+        while ntries < 100:
+            if runner.isRunning(jobid):
+                break
+            ntries += 1
+        self.assertTrue(runner.isRunning(jobid))
+        # Terminate job
+        runner.terminate(jobid)
+        self.assertFalse(runner.isRunning(jobid))
+
     def test_ge_job_runner_join_logs(self):
         """Test GEJobRunner with '-j y' option (i.e. join stderr and stdout)
 
