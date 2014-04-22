@@ -14,7 +14,7 @@ class TestSimpleJobRunner(unittest.TestCase):
         self.working_dir = self.make_tmp_dir()
         self.log_dir = None
 
-    def cleanUp(self):
+    def tearDown(self):
         shutil.rmtree(self.working_dir)
         if self.log_dir is not None:
             shutil.rmtree(self.log_dir)
@@ -36,7 +36,6 @@ class TestSimpleJobRunner(unittest.TestCase):
                 # All jobs finished
                 return
         # At this point we've reach the timeout limit
-        self.cleanUp() # Not sure why but should do clean up manually
         self.fail("Timed out waiting for test job")
 
     def test_simple_job_runner(self):
@@ -157,7 +156,7 @@ class TestGEJobRunner(unittest.TestCase):
         # Extra arguments: edit this for local setup requirements
         self.ge_extra_args = ['-l','short']
 
-    def cleanUp(self):
+    def tearDown(self):
         shutil.rmtree(self.working_dir)
         if self.log_dir is not None:
             shutil.rmtree(self.log_dir)
@@ -169,7 +168,6 @@ class TestGEJobRunner(unittest.TestCase):
         try:
             return runner.run(*args)
         except OSError:
-            self.cleanUp() # Not sure why but should do clean up manually
             self.fail("Unable to run GE job")
 
     def wait_for_jobs(self,runner,*args):
@@ -189,7 +187,6 @@ class TestGEJobRunner(unittest.TestCase):
             # Terminate jobs
             if runner.isRunning(jobid):
                 runner.terminate(jobid)
-        self.cleanUp() # Not sure why but should do clean up manually
         self.fail("Timed out waiting for test job")
 
     def test_ge_job_runner(self):
