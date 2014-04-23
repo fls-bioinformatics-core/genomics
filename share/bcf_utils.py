@@ -7,7 +7,7 @@
 #
 #########################################################################
 
-__version__ = "1.4.3"
+__version__ = "1.4.4"
 
 """bcf_utils
 
@@ -504,8 +504,13 @@ def mklink(target,link_name,relative=False):
 def chmod(target,mode):
     """Change mode of file or directory
 
-    This a wrapper for the os.lchmod function, which
-    doesn't follow symbolic links.
+    This a wrapper for the os.chmod function, with the
+    addition that it doesn't follow symbolic links.
+
+    For symbolic links it attempts to use the os.lchmod
+    function instead, as this operates on the link
+    itself and not the link target. If os.lchmod is not
+    available then links are ignored.
 
     Arguments:
       target: file or directory to apply new mode to
@@ -514,7 +519,17 @@ def chmod(target,mode):
     """
     logging.debug("Changing mode of %s to %s" % (target,mode))
     try:
-        os.lchmod(target,mode)
+        if os.path.islink(target):
+            # Try to use lchmod to operate on the link
+            try:
+                os.lchmod(target,mode)
+            except AttributeError,ex:
+                # lchmod is not available on all systems
+                # If not then just ignore
+                logging.debug("os.lchmod not available? Exception: %s" % ex)
+        else:
+            # Use os.chmod for everything else
+            os.chmod(target,mode)
     except OSError, ex:
         logging.warning("Failed to change permissions on %s to %s: %s" % (target,mode,ex))
 

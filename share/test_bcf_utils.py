@@ -426,6 +426,48 @@ class TestFileSystemFunctions(unittest.TestCase):
         self.assertEqual('name',rootname('name.fastq.gz'))
         self.assertEqual('/path/to/name',rootname('/path/to/name.fastq.gz'))
 
+class TestChmodFunction(unittest.TestCase):
+
+    def setUp(self):
+        self.test_dir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        if os.path.exists(self.test_dir):
+            shutil.rmtree(self.test_dir)
+
+    def test_chmod_for_file(self):
+        """Check chmod works on a file
+        """
+        test_file = os.path.join(self.test_dir,'test.txt')
+        open(test_file,'w').write("Some random text")
+        chmod(test_file,0644)
+        self.assertEqual(stat.S_IMODE(os.lstat(test_file).st_mode),0644)
+        chmod(test_file,0755)
+        self.assertEqual(stat.S_IMODE(os.lstat(test_file).st_mode),0755)
+
+    def test_chmod_for_directory(self):
+        """Check chmod works on a directory
+        """
+        test_dir = os.path.join(self.test_dir,'test')
+        os.mkdir(test_dir)
+        chmod(test_dir,0755)
+        self.assertEqual(stat.S_IMODE(os.lstat(test_dir).st_mode),0755)
+        chmod(test_dir,0777)
+        self.assertEqual(stat.S_IMODE(os.lstat(test_dir).st_mode),0777)
+
+    def test_chmod_doesnt_follow_link(self):
+        """Check chmod doesn't follow symbolic links
+        """
+        test_file = os.path.join(self.test_dir,'test.txt')
+        open(test_file,'w').write("Some random text")
+        test_link = os.path.join(self.test_dir,'test.lnk')
+        os.symlink(test_file,test_link)
+        chmod(test_file,0644)
+        self.assertEqual(stat.S_IMODE(os.lstat(test_file).st_mode),0644)
+        chmod(test_link,0755)
+        # Target should be unaffected
+        self.assertEqual(stat.S_IMODE(os.lstat(test_file).st_mode),0644)
+
 class TestTouchFunction(unittest.TestCase):
     """Unit tests for the 'touch' function
 
