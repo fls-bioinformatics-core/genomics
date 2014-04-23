@@ -45,7 +45,7 @@ system. So typical usage might look like:
 # Module metadata
 #######################################################################
 
-__version__ = "0.1.2"
+__version__ = "0.1.3"
 
 #######################################################################
 # Import modules that this module depends on
@@ -240,6 +240,13 @@ class Job:
         while self.isRunning():
             time.sleep(1)
         return
+
+    @property
+    def runner(self):
+        """Return the JobRunner instance associated with the Job
+
+        """
+        return self.__runner
 
 # PipelineRunner: class to set up and run multiple jobs
 class PipelineRunner:
