@@ -94,7 +94,6 @@ class BaseJobRunner:
 
     def __init__(self):
         self.__log_dir = None
-        pass
 
     def run(self,name,working_dir,script,args):
         """Start a job running
