@@ -25,6 +25,9 @@ export FASTQ_SCREEN_CONF_DIR=/path/to/conf_file_dir
 # letterspace then the extension is '_nt'
 export FASTQ_SCREEN_CONF_NT_EXT=_nt
 export FASTQ_SCREEN_CONF_CS_EXT=
+# Specify custom contaminants file for FASTQC
+# (leave blank for default)
+export FASTQC_CONTAMINANTS_FILE=
 #
 # Ownership and permissions
 #

@@ -4,7 +4,7 @@
 #
 # Usage: illumina_qc.sh <fastq>
 #
-VERSION=1.0.0
+VERSION=1.1.0
 #
 function usage() {
     echo "Usage: illumina_qc.sh <fastq> [--no-ungzip]"
@@ -147,6 +147,7 @@ echo fastq     : `basename $FASTQ`
 echo fastq_screen: $FASTQ_SCREEN
 echo fastq_screen conf files in: $FASTQ_SCREEN_CONF_DIR
 echo fastqc    : $FASTQC
+echo fastqc contaminants: $FASTQC_CONTAMINANTS_FILE
 echo ungzip fastq: $do_ungzip
 echo "--------------------------------------------------------"
 echo hostname  : $HOSTNAME
@@ -207,9 +208,15 @@ run_fastq_screen $FASTQ
 #
 # Run FASTQC
 if [ ! -d qc/${fastq_base}_fastqc ] || [ ! -f qc/${fastq_base}_fastqc.zip ] ; then
-    echo "Running FastQC command: ${FASTQC} --nogroup"
+    fastqc_cmd="${FASTQC} --outdir qc --nogroup"
+    if [ ! -z "$FASTQC_CONTAMINANTS_FILE" ] ; then
+	# Nb avoid -c even though this should be valid it seems to
+	# confuse fastqc
+	fastqc_cmd="$fastqc_cmd --contaminants $FASTQC_CONTAMINANTS_FILE"
+    fi
+    echo "Running FastQC command: $fastqc_cmd"
     echo ${FASTQC} version $(get_version $FASTQC)
-    ${FASTQC} --outdir qc --nogroup $FASTQ
+    ${fastqc_cmd} $FASTQ
     if [ $? -ne 0 ] ; then
 	echo FASTQC failed >&2
     fi
