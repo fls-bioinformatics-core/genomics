@@ -41,7 +41,7 @@ function get_version() {
 	    fastqc)
 		# fastqc -v
 		# FastQC v0.10.0
-		echo `$get_version_exe -v | cut -d" " -f2`
+		echo `$get_version_exe -v 2>&1 | tail -1 | cut -d" " -f2`
 		;;
 	    samtools)
 		# samtools: Version: 0.1.18 (r982:295)
