@@ -189,8 +189,8 @@ class BaseExampleDir:
             filelist = [self.path(x) for x in filelist]
         return filelist
 
-    def create_directory(self):
-        self.dirn = TestUtils.make_dir()
+    def create_directory(self,dirname=None):
+        self.dirn = TestUtils.make_dir(dirname=dirname)
         for d in self.dirs:
             TestUtils.make_sub_dir(self.dirn,d)
         for f in self.files:
