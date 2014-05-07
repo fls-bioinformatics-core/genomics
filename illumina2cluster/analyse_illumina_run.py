@@ -9,7 +9,7 @@ Provides functionality for analysing data from an Illumina sequencer run.
 
 """
 
-__version__ = "0.1.11.2"
+__version__ = "0.1.12"
 
 #######################################################################
 # Import modules
@@ -34,124 +34,6 @@ import bcf_utils
 #######################################################################
 # Functions
 #######################################################################
-
-def describe_project(illumina_project):
-    """Generate description string for samples in a project
-
-    Description string gives the project name and a human-readable
-    summary of the sample names, plus number of samples and whether
-    the data is paired end.
-
-    Example output: "Project Control: PhiX_1-2  (2 samples)"
-
-    Arguments
-      illumina_project: IlluminaProject instance
-
-    Returns
-      Description string.
-
-    """
-    # Gather information
-    paired_end = illumina_project.paired_end
-    n_samples = len(illumina_project.samples)
-    multiple_fastqs_per_sample = False
-    for s in illumina_project.samples:
-        n_fastqs = len(s.fastq)
-        if (paired_end and n_fastqs > 2) or (not paired_end and n_fastqs > 1):
-            multiple_fastqs_per_sample = True
-            break
-    # Build description
-    description = "%s: %s" % (illumina_project.name,
-                              illumina_project.prettyPrintSamples())
-    sample_names = illumina_project.prettyPrintSamples()
-    description += " (%d " % n_samples
-    if paired_end:
-        description += "paired end "
-    if n_samples == 1:
-        description += "sample"
-    else:
-        description += "samples"
-    if multiple_fastqs_per_sample:
-        description += ", multiple fastqs per sample"
-    description += ")"
-    return "%s" % description
-
-def summarise_projects(illumina_data):
-    """Short summary of projects, suitable for logging file
-
-    The summary description is a one line summary of the project names
-    along with the number of samples in each, and an indication if the
-    run was paired-ended.
-
-    Arguments:
-      illumina_data: a populated IlluminaData directory
-
-    Returns:
-      Summary description.
-
-    """
-    summary = ""
-    project_summaries = []
-    if illumina_data.paired_end:
-        summary = "Paired end: "
-    for project in illumina_data.projects:
-        n_samples = len(project.samples)
-        project_summaries.append("%s (%d sample%s)" % (project.name,
-                                                       n_samples,
-                                                       's' if n_samples != 1 else ''))
-    summary += "; ".join(project_summaries)
-    return summary
-
-def verify_run_against_sample_sheet(illumina_data,sample_sheet):
-    """Checks existence of predicted outputs from a sample sheet
-
-    Arguments:
-      illumina_data: a populated IlluminaData directory
-      sample_sheet : path and name of a CSV sample sheet
-
-    Returns:
-      True if all the predicted outputs from the sample sheet are
-      found, False otherwise.
-
-    """
-    # Get predicted outputs
-    predicted_projects = IlluminaData.\
-        CasavaSampleSheet(sample_sheet).predict_output()
-    # Loop through projects and check that predicted outputs exist
-    verified = True
-    for proj in predicted_projects:
-        # Locate project directory
-        proj_dir = os.path.join(illumina_data.unaligned_dir,proj)
-        if os.path.isdir(proj_dir):
-            predicted_samples = predicted_projects[proj]
-            for smpl in predicted_samples:
-                # Locate sample directory
-                smpl_dir = os.path.join(proj_dir,smpl)
-                if os.path.isdir(smpl_dir):
-                    # Check for output files
-                    predicted_names = predicted_samples[smpl]
-                    for name in predicted_names:
-                        # Look for R1 file
-                        f = os.path.join(smpl_dir,"%s_R1_001.fastq.gz" % name)
-                        if not os.path.exists(f):
-                            logging.warning("Verify: missing R1 file '%s'" % f)
-                            verified = False
-                        # Look for R2 file (paired end only)
-                        if illumina_data.paired_end:
-                            f = os.path.join(smpl_dir,"%s_R2_001.fastq.gz" % name)
-                            if not os.path.exists(f):
-                                logging.warning("Verify: missing R2 file '%s'" % f)
-                                verified = False
-                else:
-                    # Sample directory not found
-                    logging.warning("Verify: missing %s" % smpl_dir)
-                    verified = False
-        else:
-            # Project directory not found
-            logging.warning("Verify: missing %s" % proj_dir)
-            verified = False
-    # Return verification status
-    return verified
 
 #######################################################################
 # Main program
@@ -236,7 +118,7 @@ if __name__ == "__main__":
     # Report the names of the samples in each project
     if options.report:
         for project in illumina_data.projects:
-            print "%s" % describe_project(project)
+            print "%s" % IlluminaData.describe_project(project)
             # Report statistics for fastq files
             if options.stats:
                 # Print number of reads for each file, and file size
@@ -252,7 +134,7 @@ if __name__ == "__main__":
 
     # Summary: short report suitable for logging file
     if options.summary:
-        print "%s" % summarise_projects(illumina_data)
+        print "%s" % IlluminaData.summarise_projects(illumina_data)
 
     # Print number of undetermined reads
     if options.stats and illumina_data.undetermined is not None:
@@ -293,7 +175,7 @@ if __name__ == "__main__":
 
     # Verify against sample sheet
     if options.sample_sheet is not None:
-        if verify_run_against_sample_sheet(illumina_data,options.sample_sheet):
+        if IlluminaData.verify_run_against_sample_sheet(illumina_data,options.sample_sheet):
             print "Verification against sample sheet '%s': OK" % \
                 options.sample_sheet
             status = 0

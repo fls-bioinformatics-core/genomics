@@ -4,6 +4,8 @@
 from IlluminaData import *
 import unittest
 import cStringIO
+import tempfile
+import shutil
 
 class MockIlluminaData:
     """Utility class for creating mock Illumina analysis data directories
@@ -865,6 +867,135 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,Sample_Pro
             self.assertEqual(sample_sheet[i]['SampleID'],self.hiseq_sample_ids[i])
             self.assertEqual(sample_sheet[i]['SampleProject'],self.hiseq_sample_projects[i])
             self.assertEqual(sample_sheet[i]['Index'],self.hiseq_index_ids[i])
+
+class TestVerifyRunAgainstSampleSheet(unittest.TestCase):
+
+    def setUp(self):
+        # Create a mock Illumina directory
+        self.top_dir = tempfile.mkdtemp()
+        self.mock_illumina_data = MockIlluminaData('test.MockIlluminaData',
+                                                   paired_end=True,
+                                                   top_dir=self.top_dir)
+        self.mock_illumina_data.add_fastq_batch('AB','AB1','AB1_GCCAAT',lanes=(1,))
+        self.mock_illumina_data.add_fastq_batch('AB','AB2','AB2_AGTCAA',lanes=(1,))
+        self.mock_illumina_data.add_fastq_batch('CDE','CDE3','CDE3_GCCAAT',lanes=(2,3))
+        self.mock_illumina_data.add_fastq_batch('CDE','CDE4','CDE4_AGTCAA',lanes=(2,3))
+        self.mock_illumina_data.add_undetermined(lanes=(1,2,3))
+        self.mock_illumina_data.create()
+        # Sample sheet
+        fno,self.sample_sheet = tempfile.mkstemp()
+        fp = os.fdopen(fno,'w')
+        fp.write("""FCID,Lane,SampleID,SampleRef,Index,Description,Control,Recipe,Operator,SampleProject
+FC1,1,AB1,,GCCAAT,,,,,AB
+FC1,1,AB2,,AGTCAA,,,,,AB
+FC1,2,CDE3,,GCCAAT,,,,,CDE
+FC1,2,CDE4,,AGTCAA,,,,,CDE
+FC1,3,CDE3,,GCCAAT,,,,,CDE
+FC1,3,CDE4,,AGTCAA,,,,,CDE""")
+        fp.close()
+
+    def tearDown(self):
+        # Remove the test directory
+        if self.mock_illumina_data is not None:
+            self.mock_illumina_data.remove()
+        os.rmdir(self.top_dir)
+        os.remove(self.sample_sheet)
+
+    def test_verify_run_against_sample_sheet(self):
+        """Verify sample sheet against a matching run
+        """
+        illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertTrue(verify_run_against_sample_sheet(illumina_data,
+                                                        self.sample_sheet))
+
+    def test_verify_run_against_sample_sheet_with_missing_project(self):
+        """Verify sample sheet against a run with a missing project
+        """
+        shutil.rmtree(os.path.join(self.mock_illumina_data.dirn,
+                                   self.mock_illumina_data.unaligned_dir,
+                                   "Project_AB"))
+        illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertFalse(verify_run_against_sample_sheet(illumina_data,
+                                                        self.sample_sheet))
+
+    def test_verify_run_against_sample_sheet_with_missing_sample(self):
+        """Verify sample sheet against a run with a missing sample
+        """
+        shutil.rmtree(os.path.join(self.mock_illumina_data.dirn,
+                                   self.mock_illumina_data.unaligned_dir,
+                                   "Project_AB","Sample_AB1"))
+        illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertFalse(verify_run_against_sample_sheet(illumina_data,
+                                                        self.sample_sheet))
+
+    def test_verify_run_against_sample_sheet_with_missing_fastq(self):
+        """Verify sample sheet against a run with a missing fastq file
+        """
+        os.remove(os.path.join(self.mock_illumina_data.dirn,
+                               self.mock_illumina_data.unaligned_dir,
+                               "Project_CDE","Sample_CDE4",
+                               "CDE4_AGTCAA_L002_R2_001.fastq.gz"))
+        illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertFalse(verify_run_against_sample_sheet(illumina_data,
+                                                        self.sample_sheet))
+    
+class TestSummariseProjects(unittest.TestCase):
+
+    def setUp(self):
+        # Create a mock Illumina directory
+        self.top_dir = tempfile.mkdtemp()
+        self.mock_illumina_data = MockIlluminaData('test.MockIlluminaData',
+                                                   paired_end=True,
+                                                   top_dir=self.top_dir)
+        self.mock_illumina_data.add_fastq_batch('AB','AB1','AB1_GCCAAT',lanes=(1,))
+        self.mock_illumina_data.add_fastq_batch('AB','AB2','AB2_AGTCAA',lanes=(1,))
+        self.mock_illumina_data.add_fastq_batch('CDE','CDE3','CDE3_GCCAAT',lanes=(2,3))
+        self.mock_illumina_data.add_fastq_batch('CDE','CDE4','CDE4_AGTCAA',lanes=(2,3))
+        self.mock_illumina_data.add_undetermined(lanes=(1,2,3))
+        self.mock_illumina_data.create()
+
+    def tearDown(self):
+        # Remove the test directory
+        if self.mock_illumina_data is not None:
+            self.mock_illumina_data.remove()
+        os.rmdir(self.top_dir)
+
+    def test_summarise_projects_paired_end_run(self):
+        """Summarise projects for paired end run
+        """
+        illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertEqual(summarise_projects(illumina_data),
+                         "Paired end: AB (2 samples); CDE (2 samples)")
+
+class TestDescribeProject(unittest.TestCase):
+
+    def setUp(self):
+        # Create a mock Illumina directory
+        self.top_dir = tempfile.mkdtemp()
+        self.mock_illumina_data = MockIlluminaData('test.MockIlluminaData',
+                                                   paired_end=True,
+                                                   top_dir=self.top_dir)
+        self.mock_illumina_data.add_fastq_batch('AB','AB1','AB1_GCCAAT',lanes=(1,))
+        self.mock_illumina_data.add_fastq_batch('AB','AB2','AB2_AGTCAA',lanes=(1,))
+        self.mock_illumina_data.add_fastq_batch('CDE','CDE3','CDE3_GCCAAT',lanes=(2,3))
+        self.mock_illumina_data.add_fastq_batch('CDE','CDE4','CDE4_AGTCAA',lanes=(2,3))
+        self.mock_illumina_data.add_undetermined(lanes=(1,2,3))
+        self.mock_illumina_data.create()
+
+    def tearDown(self):
+        # Remove the test directory
+        if self.mock_illumina_data is not None:
+            self.mock_illumina_data.remove()
+        os.rmdir(self.top_dir)
+
+    def test_describe_project_paired_end_run(self):
+        """Generate descriptions for projects in a paired end run
+        """
+        illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertEqual(describe_project(illumina_data.projects[0]),
+                         "AB: AB1-2 (2 paired end samples)")
+        self.assertEqual(describe_project(illumina_data.projects[1]),
+                         "CDE: CDE3-4 (2 paired end samples, multiple fastqs per sample)")
 
 class TestUniqueFastqNames(unittest.TestCase):
 
