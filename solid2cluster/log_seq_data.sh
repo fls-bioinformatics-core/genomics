@@ -93,6 +93,10 @@ if [ $MODE == "validate" ] ; then
     fi
 elif [ $MODE == "info" ] ; then
     SEQ_DATA_DIR=$2
+    if [ -z "$SEQ_DATA_DIR" ]  ; then
+	echo ERROR no sequence data directory supplied
+	exit 1
+    fi
     entry=$(grep ^${SEQ_DATA_DIR}$'\t' $LOG_FILE)
     if [ -z "$entry" ] ; then
 	echo ERROR $SEQ_DATA_DIR not found
@@ -119,6 +123,10 @@ elif [ $MODE == "change" ] ; then
 else
     SEQ_DATA_DIR=$(abs_path $2)
     DESCRIPTION=$3
+fi
+if [ -z "$SEQ_DATA_DIR" ] ; then
+    echo ERROR no sequence data directory supplied
+    exit 1
 fi
 SEQ_DATA_DIR=$(readlink -m $SEQ_DATA_DIR)
 #
