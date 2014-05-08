@@ -1,3 +1,71 @@
+2014-05-07  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* QC-pipeline/illumina_qc.sh
+	- version 1.1.0
+	- Optionally use a non-default list of contaminants for
+	  FastQC (if specified in the qc.setup file)
+	- Create and set a local tmp directory for Java when
+	  running FastQC.
+	- New --no-gunzip option suppresses creation of uncompressed
+	  fastq files.
+
+	* share/bcf_utils.py
+	- version 1.4.4
+	- New functions for getting user and group names and ID numbers
+	  from the system.
+	- New 'PathInfo' class for getting information about file system
+	  paths.
+	- Moved symbolic link handling classes and functions in from
+	  utils/symlink_checker.py program.
+	- 'format_file_sizes' function updated to format to specific
+	  units, and able to handle terabyte sizes.
+	- new function 'find_program'.
+
+	* share/htmlpagewriter.py
+	- version 1.0.0
+	- New module: HTML page generation functionality relocated from
+	  the QC-pipeline/qcreporter.py utility.
+
+	* share/IlluminaData.py
+	- version 1.1.3
+	- Move 'describe_project', 'summarise_projects' and
+	  'verify_run_against_sample_sheet' functions from
+	  illumina2cluster/analyse_illumina_run.py into this
+	  module.
+
+	* share/JobRunner.py
+	- version 1.0.4
+	- fix broken 'terminate' method for SimpleJobRunner.
+	- move set/get of log directory into the BaseJobRunner
+	  class.
+
+	* share/Md5sum.py
+	- Moved Md5Checker and Md5Reporter classes from
+	  utils/md5checker.py program.
+	
+	* share/Pipeline.py
+	- version 0.1.3
+	- add 'runner' property to Job class (to access associated
+	  JobRunner instance).
+
+	* share/platforms.py
+	- added additional platforms and new function 'list_platforms'
+
+	* utils/md5checker.py
+	- version 0.3.0
+	- substantial refactoring of code to add unit tests;
+	  core functions and classes moved to the share/Md5sym.py
+	  module.
+
+	* utils/symlink_checker.py
+	- version 1.1.0
+	- refactored to add unit tests and move core functions and
+	  classes to share/bcf_utils.
+
+	* utils/uncompress_fastqz.sh
+	- New utility script for uncompressing fastq files.
+	
+
 2014-04-17  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* ChIP-seq/make_macs2_xls.py
@@ -104,7 +172,7 @@
 	- New: wrapper script to build bowtie2 indexes from a
 	  fasta file.
 
-	* buil-indexes/build_indexes.sh
+	* build-indexes/build_indexes.sh
 	- remove bfast indexes & add bowtie2.
 
 2013-11-15  Peter Briggs  <peter.briggs@manchester.ac.uk>
