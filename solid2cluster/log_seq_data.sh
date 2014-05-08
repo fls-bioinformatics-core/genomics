@@ -6,6 +6,7 @@
 #
 function usage() {
     echo "`basename $0` <logging_file> [-d|-u] <seq_data_dir> [<description>]"
+    echo "`basename $0` <logging_file> -v"
     echo ""
     echo "Add, update or delete an entry for <seq_data_dir> in <logging_file>."
     echo
@@ -21,6 +22,8 @@ function usage() {
     echo
     echo "-d deletes an existing entry, while -u updates it (or adds a new one if"
     echo "not found). -u is intended to allow descriptions to be modified."
+    echo
+    echo "-v validates the entries in the logging file."
 }
 #
 # Import external function libraries
@@ -44,9 +47,37 @@ elif [ "$2" == "-u" ] ; then
     # Update entry
     MODE=update
     shift
+elif [ "$2" == "-v" ] ; then
+    # Validate logging file
+    MODE=validate
+    shift
 fi
-SEQ_DATA_DIR=`readlink -m $(abs_path $2)`
-DESCRIPTION=$3
+#
+# Check remaining command line arguments
+if [ $MODE == "validate" ] ; then
+    if [ $# -ne 1 ] ; then
+	echo "Unrecognised arguments after -v option: $@"
+	exit 1
+    fi
+    retval=0
+    while read dir timestamp descr ; do
+	if [ ! -z  "$(echo $dir | grep -v ^#)" ] ; then
+	    if [ ! -e $dir ] ; then
+		echo "WARNING missing $dir"
+		retval=1
+	    fi
+	fi
+    done < $LOG_FILE
+    if [ $retval -ne 0 ] ; then
+	echo "ERROR invalid entries detected" >&2
+	exit 1
+    else
+	exit
+    fi
+else
+    SEQ_DATA_DIR=`readlink -m $(abs_path $2)`
+    DESCRIPTION=$3
+fi
 #
 # Make a lock on the log file
 lock_file $LOG_FILE --remove
