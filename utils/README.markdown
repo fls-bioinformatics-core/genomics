@@ -17,6 +17,7 @@ Place to put general utility scripts/tools.
  *  `sam2soap.py`: convert from SAM file to SOAP format
  *  `split_fasta.py`: extract individual chromosome sequences from fasta file
  *  `symlink_checker.py`: check and update symbolic links
+ *  `uncompress_fastqgz.sh`: create ungzipped version of a compressed FASTQ file
 
 See below for more detailed usage documentation.
 
@@ -340,3 +341,16 @@ Options:
                           supplied REGEX_PATTERN
     --replace=NEW_STRING  update links found by --find options, by substituting
                           REGEX_PATTERN with NEW_STRING
+
+
+uncompress_fastqz.sh
+--------------------
+Create uncompressed copies of fastq.gz file (if input is fastq.gz).
+
+Usage:
+
+    uncompress_fastqgz.sh <fastq>
+
+`<fastq>` can be either fastq or fastq.gz file.
+
+The original file will not be removed or altered.

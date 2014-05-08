@@ -1,7 +1,7 @@
 #!/bin/env python
 #
 #     md5checker.py: check files and directories using md5 checksums
-#     Copyright (C) University of Manchester 2012 Peter Briggs
+#     Copyright (C) University of Manchester 2012-2014 Peter Briggs
 #
 ########################################################################
 #
@@ -12,13 +12,17 @@
 """md5checker
 
 Utility for checking files and directories using md5 checksums.
+
+Uses the 'Md5Checker' and 'Md5Reporter' classes from the Md5sum module
+to perform the underlying operations.
+
 """
 
 #######################################################################
 # Module metadata
 #######################################################################
 
-__version__ = "0.2.3"
+__version__ = "0.3.1"
 
 #######################################################################
 # Import modules that this module depends on
@@ -39,7 +43,7 @@ import Md5sum
 # Functions
 #######################################################################
 
-def compute_md5sums(dirn,output_file=None):
+def compute_md5sums(dirn,output_file=None,relative=False):
     """Compute and write MD5 sums for all files in a directory
 
     Walks the directory tree under the specified directory and
@@ -53,6 +57,8 @@ def compute_md5sums(dirn,output_file=None):
     Arguments:
       dirn: directory to run the MD5 sum computation on
       output_file: (optional) name of file to write MD5 sums to
+      relative: if True then output file paths relative to
+        the supplied directory (otherwise write absolute paths)
 
     Returns:
       Zero on success, 1 if errors were encountered
@@ -62,18 +68,43 @@ def compute_md5sums(dirn,output_file=None):
         fp = open(output_file,'w')
     else:
         fp = sys.stdout
-    for d in os.walk(dirn):
-        # Calculate md5sum for each file
-        for f in d[2]:
-            try:
-                filen = os.path.normpath(os.path.join(d[0],f))
-                chksum = Md5sum.md5sum(filen)
-                fp.write("%s  %s\n" % (chksum,filen))
-            except IOError, ex:
-                # Error accessing file, report and skip
-                logging.error("%s: error while generating MD5 sum: '%s'" % (filen,ex))
-                logging.error("%s: skipped" % filen)
-                retval = 1
+    for filen,chksum in Md5sum.Md5Checker.compute_md5sums(dirn):
+        if not relative:
+            filen = os.path.join(dirn,filen)
+        fp.write("%s  %s\n" % (chksum,filen))
+    if output_file:
+        fp.close()
+    return retval
+
+def compute_md5sum_for_file(filen,output_file=None):
+    """Compute and write MD5 sum for specifed file
+
+    Computes the MD5 sum for a file, and writes the sum and the file
+    name either to stdout or to the specified file name.
+
+    Note that the output format is compatible with the Linux
+    'md5sum' program's '-c' option.
+
+    Arguments:
+      filen: file to compute the MD5 sum for
+      output_file: (optional) name of file to write MD5 sum to
+
+    Returns:
+      Zero on success, 1 if errors were encountered
+
+    """
+    retval = 1
+    if output_file:
+        fp = open(output_file,'w')
+    else:
+        fp = sys.stdout
+    try:
+        chksum = Md5sum.md5sum(filen)
+        fp.write("%s  %s\n" % (chksum,filen))
+    except IOError, ex:
+        # Error accessing file, report and skip
+        logging.error("%s: error while generating MD5 sum: '%s'" % (filen,ex))
+        retval = 1
     if output_file:
         fp.close()
     return retval
@@ -96,51 +127,14 @@ def verify_md5sums(chksum_file,verbose=False):
 
     Returns:
       Zero on success, 1 if errors were encountered
+
     """
-    retval = 0
-    nsuccess = 0
-    failures = []
-    missing = []
-    badlines = []
-    # Perform the verification
-    for line in open(chksum_file,'rU'):
-        items = line.strip().split()
-        if len(items) < 2:
-            logging.error("Unable to read MD5 sum from line (skipped):")
-            logging.error("%s" % line)
-            badlines.append(line)
-            retval = 1
-            continue
-        chksum = items[0]
-        chkfile = line[len(chksum):].strip()
-        try:
-            new_chksum = Md5sum.md5sum(chkfile)
-            if chksum == new_chksum:
-                report("%s: OK" % chkfile,verbose)
-                nsuccess += 1
-            else:
-                logging.error("%s: FAILED" % chkfile)
-                failures.append(chkfile)
-                retval = 1
-        except IOError, ex:
-            if not os.path.exists(chkfile):
-                logging.error("%s: FAILED (file not found)" % chkfile)
-                missing.append(chkfile)
-            else:
-                logging.error("%s: FAILED (%s)" % (chkfile,ex))
-                failures.append(chkfile)
-            retval = 1
+    # Set up reporter object
+    reporter = Md5sum.Md5CheckReporter(Md5sum.Md5Checker.verify_md5sums(chksum_file),
+                                       verbose=verbose)
     # Summarise
-    nfailed = len(failures)
-    nmissing = len(missing)
-    nbad = len(badlines)
-    report("Summary:",verbose)
-    report("\t%d files checked" % (nsuccess + nfailed + nmissing),verbose)
-    report("\t%d okay" % nsuccess,verbose)
-    report("\t%d failed" % nfailed,verbose)
-    report("\t%d not found" % nmissing,verbose) 
-    report("\t%d 'bad' MD5 checksum lines" % nbad,verbose)
-    return retval
+    if verbose: reporter.summary()
+    return reporter.status
 
 def diff_directories(dirn1,dirn2,verbose=False):
     """Check one directory against another using MD5 sums
@@ -154,7 +148,7 @@ def diff_directories(dirn1,dirn2,verbose=False):
 
     Note that if there are different files in one directory compared
     with the other then this function will give different results
-    depending on the order theh directories are specified. However
+    depending on the order the directories are specified. However
     for common files the actual MD5 sums will be the same regardless
     of order.
 
@@ -166,90 +160,14 @@ def diff_directories(dirn1,dirn2,verbose=False):
 
     Returns:
       Zero on success, 1 if errors were encountered
+
     """
-    retval = 0
-    nsuccess = 0
-    failures = []
-    missing = []
-    broken = []
-    # Iterate over all files in the source directory
-    for d in os.walk(dirn1):
-        for f in d[2]:
-            # Get full paths for source and target files
-            filen1 = os.path.normpath(os.path.join(d[0],f))
-            filen2 = filen1.replace(dirn1,dirn2,1)
-            # Check that source exists
-            if not os.path.isfile(filen1):
-                logging.error("%s: FAILED (broken file)" % filen1)
-                broken.append(filen1)
-                retval = 1
-            # Check that target exists
-            elif not os.path.isfile(filen2):
-                logging.error("%s: FAILED (file not found)" % filen2)
-                missing.append(filen2)
-                retval = 1
-            else:
-                try:
-                    # Calculate and compare MD5 sums
-                    chksum1 = Md5sum.md5sum(filen1)
-                    chksum2 = Md5sum.md5sum(filen2)
-                    if chksum1 == chksum2:
-                        report("%s: OK" % filen2,verbose)
-                        nsuccess += 1
-                    else:
-                        logging.error("%s: FAILED" % filen2)
-                        failures.append(filen2)
-                        retval = 1
-                except IOError, ex:
-                    # Error accessing one or both files, report and skip
-                    logging.error("%s: FAILED" % filen2)
-                    logging.error("Error while generating MD5 sums: '%s'" % ex)
-                    failures.append(filen2)
-                    retval = 1
+    # Set up reporter object
+    reporter = Md5sum.Md5CheckReporter(Md5sum.Md5Checker.md5cmp_dirs(dirn1,dirn2),
+                                       verbose=verbose)
     # Summarise
-    nfailed = len(failures)
-    nmissing = len(missing)
-    nbroken = len(broken)
-    report("Summary:",verbose)
-    report("\t%d files checked" % (nsuccess + nfailed + nmissing),verbose)
-    report("\t%d okay" % nsuccess,verbose)
-    report("\t%d failed" % nfailed,verbose)
-    report("\t%d broken files" % nbroken,verbose)
-    report("\t%d not found" % nmissing,verbose)
-    # Return status
-    return retval
-
-def compute_md5sum_for_file(filen,output_file=None):
-    """Compute and write MD5 sum for specifed file
-
-    Computes the MD5 sum for a file, and writes the sum and the file
-    name either to stdout or to the specified file name.
-
-    Note that the output format is compatible with the Linux
-    'md5sum' program's '-c' option.
-
-    Arguments:
-      filen: file to compute the MD5 sum for
-      output_file: (optional) name of file to write MD5 sum to
-
-    Returns:
-      Zero on success, 1 if errors were encountered
-    """
-    retval = 1
-    if output_file:
-        fp = open(output_file,'w')
-    else:
-        fp = sys.stdout
-    try:
-        chksum = Md5sum.md5sum(filen)
-        fp.write("%s  %s\n" % (chksum,filen))
-    except IOError, ex:
-        # Error accessing file, report and skip
-        logging.error("%s: error while generating MD5 sum: '%s'" % (filen,ex))
-        retval = 1
-    if output_file:
-        fp.close()
-    return retval
+    if verbose: reporter.summary()
+    return reporter.status
 
 def diff_files(filen1,filen2,verbose=False):
     """Check that the MD5 sums of two files match
@@ -264,20 +182,20 @@ def diff_files(filen1,filen2,verbose=False):
 
     Returns:
       Zero on success, 1 if errors were encountered
+
     """
-    # Generate Md5sum for each file
-    retval = 1
-    try:
-        chksum1 = Md5sum.md5sum(filen1)
-        chksum2 = Md5sum.md5sum(filen2)
-        if chksum1 == chksum2:
-            report("OK: MD5 sums match",verbose)
-            retval = 0
+    # Set up reporter object
+    reporter = Md5sum.Md5CheckReporter()
+    # Compare files
+    reporter.add_result(filen1,Md5sum.Md5Checker.md5cmp_files(filen1,filen2))
+    if verbose:
+        if reporter.n_ok:
+            print "OK: MD5 sums match"
+        elif reporer.n_failed:
+            print "FAILED: MD5 sums don't match"
         else:
-            report("FAILED: MD5 sums don't match",verbose)
-    except IOError, ex:
-        report("FAILED (%s)" % ex,verbose)
-    return retval
+            print "ERROR: unable to compute one or both MD5 sums"
+    return reporter.status
 
 def report(msg,verbose=False):
     """Write text to stdout
@@ -294,58 +212,7 @@ def report(msg,verbose=False):
 import unittest
 import tempfile
 import shutil
-
-class TestUtils:
-    """Utilities to help with setting up/running tests etc
-
-    """
-    def make_file(self,filename,text,basedir=None):
-        """Create test file
-        
-        """
-        if filename is None:
-            # mkstemp returns a tuple
-            tmpfile = tempfile.mkstemp(dir=basedir,text=True)
-            filename = tmpfile[1]
-        elif basedir is not None:
-            filename = os.path.join(basedir,filename)
-        fp = open(filename,'w')
-        fp.write(text)
-        fp.close()
-        return filename
-
-    def make_dir(self,dirname):
-        """Create test directory
-        
-        """
-        if dirname is None:
-            dirname = tempfile.mkdtemp()
-        else:
-            os.mkdir(dirname)
-        return dirname
-
-    def make_sub_dir(self,basedir,dirname):
-        """Create a subdirectory in an existing directory
-        
-        """
-        subdir = os.path.join(basedir,dirname)
-        os.mkdir(subdir)
-        return subdir
-
-    def make_test_directory(self):
-        """Create a template test directory structure
-
-        """
-        test_dir = TestUtils().make_dir(None)
-        fred = TestUtils().make_sub_dir(test_dir,"fred")
-        daphne = TestUtils().make_sub_dir(fred,"daphne")
-        thelma = TestUtils().make_sub_dir(test_dir,"thelma")
-        shaggy = TestUtils().make_sub_dir(test_dir,"shaggy")
-        scooby = TestUtils().make_sub_dir(shaggy,"scooby")
-        TestUtils().make_file("test.txt","This is a test file",basedir=test_dir)
-        for sub_dir in (fred,daphne,thelma,shaggy,scooby):
-            TestUtils().make_file("test.txt","This is another test file",basedir=sub_dir)
-        return test_dir
+from mock_data import TestUtils,ExampleDirScooby
 
 class TestMd5sums(unittest.TestCase):
     """Test computing and verifying MD5 sums via files
@@ -353,39 +220,45 @@ class TestMd5sums(unittest.TestCase):
     """
     def setUp(self):
         # Create and populate test directory
-        self.dir = TestUtils().make_test_directory()
+        self.dir = ExampleDirScooby()
+        self.dir.create_directory()
         # Make temporary area for input/ouput checksum files
         self.md5sum_dir = tempfile.mkdtemp()
         self.checksum_file = os.path.join(self.md5sum_dir,"checksums")
         # Reference checksums for test directory
-        self.checksums = """0b26e313ed4a7ca6904b0e9369e5b957  test.txt
-d0914057907f9d04dd9e68b1c1e180f0  shaggy/test.txt
-d0914057907f9d04dd9e68b1c1e180f0  shaggy/scooby/test.txt
-d0914057907f9d04dd9e68b1c1e180f0  fred/test.txt
-d0914057907f9d04dd9e68b1c1e180f0  fred/daphne/test.txt
-d0914057907f9d04dd9e68b1c1e180f0  thelma/test.txt
-"""
+        self.reference_checksums = []
+        for f in self.dir.filelist(full_path=False):
+            self.reference_checksums.append("%s  %s" % (self.dir.checksum_for_file(f),f))
+        self.reference_checksums.append('')
+        self.reference_checksums = '\n'.join(self.reference_checksums)
         # Store current dir and move to top level of test directory
         self.pwd = os.getcwd()
-        os.chdir(self.dir)
+        os.chdir(self.dir.dirn)
 
     def tearDown(self):
         # Move back to original directory
         os.chdir(self.pwd)
         # Clean up test directory and checksum file
-        shutil.rmtree(self.dir)
+        self.dir.delete_directory()
         shutil.rmtree(self.md5sum_dir)
 
     def test_compute_md5sums(self):
-        # Compute md5sums for test directory
-        compute_md5sums('.',output_file=self.checksum_file)
+        """compute_md5sums make md5sum file for test directory
+        """
+        compute_md5sums('.',output_file=self.checksum_file,relative=True)
         checksums = open(self.checksum_file,'r').read()
-        self.assertEqual(self.checksums,checksums)
+        reference_checksums = self.reference_checksums.split('\n')
+        reference_checksums.sort()
+        checksums = checksums.split('\n')
+        checksums.sort()
+        print str(checksums)
+        for l1,l2 in zip(reference_checksums,checksums):
+            self.assertEqual(l1,l2)
 
     def test_verify_md5sums(self):
         # Verify md5sums for test directory
         fp = open(self.checksum_file,'w')
-        fp.write(self.checksums)
+        fp.write(self.reference_checksums)
         fp.close()
         self.assertEqual(verify_md5sums(self.checksum_file),0)
 
@@ -395,15 +268,15 @@ d0914057907f9d04dd9e68b1c1e180f0  thelma/test.txt
         checksum = open(self.checksum_file,'r').read()
         self.assertEqual("0b26e313ed4a7ca6904b0e9369e5b957  test.txt\n",checksum)
 
-class TestDiffFiles(unittest.TestCase):
-    """Test checking pairs of files
+class TestDiffFilesFunction(unittest.TestCase):
+    """Test checking pairs of files (diff_files)
 
     """
     def setUp(self):
         # Create a set of files to compare
-        self.file1 = TestUtils().make_file(None,"This is a test file")
-        self.file2 = TestUtils().make_file(None,"This is a test file")
-        self.file3 = TestUtils().make_file(None,"This is another test file")
+        self.file1 = TestUtils.make_file(None,"This is a test file")
+        self.file2 = TestUtils.make_file(None,"This is a test file")
+        self.file3 = TestUtils.make_file(None,"This is another test file")
 
     def tearDown(self):
         # Delete the test files
@@ -412,78 +285,76 @@ class TestDiffFiles(unittest.TestCase):
         os.remove(self.file3)
 
     def test_same_file(self):
-        # Check that identical files checksum to the same value
+        """diff_files: distinct identical files have same checksums
+
+        """
         self.assertEqual(diff_files(self.file1,self.file2),0)
 
     def test_different_files(self):
-        # Check that different files checksum to different values
+        """diff_files: different files have different values checksums
+
+        """
         self.assertNotEqual(diff_files(self.file1,self.file3),0)
 
-class TestDiffDirectories(unittest.TestCase):
-    """Test checking pairs of directories
+class TestDiffDirectoriesFunction(unittest.TestCase):
+    """Test checking pairs of directories (diff_directories)
 
     """
 
     def setUp(self):
         # Make test directories
-        self.dir1 = TestUtils().make_test_directory()
-        self.dir2 = TestUtils().make_test_directory()
-        # Empty dirctories
-        self.empty_dir1 = TestUtils().make_test_directory()
-        self.empty_dir2 = TestUtils().make_test_directory()
-        # Directory with extra file
-        self.extra_file_dir = TestUtils().make_test_directory()
-        TestUtils().make_file("extra.txt","This is an extra test file",
-                              basedir=self.extra_file_dir)
-        # Directories with altered file
-        self.diff_file_dir1 = TestUtils().make_test_directory()
-        TestUtils().make_file("diff.txt","This is one version of the file",
-                              basedir=self.diff_file_dir1)
-        self.diff_file_dir2 = TestUtils().make_test_directory()
-        TestUtils().make_file("diff.txt","This is another version of the file",
-                              basedir=self.diff_file_dir2)
-        # Directory with a broken link
-        self.broken_link_dir = TestUtils().make_test_directory()
-        TestUtils().make_file("missing.txt","This is another test file",
-                              basedir=self.broken_link_dir)
-        os.symlink(os.path.join(self.broken_link_dir,"missing.txt"),
-                   os.path.join(self.broken_link_dir,"broken"))
-        os.remove(os.path.join(self.broken_link_dir,"missing.txt"))
+        self.empty_dir1 = TestUtils.make_dir()
+        self.empty_dir2 = TestUtils.make_dir()
+        self.dir1 = ExampleDirScooby()
+        self.dir2 = ExampleDirScooby()
+        self.dir1.create_directory()
+        self.dir2.create_directory()
 
     def tearDown(self):
         # Remove test directories
-        shutil.rmtree(self.dir1)
-        shutil.rmtree(self.dir2)
         shutil.rmtree(self.empty_dir1)
         shutil.rmtree(self.empty_dir2)
-        shutil.rmtree(self.extra_file_dir)
-        shutil.rmtree(self.diff_file_dir1)
-        shutil.rmtree(self.diff_file_dir2)
-        shutil.rmtree(self.broken_link_dir)
+        self.dir1.delete_directory()
+        self.dir2.delete_directory()
 
     def test_same_dirs(self):
-        # Check that identical directories are identified as the same
+        """diff_directories: identical directories are identified as identical
+
+        """
         self.assertEqual(diff_directories(self.empty_dir1,self.empty_dir2),0)
-        self.assertEqual(diff_directories(self.dir1,self.dir2),0)
+        self.assertEqual(diff_directories(self.dir1.dirn,self.dir2.dirn),0)
 
     def test_extra_file(self):
-        # Check when one directory contains an extra file
-        self.assertEqual(diff_directories(self.dir1,self.extra_file_dir),0)
-        self.assertNotEqual(diff_directories(self.extra_file_dir,self.dir1),0)
+        """diff_directories: target directory contains extra file
+        
+        """
+        # Add extra file to a directory
+        self.dir2.add_file("extra.txt","This is an extra test file")
+        self.assertEqual(diff_directories(self.dir1.dirn,self.dir2.dirn),0)
+        self.assertNotEqual(diff_directories(self.dir2.dirn,self.dir1.dirn),0)
 
     def test_different_file(self):
-        # Check when directories have a file that differs
-        self.assertNotEqual(diff_directories(self.diff_file_dir1,
-                                             self.diff_file_dir2),0)
-        self.assertNotEqual(diff_directories(self.diff_file_dir2,
-                                             self.diff_file_dir1),0)
+        """diff_directories: file differs between directories
+
+        """
+        # Add different versions of a file to each directory
+        self.dir1.add_file("diff.txt","This is one version of the file")
+        self.dir2.add_file("diff.txt","This is another version of the file")
+        self.assertNotEqual(diff_directories(self.dir1.dirn,
+                                             self.dir2.dirn),0)
+        self.assertNotEqual(diff_directories(self.dir2.dirn,
+                                             self.dir1.dirn),0)
 
     def test_broken_links(self):
-        # Check when directories contain broken links
-        self.assertNotEqual(diff_directories(self.broken_link_dir,
-                                             self.dir1),0)
-        self.assertEqual(diff_directories(self.dir1,
-                                          self.broken_link_dir),0)
+        """diff_directories: handle broken links
+
+        """
+        # Add broken link
+        self.dir1.add_link("broken","missing.txt")
+        self.assertNotEqual(diff_directories(self.dir1.dirn,
+                                             self.dir2.dirn),0)
+        self.assertEqual(diff_directories(self.dir2.dirn,
+                                          self.dir1.dirn),0)
 
 #######################################################################
 # Main program

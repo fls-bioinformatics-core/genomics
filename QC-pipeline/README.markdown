@@ -151,7 +151,7 @@ For each sample the `illumina_qc.sh` generates fastq_screen plots for model
 organisms, other organisms and rRNAs plus the report files from FASTQC.
 
 If the input files are `fastq.gz` then it will also produce gunzipped versions
-of the files.
+of the files (specify the `--no-gunzip` option to turn off this behaviour).
 
 This script can be run on data produced by the Illumina GAIIx and HiSeq platforms.
 

@@ -7,19 +7,20 @@
 #
 #########################################################################
 
-__version__ = "1.0.3"
+__version__ = "1.4.4"
 
 """bcf_utils
 
 Utility classes and functions shared between BCF codes.
 
-Classes:
+General utility classes:
 
   AttributeDictionary
   OrderedDictionary
 
 File system wrappers and utilities:
 
+  PathInfo
   mkdir
   mklink
   chmod
@@ -29,6 +30,15 @@ File system wrappers and utilities:
   is_gzipped_file
   rootname
   find_program
+  get_user_from_uid
+  get_uid_from_user
+  get_group_from_gid
+  get_gid_from_group
+
+Symbolic link handling:
+
+  Symlink
+  links
 
 Sample name utilities:
 
@@ -55,9 +65,13 @@ import string
 import gzip
 import shutil
 import copy
+import stat
+import pwd
+import grp
+import datetime
 
 #######################################################################
-# Class definitions
+# General utility classes
 #######################################################################
 
 class AttributeDictionary:
@@ -168,10 +182,289 @@ class OrderedDictionary:
             raise KeyError, "Key '%s' already exists" % key
 
 #######################################################################
-# Module Functions
+# File system wrappers and utilities
 #######################################################################
 
-# File system wrappers and utilities
+class PathInfo:
+    """Collect and report information on a file
+
+    The PathInfo class provides an interface to getting general
+    information on a path, which may point to a file, directory, link
+    or non-existent location.
+
+    The properties provide information on whether the path is
+    readable (i.e. accessible) by the current user, whether it is
+    readable by members of the same group, who is the owner and
+    what group does it belong to, when was it last modified etc.
+
+    """
+    def __init__(self,path,basedir=None):
+        """Create a new PathInfo object
+
+        Arguments:
+          path: a filesystem path, which can be relative or
+            absolute, or point to a non-existent location
+          basedir: (optional) if supplied then prepended to
+            the supplied path
+
+        """
+        self.__basedir = basedir
+        if self.__basedir is not None:
+            self.__path = os.path.join(self.__basedir,path)
+        else:
+            self.__path = path
+        try:
+            self.__st = os.lstat(self.__path)
+        except OSError:
+            self.__st = None
+
+    @property
+    def path(self):
+        """Return the filesystem path
+
+        """
+        return self.__path
+
+    @property
+    def is_readable(self):
+        """Return True if the path exists and is readable by the owner
+
+        Paths may be reported as unreadable for various reasons,
+        e.g. the target doesn't exist, or doesn't have permission
+        for this user to read it, or if part of the path doesn't
+        allow the user to read the file.
+
+        """
+        if self.__st is None:
+            return False
+        return bool(self.__st.st_mode & stat.S_IRUSR)
+
+    @property
+    def is_group_readable(self):
+        """Return True if the path exists and is group-readable
+
+        Paths may be reported as unreadable for various reasons,
+        e.g. the target doesn't exist, or doesn't have permission
+        for this user to read it, or if part of the path doesn't
+        allow the user to read the file.
+
+        """
+        if self.__st is None:
+            return False
+        return bool(self.__st.st_mode & stat.S_IRGRP)
+
+    @property
+    def is_group_writable(self):
+        """Return True if the path exists and is group-writable
+
+        Paths may be reported as unwritable for various reasons,
+        e.g. the target doesn't exist, or doesn't have permission
+        for this user to write to it, or if part of the path
+        doesn't allow the user to read the file.
+
+        """
+        if self.__st is None:
+            return False
+        return bool(self.__st.st_mode & stat.S_IWGRP)
+
+    @property
+    def deepest_accessible_parent(self):
+        """Return longest accessible directory that leads to path
+
+        Tries to find the longest parent directory above path
+        which is accessible by the current user.
+
+        If it's not possible to find a parent that is accessible
+        then raise an exception.
+
+        """
+        path = os.path.dirname(os.path.abspath(self.__path))
+        while path != os.sep:
+            if os.access(path,os.R_OK):
+                return path
+            path = os.path.dirname(path)
+        raise OSError,"Unable to find readable parent for %s" % self.__path
+
+    @property
+    def uid(self):
+        """Return associated UID (user ID)
+
+        Attempts to return the UID (user ID) number associated with
+        the path.
+
+        If the UID can't be found then returns None.
+
+        """
+        if self.__st is None:
+            return None
+        return self.__st.st_uid
+
+    @property
+    def user(self):
+        """Return associated user name
+
+        Attempts to return the user name associated with the path.
+        If the name can't be found then tries to return the UID
+        instead.
+
+        If neither pieces of information can be found then returns
+        None.
+
+        """
+        if self.__st is None:
+            return None
+        user = get_user_from_uid(self.uid)
+        if user is not None:
+            return user
+        else:
+            return self.uid
+
+    @property
+    def gid(self):
+        """Return associated GID (group ID)
+
+        Attempts to return the GID (group ID) number associated with
+        the path.
+
+        If the GID can't be found then returns None.
+
+        """
+        if self.__st is None:
+            return None
+        return self.__st.st_gid
+
+    @property
+    def group(self):
+        """Return associated group name
+
+        Attempts to return the group name associated with the path.
+        If the name can't be found then tries to return the GID
+        instead.
+
+        If neither pieces of information can be found then returns
+        None.
+
+        """
+        if self.__st is None:
+            return None
+        group = get_group_from_gid(self.gid)
+        if group is not None:
+            return group
+        else:
+            return self.gid
+
+    @property
+    def exists(self):
+        """Return True if the path refers to an existing location
+
+        Note that this is a wrapper to os.path.lexists so it reports
+        the existence of symbolic links rather than their targets.
+
+        """
+        return os.path.lexists(self.__path)
+
+    @property
+    def is_link(self):
+        """Return True if path refers to a symbolic link
+
+        """
+        return os.path.islink(self.__path)
+
+    @property
+    def is_file(self):
+        """Return True if path refers to a file
+
+        """
+        if not self.is_link:
+            return os.path.isfile(self.__path)
+        else:
+            return False
+
+    @property
+    def is_dir(self):
+        """Return True if path refers to a directory
+
+        """
+        if not self.is_link:
+            return os.path.isdir(self.__path)
+        else:
+            return False
+
+    @property
+    def is_executable(self):
+        """Return True if path refers to an executable file
+
+        """
+        if self.__st is None:
+            return False
+        if self.is_link:
+            return PathInfo(Symlink(self.__path).resolve_target()).is_executable
+        return bool(self.__st.st_mode & stat.S_IXUSR) and self.is_file
+
+    @property
+    def mtime(self):
+        """Return last modification timestamp for path
+
+        """
+        if self.__st is None:
+            return None
+        return self.__st.st_mtime
+
+    @property
+    def datetime(self):
+        """Return last modification time as datetime object
+
+        """
+        if self.mtime is None:
+            return None
+        return datetime.datetime.fromtimestamp(self.mtime)
+
+    def relpath(self,dirn):
+        """Return part of path relative to a directory
+
+        Wrapper for os.path.relpath(...).
+        
+        """
+        return os.path.relpath(self.__path,dirn)
+
+    def chown(self,user=None,group=None):
+        """Change associated owner and group
+
+        'user' and 'group' must be supplied as UID/GID
+        numbers (or None to leave the current values
+        unchanged).
+
+        *** Note that chown will fail attempting to
+        change the owner if the current process is not
+        owned by root ***
+
+        This is actually a wrapper to the os.lchmod
+        function, so it doesn't follow symbolic links.
+
+        """
+        if user is None and group is None:
+            # Nothing to do
+            return
+        if user is None:
+            user = -1
+        if group is None:
+            group = -1
+        # Convert to ints
+        user = int(user)
+        group = int(group)
+        # Do chown - note this will fail if the user
+        # performing the operation is not root
+        os.lchown(self.__path,user,group)
+        # Update the stat information
+        try:
+            self.__st = os.lstat(self.__path)
+        except OSError:
+            self.__st = None
+
+    def __repr__(self):
+        """Implements the built-in __repr__ function
+        """
+        return str(self.__path)
 
 def mkdir(dirn,mode=None):
     """Make a directory
@@ -211,51 +504,81 @@ def mklink(target,link_name,relative=False):
 def chmod(target,mode):
     """Change mode of file or directory
 
+    This a wrapper for the os.chmod function, with the
+    addition that it doesn't follow symbolic links.
+
+    For symbolic links it attempts to use the os.lchmod
+    function instead, as this operates on the link
+    itself and not the link target. If os.lchmod is not
+    available then links are ignored.
+
     Arguments:
       target: file or directory to apply new mode to
       mode: a valid mode specifier e.g. 0775 or 0664
+
     """
     logging.debug("Changing mode of %s to %s" % (target,mode))
-    if not os.path.islink(target):
-        try:
+    try:
+        if os.path.islink(target):
+            # Try to use lchmod to operate on the link
+            try:
+                os.lchmod(target,mode)
+            except AttributeError,ex:
+                # lchmod is not available on all systems
+                # If not then just ignore
+                logging.debug("os.lchmod not available? Exception: %s" % ex)
+        else:
+            # Use os.chmod for everything else
             os.chmod(target,mode)
-        except OSError, ex:
-            logging.warning("Failed to change permissions on %s to %s: %s" % (target,mode,ex))
-    else:
-        logging.warning("Skipped chmod for symbolic link")
+    except OSError, ex:
+        logging.warning("Failed to change permissions on %s to %s: %s" % (target,mode,ex))
 
 def touch(filename):
-    """Create a new empty file
+    """Create new empty file, or update modification time if already exists
 
     Arguments:
       filename: name of the file to create (can include leading path)
 
     """
-    open(filename,'wb+').close()
+    if not os.path.exists(filename):
+        open(filename,'wb+').close()
+    os.utime(filename,None)
 
-def format_file_size(fsize):
+def format_file_size(fsize,units=None):
     """Format a file size from bytes to human-readable form
 
     Takes a file size in bytes and returns a human-readable
     string, e.g. 4.0K, 186M, 1.5G.
 
+    Alternatively specify the required units via the 'units'
+    arguments.
+
     Arguments:
       fsize: size in bytes
+      units: (optional) specify output in kb ('K'), Mb ('M'),
+             Gb ('G') or Tb ('T')
 
     Returns:
       Human-readable version of file size.
 
     """
     # Return size in human readable form
+    if units is not None:
+        units = units.upper()
     fsize = float(fsize)/1024
-    units = 'K'
-    if fsize > 1024:
-        fsize = fsize/1024
-        units = 'M'
-        if fsize > 1024:
-            fsize = fsize/1024
-            units = 'G'
-    return "%.1f%s" % (fsize,units)
+    unit_list = 'KMGT'
+    for unit in unit_list:
+        if units is None:
+            if fsize > 1024:
+                fsize = fsize/1024
+            else:
+                break
+        else:
+            if units != unit:
+                fsize = fsize/1024
+            else:
+                break
+    return "%.1f%s" % (fsize,unit)
             
 def commonprefix(path1,path2):
     """Determine common prefix path for path1 and path2
@@ -325,13 +648,185 @@ def find_program(name):
     the full path, or None if not found.
 
     """
+    if os.path.isabs(name) and PathInfo(name).is_executable:
+        return name
     for path in os.environ['PATH'].split(os.pathsep):
         name_path = os.path.abspath(os.path.join(path,name))
-        if os.path.isfile(name_path):
+        if PathInfo(name_path).is_executable:
             return name_path
     return None
 
+def get_user_from_uid(uid):
+    """Return user name from UID
+
+    Looks up user name matching the supplied UID;
+    returns None if no matching name can be found.
+
+    """
+    try:
+        return pwd.getpwuid(int(uid)).pw_name
+    except (KeyError,ValueError,OverflowError):
+        return None
+
+def get_uid_from_user(user):
+    """Return UID from user name
+
+    Looks up UID matching the supplied user name;
+    returns None if no matching name can be found.
+
+    NB returned UID will be an integer.
+
+    """
+    try:
+        return pwd.getpwnam(str(user)).pw_uid
+    except KeyError:
+        return None
+
+def get_group_from_gid(gid):
+    """Return group name from GID
+
+    Looks up group name matching the supplied GID;
+    returns None if no matching name can be found.
+
+    """
+    try:
+        return grp.getgrgid(int(gid)).gr_name
+    except (KeyError,ValueError,OverflowError):
+        return None
+
+def get_gid_from_group(group):
+    """Return GID from group name
+
+    Looks up GID matching the supplied group name;
+    returns None if no matching name can be found.
+
+    NB returned GID will be an integer.
+
+    """
+    try:
+        return grp.getgrnam(group).gr_gid
+    except KeyError,ex:
+        return None
+
+#######################################################################
+# Symbolic link handling
+#######################################################################
+
+class Symlink:
+    """Class for interrogating and modifying symbolic links
+
+    The Symlink class provides an interface for getting information
+    about a symbolic link.
+
+    To create a new Symlink instance do e.g.:
+
+    >>> l = Symlink('my_link.lnk')
+
+    Information about the link can be obtained via the various
+    properties:
+
+    - target = returns the link target
+    - is_absolute = reports if the target represents an absolute link
+    - is_broken = reports if the target doesn't exist
+
+    There are also methods:
+
+    - resolve_target() = returns the normalise absolute path to the 
+      target
+    - update_target() = updates the target to a new location
+
+    """
+    def __init__(self,path):
+        """Create a new Symlink instance
+
+        Raises an exception if the supplied path doesn't point to
+        a link instance.
+
+        Arguments:
+          path: path to the link
+
+        """
+        if not os.path.islink(path):
+            raise Exception("%s is not a link" % path)
+        self.__path = path
+        self.__abspath = os.path.abspath(self.__path)
+
+    @property
+    def target(self):
+        """Return the target of the symlink
+
+        """
+        return os.readlink(self.__abspath)
+
+    @property
+    def is_absolute(self):
+        """Return True if the link target is an absolute link
+
+        """
+        return os.path.isabs(self.target)
+
+    @property
+    def is_broken(self):
+        """Return True if the link target doesn't exist i.e. link is broken
+
+        """
+        return not os.path.exists(self.resolve_target())
+
+    def resolve_target(self):
+        """Return the normalised absolute path to the link target
+
+        """
+        if self.is_absolute:
+            path = self.target
+        else:
+            path = os.path.abspath(os.path.join(os.path.dirname(self.__abspath),
+                                                self.target))
+        return os.path.normpath(path)
+
+    def update_target(self,new_target):
+        """Replace the current link target with new_target
+
+        Arguments:
+          new_target: path to replace the existing target with
+
+        """
+        os.unlink(self.__abspath)
+        os.symlink(new_target,self.__abspath)
+
+    def __repr__(self):
+        """Implement the __repr__ built-in
+
+        """
+        return self.__path
+
+def links(dirn):
+    """Traverse and return all symbolic links in under a directory
+
+    Given a starting directory, traverses the structure underneath
+    and yields the path for each symlink that is found.
+
+    Arguments:
+      dirn: name of the top-level directory
+
+    Returns:
+      Yields the name and full path for each symbolic link under 'dirn'.
+
+    """
+    for d in os.walk(dirn):
+        if os.path.islink(d[0]):
+            yield d[0]
+        for sd in d[1]:
+            path = os.path.join(d[0],sd)
+            if os.path.islink(path):
+                yield path
+        for f in d[2]:
+            path = os.path.join(d[0],f)
+            if os.path.islink(path):
+                yield path
+
+#######################################################################
 # Sample/library name utilities
+#######################################################################
 
 def extract_initials(name):
     """Return leading initials from the library or sample name
@@ -485,7 +980,9 @@ def name_matches(name,pattern):
     else:
         return False
 
+#######################################################################
 # File manipulations
+#######################################################################
 
 def concatenate_fastq_files(merged_fastq,fastq_files,bufsize=10240,
                             overwrite=False,verbose=True):

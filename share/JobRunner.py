@@ -1,7 +1,7 @@
 #!/bin/env python
 #
 #     JobRunner.py: classes for starting and managing job runs
-#     Copyright (C) University of Manchester 2011-3 Peter Briggs
+#     Copyright (C) University of Manchester 2011-4 Peter Briggs
 #
 ########################################################################
 #
@@ -9,7 +9,7 @@
 #
 #########################################################################
 
-__version__ = "1.0.2"
+__version__ = "1.0.4"
 
 """JobRunner
 
@@ -93,7 +93,7 @@ class BaseJobRunner:
     """
 
     def __init__(self):
-        pass
+        self.__log_dir = None
 
     def run(self,name,working_dir,script,args):
         """Start a job running
@@ -147,6 +147,22 @@ class BaseJobRunner:
         """
         return False
 
+    @property
+    def log_dir(self):
+        """Return the current log directory setting
+
+        """
+        return self.__log_dir
+
+    def set_log_dir(self,log_dir):
+        """(Re)set the directory to write log files to
+
+        """
+        if log_dir is not None:
+            self.__log_dir = os.path.abspath(log_dir)
+        else:
+            self.__log_dir = None
+
 class SimpleJobRunner(BaseJobRunner):
     """Class implementing job runner for local system
 
@@ -172,21 +188,12 @@ class SimpleJobRunner(BaseJobRunner):
         # Base log id
         self.__log_id = int(time.time())
         # Directory for log files
-        self.log_dir(log_dir)
+        self.set_log_dir(log_dir)
         # Join stderr to stdout
         self.__join_logs = join_logs
         # Keep track of log files etc
         self.__log_files = {}
         self.__err_files = {}
-
-    def log_dir(self,log_dir):
-        """(Re)set the directory to write log files to
-
-        """
-        if log_dir is not None:
-            self.__log_dir = os.path.abspath(log_dir)
-        else:
-            self.__log_dir = None
 
     def run(self,name,working_dir,script,args):
         """Run a command and return the PID (=job id)
@@ -204,7 +211,7 @@ class SimpleJobRunner(BaseJobRunner):
         logging.debug("SimpleJobRunner: submitting job")
         logging.debug("Name       : %s" % name)
         logging.debug("Working_dir: %s" % working_dir)
-        logging.debug("Log dir    : %s" % self.__log_dir)
+        logging.debug("Log dir    : %s" % self.log_dir)
         logging.debug("Join logs  : %s" % self.__join_logs)
         logging.debug("Script     : %s" % script)
         logging.debug("Arguments  : %s" % str(args))
@@ -264,7 +271,7 @@ class SimpleJobRunner(BaseJobRunner):
         kill=('kill','-9',job_id)
         p = subprocess.Popen(kill)
         p.wait()
-        if not Pstat().hasJob(job_id):
+        if job_id not in self.list():
             logging.debug("KillJob: deleted job %s" % job_id)
             return True
         else:
@@ -329,10 +336,10 @@ class SimpleJobRunner(BaseJobRunner):
         timestamp = self.__log_id
         log_file = "%s.o%s" % (name,timestamp)
         error_file = "%s.e%s" % (name,timestamp)
-        if self.__log_dir is None:
+        if self.log_dir is None:
             log_dir = os.getcwd()
         else:
-            log_dir = self.__log_dir
+            log_dir = self.log_dir
         log_file = os.path.join(log_dir,log_file)
         error_file = os.path.join(log_dir,error_file)
         self.__log_id += 1
@@ -359,7 +366,7 @@ class GEJobRunner(BaseJobRunner):
         """
         self.__queue = queue
         # Directory for log files
-        self.log_dir(log_dir)
+        self.set_log_dir(log_dir)
         # Keep track of names and log dirs for each job
         self.__names = {}
         self.__log_dirs = {}
@@ -370,15 +377,6 @@ class GEJobRunner(BaseJobRunner):
 
         """
         self.__queue = queue
-
-    def log_dir(self,log_dir):
-        """(Re)set the directory to write log files to
-
-        """
-        if log_dir is not None:
-            self.__log_dir = os.path.abspath(log_dir)
-        else:
-            self.__log_dir = None
 
     def name(self,job_id):
         """Return the name for a job
@@ -402,7 +400,7 @@ class GEJobRunner(BaseJobRunner):
         logging.debug("Name       : %s" % name)
         logging.debug("Queue      : %s" % self.__queue)
         logging.debug("Extra args : %s" % self.__ge_extra_args)
-        logging.debug("Log dir    : %s" % self.__log_dir)
+        logging.debug("Log dir    : %s" % self.log_dir)
         logging.debug("Working_dir: %s" % working_dir)
         logging.debug("Script     : %s" % script)
         logging.debug("Arguments  : %s" % str(args))
@@ -414,8 +412,8 @@ class GEJobRunner(BaseJobRunner):
         qsub = ['qsub','-b','y','-V','-N',name]
         if self.__queue:
             qsub.extend(('-q',self.__queue))
-        if self.__log_dir:
-            qsub.extend(('-o',self.__log_dir))
+        if self.log_dir:
+            qsub.extend(('-o',self.log_dir,'-e',self.log_dir))
         if not working_dir:
             qsub.append('-cwd')
         else:
@@ -447,10 +445,10 @@ class GEJobRunner(BaseJobRunner):
         # Store name and log dir against job id
         if job_id is not None:
             self.__names[job_id] = name
-            if self.__log_dir is None:
+            if self.log_dir is None:
                 self.__log_dirs[job_id] = working_dir
             else:
-                self.__log_dirs[job_id] = self.__log_dir
+                self.__log_dirs[job_id] = self.log_dir
         # Return the job id
         return job_id
 
