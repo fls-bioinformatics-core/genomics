@@ -8,6 +8,7 @@ function usage() {
     echo "Usage:"
     echo "    `basename $0` <logging_file> [-d|-u] <seq_data_dir> [<description>]"
     echo "    `basename $0` <logging_file> -c <seq_data_dir> <new_dir> [<description>]"
+    echo "    `basename $0` <logging_file> -i <seq_data_dir>"
     echo "    `basename $0` <logging_file> -v"
     echo ""
     echo "Add, update or delete an entry for <seq_data_dir> in <logging_file>, or"
@@ -30,6 +31,7 @@ function usage() {
     echo "            if an existing entry not found)"
     echo "     -c     changes an existing entry, updating the directory path and"
     echo "            (optionally) the description"
+    echo "     -i     print information about an entry"
     echo "     -v     validates the entries in the logging file."
 }
 #
@@ -62,6 +64,10 @@ elif [ "$2" == "-c" ] ; then
     # Change entry
     MODE=change
     shift
+elif [ "$2" == "-i" ] ; then
+    # Change entry
+    MODE=info
+    shift
 fi
 #
 # Check remaining command line arguments
@@ -80,11 +86,26 @@ if [ $MODE == "validate" ] ; then
 	fi
     done < $LOG_FILE
     if [ $retval -ne 0 ] ; then
-	echo "ERROR invalid entries detected" >&2
+	echo "ERROR invalid entries detected"
 	exit 1
     else
 	exit
     fi
+elif [ $MODE == "info" ] ; then
+    SEQ_DATA_DIR=$2
+    entry=$(grep ^${SEQ_DATA_DIR}$'\t' $LOG_FILE)
+    if [ -z "$entry" ] ; then
+	echo ERROR $SEQ_DATA_DIR not found
+	exit 1
+    fi
+    tstamp=$(grep ^${SEQ_DATA_DIR}$'\t' $LOG_FILE | cut -f2)
+    description=$(grep ^${SEQ_DATA_DIR}$'\t' $LOG_FILE | cut -f3)
+    echo "Name $(basename $SEQ_DATA_DIR)"
+    echo "Dir  $SEQ_DATA_DIR"
+    echo "TS   $tstamp"
+    echo "Date $(date --date=@$tstamp)"
+    echo "Desc '$description'"
+    exit
 elif [ $MODE == "change" ] ; then
     CUR_DATA_DIR=$2
     SEQ_DATA_DIR=$(abs_path $3)
