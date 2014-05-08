@@ -5,10 +5,13 @@
 # Creates a new entry in a log of sequencing data directories
 #
 function usage() {
-    echo "`basename $0` <logging_file> [-d|-u] <seq_data_dir> [<description>]"
-    echo "`basename $0` <logging_file> -v"
+    echo "Usage:"
+    echo "    `basename $0` <logging_file> [-d|-u] <seq_data_dir> [<description>]"
+    echo "    `basename $0` <logging_file> -c <seq_data_dir> <new_dir> [<description>]"
+    echo "    `basename $0` <logging_file> -v"
     echo ""
-    echo "Add, update or delete an entry for <seq_data_dir> in <logging_file>."
+    echo "Add, update or delete an entry for <seq_data_dir> in <logging_file>, or"
+    echo "verify entries."
     echo
     echo "<seq_data_dir> can be a primary data directory from a sequencer or a"
     echo "directory of derived data (e.g. analysis directory)"
@@ -20,10 +23,14 @@ function usage() {
     echo "If <logging_file> doesn't exist then it will be created; if"
     echo "<seq_data_dir> is already in the log file then it won't be added again."
     echo
-    echo "-d deletes an existing entry, while -u updates it (or adds a new one if"
-    echo "not found). -u is intended to allow descriptions to be modified."
-    echo
-    echo "-v validates the entries in the logging file."
+    echo "Options:"
+    echo ""
+    echo "     -d     deletes an existing entry"
+    echo "     -u     update description for an existing entry (or creates a new one"
+    echo "            if an existing entry not found)"
+    echo "     -c     changes an existing entry, updating the directory path and"
+    echo "            (optionally) the description"
+    echo "     -v     validates the entries in the logging file."
 }
 #
 # Import external function libraries
@@ -51,6 +58,10 @@ elif [ "$2" == "-v" ] ; then
     # Validate logging file
     MODE=validate
     shift
+elif [ "$2" == "-c" ] ; then
+    # Change entry
+    MODE=change
+    shift
 fi
 #
 # Check remaining command line arguments
@@ -74,10 +85,15 @@ if [ $MODE == "validate" ] ; then
     else
 	exit
     fi
+elif [ $MODE == "change" ] ; then
+    CUR_DATA_DIR=$2
+    SEQ_DATA_DIR=$(abs_path $3)
+    DESCRIPTION=$4
 else
-    SEQ_DATA_DIR=`readlink -m $(abs_path $2)`
+    SEQ_DATA_DIR=$(abs_path $2)
     DESCRIPTION=$3
 fi
+SEQ_DATA_DIR=$(readlink -m $SEQ_DATA_DIR)
 #
 # Make a lock on the log file
 lock_file $LOG_FILE --remove
@@ -121,7 +137,24 @@ EOF
 fi
 #
 # Delete entry
-if [ $MODE == delete ] || [ $MODE == update ] ; then
+if [ $MODE == delete ] || [ $MODE == update ] || [ $MODE == change ] ; then
+    #
+    # For 'change', extract the existing entry
+    if [ $MODE == change ] ; then
+	# Check entry exists
+	got_entry=$(grep ^${CUR_DATA_DIR}$'\t' $LOG_FILE)
+	if [ -z "$got_entry" ] ; then
+	    echo "ERROR entry not found: $CUR_DATA_DIR"
+	    exit 1
+	fi
+	# Collect existing description
+	if [ -z "$DESCRIPTION" ] ; then
+	    DESCRIPTION=$(grep ^$CUR_DATA_DIR $LOG_FILE | cut -f3)
+	fi
+	# Jiggle names for deletion step
+	NEW_DATA_DIR=$SEQ_DATA_DIR
+	SEQ_DATA_DIR=$CUR_DATA_DIR
+    fi
     #
     # Make a temporary file
     tmpfile=`mktemp`
@@ -131,8 +164,11 @@ if [ $MODE == delete ] || [ $MODE == update ] ; then
     grep -v ^${SEQ_DATA_DIR}$'\t' $LOG_FILE > $tmpfile
     #
     # Re-add if updating
-    if [ $MODE == update ] ; then
+    if [ $MODE == update ] || [ $MODE == change ] ; then
 	echo "Recreating entry for $SEQ_DATA_DIR"
+	if [ $MODE == change ] ; then
+	    SEQ_DATA_DIR=$NEW_DATA_DIR
+	fi
 	echo ${SEQ_DATA_DIR}$'\t'$(timestamp $SEQ_DATA_DIR)$'\t'${DESCRIPTION} >> $tmpfile
     fi
     #
