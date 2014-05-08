@@ -145,6 +145,13 @@ if [ $MODE == delete ] || [ $MODE == update ] || [ $MODE == change ] ; then
 	got_entry=$(grep ^${CUR_DATA_DIR}$'\t' $LOG_FILE)
 	if [ -z "$got_entry" ] ; then
 	    echo "ERROR entry not found: $CUR_DATA_DIR"
+	    unlock_file $LOG_FILE
+	    exit 1
+	fi
+	# Check that basename of old and new match up
+	if [ $(basename $CUR_DATA_DIR) != $(basename $SEQ_DATA_DIR) ] ; then
+	    echo ERROR basenames differ: $(basename $CUR_DATA_DIR) vs $(basename $SEQ_DATA_DIR)
+	    unlock_file $LOG_FILE
 	    exit 1
 	fi
 	# Collect existing description
