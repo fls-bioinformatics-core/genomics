@@ -100,11 +100,17 @@ elif [ $MODE == "info" ] ; then
     fi
     tstamp=$(grep ^${SEQ_DATA_DIR}$'\t' $LOG_FILE | cut -f2)
     description=$(grep ^${SEQ_DATA_DIR}$'\t' $LOG_FILE | cut -f3)
-    echo "Name $(basename $SEQ_DATA_DIR)"
-    echo "Dir  $SEQ_DATA_DIR"
-    echo "TS   $tstamp"
-    echo "Date $(date --date=@$tstamp)"
-    echo "Desc '$description'"
+    if [ -e $SEQ_DATA_DIR ] ; then
+	exists=yes
+    else
+	exists=no
+    fi
+    echo "Name   $(basename $SEQ_DATA_DIR)"
+    echo "Dir    $SEQ_DATA_DIR"
+    echo "TS     $tstamp"
+    echo "Date   $(date --date=@$tstamp)"
+    echo "Desc   '$description'"
+    echo "Exists $exists"
     exit
 elif [ $MODE == "change" ] ; then
     CUR_DATA_DIR=$2
