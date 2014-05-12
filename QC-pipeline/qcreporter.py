@@ -14,7 +14,7 @@
 Generate HTML reports for an NGS QC pipeline runs.
 """
 
-__version__ = "0.1.4"
+__version__ = "0.1.5"
 
 #######################################################################
 # Import modules that this module depends on
@@ -552,10 +552,10 @@ class QCSample:
             quality_plot_link = fastqc_report + "#M1"
             if inline_pngs:
                 pngdata = "data:image/png;base64," + \
-                    PNGBase64Encoder().encodePNG(os.path.join(self.qc_dir,
-                                                              self.__fastqc,
-                                                              'Images',
-                                                              'per_base_quality.png'))
+                    htmlpagewriter.PNGBase64Encoder().encodePNG(os.path.join(self.qc_dir,
+                                                                             self.__fastqc,
+                                                                             'Images',
+                                                                             'per_base_quality.png'))
             else:
                 pngdata = os.path.join(qc_dir,
                                        self.__fastqc,
