@@ -24,7 +24,6 @@ import sys
 import os
 import optparse
 import logging
-import base64
 import zipfile
 import time
 

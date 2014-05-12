@@ -26,6 +26,7 @@ import os
 import logging
 import xml.dom.minidom
 import shutil
+import base64
 import platforms
 import bcf_utils
 import TabFile
