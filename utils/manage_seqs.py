@@ -25,7 +25,7 @@ manage_seqs.py [-o OUTFILE|-a OUTFILE] [-d DESCRIPTION] INFILE [INFILE...]
 # Module metadata
 #######################################################################
 
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 
 #######################################################################
 # Import modules that this module depends on
@@ -213,7 +213,7 @@ class SeqDb:
             mode = 'w'
         fp = open(filen,mode)
         if header is not None:
-            for line in split_text(header,68):
+            for line in split_text(header,68,slack=True):
                 fp.write("# %s\n" % line)
         for name,seq in self:
             fp.write("%s\t%s\n" % (name,seq))
@@ -285,7 +285,7 @@ def split_line(line):
     seq = line.strip('\n').split('\t')[-1]
     return (name,seq)
 
-def split_text(text,char_limit,delims=' \t\n',strip=True):
+def split_text(text,char_limit,delims=' \t\n',strip=True,slack=False):
     """Break text into multiple lines
 
     Breaks supplied text into multiple lines where no line
@@ -300,6 +300,9 @@ def split_text(text,char_limit,delims=' \t\n',strip=True):
         break text on (defaults to whitespace characters)
       strip: optional, if True then trailing or leading
         delimiters are removed from lines (default)
+      slack: optional, if True then allow lines to be
+        longer than char_limit if not delimiter is found
+        (default is to be strict)
 
     Returns:
       List of lines.
@@ -316,10 +319,21 @@ def split_text(text,char_limit,delims=' \t\n',strip=True):
                 break
             else:
                 line = line[:-1]
-        # Unable to locate delimiter, split on the
-        # character limit
+        # Unable to locate delimiter
         if len(line) == 0:
-            line = text[:char_limit]
+            if not slack:
+                # Split on the character limit
+                line = text[:char_limit]
+            else:
+                # Extend the line past the limit
+                # to look for delimiter
+                extent = char_limit
+                while extent <= len(text):
+                    line = text[:extent]
+                    if line[-1] in delims:
+                        break
+                    else:
+                        extent += 1
         # Append current line to list of lines and
         # prepare for next iteration
         text = text[len(line):]
@@ -331,7 +345,8 @@ def split_text(text,char_limit,delims=' \t\n',strip=True):
     # limit)
     if strip:
         text = text.rstrip(delims)
-    lines.append(text)
+    if text:
+        lines.append(text)
     return lines
 
 #######################################################################
@@ -508,6 +523,19 @@ class TestSplitLineFunction(unittest.TestCase):
                          ['This:is','some:even','longer','text'])
         self.assertEqual(split_text("Supercalifragilisticexpialidocious",10,delims=':'),
                          ['Supercalif','ragilistic','expialidoc','ious'])
+    def test_split_line_slack(self):
+        """'split_line' works when 'slack' splitting is used
+        """
+        self.assertEqual(split_text("Some text",10,slack=True),
+                         ['Some text'])
+        self.assertEqual(split_text("This is some text",10,slack=True),
+                         ['This is','some text'])
+        self.assertEqual(split_text("This is some even longer text",10,slack=True),
+                         ['This is','some even','longer','text'])
+        self.assertEqual(split_text("This is some text\nOver multiple lines\n",10,slack=True),
+                         ['This is','some text','Over','multiple','lines'])
+        self.assertEqual(split_text("Supercalifragilisticexpialidocious",10,slack=True),
+                         ['Supercalifragilisticexpialidocious'])
 
 #######################################################################
 # Main program
