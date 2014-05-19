@@ -289,7 +289,7 @@ class XLSWorkSheet:
           title: title string for the worksheet
 
         """
-        self.title = title[:Spreadsheet.MAX_LEN_WORKSHEET_TITLE]
+        self.title = str(title)[:Spreadsheet.MAX_LEN_WORKSHEET_TITLE]
         self.data = {}
         self.styles = {}
         self.rows = []
