@@ -650,7 +650,6 @@ class XLSWorkSheet:
         # Get list of all rows we want to move (in reverse order)
         row_list = list(range(self.last_row,position-1,-1))
         for row in row_list:
-            print "Row %s" % row
             next_row = row + 1
             for col in self.columns:
                 # Get cell index
