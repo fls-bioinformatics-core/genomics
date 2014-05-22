@@ -1,3 +1,9 @@
+2014-05-22  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* illumina2cluster/report_barcodes.py
+	- New program: examine barcode sequences from one or more
+	  FASTQ files and report the most prevalent.
+
 2014-05-15  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* utils/manage_seqs.py
