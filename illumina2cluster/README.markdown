@@ -9,6 +9,7 @@ Utilities for preparing data on the cluster from the Illumina instrument:
  *   `build_illumina_analysis_dir.py`: create and populate per-project analysis dirs
  *   `demultiplex_undetermined_fastq.py`: demultiplex undetermined Illumina reads
  *   `prep_sample_sheet.py`: edit SampleSheet.csv before generating FASTQ
+ *   `report_barcodes.py`: analyse barcode sequences from FASTQ files
  *   `rsync_seq_data.sh`: copy sequencing data using rsync
  *   `verify_paired.py`: utility to check FASTQs form R1/R2 pair
 
@@ -309,6 +310,24 @@ and write out to `SampleSheet3.csv`:
 
     prep_sample_sheet.py --fix-spaces --fix-duplicates \
         -o SampleSheet3.csv SampleSheet.csv
+
+
+report_barcodes.py
+------------------
+
+Examine barcode sequences from one or more Fastq files and report the most
+prevalent. Sequences will be pooled from all specified Fastqs before being
+analysed.
+
+Usage:
+
+    report_barcodes.py FASTQ [FASTQ...]
+
+Options:
+    --version        show program's version number and exit
+    -h, --help       show this help message and exit
+    --cutoff=CUTOFF  Minimum number of times a barcode sequence must appear to
+                     be reported (default is 1000000)
 
 
 rsync_seq_data.py
