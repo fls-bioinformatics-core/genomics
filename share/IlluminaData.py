@@ -7,7 +7,7 @@
 #
 #########################################################################
 
-__version__ = "1.1.3"
+__version__ = "1.1.4"
 
 """IlluminaData
 
@@ -1104,11 +1104,17 @@ def fix_bases_mask(bases_mask,barcode_sequence):
         new_read = read
         if read.startswith('I'):
             input_index_length = int(read[1:])
-            actual_index_length = len(indexes[i])
+            try:
+                actual_index_length = len(indexes[i])
+                new_read = "I%d" % actual_index_length
+            except IndexError:
+                # No barcode for this read
+                actual_index_length = 0
+                new_read = ""
             if input_index_length > actual_index_length:
                 # Actual index sequence is shorter so adjust
                 # bases mask and pad with 'n's
-                new_read = "I%d" % actual_index_length + \
+                new_read = new_read + \
                            'n'*(input_index_length-actual_index_length)
             i += 1
         reads.append(new_read)

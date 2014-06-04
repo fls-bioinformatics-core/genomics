@@ -1079,6 +1079,15 @@ class TestFixBasesMask(unittest.TestCase):
         self.assertEqual(fix_bases_mask('y250,I8,I8,y250','TAAGGC-GATCGC'),
                          'y250,I6nn,I6nn,y250')
 
+    def test_fix_bases_mask_dual_index_to_single(self):
+        """Check fix_bases_mask for dual index converted to single index
+        """
+        self.assertEqual(fix_bases_mask('y250,I8,I8,y250','TAAGGCGA'),
+                         'y250,I8,nnnnnnnn,y250')
+        self.assertEqual(fix_bases_mask('y250,I8,I8,y250','TAAGGC'),
+                         'y250,I6nn,nnnnnnnn,y250')
+        
+
 class TestSplitRunName(unittest.TestCase):
 
     def test_split_run_name(self):
