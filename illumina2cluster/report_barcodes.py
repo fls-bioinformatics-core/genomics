@@ -20,7 +20,7 @@ Fastq file from an Illumina sequencer.
 # Import modules that this module depends on
 #######################################################################
 
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 
 import sys
 import optparse
@@ -138,7 +138,10 @@ def sequences_match(seq1,seq2,max_mismatches=0):
 def main(fastqs,cutoff):
     """Main program
 
-    
+    Arguments:
+      fastqs: list of FASTQ files to read sequences from
+      cutoff: set the minimum number of reads that a barcode must appear in
+        before it is reported
 
     """
     barcodes = Barcodes()
@@ -150,6 +153,12 @@ def main(fastqs,cutoff):
     ordered_seqs = sorted(barcodes.sequences(),
                           cmp=lambda x,y: cmp(barcodes.count_for(y),
                                               barcodes.count_for(x)))
+    print "Rank = position after sorting from most to least common"
+    print "Index sequence = the barcode sequence"
+    print "Count = number of reads with this exact index sequence"
+    print "1 mismatch = number of reads which match this index when allowing 1 mismatch"
+    print "2 mismatches = number of reads which match this index allowing 2 mismatches"
+    print "Matching indices = list of higher ranked sequences matching this one (if any)"
     print "Rank\tIndex sequence\tCount\t1 mismatch\t2 mismatches\tMatching indices"
     for i,seq in enumerate(ordered_seqs):
         n_exact = barcodes.count_for(seq)
@@ -159,12 +168,12 @@ def main(fastqs,cutoff):
         for i1,seq1 in enumerate(ordered_seqs[:i]):
             if sequences_match(seq,seq1,2):
                 match_seqs.append("%d:'%s'" % (i1+1,seq1))
-        if max(n_exact,n_1mismatch,n_2mismatch) < cutoff:
-            ##print "...remainder occur less than %d times (set by --cutoff)" % cutoff
-            continue
         print "%d\t%s\t%d\t%d\t%d\t[%s]" % (i+1,seq,
                                           n_exact,n_1mismatch,n_2mismatch,
                                           ','.join(match_seqs))
+        if n_exact < cutoff:
+            print "...remainder occur less than %d times (set by --cutoff)" % cutoff
+            break
 
 #######################################################################
 # Tests
