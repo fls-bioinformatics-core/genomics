@@ -1,5 +1,5 @@
 #     bcf_utils.py: utility classes and functions shared between BCF codes
-#     Copyright (C) University of Manchester 2013 Peter Briggs
+#     Copyright (C) University of Manchester 2013-14 Peter Briggs
 #
 ########################################################################
 #
@@ -7,7 +7,7 @@
 #
 #########################################################################
 
-__version__ = "1.4.4"
+__version__ = "1.4.5"
 
 """bcf_utils
 
@@ -34,6 +34,7 @@ File system wrappers and utilities:
   get_uid_from_user
   get_group_from_gid
   get_gid_from_group
+  walk
 
 Symbolic link handling:
 
@@ -69,6 +70,7 @@ import stat
 import pwd
 import grp
 import datetime
+import re
 
 #######################################################################
 # General utility classes
@@ -707,6 +709,39 @@ def get_gid_from_group(group):
         return grp.getgrnam(group).gr_gid
     except KeyError,ex:
         return None
+
+
+def walk(dirn,include_dirs=True,pattern=None):
+    """Traverse the directory, subdirectories and files
+
+    Essentially this 'walk' function is a convenience wrapper
+    for the 'os.walk' function.
+
+    Arguments:
+      dirn: top-level directory to start traversal from
+      include_dirs: if True then yield directories as well
+        as files (default)
+      pattern: if not None then specifies a regular expression
+        pattern which restricts the set of yielded files and
+        directories to a subset of those which match the
+        pattern
+        
+    """
+    if pattern is not None:
+        matcher = re.compile(pattern)
+    if include_dirs:
+        if pattern is None or matcher.match(dirn):
+            yield dirn
+    for dirpath,dirnames,filenames in os.walk(dirn):
+        if include_dirs:
+            for d in dirnames:
+                d1 = os.path.join(dirpath,d)
+                if pattern is None or matcher.match(d1):
+                    yield d1
+        for f in filenames:
+            f1 = os.path.join(dirpath,f)
+            if pattern is None or matcher.match(f1):
+                yield f1
 
 #######################################################################
 # Symbolic link handling
