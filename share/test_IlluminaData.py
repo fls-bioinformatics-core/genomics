@@ -855,10 +855,10 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,Sample_Pro
                                 'AGTCAA','CAGATC','CTTGTA','AGTCAA']
 
     def test_convert_hiseq_to_casava(self):
-        """Convert Expermental Manager HiSeq SampleSheet to CASAVA SampleSheet
+        """Convert Experimental Manager HiSeq SampleSheet to CASAVA SampleSheet
         
         """
-        # Make sample sheet from MiSEQ data
+        # Make sample sheet from HiSEQ data
         sample_sheet = get_casava_sample_sheet(fp=cStringIO.StringIO(self.hiseq_data))
         # Check contents
         self.assertEqual(len(sample_sheet),12)
@@ -867,6 +867,23 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,Sample_Pro
             self.assertEqual(sample_sheet[i]['SampleID'],self.hiseq_sample_ids[i])
             self.assertEqual(sample_sheet[i]['SampleProject'],self.hiseq_sample_projects[i])
             self.assertEqual(sample_sheet[i]['Index'],self.hiseq_index_ids[i])
+
+    def test_hiseq_to_casava_handle_space_in_index_sequence(self):
+        """Handle trailing space when converting Experimental Manager sample sheet
+
+        """
+        self.hiseq_data = self.hiseq_header + """
+Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_ID,index2,Sample_Project,Description
+1,PJB1,PJB1,,,N703,CTTGTAAT ,N502,TCTTTCCC,PeterBriggs,"""
+        # Make sample sheet from HiSEQ data
+        sample_sheet = get_casava_sample_sheet(fp=cStringIO.StringIO(self.hiseq_data))
+        # Check contents
+        self.assertEqual(len(sample_sheet),1)
+        line = sample_sheet[0]
+        self.assertEqual(line['Lane'],1)
+        self.assertEqual(line['SampleID'],'PJB1')
+        self.assertEqual(line['SampleProject'],'PeterBriggs')
+        self.assertEqual(line['Index'],'CTTGTAAT-TCTTTCCC')
 
 class TestVerifyRunAgainstSampleSheet(unittest.TestCase):
 

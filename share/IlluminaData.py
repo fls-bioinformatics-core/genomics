@@ -7,7 +7,7 @@
 #
 #########################################################################
 
-__version__ = "1.1.4"
+__version__ = "1.1.5"
 
 """IlluminaData
 
@@ -909,11 +909,12 @@ def get_casava_sample_sheet(samplesheet=None,fp=None,FCID_default='FC1'):
                 lane = 1
             # Set the index tag (if any)
             try:
-                index_tag = "%s-%s" % (line['index'],line['index2'])
+                index_tag = "%s-%s" % (line['index'].strip(),
+                                       line['index2'].strip())
             except KeyError:
                 # Assume not dual-indexed (no index2)
                 try:
-                    index_tag = line['index']
+                    index_tag = line['index'].strip()
                 except KeyError:
                     # No index
                     index_tag = ''
