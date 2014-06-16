@@ -5,6 +5,7 @@ import unittest
 import os
 import tempfile
 import shutil
+import mock_data
 from bcf_utils import *
 
 class TestAttributeDictionary(unittest.TestCase):
@@ -400,6 +401,57 @@ class TestUserAndGroupNameFunctions(unittest.TestCase):
         self.assertEqual(get_uid_from_user('0'),None)
         self.assertEqual(get_group_from_gid('root'),None)
         self.assertEqual(get_gid_from_group('0'),None)
+
+class TestWalkFunction(unittest.TestCase):
+    """Unit tests for the 'walk' function
+
+    """
+    def setUp(self):
+        # Make a test data directory structure
+        self.example_dir = mock_data.ExampleDirLanguages()
+        self.wd = self.example_dir.create_directory()
+
+    def tearDown(self):
+        # Remove the test data directory
+        self.example_dir.delete_directory()
+
+    def test_walk(self):
+        """'walk' traverses all files and directories
+
+        """
+        filelist = self.example_dir.filelist(include_dirs=True)
+        filelist.append(self.wd)
+        for f in walk(self.wd):
+            self.assertTrue(f in filelist,"%s not expected" % f)
+            filelist.remove(f)
+        self.assertEqual(len(filelist),0,"Items not returned: %s" %
+                         ','.join(filelist))
+
+    def test_walk_no_directories(self):
+        """'walk' traverses all files and ignores directories
+
+        """
+        filelist = self.example_dir.filelist(include_dirs=False)
+        for f in walk(self.wd,include_dirs=False):
+            self.assertTrue(f in filelist,"%s not expected" % f)
+            filelist.remove(f)
+        self.assertEqual(len(filelist),0,"Items not returned: %s" %
+                         ','.join(filelist))
+
+    def test_walk_includes_hidden_files_and_directories(self):
+        """'walk' finds 'hidden' files and directories
+
+        """
+        self.example_dir.add_file(".hidden_file")
+        self.example_dir.add_dir(".hidden_dir")
+        self.example_dir.add_file(".hidden_dir/test")
+        filelist = self.example_dir.filelist(include_dirs=True)
+        filelist.append(self.wd)
+        for f in walk(self.wd):
+            self.assertTrue(f in filelist,"%s not expected" % f)
+            filelist.remove(f)
+        self.assertEqual(len(filelist),0,"Items not returned: %s" %
+                         ','.join(filelist))
 
 class TestFileSystemFunctions(unittest.TestCase):
     """Unit tests for file system wrapper and utility functions
