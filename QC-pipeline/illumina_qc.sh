@@ -4,7 +4,7 @@
 #
 # Usage: illumina_qc.sh <fastq>
 #
-VERSION=1.1.0
+VERSION=1.1.1
 #
 function usage() {
     echo "Usage: illumina_qc.sh <fastq> [--no-ungzip]"
@@ -208,7 +208,7 @@ run_fastq_screen $FASTQ
 #
 # Run FASTQC
 if [ ! -d qc/${fastq_base}_fastqc ] || [ ! -f qc/${fastq_base}_fastqc.zip ] ; then
-    fastqc_cmd="${FASTQC} --outdir qc --nogroup"
+    fastqc_cmd="${FASTQC} --outdir qc --nogroup --extract"
     if [ ! -z "$FASTQC_CONTAMINANTS_FILE" ] ; then
 	# Nb avoid -c even though this should be valid it seems to
 	# confuse fastqc
