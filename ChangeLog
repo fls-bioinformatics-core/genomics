@@ -1,3 +1,39 @@
+2014-06-16  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* QC-pipeline/illumina_qc.sh
+	- version 1.1.1
+	- Need to specify the --extract option to work with FastQC
+	  0.11.2 (should be backwardsly compatible with 0.10.1).
+
+	* share/IlluminaData.py
+	- version 1.1.5
+	- 'get_casava_sample_sheet' needs to handle leading & trailing
+	  spaces in barcode sequences.
+
+	* share/bcf_utils.py
+	- version 1.4.5
+	- New function 'walk' traverses directory tree (wrapper for
+	  os.walk function).
+
+2014-06-04  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* share/IlluminaData.py
+	- version 1.1.4
+	- Fix_bases_mask updated to handle situation when a single index
+	  sequence is supplied for dual index data.
+
+	* illumina2cluster/report_barcodes.py
+	- version 0.0.2
+	- Make reporting cutoff apply only to exact matches.
+	
+2014-06-02  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* illumina2cluster/prep_sample_sheet.py
+	- version 0.2.1
+	- New options --include-lanes and --truncate-barcodes allow
+	  selection of subset of lanes, and barcode sequences to be
+	  cut down.
+
 2014-05-22  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* illumina2cluster/report_barcodes.py
