@@ -7,7 +7,7 @@
 #
 #########################################################################
 
-__version__ = "1.2.0"
+__version__ = "1.2.1"
 
 """IlluminaData
 
@@ -28,6 +28,7 @@ import shutil
 import platforms
 import bcf_utils
 import TabFile
+import cStringIO
 
 #######################################################################
 # Class definitions
@@ -1178,79 +1179,15 @@ def get_casava_sample_sheet(samplesheet=None,fp=None,FCID_default='FC1'):
     else:
         # Open file
         sample_sheet_fp = open(samplesheet,'rU')
-    # Read the sample sheet file to see if we can identify
-    # the format
-    line = sample_sheet_fp.readline()
-    if line.startswith('[Header]'):
-        # "Experimental Manager"-style format with [...] delimited sections
-        experiment_manager_format = True
-        # Skip through until we reach a [Data] section
-        while not line.startswith('[Data]'):
-            line = sample_sheet_fp.readline()
-        # Feed the rest of the file to a TabFile
-        data = TabFile.TabFile(fp=sample_sheet_fp,delimiter=',',
-                               first_line_is_header=True)
-    elif line.count(',') > 0:
-        # Looks like a comma-delimited header
-        experiment_manager_format = False
-        # Feed the rest of the file to a TabFile
-        data = TabFile.TabFile(fp=sample_sheet_fp,delimiter=',',
-                               column_names=line.split(','))
-    else:
-        # Don't know what to do with this
-        raise Exception, "SampleSheet format not recognised"
-    # Close file, if we opened it
-    if fp is None:
-        sample_sheet_fp.close()
-    # Clean up data: remove double quotes from fields
-    for line in data:
-        for col in data.header():
-            line[col] = str(line[col]).strip('"')
-    # Try to make sense of what we've got
-    header_line = ','.join(data.header())
-    if experiment_manager_format:
-        # Build new sample sheet with standard format
-        sample_sheet = CasavaSampleSheet()
-        for line in data:
-            sample_sheet_line = sample_sheet.append()
-            # Set the lane
-            try:
-                lane = line['Lane']
-            except KeyError:
-                # No lane column (e.g. MiSEQ)
-                lane = 1
-            # Set the index tag (if any)
-            try:
-                index_tag = "%s-%s" % (line['index'].strip(),
-                                       line['index2'].strip())
-            except KeyError:
-                # Assume not dual-indexed (no index2)
-                try:
-                    index_tag = line['index'].strip()
-                except KeyError:
-                    # No index
-                    index_tag = ''
-            sample_sheet_line['FCID'] = FCID_default
-            sample_sheet_line['Lane'] = lane
-            sample_sheet_line['Index'] = index_tag
-            sample_sheet_line['SampleID'] = line['Sample_ID']
-            sample_sheet_line['Description'] = line['Description']
-            # Deal with project name
-            if line['Sample_Project'] == '':
-                # No project name - try to use initials from sample name
-                sample_sheet_line['SampleProject'] = \
-                   bcf_utils.extract_initials(line['Sample_ID'])
-            else:
-                sample_sheet_line['SampleProject'] = line['Sample_Project']
-    else:
-        # Assume standard format, convert directly to CasavaSampleSheet
-        sample_sheet = CasavaSampleSheet()
-        for line in data:
-            if str(line[0]).startswith('#') or str(line).strip() == '':
-                continue
-            sample_sheet.append(tabdata=str(line))
-    # Finished
-    return sample_sheet
+    # Load file contents into memory
+    sample_sheet_content = ''.join(sample_sheet_fp.readlines())
+    # Try to load the sample sheet data assuming Experimental Manager format
+    try:
+        iem = IEMSampleSheet(fp=cStringIO.StringIO(sample_sheet_content))
+        return iem.casava_sample_sheet()
+    except IlluminaDataError:
+        # Not experimental manager format - try CASAVA format
+        return CasavaSampleSheet(fp=cStringIO.StringIO(sample_sheet_content))
 
 def convert_miseq_samplesheet_to_casava(samplesheet=None,fp=None):
     """Convert a Miseq sample sheet file to CASAVA format
