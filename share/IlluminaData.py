@@ -7,7 +7,7 @@
 #
 #########################################################################
 
-__version__ = "1.1.5"
+__version__ = "1.2.0"
 
 """IlluminaData
 
@@ -414,6 +414,318 @@ class IlluminaSample:
         Return string representation for the IlluminaSample -
         i.e. the sample name."""
         return str(self.name)
+
+class IEMSampleSheet:
+    """Class for handling Experimental Manager format sample sheet
+    
+    The Experimental Manager (IEM) samplel sheets are text files
+    with data delimited by '[...]' lines e.g. '[Header]', '[Reads]'
+    etc.
+
+    The 'Header' section consists of comma-separated key-value pairs
+    e.g. 'Application,HiSeq FASTQ Only'.
+
+    The 'Reads' section consists of values (one per line) (possibly
+    number of bases per read?) e.g. '101'.
+    
+    The 'Settings' section consists of comma-separated key-value
+    pairs e.g. 'Adapter,CTGTCTCTTATACACATCT'.
+
+    The 'Data' section contains the data about the lanes, samples
+    and barcode indexes. It consists of lines of comma-separated
+    values, with the first line being a 'header', and the remainder
+    being values for each of those fields.
+
+    Basic usage
+    -----------
+
+    To load data from a file:
+
+    >>> iem = IEMSampleSheet('SampleSheet.csv')
+
+    To access 'header' items:
+
+    >>> iem.header_items
+    ['IEMFileVersion','Date',..]
+    >>> iem.header['IEMFileVersion']
+    '4'
+
+    To access 'reads' data:
+
+    >>> iem.reads
+    ['101','101']
+
+    To access 'settings' items:
+
+    >>> iem.settings_items
+    ['ReverseComplement',...]
+    >>> iem.settings['ReverseComplement']
+    '0'
+
+    To access 'data' (the actual sample sheet information):
+
+    >>> iem.data.header()
+    ['Lane','Sample_ID',...]
+    >>> iem.data[0]['Lane']
+    1
+
+    etc.
+
+    Sample sheet reconstruction
+    ---------------------------
+
+    Data is loaded it is also subjected to some basic cleaning
+    up, including stripping of unnecessary commas and white space.
+    The 'show' method returns a reconstructed version of the
+    original sample sheet after the cleaning operations were
+    performed.
+    
+    Conversion to CASAVA-style sample sheet
+    ---------------------------------------
+
+    The 'casava_sample_sheet' method can be used to convert the
+    IEM format to CASAVA-style i.e. suitable for input into
+    bcl2fastq in order to generate FASTQ files from raw bcls.
+
+    """
+    def __init__(self,sample_sheet=None,fp=None):
+        """Create a new IEMSampleSheet instance
+
+        Read in data from an Experimental Manager-format sample
+        sheet and populate a data structure.
+ 
+        Raises IlluminaDataError exception if the input data
+        doesn't appear to be in the correct format.
+
+        Arguments
+          sample_sheet: name of a sample sheet file to read in
+          fp: file-like object opened for reading which contains
+             sample sheet data; if set then used in preference
+             to 'sample_sheet' argument
+
+        """
+        # Input sample sheet
+        self.sample_sheet = sample_sheet
+        # Store file sections
+        self._header = bcf_utils.OrderedDictionary()
+        self._reads = list()
+        self._settings = bcf_utils.OrderedDictionary()
+        self._data = None
+        # Read in file contents
+        if fp is None and self.sample_sheet is not None:
+            fp = open(self.sample_sheet,'rU')
+        if fp is not None:
+            self._load_data(fp)
+
+    def _load_data(self,fp):
+        """Internal: populate with data from external file
+
+        Arguments
+          fp: file-like object opened for reading which contains
+             sample sheet data
+
+        """
+        section = None
+        for i,line in enumerate(fp):
+            line = line.rstrip()
+            logging.debug(line)
+            if not line:
+                # Skip blank lines
+                continue
+            if line.startswith('['):
+                # New section
+                try:
+                    i = line.index(']')
+                    section = line[1:i]
+                    continue
+                except ValueError:
+                    logging.error("Bad line (#%d): %s" % (i+1,line))
+            if section == 'Header':
+                # Header lines are comma-separated PARAM,VALUE lines
+                self._set_param_value(line,self._header)
+            elif section == 'Reads':
+                # Read lines are one value per line
+                value = line.rstrip(',')
+                if value:
+                    self._reads.append(value)
+            elif section == 'Settings':
+                # Settings lines are comma-separated PARAM,VALUE lines
+                self._set_param_value(line,self._settings)
+            elif section == 'Data':
+                # Store data in TabFile object
+                if self._data is None:
+                    # Initialise TabFile using this first line
+                    # to set the header
+                    self._data = TabFile.TabFile(column_names=line.split(','),
+                                                 delimiter=',')
+                else:
+                    self._data.append(tabdata=line)
+            elif section is None:
+                raise IlluminaDataError("Not a valid IEM sample sheet?")
+            else:
+                raise IlluminaDataError(
+                    "Unrecognised section '%s': not a valid IEM sample sheet?" %
+                    section)
+        # Clean up data items: remove surrounding whitespace
+        if self._data is not None:
+            for line in self._data:
+                for item in self._data.header():
+                    try:
+                        line[item] = line[item].strip()
+                    except AttributeError:
+                        pass
+
+    def _set_param_value(self,line,d):
+        """Internal: process a 'key,value' line
+
+        """
+        fields = line.split(',')
+        param = fields[0]
+        value = fields[1]
+        if param:
+            d[param] = value
+
+    @property
+    def header_items(self):
+        """Return list of items listed in the '[Header]' section
+
+        Returns:
+          List of item names.
+
+        """
+        return self._header.keys()
+
+    @property
+    def header(self):
+        """Return ordered dictionary for the '[Header]' section
+
+        Returns:
+          OrderedDictionary where keys are data items.
+
+        """
+        return self._header
+
+    @property
+    def reads(self):
+        """Return list of values from the '[Reads'] section
+        
+        Returns:
+          List of values.
+
+        """
+        return self._reads
+
+    @property
+    def settings_items(self):
+        """Return list of items listed in the '[Settings]' section
+
+        Returns:
+          List of item names.
+
+        """
+        return self._settings.keys()
+
+    @property
+    def settings(self):
+        """Return ordered dictionary for the '[Settings]' section
+
+        Returns:
+          OrderedDictionary where keys are data items.
+
+        """
+        return self._settings
+
+    @property
+    def data(self):
+        """Return TabFile object for the '[Data]' section
+
+        Returns:
+          TabFile object.
+
+        """
+        return self._data
+
+    def show(self):
+        """Reconstructed version of original sample sheet
+
+        Return a string containing a reconstructed version of
+        the original sample sheet, after any cleaning operations
+        (e.g. removal of unnecessary commas and whitespace) have
+        been applied.
+
+        Returns:
+          String with the reconstructed sample sheet contents.
+
+        """
+        s = []
+        s.append('[Header]')
+        for param in self._header:
+            s.append('%s,%s' % (param,self._header[param]))
+        s.append('')
+        s.append('[Reads]')
+        for value in self._reads:
+            s.append(value)
+        s.append('')
+        s.append('[Settings]')
+        for param in self._settings:
+            s.append('%s,%s' % (param,self._settings[param]))
+        s.append('')
+        s.append('[Data]')
+        s.append(','.join(self._data.header()))
+        for line in self._data:
+            s.append(str(line))
+        return '\n'.join(s)
+
+    def casava_sample_sheet(self,FCID='FC1',fix_empty_projects=True):
+        """Return data as a CASAVA formatted sample sheet
+
+        Create a new CasavaSampleSheet instance populated
+        with data from the IEM sample sheet.
+
+        Arguments:
+          FCID: set the flow cell ID for the output Casava
+            sample sheet (defaults to 'FCID')
+          fix_empty_projects: if True then attempt to populate
+            blank 'SampleProject' fields with values derived
+            from sample names
+
+        Returns:
+          CasavaSampleSheet object.
+
+        """
+        sample_sheet = CasavaSampleSheet()
+        for line in self._data:
+            sample_sheet_line = sample_sheet.append()
+            # Set the lane
+            try:
+                lane = line['Lane']
+            except KeyError:
+                # No lane column (e.g. MiSEQ)
+                lane = 1
+            # Set the index tag (if any)
+            try:
+                index_tag = "%s-%s" % (line['index'].strip(),
+                                       line['index2'].strip())
+            except KeyError:
+                # Assume not dual-indexed (no index2)
+                try:
+                    index_tag = line['index'].strip()
+                except KeyError:
+                    # No index
+                    index_tag = ''
+            sample_sheet_line['FCID'] = FCID
+            sample_sheet_line['Lane'] = lane
+            sample_sheet_line['Index'] = index_tag
+            sample_sheet_line['SampleID'] = line['Sample_ID']
+            sample_sheet_line['Description'] = line['Description']
+            # Deal with project name
+            if line['Sample_Project'] == '' and fix_empty_projects:
+                # No project name - try to use initials from sample name
+                sample_sheet_line['SampleProject'] = \
+                   bcf_utils.extract_initials(line['Sample_ID'])
+            else:
+                sample_sheet_line['SampleProject'] = line['Sample_Project']
+        return sample_sheet
 
 class CasavaSampleSheet(TabFile.TabFile):
     """Class for reading and manipulating sample sheet files for CASAVA
