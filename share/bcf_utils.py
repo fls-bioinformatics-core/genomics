@@ -7,7 +7,7 @@
 #
 #########################################################################
 
-__version__ = "1.4.5"
+__version__ = "1.4.6"
 
 """bcf_utils
 
@@ -53,6 +53,10 @@ Sample name utilities:
 File manipulations:
 
   concatenate_fastq_files
+
+Text manipulations:
+
+  split_into_lines
 
 """
 
@@ -1086,3 +1090,90 @@ def concatenate_fastq_files(merged_fastq,fastq_files,bufsize=10240,
     # Finished, clean up
     fq_merged.close()
     os.rename(merged_fastq_part,merged_fastq)
+
+#######################################################################
+# Text manipulations
+#######################################################################
+
+def split_into_lines(text,char_limit,delimiters=' \t\n',
+                     sympathetic=False):
+    """Split a string into multiple lines with maximum length
+
+    Splits a string into multiple lines on one or more delimiters
+    (defaults to the whitespace characters i.e. ' ',tab and newline),
+    such that each line is no longer than a specified length.
+
+    For example:
+
+    >>> split_into_lines("This is some text to split",10)
+    ['This is','some text','to split']
+
+    If it's not possible to split part of the text to a suitable
+    length then the line is split "unsympathetically" at the
+    line length, e.g.
+
+    >>> split_into_lines("This is supercalifragilicous text",10)
+    ['This is','supercalif','ragilicous','text']
+
+    Set the 'sympathetic' flag to True to include a hyphen to
+    indicate that a word has been broken, e.g.
+
+    >>> split_into_lines("This is supercalifragilicous text",10,
+    ...                  sympathetic=True)
+    ['This is','supercali-','fragilico-','us text']
+
+    To use an alternative set of delimiter characters, set the
+    'delimiters' argument, e.g.
+
+    >>> split_into_lines("This: is some text",10,delimiters=':')
+    ['This',' is some t','ext']
+
+    Arguments:
+      text: string of text to be split into lines
+      char_limit: maximum length for any given line
+      delimiters: optional, specify a set of non-default
+        delimiter characters (defaults to whitespace)
+      sympathetic: optional, if True then add hyphen to
+        indicate when a word has been broken
+
+    Returns:
+      List of lines (i.e. strings).
+
+    """
+    lines = []
+    hyphen = '-'
+    while len(text) > char_limit:
+        # Locate nearest delimiter before the character limit
+        i = None
+        splitting_word = False
+        try:
+            # Check if delimiter occurs at the line boundary
+            if text[char_limit] in delimiters:
+                i = char_limit
+        except IndexError:
+            pass
+        if i is None:
+            # Look for delimiter within the line
+            for delim in delimiters:
+                try:
+                    j = text[:char_limit].rindex(delim)
+                    i = max(i,j)
+                except ValueError:
+                    pass
+        if i is None:
+            # Unable to locate delimiter within character
+            # limit so set to the limit
+            i = char_limit
+        # Are we splitting a word?
+        try:
+            if text[i] not in delimiters and sympathetic:
+                splitting_word = True
+                i = i - 1
+        except IndexError:
+            pass
+        lines.append("%s%s" % (text[:i].rstrip(delimiters),
+                               hyphen if splitting_word else ''))
+        text = text[i:].lstrip(delimiters)
+    # Append remainder
+    lines.append(text)
+    return lines

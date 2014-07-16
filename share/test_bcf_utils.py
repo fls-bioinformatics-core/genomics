@@ -855,6 +855,38 @@ class TestFindProgram(unittest.TestCase):
     def test_dont_find_program_that_does_exist(self):
         self.assertEqual(find_program('/this/doesnt/exist/ls'),None)
 
+class TestSplitIntoLinesFunction(unittest.TestCase):
+    """Unit tests for the split_into_lines function
+
+    """
+    def test_split_into_lines(self):
+        self.assertEqual(split_into_lines('This is some text',10),
+                         ['This is','some text'])
+        self.assertEqual(split_into_lines('This is\nsome text',10),
+                         ['This is','some text'])
+        self.assertEqual(split_into_lines('This is\tsome text',10),
+                         ['This is','some text'])
+        self.assertEqual(split_into_lines('This is \tsome text',10),
+                         ['This is','some text'])
+        self.assertEqual(split_into_lines('This is some text',17),
+                         ['This is some text'])
+        self.assertEqual(split_into_lines('This is some text',100),
+                         ['This is some text'])
+    def test_split_into_lines_delimiter_after_line_limit(self):
+        self.assertEqual(split_into_lines('This is some text',12),
+                         ['This is some','text'])
+    def test_split_into_lines_sympathetically(self):
+        self.assertEqual(split_into_lines("This is supercalifragilicous text",10),
+                         ['This is','supercalif','ragilicous','text'])
+        self.assertEqual(split_into_lines("This is supercalifragilicous text",10,
+                                          sympathetic=True),
+                         ['This is','supercali-','fragilico-','us text'])
+    def test_split_into_lines_alternative_delimiters(self):
+        self.assertEqual(split_into_lines('This is some text',10,':'),
+                         ['This is so','me text'])
+        self.assertEqual(split_into_lines('This: is some text',10,':'),
+                         ['This',' is some t','ext'])
+
 #######################################################################
 # Main program
 #######################################################################
