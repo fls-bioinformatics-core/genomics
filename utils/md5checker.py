@@ -268,6 +268,13 @@ class TestMd5sums(unittest.TestCase):
         checksum = open(self.checksum_file,'r').read()
         self.assertEqual("0b26e313ed4a7ca6904b0e9369e5b957  test.txt\n",checksum)
 
+    def test_broken_links(self):
+        """compute_md5sums make md5sum file for test directory with broken links
+        """
+        # Add broken link to test dir
+        self.dir.add_link("broken","missing.txt")
+        compute_md5sums('.',output_file=self.checksum_file,relative=True)
+
 class TestDiffFilesFunction(unittest.TestCase):
     """Test checking pairs of files (diff_files)
 
