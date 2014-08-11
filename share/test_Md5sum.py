@@ -316,7 +316,7 @@ class TestMd5CheckerComputeMd5sms(unittest.TestCase):
             self.assertTrue(f in files)
             self.assertEqual(md5,self.example_dir.checksum_for_file(f))
 
-    def test_compute_md5dums_ignore_links(self):
+    def test_compute_md5sums_ignore_links(self):
         """Md5Checker.compute_md5sums ignores links
 
         """
@@ -324,6 +324,19 @@ class TestMd5CheckerComputeMd5sms(unittest.TestCase):
         for f,md5 in Md5Checker.compute_md5sums(self.example_dir.dirn,
                                                 links=Md5Checker.IGNORE_LINKS):
             self.assertTrue(f in files)
+            self.assertEqual(md5,self.example_dir.checksum_for_file(f))
+
+    def test_compute_md5sums_handle_broken_links(self):
+        """Md5Checker.compute_md5sums handles broken links
+
+        """
+        # Add a broken link
+        self.example_dir.add_link("broken","missing.txt")
+        # Get file list including links
+        files = self.example_dir.filelist(include_links=True,full_path=False)
+        # Check checksums
+        for f,md5 in Md5Checker.compute_md5sums(self.example_dir.dirn):
+            self.assertTrue(f in files,"%s doesn't appear in file list?" % f)
             self.assertEqual(md5,self.example_dir.checksum_for_file(f))
 
 class TestMd5CheckerVerifyMd5sms(unittest.TestCase):

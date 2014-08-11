@@ -43,7 +43,7 @@ a wrapper class 'Md5Reporter' which
 # Module metadata
 #######################################################################
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 
 #######################################################################
 # Import modules that this module depends on
@@ -259,7 +259,11 @@ class Md5Checker:
 
         """
         for f in self.walk(d,links=links):
-            yield (os.path.relpath(f,d),md5sum(f))
+            try:
+                md5 = md5sum(f)
+                yield (os.path.relpath(f,d),md5)
+            except IOError,ex:
+                logging.error("md5sum: %s: %s" % (f,ex))
 
     @classmethod
     def verify_md5sums(self,filen=None,fp=None):
