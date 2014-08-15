@@ -9,7 +9,7 @@
 #
 #########################################################################
 
-__version__ = "1.0.4"
+__version__ = "1.0.5"
 
 """JobRunner
 
@@ -382,6 +382,12 @@ class GEJobRunner(BaseJobRunner):
         """Return the name for a job
         """
         return self.__names[job_id]
+
+    @property
+    def ge_extra_args(self):
+        """Return the extra GE arguments
+        """
+        return self.__ge_extra_args
 
     def run(self,name,working_dir,script,args):
         """Submit a script or command to the cluster via 'qsub'

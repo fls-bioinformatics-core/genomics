@@ -230,6 +230,7 @@ class TestGEJobRunner(unittest.TestCase):
         # Create a runner and execute the echo command
         self.ge_extra_args.extend(('-j','y'))
         runner = GEJobRunner(ge_extra_args=self.ge_extra_args)
+        self.assertEqual(runner.ge_extra_args,self.ge_extra_args)
         jobid = self.run_job(runner,'test',self.working_dir,'echo',('this is a test',))
         self.wait_for_jobs(runner,jobid)
         # Check outputs

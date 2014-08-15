@@ -1,3 +1,9 @@
+2014-08-15  Peter Briggs  <pjb@Fedora-MINIT-19HRGNO>
+
+	* share/JobRunner.py
+	- version 1.0.5
+	- new 'ge_extract_args' property for GEJobRunner.
+
 2014-08-11  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* share/Md5sum.py
