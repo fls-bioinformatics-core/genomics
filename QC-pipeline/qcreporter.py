@@ -33,7 +33,7 @@ SHARE_DIR = os.path.abspath(
         os.path.join(os.path.dirname(sys.argv[0]),'..')))
 sys.path.append(SHARE_DIR)
 import bcftbx.Pipeline as Pipeline
-import bcftbx.TabFile as Tabfile
+import bcftbx.TabFile as TabFile
 import bcftbx.utils as bcf_utils
 import bcftbx.htmlpagewriter as htmlpagewriter
 
