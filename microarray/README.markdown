@@ -37,7 +37,6 @@ Options:
      --p-value-col=P_VALUE_COL
                           specify column with p-value (default=13; columns start
                           counting from zero)
-    --test                Run unit tests
     --debug               Turn on debug output
 
 ### Description ###
