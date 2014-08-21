@@ -2,6 +2,7 @@
 # Tests for IlluminaData.py module
 #######################################################################
 from bcftbx.IlluminaData import *
+import bcftbx.utils
 import unittest
 import cStringIO
 import tempfile
@@ -338,17 +339,17 @@ class MockIlluminaData:
         if os.path.exists(self.dirn):
             raise OSError,"%s already exists" % self.dirn
         else:
-            bcf_utils.mkdir(self.dirn)
+            bcftbx.utils.mkdir(self.dirn)
             self.__created = True
         # "Unaligned" directory
-        bcf_utils.mkdir(self.unaligned_dir)
+        bcftbx.utils.mkdir(self.unaligned_dir)
         # Populate with projects, samples etc
         for project_name in self.__projects:
             project_dirn = os.path.join(self.unaligned_dir,project_name)
-            bcf_utils.mkdir(project_dirn)
+            bcftbx.utils.mkdir(project_dirn)
             for sample_name in self.__projects[project_name]:
                 sample_dirn = os.path.join(project_dirn,sample_name)
-                bcf_utils.mkdir(sample_dirn)
+                bcftbx.utils.mkdir(sample_dirn)
                 for fastq in self.__projects[project_name][sample_name]:
                     fq = os.path.join(sample_dirn,fastq)
                     # "Touch" the file (i.e. creates an empty file)

@@ -2,7 +2,7 @@
 # Tests for JobRunner.py module
 #######################################################################
 from bcftbx.JobRunner import *
-import bcftbx.bcf_utils as bcf_utils
+import bcftbx.utils
 import unittest
 import tempfile
 import shutil
@@ -148,7 +148,7 @@ class TestGEJobRunner(unittest.TestCase):
 
     def setUp(self):
         # Skip the test if Grid Engine not available
-        if bcf_utils.find_program('qstat') is None:
+        if bcftbx.utils.find_program('qstat') is None:
             raise unittest.SkipTest("'qstat' not found, Grid Engine not available")
         # Create a temporary directory to work in
         self.working_dir = self.make_tmp_dir()

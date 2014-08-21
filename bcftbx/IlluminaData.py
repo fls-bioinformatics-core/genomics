@@ -26,7 +26,7 @@ import logging
 import xml.dom.minidom
 import shutil
 import platforms
-import bcf_utils
+import utils
 import TabFile
 import cStringIO
 
@@ -325,7 +325,7 @@ class IlluminaProject:
 
         Wraps a call to 'pretty_print_names' function.
         """
-        return bcf_utils.pretty_print_names(self.samples)
+        return utils.pretty_print_names(self.samples)
 
 class IlluminaSample:
     """Class for storing information on a 'sample' within an Illumina project
@@ -508,9 +508,9 @@ class IEMSampleSheet:
         # Input sample sheet
         self.sample_sheet = sample_sheet
         # Store file sections
-        self._header = bcf_utils.OrderedDictionary()
+        self._header = utils.OrderedDictionary()
         self._reads = list()
-        self._settings = bcf_utils.OrderedDictionary()
+        self._settings = utils.OrderedDictionary()
         self._data = None
         # Read in file contents
         if fp is None and self.sample_sheet is not None:
@@ -723,7 +723,7 @@ class IEMSampleSheet:
             if line['Sample_Project'] == '' and fix_empty_projects:
                 # No project name - try to use initials from sample name
                 sample_sheet_line['SampleProject'] = \
-                   bcf_utils.extract_initials(line['Sample_ID'])
+                   utils.extract_initials(line['Sample_ID'])
             else:
                 sample_sheet_line['SampleProject'] = line['Sample_Project']
         return sample_sheet

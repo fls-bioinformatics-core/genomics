@@ -57,7 +57,7 @@ object holds data for a paired-end run.)
 import sys,os
 import string
 import logging
-import bcf_utils
+import utils
 
 #######################################################################
 # Class definitions
@@ -561,10 +561,10 @@ class SolidLibrary:
         # Name
         self.name = str(name)
         # Name-based information
-        self.initials = bcf_utils.extract_initials(self.name)
-        self.prefix = bcf_utils.extract_prefix(self.name)
-        self.index_as_string = bcf_utils.extract_index_as_string(self.name)
-        self.index = bcf_utils.extract_index(self.name)
+        self.initials = utils.extract_initials(self.name)
+        self.prefix = utils.extract_prefix(self.name)
+        self.index_as_string = utils.extract_index_as_string(self.name)
+        self.index = utils.extract_index(self.name)
         # Barcoding
         self.is_barcoded = False
         # Associated canonical data files
@@ -797,7 +797,7 @@ class SolidProject:
 
         Wraps a call to 'pretty_print_names' function.
         """
-        return bcf_utils.pretty_print_names(self.libraries)
+        return utils.pretty_print_names(self.libraries)
 
     def getTimeStamps(self):
         """Return a list of timestamps for primary data

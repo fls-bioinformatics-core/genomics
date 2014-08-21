@@ -15,10 +15,9 @@ Utilities and data to identify NGS sequencer platforms
 
 """
 
-import bcf_utils
-
 # Dictionary of sequencer platforms
-PLATFORMS = bcf_utils.OrderedDictionary()
+from utils import OrderedDictionary
+PLATFORMS = OrderedDictionary()
 PLATFORMS['solid4'] = "SOLiD 4"
 PLATFORMS['solid5500'] = "SOLiD 5500"
 PLATFORMS['illumina-ga2x'] = "Illumina GAIIx"
