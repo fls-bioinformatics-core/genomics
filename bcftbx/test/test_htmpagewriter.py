@@ -1,7 +1,7 @@
 #######################################################################
 # Tests for htmlpagewriter.py module
 #######################################################################
-from htmlpagewriter import HTMLPageWriter,PNGBase64Encoder
+from bcftbx.htmlpagewriter import HTMLPageWriter,PNGBase64Encoder
 import unittest
 import cStringIO
 

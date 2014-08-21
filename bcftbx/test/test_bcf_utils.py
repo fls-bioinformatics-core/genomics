@@ -5,8 +5,8 @@ import unittest
 import os
 import tempfile
 import shutil
-import mock_data
-from bcf_utils import *
+import bcftbx.test.mock_data as mock_data
+from bcftbx.bcf_utils import *
 
 class TestAttributeDictionary(unittest.TestCase):
     """Tests for the AttributeDictionary class

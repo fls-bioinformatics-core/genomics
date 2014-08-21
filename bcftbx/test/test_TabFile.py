@@ -1,7 +1,7 @@
 ########################################################################
 # Tests for TabFile.py module
 #########################################################################
-from TabFile import *
+from bcftbx.TabFile import *
 import unittest
 import cStringIO
 

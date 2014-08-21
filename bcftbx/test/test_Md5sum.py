@@ -1,8 +1,8 @@
 #######################################################################
 # Tests for Md5sum.py module
 #######################################################################
-from Md5sum import *
-from mock_data import ExampleDirSpiders,ExampleDirLanguages
+from bcftbx.Md5sum import *
+from bcftbx.test.mock_data import ExampleDirSpiders,ExampleDirLanguages
 import unittest
 import os
 import tempfile

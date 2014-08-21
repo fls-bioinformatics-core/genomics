@@ -1,8 +1,8 @@
 #######################################################################
 # Tests for JobRunner.py module
 #######################################################################
-from JobRunner import *
-import bcf_utils
+from bcftbx.JobRunner import *
+import bcftbx.bcf_utils as bcf_utils
 import unittest
 import tempfile
 import shutil

@@ -1,7 +1,7 @@
 #######################################################################
 # Tests for FASTQFile.py module
 #######################################################################
-from FASTQFile import *
+from bcftbx.FASTQFile import *
 import unittest
 import cStringIO
 

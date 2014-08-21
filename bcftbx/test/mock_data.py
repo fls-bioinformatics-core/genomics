@@ -35,8 +35,7 @@ import os
 import tempfile
 import shutil
 import copy
-import Md5sum
-import bcf_utils
+import bcftbx.Md5sum
 
 #######################################################################
 # Modules constants
@@ -207,7 +206,7 @@ class BaseExampleDir:
     def checksum_for_file(self,path):
         """
         """
-        return Md5sum.md5sum(self.path(path))
+        return bcftbx.Md5sum.md5sum(self.path(path))
 
 class ExampleDirScooby(BaseExampleDir):
     """Small test data directory with files and subdirectories

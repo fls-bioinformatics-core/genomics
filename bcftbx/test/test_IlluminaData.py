@@ -1,7 +1,7 @@
 #######################################################################
 # Tests for IlluminaData.py module
 #######################################################################
-from IlluminaData import *
+from bcftbx.IlluminaData import *
 import unittest
 import cStringIO
 import tempfile

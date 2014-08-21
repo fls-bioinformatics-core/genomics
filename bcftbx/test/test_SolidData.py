@@ -1,7 +1,7 @@
 #######################################################################
 # Tests for SolidData.py module
 #######################################################################
-from SolidData import *
+from bcftbx.SolidData import *
 import unittest
 import tempfile
 import shutil

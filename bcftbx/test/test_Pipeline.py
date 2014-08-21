@@ -2,7 +2,7 @@
 # Tests for Pipeline.py module
 #######################################################################
 import unittest
-from Pipeline import *
+from bcftbx.Pipeline import *
 
 class TestGetSolidDataFiles(unittest.TestCase):
     """Unit tests for GetSolidDataFiles function

@@ -1,7 +1,7 @@
 #######################################################################
 # Tests for Spreadsheet.py
 #######################################################################
-from Spreadsheet import *
+from bcftbx.Spreadsheet import *
 import unittest
 import tempfile
 

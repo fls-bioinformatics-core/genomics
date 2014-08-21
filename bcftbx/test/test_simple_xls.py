@@ -1,7 +1,7 @@
 #######################################################################
 # Tests for simple_xls module
 #######################################################################
-from simple_xls import *
+from bcftbx.simple_xls import *
 import unittest
 import itertools
 
