@@ -1,5 +1,11 @@
 2014-08-21  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
+	* bcftbx
+	- Substantial update: Python library modules from 'share'
+	  relocated to 'bcftbx' and turned into a Python package.
+	- 'bcf_utils.py' also renamed to 'bcftbx/utils.py'.
+	- Python applications also updated to reflect the changes.
+
 	* microarray/best_exons.py
 	- version 1.2.1
 	- new program: averages data for 'best' exons for each gene
