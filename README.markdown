@@ -17,7 +17,11 @@ Scripts are organised into the following directories:
 * [illumina2cluster](illumina2cluster): utilities for transferring and
   preparing Illumina data on the compute cluster
 * [utils](utils): non-NGS utility scripts
-* [share](share): common libraries and modules shared between applications
+
+There are also 'library' scripts and code in these directories:
+
+* [bcftbx](bcftbx): Python library modules arranged into a `bcftbx` package
+* [share](share): shared scripts and shell functions
 
 Dependencies
 ------------
@@ -26,5 +30,5 @@ Dependencies
 * perl Statistics::Descriptive module
 * BioPerl
 * java
-* python (2.4+)
+* python (2.6+)
 * python xlwt, xlrd, xlutils libraries
