@@ -24,7 +24,7 @@ __version__ = "0.0.2"
 
 import sys
 import optparse
-import FASTQFile
+import bcftbx.FASTQFile as FASTQFile
 
 #######################################################################
 # Class definitions

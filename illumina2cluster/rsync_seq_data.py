@@ -33,12 +33,12 @@ import logging
 import optparse
 import subprocess
 
-# Put ../share onto Python search path for modules
+# Put .. onto Python search path for modules
 SHARE_DIR = os.path.abspath(
     os.path.normpath(
-        os.path.join(os.path.dirname(sys.argv[0]),'..','share')))
+        os.path.join(os.path.dirname(sys.argv[0]),'..')))
 sys.path.append(SHARE_DIR)
-import platforms
+import bcftbx.platforms as platforms
 
 #######################################################################
 # Functions

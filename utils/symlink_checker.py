@@ -28,7 +28,7 @@ import os
 import re
 import logging
 import optparse
-import bcf_utils
+import bcftbx.utils
 
 #######################################################################
 # Main program
@@ -64,8 +64,8 @@ if __name__ == "__main__":
         regex = re.compile(options.regex_pattern)
 
     # Examine links in the directory structure
-    for l in bcf_utils.links(args[0]):
-        link = bcf_utils.Symlink(l)
+    for l in bcftbx.utils.links(args[0]):
+        link = bcftbx.utils.Symlink(l)
         logging.debug("%s -> %s" % (link,link.target))
         if options.broken and link.is_broken:
             # Broken link

@@ -32,18 +32,13 @@ import subprocess
 import time
 import optparse
 
-# Put ../share onto Python search path for modules
+# Put .. onto Python search path for modules
 SHARE_DIR = os.path.abspath(
     os.path.normpath(
-        os.path.join(os.path.dirname(sys.argv[0]),'..','share')))
+        os.path.join(os.path.dirname(sys.argv[0]),'..')))
 sys.path.append(SHARE_DIR)
-try:
-    import JobRunner
-    import Pipeline
-except ImportError, ex:
-    print "Error importing modules: %s" % ex
-    print "Check PYTHONPATH"
-    sys.exit(1)
+import bcftbx.JobRunner as JobRunner
+import bcftbx.Pipeline as Pipeline
 
 #######################################################################
 # Module Functions

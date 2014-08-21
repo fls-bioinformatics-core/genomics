@@ -20,18 +20,15 @@ import sys,os
 import logging
 logging.basicConfig(format="%(levelname)s %(message)s")
 
-# Put ../share onto Python search path for modules
+# Put .. onto Python search path for modules
 SHARE_DIR = os.path.abspath(
     os.path.normpath(
-        os.path.join(os.path.dirname(sys.argv[0]),'..','share')))
+        os.path.join(os.path.dirname(sys.argv[0]),'..')))
 sys.path.append(SHARE_DIR)
-try:
-    import SolidData
-    import Experiment
-    import JobRunner
-    import Pipeline
-except ImportError, ex:
-    logging.warning("Error importing modules: %s" % ex)
+import bcftbx.SolidData as SolidData
+import bcftbx.Experiment as Experiment
+import bcftbx.JobRunner as JobRunner
+import bcftbx.Pipeline as Pipeline
 
 #######################################################################
 # Class definitions

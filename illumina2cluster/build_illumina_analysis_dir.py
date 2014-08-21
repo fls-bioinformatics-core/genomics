@@ -32,13 +32,13 @@ import optparse
 import logging
 import gzip
 
-# Put ../share onto Python search path for modules
+# Put .. onto Python search path for modules
 SHARE_DIR = os.path.abspath(
     os.path.normpath(
-        os.path.join(os.path.dirname(sys.argv[0]),'..','share')))
+        os.path.join(os.path.dirname(sys.argv[0]),'..')))
 sys.path.append(SHARE_DIR)
-import IlluminaData
-import bcf_utils
+import bcftbx.IlluminaData as IlluminaData
+import bcftbx.utils as bcf_utils
 
 #######################################################################
 # Functions

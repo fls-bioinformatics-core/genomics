@@ -61,10 +61,16 @@ import sys
 import os
 import optparse
 import logging
-import TabFile
-import bcf_utils
 from collections import Iterator
 from operator import attrgetter
+
+# Put .. onto Python search path for modules
+SHARE_DIR = os.path.abspath(
+    os.path.normpath(
+        os.path.join(os.path.dirname(sys.argv[0]),'..')))
+sys.path.append(SHARE_DIR)
+import bcftbx.TabFile as TabFile
+import bcftbx.utils as bcf_utils
 
 ########################################################################
 # Classes

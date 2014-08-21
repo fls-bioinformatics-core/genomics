@@ -27,20 +27,15 @@ import logging
 import zipfile
 import time
 
-# Put ../share onto Python search path for modules
+# Put .. onto Python search path for modules
 SHARE_DIR = os.path.abspath(
     os.path.normpath(
-        os.path.join(os.path.dirname(sys.argv[0]),'..','share')))
+        os.path.join(os.path.dirname(sys.argv[0]),'..')))
 sys.path.append(SHARE_DIR)
-try:
-    import Pipeline
-    import TabFile
-    import bcf_utils
-    import htmlpagewriter
-except ImportError, ex:
-    print "Error importing modules: %s" % ex
-    print "Check PYTHONPATH"
-    sys.exit(1)
+import bcftbx.Pipeline as Pipeline
+import bcftbx.TabFile as Tabfile
+import bcftbx.utils as bcf_utils
+import bcftbx.htmlpagewriter as htmlpagewriter
 
 # Configure logging output
 logging.basicConfig(format="%(levelname)s: %(message)s")

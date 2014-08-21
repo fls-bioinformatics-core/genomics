@@ -28,13 +28,14 @@ import optparse
 import logging
 logging.basicConfig(format="%(levelname)s %(message)s")
 
-# Put ../share onto Python search path for modules
+# Put .. onto Python search path for modules
 SHARE_DIR = os.path.abspath(
     os.path.normpath(
-        os.path.join(os.path.dirname(sys.argv[0]),'..','share')))
+        os.path.join(os.path.dirname(sys.argv[0]),'..')))
 sys.path.append(SHARE_DIR)
-import SolidData
-import Experiment
+import bcftbx.SolidData as SolidData
+import bcftbx.Experiment as Experiment
+import bcftbx.Md5sum as Md5sum
 
 #######################################################################
 # Class definitions
@@ -629,7 +630,7 @@ if __name__ == "__main__":
     # Report the runs to a spreadsheet
     if options.xls:
         try:
-            import Spreadsheet
+            import bcftbx.Spreadsheet as Spreadsheet
             write_spreadsheet(solid_runs,spreadsheet)
         except ImportError, ex:
             logging.error("Unable to write spreadsheet: %s" % ex)
@@ -661,11 +662,7 @@ if __name__ == "__main__":
             # Only specified libraries
             md5_pattern = options.md5_pattern
         # Calculate checksums
-        try:
-            import Md5sum
-            md5_checksums(solid_runs,md5_pattern)
-        except ImportError:
-            logging.error("Unable to generate MD5 sums: %s" % ex)
+        md5_checksums(solid_runs,md5_pattern)
 
     # Do verification
     # Nb this should always be the last step
