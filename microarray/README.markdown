@@ -9,7 +9,9 @@ Scripts and tools for microarray specific tasks.
 best_exons.py
 -------------
 
-Usage:
+Average data for 'best' exons for each gene symbol in a file.
+
+### Usage: ###
 
     best_exons.py [OPTIONS] EXONS_IN BEST_EXONS
 
@@ -17,6 +19,7 @@ Read exon and gene symbol data from EXONS_IN and picks the top three exons for
 each gene symbol, then outputs averages of the associated values to BEST_EXONS.
 
 Options:
+
     --version             show program's version number and exit
     -h, --help            show this help message and exit
     --rank-by=CRITERION   select the criterion for ranking the 'best' exons;
@@ -36,6 +39,8 @@ Options:
                           counting from zero)
     --test                Run unit tests
     --debug               Turn on debug output
+
+### Description ###
 
 Program to pick 'top' three exons for each gene symbol from a TSV file
 with the exon data (file has one exon per line) and output a single
@@ -79,9 +84,13 @@ had 4 or fewer exons associated with them in the input file.
 xrothologs.py
 -------------
 
-Usage:
+Cross-reference data for two species using probe set lookup
+
+### Usage: ###
 
     xrorthologs.py [options] LOOKUPFILE SPECIES1 SPECIES2
+
+### Description ###
 
 Cross-reference data from two species given a lookup file that maps probe set
 IDs from one species onto those onto the other.
