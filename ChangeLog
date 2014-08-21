@@ -1,4 +1,11 @@
-2014-08-15  Peter Briggs  <pjb@Fedora-MINIT-19HRGNO>
+2014-08-21  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* microarray/best_exons.py
+	- version 1.2.1
+	- new program: averages data for 'best' exons for each gene
+	  symbol in a file.
+
+2014-08-15  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* share/JobRunner.py
 	- version 1.0.5
