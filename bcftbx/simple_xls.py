@@ -121,7 +121,7 @@ import re
 from collections import Iterator
 import logging
 import Spreadsheet
-import bcf_utils
+from utils import OrderedDictionary
 
 #######################################################################
 # Constants
@@ -179,7 +179,7 @@ class XLSWorkBook:
 
         """
         self.title = title
-        self.worksheet = bcf_utils.OrderedDictionary()
+        self.worksheet = OrderedDictionary()
 
     def add_work_sheet(self,name,title=None):
         """Create and append a new worksheet

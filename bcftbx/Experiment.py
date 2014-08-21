@@ -24,7 +24,7 @@ collection of experiments which are typically part of the same SOLiD run.
 import os
 import logging
 import SolidData
-import bcf_utils
+import utils
 
 #######################################################################
 # Class definitions
@@ -196,7 +196,7 @@ class ExperimentList:
                 if not dry_run:
                     # Create top directory
                     print "Creating %s" % top_dir
-                    bcf_utils.mkdir(top_dir,mode=0775)
+                    utils.mkdir(top_dir,mode=0775)
                 else:
                     # Report what would have been done
                     print "mkdir %s" % top_dir
@@ -216,7 +216,7 @@ class ExperimentList:
             else:
                 if not dry_run:
                     # Create directory
-                    bcf_utils.mkdir(expt_dir,mode=0775)
+                    utils.mkdir(expt_dir,mode=0775)
                 else:
                     # Report what would have been done
                     print "mkdir %s" % expt_dir
@@ -259,7 +259,7 @@ class ExperimentList:
             else:
                 if not dry_run:
                     # Create directory
-                    bcf_utils.mkdir(scriptcode_dir,mode=0775)
+                    utils.mkdir(scriptcode_dir,mode=0775)
                 else:
                     # Report what would have been done
                     print "mkdir %s" % scriptcode_dir
@@ -288,7 +288,7 @@ class ExperimentList:
             return
         if not dry_run:
             # Make symbolic links
-            bcf_utils.mklink(source,target,relative=relative)
+            utils.mklink(source,target,relative=relative)
         else:
             # Report what would have been done
             print "ln -s %s %s" % (source,target)
