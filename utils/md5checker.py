@@ -261,28 +261,11 @@ if __name__ == "__main__":
                                  "This option behaves the same as the Linux 'md5sum' tool.")
     p.add_option_group(group)
 
-    # Testing
-    group = optparse.OptionGroup(p,"Testing")
-    group.add_option('--test',action="store_true",dest="run_tests",default=False,
-                     help="run unit tests")
-    p.add_option_group(group)
-
     # Process the command line
     options,arguments = p.parse_args()
 
     # Set up logging output
     logging.basicConfig(format='%(message)s')
-
-    # Unit tests
-    if options.run_tests:
-        print "Running unit tests"
-        logging.getLogger().setLevel(logging.CRITICAL)
-        suite = unittest.TestSuite(unittest.TestLoader().\
-                                       discover(os.path.dirname(sys.argv[0]), \
-                                                    pattern=os.path.basename(sys.argv[0])))
-        unittest.TextTestRunner(verbosity=2).run(suite)
-        print "Tests finished"
-        sys.exit()
 
     # Figure out mode of operation
     if options.check:

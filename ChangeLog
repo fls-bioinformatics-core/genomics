@@ -2,7 +2,8 @@
 
 	* utils/md5checker.py
 	- version 0.3.2
-	- move unit tests into separate test module.
+	- move unit tests into separate test module & remove --test
+	  option.
 
 2014-08-21  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
