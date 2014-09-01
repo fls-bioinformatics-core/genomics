@@ -1,5 +1,16 @@
 2014-09-01  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
+	* bcftbx/qc/report.py
+	- version 0.99.1
+	- relocated QC reporting classes and functions from the
+	  qcreporter.py program into a new module in the bcftbx
+	  package.
+
+	* bcftbx
+	- version 0.99.0
+	- add a single version for the whole package, accessible
+	  using the 'bcftbx.get_version()' function.
+
 	* utils/md5checker.py
 	- version 0.3.2
 	- move unit tests into separate test module & remove --test
