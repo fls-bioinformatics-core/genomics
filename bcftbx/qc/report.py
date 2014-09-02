@@ -322,48 +322,21 @@ class QCSample:
         qc_files = os.listdir(self.qc_dir)
         qc_files.sort()
         # Associate QC outputs with sample names
-        sample_name_underscore = self.name+'_'
-        sample_name_dot = self.name+'.'
         for f in qc_files:
-            # Screens
-            if f.startswith(sample_name_underscore):
-                if f.endswith('_screen.png'):
-                    # Extract and check screen name
-                    screen_name = f.replace(sample_name_underscore,'').\
-                        replace('paired_','').\
-                        replace('_screen.png','')
-                    if screen_name in FASTQ_SCREEN_NAMES:
-                        self.addScreen(f)
-            # Boxplots
-            if f.endswith('_boxplot.png'):
-                if f.startswith(sample_name_dot) or f.startswith(sample_name_underscore):
-                    self.addBoxplot(f)
-                else:
-                    # Try progressive manipulations looking for a match
-                    #
-                    # Removing "_QV" from names
-                    f1 = f.replace('_QV','')
-                    if f1.startswith(sample_name_underscore) or \
-                            f1.startswith(sample_name_dot):
-                        self.addBoxplot(f)
-                    else:
-                        # Removing "_F3_" from names
-                        f1 = f1.replace('_F3_','_')
-                        if f1.startswith(sample_name_underscore) or \
-                                f1.startswith(sample_name_dot):
-                            self.addBoxplot(f)
-                        else:
-                            # Removing "_F5-BC_" from names
-                            f1 = f1.replace('_F5-BC_','_')
-                            if f1.startswith(sample_name_underscore) or \
-                                f1.startswith(sample_name_dot):
-                                self.addBoxplot(f)
-            # FastQC
-            if f == "%sfastqc" % sample_name_underscore:
+            if is_fastq_screen(self.name,f):
+                # Fastq screen
+                self.addScreen(f)
+            elif is_fastqc(self.name,f):
+                # FastQC
                 self.addFastQC(f)
+            elif is_boxplot(self.name,f):
+                # Boxplot
+                self.addBoxplot(f)
         # Program information
         # Info files can be in qc dir or one level up (for older
         # qc scripts)
+        sample_name_underscore = self.name+'_'
+        sample_name_dot = self.name+'.'
         dirs = (self.qc_dir,os.path.join(self.qc_dir,".."))
         for d in dirs:
             for f in os.listdir(d):
@@ -1145,6 +1118,66 @@ class SolidQCSample(QCSample):
 #######################################################################
 # Functions
 #######################################################################
+
+def is_fastqc(name,f):
+    """Return True if f is a FastQC file associated with sample
+
+    'name' can be a file name, or a file 'root' i.e. filename
+    with all trailing extensions removed.
+
+    """
+    name_underscore = os.path.basename(utils.rootname(name))+'_'
+    if f == "%sfastqc" % name_underscore:
+        return True
+    else:
+        return False
+
+def is_fastq_screen(name,f):
+    """Return True if f is a fastq_screen file associated with sample
+
+    'name' can be a file name, or a file 'root' i.e. filename
+    with all trailing extensions removed.
+
+    """
+    name_underscore = os.path.basename(utils.rootname(name))+'_'
+    if f.startswith(name_underscore) and f.endswith('_screen.png'):
+        # Extract and check screen name
+        screen_name = f.replace(name_underscore,'').\
+                      replace('paired_','').\
+                      replace('_screen.png','')
+        if screen_name in FASTQ_SCREEN_NAMES:
+            return True
+    # Not a match
+    return False
+
+def is_boxplot(name,f):
+    """Return True if f is a qc_boxplot associated with sample
+
+    'name' can be a file name, or a file 'root' i.e. filename
+    with all trailing extensions removed.
+
+    """
+    name_underscore = os.path.basename(utils.rootname(name))+'_'
+    name_dot = os.path.basename(utils.rootname(name))+'.'
+    if f.endswith('_boxplot.png'):
+        if f.startswith(name_dot) or f.startswith(name_underscore):
+            return True
+        # Try progressive manipulations looking for a match
+        #
+        # Removing "_QV" from names
+        f1 = f.replace('_QV','')
+        if f1.startswith(name_underscore) or f1.startswith(name_dot):
+            return True
+        # Removing "_F3_" from names
+        f1 = f1.replace('_F3_','_')
+        if f1.startswith(name_underscore) or f1.startswith(name_dot):
+            return True
+        # Removing "_F5-BC_" from names
+        f1 = f1.replace('_F5-BC_','_')
+        if f1.startswith(name_underscore) or f1.startswith(name_dot):
+            return True
+    # Failed all tests, not a boxplot
+    return False
 
 def cmp_boxplots(b1,b2):
     """Compare the names of two boxplots for sorting purposes
