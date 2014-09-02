@@ -335,13 +335,10 @@ class QCSample:
         # Program information
         # Info files can be in qc dir or one level up (for older
         # qc scripts)
-        sample_name_underscore = self.name+'_'
-        sample_name_dot = self.name+'.'
         dirs = (self.qc_dir,os.path.join(self.qc_dir,".."))
         for d in dirs:
             for f in os.listdir(d):
-                if f.endswith('.programs') and \
-                   (f.startswith(sample_name_dot) or f.startswith(sample_name_underscore)):
+                if is_program_info(self.name,f):
                     self.addProgramInfo(os.path.join(d,f))
 
     def screens(self):
@@ -1119,8 +1116,23 @@ class SolidQCSample(QCSample):
 # Functions
 #######################################################################
 
+def is_program_info(name,f):
+    """Return True if f is a 'program info' file associated with name
+
+    'name' can be a file name, or a file 'root' i.e. filename
+    with all trailing extensions removed.
+
+    """
+    name_underscore = os.path.basename(utils.rootname(name))+'_'
+    name_dot = os.path.basename(utils.rootname(name))+'.'
+    if f.endswith('.programs') and \
+       (f.startswith(name_dot) or f.startswith(ame_underscore)):
+        return True
+    else:
+        return False
+
 def is_fastqc(name,f):
-    """Return True if f is a FastQC file associated with sample
+    """Return True if f is a FastQC file associated with name
 
     'name' can be a file name, or a file 'root' i.e. filename
     with all trailing extensions removed.
@@ -1133,7 +1145,7 @@ def is_fastqc(name,f):
         return False
 
 def is_fastq_screen(name,f):
-    """Return True if f is a fastq_screen file associated with sample
+    """Return True if f is a fastq_screen file associated with name
 
     'name' can be a file name, or a file 'root' i.e. filename
     with all trailing extensions removed.

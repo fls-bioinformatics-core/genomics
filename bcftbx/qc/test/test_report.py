@@ -44,20 +44,16 @@ class TestIsFastqScreen(unittest.TestCase):
                                         "ED2-1_rRNA_screen.png"))
         self.assertFalse(is_fastq_screen("ED2-2.fastq.gz",
                                          "ED2-1_model_organisms_screen.png"))
-    def test_is_fastq_screen_solid(self):
-        self.assertTrue(is_fastq_screen("ED2-1.fastq",
-                                        "ED2-1_model_organisms_screen.png"))
-        self.assertTrue(is_fastq_screen("ED2-1.fastq.gz",
-                                        "ED2-1_model_organisms_screen.png"))
-        self.assertTrue(is_fastq_screen("ED2-1.fastq.gz",
-                                        "ED2-1_other_organisms_screen.png"))
-        self.assertTrue(is_fastq_screen("ED2-1.fastq.gz",
-                                        "ED2-1_rRNA_screen.png"))
-        self.assertFalse(is_fastq_screen("ED2-2.fastq.gz",
-                                         "ED2-1_model_organisms_screen.png"))
 
 class TestIsBoxplot(unittest.TestCase):
     def test_is_boxplot(self):
          self.assertTrue(is_boxplot("SY5_F5","SY5_F5_QV.qual_seq-order_boxplot.png"))
          self.assertTrue(is_boxplot("solid0127_20120117_SH_JC1_pool_SH_SP6261",
                                     "solid0127_20120117_SH_JC1_pool_SH_SP6261_QV.qual_seq-order_boxplot.png"))
+
+class TestIsProgramInfo(unittest.TestCase):
+    def test_is_program_info(self):
+         self.assertTrue(is_program_info(
+             "solid0127_20121204_FRAG_BC_Run_56_pool_LC_CK_F3_CKSEQ26",
+             "solid0127_20121204_FRAG_BC_Run_56_pool_LC_CK_F3_CKSEQ26.solid_qc.programs"
+         ))
