@@ -1126,7 +1126,7 @@ def is_program_info(name,f):
     name_underscore = os.path.basename(utils.rootname(name))+'_'
     name_dot = os.path.basename(utils.rootname(name))+'.'
     if f.endswith('.programs') and \
-       (f.startswith(name_dot) or f.startswith(ame_underscore)):
+       (f.startswith(name_dot) or f.startswith(name_underscore)):
         return True
     else:
         return False
