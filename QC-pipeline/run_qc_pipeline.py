@@ -37,6 +37,7 @@ SHARE_DIR = os.path.abspath(
     os.path.normpath(
         os.path.join(os.path.dirname(sys.argv[0]),'..')))
 sys.path.append(SHARE_DIR)
+from bcftbx import get_version
 import bcftbx.JobRunner as JobRunner
 import bcftbx.Pipeline as Pipeline
 
@@ -130,6 +131,7 @@ if __name__ == "__main__":
 
     # Set up command line parser
     p = optparse.OptionParser(usage="%prog [options] SCRIPT DIR [ DIR ...]",
+                              version="%prog "+get_version(),
                               description=
                               "Execute SCRIPT on data in each directory DIR. By default "
                               "the SCRIPT is executed on each CSFASTA/QUAL file pair "
@@ -144,8 +146,6 @@ if __name__ == "__main__":
                      default=max_concurrent_jobs,
                      help="queue no more than MAX_CONCURRENT_JOBS at one time (default %s)"
                      % max_concurrent_jobs)
-    group.add_option('--queue',action='store',dest='ge_queue',default=ge_queue,
-                     help="explicitly specify Grid Engine queue to use")
     group.add_option('--input',action='store',dest='input_type',default=input_type,
                      help="specify type of data to use as input for the script. INPUT_TYPE "
                      "can be one of: 'solid' (CSFASTA/QUAL file pair, default), "
@@ -160,14 +160,27 @@ if __name__ == "__main__":
     group = optparse.OptionGroup(p,"Advanced Options")
     group.add_option('--regexp',action='store',dest='pattern',default=None,
                      help="regular expression to match input files against")
-    group.add_option('--test',action='store',dest='max_total_jobs',default=0,type='int',
-                     help="submit no more than MAX_TOTAL_JOBS (otherwise submit all jobs)")
     group.add_option('--runner',action='store',dest='runner',default=runner_type,
                      help="specify how jobs are executed: ge = Grid Engine, drmma = Grid "
                      "Engine via DRMAA interface, simple = use local system. Default is "
                      "'%s'" % runner_type)
+    p.add_option_group(group)
+
+    # Grid engine specific options
+    group = optparse.OptionGroup(p,"Grid Engine-specific options")
+    group.add_option('--queue',action='store',dest='ge_queue',default=ge_queue,
+                     help="explicitly specify Grid Engine queue to use")
+    group.add_option('--ge_args',action='store',dest='ge_args',default=None,
+                     help="explicitly specify additional arguments to use for Grid Engine "
+                     "submission (e.g. '-j y')")
+    p.add_option_group(group)
+
+    # Developer options
+    group = optparse.OptionGroup(p,"Developer Options")
     group.add_option('--debug',action='store_true',dest='debug',default=False,
                      help="print debugging output")
+    group.add_option('--test',action='store',dest='max_total_jobs',default=0,type='int',
+                     help="submit no more than MAX_TOTAL_JOBS (otherwise submit all jobs)")
     p.add_option_group(group)
 
     # Deal with command line
@@ -230,7 +243,10 @@ if __name__ == "__main__":
     if options.runner == 'simple':
         runner = JobRunner.SimpleJobRunner()
     elif options.runner == 'ge':
-        runner = JobRunner.GEJobRunner(queue=options.ge_queue)
+        if options.ge_args:
+            ge_extra_args = str(options.ge_args).split(' ')
+        runner = JobRunner.GEJobRunner(queue=options.ge_queue,
+                                       ge_extra_args=ge_extra_args)
     elif options.runner == 'drmaa':
         runner = JobRunner.DRMAAJobRunner(queue=options.ge_queue)
     else:
