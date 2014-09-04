@@ -35,8 +35,9 @@ umask 0002
 # Get the input file
 fastq=`basename $1`
 #
-# Strip "fastq" extension
-fastq_base=${fastq%.fastq}
+# Strip "fastq(.gz)" extension
+fastq_base=${fastq%.gz}
+fastq_base=${fastq_base%.fastq}
 #
 # Get the data directory i.e. location of the input file
 datadir=`dirname $1`
@@ -105,7 +106,7 @@ SCREENS="model_organisms other_organisms rRNA"
 #
 for screen in $SCREENS ; do
     # Check if screen files already exist
-    screen_base=${fastq%%.*}_${screen}_screen
+    screen_base=${fastq_base}_${screen}_screen
     if [ -f "${screen_base}.txt" ] && [ -f "${screen_base}.png" ] ; then
 	echo Screen files already exist for ${screen}, skipping fastq_screen
     else
@@ -118,8 +119,8 @@ for screen in $SCREENS ; do
 	    echo WARNING conf file $fastq_screen_conf not found, skipped
 	else
 	    # Names for output files
-	    fastq_screen_txt=${fastq_base}_screen.txt
-	    fastq_screen_png=${fastq_base}_screen.png
+	    fastq_screen_txt=${fastq%.fastq}_screen.txt
+	    fastq_screen_png=${fastq%.fastq}_screen.png
 	    # Check for and remove exisiting outputs
 	    if [ -f "${fastq_screen_txt}" ] ; then
 		echo "Removing old ${fastq_screen_txt}"
