@@ -160,6 +160,16 @@ echo _JAVA_OPTIONS: $_JAVA_OPTIONS
 echo "--------------------------------------------------------"
 #
 #############################################
+# SET UP QC DIRECTORY
+#############################################
+#
+# Create 'qc' subdirectory
+if [ ! -d "qc" ] ; then
+    echo Making qc subdirectory
+    mkdir qc
+fi
+#
+#############################################
 # Report program paths and versions
 #############################################
 #
@@ -171,16 +181,6 @@ report_program_info $FASTQC >> $program_info
 # Echo to log
 cat $program_info
 echo "--------------------------------------------------------"
-#
-#############################################
-# SET UP QC DIRECTORY
-#############################################
-#
-# Create 'qc' subdirectory
-if [ ! -d "qc" ] ; then
-    echo Making qc subdirectory
-    mkdir qc
-fi
 #
 #############################################
 # FASTQ MANIPULATIONS
