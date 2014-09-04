@@ -154,6 +154,8 @@ if __name__ == "__main__":
     group.add_option('--email',action='store',dest='email_addr',default=None,
                      help="send email to EMAIL_ADDR when each stage of the pipeline is "
                      "complete")
+    group.add_option('--log-dir',action='store',dest='log_dir',default=None,
+                     help="put log files into LOG_DIR (defaults to cwd)")
     p.add_option_group(group)
 
     # Advanced options
@@ -241,17 +243,19 @@ if __name__ == "__main__":
 
     # Set up job runner
     if options.runner == 'simple':
-        runner = JobRunner.SimpleJobRunner()
+        runner = JobRunner.SimpleJobRunner(join_logs=True)
     elif options.runner == 'ge':
         if options.ge_args:
             ge_extra_args = str(options.ge_args).split(' ')
         runner = JobRunner.GEJobRunner(queue=options.ge_queue,
-                                       ge_extra_args=ge_extra_args)
+                                       ge_extra_args=ge_extra_args,
+                                       join_logs=True)
     elif options.runner == 'drmaa':
         runner = JobRunner.DRMAAJobRunner(queue=options.ge_queue)
     else:
         logging.error("Unknown job runner: '%s'" % options.runner)
         sys.exit(1)
+    runner.set_log_dir(options.log_dir)
 
     # Set up and run pipeline
     pipeline = Pipeline.PipelineRunner(runner,max_concurrent_jobs=options.max_concurrent_jobs,
