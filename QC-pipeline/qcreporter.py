@@ -64,6 +64,8 @@ if __name__ == "__main__":
                  help="don't generate report, just verify the QC outputs")
     p.add_option('--regexp',action='store',dest='pattern',default=None,
                  help="select subset of files which match regular expression PATTERN")
+    p.add_option('--debug',action='store_true',dest='debug',default=False,
+                 help="turn on debugging output")
 
     # Deal with command line
     options,arguments = p.parse_args()
@@ -71,6 +73,10 @@ if __name__ == "__main__":
     # Check arguments
     if len(arguments) < 1:
         p.error("Takes at least one argument (one or more directories)")
+
+    # Turn on debug output
+    if options.debug:
+        logging.getLogger().setLevel(logging.DEBUG)
 
     # Loop over input directories
     for d in arguments:
