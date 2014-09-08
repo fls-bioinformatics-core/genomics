@@ -478,6 +478,18 @@ class TestFileSystemFunctions(unittest.TestCase):
         self.assertEqual('name',rootname('name.fastq.gz'))
         self.assertEqual('/path/to/name',rootname('/path/to/name.fastq.gz'))
 
+    def test_strip_ext(self):
+        self.assertEqual('name',strip_ext('name'))
+        self.assertEqual('name',strip_ext('name.fastq','fastq'))
+        self.assertEqual('name',strip_ext('name.fastq','.fastq'))
+        self.assertEqual('name.fastq',strip_ext('name.fastq','gz'))
+        self.assertEqual('name.fastq',strip_ext('name.fastq.gz','gz'))
+        self.assertEqual('name.fastq',strip_ext('name.fastq','fastq.gz'))
+        self.assertEqual('name',strip_ext('name.fastq.gz','fastq.gz'))
+        self.assertEqual('name.gz',strip_ext('name.gz','fastq.gz'))
+        self.assertEqual('name',strip_ext('name.fastq'))
+        self.assertEqual('name.fastq',strip_ext('name.fastq.gz'))
+
 class TestChmodFunction(unittest.TestCase):
 
     def setUp(self):
