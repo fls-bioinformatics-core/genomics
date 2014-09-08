@@ -20,6 +20,21 @@ from bcftbx.qc.report import *
 # solid0127_20120117_PE_BC_SH_JC1_pool_F3_SH_SP6033.csfasta/solid0127_20120117_PE_BC_SH_JC1_pool_F3_QV_SH_SP6033.qual
 # solid0127_20120117_PE_BC_SH_JC1_pool_F5-BC_SH_SP6033.csfasta/solid0127_20120117_PE_BC_SH_JC1_pool_F5-BC_QV_SH_SP6033.qual
 
+class TestStripNGSExtensions(unittest.TestCase):
+    def test_strip_ngs_extensions_csfasta(self):
+        self.assertEqual(strip_ngs_extensions("ED2.csfasta"),"ED2")
+    def test_strip_ngs_extensions_qual(self):
+        self.assertEqual(strip_ngs_extensions("ED2_QV.qual"),"ED2_QV")
+    def test_strip_ngs_extensions_fastq(self):
+        self.assertEqual(strip_ngs_extensions("ED2.fastq"),"ED2")
+    def test_strip_ngs_extensions_fastq_gz(self):
+        self.assertEqual(strip_ngs_extensions("ED2.fastq.gz"),"ED2")
+    def test_strip_ngs_extensions_dots_in_name(self):
+        self.assertEqual(strip_ngs_extensions("ED2.1.fastq"),"ED2.1")
+        self.assertEqual(strip_ngs_extensions("ED2.1.fastq.gz"),"ED2.1")
+    def test_strip_ngs_extensions_no_extension(self):
+        self.assertEqual(strip_ngs_extensions("ED2-1_R1"),"ED2-1_R1")
+
 class TestIsFastqc(unittest.TestCase):
     def test_is_fastqc(self):
         self.assertTrue(is_fastqc("ED2-1","ED2-1_fastqc"))
@@ -31,6 +46,16 @@ class TestIsFastqc(unittest.TestCase):
         self.assertTrue(is_fastqc("/data/ED/ED2-1.fastq","ED2-1_fastqc"))
     def test_is_fastqc_doesnt_match(self):
         self.assertFalse(is_fastqc("ED2-2","ED2-1_fastqc"))
+    def test_is_fastqc_with_dots(self):
+        self.assertTrue(is_fastqc("ED2.1.R1.fastq",
+                                  "ED2.1.R1_fastqc"))
+    def test_is_fastqc_with_underscores(self):
+        self.assertTrue(is_fastqc("ED2_1_R1.fastq",
+                                  "ED2_1_R1_fastqc"))
+        self.assertTrue(is_fastqc("ED2-1_R2",
+                                  "ED2-1_R2_fastqc"))
+        self.assertFalse(is_fastqc("ED2_1_R2.fastq",
+                                   "ED2_1_R1_fastqc"))
 
 class TestIsFastqScreen(unittest.TestCase):
     def test_is_fastq_screen_illumina(self):
@@ -44,6 +69,9 @@ class TestIsFastqScreen(unittest.TestCase):
                                         "ED2-1_rRNA_screen.png"))
         self.assertFalse(is_fastq_screen("ED2-2.fastq.gz",
                                          "ED2-1_model_organisms_screen.png"))
+    def test_is_fastq_screen_with_dots(self):
+        self.assertTrue(is_fastq_screen("ED2.1.R1.fastq",
+                                        "ED2.1.R1_model_organisms_screen.png"))
 
 class TestIsBoxplot(unittest.TestCase):
     def test_is_boxplot(self):
@@ -57,3 +85,12 @@ class TestIsProgramInfo(unittest.TestCase):
              "solid0127_20121204_FRAG_BC_Run_56_pool_LC_CK_F3_CKSEQ26",
              "solid0127_20121204_FRAG_BC_Run_56_pool_LC_CK_F3_CKSEQ26.solid_qc.programs"
          ))
+         self.assertTrue(is_program_info(
+             "solid0127_20121204_FRAG_BC_Run_56_pool_LC_CK_F3_CKSEQ26",
+             "solid0127_20121204_FRAG_BC_Run_56_pool_LC_CK_F3_CKSEQ26.solid_qc.programs"
+         ))
+    def test_is_program_info_with_dots(self):
+         self.assertTrue(is_program_info(
+             "ED1.1","ED1.1.illumina_qc.programs"
+         ))
+        

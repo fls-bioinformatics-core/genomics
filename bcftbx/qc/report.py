@@ -323,14 +323,18 @@ class QCSample:
         qc_files.sort()
         # Associate QC outputs with sample names
         for f in qc_files:
+            logging.debug("Testing file: %s" % f)
             if is_fastq_screen(self.name,f):
                 # Fastq screen
+                logging.debug("Assigned to fastq_screen for %s" % self.name)
                 self.addScreen(f)
             elif is_fastqc(self.name,f):
                 # FastQC
+                logging.debug("Assigned to FastQC for %s" % self.name)
                 self.addFastQC(f)
             elif is_boxplot(self.name,f):
                 # Boxplot
+                logging.debug("Assigned to boxplot for %s" % self.name)
                 self.addBoxplot(f)
         # Program information
         # Info files can be in qc dir or one level up (for older
@@ -620,9 +624,9 @@ class IlluminaQCReporter(QCReporter):
         # Locate input fastq.gz files
         primary_data = self.getPrimaryDataFiles()
         for data in primary_data:
-            sample = utils.rootname(os.path.basename(data[0]))
-            self.addSample(IlluminaQCSample(sample,self.qc_dir))
+            sample = strip_ngs_extensions(os.path.basename(data[0]))
             logging.debug("Processing outputs for sample: '%s'" % sample)
+            self.addSample(IlluminaQCSample(sample,self.qc_dir))
         # Summarise data from fastqc
         self.__stats = TabFile.TabFile(column_names=('Sample',
                                                      'Reads',
@@ -861,7 +865,7 @@ class SolidQCReporter(QCReporter):
         # Get primary data files
         primary_data = self.getPrimaryDataFiles()
         for data in primary_data:
-            sample = utils.rootname(os.path.basename(data[0]))
+            sample = strip_ngs_extensions(os.path.basename(data[0]))
             if self.__paired_end:
                 # Strip trailing "_F3" from names
                 sample = sample.replace('_F3','')
@@ -1116,6 +1120,19 @@ class SolidQCSample(QCSample):
 # Functions
 #######################################################################
 
+def strip_ngs_extensions(name):
+    """Remove fastq, fastq, csfasta or qual extensions from name
+
+    """
+    # First remove compression names
+    strip_name = name
+    for ext in ('.gz','.bz2'):
+        strip_name = utils.strip_ext(strip_name,ext)
+    # Then remove bioinf extensions
+    for ext in ('.fastq','.csfasta','.qual'):
+        strip_name = utils.strip_ext(strip_name,ext)
+    return strip_name
+
 def is_program_info(name,f):
     """Return True if f is a 'program info' file associated with name
 
@@ -1123,7 +1140,7 @@ def is_program_info(name,f):
     with all trailing extensions removed.
 
     """
-    name_underscore = os.path.basename(utils.rootname(name))+'_'
+    name_underscore = os.path.basename(strip_ngs_extensions(name))+'_'
     name_dot = os.path.basename(utils.rootname(name))+'.'
     if f.endswith('.programs') and \
        (f.startswith(name_dot) or f.startswith(name_underscore)):
@@ -1138,7 +1155,8 @@ def is_fastqc(name,f):
     with all trailing extensions removed.
 
     """
-    name_underscore = os.path.basename(utils.rootname(name))+'_'
+    name_underscore = os.path.basename(strip_ngs_extensions(name))+'_'
+    logging.debug("name = %s name_underscore = %s" % (name,name_underscore))
     if f == "%sfastqc" % name_underscore:
         return True
     else:
@@ -1151,7 +1169,7 @@ def is_fastq_screen(name,f):
     with all trailing extensions removed.
 
     """
-    name_underscore = os.path.basename(utils.rootname(name))+'_'
+    name_underscore = os.path.basename(strip_ngs_extensions(name))+'_'
     if f.startswith(name_underscore) and f.endswith('_screen.png'):
         # Extract and check screen name
         screen_name = f.replace(name_underscore,'').\
@@ -1169,7 +1187,7 @@ def is_boxplot(name,f):
     with all trailing extensions removed.
 
     """
-    name_underscore = os.path.basename(utils.rootname(name))+'_'
+    name_underscore = os.path.basename(strip_ngs_extensions(name))+'_'
     name_dot = os.path.basename(utils.rootname(name))+'.'
     if f.endswith('_boxplot.png'):
         if f.startswith(name_dot) or f.startswith(name_underscore):
