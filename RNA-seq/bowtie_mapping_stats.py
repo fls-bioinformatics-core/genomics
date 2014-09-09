@@ -98,7 +98,8 @@ sys.path.append(SHARE_DIR)
 
 # Get local modules and functions
 try:
-    from simple_xls import cell,XLSWorkBook,XLSStyle,column_integer_to_index,NumberFormats
+    from bcftbx.simple_xls import XLSWorkBook,XLSStyle
+    from bcftbx.simple_xls import cell,column_integer_to_index,NumberFormats
 except ImportError,ex:
     logging.error("Failed to import local modules: %s" % ex)
     logging.error("Set your PYTHONPATH to include the directory with the required modules, "
