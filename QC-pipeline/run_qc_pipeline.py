@@ -248,8 +248,7 @@ if __name__ == "__main__":
         if options.ge_args:
             ge_extra_args = str(options.ge_args).split(' ')
         runner = JobRunner.GEJobRunner(queue=options.ge_queue,
-                                       ge_extra_args=ge_extra_args,
-                                       join_logs=True)
+                                       ge_extra_args=ge_extra_args)
     elif options.runner == 'drmaa':
         runner = JobRunner.DRMAAJobRunner(queue=options.ge_queue)
     else:
