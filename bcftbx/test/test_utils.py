@@ -167,6 +167,22 @@ class TestPathInfo(unittest.TestCase):
         self.assertEqual(PathInfo(d.path("spider.txt")).deepest_accessible_parent,d.dirn)
         self.assertEqual(PathInfo(d.path("web")).deepest_accessible_parent,d.dirn)
 
+    def test_resolve_link_via_parent_dir(self):
+        """PathInfo.resolve_link_via_parent resolves paths when parent directory is a symlink
+
+        """
+        d = self.example_dir
+        self.assertEqual(PathInfo(d.path("web/parlour.txt")).resolve_link_via_parent,
+                         d.path("web/parlour.txt"))
+        self.assertEqual(PathInfo(d.path("web2/parlour.txt")).resolve_link_via_parent,
+                         d.path("web/parlour.txt"))
+        self.assertEqual(PathInfo(d.path("web/relative.txt")).resolve_link_via_parent,
+                         d.path("spider.txt"))
+        self.assertEqual(PathInfo(d.path("web/related.txt")).resolve_link_via_parent,
+                         d.path("spider.txt"))
+        self.assertEqual(PathInfo(d.path("broken.txt")).resolve_link_via_parent,
+                         d.path("missing.txt"))
+
     def test_is_group_readable(self):
         """PathInfo.is_group_readable checks if file, directory and link is group readable
 
@@ -612,6 +628,10 @@ class ExampleDirLinks(ExampleDirSpiders):
         self.add_link("web/relative.txt","../spider.txt")
         # Add a link to a directory
         self.add_link("web2","web")
+        # Add a link to a link
+        self.add_link("web/related.txt","relative.txt")
+        # Add a file that will appear in the linked directory
+        self.add_file("web/parlour.txt","I have a little something here")
 
 class TestSymlink(unittest.TestCase):
     """Tests for the 'Symlink' class
@@ -714,6 +734,7 @@ class TestLinksFunction(unittest.TestCase):
                   "absolute.txt",
                   "absolutely_broken.txt",
                   "web/relative.txt",
+                  "web/related.txt",
                   "web2"):
             self.links.append(self.example_dir.path(l))
 

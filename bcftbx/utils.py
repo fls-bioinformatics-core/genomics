@@ -7,7 +7,7 @@
 #
 #########################################################################
 
-__version__ = "1.4.6"
+__version__ = "1.4.7"
 
 """bcf_utils
 
@@ -291,6 +291,40 @@ class PathInfo:
                 return path
             path = os.path.dirname(path)
         raise OSError,"Unable to find readable parent for %s" % self.__path
+
+    @property
+    def resolve_link_via_parent(self):
+        """If path or parent directory is a link then return actual path
+
+        Resolves and returns the 'real' path for a path where either
+        it or one of its parent directories is a symbolic link.
+
+        It will resolve multiple levels of symlinks to generate a path
+        that is free of links (nb it is possible that the resolved path
+        will not be an existing file or directory).
+
+        If there are no links in the directory tree then returns the
+        full path of the input.
+
+        """
+        path = os.path.abspath(self.__path)
+        realpath = []
+        while path != os.sep:
+            if os.path.islink(path):
+                # Construct actual path
+                link_path = os.readlink(path)
+                if os.path.isabs(link_path):
+                    path = link_path
+                else:
+                    path = os.path.normpath(os.path.join(os.path.dirname(path),
+                                                         link_path))
+                continue
+            # Descend to next level
+            realpath.append(os.path.basename(path))
+            path = os.path.dirname(path)
+        # Descended to root, rebuild path
+        realpath = os.sep + os.sep.join(realpath[::-1])
+        return realpath
 
     @property
     def uid(self):
