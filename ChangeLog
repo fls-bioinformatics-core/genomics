@@ -1,5 +1,10 @@
 2014-10-09  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
+	* bcftbx/Md5sum.py
+	- version 1.1.0
+	- 'md5sum' function updated to handle either file name,
+	   or a file-like object opened for reading.
+
 	* bcftbx/utils.py
 	- version 1.4.8
 	- New function 'get_current_user', gets name of
