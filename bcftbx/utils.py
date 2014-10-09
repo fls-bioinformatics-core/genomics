@@ -7,7 +7,7 @@
 #
 #########################################################################
 
-__version__ = "1.4.7"
+__version__ = "1.4.8"
 
 """bcf_utils
 
@@ -30,6 +30,7 @@ File system wrappers and utilities:
   is_gzipped_file
   rootname
   find_program
+  get_current_user
   get_user_from_uid
   get_uid_from_user
   get_group_from_gid
@@ -696,6 +697,18 @@ def find_program(name):
         if PathInfo(name_path).is_executable:
             return name_path
     return None
+
+def get_current_user():
+    """Return name of the current user
+
+    Looks up user name for the current user; returns
+    None if no matching name can be found.
+
+    """
+    try:
+        return pwd.getpwuid(os.getuid()).pw_name
+    except (KeyError,ValueError,OverflowError):
+        return None
 
 def get_user_from_uid(uid):
     """Return user name from UID
