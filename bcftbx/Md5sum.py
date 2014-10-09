@@ -43,7 +43,7 @@ a wrapper class 'Md5Reporter' which
 # Module metadata
 #######################################################################
 
-__version__ = "1.0.1"
+__version__ = "1.1.0"
 
 #######################################################################
 # Import modules that this module depends on
@@ -474,8 +474,8 @@ def hexify(s):
     """
     return ("%02x"*len(s)) % tuple(map(ord, s))
 
-def md5sum(filen):
-    """Return md5sum digest for a file
+def md5sum(f):
+    """Return md5sum digest for a file or stream
     
     This implements the md5sum checksum generation using both
     the hashlib module (which should be available in Python 2.5) and
@@ -487,7 +487,8 @@ def md5sum(filen):
     checksums are the same using either library regardless.
 
     Arguments:
-      filen: name of the file to generate the checksum from
+      f: name of the file to generate the checksum from, or
+        a file-like object opened for reading in binary mode.
         
     Returns:
       Md5sum digest for the named file.
@@ -499,7 +500,10 @@ def md5sum(filen):
     except NameError:
         chksum = md5.new()
     # Generate checksum
-    with open(filen, "rb") as f:
-        for block in iter(lambda: f.read(BLOCKSIZE), ''):
-            chksum.update(block)
+    try:
+        f = open(f,"rb")
+    except TypeError:
+        pass
+    for block in iter(lambda: f.read(BLOCKSIZE), ''):
+        chksum.update(block)
     return hexify(chksum.digest())

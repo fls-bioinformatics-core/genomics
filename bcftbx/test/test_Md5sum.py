@@ -32,10 +32,17 @@ class TestMd5sum(unittest.TestCase):
     def tearDown(self):
         os.remove(self.filen)
 
-    def test_md5sum(self):
-        """md5sum function generates correct MD5 hash
+    def test_md5sum_for_file(self):
+        """md5sum function generates correct MD5 hash for file
         """
         self.assertEqual(md5sum(self.filen),
+                         '08a6facee51e5435b9ef3744bd4dd5dc')
+
+    def test_md5sum_for_stream(self):
+        """md5sum function generates correct MD5 hash for stream
+        """
+        fp = open(self.filen,'rb')
+        self.assertEqual(md5sum(fp),
                          '08a6facee51e5435b9ef3744bd4dd5dc')
 
     def test_no_file_name(self):
