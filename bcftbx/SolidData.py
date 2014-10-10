@@ -1208,8 +1208,15 @@ def is_paired_end(solid_run):
 
     Returns:
       True if this is a paired-end run, False otherwise.
+
     """
-    return (solid_run.run_definition.runType == "PAIRED-END")
+    if solid_run.run_definition:
+        return (solid_run.run_definition.runType == "PAIRED-END")
+    else:
+        for sample in solid_run.samples:
+            for lib in sample.libraries:
+                if lib.csfasta_f5: return True
+    return False
 
 def get_primary_data_file_pair(dirn):
     """Return csfasta/qual file pair from specified directory

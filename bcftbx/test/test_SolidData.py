@@ -999,6 +999,8 @@ class TestSolidRunNoRunDefinition(unittest.TestCase):
         self.assertTrue(self.solid_run)
         # Check the run name
         self.assertEqual(self.solid_run.run_name,'solid0123_20130426_FRAG_BC')
+        # Check the paired-ended-ness
+        self.assertFalse(self.solid_run.is_paired_end)
 
 class TestSolidRunNotASolidRunDir(unittest.TestCase):
     def setUp(self):
