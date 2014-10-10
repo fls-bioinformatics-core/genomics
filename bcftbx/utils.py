@@ -1,15 +1,15 @@
-#     bcf_utils.py: utility classes and functions shared between BCF codes
+#     utils.py: utility classes and functions shared between BCF codes
 #     Copyright (C) University of Manchester 2013-14 Peter Briggs
 #
 ########################################################################
 #
-# bcf_utils.py
+# utils.py
 #
 #########################################################################
 
-__version__ = "1.4.8"
+__version__ = "1.5.0"
 
-"""bcf_utils
+"""utils
 
 Utility classes and functions shared between BCF codes.
 
@@ -36,6 +36,7 @@ File system wrappers and utilities:
   get_group_from_gid
   get_gid_from_group
   walk
+  list_dirs
   strip_ext
 
 Symbolic link handling:
@@ -794,6 +795,29 @@ def walk(dirn,include_dirs=True,pattern=None):
             f1 = os.path.join(dirpath,f)
             if pattern is None or matcher.match(f1):
                 yield f1
+
+def list_dirs(parent,matches=None,startswith=None):
+    """Return list of subdirectories relative to 'parent'
+
+    Arguments:
+      parent: directory to list subdirectories of
+      matches: if not None then only include subdirectories
+        that exactly match the supplied string
+      startswith: if not None then then return subset of
+        subdirectories that start with the supplied string
+
+    Returns:
+      List of subdirectories (relative to the parent dir).
+
+    """
+    dirs = []
+    for d in os.listdir(parent):
+        if os.path.isdir(os.path.join(parent,d)):
+            if startswith is None or d.startswith(startswith):
+                if matches is None or d == matches:
+                    dirs.append(d)
+    dirs.sort()
+    return dirs
 
 def strip_ext(name,ext=None):
     """Strip extension from file name

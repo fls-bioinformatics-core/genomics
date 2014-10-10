@@ -469,6 +469,74 @@ class TestWalkFunction(unittest.TestCase):
         self.assertEqual(len(filelist),0,"Items not returned: %s" %
                          ','.join(filelist))
 
+class TestListDirsFunction(unittest.TestCase):
+    """Tests for the list_dirs function
+
+    """
+    def setUp(self):
+        self.parent_dir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        shutil.rmtree(self.parent_dir)
+
+    def add_sub_dir(self,name):
+        # Add a subdirectory
+        os.mkdir(os.path.join(self.parent_dir,name))
+
+    def touch_file(self,name):
+        # Add an empty file
+        open(os.path.join(self.parent_dir,name),'w').close()
+
+    def test_empty_dir(self):
+        """list_dirs returns empty list when listing empty directory
+        """
+        self.assertEqual(list_dirs(self.parent_dir),[])
+
+    def test_gets_dirs(self):
+        """list_dirs returns all subdirectories
+        """
+        self.add_sub_dir('hello')
+        self.assertEqual(list_dirs(self.parent_dir),['hello'])
+        self.add_sub_dir('goodbye')
+        self.add_sub_dir('adios')
+        self.assertEqual(list_dirs(self.parent_dir),['adios','goodbye','hello'])
+
+    def test_ignores_files(self):
+        """list_dirs ignores files and only returns subdirectories
+        """
+        self.touch_file('hello')
+        self.assertEqual(list_dirs(self.parent_dir),[])
+        self.add_sub_dir('goodbye')
+        self.add_sub_dir('adios')
+        self.assertEqual(list_dirs(self.parent_dir),['adios','goodbye'])
+
+    def test_gets_dir_using_matches(self):
+        """list_dirs 'matches' argument returns a single directory
+        """
+        self.touch_file('hello')
+        self.assertEqual(list_dirs(self.parent_dir),[])
+        self.add_sub_dir('goodbye')
+        self.add_sub_dir('adios')
+        self.assertEqual(list_dirs(self.parent_dir,matches='goodbye'),['goodbye'])
+        self.assertEqual(list_dirs(self.parent_dir,matches='nothing'),[])
+
+    def test_gets_dirs_using_startswith(self):
+        """list_dirs 'startswith' argument returns matching subset of directories
+        """
+        self.assertEqual(list_dirs(self.parent_dir),[])
+        self.add_sub_dir('hello')
+        self.add_sub_dir('helium')
+        self.add_sub_dir('helicopter')
+        self.add_sub_dir('hermes')
+        self.add_sub_dir('goodbye')
+        self.add_sub_dir('adios')
+        self.assertEqual(list_dirs(self.parent_dir,startswith='hel'),
+                         ['helicopter','helium','hello'])
+        self.assertEqual(list_dirs(self.parent_dir,startswith='her'),
+                         ['hermes'])
+        self.assertEqual(list_dirs(self.parent_dir,startswith='helio'),
+                         [])
+
 class TestFileSystemFunctions(unittest.TestCase):
     """Unit tests for file system wrapper and utility functions
 

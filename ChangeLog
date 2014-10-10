@@ -1,3 +1,10 @@
+2014-10-10  Peter Briggs  <pjb@Fedora-MINIT-19HRGNO>
+
+	* bcftbx/utils.py
+	- version 1.5.0
+	- New function 'list_dirs', gets subdirectories of
+	  specified parent directory.
+
 2014-10-09  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* bcftbx/Md5sum.py
