@@ -124,89 +124,129 @@ class SolidRun:
                     logging.warning("%s: using run definition file %s" % 
                                     (os.path.basename(self.run_dir),self.run_defn_filn))
                     break
-            # No other candidates found, abort
-            if self.run_defn_filn is None:
-                logging.error("No run definition files found for %s" % self.run_dir)
-                return
-        # Populate run definition object
-        self.run_definition = SolidRunDefinition(self.run_defn_filn)
 
-        # Get run name and info
-        self.run_name = self.run_definition.runName
-        self.run_info = SolidRunInfo(self.run_name)
+        if self.run_defn_filn:
+            # Populate run definition object
+            self.run_definition = SolidRunDefinition(self.run_defn_filn)
+            # Get run name and info
+            self.run_name = self.run_definition.runName
+            self.run_info = SolidRunInfo(self.run_name)
+            # Populate libraries
+            for i in range(0,self.run_definition.nSamples()):
+                sample_name = self.run_definition.getDataItem('sampleName',i)
+                library_name = self.run_definition.getDataItem('library',i)
+                # Barcoded samples
+                #
+                # Look for content in the "barcodes" column for the library
+                # in the run definition file
+                #
+                # There may be several barcoded samples
+                # Example barcode items:
+                # --> "1"
+                # --> "1,2,3,4,5,6,7,8"
+                # (or could be empty)
+                try:
+                    barcodes = self.run_definition.getDataItem('barcodes',i)
+                except IndexError:
+                    barcodes = ''
+                logging.debug("%s: barcodes: %s" % (library_name,barcodes))
+                library_is_barcoded = (barcodes != '' and barcodes)
+                if library_is_barcoded:
+                    barcodes = barcodes.strip('"').split(',')
 
-        # Determine samples and libraries
-        for i in range(0,self.run_definition.nSamples()):
-            sample_name = self.run_definition.getDataItem('sampleName',i)
-            library_name = self.run_definition.getDataItem('library',i)
+                # Look for the directory with the results
+                #
+                # There should be a symlink "results" that will
+                # point to the actual results directory
+                results = os.path.join(self.run_dir,sample_name,'results')
+                if os.path.islink(results):
+                    libraries_dir = os.path.join(self.run_dir,
+                                                 sample_name,
+                                                 os.readlink(results),
+                                                 'libraries')
+                else:
+                    libraries_dir = None
+                self.add_library(sample_name,library_name,
+                                 libraries_dir,library_is_barcoded)
+        else:
+            logging.warning("No run definition file found for %s" % self.run_dir)
+            # Improvise run name and info
+            self.run_name = os.path.basename(self.run_dir)
+            self.run_info = SolidRunInfo(self.run_name)
+            # Try to guess samples and libraries
+            samples = []
+            for s in utils.list_dirs(self.run_dir):
+                logging.debug("Examining subdir %s" % s)
+                # Look for 'results' subdir
+                results = os.path.join(self.run_dir,s,'results')
+                if not os.path.isdir(results):
+                    continue
+                # Look for 'libraries' subdir
+                if os.path.islink(results):
+                    libraries_dir = os.path.join(self.run_dir,s,
+                                                 os.readlink(results),
+                                                 'libraries')
+                else:
+                    continue
+                # Look for possible libraries
+                for d in utils.list_dirs(libraries_dir):
+                    logging.debug("Examining putative library subdir %s" % d)
+                    self.add_library(s,d,libraries_dir,False)
 
-            # Barcoded samples
-            #
-            # Look for content in the "barcodes" column for the library
-            # in the run definition file
-            #
-            # There may be several barcoded samples
-            # Example barcode items:
-            # --> "1"
-            # --> "1,2,3,4,5,6,7,8"
-            # (or could be empty)
-            try:
-                barcodes = self.run_definition.getDataItem('barcodes',i)
-            except IndexError:
-                barcodes = ''
-            logging.debug("%s: barcodes: %s" % (library_name,barcodes))
-            library_is_barcoded = (barcodes != '' and barcodes)
-            if library_is_barcoded:
-                barcodes = barcodes.strip('"').split(',')
+    def add_library(self,sample_name,library_name,libraries_dir,is_barcoded):
+        """Add a library to the SolidRun
 
-            # Look for the directory with the results
-            #
-            # There should be a symlink "results" that will
-            # point to the actual results directory
-            results = os.path.join(self.run_dir,sample_name,'results')
-            if os.path.islink(results):
-                libraries_dir = os.path.join(self.run_dir,
-                                             sample_name,
-                                             os.readlink(results),
-                                             'libraries')
-            else:
-                libraries_dir = None
+        Arguments:
+          sample_name: name of the sample
+          library_name: name of the library
+          libraries_dir: path to the 'libraries' directory containing the
+            library being added
+          is_barcoded: True if sample is barcoded, False if not
 
-            if not sample_name in [s.name for s in self.samples]:
+        """
+        try:
+            # Look for existing sample
+            sample = None
+            for s in self.samples:
+                if sample_name == s.name:
+                    sample = s
+                    break
+            if sample is None:
                 # New sample
                 sample = SolidSample(sample_name,parent_run=self)
                 self.samples.append(sample)
-                # Locate and process barcode statistics
-                if libraries_dir:
-                    for f in os.listdir(libraries_dir):
-                        if f.startswith("BarcodeStatistics"):
-                            barcode_stats_filn = os.path.join(libraries_dir,f)
-                            sample.barcode_stats = \
-                                SolidBarcodeStatistics(barcode_stats_filn)
-                            break
-                else:
-                    logging.warning("%s: libraries directory '%s' is missing" %
-                                    (self.run_name,libraries_dir))
-                # Locate and process 'unassigned' data
-                # These are csfasta/qual files in the directory
-                # <sample>/results.F1B1/libraries/unassigned
-                unassigned_dir = os.path.join(libraries_dir,"unassigned")
-                logging.debug("%s: 'unassigned' dir %s" % (sample.name,unassigned_dir))
-                if os.path.isdir(unassigned_dir):
-                    # Collect information on unassigned read data
-                    sample.unassigned = SolidLibrary("unassigned",parent_sample=sample)
-                    for d in os.listdir(unassigned_dir):
-                        reads_dir = os.path.join(unassigned_dir,d,"reads")
-                        logging.debug("%s: reads dir %s" % (sample.name,reads_dir))
-                        if os.path.isdir(reads_dir):
-                            csfasta,qual = get_primary_data_file_pair(reads_dir)
-                            if csfasta and qual:
-                                sample.unassigned.addPrimaryData(csfasta,qual)
-                                logging.debug("-----> Adding primary data (unassigned)")
+
+            # Locate and process barcode statistics
+            if libraries_dir:
+                for f in os.listdir(libraries_dir):
+                    if f.startswith("BarcodeStatistics"):
+                        barcode_stats_filn = os.path.join(libraries_dir,f)
+                        sample.barcode_stats = \
+                                               SolidBarcodeStatistics(barcode_stats_filn)
+                        break
+            else:
+                logging.warning("%s: libraries directory '%s' is missing" %
+                                (self.run_name,libraries_dir))
+            # Locate and process 'unassigned' data
+            # These are csfasta/qual files in the directory
+            # <sample>/results.F1B1/libraries/unassigned
+            unassigned_dir = os.path.join(libraries_dir,"unassigned")
+            logging.debug("%s: 'unassigned' dir %s" % (sample.name,unassigned_dir))
+            if os.path.isdir(unassigned_dir):
+                # Collect information on unassigned read data
+                sample.unassigned = SolidLibrary("unassigned",parent_sample=sample)
+                for d in os.listdir(unassigned_dir):
+                    reads_dir = os.path.join(unassigned_dir,d,"reads")
+                    logging.debug("%s: reads dir %s" % (sample.name,reads_dir))
+                    if os.path.isdir(reads_dir):
+                        csfasta,qual = get_primary_data_file_pair(reads_dir)
+                        if csfasta and qual:
+                            sample.unassigned.addPrimaryData(csfasta,qual)
+                            logging.debug("-----> Adding primary data (unassigned)")
                     
             # Store the library
             library = sample.addLibrary(library_name)
-            library.is_barcoded = library_is_barcoded
+            library.is_barcoded = is_barcoded
 
             # Locate data files for this library
             #
@@ -274,6 +314,9 @@ class SolidRun:
                             library.csfasta_f5 = primary_data.csfasta
                             library.qual_f5    = primary_data.qual
                             f5_timestamp       = primary_data.timestamp
+        except Exception,ex:
+            logging.error("Exception adding sample: %s" % ex)
+            raise ex
 
     @property
     def is_paired_end(self):
@@ -398,7 +441,7 @@ class SolidRun:
             return False
         elif not self.run_info:
             return False
-        elif not self.run_definition:
+        elif not self.run_definition and len(self.samples) == 0:
             return False
         else:
             return True
@@ -847,7 +890,10 @@ class SolidRunInfo:
         self.flow_cell = 1
         self.date = None
         #
-        data = str(run_name).split('_')
+        if self.name.count('_') == 0:
+            return
+        #
+        data = self.name.split('_')
         #
         # Basic info
         self.instrument = data[0]

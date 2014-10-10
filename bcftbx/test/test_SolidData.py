@@ -450,6 +450,12 @@ class TestSolidRunInfo(unittest.TestCase):
         self.assertEqual('26/04/13',info.date)
         self.assertEqual(str(info),run_name)
 
+    def test_bad_run_names(self):
+        info = SolidRunInfo('bad_name')
+        self.assertEqual('bad_name',info.name)
+        info = SolidRunInfo('badname')
+        self.assertEqual('badname',info.name)
+
 class TestSolidLibrary(unittest.TestCase):
     """Unit tests for SolidLibrary class.
     """
@@ -973,6 +979,44 @@ class TestVerifySolidRunPairedEnd(unittest.TestCase):
         os.remove(solid_run.samples[0].libraries[0].qual)
         # Test
         self.assertFalse(SolidRun(self.solid_test_dir).verify())
+
+class TestSolidRunNoRunDefinition(unittest.TestCase):
+    """Unit tests for SolidRun class when directory doesn't have RunDefinition file.
+    """
+    def setUp(self):
+        # Set up a mock SOLiD directory structure
+        self.solid_test_dir = TestUtils().make_solid_dir('solid0123_20130426_FRAG_BC')
+        # Remove RunDefinition file
+        os.remove(os.path.join(self.solid_test_dir,
+                               'solid0123_20130426_FRAG_BC_run_definition.txt'))
+
+    def tearDown(self):
+        shutil.rmtree(self.solid_test_dir)
+
+    def test_solid_run_with_no_run_definition(self):
+        # Create a SolidRun
+        self.solid_run = SolidRun(self.solid_test_dir)
+        self.assertTrue(self.solid_run)
+        # Check the run name
+        self.assertEqual(self.solid_run.run_name,'solid0123_20130426_FRAG_BC')
+
+class TestSolidRunNotASolidRunDir(unittest.TestCase):
+    def setUp(self):
+        # Set up a non-SOLiD directory structure
+        self.test_dir = tempfile.mkdtemp()
+        dirname = os.path.join(self.test_dir,'test')
+        os.mkdir(dirname)
+        os.makedirs(dirname+'/AB/results')
+        os.makedirs(dirname+'/CD')
+        os.makedirs(dirname+'/random/stuff')
+
+    def tearDown(self):
+        shutil.rmtree(self.test_dir)
+
+    def test_not_a_solid_run_dir(self):
+        # Create a SolidRun
+        self.solid_run = SolidRun(self.test_dir)
+        self.assertFalse(self.solid_run)
 
 class TestFunctions(unittest.TestCase):
     """Unit tests for module functions.
