@@ -1,3 +1,18 @@
+2014-10-14  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* bcftbx/cmdparse.py
+	- version 1.0.0
+	- New module for creating 'command parsers', for
+	  processing command lines of the form 'PROG CMD OPTIONS
+	  ARGS'.
+
+	* bcftbx/JobRunner.py
+	- version 1.1.0
+	- New function 'fetch_runner', returns appropriate job
+	  runner instance matching text description (used for
+	  specifying job runners on command line or in config
+	  files).
+
 2014-10-10  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* bcftbx/utils.py
