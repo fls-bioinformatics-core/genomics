@@ -9,7 +9,7 @@
 #
 #########################################################################
 
-__version__ = "1.0.5"
+__version__ = "1.1.0"
 
 """JobRunner
 
@@ -699,3 +699,33 @@ class DRMAAJobRunner(BaseJobRunner):
                     self.__session.jobStatus(job) == drmaa.JobState.SYSTEM_SUSPENDED:
                 job_ids.append(job)
         return job_ids
+
+#######################################################################
+# Functions
+#######################################################################
+
+def fetch_runner(definition):
+    """Return job runner instance based on a definition string
+
+    Given a definition string, returns an appropriate runner
+    instance.
+
+    Definitions are of the form:
+
+      RunnerName[(args)]
+
+    RunnerName can be 'SimpleJobRunner' or 'GEJobRunner'.
+    If '(args)' are also supplied then these are passed to
+    the job runner on instantiation (only works for
+    GE runners).
+
+    """
+    if definition.startswith('SimpleJobRunner'):
+        return SimpleJobRunner(join_logs=True)
+    elif definition.startswith('GEJobRunner'):
+        if definition.startswith('GEJobRunner(') and definition.endswith(')'):
+            ge_extra_args = definition[len('GEJobRunner('):len(definition)-1].split(' ')
+            return GEJobRunner(ge_extra_args=ge_extra_args)
+        else:
+            return GEJobRunner()
+    raise Exception,"Unrecognised runner definition: %s" % definition
