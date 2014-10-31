@@ -4,7 +4,7 @@
 #
 # Usage: illumina_qc.sh <fastq>
 #
-VERSION=1.2.0
+VERSION=1.2.1
 #
 function usage() {
     echo "Usage: illumina_qc.sh <fastq[.gz]> [--ungzip-fastqs]"
@@ -36,6 +36,18 @@ function import_functions() {
 }
 #
 #===========================================================================
+# Generic command line options
+#===========================================================================
+#
+if [ $# -lt 1 ] || [ "$1" == "-h" ] || [ "$1" == "--help" ] ; then
+    usage
+    exit
+elif  [ "$1" == "--version" ] ; then
+    echo $(basename $0) version $VERSION
+    exit
+fi
+#
+#===========================================================================
 # Import function libraries
 #===========================================================================
 #
@@ -51,12 +63,6 @@ import_functions versions.sh
 #===========================================================================
 # Main script
 #===========================================================================
-#
-# Check command line
-if [ $# -lt 1 ] || [ "$1" == "-h" ] || [ "$1" == "--help" ] ; then
-    usage
-    exit
-fi
 #
 # Announce ourselves
 echo ========================================================

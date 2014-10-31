@@ -6,6 +6,8 @@
 	  files, unless new '--ungzip-fastqs' option is
 	  specified (and existing option '--no-gzip-fastqs' now
 	  does nothing).
+	- version 1.2.1
+	- Added --version option.
 
 2014-10-14  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
