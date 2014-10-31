@@ -4,18 +4,18 @@
 #
 # Usage: illumina_qc.sh <fastq>
 #
-VERSION=1.1.1
+VERSION=1.2.0
 #
 function usage() {
-    echo "Usage: illumina_qc.sh <fastq> [--no-ungzip]"
+    echo "Usage: illumina_qc.sh <fastq[.gz]> [--ungzip-fastqs]"
     echo ""
     echo "Run QC pipeline for Illumina data:"
     echo ""
     echo "* check for contamination using fastq_screen"
     echo "* generate QC metrics using FASTQC"
     echo "* create uncompressed copies of fastq file (if"
-    echo "  input is fastq.gz and --no-ungzip option is"
-    echo "  not specified)"
+    echo "  input is fastq.gz and --ungzip-fastqs option"
+    echo "  is specified)"
     echo ""
     echo "<fastq> can be either fastq or fastq.gz file"
 }
@@ -75,11 +75,14 @@ if [ ! -f "$FASTQ" ] ; then
 fi
 #
 # Check for additional options
-do_ungzip=yes
+do_ungzip=no
 while [ ! -z "$2" ] ; do
     case "$2" in
 	--no-ungzip)
-	    do_ungzip=no
+	    echo "--no-ungzip: now the default (ignored)" >&2
+	    ;;
+	--ungzip-fastqs)
+	    do_ungzip=yes
 	    ;;
 	*)
 	    echo "Unrecognised option: $2"

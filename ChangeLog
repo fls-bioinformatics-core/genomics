@@ -1,3 +1,12 @@
+2014-10-31  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* QC-pipeline/illumina_qc.sh
+	- version 1.2.0
+	- Default behaviour is not *not* to decompress fastq
+	  files, unless new '--ungzip-fastqs' option is
+	  specified (and existing option '--no-gzip-fastqs' now
+	  does nothing).
+
 2014-10-14  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* bcftbx/cmdparse.py
