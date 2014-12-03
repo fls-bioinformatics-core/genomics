@@ -18,16 +18,22 @@ Utility for checking and updating symbolic links.
 # Module metadata
 #######################################################################
 
-__version__ = "1.1.0"
+__version__ = "1.1.1"
 
 #######################################################################
 # Import modules that this module depends on
 #######################################################################
 
+import sys
 import os
 import re
 import logging
 import optparse
+# Put .. onto Python search path for modules
+SHARE_DIR = os.path.abspath(
+    os.path.normpath(
+        os.path.join(os.path.dirname(sys.argv[0]),'..')))
+sys.path.append(SHARE_DIR)
 import bcftbx.utils
 
 #######################################################################
