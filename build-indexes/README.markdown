@@ -11,6 +11,7 @@ Scripts for setting up genome indexes for various programs:
  *  `srma_build_indexes.sh`: build indexes for srma
  *  `setup_genome_indexes.sh`: automatically and reproducibly set up genome indexes
  *  `build_rRNA_bowtie_indexes.sh`: create indexes and fastq_screen.conf for rRNA
+ *  `make_seq_alignments.sh`: build sequence alignment (.nib) files from FASTA
 
 fetch_fasta.sh
 --------------
@@ -272,6 +273,39 @@ The script creates the following directory structure in the current directory:
 It also creates `fastq_screen_rRNAs.conf` in the `fastq_screen` subdirectory of
 the current directory.
 
+
+make_seq_alignments.sh
+----------------------
+Build sequence alignment (`.nib`) files from a FASTA file.
+
+The procedure is:
+
+* Split FASTA file into individual chromosomes (uses the `split_fasta.py`
+  utility)
+* For each resulting chromosome run the UCSC tool `faToNib` to generate a
+  sequence alignment file
+* Copy these to a specified destination directory
+
+### Usage ###
+
+    make_seq_alignments.sh [--qsub=...] FASTA SEQ_DIR
+
+Generates sequence alignment (`.nib`) files for each chromosome in `FASTA`, and
+copies them into the (pre-existing) directory `SEQ_DIR`.
+
+### Options ###
+
+* `--qsub(=...)` Run operations via Grid Engine (otherwise run directly).
+   Optionally also supply extra arguments using `--qsub="..."` e.g. name of
+   a specific queue.
+
+### Inputs ###
+
+FASTA file with all chromosome sequences.
+
+### Outputs ###
+
+A set of sequence alignment (`.nib`) files in the specified output directory.
 
 Note on preparing reference genome files
 ----------------------------------------
