@@ -5,6 +5,7 @@ Place to put general utility scripts/tools.
 
  *  `annotate_probesets.py`: annotate probe set list based on probe set names
  *  `cd_set_umask.sh`: setup script to automagically set umask for specific directory
+ *  `cmpdirs.py`: compare contents of two directories
  *  `cluster_load.py`: report Grid Engine usage via qstat wrapper
  *  `do.sh`: execute shell command iteratively with range of integer index values
  *  `extract_reads.py`: write out subsets of reads from input data files
@@ -71,6 +72,24 @@ will execute:
     ln -s /blah/blah2/myfile2.ext ./myfile2.ext
     ...
     ln -s /blah/blah43/myfile43.ext ./myfile43.ext
+
+
+cmpdirs.py
+----------
+Recursively compare contents of one directory against another.
+
+Usage:
+
+    cmpdirs.py [OPTIONS] DIR1 DIR2
+
+Compare contents of `DIR1` against corresponding files and directories in `DIR2`.
+Files are compared using MD5 sums, symlinks using their targets.
+
+Options:
+
+    --version        show program's version number and exit
+    -h, --help       show this help message and exit
+    -n N_PROCESSORS  specify number of cores to use
 
 
 cluster_load.py
