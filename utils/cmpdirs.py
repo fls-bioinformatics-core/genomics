@@ -19,7 +19,7 @@ Compare the contents of two directories.
 # Module metadata
 #######################################################################
 
-__version__ = '0.0.2'
+__version__ = '0.0.3'
 
 #######################################################################
 # Import modules that this module depends on
@@ -51,7 +51,7 @@ class CmpResult:
         Md5sum.Md5Checker.MD5_OK: 'OK',
         Md5sum.Md5Checker.MD5_FAILED: 'FAILED: MD5s don\'t match',
         Md5sum.Md5Checker.MD5_ERROR: 'FAILED: error generating MD5',
-        Md5sum.Md5Checker.MISSING_SOURCE: 'FAILED: source missing',
+        Md5sum.Md5Checker.MISSING_SOURCE: 'FAILED: reference missing',
         Md5sum.Md5Checker.MISSING_TARGET: 'FAILED: target missing',
         Md5sum.Md5Checker.LINKS_SAME: 'OK',
         Md5sum.Md5Checker.LINKS_DIFFER: 'FAILED: symlink targets don\'t match',
@@ -99,56 +99,77 @@ def yield_filepairs(dir1,dir2,include_dirs=False):
     """
     dir1 = os.path.abspath(dir1)
     dir2 = os.path.abspath(dir2)
-    for d in os.walk(dir1):
+    for d in os.walk(dir1,followlinks=True):
         d1 = os.path.normpath(d[0])
-        if include_dirs:
+        if os.path.islink(d1):
             yield (d1,os.path.normpath(
                 os.path.join(dir2,os.path.relpath(d1,dir1))))
-        for f in d[2]:
-            # File in dir1
-            f1 = os.path.join(d1,f)
-            f2 = os.path.join(dir2,os.path.relpath(f1,dir1))
-            yield (f1,f2)
+        else:
+            if include_dirs:
+                yield (d1,os.path.normpath(
+                    os.path.join(dir2,os.path.relpath(d1,dir1))))
+            for f in d[2]:
+                # File in dir1
+                f1 = os.path.join(d1,f)
+                f2 = os.path.join(dir2,os.path.relpath(f1,dir1))
+                yield (f1,f2)
 
 def cmp_filepair(file_pair):
     """Compare a pair of files
 
     'file_pair' is a tuple consisting of a pair of file paths
-    (a 'source' file and a corresponding 'target').
+    (a 'reference' file and a corresponding 'target').
 
     The two paths are compared and a CmpResult object is
     returned.
 
+    Arguments:
+      file_pair: tuple 
+
     """
     f1,f2 = file_pair
     if not os.path.lexists(f1):
+        # Missing reference file
         result = Md5sum.Md5Checker.MISSING_SOURCE
-    elif not os.path.lexists(f2):
-        result = Md5sum.Md5Checker.MISSING_TARGET
-    elif os.path.islink(f1):
-        # Compare symlinks
-        if os.path.islink(f2):
-            if os.path.realpath(f1) == os.path.realpath(f2):
-                result = Md5sum.Md5Checker.LINKS_SAME
-            else:
-                result = Md5sum.Md5Checker.LINKS_DIFFER
-        else:
-            result = Md5sum.Md5Checker.TYPES_DIFFER
-    elif os.path.isdir(f1):
-        # Compare directories
-        if os.path.isdir(f2):
-            result = Md5sum.Md5Checker.MD5_OK
-        else:
-            result = Md5sum.Md5Checker.TYPES_DIFFER
     else:
-        # Compare files
-        result = Md5sum.Md5Checker.md5cmp_files(f1,f2)
+        if not os.path.lexists(f2):
+            result = Md5sum.Md5Checker.MISSING_TARGET
+        elif os.path.islink(f1):
+            print "%s: is link" % f1
+            # Compare links
+            if os.path.islink(f2):
+                print "%s: is link" % f2
+                if os.readlink(f1) == os.readlink(f2):
+                    result = Md5sum.Md5Checker.LINKS_SAME
+                else:
+                    result = Md5sum.Md5Checker.LINKS_DIFFER
+            else:
+                print "%s: is not link" % f2
+                result = Md5sum.Md5Checker.TYPES_DIFFER
+        elif os.path.isdir(f1):
+            # Compare directories
+            if os.path.isdir(f2):
+                result = Md5sum.Md5Checker.MD5_OK
+            else:
+                result = Md5sum.Md5Checker.TYPES_DIFFER
+        else:
+            # Compare files
+            result = Md5sum.Md5Checker.md5cmp_files(f1,f2)
     return CmpResult(f1,f2,result)
 
 def cmp_dirs(dir1,dir2,n=1):
     """Compare the contents of a pair of directories
 
-    
+    Arguments:
+      dir1: 'reference' directory for comparison
+      dir2: directory to compare against reference
+      n:    number of processors to use (defaults to 1
+            i.e. single core)
+
+    Returns:
+      Dictionary where keys are comparison result codes
+      and values are the corresponding counts for each
+      code (and codes with zero count are not represented).
 
     """
     counts = {}
@@ -196,6 +217,6 @@ if __name__ == '__main__':
             verified += counts[status]
         except KeyError:
             pass
-    print "Verified %d Total %d" % (verified,total)
+    print "Verified %d out of total %d examined" % (verified,total)
     sys.exit(0 if total == verified else 1)
 
