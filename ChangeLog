@@ -1,3 +1,23 @@
+2014-12-10  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* utils/cmpdirs.py
+	- Version 0.0.1
+	- New program to recursively compare the contents
+	  of one directory against another.
+
+2014-12-04  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* build-indexes/make_seq_alignments.sh
+	- New script to create sequence alignment (.nib)
+	  files from a Fasta file.
+
+2014-12-03  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* utils/symlink_checker.py
+	- version 1.1.1
+	- Add 'genomics' top-level directory to search path
+	  for Python modules.
+
 2014-10-31  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* QC-pipeline/illumina_qc.sh
