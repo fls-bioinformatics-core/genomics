@@ -19,7 +19,7 @@ Compare the contents of two directories.
 # Module metadata
 #######################################################################
 
-__version__ = '0.0.1'
+__version__ = '0.0.2'
 
 #######################################################################
 # Import modules that this module depends on
@@ -190,10 +190,12 @@ if __name__ == '__main__':
         total = sum([counts[x] for x in counts])
     else:
         total = 0
-    try:
-        verified = counts[Md5sum.Md5Checker.MD5_OK]
-    except KeyError:
-        verified = 0
+    verified = 0
+    for status in (Md5sum.Md5Checker.MD5_OK,Md5sum.Md5Checker.LINKS_SAME):
+        try:
+            verified += counts[status]
+        except KeyError:
+            pass
     print "Verified %d Total %d" % (verified,total)
     sys.exit(0 if total == verified else 1)
 
