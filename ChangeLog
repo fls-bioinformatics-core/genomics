@@ -2,6 +2,8 @@
 
 	* utils/cmpdirs.py
 	- Version 0.0.1
+	- Version 0.0.2
+	- Version 0.0.3
 	- New program to recursively compare the contents
 	  of one directory against another.
 
