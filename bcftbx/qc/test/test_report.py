@@ -3,6 +3,7 @@
 #######################################################################
 
 import unittest
+from bcftbx.test.mock_data import TestUtils
 from bcftbx.qc.report import *
 
 # Example file names:
@@ -93,4 +94,177 @@ class TestIsProgramInfo(unittest.TestCase):
          self.assertTrue(is_program_info(
              "ED1.1","ED1.1.illumina_qc.programs"
          ))
-        
+
+SOLID_SAMPLE_NAMES = ['solid0127_20111101_RR2_CM_pool_CM1Q_NO_SHEAR',
+                      'solid0127_20111101_RR2_CM_pool_CM1Q_SHEAR']
+
+SOLID_FILES = """qc.solid0127_20111101_RR2_CM_pool_CM1Q_NO_SHEAR.o682883
+qc.solid0127_20111101_RR2_CM_pool_CM1Q_SHEAR.o682884
+solid0127_20111101_RR2_CM_pool_CM1Q_NO_SHEAR.csfasta
+solid0127_20111101_RR2_CM_pool_CM1Q_NO_SHEAR.fastq
+solid0127_20111101_RR2_CM_pool_CM1Q_NO_SHEAR_QV.qual
+solid0127_20111101_RR2_CM_pool_CM1Q_NO_SHEAR_QV_T_F3.qual
+solid0127_20111101_RR2_CM_pool_CM1Q_NO_SHEAR_T_F3.csfasta
+solid0127_20111101_RR2_CM_pool_CM1Q_NO_SHEAR_T_F3.fastq
+solid0127_20111101_RR2_CM_pool_CM1Q_SHEAR.csfasta
+solid0127_20111101_RR2_CM_pool_CM1Q_SHEAR.fastq
+solid0127_20111101_RR2_CM_pool_CM1Q_SHEAR_QV.qual
+solid0127_20111101_RR2_CM_pool_CM1Q_SHEAR_QV_T_F3.qual
+solid0127_20111101_RR2_CM_pool_CM1Q_SHEAR_T_F3.csfasta
+solid0127_20111101_RR2_CM_pool_CM1Q_SHEAR_T_F3.fastq
+SOLiD_preprocess_filter.stats"""
+
+SOLID_QC_FILES = """solid0127_20111101_RR2_CM_pool_CM1Q_NO_SHEAR_model_organisms_screen.png
+solid0127_20111101_RR2_CM_pool_CM1Q_NO_SHEAR_model_organisms_screen.txt
+solid0127_20111101_RR2_CM_pool_CM1Q_NO_SHEAR_other_organisms_screen.png
+solid0127_20111101_RR2_CM_pool_CM1Q_NO_SHEAR_other_organisms_screen.txt
+solid0127_20111101_RR2_CM_pool_CM1Q_NO_SHEAR_QV.qual_seq-order_boxplot.pdf
+solid0127_20111101_RR2_CM_pool_CM1Q_NO_SHEAR_QV.qual_seq-order_boxplot.png
+solid0127_20111101_RR2_CM_pool_CM1Q_NO_SHEAR_QV.qual_seq-order_boxplot.ps
+solid0127_20111101_RR2_CM_pool_CM1Q_NO_SHEAR_QV_T_F3.qual_seq-order_boxplot.pdf
+solid0127_20111101_RR2_CM_pool_CM1Q_NO_SHEAR_QV_T_F3.qual_seq-order_boxplot.png
+solid0127_20111101_RR2_CM_pool_CM1Q_NO_SHEAR_QV_T_F3.qual_seq-order_boxplot.ps
+solid0127_20111101_RR2_CM_pool_CM1Q_NO_SHEAR_rRNA_screen.png
+solid0127_20111101_RR2_CM_pool_CM1Q_NO_SHEAR_rRNA_screen.txt
+solid0127_20111101_RR2_CM_pool_CM1Q_SHEAR_model_organisms_screen.png
+solid0127_20111101_RR2_CM_pool_CM1Q_SHEAR_model_organisms_screen.txt
+solid0127_20111101_RR2_CM_pool_CM1Q_SHEAR_other_organisms_screen.png
+solid0127_20111101_RR2_CM_pool_CM1Q_SHEAR_other_organisms_screen.txt
+solid0127_20111101_RR2_CM_pool_CM1Q_SHEAR_QV.qual_seq-order_boxplot.pdf
+solid0127_20111101_RR2_CM_pool_CM1Q_SHEAR_QV.qual_seq-order_boxplot.png
+solid0127_20111101_RR2_CM_pool_CM1Q_SHEAR_QV.qual_seq-order_boxplot.ps
+solid0127_20111101_RR2_CM_pool_CM1Q_SHEAR_QV_T_F3.qual_seq-order_boxplot.pdf
+solid0127_20111101_RR2_CM_pool_CM1Q_SHEAR_QV_T_F3.qual_seq-order_boxplot.png
+solid0127_20111101_RR2_CM_pool_CM1Q_SHEAR_QV_T_F3.qual_seq-order_boxplot.ps
+solid0127_20111101_RR2_CM_pool_CM1Q_SHEAR_rRNA_screen.png
+solid0127_20111101_RR2_CM_pool_CM1Q_SHEAR_rRNA_screen.txt"""
+
+class TestQCSampleForSolid(unittest.TestCase):
+    def setUp(self):
+        # Make an example directory with sample files
+        # structured as for SOLiD data
+        self.d = TestUtils.make_dir()
+        # Add files
+        for f in SOLID_FILES.split():
+            TestUtils.make_file(f,"lorem ipsum",basedir=self.d)
+        # Make an example QC dir
+        self.qc_dir = TestUtils.make_sub_dir(self.d,'qc')
+        for f in SOLID_QC_FILES.split():
+            TestUtils.make_file(f,"lorem ipsum",basedir=self.qc_dir)
+    def tearDown(self):
+        # Remove the example dir
+        TestUtils.remove_dir(self.d)
+    def test_qcsample_with_solid_data(self):
+        for name in SOLID_SAMPLE_NAMES:
+            solid_qc_sample = SolidQCSample(name,self.qc_dir,False)
+            self.assertTrue(solid_qc_sample.verify(),"Verify failed for %s" % name)
+
+ILLUMINA_SAMPLE_NAMES = ['JB-8_CAGAGAGG-GCGTAAGA_L004_R1_001',
+                         'JB-8_CAGAGAGG-GCGTAAGA_L004_R2_001',
+                         'JB-9_GCTACGCT-GCGTAAGA_L004_R1_001',
+                         'JB-9_GCTACGCT-GCGTAAGA_L004_R2_001']
+
+ILLUMINA_FILES = """JB-8_CAGAGAGG-GCGTAAGA_L004_R1_001.fastq.gz
+JB-8_CAGAGAGG-GCGTAAGA_L004_R2_001.fastq.gz
+JB-9_GCTACGCT-GCGTAAGA_L004_R1_001.fastq.gz
+JB-9_GCTACGCT-GCGTAAGA_L004_R2_001.fastq.gz"""
+
+ILLUMINA_QC_FILES = """JB-8_CAGAGAGG-GCGTAAGA_L004_R1_001_fastqc.html
+JB-8_CAGAGAGG-GCGTAAGA_L004_R1_001_fastqc.zip
+JB-8_CAGAGAGG-GCGTAAGA_L004_R1_001_model_organisms_screen.png
+JB-8_CAGAGAGG-GCGTAAGA_L004_R1_001_model_organisms_screen.txt
+JB-8_CAGAGAGG-GCGTAAGA_L004_R1_001_other_organisms_screen.png
+JB-8_CAGAGAGG-GCGTAAGA_L004_R1_001_other_organisms_screen.txt
+JB-8_CAGAGAGG-GCGTAAGA_L004_R1_001_rRNA_screen.png
+JB-8_CAGAGAGG-GCGTAAGA_L004_R1_001_rRNA_screen.txt
+JB-8_CAGAGAGG-GCGTAAGA_L004_R2_001_fastqc.html
+JB-8_CAGAGAGG-GCGTAAGA_L004_R2_001_fastqc.zip
+JB-8_CAGAGAGG-GCGTAAGA_L004_R2_001_model_organisms_screen.png
+JB-8_CAGAGAGG-GCGTAAGA_L004_R2_001_model_organisms_screen.txt
+JB-8_CAGAGAGG-GCGTAAGA_L004_R2_001_other_organisms_screen.png
+JB-8_CAGAGAGG-GCGTAAGA_L004_R2_001_other_organisms_screen.txt
+JB-8_CAGAGAGG-GCGTAAGA_L004_R2_001_rRNA_screen.png
+JB-8_CAGAGAGG-GCGTAAGA_L004_R2_001_rRNA_screen.txt
+JB-8_CAGAGAGG-GCGTAAGA_L005_R1_001_fastqc.html
+JB-8_CAGAGAGG-GCGTAAGA_L005_R1_001_fastqc.zip
+JB-8_CAGAGAGG-GCGTAAGA_L005_R1_001_model_organisms_screen.png
+JB-8_CAGAGAGG-GCGTAAGA_L005_R1_001_model_organisms_screen.txt
+JB-8_CAGAGAGG-GCGTAAGA_L005_R1_001_other_organisms_screen.png
+JB-8_CAGAGAGG-GCGTAAGA_L005_R1_001_other_organisms_screen.txt
+JB-8_CAGAGAGG-GCGTAAGA_L005_R1_001_rRNA_screen.png
+JB-8_CAGAGAGG-GCGTAAGA_L005_R1_001_rRNA_screen.txt
+JB-8_CAGAGAGG-GCGTAAGA_L005_R2_001_fastqc.html
+JB-8_CAGAGAGG-GCGTAAGA_L005_R2_001_fastqc.zip
+JB-8_CAGAGAGG-GCGTAAGA_L005_R2_001.illumina_qc.programs
+JB-8_CAGAGAGG-GCGTAAGA_L005_R2_001_model_organisms_screen.png
+JB-8_CAGAGAGG-GCGTAAGA_L005_R2_001_model_organisms_screen.txt
+JB-8_CAGAGAGG-GCGTAAGA_L005_R2_001_other_organisms_screen.png
+JB-8_CAGAGAGG-GCGTAAGA_L005_R2_001_other_organisms_screen.txt
+JB-8_CAGAGAGG-GCGTAAGA_L005_R2_001_rRNA_screen.png
+JB-8_CAGAGAGG-GCGTAAGA_L005_R2_001_rRNA_screen.txt
+JB-9_GCTACGCT-GCGTAAGA_L004_R1_001_fastqc.html
+JB-9_GCTACGCT-GCGTAAGA_L004_R1_001_fastqc.zip
+JB-9_GCTACGCT-GCGTAAGA_L004_R1_001_model_organisms_screen.png
+JB-9_GCTACGCT-GCGTAAGA_L004_R1_001_model_organisms_screen.txt
+JB-9_GCTACGCT-GCGTAAGA_L004_R1_001_other_organisms_screen.png
+JB-9_GCTACGCT-GCGTAAGA_L004_R1_001_other_organisms_screen.txt
+JB-9_GCTACGCT-GCGTAAGA_L004_R1_001_rRNA_screen.png
+JB-9_GCTACGCT-GCGTAAGA_L004_R1_001_rRNA_screen.txt
+JB-9_GCTACGCT-GCGTAAGA_L004_R2_001_fastqc.html
+JB-9_GCTACGCT-GCGTAAGA_L004_R2_001_fastqc.zip
+JB-9_GCTACGCT-GCGTAAGA_L004_R2_001_model_organisms_screen.png
+JB-9_GCTACGCT-GCGTAAGA_L004_R2_001_model_organisms_screen.txt
+JB-9_GCTACGCT-GCGTAAGA_L004_R2_001_other_organisms_screen.png
+JB-9_GCTACGCT-GCGTAAGA_L004_R2_001_other_organisms_screen.txt
+JB-9_GCTACGCT-GCGTAAGA_L004_R2_001_rRNA_screen.png
+JB-9_GCTACGCT-GCGTAAGA_L004_R2_001_rRNA_screen.txt
+JB-9_GCTACGCT-GCGTAAGA_L005_R1_001_fastqc.html
+JB-9_GCTACGCT-GCGTAAGA_L005_R1_001_fastqc.zip
+JB-9_GCTACGCT-GCGTAAGA_L005_R1_001_model_organisms_screen.png
+JB-9_GCTACGCT-GCGTAAGA_L005_R1_001_model_organisms_screen.txt
+JB-9_GCTACGCT-GCGTAAGA_L005_R1_001_other_organisms_screen.png
+JB-9_GCTACGCT-GCGTAAGA_L005_R1_001_other_organisms_screen.txt
+JB-9_GCTACGCT-GCGTAAGA_L005_R1_001_rRNA_screen.png
+JB-9_GCTACGCT-GCGTAAGA_L005_R1_001_rRNA_screen.txt
+JB-9_GCTACGCT-GCGTAAGA_L005_R2_001_fastqc.html
+JB-9_GCTACGCT-GCGTAAGA_L005_R2_001_fastqc.zip
+JB-9_GCTACGCT-GCGTAAGA_L005_R2_001_model_organisms_screen.png
+JB-9_GCTACGCT-GCGTAAGA_L005_R2_001_model_organisms_screen.txt
+JB-9_GCTACGCT-GCGTAAGA_L005_R2_001_other_organisms_screen.png
+JB-9_GCTACGCT-GCGTAAGA_L005_R2_001_other_organisms_screen.txt
+JB-9_GCTACGCT-GCGTAAGA_L005_R2_001_rRNA_screen.png
+JB-9_GCTACGCT-GCGTAAGA_L005_R2_001_rRNA_screen.txt
+"""
+
+ILLUMINA_FASTQC_DIRS="""JB-8_CAGAGAGG-GCGTAAGA_L004_R1_001_fastqc
+JB-8_CAGAGAGG-GCGTAAGA_L004_R2_001_fastqc
+JB-8_CAGAGAGG-GCGTAAGA_L005_R1_001_fastqc
+JB-8_CAGAGAGG-GCGTAAGA_L005_R2_001_fastqc
+JB-9_GCTACGCT-GCGTAAGA_L004_R1_001_fastqc
+JB-9_GCTACGCT-GCGTAAGA_L004_R2_001_fastqc
+JB-9_GCTACGCT-GCGTAAGA_L005_R1_001_fastqc
+JB-9_GCTACGCT-GCGTAAGA_L005_R2_001_fastqc
+"""
+
+class TestQCSampleForIllumina(unittest.TestCase):
+    def setUp(self):
+        # Make an example directory with sample files
+        # structured as for Illumina data
+        self.d = TestUtils.make_dir()
+        # Add fastq files
+        self.fastq_dir = TestUtils.make_sub_dir(self.d,'fastqs')
+        for f in ILLUMINA_FILES.split():
+            TestUtils.make_file(f,"lorem ipsum",basedir=self.fastq_dir)
+        # Make an example QC dir
+        self.qc_dir = TestUtils.make_sub_dir(self.d,'qc')
+        for f in ILLUMINA_QC_FILES.split():
+            TestUtils.make_file(f,"lorem ipsum",basedir=self.qc_dir)
+        for d in ILLUMINA_FASTQC_DIRS.split():
+            TestUtils.make_sub_dir(self.qc_dir,d)
+    def tearDown(self):
+        # Remove the example dir
+        TestUtils.remove_dir(self.d)
+    def test_qcsample_with_illumina_data(self):
+        for name in ILLUMINA_SAMPLE_NAMES:
+            illumina_qc_sample = IlluminaQCSample(name,self.qc_dir)
+            self.assertTrue(illumina_qc_sample.verify(),"Verify failed for %s" % name)
