@@ -20,6 +20,7 @@ Utilities for generating reports for NGS QC pipeline runs.
 #######################################################################
 
 import os
+import glob
 import zipfile
 import time
 import logging
@@ -318,9 +319,13 @@ class QCSample:
         self.__fastqc = None
         self.__programs = {}
         self.__zip_includes = []
-        # Populate with data
+        # Populate with data - use globbing to reduce the number of files
+        # we have to deal with
         qc_files = os.listdir(self.qc_dir)
+        glob_pattern = os.path.join(self.qc_dir,"%s*" % self.name)
+        qc_files = [os.path.basename(f) for f in glob.glob(glob_pattern)]
         qc_files.sort()
+        #print "QC files: %s" % qc_files
         # Associate QC outputs with sample names
         for f in qc_files:
             logging.debug("Testing file: %s" % f)
