@@ -845,7 +845,8 @@ class CasavaSampleSheet(TabFile.TabFile):
         """
         empty_names = []
         for line in self:
-            if line['SampleID'].strip() == '' or line['SampleProject'].strip() == '':
+            if str(line['SampleID']).strip() == '' \
+               or str(line['SampleProject']).strip() == '':
                 empty_names.append(line)
         return empty_names
 
@@ -860,7 +861,8 @@ class CasavaSampleSheet(TabFile.TabFile):
         illegal_names = []
         for line in self:
             for c in self.illegal_characters:
-                illegal = (line['SampleID'].count(c) > 0) or (line['SampleProject'].count(c) > 0)
+                illegal = (str(line['SampleID']).count(c) > 0) \
+                          or (str(line['SampleProject']).count(c) > 0)
                 if illegal:
                     illegal_names.append(line)
                     break
@@ -885,8 +887,8 @@ class CasavaSampleSheet(TabFile.TabFile):
         """
         for line in self.illegal_names:
             for c in self.illegal_characters:
-                line['SampleID'] = line['SampleID'].strip().replace(c,'_').strip('_')
-                line['SampleProject'] = line['SampleProject'].strip().replace(c,'_').strip('_')
+                line['SampleID'] = str(line['SampleID']).strip().replace(c,'_').strip('_')
+                line['SampleProject'] = str(line['SampleProject']).strip().replace(c,'_').strip('_')
 
     def predict_output(self):
         """Predict the expected outputs from the sample sheet content
