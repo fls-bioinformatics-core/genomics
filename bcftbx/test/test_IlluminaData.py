@@ -644,6 +644,21 @@ class TestCasavaSampleSheet(unittest.TestCase):
 """))
         self.assertEqual(len(sample_sheet),1)
 
+    def test_numeric_names(self):
+        """Check that purely numerical names can be handled
+
+        """
+        # Set up and introduce numeric names
+        sample_sheet = CasavaSampleSheet(fp=cStringIO.StringIO(self.sample_sheet_text))
+        sample_sheet[3]['SampleID'] = 8861
+        sample_sheet[4]['SampleProject'] = 123
+        # Check for illegal names
+        self.assertEqual(len(sample_sheet.illegal_names),0)
+        # Check for empty names
+        self.assertEqual(len(sample_sheet.empty_names),0)
+        # Check for duplicated names
+        self.assertEqual(len(sample_sheet.duplicated_names),0)
+
 class TestIlluminaFastq(unittest.TestCase):
 
     def test_illumina_fastq(self):
