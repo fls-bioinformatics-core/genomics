@@ -60,7 +60,7 @@ fi
 : ${FASTQ_SCREEN_CONF_DIR:=}
 #
 # fastq_screen options
-FASTQ_SCREEN_OPTIONS="$options --subset 1000000"
+FASTQ_SCREEN_OPTIONS="$options --subset 1000000 --threads 1"
 #
 # Extension for conf file based on index type
 if [ -z "$color" ] ; then
