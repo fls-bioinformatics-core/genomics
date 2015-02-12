@@ -4,10 +4,12 @@
 #
 # Usage: illumina_qc.sh <fastq>
 #
-VERSION=1.2.1
+VERSION=1.2.2
 #
 function usage() {
-    echo "Usage: illumina_qc.sh <fastq[.gz]> [--ungzip-fastqs]"
+    echo "Usage: $(basename $0) <fastq[.gz]> [options]"
+    echo "       $(basename $0) --version"
+    echo "       $(basename $0) --help|-h"
     echo ""
     echo "Run QC pipeline for Illumina data:"
     echo ""
@@ -18,6 +20,19 @@ function usage() {
     echo "  is specified)"
     echo ""
     echo "<fastq> can be either fastq or fastq.gz file"
+    echo ""
+    echo "Options:"
+    echo "  -h,--help     print this help text and exit"
+    echo "  --version     print version and exit"
+    echo "  --ungzip-fastqs"
+    echo "                create uncompressed versions of"
+    echo "                fastq files, if gzipped copies"
+    echo "                exist"
+    echo "  --no-ungzip   don't create uncompressed fastqs"
+    echo "                (ignored, this is the default)"
+    echo "  --threads N   number of threads (i.e. cores)"
+    echo "                available to the script (default"
+    echo "                is N=1)"
 }
 function import_functions() {
     if [ -z "$1" ] ; then
@@ -82,13 +97,23 @@ fi
 #
 # Check for additional options
 do_ungzip=no
+threads=1
 while [ ! -z "$2" ] ; do
     case "$2" in
 	--no-ungzip)
-	    echo "--no-ungzip: now the default (ignored)" >&2
+	    if [ $do_ungzip == "yes" ] ; then
+		echo "--no-ungzip: now the default (ignored)" >&2
+	    else
+		echo "ERROR cannot combine --no-ungzip and --ungzip-fastqs" >&2
+		exit 1
+	    fi
 	    ;;
 	--ungzip-fastqs)
 	    do_ungzip=yes
+	    ;;
+	--threads)
+	    shift
+	    threads=$2
 	    ;;
 	*)
 	    echo "Unrecognised option: $2"
@@ -158,6 +183,7 @@ echo fastq_screen conf files in: $FASTQ_SCREEN_CONF_DIR
 echo fastqc    : $FASTQC
 echo fastqc contaminants: $FASTQC_CONTAMINANTS_FILE
 echo ungzip fastq: $do_ungzip
+echo threads   : $threads
 echo "--------------------------------------------------------"
 echo hostname  : $HOSTNAME
 echo job id    : $JOB_ID
@@ -213,11 +239,11 @@ fi
 #############################################
 #
 # Run fastq_screen
-run_fastq_screen $FASTQ
+run_fastq_screen --threads $threads $FASTQ
 #
 # Run FASTQC
 if [ ! -d qc/${fastq_base}_fastqc ] || [ ! -f qc/${fastq_base}_fastqc.zip ] ; then
-    fastqc_cmd="${FASTQC} --outdir qc --nogroup --extract"
+    fastqc_cmd="${FASTQC} --outdir qc --nogroup --extract --threads $threads"
     if [ ! -z "$FASTQC_CONTAMINANTS_FILE" ] ; then
 	# Nb avoid -c even though this should be valid it seems to
 	# confuse fastqc
