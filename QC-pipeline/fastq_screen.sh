@@ -12,6 +12,7 @@ function usage() {
     echo ""
     echo "Options:"
     echo "  --color: use colorspace bowtie indexes (SOLiD data)"
+    echo "  --threads N: use N threads to run fastq_screen (default is 1)"
 }
 # Check command line
 if [ $# -eq 0 ] || [ "$1" == "-h" ] || [ "$1" == "--help" ] ; then
@@ -21,13 +22,24 @@ fi
 # Collect options
 options=
 color=
-case "$1" in
-    --color)
-	color=yes
-	options="$options --color"
-	shift
-    ;;
-esac
+threads=1
+while [ $# -gt 1 ] ; do
+    case "$1" in
+	--color)
+	    color=yes
+	    options="$options --color"
+	    ;;
+	--threads)
+	    shift
+	    threads=$1
+	    ;;
+	*)
+	    echo Unrecognised option: $1 >&2
+	    exit 1
+	    ;;
+    esac
+    shift
+done
 #
 # Set umask to allow group read-write on all new files etc
 umask 0002
@@ -60,7 +72,7 @@ fi
 : ${FASTQ_SCREEN_CONF_DIR:=}
 #
 # fastq_screen options
-FASTQ_SCREEN_OPTIONS="$options --subset 1000000 --threads 1"
+FASTQ_SCREEN_OPTIONS="$options --subset 1000000 --threads $threads"
 #
 # Extension for conf file based on index type
 if [ -z "$color" ] ; then
@@ -82,6 +94,7 @@ echo fastq     : $fastq
 echo fastq_screen: $FASTQ_SCREEN
 echo Location of conf files: $FASTQ_SCREEN_CONF_DIR
 echo Colorspace: $color
+echo Threads   : $threads
 #
 # Check that fastq file exists
 if [ ! -f "${datadir}/${fastq}" ] ; then
