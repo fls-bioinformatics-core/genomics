@@ -1,3 +1,14 @@
+2015-02-12  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* QC-pipeline/illumina_qc.sh
+	- Version 1.2.2
+	- Add --threads option (pass number of threads to
+	  use to fastq_screen and fastqc)
+
+	* QC-pipeline/fastq_screen.sh
+	- Add --threads option (pass number of threads to
+	  use to fastq_screen command)
+
 2014-12-10  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* utils/cmpdirs.py
