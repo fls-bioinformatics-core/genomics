@@ -7,7 +7,7 @@
 #
 #########################################################################
 
-__version__ = "1.2.1"
+__version__ = "1.2.2"
 
 """IlluminaData
 
@@ -297,7 +297,7 @@ class IlluminaProject:
         # Raise an exception if no samples found
         if not self.samples:
             raise IlluminaDataError, "No samples found for project %s" % \
-                project.name
+                self.name
         # Sort samples on name
         self.samples.sort(lambda a,b: cmp(a.name,b.name))
         # Determine whether project is paired end
