@@ -4,7 +4,7 @@
 #
 #########################################################################
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 
 """cmdparse
 
@@ -235,7 +235,7 @@ class CommandParser:
 # Functions
 #######################################################################
 
-def add_nprocessors_option(parser,default_nprocessors):
+def add_nprocessors_option(parser,default_nprocessors,default_display=None):
     """Add a '--nprocessors' option to a parser
     
     Given an OptionParser 'parser', add a '--nprocessors' option.
@@ -243,14 +243,19 @@ def add_nprocessors_option(parser,default_nprocessors):
     The value of this option can be accessed via the 'nprocessors'
     attribute of the parser options.
 
+    If 'default_display' is not None then this value will be shown
+    in the help text, rather than the value supplied for the default.
+
     Returns the input OptionParser object.
 
     """
+    if default_display is None:
+        default_display = default_nprocessors
     parser.add_option('--nprocessors',action='store',
                       dest='nprocessors',default=default_nprocessors,
                       help="explicitly specify number of processors/cores to use "
                       "(default %s)" % 
-                      default_nprocessors)
+                      default_display)
     return parser
 
 def add_runner_option(parser):
