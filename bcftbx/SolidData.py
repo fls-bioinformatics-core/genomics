@@ -1,5 +1,5 @@
 #     SolidData.py: module for handling data about SOLiD sequencer runs
-#     Copyright (C) University of Manchester 2011-3 Peter Briggs
+#     Copyright (C) University of Manchester 2011-5 Peter Briggs
 #
 ########################################################################
 #
@@ -885,6 +885,7 @@ class SolidRunInfo:
         self.id = None
         self.instrument = None
         self.datestamp = None
+        self.is_paired_end = False
         self.is_fragment_library = False
         self.is_barcoded_sample = False
         self.flow_cell = 1
@@ -898,6 +899,10 @@ class SolidRunInfo:
         # Basic info
         self.instrument = data[0]
         self.datestamp = data[1]
+        #
+        # Paired end
+        if 'PE' in data:
+            self.is_paired_end = True
         #
         # Fragment library
         if 'FRAG' in data:
@@ -916,6 +921,8 @@ class SolidRunInfo:
                              self.datestamp)
         if self.is_fragment_library:
             self.id += "_FRAG"
+        if self.is_paired_end:
+            self.id += "_PE"
         if self.is_barcoded_sample:
             self.id += "_BC"
         #

@@ -427,6 +427,7 @@ class TestSolidRunInfo(unittest.TestCase):
         self.assertEqual(instrument,info.instrument)
         self.assertEqual(datestamp,info.datestamp)
         self.assertEqual(1,info.flow_cell)
+        self.assertFalse(info.is_paired_end)
         self.assertTrue(info.is_fragment_library)
         self.assertTrue(info.is_barcoded_sample)
         self.assertEqual('26/04/13',info.date)
@@ -445,7 +446,26 @@ class TestSolidRunInfo(unittest.TestCase):
         self.assertEqual(instrument,info.instrument)
         self.assertEqual(datestamp,info.datestamp)
         self.assertEqual(2,info.flow_cell)
+        self.assertFalse(info.is_paired_end)
         self.assertTrue(info.is_fragment_library)
+        self.assertTrue(info.is_barcoded_sample)
+        self.assertEqual('26/04/13',info.date)
+        self.assertEqual(str(info),run_name)
+
+    def test_paired_end(self):
+        instrument = 'solid0123'
+        datestamp  = '20130426'
+        paired_end = 'PE'
+        barcode    = 'BC'
+        run_name   = instrument+'_'+datestamp+'_'+paired_end+'_'+barcode
+        info = SolidRunInfo(run_name)
+        self.assertEqual(run_name,info.name)
+        self.assertEqual(run_name,info.id)
+        self.assertEqual(instrument,info.instrument)
+        self.assertEqual(datestamp,info.datestamp)
+        self.assertEqual(1,info.flow_cell)
+        self.assertTrue(info.is_paired_end)
+        self.assertFalse(info.is_fragment_library)
         self.assertTrue(info.is_barcoded_sample)
         self.assertEqual('26/04/13',info.date)
         self.assertEqual(str(info),run_name)
