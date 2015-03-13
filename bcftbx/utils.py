@@ -7,7 +7,7 @@
 #
 #########################################################################
 
-__version__ = "1.5.0"
+__version__ = "1.5.1"
 
 """utils
 
@@ -909,15 +909,15 @@ class Symlink:
         """
         if not os.path.islink(path):
             raise Exception("%s is not a link" % path)
-        self.__path = path
-        self.__abspath = os.path.abspath(self.__path)
+        self._path = path
+        self._abspath = os.path.abspath(self._path)
 
     @property
     def target(self):
         """Return the target of the symlink
 
         """
-        return os.readlink(self.__abspath)
+        return os.readlink(self._abspath)
 
     @property
     def is_absolute(self):
@@ -940,7 +940,7 @@ class Symlink:
         if self.is_absolute:
             path = self.target
         else:
-            path = os.path.abspath(os.path.join(os.path.dirname(self.__abspath),
+            path = os.path.abspath(os.path.join(os.path.dirname(self._abspath),
                                                 self.target))
         return os.path.normpath(path)
 
@@ -951,14 +951,14 @@ class Symlink:
           new_target: path to replace the existing target with
 
         """
-        os.unlink(self.__abspath)
-        os.symlink(new_target,self.__abspath)
+        os.unlink(self._abspath)
+        os.symlink(new_target,self._abspath)
 
     def __repr__(self):
         """Implement the __repr__ built-in
 
         """
-        return self.__path
+        return self._path
 
 def links(dirn):
     """Traverse and return all symbolic links in under a directory
