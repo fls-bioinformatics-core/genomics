@@ -43,6 +43,9 @@ setup(name = "genomics",
       # Enable 'python setup.py test'
       test_suite='nose.collector',
       tests_require=['nose'],
+      # Scripts
       scripts = scripts,
+      # Configuration file for QC
+      data_files = ['config',['QC-pipeline/qc.setup.sample']],
       include_package_data=True,
       zip_safe = False)
