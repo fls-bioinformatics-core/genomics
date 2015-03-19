@@ -33,6 +33,10 @@ to install the package.
 To use the package without installing it first you will need to add the
 directory to your `PYTHONPATH` environment.
 
+To install directly from github using `pip`::
+
+    pip install git+https://github.com/fls-bioinformatics-core/genomics.git@devel
+
 Running Tests
 *************
 
