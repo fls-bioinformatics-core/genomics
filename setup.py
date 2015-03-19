@@ -33,7 +33,7 @@ setup(name = "genomics",
       url = 'https://github.com/fls-bioinformatics-core/genomics',
       maintainer = 'Peter Briggs',
       maintainer_email = 'peter.briggs@manchester.ac.uk',
-      packages = ['bcftbx'],
+      packages = ['bcftbx','bcftbx.qc'],
       license = 'Artistic License',
       # Pull in dependencies
       install_requires = ['xlwt >= 0.7.2',
