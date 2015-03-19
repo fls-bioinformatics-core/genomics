@@ -29,7 +29,7 @@ setup(name = "genomics",
       description = 'Utilities for NGS and genomic bioinformatics',
       long_description = """Utility programs and libraries used for Next Generation
       Sequencing (NGS) and genomic bioinformatics, developed and used within the
-      Bioinformatics Core Facility (BCF) at the University of Manchester,"""
+      Bioinformatics Core Facility (BCF) at the University of Manchester""",
       url = 'https://github.com/fls-bioinformatics-core/genomics',
       maintainer = 'Peter Briggs',
       maintainer_email = 'peter.briggs@manchester.ac.uk',
