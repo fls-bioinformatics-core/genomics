@@ -18,7 +18,8 @@ for pattern in ('build-indexes/*.sh',
                 'QC-pipeline/*.py','QC-pipeline/*.sh',
                 'RNA-seq/*.py',
                 'solid2cluster/*.py','solid2cluster/*.sh',
-                'utils/*.pl','utils/*.py','utils/*.R','utils/*.sh'):
+                'utils/*.pl','utils/*.py','utils/*.R','utils/*.sh',
+                'share/bcftbx.*.sh'):
     scripts.extend(glob(pattern))
 
 # Setup for installation etc
