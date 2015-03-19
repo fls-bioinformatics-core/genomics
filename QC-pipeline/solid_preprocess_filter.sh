@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Script to run SOLiD_preprocess_filter steps on SOLiD data
 #
@@ -41,24 +41,14 @@ fi
 #===========================================================================
 # Import function libraries
 #===========================================================================
-##
+#
+export PATH=$PATH:$(dirname $0)/../share
+#
 # General shell functions
-if [ -f functions.sh ] ; then
-    # Import local copy
-    . functions.sh
-else
-    # Import version in share
-    . `dirname $0`/../share/functions.sh
-fi
+. bcftbx.functions.sh
 #
 # NGS-specific functions
-if [ -f ngs_utils.sh ] ; then
-    # Import local copy
-    . ngs_utils.sh
-else
-    # Import version in share
-    . `dirname $0`/../share/ngs_utils.sh
-fi
+. bcftbx.ngs_utils.sh
 #
 #===========================================================================
 # Main script

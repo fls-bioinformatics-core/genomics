@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Script to run QC steps on SOLiD data
 #
@@ -17,18 +17,15 @@ function usage() {
     echo ""
     echo "If F5 files are also supplied then run in paired-end mode"
 }
+export PATH=$PATH:$(dirname $0)/../share
 function import_functions() {
     if [ -z "$1" ] ; then
 	echo ERROR no filename supplied to import_functions >2
     else
-	if [ -f $1 ] ; then
-	    # Import local copy
-	    echo Sourcing `pwd`/$1
-	    . $1
-	else
-	    # Import version in share
-	    echo Sourcing `dirname $0`/../share/$1
-	    . `dirname $0`/../share/$1
+	echo Sourcing $1
+	. $1
+	if [ $? -ne 0 ] ; then
+	    echo ERROR failed to import $1 >2
 	fi
     fi
 }
@@ -57,13 +54,13 @@ fi
 #===========================================================================
 #
 # General shell functions
-import_functions functions.sh
+import_functions bcftbx.functions.sh
 #
 # NGS-specific functions
-import_functions ngs_utils.sh
+import_functions bcftbx.ngs_utils.sh
 #
 # Program version functions
-import_functions versions.sh
+import_functions bcftbx.versions.sh
 #
 #===========================================================================
 # Main script
