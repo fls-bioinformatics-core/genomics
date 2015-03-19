@@ -46,6 +46,6 @@ setup(name = "genomics",
       # Scripts
       scripts = scripts,
       # Configuration file for QC
-      data_files = ['config',['QC-pipeline/qc.setup.sample']],
+      data_files = [('config',['QC-pipeline/qc.setup.sample']),],
       include_package_data=True,
       zip_safe = False)
