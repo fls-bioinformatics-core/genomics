@@ -37,6 +37,18 @@ To install directly from github using `pip`::
 
     pip install git+https://github.com/fls-bioinformatics-core/genomics.git@devel
 
+Documentation
+*************
+
+Documentation based on `sphinx` is available under the `docs` directory.
+
+To build::
+
+    cd docs
+    make html
+
+which creates the documentation in the `docs/build` subdirectory.
+
 Running Tests
 *************
 
