@@ -38,6 +38,7 @@ function trawl() {
     brg=
     bif=
     ebwt=
+    bt2=
     fai=
     scripts=
     compressed=
@@ -85,6 +86,10 @@ function trawl() {
 		    # Bowtie index
 		    ebwt="$ebwt $name"
 		    ;;
+		bt2)
+		    # Bowtie2 index
+		    bt2="$bt2 $name"
+		    ;;
 		sh)
 		    # Script
 		    scripts="$scripts $name"
@@ -107,6 +112,7 @@ function trawl() {
     report_files "${indent}" $bif
     report_files "${indent}" $fai
     report_files "${indent}" $ebwt
+    report_files "${indent}" $bt2
     ##report_files "${indent}" $scripts
     report_files "${indent}" $compressed
     ##report_files "${indent}" $other
@@ -125,7 +131,14 @@ else
 fi
 #
 # Import external function library
-. ${TRAWLER_DIR}/../share/functions.sh
+export PATH=$(dirname $0)/../share:${PATH}
+. bcftbx.functions.sh
+#
+# Check a directory was supplied
+if [ -z "$1" ] ; then
+    echo "Usage: $TRAWLER DIR"
+    exit
+fi
 #
 # Begin the trawl
 trawl $1 $2
