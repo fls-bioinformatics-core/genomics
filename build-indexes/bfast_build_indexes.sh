@@ -30,7 +30,8 @@ EOF
 }
 #
 # Import functions
-. `dirname $0`/../share/functions.sh
+export PATH=$(dirname $0)/../share:${PATH}
+. bcftbx.functions.sh
 #
 # Initialisations
 script_name=`basename $0`
