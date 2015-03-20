@@ -105,13 +105,7 @@ if [ ! -z "$CSFASTA_F5" ] || [ ! -z "$QUAL_F5" ] ; then
 fi
 #
 # Set up environment
-QC_SETUP=`dirname $0`/qc.setup
-if [ -f "${QC_SETUP}" ] ; then
-    echo Sourcing qc.setup to set up environment
-    . ${QC_SETUP}
-else
-    echo WARNING qc.setup not found in `dirname $0`
-fi
+import_qc_settings
 #
 # Run solid2fastq to make fastq file
 solid2fastq_cmd="run_solid2fastq ${options} ${CSFASTA} ${QUAL} ${CSFASTA_F5} ${QUAL_F5}"
