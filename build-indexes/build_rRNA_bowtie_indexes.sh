@@ -12,7 +12,8 @@
 #    nucleotide indexes
 #
 # Import functions
-. `dirname $0`/../share/functions.sh
+export PATH=$(dirname $0)/../share:${PATH}
+. bcftbx.functions.sh
 #
 SCRIPT_DIR=$(abs_path `dirname $0`)
 #
@@ -84,7 +85,7 @@ for index_type in "color nt" ; do
 	conf_ext=_nt
     fi
     #
-    FASTQ_SCREEN_CONF=${GENOME_INDEXES}/fastq_screen/fastq_screen_rRNA${conf_ext}.conf
+    FASTQ_SCREEN_CONF=${GENOME_INDEXES}/fastq_screen_rRNA${conf_ext}.conf
     cd ../..
     cat <<EOF > ${FASTQ_SCREEN_CONF}
 ## fastq_screen_rRNA ##
