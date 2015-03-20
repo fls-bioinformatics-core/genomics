@@ -11,6 +11,14 @@ Contents
 .. toctree::
    :maxdepth: 2
 
+   qc_pipeline
+
+Command Reference
+*****************
+
+.. toctree::
+   :maxdepth: 2
+
 Indices and tables
 ==================
 
