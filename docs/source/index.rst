@@ -11,6 +11,7 @@ Contents
 .. toctree::
    :maxdepth: 2
 
+   config
    qc_pipeline
 
 Command Reference
@@ -18,6 +19,8 @@ Command Reference
 
 .. toctree::
    :maxdepth: 2
+
+   reference/qc_pipeline
 
 Indices and tables
 ==================
