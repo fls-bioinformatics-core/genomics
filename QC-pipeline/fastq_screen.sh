@@ -58,6 +58,9 @@ if [ "$datadir" == "." ] ; then
 fi
 #
 # Set up environment
+export PATH=$(dirname $0)/../share:${PATH}
+. bcftbx.functions.sh
+. bcftbx.ngs_utils.sh
 import_qc_settings
 #
 # Set the programs
