@@ -24,11 +24,11 @@ programs.
 Installation
 ************
 
-Run::
+It is recommended to use::
 
-    python setup.py install
+    pip install .
 
-to install the package.
+from within the top-level source directory to install the package.
 
 To use the package without installing it first you will need to add the
 directory to your `PYTHONPATH` environment.
