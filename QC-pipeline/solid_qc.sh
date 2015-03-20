@@ -108,13 +108,7 @@ echo hostname  : $HOSTNAME
 echo job id    : $JOB_ID
 #
 # Set up environment
-QC_SETUP=`dirname $0`/qc.setup
-if [ -f "${QC_SETUP}" ] ; then
-    echo Sourcing qc.setup to set up environment
-    . ${QC_SETUP}
-else
-    echo WARNING qc.setup not found in `dirname $0`
-fi
+import_qc_settings
 #
 # Working directory
 WORKING_DIR=`pwd`

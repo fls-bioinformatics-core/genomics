@@ -1,7 +1,7 @@
 #!/bin/sh
 #
 # ngs_utils.sh: library of shell functions for NGS
-# Peter Briggs, University of Manchester 2011
+# Peter Briggs, University of Manchester 2011-2015
 #
 # Set of shell functions to perform various NGS operations, e.g.
 # generate fastq files from SOLiD data etc.
@@ -19,6 +19,24 @@
 # NB This also requires the shell functions from functions.sh.
 #
 #====================================================================
+#
+# Import the QC settings
+#
+# Locates qc.setup file and sources it to get the environment
+# variables defined there
+# 
+# qc.setup is expected to be in the 'config' directory
+#
+# Usage: import_qc_settings
+function import_qc_settings() {
+    QC_SETUP=$(dirname $0)/../config/qc.setup
+    if [ -f "${QC_SETUP}" ] ; then
+	echo Sourcing qc.setup to set up environment
+	. ${QC_SETUP}
+    else
+	echo WARNING ${QC_SETUP} not found
+    fi
+}
 #
 # run_solid2fastq: create fastq file
 #

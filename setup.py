@@ -18,8 +18,7 @@ for pattern in ('build-indexes/*.sh',
                 'QC-pipeline/*.py','QC-pipeline/*.sh',
                 'RNA-seq/*.py',
                 'solid2cluster/*.py','solid2cluster/*.sh',
-                'utils/*.pl','utils/*.py','utils/*.R','utils/*.sh',
-                'share/bcftbx.*.sh'):
+                'utils/*.pl','utils/*.py','utils/*.R','utils/*.sh'):
     scripts.extend(glob(pattern))
 
 # Setup for installation etc
@@ -46,6 +45,10 @@ setup(name = "genomics",
       # Scripts
       scripts = scripts,
       # Configuration file for QC
-      data_files = [('config',['QC-pipeline/qc.setup.sample']),],
+      data_files = [('config',['config/qc.setup.sample']),
+                    ('share',['share/bcftbx.functions.sh',
+                              'share/bcftbx.ngs_utils.sh',
+                              'share/bcftbx.versions.sh',
+                              'share/bcftbx.lock.sh'])],
       include_package_data=True,
       zip_safe = False)
