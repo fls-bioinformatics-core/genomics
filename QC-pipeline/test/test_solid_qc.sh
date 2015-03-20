@@ -3,10 +3,10 @@
 name=$(basename ${0%.*})
 test_dir=$(mktemp --directory --tmpdir=. --suffix=.$name)
 data_files=\
-"solid_F3_sample1.csfasta \
-solid_F3_QV_sample1.qual \
-solid_F3_sample2.csfasta \
-solid_F3_QV_sample2.qual"
+"solid_sample1_F3.csfasta \
+solid_sample1_F3_QV.qual \
+solid_sample2_F3.csfasta \
+solid_sample2_F3_QV.qual"
 echo Running tests in $test_dir
 cd $test_dir
 for f in $data_files ; do
