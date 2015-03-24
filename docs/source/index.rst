@@ -20,7 +20,10 @@ Command Reference
 .. toctree::
    :maxdepth: 2
 
+   reference/chip_seq
+   reference/rna_seq
    reference/qc_pipeline
+   reference/microarray
 
 Indices and tables
 ==================
