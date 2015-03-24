@@ -3,6 +3,16 @@ ChIP-seq
 
 Scripts and tools for ChIP-seq specific tasks.
 
+* ``calc_coverage_stats.pl``: stats from a coverage file
+* ``convertFastq2Fasta.pl``: convert consensus fastq to fasta format
+* ``CreateChIPalignFileFromBed.pl``: convert csfasta->BED for GLITR
+* ``getRandomTags_index.pl``, ``getRandomTags_index_fastq.pl``: extract
+  random subsets of reads
+* ``make_macs_xls.py``, ``make_macs2_xls.py``: convert a MACS output file
+  into an Excel spreadsheet
+* ``mean_coverage.pl``: mean depth of read coverage from BAM file
+* ``run_DESeq.R``
+
 calc_coverage_stats.pl
 **********************
 
@@ -38,8 +48,8 @@ Usage::
 
     CreateChIPalignFileFromBed.pl in.bed out.align
 
-getRandomTags_index.pl/getRandomTags_index_fastq.pl
-***************************************************
+getRandomTags_index.pl, getRandomTags_index_fastq.pl
+****************************************************
 
 Extract random subset of records from fasta and fastq sequence files.
 
@@ -61,8 +71,8 @@ Usage::
 
     getRandomTags_index_fastq.pl in.fastq N out.fastq
 
-make_macs_xls.py/make_macs2_xls.py
-**********************************
+make_macs_xls.py, make_macs2_xls.py
+***********************************
 
 Convert a MACS tab-delimited output file into an Excel (XLS) spreadsheet.
 
@@ -104,7 +114,7 @@ Usage::
     runDESeq.R [input file] [generic figure label] [output file]
 
 Run DESeq in R using a tab delimited file [input file] that has a column of
-chr_start_end called 'regions' and four columns of read counts for:
+``chr_start_end`` called 'regions', and four columns of read counts for:
 
 ::
 
