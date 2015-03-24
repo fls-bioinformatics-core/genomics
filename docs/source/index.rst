@@ -20,6 +20,7 @@ Command Reference
 .. toctree::
    :maxdepth: 2
 
+   reference/illumina2cluster
    reference/chip_seq
    reference/rna_seq
    reference/qc_pipeline
