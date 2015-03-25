@@ -164,6 +164,7 @@ advised to specify distinct output directories, e.g.::
 
     DEFINE_RUN	pjbriggs_SampleSheet.csv:Unaligned_pjbriggs:y68,I7
 
+.. _bclToFastq:
 
 bclToFastq.sh
 *************
@@ -206,6 +207,7 @@ Options:
    configureBcltoFastq.pl (see the CASAVA user guide for details of
    how -j works)
 
+.. _build_illumina_analysis_dirs:
 
 build_illumina_analysis_dirs.py
 *******************************
@@ -277,6 +279,7 @@ Options:
     specify SampleSheet.csv file to read barcodes, sample names and lane
     assignments from (as an alternative to ``--barcode``).
 
+.. _prep_sample_sheet:
 
 prep_sample_sheet.py
 ********************
@@ -334,7 +337,19 @@ Options:
 
     ignore warnings about spaces and duplicated sampleID/sampleProject
     combinations when writing new samplesheet.csv file
-  
+
+.. cmdoption:: --include-lanes=LANES
+
+    specify a subset of lanes to include in the output sample sheet;
+    ``LANES`` should be single integer (e.g. 1), a list of integers (e.g.
+    1,3,...), a range (e.g. 1-3) or a combination (e.g. 1,3-5,7).
+    Default is to include all lanes
+
+.. cmdoption:: --truncate-barcodes=BARCODE_LEN
+
+    trim barcode sequences in sample sheet to number of bases specified
+    by ``BARCODE_LEN``. Default is to leave barcode sequences unmodified
+
 Deprecated options:
 
 .. cmdoption:: --miseq
@@ -345,18 +360,18 @@ Deprecated options:
 
 Examples:
 
-Read in the sample sheet file ``SampleSheet.csv``, update the ``SampleProject`` and
-``SampleID`` for lanes 1 and 8, and write the updated sample sheet to the file
-``SampleSheet2.csv``::
+1. Read in the sample sheet file ``SampleSheet.csv``, update the ``SampleProject``
+   and ``SampleID`` for lanes 1 and 8, and write the updated sample sheet to the
+   file ``SampleSheet2.csv``::
 
-    prep_sample_sheet.py -o SampleSheet2.csv --set-project=1,8:Control \
-        --set-id=1:PhiX_10pM --set-id=8:PhiX_12pM SampleSheet.csv
+     prep_sample_sheet.py -o SampleSheet2.csv --set-project=1,8:Control \
+          --set-id=1:PhiX_10pM --set-id=8:PhiX_12pM SampleSheet.csv
 
-Automatically fix spaces and duplicated ``sampleID``/``sampleProject`` combinations
-and write out to ``SampleSheet3.csv``::
+2. Automatically fix spaces and duplicated ``sampleID``/``sampleProject``
+   combinations and write out to ``SampleSheet3.csv``::
 
-    prep_sample_sheet.py --fix-spaces --fix-duplicates \
-        -o SampleSheet3.csv SampleSheet.csv
+     prep_sample_sheet.py --fix-spaces --fix-duplicates \
+          -o SampleSheet3.csv SampleSheet.csv
 
 
 report_barcodes.py
@@ -428,6 +443,7 @@ Options:
 
     write rsync output directly stdout, don't create a log file
 
+.. _verify_paired:
 
 verify_paired.py
 ****************
