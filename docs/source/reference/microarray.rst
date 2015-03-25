@@ -1,5 +1,5 @@
-microarray
-==========
+Microarray Utilities
+====================
 
 Scripts and tools for microarray specific tasks.
 
@@ -112,6 +112,7 @@ first column and a comma-separated list of the equivalent probe sets for species
 in the fourth column, e.g.
 
 ::
+
     ...
     121_at	7849	18510	1418208_at,1446561_at
     1255_g_at	2978	14913	1421061_a
