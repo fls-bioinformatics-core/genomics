@@ -9,15 +9,28 @@ Contents
 ********
 
 .. toctree::
+   :numbered:
    :maxdepth: 2
 
    config
    qc_pipeline
+   external
+
+Protocols
+*********
+
+.. toctree::
+   :numbered:
+   :maxdepth: 2
+
+   protocols/qc
+   protocols/utilities
 
 Command Reference
 *****************
 
 .. toctree::
+   :numbered:
    :maxdepth: 2
 
    reference/solid2cluster
