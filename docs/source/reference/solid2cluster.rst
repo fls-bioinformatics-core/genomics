@@ -8,6 +8,7 @@ Utilities for transferring data from the SOLiD instrument to the cluster:
 * ``analyse_solid_run.py``: report on the primary data directories from SOLiD runs
 * ``build_analysis_dir.py``: construct analysis directories for experiments
 
+.. _rsync_solid_to_cluster:
 
 rsync_solid_to_cluster.sh
 *************************
@@ -39,23 +40,58 @@ The output from each ``rsync`` is also captured in a timestamped log file. If an
 address is supplied on the command line then copies of the logs will be mailed to this
 address.
 
+.. _log_seq_data:
 
 log_seq_data.sh
 ***************
 
-Script to add entries for transferred SOLiD run directories to a logging file.
+Script to add entries for transferred SOLiD run or analysis directories to a
+logging file.
 
 Usage::
 
-    log_seq_data.sh <logging_file> <solid_run_dir> [<description>]
+    log_seq_data.sh [-u|-d] <logging_file> <solid_run_dir> [<description>]
 
-A new entry for the directory ``<solid_run_dir>`` will be added to ``<logging_file>``,
-consisting of the full path to the directory, a UNIX timestamp, and the optional
-description.
+A new entry for the directory ``<solid_run_dir>`` will be added to
+``<logging_file>``, consisting of the path to the directory, a UNIX timestamp,
+and the optional description.
 
-If the logging file doesn't exist then it will be created, and a new entry won't be
+The path can be relative or absolute; relative paths are automatically converted
+to full paths.
+
+If the logging file doesn't exist then it will be created. A new entry won't be
 created for any SOLiD run directory that is already in the logging file.
 
+Options:
+
+.. cmdoption:: -u
+
+    Updates an existing entry
+
+.. cmdoption:: -d
+
+    Deletes an existing entry
+
+Examples:
+
+Log a primary data directory::
+
+    log_seq_data.sh /mnt/data/SEQ_DATA.log /mnt/data/solid0127_20110914_FRAG_BC "Primary data"
+
+Log an analysis directory (no description)::
+
+    log_seq_data.sh /mnt/data/SEQ_DATA.log /mnt/data/solid0127_20110914_FRAG_BC_analysis
+
+Update an entry to add a description::
+
+    log_seq_data.sh /mnt/data/SEQ_DATA.log -u /mnt/data/solid0127_20110914_FRAG_BC_analysis \
+        "Analysis directory"
+
+Delete an entry::
+
+    log_seq_data.sh /mnt/data/SEQ_DATA.log -d /mnt/data/solid0127_20110914_FRAG_BC_analysis
+
+.. _analyse_solid_run:
 
 analyse_solid_run.py
 ********************
@@ -126,6 +162,7 @@ Options:
 
     suppress warning messages
 
+.. _build_analysis_dirs:
 
 build_analysis_dir.py
 *********************

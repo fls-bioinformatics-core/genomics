@@ -23,6 +23,9 @@ Protocols
    :numbered:
    :maxdepth: 2
 
+   protocols/prep_ref_data
+   protocols/prep_solid
+   protocols/prep_illumina
    protocols/qc
    protocols/utilities
 
