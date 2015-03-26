@@ -7,9 +7,6 @@ Place to put general utility scripts/tools.
  *  `cmpdirs.py`: compare contents of two directories
  *  `cluster_load.py`: report Grid Engine usage via qstat wrapper
  *  `do.sh`: execute shell command iteratively with range of integer index values
- *  `extract_reads.py`: write out subsets of reads from input data files
- *  `fastq_edit.py`: edit FASTQ files and data
- *  `fastq_sniffer.py`: "sniff" FASTQ file to determine quality encoding
  *  `makeBinsFromBed.pl`: create bin files for binning applications
  *  `makeRegularBinsFromGenomeTable.R`: make bin file from set of chromosomes
  *  `make_mock_solid_dir.py`: create mock SOLiD directory structure for testing
@@ -18,7 +15,6 @@ Place to put general utility scripts/tools.
  *  `sam2soap.py`: convert from SAM file to SOAP format
  *  `split_fasta.py`: extract individual chromosome sequences from fasta file
  *  `symlink_checker.py`: check and update symbolic links
- *  `uncompress_fastqgz.sh`: create ungzipped version of a compressed FASTQ file
 
 See below for more detailed usage documentation.
 
@@ -94,71 +90,6 @@ Outputs a report of the form:
           node02    1        0 (0/0)         1 (0/0)
           ...
 
-extract_reads.py
-----------------
-
-Usage: `extract_reads.py OPTIONS infile [infile ...]`
-
-Extract subsets of reads from each of the supplied files according to
-specified criteria (e.g. random, matching a pattern etc). Input files can be
-any mixture of FASTQ (.fastq, .fq), CSFASTA (.csfasta) and QUAL (.qual).
-Output file names will be the input file names with '.subset' appended.
-
-Options:
-
-    --version             show program's version number and exit
-    -h, --help            show this help message and exit
-    -m PATTERN, --match=PATTERN
-                          Extract records that match Python regular expression
-                          PATTERN
-    -n N                  Extract N random records from the input file(s)
-                          (default 500). If multiple input files are specified,
-                          the same subsets will be extracted for each.
-
-
-fastq_edit.py
--------------
-
-Usage: `fastq_edit.py [options] <fastq_file>`
-
-Perform various operations on FASTQ file.
-
-Options:
-
-    --version             show program's version number and exit
-    -h, --help            show this help message and exit
-    --stats               Generate basic stats for input FASTQ
-    --instrument-name=INSTRUMENT_NAME
-                          Update the 'instrument name' in the sequence
-                          identifier part of each read record and write updated
-                          FASTQ file to stdout
-
-
-fastq_sniffer.py
-----------------
-
-Usage: `fastq_sniffer.py <fastq_file>`
-
-"Sniff" FASTQ file to try and determine likely format and quality encoding.
-
-Attempts to identify FASTQ format and quality encoding, and suggests likely datatype
-for import into Galaxy.
-
-Use the `--subset` option to only use a subset of reads from the file for the type
-determination (using a smaller set speeds up the process at the risk of not being able
-to accuracy determine the encoding convention).
-
-See [http://en.wikipedia.org/wiki/FASTQ_format]() for information on the different
-quality encoding standards used in different FASTQ formats.
-
-Options:
-
-    --version          show program's version number and exit
-    -h, --help         show this help message and exit
-    --subset=N_SUBSET  try to determine encoding from a subset of consisting of
-                       the first N_SUBSET reads. (Quicker than using all reads
-                       but may not be accurate if subset is not representative
-                       of the file as a whole.)
 
 makeBinsFromBed.pl
 ------------------
@@ -366,16 +297,3 @@ Options:
                           supplied REGEX_PATTERN
     --replace=NEW_STRING  update links found by --find options, by substituting
                           REGEX_PATTERN with NEW_STRING
-
-
-uncompress_fastqz.sh
---------------------
-Create uncompressed copies of fastq.gz file (if input is fastq.gz).
-
-Usage:
-
-    uncompress_fastqgz.sh <fastq>
-
-`<fastq>` can be either fastq or fastq.gz file.
-
-The original file will not be removed or altered.

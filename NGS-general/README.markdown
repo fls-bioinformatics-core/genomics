@@ -3,8 +3,10 @@ NGS-general
 
 General NGS scripts that are used for both ChIP-seq and RNA-seq.
 
-  * `boxplotps2png.sh`: make PNGs of PS plots from `qc_boxplotter.sh`
   * `explain_sam_flag.sh`: decodes bit-wise flag from SAM file
+  * `extract_reads.py`: write out subsets of reads from input data files
+  * `fastq_edit.py`: edit FASTQ files and data
+  * `fastq_sniffer.py`: "sniff" FASTQ file to determine quality encoding
   * `qc_boxplotter.sh`: generate QC boxplot from SOLiD qual file
   * `SamStats`: counts uniquely map reads per chromosome/contig
   * `splitBarcodes.pl`: separate multiple barcodes in SOLiD data
@@ -12,19 +14,7 @@ General NGS scripts that are used for both ChIP-seq and RNA-seq.
   * `remove_mispairs.py`: remove "singleton" reads from paired end fastq
   * `separate_paired_fastq.pl`: separate F3 and F5 reads from fastq
   * `trim_fastq.pl`: trim down sequences in fastq file from 5' end
-
-
-boxplotps2png.sh
-----------------
-Utility to generate PNGs from PS boxplots produced from `qc_boxplotter.sh`.
-
-Usage:
-
-    boxplotps2png.sh BOXPLOT1.ps [ BOXPLOT2.ps ... ]
-
-Outputs:
-
-PNG versions of the input postscript files as BOXPLOT1.png, BOXPLOT2.png etc.
+ *  `uncompress_fastqgz.sh`: create ungzipped version of a compressed FASTQ file
 
 
 explain_sam_flag.sh
@@ -33,18 +23,71 @@ Convert a decimal bitwise SAM flag value to binary representation and
 interpret each bit.
 
 
-qc_boxplotter
+extract_reads.py
+----------------
+
+Usage: `extract_reads.py OPTIONS infile [infile ...]`
+
+Extract subsets of reads from each of the supplied files according to
+specified criteria (e.g. random, matching a pattern etc). Input files can be
+any mixture of FASTQ (.fastq, .fq), CSFASTA (.csfasta) and QUAL (.qual).
+Output file names will be the input file names with '.subset' appended.
+
+Options:
+
+    --version             show program's version number and exit
+    -h, --help            show this help message and exit
+    -m PATTERN, --match=PATTERN
+                          Extract records that match Python regular expression
+                          PATTERN
+    -n N                  Extract N random records from the input file(s)
+                          (default 500). If multiple input files are specified,
+                          the same subsets will be extracted for each.
+
+
+fastq_edit.py
 -------------
-Generates a QC boxplot from a SOLiD .qual file.
 
-Usage:
+Usage: `fastq_edit.py [options] <fastq_file>`
 
-    qc_boxplotter.sh <solid.qual>
+Perform various operations on FASTQ file.
 
-Outputs:
+Options:
 
-Two files (PostScript and PDF format) with the boxplot, called
-`<solid.qual>_seq-order_boxplot.ps` and `<solid.qual>_seq-order_boxplot.pdf`
+    --version             show program's version number and exit
+    -h, --help            show this help message and exit
+    --stats               Generate basic stats for input FASTQ
+    --instrument-name=INSTRUMENT_NAME
+                          Update the 'instrument name' in the sequence
+                          identifier part of each read record and write updated
+                          FASTQ file to stdout
+
+
+fastq_sniffer.py
+----------------
+
+Usage: `fastq_sniffer.py <fastq_file>`
+
+"Sniff" FASTQ file to try and determine likely format and quality encoding.
+
+Attempts to identify FASTQ format and quality encoding, and suggests likely datatype
+for import into Galaxy.
+
+Use the `--subset` option to only use a subset of reads from the file for the type
+determination (using a smaller set speeds up the process at the risk of not being able
+to accuracy determine the encoding convention).
+
+See [http://en.wikipedia.org/wiki/FASTQ_format]() for information on the different
+quality encoding standards used in different FASTQ formats.
+
+Options:
+
+    --version          show program's version number and exit
+    -h, --help         show this help message and exit
+    --subset=N_SUBSET  try to determine encoding from a subset of consisting of
+                       the first N_SUBSET reads. (Quicker than using all reads
+                       but may not be accurate if subset is not representative
+                       of the file as a whole.)
 
 
 SamStats
@@ -119,3 +162,16 @@ by the user.
 Usage:
 
     trim_fastq.pl <single end FASTQ> <desired length>
+
+
+uncompress_fastqz.sh
+--------------------
+Create uncompressed copies of fastq.gz file (if input is fastq.gz).
+
+Usage:
+
+    uncompress_fastqgz.sh <fastq>
+
+`<fastq>` can be either fastq or fastq.gz file.
+
+The original file will not be removed or altered.
