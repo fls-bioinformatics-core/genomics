@@ -1,24 +1,55 @@
 Configuration and set up
 ========================
 
-Install the underlying software
-*******************************
+Installing the genomics/bcftbx package
+**************************************
 
-Core software:
+It is recommended to install directly from github using `pip`::
+
+    pip install git+https://github.com/fls-bioinformatics-core/genomics.git@devel
+
+from within the top-level source directory to install the package.
+
+To use the package without installing it first you will need to add the
+directory to your `PYTHONPATH` environment, and reference the scripts and
+programs using their full paths.
+
+
+Dependencies
+************
+
+The package consists predominantly of code written in Python, which has been
+used extensively with Python 2.6 and 2.7.
+
+In addition there are scripts requiring:
+
+* ``bash``
+* ``Perl``
+* ``R``
+
+and the following packages are required for subsets of the code:
+
+* Perl: ``Statistics::Descriptive`` and ``BioPerl``
+* python: ``xlwt``, ``xlrd`` and ``xlutils``
+
+Finally, some of the utilities also use 3rd-party software packages,
+including:
+
+**Core software**
 
 * ``bowtie`` http://bowtie-bio.sourceforge.net/index.shtml
 * ``fastq_screen`` http://www.bioinformatics.bbsrc.ac.uk/projects/fastq_screen/
 * ``convert`` (part of ``ImageMagick`` http://www.imagemagick.org/)
 
-Illumina-specific:
+**Illumina-specific**
 
+* ``BCL2FASTQ`` http://support.illumina.com/downloads/bcl2fastq_conversion_software_184.html
 * ``FastQC`` http://www.bioinformatics.babraham.ac.uk/projects/fastqc/
 
-SOLiD-specific:
+**SOLiD-specific**
 
 * ``solid2fastq`` (part of ``bfast`` http://sourceforge.net/projects/bfast/)
-
-  There are alternatives, see for example
+  - there are alternatives, see for example
   http://kevin-gattaca.blogspot.co.uk/2010/05/plethora-of-solid2fastq-or-csfasta.html
 * ``SOLiD_preprocess_filter_v2.pl`` See https://www.biostars.org/p/71142/
 
