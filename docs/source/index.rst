@@ -13,7 +13,6 @@ Contents
    :maxdepth: 2
 
    config
-   qc_pipeline
    external
 
 Protocols
@@ -38,10 +37,12 @@ Command Reference
 
    reference/solid2cluster
    reference/illumina2cluster
+   reference/ngs_general
    reference/chip_seq
    reference/rna_seq
    reference/qc_pipeline
    reference/microarray
+   reference/utils
 
 Indices and tables
 ==================

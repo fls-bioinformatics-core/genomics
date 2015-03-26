@@ -3,9 +3,7 @@ NGS-general
 
 General NGS scripts that are used for both ChIP-seq and RNA-seq.
 
-* ``boxplotps2png.sh``: make PNGs of PS plots from ``qc_boxplotter.sh``
 * ``explain_sam_flag.sh``: decodes bit-wise flag from SAM file
-* ``qc_boxplotter.sh``: generate QC boxplot from SOLiD qual file
 * ``SamStats``: counts uniquely map reads per chromosome/contig
 * ``splitBarcodes.pl``: separate multiple barcodes in SOLiD data
 * ``remove_mispairs.pl``: remove "singleton" reads from paired end fastq
@@ -14,42 +12,11 @@ General NGS scripts that are used for both ChIP-seq and RNA-seq.
 * ``trim_fastq.pl``: trim down sequences in fastq file from 5' end
 
 
-boxplotps2png.sh
-****************
-
-Utility to generate PNGs from PS boxplots produced from :ref:`qc_boxplotter`.
-
-Usage:
-
-    boxplotps2png.sh BOXPLOT1.ps [ BOXPLOT2.ps ... ]
-
-Outputs:
-
-PNG versions of the input postscript files as BOXPLOT1.png, BOXPLOT2.png etc.
-
-
 explain_sam_flag.sh
 *******************
 
 Convert a decimal bitwise SAM flag value to binary representation and
 interpret each bit.
-
-.. _qc_boxplotter:
-
-qc_boxplotter
-*************
-
-Generates a QC boxplot from a SOLiD .qual file.
-
-Usage::
-
-    qc_boxplotter.sh <solid.qual>
-
-Outputs:
-
-Two files (PostScript and PDF format) with the boxplot, called
-``<solid.qual>_seq-order_boxplot.ps`` and
-``<solid.qual>_seq-order_boxplot.pdf``
 
 
 SamStats
