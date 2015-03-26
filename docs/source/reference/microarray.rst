@@ -3,8 +3,51 @@ Microarray Utilities
 
 Scripts and tools for microarray specific tasks.
 
-* ``best_exons.py``: average data for 'best' exons for each gene symbol in a file
-* ``xrothologs.py``: cross-reference data for two species using probe set lookup
+* :ref:`annotate_probesets`: annotate probe set list based on probeset
+  names
+* :ref:`best_exons`: average data for 'best' exons for each gene symbol
+  in a file
+* :ref:`xrorthologs`: cross-reference data for two species using probeset
+  lookup
+
+.. _annotate_probesets:
+
+annotate_probesets.py
+*********************
+
+Usage::
+
+     annotate_probesets.py OPTIONS probe_set_file
+
+Annotate a probeset list based on probe set names: reads in first column
+of tab-delimited input file `probe_set_file` as a list of probeset names
+and outputs these names to another tab-delimited file with a description
+for each.
+
+Output file name can be specified with the `-o` option, otherwise it will
+be the input file name with `_annotated` appended.
+
+Options:
+
+.. cmdoption:: -o OUT_FILE
+
+    specify output file name
+
+Example input::
+
+    ...
+    1769726_at
+    1769727_s_at
+    ...
+
+generates output::
+
+    ...
+    1769726_at	Rank 1: _at : anti-sense target (most probe sets on the array)
+    1769727_s_at	Warning: _s_at : designates probe sets that share common probes among multiple transcripts from different genes
+    ...
+
+.. _best_exons:
 
 best_exons.py
 *************
@@ -91,9 +134,10 @@ TSV file with one gene symbol per line plus averaged data for the 'best'
 exons, and an extra column which has a ``*`` to indicate which gene symbols
 had 4 or fewer exons associated with them in the input file.
 
+.. _xrorthologs:
 
-xrothologs.py
-*************
+xrorthologs.py
+**************
 
 Cross-reference data for two species using probe set lookup
 
