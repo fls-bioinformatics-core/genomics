@@ -93,6 +93,8 @@ for nucleotide space indexes, and
 
 for colorspace. (In each case the path is the base name for the index files.)
 
+.. _qc_setup:
+
 Create `qc.setup`
 *****************
 
