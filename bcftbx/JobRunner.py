@@ -9,7 +9,7 @@
 #
 #########################################################################
 
-__version__ = "1.1.0"
+__version__ = "1.1.1"
 
 """JobRunner
 
@@ -195,6 +195,9 @@ class SimpleJobRunner(BaseJobRunner):
         self.__log_files = {}
         self.__err_files = {}
 
+    def __repr__(self):
+        return 'SimpleJobRunner'
+
     def run(self,name,working_dir,script,args):
         """Run a command and return the PID (=job id)
 
@@ -371,6 +374,12 @@ class GEJobRunner(BaseJobRunner):
         self.__names = {}
         self.__log_dirs = {}
         self.__ge_extra_args = ge_extra_args
+
+    def __repr__(self):
+        name = 'GEJobRunner'
+        if self.__ge_extra_args is not None:
+            name += '(%s)' % self.__ge_extra_args
+        return name
 
     def queue(self,queue):
         """(Re)set the name of GE queue to use
@@ -600,6 +609,9 @@ class DRMAAJobRunner(BaseJobRunner):
         # Initialise DRMAA session
         self.__session = drmaa.Session()
         self.__session.initialize()
+
+    def __repr__(self):
+        return 'DRMAAJobRunner'
 
     def __del__(self):
         # Clean up on object deletion
