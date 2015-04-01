@@ -9,7 +9,7 @@
 #
 #########################################################################
 
-__version__ = "1.1.1"
+__version__ = "1.1.2"
 
 """JobRunner
 
@@ -378,7 +378,7 @@ class GEJobRunner(BaseJobRunner):
     def __repr__(self):
         name = 'GEJobRunner'
         if self.__ge_extra_args is not None:
-            name += '(%s)' % self.__ge_extra_args
+            name += '(%s)' % ' '.join(self.__ge_extra_args)
         return name
 
     def queue(self,queue):
