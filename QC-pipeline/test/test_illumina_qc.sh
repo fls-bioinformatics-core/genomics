@@ -10,7 +10,7 @@ cd $test_dir
 for f in $data_files ; do
   ln -s ../$f
 done
-run_qc_pipeline.py --input=fastqgz--runner=simple illumina_qc.sh .
+run_qc_pipeline.py --input=fastqgz --runner=simple illumina_qc.sh .
 qcreporter.py --format=fastqgz --platform=illumina --verify .
 retcode=$?
 echo FINISHED: $retcode
