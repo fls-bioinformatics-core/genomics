@@ -64,13 +64,13 @@ fi
 #===========================================================================
 #
 # General shell functions
-import_functions functions.sh
+import_functions bcftbx.functions.sh
 #
 # NGS-specific functions
-import_functions ngs_utils.sh
+import_functions bcftbx.ngs_utils.sh
 #
 # Program version functions
-import_functions versions.sh
+import_functions bcftbx.versions.sh
 #
 #===========================================================================
 # Main script
