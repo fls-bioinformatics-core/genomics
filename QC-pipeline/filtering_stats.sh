@@ -12,15 +12,20 @@
 # specified <stats_file>
 #
 # Import function libraries
-if [ -f functions.sh ] ; then
-    # Import local copies
-    . functions.sh
-    . lock.sh
-else
-    # Import versions in share
-    . `dirname $0`/../share/functions.sh
-    . `dirname $0`/../share/lock.sh
-fi
+export PATH=$PATH:$(dirname $0)/../share
+function import_functions() {
+    if [ -z "$1" ] ; then
+	echo ERROR no filename supplied to import_functions >2
+    else
+	echo Sourcing $1
+	. $1
+	if [ $? -ne 0 ] ; then
+	    echo ERROR failed to import $1 >2
+	fi
+    fi
+}
+import_functions bcftbx.functions.sh
+import_functions bcftbx.lock.sh
 #
 # Local functions
 #
