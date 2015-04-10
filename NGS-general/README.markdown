@@ -7,14 +7,16 @@ General NGS scripts that are used for both ChIP-seq and RNA-seq.
   * `extract_reads.py`: write out subsets of reads from input data files
   * `fastq_edit.py`: edit FASTQ files and data
   * `fastq_sniffer.py`: "sniff" FASTQ file to determine quality encoding
-  * `qc_boxplotter.sh`: generate QC boxplot from SOLiD qual file
+  * `manage_seqs.py`: handling sets of named sequences (e.g. FastQC contaminants file)
   * `SamStats`: counts uniquely map reads per chromosome/contig
   * `splitBarcodes.pl`: separate multiple barcodes in SOLiD data
   * `remove_mispairs.pl`: remove "singleton" reads from paired end fastq
   * `remove_mispairs.py`: remove "singleton" reads from paired end fastq
+  * `sam2soap.py`: convert from SAM file to SOAP format
   * `separate_paired_fastq.pl`: separate F3 and F5 reads from fastq
+  * `split_fasta.py`: extract individual chromosome sequences from fasta file
   * `trim_fastq.pl`: trim down sequences in fastq file from 5' end
- *  `uncompress_fastqgz.sh`: create ungzipped version of a compressed FASTQ file
+  * `uncompress_fastqgz.sh`: create ungzipped version of a compressed FASTQ file
 
 
 explain_sam_flag.sh
@@ -88,6 +90,43 @@ Options:
                        the first N_SUBSET reads. (Quicker than using all reads
                        but may not be accurate if subset is not representative
                        of the file as a whole.)
+
+
+manage_seqs.py
+--------------
+
+Read sequences and names from one or more INFILEs (which can be a mixture of
+FastQC 'contaminants' format and or Fasta format), check for redundancy (i.e.
+sequences with multiple associated names) and contradictions (i.e. names with
+multiple associated sequences).
+
+Usage:
+
+    manage_seqs.py OPTIONS FILE [FILE...]
+
+To append a 
+
+Options:
+
+    --version       show program's version number and exit
+    -h, --help      show this help message and exit
+    -o OUT_FILE     write all sequences to OUT_FILE in FastQC 'contaminants'
+                    format
+    -a APPEND_FILE  append sequences to existing APPEND_FILE (not compatible
+                    with -o)
+    -d DESCRIPTION  supply arbitrary text to write to the header of the output
+                    file
+
+Intended to help create/update files with lists of "contaminant" sequences to
+input into the `FastQC` program (using `FastQC`'s `--contaminants` option).
+
+To create a contaminants file using sequences from a FASTA file do e.g.:
+
+    % manage_seqs.py -o custom_contaminants.txt sequences.fa
+
+To append sequences to an existing contaminants file do e.g.
+
+    % manage_seqs.py -a my_contaminantes.txt additional_seqs.fa
 
 
 SamStats
