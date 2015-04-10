@@ -2,4 +2,18 @@
 ===================
 
 .. automodule:: bcftbx.Pipeline
-   :members:
+
+Classes
+*******
+
+.. autoclass:: Job
+.. autoclass:: PipelineRunner
+.. autoclass:: SolidPipelineRunner
+
+Functions
+*********
+
+.. autofunction:: GetSolidDataFiles
+.. autofunction:: GetSolidPairedEndFile
+.. autofunction:: GetFastqFiles
+.. autofunction:: GetFastqGzFiles
