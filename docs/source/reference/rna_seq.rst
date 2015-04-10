@@ -1,13 +1,14 @@
-RNA-seq
-=======
+RNA-seq specific utilities
+==========================
 
 Scripts and tools for RNA-seq specific tasks.
 
-* ``bowtie_mapping_stats.py``: summarise statistics from bowtie output in spreadsheet
-* ``GFFedit``: swap gene names in GFF file to gene ID
-* ``qc_bash_script.sh``: generalised QC pipeline for RNA-seq
-* ``Split``: filter reads from bowtie mapping against two genomes
+* :ref:`bowtie_mapping_stats`: summarise statistics from bowtie output in spreadsheet
+* :ref:`GFFedit`: swap gene names in GFF file to gene ID
+* :ref:`qc_bash_script`: generalised QC pipeline for RNA-seq
+* :ref:`Split`: filter reads from bowtie mapping against two genomes
 
+.. _bowtie_mapping_stats:
 
 bowtie_mapping_stats.py
 ***********************
@@ -58,6 +59,8 @@ The sample name will be extracted along with the numbers of reads processed, wit
 reported alignment, that failed to align, and with alignments suppressed and tabulated in the
 output spreadsheet.
 
+.. _GFFedit:
+
 GFFedit
 *******
 
@@ -84,6 +87,8 @@ Output:
 .. cmdoption:: GFFedit_<myfile>.gff
 
     edited version of input file
+
+.. _qc_bash_script:
 
 qc_bash_script.sh
 *****************
@@ -121,6 +126,8 @@ Outputs:
 
 Creates a ``qc`` subdirectory in ``analysis_dir`` which contains the fastq_screen
 and boxplotter output files.
+
+.. _Split:
 
 Split
 *****

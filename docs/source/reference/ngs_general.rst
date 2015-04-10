@@ -1,19 +1,21 @@
-NGS-general
-===========
+General NGS utilities
+=====================
 
 General NGS scripts that are used for both ChIP-seq and RNA-seq.
 
-* ``explain_sam_flag.sh``: decodes bit-wise flag from SAM file
-* ``extract_reads.py``: write out subsets of reads from input data files
-* ``fastq_edit.py``: edit FASTQ files and data
-* ``fastq_sniffer.py``: "sniff" FASTQ file to determine quality encoding
-* ``SamStats``: counts uniquely map reads per chromosome/contig
-* ``splitBarcodes.pl``: separate multiple barcodes in SOLiD data
-* ``remove_mispairs.pl``: remove "singleton" reads from paired end fastq
-* ``remove_mispairs.py``: remove "singleton" reads from paired end fastq
-* ``separate_paired_fastq.pl``: separate F3 and F5 reads from fastq
-* ``trim_fastq.pl``: trim down sequences in fastq file from 5' end
-* ``uncompress_fastqgz.sh``: create ungzipped version of a compressed FASTQ
+* :ref:`explain_sam_flag`: decodes bit-wise flag from SAM file
+* :ref:`extract_reads`: write out subsets of reads from input data files
+* :ref:`fastq_edit`: edit FASTQ files and data
+* :ref:`fastq_sniffer`: "sniff" FASTQ file to determine quality encoding
+* :ref:`SamStats`: counts uniquely map reads per chromosome/contig
+* :ref:`splitBarcodes`: separate multiple barcodes in SOLiD data
+* :ref:`remove_mispairs`: remove "singleton" reads from paired end fastq
+* :ref:`remove_mispairs`: remove "singleton" reads from paired end fastq
+* :ref:`sam2soap`: convert from SAM file to SOAP format
+* :ref:`separate_paired_fastq`: separate F3 and F5 reads from fastq
+* :ref:`split_fasta`: extract individual chromosome sequences from fasta file
+* :ref:`trim_fastq`: trim down sequences in fastq file from 5' end
+* :ref:`uncompress_fastqgz`: create ungzipped version of a compressed FASTQ
   file
 
 .. _explain_sam_flag:
@@ -175,6 +177,27 @@ Python implementation of ``remove_mispairs.pl`` which can also remove
 singletons for paired end fastq data file where the reads are not
 interleaved.
 
+.. _sam2soap:
+
+sam2soap.py
+***********
+
+Convert a SAM file into SOAP format.
+
+Usage::
+
+    sam2soap.py OPTIONS [ SAMFILE ]
+
+Convert SAM file to SOAP format - reads from stdin (or SAMFILE, if
+specified), and writes output to stdout unless -o option is
+specified.
+
+Options:
+
+.. cmdoption:: -o SOAPFILE
+
+    Output SOAP file name
+
 .. _separate_paired_fastq:
 
 separate_paired_fastq.pl
@@ -186,6 +209,24 @@ each.
 Usage::
 
     separate_paired_fastq.pl <interleaved FASTQ>
+
+.. _split_fasta:
+
+split_fasta.py
+**************
+
+Extract individual chromosome sequences from a fasta file.
+
+Usage::
+
+    split_fasta.py fasta_file
+
+Split input FASTA file with multiple sequences into multiple
+files each containing sequences for a single chromosome.
+
+For each chromosome CHROM found in the input Fasta file (delimited
+by a line ``>CHROM``), outputs a file called ``CHROM.fa`` in the
+current directory containing just the sequence for that chromosome.
 
 .. _trim_fastq:
 

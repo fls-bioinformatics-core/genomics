@@ -5,8 +5,8 @@ Utilities for NGS and genomics-related bioinformatics developed within the
 Bioinformatics Core Facility (BCF) within the Faculty of Life Sciences (FLS)
 at the University of Manchester (UoM).
 
-Contents
-********
+Installation and Setup
+**********************
 
 .. toctree::
    :numbered:
@@ -32,9 +32,9 @@ Command Reference
 *****************
 
 .. toctree::
-   :numbered:
    :maxdepth: 2
 
+   reference/build_indexes
    reference/solid2cluster
    reference/illumina2cluster
    reference/ngs_general

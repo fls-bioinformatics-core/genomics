@@ -1,4 +1,4 @@
-Microarray Utilities
+Microarray utilities
 ====================
 
 Scripts and tools for microarray specific tasks.

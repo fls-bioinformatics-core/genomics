@@ -1,18 +1,19 @@
-illumina2cluster
-================
+Illumina data handling utilities
+================================
 
 Utilities for preparing data on the cluster from the Illumina instrument:
 
-* ``analyse_illumina_run.py``: reporting and manipulations of Illumina run data
-* ``auto_process_illumina.sh``: automatically process Illumina-based sequencing run
-* ``bclToFastq.sh``: generate FASTQ from BCL files
-* ``build_illumina_analysis_dir.py``: create and populate per-project analysis dirs
-* ``demultiplex_undetermined_fastq.py``: demultiplex undetermined Illumina reads
-* ``prep_sample_sheet.py``: edit SampleSheet.csv before generating FASTQ
-* ``report_barcodes.py``: analyse barcode sequences from FASTQ files
-* ``rsync_seq_data.sh``: copy sequencing data using rsync
-* ``verify_paired.py``: utility to check FASTQs form R1/R2 pair
+* :ref:`analyse_illumina_run`: reporting and manipulations of Illumina run data
+* :ref:`auto_process_illumina`: automatically process Illumina-based sequencing run
+* :ref:`bclToFastq`: generate FASTQ from BCL files
+* :ref:`build_illumina_analysis_dirs`: create and populate per-project analysis dirs
+* :ref:`demultiplex_undetermined_fastq`: demultiplex undetermined Illumina reads
+* :ref:`prep_sample_sheet`: edit SampleSheet.csv before generating FASTQ
+* :ref:`report_barcodes`: analyse barcode sequences from FASTQ files
+* :ref:`rsync_seq_data`: copy sequencing data using rsync
+* :ref:`verify_paired`: utility to check FASTQs form R1/R2 pair
 
+.. _analyse_illumina_run:
 
 analyse_illumina_run.py
 ***********************
@@ -57,6 +58,7 @@ Options:
 
     Report statistics (read counts etc) for fastq files
 
+.. _auto_process_illumina:
 
 auto_process_illumina.sh
 ************************
@@ -252,6 +254,7 @@ Options:
 
     create merged fastq files for each set of replicates detected
 
+.. _demultiplex_undetermined_fastq:
 
 demultiplex_undetermined_fastq.py
 *********************************
@@ -373,6 +376,7 @@ Examples:
      prep_sample_sheet.py --fix-spaces --fix-duplicates \
           -o SampleSheet3.csv SampleSheet.csv
 
+.. _report_barcodes:
 
 report_barcodes.py
 ******************
@@ -392,6 +396,7 @@ Options:
     Minimum number of times a barcode sequence must appear to
     be reported (default is 1000000)
 
+.. _rsync_seq_data:
 
 rsync_seq_data.py
 *****************

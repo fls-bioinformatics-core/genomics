@@ -1,17 +1,17 @@
-ChIP-seq
-========
+ChIP-seq specific utilities
+===========================
 
 Scripts and tools for ChIP-seq specific tasks.
 
-* ``calc_coverage_stats.pl``: stats from a coverage file
-* ``convertFastq2Fasta.pl``: convert consensus fastq to fasta format
-* ``CreateChIPalignFileFromBed.pl``: convert csfasta->BED for GLITR
-* ``getRandomTags_index.pl``, ``getRandomTags_index_fastq.pl``: extract
-  random subsets of reads
-* ``make_macs_xls.py``, ``make_macs2_xls.py``: convert a MACS output file
-  into an Excel spreadsheet
-* ``mean_coverage.pl``: mean depth of read coverage from BAM file
-* ``run_DESeq.R``
+* :ref:`calc_coverage_stats`: stats from a coverage file
+* :ref:`convertFastq2Fasta`: convert consensus fastq to fasta format
+* :ref:`CreateChIPalignFileFromBed`: convert csfasta->BED for GLITR
+* :ref:`getRandomTags_index`: extract random subsets of reads
+* :ref:`make_macs_xls`: convert a MACS output file into an Excel spreadsheet
+* :ref:`mean_coverage`: mean depth of read coverage from BAM file
+* :ref:`run_DESeq`
+
+.. _calc_coverage_stats:
 
 calc_coverage_stats.pl
 **********************
@@ -26,6 +26,7 @@ Outputs mean and median for all positions including 0 count positions
 
 NB requires perl ``Statistics::Descriptive`` module
 
+.. _convertFastq2Fasta:
 
 convertFastq2Fasta.pl
 *********************
@@ -40,6 +41,8 @@ Usage::
 
     perl ~/ChIP_seq/convertFastq2Fasta.pl in.pileup.fq > out.fa
 
+.. _CreateChIPalignFileFromBed:
+
 CreateChIPalignFileFromBed.pl
 *****************************
 Convert csfasta->BED format file to ChIPalign format for GLITR peak caller.
@@ -47,6 +50,8 @@ Convert csfasta->BED format file to ChIPalign format for GLITR peak caller.
 Usage::
 
     CreateChIPalignFileFromBed.pl in.bed out.align
+
+.. _getRandomTags_index:
 
 getRandomTags_index.pl, getRandomTags_index_fastq.pl
 ****************************************************
@@ -71,6 +76,8 @@ Usage::
 
     getRandomTags_index_fastq.pl in.fastq N out.fastq
 
+.. _make_macs_xls:
+
 make_macs_xls.py, make_macs2_xls.py
 ***********************************
 
@@ -85,6 +92,8 @@ To process output from MACS 1.4.2 and earlier use ``make_macs_xls.py``; for MACS
 by earlier versions), use ``make_macs2_xls.py``.
 
 Creates an XLS spreadsheet called ``<macs_output_file>_XLS.xls``
+
+.. _mean_coverage:
 
 mean_coverage.pl
 ****************
@@ -103,8 +112,10 @@ It can also be used for genomic regions::
 
     /path/to/samtools view -b in.bam <genomic region> | /path/to/samtools pileup - | awk '{print $4}' | perl mean_coverage.pl
 
-Note that this assumes every base is covered at least once (because samtools pileup doesn't
+Note that this assumes every base is covered at least once (because ``samtools pileup`` doesn't
 report bases with zero coverage).
+
+.. _run_DESeq:
 
 run_DESeq.R
 ***********

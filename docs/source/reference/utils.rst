@@ -1,31 +1,32 @@
-utils
-=====
+General non-bioinformatic utilities
+===================================
 
 General utility scripts/tools.
 
-* ``cd_set_umask.sh``: setup script to automagically set umask for specific
+* :ref:`cd_set_umask`: setup script to automagically set umask for specific
   directory
-* ``cmpdirs.py``: compare contents of two directories
-* ``cluster_load.py``: report Grid Engine usage via qstat wrapper
-* ``do.sh``: execute shell command iteratively with range of integer index
+* :ref:`cmpdirs`: compare contents of two directories
+* :ref:`cluster_load`: report Grid Engine usage via qstat wrapper
+* :ref:`do_sh`: execute shell command iteratively with range of integer index
   values
-* ``makeBinsFromBed.pl``: create bin files for binning applications
-* ``makeRegularBinsFromGenomeTable.R``: make bin file from set of chromosomes
-* ``make_mock_solid_dir.py``: create mock SOLiD directory structure for
+* :ref:`makeBinsFromBed`: create bin files for binning applications
+* :ref:`makeRegularBinsFromGenomeTable`: make bin file from set of chromosomes
+* :ref:`make_mock_solid_dir`: create mock SOLiD directory structure for
   testing
-* ``manage_seqs.py``: handling sets of named sequences (e.g. FastQC
+* :ref:`manage_seqs`: handling sets of named sequences (e.g. FastQC
   contaminants file)
-* ``md5checker.py``: check files and directories using MD5 sums
-* ``sam2soap.py``: convert from SAM file to SOAP format
-* ``split_fasta.py``: extract individual chromosome sequences from fasta file
-* ``symlink_checker.py``: check and update symbolic links
+* :ref:`md5checker`: check files and directories using MD5 sums
+* :ref:`symlink_checker`: check and update symbolic links
 
+.. _cd_set_umask:
 
 cd_set_umask.sh
 ***************
 
 Script to set and revert a user's ``umask`` appropriately when moving
 in and out of a particular directory (or one of its subdirectories).
+
+.. _do_sh:
 
 do.sh
 *****
@@ -42,6 +43,7 @@ will execute::
     ...
     ln -s /blah/blah43/myfile43.ext ./myfile43.ext
 
+.. _cmpdirs:
 
 cmpdirs.py
 **********
@@ -63,6 +65,7 @@ Options:
 
     specify number of cores to use
 
+.. _cluster_load:
 
 cluster_load.py
 ***************
@@ -100,6 +103,7 @@ Outputs a report of the form::
           node02    1        0 (0/0)         1 (0/0)
           ...
 
+.. _makeBinsFromBed:
 
 makeBinsFromBed.pl
 ******************
@@ -165,6 +169,7 @@ Options:
 
      --marker tss  --binSize 1000 --binType upstream --offset -500
         
+.. _makeRegularBinsFromGenomeTable:
 
 makeRegularBinsFromGenomeTable.R
 ********************************
@@ -191,6 +196,7 @@ Outputs:
   extension ``<binSize>.bp.bin.bed``, with each chromosome divided
   into bins of the requested size.
 
+.. _make_mock_solid_dir:
 
 make_mock_solid_dir.py
 **********************
@@ -208,6 +214,7 @@ Arguments:
 
     Create directory structure for paired-end run
 
+.. _manage_seqs:
 
 manage_seqs.py
 **************
@@ -251,6 +258,7 @@ To append sequences to an existing contaminants file do e.g.::
 
     manage_seqs.py -a my_contaminantes.txt additional_seqs.fa
 
+.. _md5checker:
 
 md5checker.py
 *************
@@ -282,48 +290,7 @@ To compare two files by their MD5 sums::
 
     md5checker.py --diff FILE1 FILE2
 
-
-sam2soap.py
-***********
-
-Convert a SAM file into SOAP format.
-
-Usage::
-
-    sam2soap.py OPTIONS [ SAMFILE ]
-
-Convert SAM file to SOAP format - reads from stdin (or SAMFILE, if
-specified), and writes output to stdout unless -o option is
-specified.
-
-Options:
-
-.. cmdoption:: -o SOAPFILE
-
-    Output SOAP file name
-
-split_fasta.py
-**************
-
-Extract individual chromosome sequences from a fasta file.
-
-Usage::
-
-    split_fasta.py OPTIONS fasta_file
-
-Split input FASTA file with multiple sequences into multiple
-files each containing sequences for a single chromosome.
-
-Options:
-
-    --version   show program's version number and exit
-    -h, --help  show this help message and exit
-    --tests     Run unit tests
-
-For each chromosome CHROM found in the input Fasta file (delimited
-by a line ``>CHROM``), outputs a file called ``CHROM.fa`` in the
-current directory containing just the sequence for that chromosome.
-
+.. _symlink_checker:
 
 symlink_checker.py
 ******************

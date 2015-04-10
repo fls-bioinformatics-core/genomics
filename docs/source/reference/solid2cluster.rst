@@ -1,12 +1,12 @@
-solid2cluster
-=============
+SOLiD data handling utilities
+=============================
 
 Utilities for transferring data from the SOLiD instrument to the cluster:
 
-* ``rsync_solid_to_cluster.sh``: perform transfer of primary data
-* ``log_seq_data.sh``: maintain logging file of transferred runs and analysis data
-* ``analyse_solid_run.py``: report on the primary data directories from SOLiD runs
-* ``build_analysis_dir.py``: construct analysis directories for experiments
+* :ref:`rsync_solid_to_cluster`: perform transfer of primary data
+* :ref:`log_seq_data`: maintain logging file of transferred runs and analysis data
+* :ref:`analyse_solid_run`: report on the primary data directories from SOLiD runs
+* :ref:`build_analysis_dir`: construct analysis directories for experiments
 
 .. _rsync_solid_to_cluster:
 
@@ -162,7 +162,7 @@ Options:
 
     suppress warning messages
 
-.. _build_analysis_dirs:
+.. _build_analysis_dir:
 
 build_analysis_dir.py
 *********************

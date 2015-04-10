@@ -60,8 +60,8 @@ command reference for the utilities.
 
 .. _illumina_qc:
 
-illumina_qc.sh: QC for Illumina sequencing data
-***********************************************
+QC for Illumina sequencing data
+*******************************
 
 The full QC pipeline for Illumina data (GA2x, MiSEQ and HiSEQ sequencers) is
 encoded in the ``illumina_qc.sh`` script.
@@ -85,8 +85,8 @@ behaviour).
 
 .. _solid_qc:
 
-solid_qc.sh: QC for SOLiD sequencing data
-*****************************************
+QC for SOLiD sequencing data
+****************************
 
 The full QC pipeline for SOLiD data is encoded in the ``solid_qc.sh`` script.
 It runs in either "fragment mode", which takes a CSFASTA/QUAL file pair as input,

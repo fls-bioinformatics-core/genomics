@@ -1,5 +1,5 @@
-QC-pipeline
-===========
+QC utilities
+============
 
 Scripts for running general QC and data preparation on SOLiD and Illumina
 sequencing data prior to library-specific analyses.
