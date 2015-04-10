@@ -7,15 +7,14 @@
 #
 #########################################################################
 
-__version__ = "1.2.2"
-
-"""IlluminaData
-
+"""
 Provides classes for extracting data about runs of Illumina-based sequencers
 (e.g. GA2x or HiSeq) from directory structure, data files and naming
 conventions.
 
 """
+
+__version__ = "1.2.2"
 
 #######################################################################
 # Import modules that this module depends on

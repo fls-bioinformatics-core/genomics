@@ -7,11 +7,8 @@
 #
 #########################################################################
 
-__version__ = "0.3.0"
-
-"""FASTQFile
-
-Implements a set of classes for reading through FASTQ files and manipulating
+"""
+A set of classes for reading through FASTQ files and manipulating
 the data within them:
 
 * FastqIterator: enables looping through all read records in FASTQ file
@@ -19,8 +16,17 @@ the data within them:
 * SequenceIdentifier: provides access to sequence identifier info in a read
 * FastqAttributes: provides access to gross attributes of FASTQ file
 
+Additionally there are a few utility functions:
+
+* get_fastq_file_handle: return a file handled opened for reading a FASTQ file
+* nreads: return the number of reads in a FASTQ file
+* fastqs_are_pair: check whether two FASTQs form an R1/R2 pair
+
 Information on the FASTQ file format: http://en.wikipedia.org/wiki/FASTQ_format
+
 """
+
+__version__ = "0.3.0"
 
 #######################################################################
 # Import modules that this module depends on
@@ -42,12 +48,14 @@ class FastqIterator(Iterator):
     Class to loop over all records in a FASTQ file, returning a FastqRead
     object for each record.
 
-    Example looping over all reads
+    Example looping over all reads:
+
     >>> for read in FastqIterator(fastq_file):
     >>>    print read
 
     Input FASTQ can be in gzipped format; FASTQ data can also be supplied
-    as a file-like object opened for reading, for example
+    as a file-like object opened for reading, for example:
+
     >>> fp = open(fastq_file,'rU')
     >>> for read in FastqIterator(fp=fp):
     >>>    print read
@@ -62,7 +70,7 @@ class FastqIterator(Iterator):
         FASTQ, specified via a file name (using the 'fastq' argument), or a
         file-like object opened for line reading (using the 'fp' argument).
 
-        Arguments:
+        Args:
            fastq_file: name of the FASTQ file to iterate through
            fp: file-like object opened for reading
 

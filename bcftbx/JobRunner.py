@@ -9,18 +9,15 @@
 #
 #########################################################################
 
-__version__ = "1.1.1"
-
-"""JobRunner
-
+"""
 Classes for starting, stopping and managing jobs.
 
 Class BaseJobRunner is a template with methods that need to be implemented
 by subclasses. The subclasses implemented here are:
 
-   SimpleJobRunner: run jobs (e.g. scripts) on a local file system.
-   GEJobRunner    : run jobs using Grid Engine (GE) i.e. qsub, qdel etc
-   DRMAAJobRunner : run jobs using the DRMAA interface to Grid Engine
+* SimpleJobRunner: run jobs (e.g. scripts) on a local file system.
+* GEJobRunner    : run jobs using Grid Engine (GE) i.e. qsub, qdel etc
+* DRMAAJobRunner : run jobs using the DRMAA interface to Grid Engine
 
 A single JobRunner instance can be used to start and manage multiple processes.
 
@@ -43,9 +40,9 @@ Simple usage example:
 >>> # Get the names of the output files
 >>> log,err = (runner.logFile(job_id),runner.errFile(job_id))
 
-
-
 """
+
+__version__ = "1.1.1"
 
 #######################################################################
 # Import modules that this module depends on

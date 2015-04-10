@@ -7,10 +7,7 @@
 #
 #########################################################################
 
-__version__ = "0.1.8"
-
-"""Spreadsheet.py
-
+"""
 Provides classes for writing data to an Excel spreadsheet, using the 3rd party modules
 xlrd, xlwt and xlutils.
 
@@ -59,9 +56,9 @@ Dependencies
 The Spreadsheet module depends on the xlwt, xlrd and xlutils libraries which
 can be found at:
 
-http://pypi.python.org/pypi/xlwt/0.7.2
-http://pypi.python.org/pypi/xlrd/0.7.1
-http://pypi.python.org/pypi/xlutils/1.4.1
+* http://pypi.python.org/pypi/xlwt/0.7.2
+* http://pypi.python.org/pypi/xlrd/0.7.1
+* http://pypi.python.org/pypi/xlutils/1.4.1
 
 Note that xlutils also needs functools:
 http://pypi.python.org/pypi/functools
@@ -71,18 +68,9 @@ functools, try:
 
 https://github.com/dln/pycassa/blob/90736f8146c1cac8287f66e8c8b64cb80e011513/pycassa/py25_functools.py
 
-Tests
------
-This module has a set of unit tests built-in; to run do
-
-% python Spreadsheet.py
-
-or
-
-% python Spreadsheet.py -v
-
-for verbose output.
 """
+
+__version__ = "0.1.8"
 
 #######################################################################
 # Import modules that this module depends on

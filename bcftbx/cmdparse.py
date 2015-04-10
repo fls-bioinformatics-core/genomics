@@ -4,14 +4,11 @@
 #
 #########################################################################
 
-__version__ = "1.0.1"
-
-"""cmdparse
-
+"""
 Provides a CommandParser class built on top of the 'optparse.OptionParser'
-class, that can be used for handling command lines of the form:
+class, that can be used for handling command lines of the form::
 
-PROG COMMAND OPTION ARGS
+    PROG COMMAND OPTION ARGS
 
 where different sets of options can be defined based on the initial
 command.
@@ -27,6 +24,8 @@ add 'standard' options:
 * --debug
 
 """
+
+__version__ = "1.0.1"
 
 #######################################################################
 # Imports
