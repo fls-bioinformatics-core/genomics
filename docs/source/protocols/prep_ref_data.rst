@@ -4,8 +4,8 @@ Reference data preparation
 Genome sequence data and indexes
 ********************************
 
-Suggested structure
--------------------
+Suggested directory structure
+-----------------------------
 
 For a given genome build, the recommended basic structure is (e.g. for *Rattus
 norvegicus* ``rn4``)::
@@ -45,8 +45,18 @@ To add a new genome index:
 * Create and populate ``bowtie``, ``bfast`` etc subdirectories with the
   appropriate indexes (see below for advice on generating indexes) 
 
-Preparing fasta genome files
-----------------------------
+Download and prepare FASTA genome files
+---------------------------------------
+
+.. note::
+
+   The :ref:`fetch_fasta` script is intended to reproducibly create FASTA
+   files for a set of genomes.
+
+   To see which genomes are available run the program without any arguments; to
+   obtain the FASTA file do e.g.::
+
+      fetch_fasta.sh mm9
 
 Where the reference genome is a collection of fasta files for each chromosome,
 it's necessary to prepare a single file for the bfast and bowtie index
@@ -59,8 +69,8 @@ The individual chromosome fasta files can then be removed or archived, e.g.::
     tar -cvf hg18_random_chrM.tar chr*
     gzip hg18_random_chrM.tar
 
-Metadata in .info files
-***********************
+``.info`` metadata files
+************************
 
 Standard practice when add a new genome index is to also create a ``.info``
 file (for example ``hg18_random_chrM.info``).
@@ -80,45 +90,26 @@ The free text area can contain any additional information that the person prepar
 the indexes thinks is important (for example, scripts or commands used to generate
 the indexes for individual programs).
 
-Scripts for index generation
-****************************
+Generate indexes for mapping software
+*************************************
 
 This package includes a number of scripts for fetching and generating genome
 indexes for ``Bfast``, ``Bowtie`` and ``SRMA``.
 
-fetch_fasta.sh: download FASTA files
-------------------------------------
+* :ref:`bowtie_build_indexes` can be used to generate color- and
+  nuleotide-space indexes from a FASTA file.
 
-The ``fetch_fasta.sh`` script is intended to reproducibly create FASTA files
-for a set of genomes.
+  To use, go to the bowtie subdirectory for the genome and do e.g.::
 
-To see which genomes are available run the program without any arguments; to
-obtain the FASTA file do e.g.::
+      qsub -b y -V -cwd bowtie_build_indexes.sh ../fasta/genome.fa
 
-    fetch_fasta.sh mm9
+  This will create both color and nucleotide space indexes; to only generate
+  colorspace use the ``--cs`` option of the script, to only get nucleotide
+  space use ``--nt``.
 
-bowtie_build_indexes.sh: bowtie indexes
----------------------------------------
+* :ref:`bowtie2_build_indexes` generates indexes for ``bowtie2`` (letter
+  space only).
 
-The script bowtie_build_indexes.sh can be used to generate color- and
-nuleotide-space indexes from a FASTA file.
+* :ref:`bfast_build_indexes` prepares indexes for ``bfast``.
 
-To use, go to the bowtie subdirectory for the genome and do e.g.::
-
-    qsub -b y -V -cwd bowtie_build_indexes.sh ../fasta/genome.fa
-
-This will create both color and nucleotide space indexes; to only generate
-colorspace use the ``--cs`` option of the script, to only get nucleotide
-space use ``--nt``.
-
-bfast_build_indexes.sh: bfast indexes
--------------------------------------
-
-``bfast_build_indexes.sh`` automates the steps required to prepare indexes
-for ``bfast``.
-
-srma_build_indexes.sh: SRMA indexes
------------------------------------
-
-``srma_build_indexes.sh`` automates the steps required to prepare indexes
-for ``SRMA``. 
+* :ref:`srma_build_indexes` prepare indexes for ``SRMA``. 

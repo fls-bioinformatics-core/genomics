@@ -35,7 +35,7 @@ Here the ``PE`` part of the name indicates a paired-end run.
     If the run name contains ``WFA`` then it's a work-flow analysis and not
     final sequence data.
 
-See also `Link SOLiD 4 System Instrument Operation Quick Reference <http://www3.appliedbiosystems.com/cms/groups/mcb_support/documents/generaldocuments/cms_082582.pdf>`_ (PDF)
+See also `SOLiD 4 System Instrument Operation Quick Reference <http://www3.appliedbiosystems.com/cms/groups/mcb_support/documents/generaldocuments/cms_082582.pdf>`_ (PDF)
 for more information.
 
 Navigating the SOLiD run data directories
@@ -132,7 +132,7 @@ described above for multiplex fragment sequencing:
 
 **Automatic location of primary data using analyse_solid_run.py**
 
-The heuristics described above are also encoded in the ``analyse_solid_run.py``
+The heuristics described above are also encoded in the :ref:`analyse_solid_run`
 program, which will identify and report the location of the primary data files
 when without any other arguments i.e.::
 
@@ -146,7 +146,7 @@ Handling the SOLiD data
 Copying SOLiD data from the sequencer
 -------------------------------------
 
-The script ``rsync_solid_to_cluster.sh`` can be used to copy data from
+The script :ref:`rsync_solid_to_cluster` can be used to copy data from
 the sequencing instrument in a semi-automatic fashion, by prompting the user
 at each point to ask if they wish to proceed with the next step.
 
@@ -185,7 +185,7 @@ Verifying the transferred data using MD5 checksums
 --------------------------------------------------
 
 Once the data has been transferred use the ``--md5sum`` option of
-``analyse_solid_run.py`` to generate MD5 checksums for each of the primary
+:ref:`analyse_solid_run` to generate MD5 checksums for each of the primary
 data files, for example::
 
     analyse_solid_run.py --md5sum solid 0123_20110827_FRAG_BC > chksums
@@ -214,7 +214,7 @@ Copying sequencing data to another location
 Once the data has been transferred from the sequencer to the data store, it
 maybe be necessary to copy a subset of the data to another location.
 
-In these cases the ``analyse_solid_run.py`` script can be used generate a
+In these cases the :ref:`analyse_solid_run` script can be used generate a
 template ``rsync`` script to perform the transfer, for example::
 
     analyse_solid_run.py --rsync solid 0127_20110914_FRAG_BC > rsync.sh
@@ -264,12 +264,12 @@ for creating the analysis directories:
 2. Create and populate the analysis directories
 3. Run the automated QC pipeline
 4. Generate XLS spreadsheet entry
-5. Add the data and analysis directories to the `ngsdata` logging file
+5. Add the data and analysis directories to the logging file
 
 Check the primary data
 ----------------------
 
-The ``analyse_solid_run.py`` script can be used to check and report on the
+The :ref:`analyse_solid_run` script can be used to check and report on the
 SOLiD data. Running with the ``--verify`` option checks that the primary
 data is available for each sample and library::
 
@@ -317,7 +317,7 @@ library (e.g. ``E01``) within each sample (e.g. ``AB_E``).
 Create and populate analysis directories
 ----------------------------------------
 
-To get a suggested layout command, run ``analyse_solid_run.py`` with the
+To get a suggested layout command, run :ref:`analyse_solid_run` with the
 ``--layout`` option, e.g.::
 
     analyse_solid_run.py --layout <solid_run_dir>
@@ -354,7 +354,7 @@ from the command line i.e.::
 
     sh layout.sh
 
-The ``build_analysis_dir.py`` program creates the top level analysis
+The :ref:`build_analysis_dir` program creates the top level analysis
 directories, with subdirectories for each of the experiments (using
 a combination of the name and experiment type e.g. ``AB_ChIP-seq``).
 Each subdirectory will contain symbolic links to the primary data
@@ -387,7 +387,7 @@ the layout script to explicitly choose a naming scheme:
  +-------------+-------------------------------------------+----------------------------------------------------+
 
 For the partial scheme, the qual file names always end with ``_QV``
-(regardless of where the `QV` part appears in the original name).
+(regardless of where the ``QV`` part appears in the original name).
 
 For paired-end data, both the partial and minimal schemes append
 either ``_F3`` or ``_F5`` to the names as appropriate.
