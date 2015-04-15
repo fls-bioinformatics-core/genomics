@@ -9,17 +9,14 @@
 #
 #########################################################################
 
-__version__ = "0.2.7"
-
-"""TabFile
-
+"""
 Classes for working with generic tab-delimited data.
 
 The TabFile module provides a TabFile class, which represents a tab-delimited
 data file, and a TabDataLine class, which represents a line of data.
 
 Creating a TabFile
-==================
+------------------
 
 TabFile objects can be initialised from existing files:
 
@@ -30,7 +27,7 @@ or an 'empty' TabFile can be created if no file name is specified.
 Lines starting with '#' are ignored.
 
 Accessing Data within a TabFile
-===============================
+-------------------------------
 
 Within a TabFile object each line of data is represented by a TabDataLine
 object. Lines of data are referenced using index notation, with the first
@@ -81,7 +78,7 @@ Use the 'str' built-in to get the line as a tab-delimited string:
 >>> str(line)
 
 Adding and Removing Data
-========================
+------------------------
 
 New lines can be added to the TabFile object via the 'append' and 'insert'
 methods:
@@ -110,7 +107,7 @@ New columns can be added using the 'appendColumn' method e.g.:
 >>> data.appendColumn('new_col') # Creates a new empty column
 
 Filtering Data
-===============
+--------------
 
 The 'lookup' method returns a set of data lines where a key matches a
 specific value:
@@ -127,7 +124,7 @@ for a set of column indices or column names:
 ['chr1',123456]
 
 Sorting Data
-============
+------------
 
 The 'sort' method offers a simple way of sorting the data lines within
 a TabFile. The simplest example is sorting on a specific column:
@@ -137,7 +134,7 @@ a TabFile. The simplest example is sorting on a specific column:
 See the method documentation for more detail on using the 'sort' method.
 
 Manipulating Data: whole column operations
-==========================================
+------------------------------------------
 
 The 'transformColumn' and 'computeColumn' methods provide a way to
 update all the values in a column with a single method call. In each
@@ -172,7 +169,7 @@ Again a lambda expression can be used instead:
 >>> data.computeColumn('midpoint',lambda line: line['stop'] - line['start'])
 
 Writing to File
-===============
+---------------
 
 Use the TabFile's 'write' method to output the content to a file:
 
@@ -182,14 +179,17 @@ It's also possible to reorder the columns before writing out using
 the 'reorderColumns' method.
 
 Specifying Delimiters
-=====================
+---------------------
 
 It's possible to use a different field delimiter than tabs, by explicitly
 specifying the value of the 'delimiter' argument when creating a new
 TabFile object, for example for a comma-delimited file:
 
 >>> data = TabFile('data.txt',delimiter=',')
+
 """
+
+__version__ = "0.2.7"
 
 import logging
 

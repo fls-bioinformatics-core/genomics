@@ -9,24 +9,26 @@
 #
 #########################################################################
 
-"""Pipeline
-
+"""
 Classes for running scripts iteratively over a collection of data files.
 
 The essential classes are:
 
-  PipelineRunner: queue and run script multiple times on standard set
-    of inputs
-
-  SolidPipelineRunner: subclass of PipelineRunner specifically for
-    running on SOLiD data (i.e. pairs of csfasta/qual files)
+* Job: wrapper for setting up, submitting and monitoring running
+  scripts
+* PipelineRunner: queue and run script multiple times on standard set
+  of inputs
+* SolidPipelineRunner: subclass of PipelineRunner specifically for
+  running on SOLiD data (i.e. pairs of csfasta/qual files)
 
 There are also some useful methods:
 
-  GetSolidDataFiles: collect csfasta/qual file pairs from a specific
-    directory
-
-  GetFastqFiles: collect fastq files from a specific directory
+* GetSolidDataFiles: collect csfasta/qual file pairs from a specific
+  directory
+* GetSolidPairedEndFile: collect csfasta/qual file pairs for paired
+  end data
+* GetFastqFiles: collect fastq files from a specific directory
+* GetFastqGzFiles: collect gzipped fastq files
 
 The PipelineRunners depend on the JobRunner instances (created from
 classes in the JobRunner module) to interface with the job management

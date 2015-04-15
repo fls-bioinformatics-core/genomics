@@ -12,15 +12,9 @@
 # specified <stats_file>
 #
 # Import function libraries
-if [ -f functions.sh ] ; then
-    # Import local copies
-    . functions.sh
-    . lock.sh
-else
-    # Import versions in share
-    . `dirname $0`/../share/functions.sh
-    . `dirname $0`/../share/lock.sh
-fi
+export PATH=$(dirname $0)/../share:${PATH}
+. bcftbx.functions.sh
+. bcftbx.lock.sh
 #
 # Local functions
 #

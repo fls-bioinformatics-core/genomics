@@ -58,13 +58,10 @@ if [ "$datadir" == "." ] ; then
 fi
 #
 # Set up environment
-QC_SETUP=`dirname $0`/qc.setup
-if [ -f "${QC_SETUP}" ] ; then
-    echo Sourcing qc.setup to set up environment
-    . ${QC_SETUP}
-else
-    echo WARNING qc.setup not found in `dirname $0`
-fi
+export PATH=$(dirname $0)/../share:${PATH}
+. bcftbx.functions.sh
+. bcftbx.ngs_utils.sh
+import_qc_settings
 #
 # Set the programs
 # Override these defaults by setting them in qc.setup

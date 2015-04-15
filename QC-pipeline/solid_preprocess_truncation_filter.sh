@@ -37,23 +37,13 @@ function usage() {
 # Import function libraries
 #===========================================================================
 #
+export PATH=$PATH:$(dirname $0)/../share
+#
 # General shell functions
-if [ -f functions.sh ] ; then
-    # Import local copy
-    . functions.sh
-else
-    # Import version in share
-    . `dirname $0`/../share/functions.sh
-fi
+. bcftbx.functions.sh
 #
 # NGS-specific functions
-if [ -f ngs_utils.sh ] ; then
-    # Import local copy
-    . ngs_utils.sh
-else
-    # Import version in share
-    . `dirname $0`/../share/ngs_utils.sh
-fi
+. bcftbx.ngs_utils.sh
 #
 #===========================================================================
 # Local functions
@@ -168,13 +158,7 @@ if [ ! -f "$qual" ] ; then
 fi
 #
 # Set up environment
-QC_SETUP=`dirname $0`/qc.setup
-if [ -f "${QC_SETUP}" ] ; then
-    echo Sourcing qc.setup to set up environment
-    . ${QC_SETUP}
-else
-    echo WARNING qc.setup not found in `dirname $0`
-fi
+import_qc_settings
 #
 # Set the programs
 # Override these defaults by setting them in qc.setup

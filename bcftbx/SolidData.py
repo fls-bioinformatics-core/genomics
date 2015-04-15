@@ -7,8 +7,7 @@
 #
 #########################################################################
 
-"""SolidData
-
+"""
 Provides classes for extracting data about SOLiD runs from directory
 structure, data files and naming conventions.
 
@@ -48,6 +47,7 @@ properties point to the F5 reads.
 
 (The 'is_paired_end' function can be used to test whether a SolidRun
 object holds data for a paired-end run.)
+
 """
 
 #######################################################################

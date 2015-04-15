@@ -7,11 +7,7 @@
 #
 #########################################################################
 
-__version__ = "0.0.8"
-
 """
-simple_xls.py
-
 Simple spreadsheet module intended to provide a nicer programmatic interface
 to Excel spreadsheet generation.
 
@@ -112,6 +108,8 @@ Alternatively the contents of a sheet (or a subset) can be rendered as text:
 >>> data.render_as_text(start='B1',end='C6',include_columns_and_rows=True)
 
 """
+
+__version__ = "0.0.8"
 
 #######################################################################
 # Import modules that this module depends on

@@ -9,8 +9,7 @@
 #
 #########################################################################
 
-"""qc/report.py
-
+"""
 Utilities for generating reports for NGS QC pipeline runs.
 
 """

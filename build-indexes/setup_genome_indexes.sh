@@ -23,7 +23,8 @@
 # FASTQ_SCREEN_OTHER_ORGANISMS: "other" organisms
 #
 # Import functions
-. `dirname $0`/../share/functions.sh
+export PATH=$(dirname $0)/../share:${PATH}
+. bcftbx.functions.sh
 #
 # Initialise
 TOP_DIR=`pwd`

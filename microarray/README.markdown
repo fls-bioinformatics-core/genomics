@@ -3,8 +3,40 @@ microarray
 
 Scripts and tools for microarray specific tasks.
 
+  * `annotate_probesets.py`: annotate probe set list based on probe set names
   * `best_exons.py`: average data for 'best' exons for each gene symbol in a file
   * `xrothologs.py`: cross-reference data for two species using probe set lookup
+
+annotate_probesets.py
+---------------------
+
+Usage: `annotate_probesets.py OPTIONS probe_set_file`
+
+Annotate a probeset list based on probe set names: reads in first column of
+tab-delimited input file 'probe_set_file' as a list of probeset names and outputs
+these names to another tab-delimited file with a description for each. Output file name
+can be specified with the -o option, otherwise it will be the input file name with
+'_annotated' appended.
+
+Options:
+
+    --version    show program's version number and exit
+    -h, --help   show this help message and exit
+    -o OUT_FILE  specify output file name
+
+Example input:
+
+    ...
+    1769726_at
+    1769727_s_at
+    ...
+
+generates output:
+
+    ...
+    1769726_at	Rank 1: _at : anti-sense target (most probe sets on the array)
+    1769727_s_at	Warning: _s_at : designates probe sets that share common probes among multiple transcripts from different genes
+    ...
 
 best_exons.py
 -------------
