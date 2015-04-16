@@ -1,5 +1,5 @@
-Other tools
-===========
+Related projects
+================
 
 These are other BCF-related utilities external to this package.
 

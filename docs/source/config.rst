@@ -1,17 +1,17 @@
-Configuration and set up
-========================
+Installation and set up
+=======================
 
 Installing the genomics/bcftbx package
 **************************************
 
-It is recommended to install directly from github using `pip`::
+It is recommended to install directly from github using ``pip``::
 
-    pip install git+https://github.com/fls-bioinformatics-core/genomics.git@devel
+    pip install git+https://github.com/fls-bioinformatics-core/genomics.git
 
 from within the top-level source directory to install the package.
 
 To use the package without installing it first you will need to add the
-directory to your `PYTHONPATH` environment, and reference the scripts and
+directory to your ``PYTHONPATH`` environment, and reference the scripts and
 programs using their full paths.
 
 
