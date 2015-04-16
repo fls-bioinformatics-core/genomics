@@ -19,7 +19,7 @@ The utilities are divided into broad categories:
 - General non-bioinformatics utilities (``utils``)
 
 There is also a Python package called ``bcftbx`` which is used by many of the
-programs.
+programs, and which provides a wide range of utility functions.
 
 Installation
 ************
@@ -35,28 +35,61 @@ directory to your ``PYTHONPATH`` environment.
 
 To install directly from github using ``pip``::
 
-    pip install git+https://github.com/fls-bioinformatics-core/genomics.git@devel
+    pip install git+https://github.com/fls-bioinformatics-core/genomics.git
+
+Setup
+*****
+
+Many of the scripts should run directly after installation without additional
+setup. The exceptions are the QC scripts, which require a ``qc_setup.sh``
+file to be created and edited to point to the locations of the ``fastq_screen``
+configuration files.
 
 Documentation
 *************
 
 Documentation based on ``sphinx`` is available under the ``docs`` directory.
 
-To build::
+To build do either::
+
+    python setup.py sphinx_build
+
+or::
 
     cd docs
     make html
 
-which creates the documentation in the `docs/build` subdirectory.
+both of which create the documentation in the ``docs/build`` subdirectory.
 
 Running Tests
 *************
 
-The tests can be run using::
+The Python unit tests can be run using::
 
     python setup.py test
 
-Note that this requires the `nose` package.
+Note that this requires the ``nose`` package.
+
+There are also some test scripts in the ``QC-pipeline/tests`` directory,
+these can be run individually or via a 'runner' script::
+
+    run_tests.sh
+
+(Note that this requires that the QC scripts have already been setup after
+installing the package.)
+
+Developmental version
+*********************
+
+The developmental branch of the code on github is ``devel``, this can be
+installed using::
+
+    pip install git+https://github.com/fls-bioinformatics-core/genomics.git@devel
+
+Use the ``-e`` option to install an 'editable' version (see the section on
+`"Editable" installs
+<https://pip.pypa.io/en/latest/reference/pip_install.html#editable-installs>_`
+in the pip documentation),
 
 Dependencies
 ************
@@ -83,3 +116,5 @@ Some of the scripts also use third party software, including:
 - fastq_screen
 - fastqc
 - ``convert`` (from ImageMagick)
+
+There are also a couple of Java-based programs.
