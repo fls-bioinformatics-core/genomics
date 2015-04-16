@@ -1,3 +1,13 @@
+2015-04-16  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* genomics/bcftbx version 0.99.1
+	- First version which is installable via setup.py
+	- Significant rearrangement of various scripts and
+	  programs
+	- First version of sphinx-based documentation added
+	- First version of test scripts for SOLiD and
+	  Illumina QC scripts
+
 2015-02-12  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* QC-pipeline/illumina_qc.sh
