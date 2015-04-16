@@ -5,6 +5,8 @@ Utilities for NGS and genomics-related bioinformatics developed within the
 Bioinformatics Core Facility (BCF) within the Faculty of Life Sciences (FLS)
 at the University of Manchester (UoM).
 
+Full documentation is available at http://genomics-bcftbx.readthedocs.org.
+
 Overview
 ********
 
