@@ -13,4 +13,6 @@ install:
 script:
 # Run the unit tests for bcftbx
   - "python setup.py test"
-
+# Run the best_exons example
+  - "cd microarray/examples/"
+  - ./test_best_exons.sh
