@@ -946,12 +946,23 @@ class TestFindProgram(unittest.TestCase):
     """Unit tests for find_program function
 
     """
+    def setUp(self):
+        # Try and locate 'ls'
+        # Can be in different locations for different OSes
+        self.ls = None
+        for d in ('/usr/bin','/bin'):
+            ls = os.path.join(d,'ls')
+            if os.path.exists(ls):
+                self.ls = ls
+                break
+        if self.ls is None:
+            self.fail("unable to locate ls program for test")
 
     def test_find_program_that_exists(self):
-        self.assertEqual(find_program('ls'),'/usr/bin/ls')
+        self.assertEqual(find_program('ls'),self.ls)
 
     def test_find_program_with_full_path(self):
-        self.assertEqual(find_program('/usr/bin/ls'),'/usr/bin/ls')
+        self.assertEqual(find_program(self.ls),self.ls)
 
     def test_dont_find_program_that_does_exist(self):
         self.assertEqual(find_program('/this/doesnt/exist/ls'),None)
