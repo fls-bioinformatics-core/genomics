@@ -196,11 +196,28 @@ if __name__ == "__main__":
     # Expects single Fasta file as input
     if len(arguments) != 1:
         p.error("Expects exactly one fasta file as input")
+    # Keep a record of file names from chromosome names
+    file_names = []
     # Loop over chromosomes and output each one to a separate file
     for chrom in FastaChromIterator(arguments[0]):
         name = chrom[0]
         seq = chrom[1]
-        print "Outputting '%s'" % name
-        fasta = "%s.fa" % name
-        open(fasta,'w').write(">%s\n%s" % (name,seq))
+        # Make a file name from chromosome description
+        # Split on spaces and escape special characters
+        fname = name.split()[0].replace('|','_').strip('_')
+        # Check that the name hasn't already been used
+        n = 0
+        while fname in file_names:
+            if n:
+                fname = '.'.join(fname.split('.')[0:-1])
+            n += 1
+            fname += ".%d" % n
+        file_names.append(fname)
+        fasta = "%s.fa" % fname
+        # Report what's happening
+        print "Outputting '%s' to %s" % (name,fasta)
+        if os.path.isfile(fasta):
+            sys.stderr.write("WARNING '%s' already exists, overwriting\n" % fasta)
+        with open(fasta,'w') as fp:
+            fp.write(">%s\n%s" % (name,seq))
 
