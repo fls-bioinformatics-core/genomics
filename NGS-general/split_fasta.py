@@ -22,7 +22,7 @@ data chromosome-by-chromosome from a Fasta file.
 # Module metadata
 #######################################################################
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 #######################################################################
 # Import modules
@@ -121,32 +121,6 @@ class FastaChromIterator(Iterator):
 # Functions
 #######################################################################
 
-def split_fasta(fasta):
-    """
-    """
-    # Open input file and loop through sequences
-    fp = open(fasta,'rU')
-    chrom = None
-    fp_chrom = None
-    for line in fp:
-        if line.startswith(">"):
-            # New chromosome
-            chrom_name = line.strip()[1:]
-            if chrom != chrom_name:
-                # Close current output file, if one is open
-                if fp_chrom is not None:
-                    fp_chrom.close()
-                    fp_chrom = None
-                # Open new output file
-                print "Opening output file for chromosome %s" % chrom_name
-                chrom_fasta = "%s.fa" % chrom_name
-                fp_chrom = open(chrom_fasta,'w')
-        if fp_chrom is not None:
-            fp_chrom.write(line)
-    # Finished, tidy up loose ends
-    if fp_chrom is not None:
-        fp_chrom.close()
-
 #######################################################################
 # Tests
 #######################################################################
@@ -226,11 +200,28 @@ if __name__ == "__main__":
     # Expects single Fasta file as input
     if len(arguments) != 1:
         p.error("Expects exactly one fasta file as input")
+    # Keep a record of file names from chromosome names
+    file_names = []
     # Loop over chromosomes and output each one to a separate file
     for chrom in FastaChromIterator(arguments[0]):
         name = chrom[0]
         seq = chrom[1]
-        print "Outputting '%s'" % name
-        fasta = "%s.fa" % name
-        open(fasta,'w').write(">%s\n%s" % (name,seq))
+        # Make a file name from chromosome description
+        # Split on spaces and escape special characters
+        fname = name.split()[0].replace('|','_').strip('_')
+        # Check that the name hasn't already been used
+        n = 0
+        while fname in file_names:
+            if n:
+                fname = '.'.join(fname.split('.')[0:-1])
+            n += 1
+            fname += ".%d" % n
+        file_names.append(fname)
+        fasta = "%s.fa" % fname
+        # Report what's happening
+        print "Outputting '%s' to %s" % (name,fasta)
+        if os.path.isfile(fasta):
+            sys.stderr.write("WARNING '%s' already exists, overwriting\n" % fasta)
+        with open(fasta,'w') as fp:
+            fp.write(">%s\n%s" % (name,seq))
 
