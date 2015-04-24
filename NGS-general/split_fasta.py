@@ -118,36 +118,6 @@ class FastaChromIterator(Iterator):
             raise StopIteration
 
 #######################################################################
-# Functions
-#######################################################################
-
-def split_fasta(fasta):
-    """
-    """
-    # Open input file and loop through sequences
-    fp = open(fasta,'rU')
-    chrom = None
-    fp_chrom = None
-    for line in fp:
-        if line.startswith(">"):
-            # New chromosome
-            chrom_name = line.strip()[1:]
-            if chrom != chrom_name:
-                # Close current output file, if one is open
-                if fp_chrom is not None:
-                    fp_chrom.close()
-                    fp_chrom = None
-                # Open new output file
-                print "Opening output file for chromosome %s" % chrom_name
-                chrom_fasta = "%s.fa" % chrom_name
-                fp_chrom = open(chrom_fasta,'w')
-        if fp_chrom is not None:
-            fp_chrom.write(line)
-    # Finished, tidy up loose ends
-    if fp_chrom is not None:
-        fp_chrom.close()
-
-#######################################################################
 # Tests
 #######################################################################
 
