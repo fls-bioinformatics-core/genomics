@@ -11,6 +11,7 @@ cd $test_dir
 for f in $data_files ; do
   ln -s $data_dir/$f
 done
+mkdir qc
 run_qc_pipeline.py --input=fastqgz --runner=simple illumina_qc.sh .
 qcreporter.py --format=fastqgz --platform=illumina --verify .
 retcode=$?

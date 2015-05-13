@@ -13,6 +13,7 @@ cd $test_dir
 for f in $data_files ; do
   ln -s $data_dir/$f
 done
+mkdir qc
 run_qc_pipeline.py --runner=simple solid_qc.sh --input=solid_paired_end .
 qcreporter.py --platform=solid --format=solid_paired_end --verify .
 retcode=$?
