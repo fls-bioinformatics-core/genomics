@@ -27,6 +27,7 @@ for script in \
 =======================================================
 FAIL: $script
 -------------------------------------------------------
+Tail from captured output:
 EOF
     tail $log >>error_report.log
     cat >>error_report.log <<EOF
