@@ -7,7 +7,7 @@
 #
 #########################################################################
 
-__version__ = "1.5.1"
+__version__ = "1.5.2"
 
 """utils
 
@@ -35,6 +35,7 @@ File system wrappers and utilities:
   get_uid_from_user
   get_group_from_gid
   get_gid_from_group
+  get_hostname
   walk
   list_dirs
   strip_ext
@@ -78,6 +79,7 @@ import pwd
 import grp
 import datetime
 import re
+import socket
 
 #######################################################################
 # General utility classes
@@ -763,6 +765,11 @@ def get_gid_from_group(group):
     except KeyError,ex:
         return None
 
+def get_hostname():
+    """
+    Return the hostname for the current system
+    """
+    return socket.getfqdn()
 
 def walk(dirn,include_dirs=True,pattern=None):
     """Traverse the directory, subdirectories and files
