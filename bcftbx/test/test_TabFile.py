@@ -370,6 +370,41 @@ chr2\t1234\t5678\t6.8
         self.assertEqual(fp.getvalue(),self.data.replace('\t',','))
         fp.close()
 
+class TestTabFileValueConversions(unittest.TestCase):
+    """Test that appropriate conversions are performed on input values
+    """
+
+    def setUp(self):
+        # Make file-like object to read data in
+        self.fp = cStringIO.StringIO(
+"""chr\tstart\tend\tdata
+chr1\t1\t4.6
+chr1\t567\t5.7
+chr2\t1234\t6.8
+""")
+
+    def tearDown(self):
+        # Close the open file-like input
+        self.fp.close()
+
+    def test_convert_values_to_type(self):
+        """Convert input values to appropriate types (integer, float etc)
+        """
+        tabfile = TabFile('test',self.fp,first_line_is_header=True)
+        for line in tabfile:
+            self.assertTrue(isinstance(line[0],str))
+            self.assertTrue(isinstance(line[1],(int,long)))
+            self.assertTrue(isinstance(line[2],float))
+
+    def test_convert_values_to_str(self):
+        """Convert all input values to strings
+        """
+        tabfile = TabFile('test',self.fp,first_line_is_header=True,
+                          convert=False)
+        for line in tabfile:
+            for value in line:
+                self.assertTrue(isinstance(value,str))
+
 class TestBadTabFile(unittest.TestCase):
     """Test with 'bad' input files
     """
@@ -772,6 +807,19 @@ class TestTabDataLineTypeConversion(unittest.TestCase):
             line.append(value)
         for i in range(len(test_values)):
             self.assertEqual(line[i],test_values[i])
+
+class TestTabDataLineNoTypeConversion(unittest.TestCase):
+
+    def test_no_type_conversion(self):
+        """Load data which should not be converted to integers etc
+        """
+        test_values = ['hello',12,34.56]
+        input_data = '\t'.join([str(x) for x in test_values])
+        line = TabDataLine(line=input_data,convert=False)
+        for i in range(len(test_values)):
+            self.assertEqual(line[i],str(test_values[i]))
+
+    
 
 class TestTabDataLineDelimiters(unittest.TestCase):
 

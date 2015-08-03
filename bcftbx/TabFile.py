@@ -189,7 +189,7 @@ TabFile object, for example for a comma-delimited file:
 
 """
 
-__version__ = "0.2.7"
+__version__ = "0.2.8"
 
 import logging
 
@@ -227,7 +227,8 @@ class TabDataLine:
         if not line: print "Blank line"
     
     """
-    def __init__(self,line=None,column_names=None,delimiter='\t',lineno=None):
+    def __init__(self,line=None,column_names=None,delimiter='\t',lineno=None,
+                 convert=True):
         """Create a new TabFileLine object
 
         Arguments:
@@ -236,7 +237,15 @@ class TabDataLine:
             to assign to each value.
           delimiter: (optional) delimiter character (defaults to tab)
           lineno: (optional) Line number
+          convert: if True then convert values to the appropriate
+            types; if False then all values will be converted to
+            strings.
         """
+        # Conversion function
+        if convert:
+            self.__convert = self.convert_to_type
+        else:
+            self.__convert = self.convert_to_str
         # Data
         self.data = []
         self.delimiter(delimiter)
@@ -330,7 +339,13 @@ class TabDataLine:
             if str(item).strip(): return True
         return False
 
-    def __convert(self,value):
+    def convert_to_str(self,value):
+        """Convert value to string
+
+        """
+        return str(value)
+
+    def convert_to_type(self,value):
         """Internal: convert a value to the correct type
 
         Used to coerce input values into integers or floats
@@ -451,7 +466,7 @@ class TabFile:
     """
     def __init__(self,filen=None,fp=None,column_names=None,skip_first_line=False,
                  first_line_is_header=False,tab_data_line=TabDataLine,
-                 delimiter='\t'):
+                 delimiter='\t',convert=True):
         """Create a new TabFile object
 
         If either of 'filen' or 'fp' arguments are given then the
@@ -475,6 +490,9 @@ class TabFile:
           tab_data_line: (optional) class to use for creating data
               line objects (defaults to TabDataLine).
           delimiter: (optional) delimiter character (defaults to tab)
+          convert: (optional) if True then convert input values to
+              the appropriate types (e.g. integer, float etc); if
+              False then convert everything to strings
         """
         # Initialise
         self.__filen = filen
@@ -482,6 +500,7 @@ class TabFile:
         self.__header = []
         self.__delimiter = delimiter
         self.__data = []
+        self.__convert = convert
         # Class to use for data lines
         self.__tabdataline = tab_data_line
         # Set up column names
@@ -533,7 +552,8 @@ class TabFile:
                 continue
             # Store data
             data_line = self.__tabdataline(line,column_names=self.header(),lineno=line_no,
-                                           delimiter=self.__delimiter)
+                                           delimiter=self.__delimiter,
+                                           convert=self.__convert)
             if self.__ncols > 0:
                 if len(data_line) != self.__ncols:
                     # Inconsistent lines are an error
