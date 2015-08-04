@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Run set of test scripts and report success or failure
 #

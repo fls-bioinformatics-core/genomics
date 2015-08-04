@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 name=$(basename ${0%.*})
 test_dir=$(mktemp --directory --tmpdir=. --suffix=.$name)
