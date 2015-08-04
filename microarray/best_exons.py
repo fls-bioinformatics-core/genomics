@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/usr/bin/env python
 #
 #     best_exons.py: pick 'best' exons for gene symbols and average data
 #     Copyright (C) University of Manchester 2013 Peter Briggs

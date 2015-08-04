@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/usr/bin/env python
 #
 #     md5checker.py: check files and directories using md5 checksums
 #     Copyright (C) University of Manchester 2012-2014 Peter Briggs

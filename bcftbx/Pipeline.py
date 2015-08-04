@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/usr/bin/env python
 #
 #     Pipeline.py: classes for running scripts iteratively
 #     Copyright (C) University of Manchester 2011 Peter Briggs

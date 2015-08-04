@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/usr/bin/env python
 #
 #     platforms.py: utilities and data to identify sequencer platforms
 #     Copyright (C) University of Manchester 2013 Peter Briggs

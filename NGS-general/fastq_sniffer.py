@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/usr/bin/env python
 #
 #     fastq_sniffer.py: "sniff" FASTQ file to determine quality encoding
 #     Copyright (C) University of Manchester 2013 Peter Briggs

@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/usr/bin/env python
 #
 #     bowtie_mapping_stats.py: write Bowtie mapping stats to a spreadsheet
 #     Copyright (C) University of Manchester 2011-2014 Peter Briggs

@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/usr/bin/env python
 #
 #     Experiment.py: classes for defining SOLiD sequencing experiments
 #     Copyright (C) University of Manchester 2011-2013 Peter Briggs

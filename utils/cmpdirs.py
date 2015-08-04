@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/usr/bin/env python
 #
 #     cmpdirs.py: compare contents of two directories
 #     Copyright (C) University of Manchester 2014 Peter Briggs

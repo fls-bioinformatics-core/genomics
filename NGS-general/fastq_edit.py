@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/usr/bin/env python
 #
 #     fastq_edit.py: edit FASTQ files and data
 #     Copyright (C) University of Manchester 2012 Peter Briggs

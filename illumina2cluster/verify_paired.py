@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/usr/bin/env python
 #
 #     verify_paired.py: check R1 and R2 fastq files are consistent
 #     Copyright (C) University of Manchester 2013 Peter Briggs

@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/usr/bin/env python
 #
 #     htmlpagewriter: programmatic generation of HTML files
 #     Copyright (C) University of Manchester 2012-2014 Peter Briggs

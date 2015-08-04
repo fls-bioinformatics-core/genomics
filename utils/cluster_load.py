@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/usr/bin/env python
 #
 #     cluster_load.py: wrap qstat for reporting current Grid Engine usage
 #     Copyright (C) University of Manchester 2013 Peter Briggs

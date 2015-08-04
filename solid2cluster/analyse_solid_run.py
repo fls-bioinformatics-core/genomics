@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/usr/bin/env python
 #
 #     analyse_solid_run.py: analyse and report on SOLiD sequencer runs
 #     Copyright (C) University of Manchester 2011-12 Peter Briggs

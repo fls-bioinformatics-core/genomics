@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/usr/bin/env python
 #
 #     analyse_illumina_run.py: analyse and report on Illumina sequencer runs
 #     Copyright (C) University of Manchester 2013 Peter Briggs

@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/usr/bin/env python
 #
 #     build_illumina_analysis_dir.py: build analysis dir with links to fastq files
 #     Copyright (C) University of Manchester 2012-2013 Peter Briggs

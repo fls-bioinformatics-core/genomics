@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/usr/bin/env python
 #
 #     manage_seqs.py: Utility for handling sets of named sequences
 #     Copyright (C) University of Manchester 2014 Peter Briggs

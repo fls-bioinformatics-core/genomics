@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/usr/bin/env python
 #
 #     prep_sample_sheet.py: prepare sample sheet file for Illumina sequencers
 #     Copyright (C) University of Manchester 2012-3 Peter Briggs

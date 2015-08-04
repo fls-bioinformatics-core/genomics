@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/usr/bin/env python
 #
 #     extract_reads.py: write random subsets of read records from input files
 #     Copyright (C) University of Manchester 2012 Peter Briggs

@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/usr/bin/env python
 #
 #     rsync_seq_data.py: wrapper for rsync for sequencing data
 #     Copyright (C) University of Manchester 2013 Peter Briggs

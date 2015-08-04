@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/usr/bin/env python
 #
 #     make_mock_solid_dir.py: make mock SOLiD directory for test purposes
 #     Copyright (C) University of Manchester 2011 Peter Briggs

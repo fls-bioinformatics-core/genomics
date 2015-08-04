@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/usr/bin/env python
 #
 #     make_macs2_xls.py: Convert MACS output file to XLS spreadsheet
 #     Copyright (C) University of Manchester 2013-2014 Peter Briggs, Ian Donaldson

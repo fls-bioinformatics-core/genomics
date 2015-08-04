@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/usr/bin/env python
 #
 #     JobRunner.py: classes for starting and managing job runs
 #     Copyright (C) University of Manchester 2011-4 Peter Briggs

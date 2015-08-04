@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/usr/bin/env python
 #
 #     demultiplex_undetermined_fastq.py: demultiplex undetermined Illumina reads
 #     Copyright (C) University of Manchester 2013 Peter Briggs

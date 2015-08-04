@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/usr/bin/env python
 #
 #     report_barcodes.py: analyse barcode sequences from fastq files
 #     Copyright (C) University of Manchester 2014 Peter Briggs

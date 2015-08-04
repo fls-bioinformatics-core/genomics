@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/usr/bin/env python
 #
 #     symlink_checker.py: check and update symbolic links
 #     Copyright (C) University of Manchester 2012-2014 Peter Briggs
