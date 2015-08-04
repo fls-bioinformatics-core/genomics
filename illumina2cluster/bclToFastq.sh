@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Bcl to Fastq conversion wrapper script
 #

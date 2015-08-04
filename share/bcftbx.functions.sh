@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # function.sh: library of useful shell functions
 # Peter Briggs, University of Manchester 2011

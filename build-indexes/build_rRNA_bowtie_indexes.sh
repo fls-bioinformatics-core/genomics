@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Unpack rRNA sequences and build bowtie indexes
 #

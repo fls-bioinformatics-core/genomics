@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Dirty utility script to convert a SAM bitwise flag from decimal
 # to binary representation, pad with zeros and then interpret

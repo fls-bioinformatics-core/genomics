@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # filtering_stats.sh: calculate stats for preprocess filtering
 #

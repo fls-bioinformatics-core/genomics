@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Script to run SOLiD_preprocess_filter steps on SOLiD data
 #

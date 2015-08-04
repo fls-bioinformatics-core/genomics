@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # bowtie2_build_indexes.sh
 #

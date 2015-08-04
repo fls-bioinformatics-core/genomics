@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Automatically process Illumina-based sequencing run
 #

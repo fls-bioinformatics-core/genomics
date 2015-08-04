@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # cd_set_umask.sh
 #

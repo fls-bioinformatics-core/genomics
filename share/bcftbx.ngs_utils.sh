@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # ngs_utils.sh: library of shell functions for NGS
 # Peter Briggs, University of Manchester 2011-2015

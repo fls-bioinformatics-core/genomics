@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # setup_genome_indexes.sh
 #

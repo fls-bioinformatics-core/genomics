@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # bfast_build_indexes.sh
 #

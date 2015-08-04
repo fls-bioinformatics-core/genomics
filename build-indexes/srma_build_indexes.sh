@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # srma_build_indexes.sh
 #

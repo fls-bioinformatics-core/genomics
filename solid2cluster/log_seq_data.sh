@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # log_seq_data.sh <log_file> <seq_data_dir>
 #

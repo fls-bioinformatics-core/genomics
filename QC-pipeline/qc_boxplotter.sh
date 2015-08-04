@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # qc_boxplotter.sh: wrapper script for Ian Donaldson's colour_QC_script.sh boxplotter
 #

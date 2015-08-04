@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # versions.sh: shell functions for acquiring program versions
 # Peter Briggs, University of Manchester 2012

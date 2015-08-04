@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Generate sequence alignment files for arbitrary fasta file
 if [ $# -eq 0 ] ; then

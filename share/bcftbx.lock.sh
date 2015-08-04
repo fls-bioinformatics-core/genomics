@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # lock.sh: shell function library for managing file locks
 # Peter Briggs, University of Manchester 2011

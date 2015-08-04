@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # fetch_fasta.sh: reproducibly download and create fasta files for
 # various organisms

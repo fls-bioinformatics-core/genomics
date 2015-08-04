@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # boxplotps2png.sh: utility to generate PNGs from PS boxplots
 #
