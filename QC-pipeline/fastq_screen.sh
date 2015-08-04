@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Script to run fastq_screen QC steps on NGS data
 #

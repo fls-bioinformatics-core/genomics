@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # fastq_stats.sh: calculate stats for preprocess filtering etc for FASTQ files
 #

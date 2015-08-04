@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/usr/bin/env python
 #
 #     qcreporter.py: generate report file for NGS qc runs
 #     Copyright (C) University of Manchester 2012-2014 Peter Briggs
