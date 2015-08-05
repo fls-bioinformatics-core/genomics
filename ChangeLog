@@ -1,3 +1,15 @@
+2015-08-05  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* genomics/bcftbx version 0.99.2
+	- Porting to Ubuntu: update Python scripts to use
+	  '#!/usr/bin/env python' and shell scripts to use
+	  '#!/bin/bash'
+	- bcftbx/TabFile: add switch to TabFile class t
+	  prevent type conversions when reading in data
+	- bcftbx/utils: new function 'get_hostname'.
+	- NGS-general/split_fasta.py: fixes to handle
+	  comments in sequence definition lines.
+
 2015-04-16  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* genomics/bcftbx version 0.99.1
