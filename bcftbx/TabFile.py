@@ -655,7 +655,8 @@ class TabFile:
         else:
             line = None
         data_line = self.__tabdataline(line=line,column_names=self.header(),
-                                       delimiter=self.__delimiter)
+                                       delimiter=self.__delimiter,
+                                       convert=self.__convert)
         self.__data.append(data_line)
         return data_line
 
