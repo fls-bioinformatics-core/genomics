@@ -387,8 +387,8 @@ chr2\t1234\t6.8
         # Close the open file-like input
         self.fp.close()
 
-    def test_convert_values_to_type(self):
-        """Convert input values to appropriate types (integer, float etc)
+    def test_convert_values_to_type_read_from_file(self):
+        """Convert input values to appropriate types (e.g. integer) when reading from file
         """
         tabfile = TabFile('test',self.fp,first_line_is_header=True)
         for line in tabfile:
@@ -396,11 +396,53 @@ chr2\t1234\t6.8
             self.assertTrue(isinstance(line[1],(int,long)))
             self.assertTrue(isinstance(line[2],float))
 
-    def test_convert_values_to_str(self):
-        """Convert all input values to strings
+    def test_convert_values_to_str_read_from_file(self):
+        """Convert all input values to strings when reading from file
         """
         tabfile = TabFile('test',self.fp,first_line_is_header=True,
                           convert=False)
+        for line in tabfile:
+            for value in line:
+                self.assertTrue(isinstance(value,str))
+
+    def test_convert_values_to_type_append_tabdata(self):
+        """Convert input values to appropriate types (e.g. integer) when appending tabdata
+        """
+        tabfile = TabFile('test',self.fp,first_line_is_header=True)
+        tabfile.append(tabdata="chr3\t5678\t7.9")
+        for line in tabfile:
+            self.assertTrue(isinstance(line[0],str))
+            self.assertTrue(isinstance(line[1],(int,long)))
+            self.assertTrue(isinstance(line[2],float))
+
+    def test_convert_values_to_str_append_tabdata(self):
+        """Convert all input values to strings when appending tabdata
+        """
+        tabfile = TabFile('test',self.fp,first_line_is_header=True,
+                          convert=False)
+        tabfile.append(tabdata="chr3\t5678\t7.9")
+        for line in tabfile:
+            for value in line:
+                self.assertTrue(isinstance(value,str))
+
+    def test_convert_values_to_type_append_list(self):
+        """Convert input values to appropriate types (e.g. integer) when appending a list
+        """
+        tabfile = TabFile('test',self.fp,first_line_is_header=True)
+        tabfile.append(data=["chr3","5678","7.9"])
+        tabfile.append(data=["chr3",5678,7.9])
+        for line in tabfile:
+            self.assertTrue(isinstance(line[0],str))
+            self.assertTrue(isinstance(line[1],(int,long)))
+            self.assertTrue(isinstance(line[2],float))
+
+    def test_convert_values_to_str_append_list(self):
+        """Convert all input values to strings when appending a list
+        """
+        tabfile = TabFile('test',self.fp,first_line_is_header=True,
+                          convert=False)
+        tabfile.append(data=["chr3","5678","7.9"])
+        tabfile.append(data=["chr3",5678,7.9])
         for line in tabfile:
             for value in line:
                 self.assertTrue(isinstance(value,str))
