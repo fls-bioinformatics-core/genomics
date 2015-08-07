@@ -574,7 +574,7 @@ function check_md5sum() {
 	# Run md5sum check
 	echo -n "Checking MD5SUM for $FASTA: "
 	md5sum=`md5sum fasta/$FASTA | cut -d' ' -f1`
-	if [ $md5sum != $MD5SUM ] ; then
+	if [ "$md5sum" != $MD5SUM ] ; then
 	    echo FAILED
 	    echo ERROR md5sum check failed
 	    clean_up
