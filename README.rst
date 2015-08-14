@@ -80,6 +80,17 @@ these can be run individually or via a 'runner' script::
 (Note that this requires that the QC scripts have already been setup after
 installing the package.)
 
+In addition the tests are run via TravisCI whenever this GitHub repository
+is updated:
+
+.. image:: https://travis-ci.org/fls-bioinformatics-core/genomics?branch=master
+   :alt: Current status of TravisCI build for master branch
+   :target: https://travis-ci.org/fls-bioinformatics-core/genomics/builds
+
+This TravisCI integration simulates a manual install of these Galaxy Tools
+and their dependencies. See the special ``.travis.yml`` file for more
+technical details.
+
 Developmental version
 *********************
 
@@ -92,6 +103,13 @@ Use the ``-e`` option to install an 'editable' version (see the section on
 `"Editable" installs
 <https://pip.pypa.io/en/latest/reference/pip_install.html#editable-installs>_`
 in the pip documentation),
+
+The tests are run on TravisCI whenever the developmental version is updated:
+
+.. image:: https://travis-ci.org/fls-bioinformatics-core/genomics?branch=devel
+   :alt: Current status of TravisCI build for devel branch
+   :target: https://travis-ci.org/fls-bioinformatics-core/genomics/builds
+
 
 Dependencies
 ************
