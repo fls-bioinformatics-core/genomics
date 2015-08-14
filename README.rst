@@ -87,10 +87,6 @@ is updated:
    :alt: Current status of TravisCI build for master branch
    :target: https://travis-ci.org/fls-bioinformatics-core/genomics/builds
 
-This TravisCI integration simulates a manual install of these Galaxy Tools
-and their dependencies. See the special ``.travis.yml`` file for more
-technical details.
-
 Developmental version
 *********************
 
@@ -109,7 +105,6 @@ The tests are run on TravisCI whenever the developmental version is updated:
 .. image:: https://travis-ci.org/fls-bioinformatics-core/genomics.png?branch=devel
    :alt: Current status of TravisCI build for devel branch
    :target: https://travis-ci.org/fls-bioinformatics-core/genomics/builds
-
 
 Dependencies
 ************
