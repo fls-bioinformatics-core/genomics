@@ -83,7 +83,7 @@ installing the package.)
 In addition the tests are run via TravisCI whenever this GitHub repository
 is updated:
 
-.. image:: https://travis-ci.org/fls-bioinformatics-core/genomics?branch=master
+.. image:: https://travis-ci.org/fls-bioinformatics-core/genomics.png?branch=master
    :alt: Current status of TravisCI build for master branch
    :target: https://travis-ci.org/fls-bioinformatics-core/genomics/builds
 
@@ -106,7 +106,7 @@ in the pip documentation),
 
 The tests are run on TravisCI whenever the developmental version is updated:
 
-.. image:: https://travis-ci.org/fls-bioinformatics-core/genomics?branch=devel
+.. image:: https://travis-ci.org/fls-bioinformatics-core/genomics.png?branch=devel
    :alt: Current status of TravisCI build for devel branch
    :target: https://travis-ci.org/fls-bioinformatics-core/genomics/builds
 
