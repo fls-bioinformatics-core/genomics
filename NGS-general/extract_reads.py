@@ -24,7 +24,7 @@ Recognises FASTQ, CSFASTA and QUAL files.
 # Module metadata
 #######################################################################
 
-__version__ = "0.1.3"
+__version__ = "0.1.4"
 
 #######################################################################
 # Import modules
@@ -35,6 +35,7 @@ import random
 import logging
 import optparse
 import re
+import gzip
 
 #######################################################################
 # Classes
@@ -53,6 +54,7 @@ class ReadExtractor:
         # Initialise
         self.__file_name = file_name
         self.__file_type = None
+        self.__gz = bool(self.__file_name.endswith('.gz'))
         if lines_per_record is not None:
             self.__lines_per_record = lines_per_record
         else:
@@ -61,7 +63,10 @@ class ReadExtractor:
         self.__n_data_lines = 0
         self.__n_records = 0
         # Get number of records etc
-        fp = open(self.__file_name,'rU')
+        if self.__gz:
+            fp = gzip.open(self.__file_name,'r')
+        else:
+            fp = open(self.__file_name,'rU')
         for line in fp:
             if self.__n_data_lines == 0 and line.startswith('#'):
                 # Assume header lines start with # symbol and
@@ -75,7 +80,10 @@ class ReadExtractor:
     def __set_lines_per_record(self):
         """Internal: set number of lines per record based on file extension
         """
-        self.__file_type = os.path.splitext(self.__file_name)[1].strip('.')
+        if self.__gz:
+            self.__file_type = os.path.splitext(self.__file_name[:-3])[1].strip('.')
+        else:
+            self.__file_type = os.path.splitext(self.__file_name)[1].strip('.')
         if self.__file_type == "csfasta" or self.__file_type == "qual":
             self.__lines_per_record = 2
         elif self.__file_type == "fastq" or self.__file_type == "fq":
@@ -109,9 +117,15 @@ class ReadExtractor:
           record_indexes: a list of record numbers which will be written to
             the output file
         """
-        fr = open(self.__file_name,'rU')
-        fp = open(os.path.basename(self.__file_name)+'.subset','w')
-        print "Outputting to %s" % os.path.basename(self.__file_name)+'.subset'
+        if self.__gz:
+            fr = gzip.open(self.__file_name,'r')
+            outfile = os.path.basename(self.__file_name[:-3])+'.subset.gz'
+            fp = gzip.open(outfile,'w')
+        else:
+            fr = open(self.__file_name,'rU')
+            outfile = os.path.basename(self.__file_name)+'.subset'
+            fp = open(outfile,'w')
+        print "Outputting to %s" % outfile
         current_line = 0
         for line in fr:
             i = (current_line - self.__n_header_lines)/self.__lines_per_record
@@ -126,10 +140,16 @@ class ReadExtractor:
         Arguments:
           regex_pattern: Python-style regular expression
         """
-        fr = open(self.__file_name,'rU')
-        fp = open(os.path.basename(self.__file_name)+'.subset','w')
+        if self.__gz:
+            fr = gzip.open(self.__file_name,'r')
+            outfile = os.path.basename(self.__file_name[:-3])+'.subset.gz'
+            fp = gzip.open(outfile,'w')
+        else:
+            fr = open(self.__file_name,'rU')
+            outfile = os.path.basename(self.__file_name)+'.subset'
+            fp = open(outfile,'w')
         regex = re.compile(regex_pattern)
-        print "Outputting to %s" % os.path.basename(self.__file_name)+'.subset'
+        print "Outputting to %s" % outfile
         record = []
         for line in fr:
             record.append(line)
