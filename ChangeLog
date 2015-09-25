@@ -1,10 +1,18 @@
+2015-09-25  Peter Briggs  <pjb@Fedora-MINIT-19HRGNO>
+
+	* genomics/bcftbx version 0.99.3
+	- fetch_fasta.sh: fix bug when MD5 sum failed (e.g.
+	  if file was missing)
+	- extract_reads.py: updated to handle gzipped input
+	  files.
+
 2015-08-05  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* genomics/bcftbx version 0.99.2
 	- Porting to Ubuntu: update Python scripts to use
 	  '#!/usr/bin/env python' and shell scripts to use
 	  '#!/bin/bash'
-	- bcftbx/TabFile: add switch to TabFile class t
+	- bcftbx/TabFile: add switch to TabFile class to
 	  prevent type conversions when reading in data
 	- bcftbx/utils: new function 'get_hostname'.
 	- NGS-general/split_fasta.py: fixes to handle
