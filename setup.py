@@ -24,7 +24,7 @@ for pattern in ('build-indexes/*.sh',
 # Setup for installation etc
 from setuptools import setup
 import bcftbx
-setup(name = "genomics",
+setup(name = "genomics-bcftbx",
       version = bcftbx.__version__,
       description = 'Utilities for NGS and genomic bioinformatics',
       long_description = """Utility programs and libraries used for Next Generation
