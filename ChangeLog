@@ -1,4 +1,10 @@
-2015-09-25  Peter Briggs  <pjb@Fedora-MINIT-19HRGNO>
+2015-11-19  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* genomics-bcftbx version 0.99.4
+	- changed package name to 'genomics-bcftbx' in
+	  setup.py.
+
+2015-09-25  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* genomics/bcftbx version 0.99.3
 	- fetch_fasta.sh: fix bug when MD5 sum failed (e.g.
