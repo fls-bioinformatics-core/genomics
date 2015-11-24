@@ -23,6 +23,7 @@ PLATFORMS['solid5500'] = "SOLiD 5500"
 PLATFORMS['illumina-ga2x'] = "Illumina GAIIx"
 PLATFORMS['hiseq'] = "Illumina HiSEQ"
 PLATFORMS['miseq'] = "Illumina MiSEQ"
+PLATFORMS['nextseq'] = "Illumina NextSeq"
 PLATFORMS['other'] = "Unknown/external"
 
 # Dictionary matching sequencing platforms to regexp patterns
@@ -32,6 +33,7 @@ SEQUENCERS = {
     '^.*_SN7001250_.*$': 'hiseq',
     '^.*_SN700511R_.*$': 'hiseq',
     '^.*_M00879_.*$': 'miseq',
+    '^.*_NB500968_.*$': 'nextseq',
     '^solid0127_.*$': 'solid4',
     }
 
