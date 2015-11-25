@@ -8,6 +8,367 @@ import cStringIO
 import tempfile
 import shutil
 
+class MockIlluminaRun:
+    """
+    Utility class for creating mock Illumina sequencer output dirctories
+
+    Example usage:
+
+    >>> mockrun = MockIlluminaData('151125_AB12345_001_CD256X','miseq')
+    >>> mockrun.create()
+
+    To delete the physical directory structure when finished:
+
+    >>> mockrun.remove()
+
+    """
+    def __init__(self,name,platform,top_dir=None):
+        """
+        Create a new MockIlluminaRun instance
+
+        Arguments:
+          name (str): name for the run (used as top-level dir)
+          platform (str): sequencing platform e.g. 'miseq', 'hiseq'
+            'nextseq'
+          top_dir (str): optionally specify a parent directory for
+            the mock run (default is the current working directory)
+
+        """
+        self._created = False
+        self._name = name
+        if top_dir is not None:
+            self._top_dir = os.path.abspath(top_dir)
+        else:
+            self._top_dir = os.getcwd()
+        if platform not in ('miseq','hiseq','nextseq'):
+            raise Exception("Unrecognised platform: %s" % platform)
+        self._platform = platform
+
+    @property
+    def name(self):
+        """
+        Name of the mock run
+
+        """
+        return self._name
+
+    @property
+    def dirn(self):
+        """
+        Full path to the mock run directory
+
+        """
+        return os.path.join(self._top_dir,self._name)
+
+    def _path(self,*dirs):
+        """
+        Return path under run directory
+
+        """
+        dirs0 = [self.dirn]
+        dirs0.extend(dirs)
+        return os.path.join(*dirs0)
+
+    def _create_miseq(self):
+        """Internal: creates mock MISeq run directory structure
+
+        """
+        # Constants for MISeq
+        nlanes = 1
+        ntiles = 12 #158
+        ncycles = 218
+        bcl_ext = '.bcl'
+        # Basic directory structure
+        bcftbx.utils.mkdir(self._path('Data'))
+        bcftbx.utils.mkdir(self._path('Data','Intensities'))
+        bcftbx.utils.mkdir(self._path('Data','Intensities','BaseCalls'))
+        # Lanes
+        for i in xrange(1,nlanes+1):
+            # .locs files
+            bcftbx.utils.mkdir(self._path('Data','Intensities','L%03d' % i))
+            for j in xrange(1101,1101+ntiles):
+                open(self._path('Data','Intensities','L%03d' % i,
+                                's_%d_%d.locs' % (i,j)),'wb+').close()
+            # BaseCalls
+            bcftbx.utils.mkdir(self._path('Data','Intensities','BaseCalls',
+                                          'L%03d' % i))
+            for j in xrange(1101,1101+ntiles):
+                open(self._path('Data','Intensities','BaseCalls',
+                                'L%03d' % i,
+                                's_%d_%d.control' % (i,j)),'wb+').close()
+                open(self._path('Data','Intensities','BaseCalls',
+                                'L%03d' % i,
+                                's_%d_%d.filter' % (i,j)),'wb+').close()
+            for k in xrange(1,ncycles+1):
+                bcftbx.utils.mkdir(self._path('Data','Intensities','BaseCalls',
+                                              'L%03d' % i,'C%d.1' % k))
+                for j in xrange(1101,1101+ntiles):
+                    open(self._path('Data','Intensities','BaseCalls',
+                                    'L%03d' % i,'C%d.1' % k,
+                                    's_%d_%d.%s' % (i,j,bcl_ext)),'wb+').close()
+                    open(self._path('Data','Intensities','BaseCalls',
+                                    'L%03d' % i,'C%d.1' % k,
+                                    's_%d_%d.stats' % (i,j)),'wb+').close()
+        # RunInfo.xml
+        run_info_xml = """<?xml version="1.0"?>
+<RunInfo xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Version="2">
+  <Run Id="%s" Number="1">
+    <Flowcell>00000000-ABCD1</Flowcell>
+    <Instrument>M00001</Instrument>
+    <Date>150729</Date>
+    <Reads>
+      <Read Number="1" NumCycles="101" IsIndexedRead="N" />
+      <Read Number="2" NumCycles="8" IsIndexedRead="Y" />
+      <Read Number="3" NumCycles="8" IsIndexedRead="Y" />
+      <Read Number="4" NumCycles="101" IsIndexedRead="N" />
+    </Reads>
+    <FlowcellLayout LaneCount="1" SurfaceCount="2" SwathCount="1" TileCount="19" />
+  </Run>
+</RunInfo>
+"""
+        with open(self._path('RunInfo.xml'),'w') as fp:
+            fp.write(run_info_xml % self.name)
+        # SampleSheet.csv
+        sample_sheet_csv = """[Header],,,,,,,,,
+IEMFileVersion,4,,,,,,,,
+Date,11/23/2015,,,,,,,,
+Workflow,GenerateFASTQ,,,,,,,,
+Application,FASTQ Only,,,,,,,,
+Assay,TruSeq HT,,,,,,,,
+Description,,,,,,,,,
+Chemistry,Amplicon,,,,,,,,
+,,,,,,,,,
+[Reads],,,,,,,,,
+101,,,,,,,,,
+101,,,,,,,,,
+,,,,,,,,,
+[Settings],,,,,,,,,
+ReverseComplement,0,,,,,,,,
+Adapter,AGATCGGAAGAGCACACGTCTGAACTCCAGTCA,,,,,,,,
+AdapterRead2,AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT,,,,,,,,
+,,,,,,,,,
+[Data],,,,,,,,,
+Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_ID,index2,Sample_Project,Description
+Sample_1,Sample_1,,,D701,CGTGTAGG,D501,GACCTGTA,,
+Sample_2,Sample_2,,,D702,CGTGTAGG,D501,ATGTAACT,,
+"""
+        with open(self._path('Data','Intensities','BaseCalls',
+                             'SampleSheet.csv'),'w') as fp:
+            fp.write(sample_sheet_csv)
+        # (Empty) config.xml files
+        open(self._path('Data','Intensities','config.xml'),'wb+').close()
+        open(self._path('Data','Intensities','BaseCalls','config.xml'),
+             'wb+').close()
+
+    def _create_hiseq(self):
+        """
+        Internal: creates mock HISeq run directory structure
+
+        """
+        # Constants for HISeq
+        nlanes = 8
+        ntiles = 12 #1216
+        ncycles = 218
+        bcl_ext = '.bcl.gz'
+        # Basic directory structure
+        bcftbx.utils.mkdir(self._path('Data'))
+        bcftbx.utils.mkdir(self._path('Data','Intensities'))
+        bcftbx.utils.mkdir(self._path('Data','Intensities','BaseCalls'))
+        # Lanes
+        for i in xrange(1,nlanes+1):
+            # .clocs files
+            bcftbx.utils.mkdir(self._path('Data','Intensities','L%03d' % i))
+            for j in xrange(1101,1101+ntiles):
+                open(self._path('Data','Intensities','L%03d' % i,
+                                's_%d_%d.clocs' % (i,j)),'wb+').close()
+            # BaseCalls
+            bcftbx.utils.mkdir(self._path('Data','Intensities','BaseCalls',
+                                          'L%03d' % i))
+            for j in xrange(1101,1101+ntiles):
+                open(self._path('Data','Intensities','BaseCalls',
+                                'L%03d' % i,
+                                's_%d_%d.control' % (i,j)),'wb+').close()
+                open(self._path('Data','Intensities','BaseCalls',
+                                'L%03d' % i,
+                                's_%d_%d.filter' % (i,j)),'wb+').close()
+            for k in xrange(1,ncycles+1):
+                bcftbx.utils.mkdir(self._path('Data','Intensities','BaseCalls',
+                                              'L%03d' % i,'C%d.1' % k))
+                for j in xrange(1101,1101+ntiles):
+                    open(self._path('Data','Intensities','BaseCalls',
+                                    'L%03d' % i,'C%d.1' % k,
+                                    's_%d_%d.%s' % (i,j,bcl_ext)),'wb+').close()
+                    open(self._path('Data','Intensities','BaseCalls',
+                                    'L%03d' % i,'C%d.1' % k,
+                                    's_%d_%d.stats' % (i,j)),'wb+').close()
+        # RunInfo.xml
+        run_info_xml = """<?xml version="1.0"?>
+<RunInfo xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Version="2">
+  <Run Id="%s" Number="2">
+    <Flowcell>A00NAABXX</Flowcell>
+    <Instrument>H00002</Instrument>
+    <Date>151113</Date>
+    <Reads>
+      <Read Number="1" NumCycles="101" IsIndexedRead="N" />
+      <Read Number="2" NumCycles="8" IsIndexedRead="Y" />
+      <Read Number="3" NumCycles="8" IsIndexedRead="Y" />
+      <Read Number="4" NumCycles="101" IsIndexedRead="N" />
+    </Reads>
+    <FlowcellLayout LaneCount="8" SurfaceCount="2" SwathCount="3" TileCount="16" />
+    <AlignToPhiX>
+      <Lane>1</Lane>
+      <Lane>2</Lane>
+      <Lane>3</Lane>
+      <Lane>4</Lane>
+      <Lane>5</Lane>
+      <Lane>6</Lane>
+      <Lane>7</Lane>
+      <Lane>8</Lane>
+    </AlignToPhiX>
+  </Run>
+</RunInfo>
+"""
+        with open(self._path('RunInfo.xml'),'w') as fp:
+            fp.write(run_info_xml % self.name)
+        # SampleSheet.csv
+        sample_sheet_csv = """[Header],,,,,,,,,,
+IEMFileVersion,4,,,,,,,,,
+Date,11/11/2015,,,,,,,,,
+Workflow,GenerateFASTQ,,,,,,,,,
+Application,HiSeq FASTQ Only,,,,,,,,,
+Assay,Nextera XT,,,,,,,,,
+Description,,,,,,,,,,
+Chemistry,Amplicon,,,,,,,,,
+,,,,,,,,,,
+[Reads],,,,,,,,,,
+101,,,,,,,,,,
+101,,,,,,,,,,
+,,,,,,,,,,
+[Settings],,,,,,,,,,
+ReverseComplement,0,,,,,,,,,
+Adapter,CTGTCTCTTATACACATCT,,,,,,,,,
+,,,,,,,,,,
+[Data],,,,,,,,,,
+Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_ID,index2,Sample_Project,Description
+1,AB1,AB1,,,N701,TAAGGCGA,S504,AGAGTAGA,AB,
+2,TM2,TM1,,,N701,TAAGGCGA,S517,GCGTAAGA,TM,
+3,CD3,CD3,,,N701,GTGAAACG,S503,TCTTTCCC,CD,
+4,EB4,EB4,,A1,N701,TAAGGCGA,S501,TAGATCGC,EB,
+5,EB5,EB5,,A3,N703,AGGCAGAA,S501,TAGATCGC,EB,
+6,EB6,EB6,,F3,N703,AGGCAGAA,S506,ACTGCATA,EB,
+7,ML7,ML7,,,N701,GCCAATAT,S502,TCTTTCCC,ML,
+8,VL8,VL8,,,N701,GCCAATAT,S503,TCTTTCCC,VL,
+"""
+        with open(self._path('Data','Intensities','BaseCalls',
+                             'SampleSheet.csv'),'w') as fp:
+            fp.write(sample_sheet_csv)
+        # (Empty) config.xml files
+        open(self._path('Data','Intensities','config.xml'),'wb+').close()
+        open(self._path('Data','Intensities','BaseCalls','config.xml'),
+             'wb+').close()
+
+    def _create_nextseq(self):
+        """
+        Internal: creates mock NextSeq run directory structure
+
+        """
+        # Constants for NextSeq
+        nlanes = 4
+        ntiles = 12 #158
+        bcl_ext = '.bcl.bgzf'
+        # Basic directory structure
+        bcftbx.utils.mkdir(self._path('Data'))
+        bcftbx.utils.mkdir(self._path('Data','Intensities'))
+        bcftbx.utils.mkdir(self._path('Data','Intensities','BaseCalls'))
+        bcftbx.utils.mkdir(self._path('InterOp'))
+        # Lanes
+        for i in xrange(1,nlanes+1):
+            # .locs files
+            bcftbx.utils.mkdir(self._path('Data','Intensities','L%03d' % i))
+            open(self._path('Data','Intensities','L%03d' % i,'s_%d.locs' % i),
+                 'wb+').close()
+            # BaseCalls
+            bcftbx.utils.mkdir(self._path('Data','Intensities','BaseCalls',
+                                          'L%03d' % i))
+            open(self._path('Data','Intensities','BaseCalls','L%03d' % i,
+                            's_%d.bci' % i),'wb+').close()
+            open(self._path('Data','Intensities','BaseCalls','L%03d' % i,
+                            's_%d.filter' % i),'wb+').close()
+            for j in xrange(1,ntiles+1):
+                open(self._path('Data','Intensities','BaseCalls','L%03d' % i,
+                                '%04d%s' % (j,bcl_ext)),'wb+').close()
+                open(self._path('Data','Intensities','BaseCalls','L%03d' % i,
+                                '%04d%s.bci' % (j,bcl_ext)),'wb+').close()
+        # RunInfo.xml
+        run_info_xml = """<?xml version="1.0"?>
+<RunInfo xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.o
+rg/2001/XMLSchema-instance" Version="4">
+  <Run Id="%s" Number="1">
+    <Flowcell>ABC1234XX</Flowcell>
+    <Instrument>N000003</Instrument>
+    <Date>151123</Date>
+    <Reads>
+      <Read Number="1" NumCycles="76" IsIndexedRead="N" />
+      <Read Number="2" NumCycles="6" IsIndexedRead="Y" />
+      <Read Number="3" NumCycles="76" IsIndexedRead="N" />
+    </Reads>
+    <FlowcellLayout LaneCount="4" SurfaceCount="2" SwathCount="3" TileCount="12"
+ SectionPerLane="3" LanePerSection="2">
+      <TileSet TileNamingConvention="FiveDigit">
+        <Tiles>
+          <Tile>1_11101</Tile>
+          <Tile>1_21101</Tile></Tiles>
+      </TileSet>
+    </FlowcellLayout>
+    <ImageDimensions Width="2592" Height="1944" />
+    <ImageChannels>
+      <Name>Red</Name>
+      <Name>Green</Name>
+    </ImageChannels>
+  </Run>
+</RunInfo>"""
+        with open(self._path('RunInfo.xml'),'w') as fp:
+            fp.write(run_info_xml % self.name)
+
+    def create(self):
+        """
+        Build and populate the directory structure
+
+        Creates the directory structure on disk which has been defined
+        within the MockIlluminaRun object.
+
+        Invoke the 'remove' method to delete the directory structure.
+
+        'create' raises an OSError exception if any part of the directory
+        structure already exists.
+
+        """
+        # Create top level directory
+        if os.path.exists(self.dirn):
+            raise OSError,"%s already exists" % self.dirn
+        else:
+            bcftbx.utils.mkdir(self.dirn)
+            self._created = True
+        # Make platform-specific directory structure
+        if self._platform == 'miseq':
+            self._create_miseq()
+        elif self._platform == 'hiseq':
+            self._create_hiseq()
+        elif self._platform == 'nextseq':
+            self._create_nextseq()
+
+    def remove(self):
+        """
+        Delete the directory structure and contents
+
+        This removes the directory structure from disk that has
+        previously been created using the create method.
+
+        """
+        if self._created:
+            shutil.rmtree(self.dirn)
+            self._created = False
+
 class MockIlluminaData:
     """Utility class for creating mock Illumina analysis data directories
 
@@ -318,7 +679,7 @@ class MockIlluminaData:
                                  lanes=(lane,))
 
     def create(self):
-        """Build and populate the directory structure 
+        """Build and populate the directory structure
 
         Creates the directory structure on disk which has been defined
         within the MockIlluminaData object.
@@ -365,6 +726,83 @@ class MockIlluminaData:
         if self.__created:
             shutil.rmtree(self.dirn)
             self.__created = False
+
+class TestIlluminaRun(unittest.TestCase):
+    """
+    Tests for IlluminaRun against MISeq, HISeq and NextSeq
+
+    """
+    def setUp(self):
+        # Create a mock Illumina run directory
+        self.mock_illumina_run = None
+
+    def tearDown(self):
+        # Remove the test directory
+        if self.mock_illumina_run is not None:
+            self.mock_illumina_run.remove()
+
+    def test_illuminarun_miseq(self):
+        # Make a mock run directory for MISeq format
+        self.mock_illumina_run = MockIlluminaRun(
+            '151125_M00879_0001_000000000-ABCDE1','miseq')
+        self.mock_illumina_run.create()
+        # Load into an IlluminaRun object
+        run = IlluminaRun(self.mock_illumina_run.name)
+        # Check the properties
+        self.assertEqual(run.run_dir,self.mock_illumina_run.dirn)
+        self.assertEqual(run.platform,"miseq")
+        self.assertEqual(run.basecalls_dir,
+                         os.path.join(self.mock_illumina_run.dirn,
+                                      'Data','Intensities','BaseCalls'))
+        self.assertEqual(run.sample_sheet_csv,
+                         os.path.join(self.mock_illumina_run.dirn,
+                                      'Data','Intensities','BaseCalls',
+                                      'SampleSheet.csv'))
+        self.assertEqual(run.runinfo_xml,
+                         os.path.join(self.mock_illumina_run.dirn,
+                                      'RunInfo.xml'))
+        self.assertEqual(run.bcl_extension,".bcl")
+
+    def test_illuminarun_hiseq(self):
+        # Make a mock run directory for HISeq format
+        self.mock_illumina_run = MockIlluminaRun(
+            '151125_SN700511R_0002_000000000-ABCDE1XX','hiseq')
+        self.mock_illumina_run.create()
+        # Load into an IlluminaRun object
+        run = IlluminaRun(self.mock_illumina_run.name)
+        # Check the properties
+        self.assertEqual(run.run_dir,self.mock_illumina_run.dirn)
+        self.assertEqual(run.platform,"hiseq")
+        self.assertEqual(run.basecalls_dir,
+                         os.path.join(self.mock_illumina_run.dirn,
+                                      'Data','Intensities','BaseCalls'))
+        self.assertEqual(run.sample_sheet_csv,
+                         os.path.join(self.mock_illumina_run.dirn,
+                                      'Data','Intensities','BaseCalls',
+                                      'SampleSheet.csv'))
+        self.assertEqual(run.runinfo_xml,
+                         os.path.join(self.mock_illumina_run.dirn,
+                                      'RunInfo.xml'))
+        self.assertEqual(run.bcl_extension,".bcl.gz")
+
+    def test_illuminarun_nextseq(self):
+        # Make a mock run directory for HISeq format
+        self.mock_illumina_run = MockIlluminaRun(
+            '151125_NB500968_0003_000000000-ABCDE1XX','nextseq')
+        self.mock_illumina_run.create()
+        # Load into an IlluminaRun object
+        run = IlluminaRun(self.mock_illumina_run.name)
+        # Check the properties
+        self.assertEqual(run.run_dir,self.mock_illumina_run.dirn)
+        self.assertEqual(run.platform,"nextseq")
+        self.assertEqual(run.basecalls_dir,
+                         os.path.join(self.mock_illumina_run.dirn,
+                                      'Data','Intensities','BaseCalls'))
+        self.assertEqual(run.sample_sheet_csv,None)
+        self.assertEqual(run.runinfo_xml,
+                         os.path.join(self.mock_illumina_run.dirn,
+                                      'RunInfo.xml'))
+        self.assertEqual(run.bcl_extension,".bcl.bgzf")
 
 class TestIlluminaData(unittest.TestCase):
     """Collective tests for IlluminaData, IlluminaProject and IlluminaSample

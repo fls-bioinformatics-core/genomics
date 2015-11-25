@@ -82,20 +82,27 @@ class IlluminaRun:
     def bcl_extension(self):
         """Get extension of bcl files
 
-        Returns either 'bcl' or 'bcl.gz'.
+        Returns one of 'bcl', 'bcl.gz', 'bcl.bgzf'
+
+        Raises an exception if no matching files are found.
 
         """
-        # Locate the directory for the first cycle in the first
-        # lane, which should always be present
+        # Locate the directory for the first cycle in the first lane
+        # (HiSeq and MiSeq)
         lane1_cycle1 = os.path.join(self.basecalls_dir,'L001','C1.1')
-        # Examine filename extensions
-        for f in os.listdir(lane1_cycle1):
-            if str(f).endswith('.bcl'):
-                return 'bcl'
-            elif str(f).endswith('.bcl.gz'):
-                return 'bcl.gz'
+        if os.path.isdir(lane1_cycle1):
+            for f in os.listdir(lane1_cycle1):
+                for ext in ('.bcl','.bcl.gz',):
+                    if str(f).endswith(ext):
+                        return ext
+        # Look in the directory for the first lane (NextSeq)
+        lane1 = os.path.join(self.basecalls_dir,'L001')
+        for f in os.listdir(lane1):
+            for ext in ('.bcl.bgzf',):
+                if str(f).endswith(ext):
+                    return ext
         # Failed to match any known extension, raise exception
-        raise Exception("No bcl files found in %s" % lane1_cycle1)
+        raise Exception("Unable to determine bcl extension")
 
 class IlluminaRunInfo:
     """Class for examining Illumina RunInfo.xml file
@@ -103,7 +110,7 @@ class IlluminaRunInfo:
     Extracts basic information from a RunInfo.xml file:
 
     run_id     : the run id e.g.'130805_PJ600412T_0012_ABCDEZXDYY'
-    run_number : the run numer e.g. '12'
+    run_number : the run number e.g. '12'
     bases_mask : bases mask string derived from the read information
                  e.g. 'y101,I6,y101'
     reads      : a list of Python dictionaries (one per read)
