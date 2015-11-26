@@ -8,6 +8,7 @@ General NGS scripts that are used for both ChIP-seq and RNA-seq.
   * `fastq_edit.py`: edit FASTQ files and data
   * `fastq_sniffer.py`: "sniff" FASTQ file to determine quality encoding
   * `manage_seqs.py`: handling sets of named sequences (e.g. FastQC contaminants file)
+  * `merge_regions.py`: discover overlapping regions (aka peaks) for time series data
   * `SamStats`: counts uniquely map reads per chromosome/contig
   * `splitBarcodes.pl`: separate multiple barcodes in SOLiD data
   * `remove_mispairs.pl`: remove "singleton" reads from paired end fastq
@@ -128,6 +129,65 @@ To append sequences to an existing contaminants file do e.g.
 
     % manage_seqs.py -a my_contaminantes.txt additional_seqs.fa
 
+merge_regions.py
+----------------
+Program that discovers overlapping regions (aka peaks) for time series
+data supplied in a tab delimited file, and reports the sets of overlapped
+regions.
+
+Depending on the mode it also reports either a "merged" region (i.e. a
+region that is large enough to encompass all the overlapped peaks), or
+a "best" region (i.e. the peak in the set which has the highest
+normalized tag count).
+
+Usage:
+
+    merge_regions.py [--mode MODE] [OPTIONS] PEAKS_FILE THRESHOLD ATTR
+
+where `MODE` can be one of `merge`, `merge_hybrid` or `best`.
+
+`PEAKS_FILE in a tab delimited input file with one region per line,
+with the following columns:
+
+    CHR START END PEAK_ID STRAND TAG_COUNT ... TIME_POINT
+
+where:
+
+    CHR   = chromomsome
+    START = start position
+    END   = end position
+    PEAK_ID = name for each peak
+    STRAND = strand (+ or -)
+    TAG_COUNT = normalized tag count
+
+The last column should be the time point index.
+
+ *  **merge mode**: overlapping regions are merged together into a
+    single region which covers all regions in the overlap.
+    Output in `merge` mode is:
+
+        CHR START END N_OVERLAPS FLAG PEAK_LIST
+
+ * **merge_hybrid mode**: this is the same as 'merge', but the
+   highest score from the overlapping set is also output. Output in
+   `merge_hybrid` mode is:
+
+        CHR START END SCORE N_OVERLAPS FLAG PEAK_LIST
+
+ * **best mode**: only the region with the highest score of all
+   those in the overlapping set is kept. Output in `best` mode is:
+
+        CHR START END N_OVERLAPS FLAG BEST_PEAK PEAK_LIST
+
+`N_OVERLAPS` is the number of overlapping peaks (zero if there
+were no overlaps).
+
+`FLAG` is either `no_overlap` (the peak didn't overlap any others),
+`normal` (overlaps with no more than one peak from each time point),
+or `time_split_full` (overlaps with more than one peak for a single
+time point).
+
+`PEAK_LIST` is a comma-delimited list of region ids.
 
 SamStats
 --------
