@@ -242,10 +242,23 @@ class SequenceIdentifier:
           seqid: the sequence identifier line (i.e. first line) from the
             FASTQ read record
         """
-        self.__seqid = str(seqid).strip()
-        self.format = None
+        self.__seqid = str(seqid).rstrip()
+
+    @property
+    def format(self):
+        """
+        Identify the format of the sequence identifier
+
+        Returns:
+          String: 'illumina18', 'illumina' or None
+
+        """
+        try:
+            return self._format
+        except AttributeError:
+            pass
         # Identify sequence id line elements
-        if seqid.startswith('@'):
+        if self.__seqid.startswith('@'):
             # example of Illumina 1.8+ format:
             # @EAS139:136:FC706VJ:2:2104:15343:197393 1:Y:18:ATCACG
             try:
@@ -262,8 +275,8 @@ class SequenceIdentifier:
                 self.bad_read = fields[7]
                 self.control_bit_flag = fields[8]
                 self.index_sequence = fields[9]
-                self.format = 'illumina18'
-                return
+                self._format = 'illumina18'
+                return self._format
             except IndexError:
                 pass
             # Example of earlier Illumina format (1.3/1.5):
@@ -282,8 +295,8 @@ class SequenceIdentifier:
                 self.bad_read = None
                 self.control_bit_flag = None
                 self.index_sequence = None
-                self.format = 'illumina'
-                return
+                self._format = 'illumina'
+                return self._format
             except IndexError:
                 pass
 
