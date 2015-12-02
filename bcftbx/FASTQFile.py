@@ -181,33 +181,41 @@ class FastqRead:
 
     @property
     def seqlen(self):
-        if self.is_colorspace:
-            return len(self.sequence) - 1
-        else:
-            return len(self.sequence)
+        try:
+            return self._seqlen
+        except AttributeError:
+            if self.is_colorspace:
+                self._seqlen = len(self.sequence) - 1
+            else:
+                self._seqlen = len(self.sequence)
+            return self._seqlen
 
     @property
     def maxquality(self):
-        maxqual = None
-        for q in self.quality:
-            if maxqual is None:
-                maxqual = ord(q)
-            else:
-                maxqual = max(maxqual,ord(q))
-        return chr(maxqual)
+        try:
+            # Cached value
+            return self._maxqual
+        except AttributeError:
+            # Compute, store and return
+            self._maxqual = max(self.quality)
+        return self._maxqual
 
     @property
     def minquality(self):
-        minqual = None
-        for q in self.quality:
-            if minqual is None:
-                minqual = ord(q)
-            else:
-                minqual = min(minqual,ord(q))
-        return chr(minqual)
+        try:
+            # Cached value
+            return self._minqual
+        except AttributeError:
+            # Compute, store and return
+            self._minqual = min(self.quality)
+        return self._minqual
 
     @property
     def is_colorspace(self):
+        try:
+            return self._is_colorspace
+        except AttributeError:
+            pass
         if self.seqid.format is None:
             # Check if it looks like colorspace
             # Sequence starts with 'T' and only contains characters
@@ -216,11 +224,14 @@ class FastqRead:
             if sequence.startswith('T'):
                 for c in sequence[1:]:
                     if c not in '.0123':
-                        return False
+                        self._is_colorspace = False
+                        return self._is_colorspace
                 # Passed colorspace tests
-                return True
+                self._is_colorspace = True
+                return self._is_colorspace
         # Not colorspace
-        return False
+        self._is_colorspace = False
+        return self._is_colorspace
 
     def __repr__(self):
         return '\n'.join((str(self.seqid),
