@@ -26,7 +26,9 @@ Information on the FASTQ file format: http://en.wikipedia.org/wiki/FASTQ_format
 
 """
 
-__version__ = "0.3.0"
+__version__ = "1.0.0"
+
+CHUNKSIZE = 102400
 
 #######################################################################
 # Import modules that this module depends on
@@ -80,21 +82,53 @@ class FastqIterator(Iterator):
             self.__fp = get_fastq_file_handle(self.__fastq_file)
         else:
             self.__fp = fp
+        self._buf = ''
+        self._lines = []
+        self._ip = 0
 
     def next(self):
         """Return next record from FASTQ file as a FastqRead object
         """
-        seqid_line = self.__fp.readline()
-        seq_line = self.__fp.readline()
-        optid_line = self.__fp.readline()
-        quality_line = self.__fp.readline()
-        if quality_line != '':
-            return FastqRead(seqid_line,seq_line,optid_line,quality_line)
-        else:
-            # Reached EOF
-            if self.__fastq_file is None:
-                self.__fp.close()
-            raise StopIteration
+        # Convenience variables
+        lines = self._lines
+        buf = self._buf
+        ip = self._ip
+        # Do we already have a read to return?
+        while len(lines) < 4:
+            # Fetch more data
+            data = self.__fp.read(CHUNKSIZE)
+            if not data:
+                # Reached EOF
+                if self.__fastq_file is None:
+                    self.__fp.close()
+                raise StopIteration
+            # Add to buffer and split into lines
+            buf = buf + data
+            if buf[0] == '\n':
+                buf = buf[1:]
+            if buf[-1] != '\n':
+                i = buf.rfind('\n')
+                if i == -1:
+                    continue
+                else:
+                    lines.extend(buf[:i].split('\n'))
+                    buf = buf[i+1:]
+            else:
+                lines.extend(buf[:-1].split('\n'))
+                buf = ''
+        # Return a read
+        read = lines[ip:ip + 4]
+        ip = ip + 4
+        if (len(lines) - ip) < 4:
+            # Not enough lines for another read so
+            # reset the buffer
+            lines = lines[ip:]
+            ip = 0
+        # Update internals
+        self._lines = lines
+        self._buf = buf
+        self._ip = ip
+        return FastqRead(*read)
 
 class FastqRead:
     """Class to store a FASTQ record with information about a read
@@ -361,11 +395,12 @@ def get_fastq_file_handle(fastq):
 
     Returns:
       File handle that can be used for read operations.
+
     """
     if os.path.splitext(fastq)[1] == '.gz':
-        return gzip.open(fastq,'r')
+        return gzip.open(fastq,'rb')
     else:
-        return open(fastq,'rU')
+        return open(fastq,'rb')
 
 def nreads(fastq=None,fp=None):
     """Return number of reads in a FASTQ file
