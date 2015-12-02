@@ -167,9 +167,9 @@ class FastqRead:
           quality: fourth line of the record
         """
         self.raw_seqid = seqid_line
-        self.sequence = str(seq_line).strip()
-        self.optid = str(optid_line.strip())
-        self.quality = str(quality_line.strip())
+        self.sequence = str(seq_line).rstrip()
+        self.optid = str(optid_line).rstrip()
+        self.quality = str(quality_line).rstrip()
 
     @property
     def seqid(self):
