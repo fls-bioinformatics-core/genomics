@@ -41,6 +41,18 @@ import gzip
 import itertools
 
 #######################################################################
+# Precompiled regular expressions
+#######################################################################
+
+# Match Illumina 1.8+ format, e.g.:
+# @EAS139:136:FC706VJ:2:2104:15343:197393 1:Y:18:ATCACG
+RE_ILLUMINA18 = re.compile(r"^@([^:]+):([0-9]+):([^:]+):([0-9]+):([0-9]+):([0-9]+):([0-9]+) (1|2):(Y|N):([0-9]+):(.*)$")
+#
+# Match  earlier Illumina format (1.3/1.5), e.g.:
+# @HWUSI-EAS100R:6:73:941:1973#0/1
+RE_ILLUMINA = re.compile(r"^@([^:]+):([0-9]+):([0-9]+):([0-9]+):([0-9]+)#([0-9]+)/(1|2)$")
+
+#######################################################################
 # Class definitions
 #######################################################################
 
@@ -253,7 +265,51 @@ class SequenceIdentifier:
           seqid: the sequence identifier line (i.e. first line) from the
             FASTQ read record
         """
+        # Initialise
         self.__seqid = str(seqid).rstrip()
+        self.instrument_name = None
+        self.run_id = None
+        self.flowcell_id = None
+        self.flowcell_lane = None
+        self.tile_no = None
+        self.x_coord = None
+        self.y_coord = None
+        self.multiplex_index_no = None
+        self.pair_id =  None
+        self.bad_read = None
+        self.control_bit_flag = None
+        self.index_sequence = None
+        self._format = None
+        # Identify sequence id line elements
+        m = RE_ILLUMINA18.match(self.__seqid)
+        if m:
+            # example of Illumina 1.8+ format:
+            # @EAS139:136:FC706VJ:2:2104:15343:197393 1:Y:18:ATCACG
+            self._format = 'illumina18'
+            self.instrument_name = m.group(1)
+            self.run_id = m.group(2)
+            self.flowcell_id = m.group(3)
+            self.flowcell_lane = m.group(4)
+            self.tile_no = m.group(5)
+            self.x_coord = m.group(6)
+            self.y_coord = m.group(7)
+            self.pair_id = m.group(8)
+            self.bad_read = m.group(9)
+            self.control_bit_flag = m.group(10)
+            self.index_sequence = m.group(11)
+        else:
+            # Example of earlier Illumina format (1.3/1.5):
+            # @HWUSI-EAS100R:6:73:941:1973#0/1
+            m = RE_ILLUMINA.match(self.__seqid)
+            if m:
+                self._format = 'illumina'
+                self.instrument_name = m.group(1)
+                self.flowcell_lane = m.group(2)
+                self.tile_no = m.group(3)
+                self.x_coord = m.group(4)
+                self.y_coord = m.group(5)
+                self.multiplex_index_no = m.group(6)
+                self.pair_id = m.group(7)
 
     @property
     def format(self):
@@ -268,48 +324,6 @@ class SequenceIdentifier:
             return self._format
         except AttributeError:
             pass
-        # Identify sequence id line elements
-        if self.__seqid.startswith('@'):
-            # example of Illumina 1.8+ format:
-            # @EAS139:136:FC706VJ:2:2104:15343:197393 1:Y:18:ATCACG
-            try:
-                fields = self.__seqid[1:].split(':')
-                self.instrument_name = fields[0]
-                self.run_id = fields[1]
-                self.flowcell_id = fields[2]
-                self.flowcell_lane = fields[3]
-                self.tile_no = fields[4]
-                self.x_coord = fields[5]
-                self.y_coord = fields[6].split(' ')[0]
-                self.multiplex_index_no = None
-                self.pair_id = fields[6].split(' ')[1]
-                self.bad_read = fields[7]
-                self.control_bit_flag = fields[8]
-                self.index_sequence = fields[9]
-                self._format = 'illumina18'
-                return self._format
-            except IndexError:
-                pass
-            # Example of earlier Illumina format (1.3/1.5):
-            # @HWUSI-EAS100R:6:73:941:1973#0/1
-            try:
-                fields = self.__seqid[1:].split(':')
-                self.instrument_name = fields[0]
-                self.run_id = None
-                self.flowcell_id = None
-                self.flowcell_lane = fields[1]
-                self.tile_no = fields[2]
-                self.x_coord = fields[3]
-                self.y_coord = fields[4].split('#')[0]
-                self.multiplex_index_no = fields[4].split('#')[1].split('/')[0]
-                self.pair_id = fields[4].split('#')[1].split('/')[1]
-                self.bad_read = None
-                self.control_bit_flag = None
-                self.index_sequence = None
-                self._format = 'illumina'
-                return self._format
-            except IndexError:
-                pass
 
     def is_pair_of(self,seqid):
         """Check if this forms a pair with another SequenceIdentifier
