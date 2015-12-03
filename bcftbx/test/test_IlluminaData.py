@@ -1062,6 +1062,87 @@ class TestIlluminaDataForCasava(BaseTestIlluminaData):
         illumina_data = IlluminaData(self.mock_illumina_data.dirn)
         self.assertIlluminaData(illumina_data,self.mock_illumina_data)
 
+class TestIlluminaDataForBcl2fastq2(BaseTestIlluminaData):
+    """
+    Test for IlluminaData, IlluminaProject and IlluminaSample for bcl2fastq2-style output
+
+    """
+    def makeMockIlluminaData(self,paired_end=False,
+                             multiple_projects=False,
+                             multiplexed_run=False):
+        # Create initial mock dir
+        mock_illumina_data = MockIlluminaData('test.MockIlluminaData',
+                                              'bcl2fastq2',
+                                              paired_end=paired_end)
+        # Lanes to add
+        if multiplexed_run:
+            lanes=(1,4,5)
+        else:
+            lanes=(1,)
+        # Add first project with two samples
+        mock_illumina_data.add_fastq_batch('AB','AB1','AB1_S1',lanes=lanes)
+        mock_illumina_data.add_fastq_batch('AB','AB2','AB2_S2',lanes=lanes)
+        # Additional projects
+        if multiplexed_run:
+            mock_illumina_data.add_fastq_batch('CDE','CDE3','CDE3_S3',
+                                               lanes=lanes)
+            mock_illumina_data.add_fastq_batch('CDE','CDE4','CDE4_S4',
+                                               lanes=lanes)
+        # Undetermined reads
+        mock_illumina_data.add_undetermined(lanes=lanes)
+        # Create and finish
+        self.mock_illumina_data = mock_illumina_data
+        self.mock_illumina_data.create()
+
+    def test_illumina_data(self):
+        """Read bcl2fastq2-style output with single project
+
+        """
+        self.makeMockIlluminaData()
+        illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertIlluminaData(illumina_data,self.mock_illumina_data)
+
+    def test_illumina_data_paired_end(self):
+        """Read bcl2fastq2-style output with single project & paired-end data
+
+        """
+        self.makeMockIlluminaData(paired_end=True)
+        illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertIlluminaData(illumina_data,self.mock_illumina_data)
+
+    def test_illumina_data_multiple_projects(self):
+        """Read bcl2fastq2-style output with multiple projects
+
+        """
+        self.makeMockIlluminaData(multiple_projects=True)
+        illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertIlluminaData(illumina_data,self.mock_illumina_data)
+
+    def test_illumina_data_multiple_projects_paired_end(self):
+        """Read bcl2fastq2-style output with multiple projects & paired-end data
+
+        """
+        self.makeMockIlluminaData(multiple_projects=True,paired_end=True)
+        illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertIlluminaData(illumina_data,self.mock_illumina_data)
+
+    def test_illumina_data_multiple_projects_multiplexed(self):
+        """Read bcl2fastq2-style output with multiple projects & multiplexing
+
+        """
+        self.makeMockIlluminaData(multiple_projects=True,multiplexed_run=True)
+        illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertIlluminaData(illumina_data,self.mock_illumina_data)
+
+    def test_illumina_data_multiple_projects_multiplexed_paired_end(self):
+        """Read bcl2fastq2-style output with multiple projects, multiplexing & paired-end data
+
+        """
+        self.makeMockIlluminaData(multiple_projects=True,multiplexed_run=True,
+                                  paired_end=True)
+        illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertIlluminaData(illumina_data,self.mock_illumina_data)
+
 class TestCasavaSampleSheet(unittest.TestCase):
 
     def setUp(self):
