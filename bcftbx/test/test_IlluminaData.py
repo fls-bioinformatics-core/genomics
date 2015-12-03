@@ -1190,10 +1190,12 @@ class TestIlluminaFastq(unittest.TestCase):
         fq = IlluminaFastq(fastq_name)
         self.assertEqual(fq.fastq,fastq_name)
         self.assertEqual(fq.sample_name,'NA10831')
+        self.assertEqual(fq.sample_number,None)
         self.assertEqual(fq.barcode_sequence,'ATCACG')
         self.assertEqual(fq.lane_number,2)
         self.assertEqual(fq.read_number,1)
         self.assertEqual(fq.set_number,1)
+        self.assertEqual(str(fq),fastq_name)
 
     def test_illumina_fastq_with_path_and_extension(self):
         """Check extraction of name components with leading path and extension
@@ -1203,10 +1205,12 @@ class TestIlluminaFastq(unittest.TestCase):
         fq = IlluminaFastq(fastq_name)
         self.assertEqual(fq.fastq,fastq_name)
         self.assertEqual(fq.sample_name,'NA10831')
+        self.assertEqual(fq.sample_number,None)
         self.assertEqual(fq.barcode_sequence,'ATCACG')
         self.assertEqual(fq.lane_number,2)
         self.assertEqual(fq.read_number,1)
         self.assertEqual(fq.set_number,1)
+        self.assertEqual(str(fq),'NA10831_ATCACG_L002_R1_001')
 
     def test_illumina_fastq_r2(self):
         """Check extraction of fastq name components for R2 read
@@ -1216,10 +1220,12 @@ class TestIlluminaFastq(unittest.TestCase):
         fq = IlluminaFastq(fastq_name)
         self.assertEqual(fq.fastq,fastq_name)
         self.assertEqual(fq.sample_name,'NA10831')
+        self.assertEqual(fq.sample_number,None)
         self.assertEqual(fq.barcode_sequence,'ATCACG')
         self.assertEqual(fq.lane_number,2)
         self.assertEqual(fq.read_number,2)
         self.assertEqual(fq.set_number,1)
+        self.assertEqual(str(fq),fastq_name)
 
     def test_illumina_fastq_no_index(self):
         """Check extraction of fastq name components without a barcode
@@ -1229,10 +1235,12 @@ class TestIlluminaFastq(unittest.TestCase):
         fq = IlluminaFastq(fastq_name)
         self.assertEqual(fq.fastq,fastq_name)
         self.assertEqual(fq.sample_name,'NA10831')
+        self.assertEqual(fq.sample_number,None)
         self.assertEqual(fq.barcode_sequence,None)
         self.assertEqual(fq.lane_number,2)
         self.assertEqual(fq.read_number,1)
         self.assertEqual(fq.set_number,1)
+        self.assertEqual(str(fq),fastq_name)
 
     def test_illumina_fastq_dual_index(self):
         """Check extraction of fastq name components with dual index
@@ -1242,10 +1250,28 @@ class TestIlluminaFastq(unittest.TestCase):
         fq = IlluminaFastq(fastq_name)
         self.assertEqual(fq.fastq,fastq_name)
         self.assertEqual(fq.sample_name,'NA10831')
+        self.assertEqual(fq.sample_number,None)
         self.assertEqual(fq.barcode_sequence,'ATCACG-GCACTA')
         self.assertEqual(fq.lane_number,2)
         self.assertEqual(fq.read_number,1)
         self.assertEqual(fq.set_number,1)
+        self.assertEqual(str(fq),fastq_name)
+
+    def test_illumina_fastq_from_bcl2fastq2(self):
+        """
+        Check extraction of fastq name components for bcl2fastq2 output
+
+        """
+        fastq_name = 'NA10831_S7_L002_R1_001'
+        fq = IlluminaFastq(fastq_name)
+        self.assertEqual(fq.fastq,fastq_name)
+        self.assertEqual(fq.sample_name,'NA10831')
+        self.assertEqual(fq.sample_number,7)
+        self.assertEqual(fq.barcode_sequence,None)
+        self.assertEqual(fq.lane_number,2)
+        self.assertEqual(fq.read_number,1)
+        self.assertEqual(fq.set_number,1)
+        self.assertEqual(str(fq),fastq_name)
 
 class TestIEMSampleSheet(unittest.TestCase):
     def setUp(self):

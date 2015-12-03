@@ -942,7 +942,8 @@ class IlluminaFastq:
     data about the sample name, barcode sequence, lane number, read number
     and set number.
 
-    The format of the names follow the general form:
+    For Fastqs produced by CASAVA and bcl2fastq v1.8, the format of the names
+    follows the general form:
 
     <sample_name>_<barcode_sequence>_L<lane_number>_R<read_number>_<set_number>.fastq.gz
 
@@ -950,8 +951,22 @@ class IlluminaFastq:
 
     NA10831_ATCACG_L002_R1_001.fastq.gz
 
-    sample_name = 'NA10831_ATCACG_L002_R1_001'
+    sample_name = 'NA10831'
     barcode_sequence = 'ATCACG'
+    lane_number = 2
+    read_number = 1
+    set_number = 1
+
+    For Fastqs produced by bcl2fast v2, the format looks like:
+
+    <sample_name>_S<sample_number>_L<lane_number>_R<read_number>_<set_number>.fastq.gz
+
+    e.g. for
+
+    NA10831_S4_L002_R1_001.fastq.gz
+
+    sample_name = 'NA10831'
+    sample_number = 4
     lane_number = 2
     read_number = 1
     set_number = 1
@@ -960,7 +975,8 @@ class IlluminaFastq:
 
     fastq:            the original fastq file name
     sample_name:      name of the sample (leading part of the name)
-    barcode_sequence: barcode sequence (string or None)
+    sample_number:    number of the same (integer or None, bcl2fastq v2 only)
+    barcode_sequence: barcode sequence (string or None, CASAVA/bcl2fast v1.8 only)
     lane_number:      integer
     read_number:      integer
     set_number:       integer
@@ -977,10 +993,11 @@ class IlluminaFastq:
         self.fastq = fastq
         # Values derived from the name
         self.sample_name = None
-        barcode_sequence = None
-        lane_number = None
-        read_number = None
-        set_number = None
+        self.sample_number = None
+        self.barcode_sequence = None
+        self.lane_number = None
+        self.read_number = None
+        self.set_number = None
         # Base name for sample (no leading path or extension)
         fastq_base = os.path.basename(fastq)
         try:
@@ -997,10 +1014,15 @@ class IlluminaFastq:
         self.read_number = int(fields[-2][1])
         # Lane number: zero-padded 3 digit integer 'L001'
         self.lane_number = int(fields[-3][1:])
-        # Barcode sequence: string (or None if 'NoIndex')
-        self.barcode_sequence = fields[-4]
-        if self.barcode_sequence == 'NoIndex':
-            self.barcode_sequence = None
+        # Either barcode sequence or sample number
+        if fields[-4].startswith('S'):
+            # Sample number: integer
+            self.sample_number = int(fields[-4][1:])
+        else:
+            # Barcode sequence: string (or None if 'NoIndex')
+            self.barcode_sequence = fields[-4]
+            if self.barcode_sequence == 'NoIndex':
+                self.barcode_sequence = None
         # Sample name: whatever's left over
         self.sample_name = '_'.join(fields[:-4])
 
@@ -1008,8 +1030,14 @@ class IlluminaFastq:
         """Implement __repr__ built-in
 
         """
+        if self.sample_number is not None:
+            sample_identifier = "S%d" % self.sample_number
+        elif self.barcode_sequence is not None:
+            sample_identifier = self.barcode_sequence
+        else:
+            sample_identifier = "NoIndex"
         return "%s_%s_L%03d_R%d_%03d" % (self.sample_name,
-                                         'NoIndex' if self.barcode_sequence is None else self.barcode_sequence,
+                                         sample_identifier,
                                          self.lane_number,
                                          self.read_number,
                                          self.set_number)
