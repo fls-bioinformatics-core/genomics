@@ -988,7 +988,8 @@ class BaseTestIlluminaData(unittest.TestCase):
                                        mock_illumina_data,undetermined.name)
 
 class TestIlluminaDataForCasava(BaseTestIlluminaData):
-    """Collective tests for IlluminaData, IlluminaProject and IlluminaSample
+    """
+    Test IlluminaData, IlluminaProject and IlluminaSample for CASAVA-style output
 
     """
     def makeMockIlluminaData(self,paired_end=False,
@@ -1002,13 +1003,12 @@ class TestIlluminaDataForCasava(BaseTestIlluminaData):
         mock_illumina_data.add_fastq_batch('AB','AB2','AB2_AGTCAA',lanes=(1,))
         # Additional projects?
         if multiplexed_run:
-            if multiplexed_run:
-                lanes=(1,4,5)
-                mock_illumina_data.add_undetermined(lanes=lanes)
-            else:
-                lanes=(1,)
-            mock_illumina_data.add_fastq_batch('CDE','CDE3','CDE3_GCCAAT',lanes=lanes)
-            mock_illumina_data.add_fastq_batch('CDE','CDE4','CDE4_AGTCAA',lanes=lanes)
+            lanes = (1,4,5)
+            mock_illumina_data.add_fastq_batch('CDE','CDE3','CDE3_GCCAAT',
+                                               lanes=lanes)
+            mock_illumina_data.add_fastq_batch('CDE','CDE4','CDE4_AGTCAA',
+                                               lanes=lanes)
+            mock_illumina_data.add_undetermined(lanes=lanes)
         # Create and finish
         self.mock_illumina_data = mock_illumina_data
         self.mock_illumina_data.create()
