@@ -14,7 +14,7 @@ class MockIlluminaRun:
 
     Example usage:
 
-    >>> mockrun = MockIlluminaData('151125_AB12345_001_CD256X','miseq')
+    >>> mockrun = MockIlluminaRun('151125_AB12345_001_CD256X','miseq')
     >>> mockrun.create()
 
     To delete the physical directory structure when finished:
@@ -378,14 +378,19 @@ class MockIlluminaData:
     These artifical directories are intended to be used for testing
     purposes.
 
+    Two styles of analysis directories can be produced: 'casava'-style
+    aims to mimic that produced from the CASAVA and bcl2fastq 1.8
+    processing software; 'bcl2fastq2' mimics that from the bcl2fastq
+    2.* software.
+
     Basic example usage:
 
-    >>> mockdata = MockIlluminaData('130904_PJB_XXXXX')
+    >>> mockdata = MockIlluminaData('130904_PJB_XXXXX','casava')
     >>> mockdata.add_fastq('PJB','PJB1','PJB1_GCCAAT_L001_R1_001.fastq.gz')
     >>> ...
     >>> mockdata.create()
 
-    This will make a directory structure:
+    This will make a CASAVA-style directory structure like:
 
     1130904_PJB_XXXXX/
         Unaligned/
@@ -393,6 +398,20 @@ class MockIlluminaData:
                 Sample_PJB1/
                     PJB1_GCCAAT_L001_R1_001.fastq.gz
         ...
+
+    Using:
+
+    >>> mockdata = MockIlluminaData('130904_PJB_XXXXX','bcl2fastq2')
+    >>> mockdata.add_fastq('PJB','PJB1','PJB1_S1_L001_R1_001.fastq.gz')
+
+    will make a bcl2fast2-style directory structure like:
+
+    1130904_PJB_XXXXX/
+        Unaligned/
+            PJB/
+               PJB1_S1_L001_R1_001.fastq.gz
+        ...
+
 
     Multiple fastqs can be more easily added using e.g.:
 
@@ -409,13 +428,17 @@ class MockIlluminaData:
     >>> mockdata.remove()
 
     """
-    def __init__(self,name,unaligned_dir='Unaligned',paired_end=False,top_dir=None):
+    def __init__(self,name,package,
+                 unaligned_dir='Unaligned',
+                 paired_end=False,top_dir=None):
         """Create new MockIlluminaData instance
 
         Makes a new empty MockIlluminaData object.
 
         Arguments:
           name: name of the directory for the mock data
+          package: name of the conversion software package to mimic (can
+            be 'casava' or 'bcl2fastq')
           unaligned_dir: directory holding the mock projects etc (default is
             'Unaligned')
           paired_end: specify whether mock data is paired end (True) or not
@@ -426,9 +449,16 @@ class MockIlluminaData:
         """
         self.__created = False
         self.__name = name
+        if package not in ('casava','bcl2fastq2'):
+            raise Exception("Unknown package '%s': cannot make mock output dir"
+                            % package)
+        self.__package = package
         self.__unaligned_dir = unaligned_dir
         self.__paired_end = paired_end
-        self.__undetermined_dir = 'Undetermined_indices'
+        if self.package == 'casava':
+            self.__undetermined_dir = 'Undetermined_indices'
+        else:
+            self.__undetermined_dir = self.__unaligned_dir
         if top_dir is not None:
             self.__top_dir = os.path.abspath(top_dir)
         else:
@@ -441,6 +471,14 @@ class MockIlluminaData:
 
         """
         return self.__name
+
+    @property
+    def package(self):
+        """
+        Software package output that is being mimicked
+
+        """
+        return self.__package
 
     @property
     def dirn(self):
@@ -518,8 +556,8 @@ class MockIlluminaData:
     def __project_dir(self,project_name):
         """Internal: convert project name to internal representation
 
-        Project names are prepended with "Project_" if not already
-        present, or if it is the "undetermined_indexes" directory.
+        Project names which are prepended with "Project_" will have this
+        part removed.
 
         Arguments:
           project_name: name of a project
@@ -528,17 +566,16 @@ class MockIlluminaData:
           Canonical project name for internal storage.
 
         """
-        if project_name.startswith('Project_') or \
-           project_name.startswith(self.__undetermined_dir):
-            return project_name
+        if project_name.startswith('Project_'):
+           return project_name[8:]
         else:
-            return 'Project_' + project_name
+            return project_name
 
     def __sample_dir(self,sample_name):
         """Internal: convert sample name to internal representation
 
-        Sample names are prepended with "Sample_" if not already
-        present.
+        Sample names which are prepended with "Sample_" will have this
+        part removed.
 
         Arguments:
           sample_name: name of a sample
@@ -548,9 +585,9 @@ class MockIlluminaData:
 
         """
         if sample_name.startswith('Sample_'):
-            return sample_name
+            return sample_name[7:]
         else:
-            return 'Sample_' + sample_name
+            return sample_name
 
     def add_project(self,project_name):
         """Add a project to the MockIlluminaData instance
@@ -672,8 +709,13 @@ class MockIlluminaData:
 
         """
         for lane in lanes:
-            sample_name = "Sample_lane%d" % lane
-            fastq_base = "lane%d_Undetermined" % lane
+            sample_name = "lane%d" % lane
+            if self.package == 'casava':
+                # CASAVA-style naming
+                fastq_base = "lane%d_Undetermined" % lane
+            elif self.package == 'bcl2fastq2':
+                # bcl2fastq2-style naming
+                fastq_base = "Undetermined_S0"
             self.add_sample(self.__undetermined_dir,sample_name)
             self.add_fastq_batch(self.__undetermined_dir,sample_name,fastq_base,
                                  lanes=(lane,))
@@ -704,15 +746,47 @@ class MockIlluminaData:
             self.__created = True
         # "Unaligned" directory
         bcftbx.utils.mkdir(self.unaligned_dir)
+        if self.package == 'casava':
+            self._populate_casava()
+        elif self.package == 'bcl2fastq2':
+            self._populate_bcl2fastq2()
+
+    def _populate_casava(self):
+        """
+        Populate the MockIlluminaData structure in the style of CASAVA
+
+        """
         # Populate with projects, samples etc
         for project_name in self.__projects:
-            project_dirn = os.path.join(self.unaligned_dir,project_name)
+            if project_name == self.__undetermined_dir:
+                project_dirn = os.path.join(self.unaligned_dir,project_name)
+            else:
+                project_dirn = os.path.join(self.unaligned_dir,
+                                            "Project_%s" % project_name)
             bcftbx.utils.mkdir(project_dirn)
             for sample_name in self.__projects[project_name]:
-                sample_dirn = os.path.join(project_dirn,sample_name)
+                sample_dirn = os.path.join(project_dirn,
+                                           "Sample_%s" % sample_name)
                 bcftbx.utils.mkdir(sample_dirn)
                 for fastq in self.__projects[project_name][sample_name]:
                     fq = os.path.join(sample_dirn,fastq)
+                    # "Touch" the file (i.e. creates an empty file)
+                    open(fq,'wb+').close()
+
+    def _populate_bcl2fastq2(self):
+        """
+        Populate the MockIlluminaData structure in the style of bcl2fastq2
+
+        """
+        for project_name in self.__projects:
+            if project_name == self.__undetermined_dir:
+                project_dirn = self.unaligned_dir
+            else:
+                project_dirn = os.path.join(self.unaligned_dir,project_name)
+            bcftbx.utils.mkdir(project_dirn)
+            for sample_name in self.__projects[project_name]:
+                for fastq in self.__projects[project_name][sample_name]:
+                    fq = os.path.join(project_dirn,fastq)
                     # "Touch" the file (i.e. creates an empty file)
                     open(fq,'wb+').close()
 
@@ -804,8 +878,9 @@ class TestIlluminaRun(unittest.TestCase):
                                       'RunInfo.xml'))
         self.assertEqual(run.bcl_extension,".bcl.bgzf")
 
-class TestIlluminaData(unittest.TestCase):
-    """Collective tests for IlluminaData, IlluminaProject and IlluminaSample
+class BaseTestIlluminaData(unittest.TestCase):
+    """
+    Base class for testing IlluminaData, IlluminaProject and IlluminaSample
 
     Test methods use the following pattern:
 
@@ -820,8 +895,12 @@ class TestIlluminaData(unittest.TestCase):
     assertIlluminaUndetermined; assertIlluminaProject invokes
     assertIlluminaSample.
 
-    """
+    Tests of IlluminaData for different styles of processing software
+    output can be based on this class. The subclass needs to implement
+    its own 'test_...' methods but can use the assert methods here to
+    verify that the results are correct.
 
+    """
     def setUp(self):
         # Create a mock Illumina directory
         self.mock_illumina_data = None
@@ -830,28 +909,6 @@ class TestIlluminaData(unittest.TestCase):
         # Remove the test directory
         if self.mock_illumina_data is not None:
             self.mock_illumina_data.remove()
-
-    def makeMockIlluminaData(self,paired_end=False,
-                             multiple_projects=False,
-                             multiplexed_run=False):
-        # Create initial mock dir
-        mock_illumina_data = MockIlluminaData('test.MockIlluminaData',
-                                              paired_end=paired_end)
-        # Add first project with two samples
-        mock_illumina_data.add_fastq_batch('AB','AB1','AB1_GCCAAT',lanes=(1,))
-        mock_illumina_data.add_fastq_batch('AB','AB2','AB2_AGTCAA',lanes=(1,))
-        # Additional projects?
-        if multiplexed_run:
-            if multiplexed_run:
-                lanes=(1,4,5)
-                mock_illumina_data.add_undetermined(lanes=lanes)
-            else:
-                lanes=(1,)
-            mock_illumina_data.add_fastq_batch('CDE','CDE3','CDE3_GCCAAT',lanes=lanes)
-            mock_illumina_data.add_fastq_batch('CDE','CDE4','CDE4_AGTCAA',lanes=lanes)
-        # Create and finish
-        self.mock_illumina_data = mock_illumina_data
-        self.mock_illumina_data.create()
 
     def assertIlluminaData(self,illumina_data,mock_illumina_data):
         """Verify that an IlluminaData object matches a MockIlluminaData object
@@ -930,8 +987,34 @@ class TestIlluminaData(unittest.TestCase):
             self.assertIlluminaProject(undetermined,
                                        mock_illumina_data,undetermined.name)
 
+class TestIlluminaDataForCasava(BaseTestIlluminaData):
+    """Collective tests for IlluminaData, IlluminaProject and IlluminaSample
+
+    """
+    def makeMockIlluminaData(self,paired_end=False,
+                             multiple_projects=False,
+                             multiplexed_run=False):
+        # Create initial mock dir
+        mock_illumina_data = MockIlluminaData('test.MockIlluminaData',
+                                              'casava',paired_end=paired_end)
+        # Add first project with two samples
+        mock_illumina_data.add_fastq_batch('AB','AB1','AB1_GCCAAT',lanes=(1,))
+        mock_illumina_data.add_fastq_batch('AB','AB2','AB2_AGTCAA',lanes=(1,))
+        # Additional projects?
+        if multiplexed_run:
+            if multiplexed_run:
+                lanes=(1,4,5)
+                mock_illumina_data.add_undetermined(lanes=lanes)
+            else:
+                lanes=(1,)
+            mock_illumina_data.add_fastq_batch('CDE','CDE3','CDE3_GCCAAT',lanes=lanes)
+            mock_illumina_data.add_fastq_batch('CDE','CDE4','CDE4_AGTCAA',lanes=lanes)
+        # Create and finish
+        self.mock_illumina_data = mock_illumina_data
+        self.mock_illumina_data.create()
+
     def test_illumina_data(self):
-        """Basic test with single project
+        """Read CASAVA-style output with single project
 
         """
         self.makeMockIlluminaData()
@@ -939,7 +1022,7 @@ class TestIlluminaData(unittest.TestCase):
         self.assertIlluminaData(illumina_data,self.mock_illumina_data)
 
     def test_illumina_data_paired_end(self):
-        """Test with single project & paired-end data
+        """Read CASAVA-style output with single project & paired-end data
 
         """
         self.makeMockIlluminaData(paired_end=True)
@@ -947,7 +1030,7 @@ class TestIlluminaData(unittest.TestCase):
         self.assertIlluminaData(illumina_data,self.mock_illumina_data)
 
     def test_illumina_data_multiple_projects(self):
-        """Test with multiple projects
+        """Read CASAVA-style output with multiple projects
 
         """
         self.makeMockIlluminaData(multiple_projects=True)
@@ -955,7 +1038,7 @@ class TestIlluminaData(unittest.TestCase):
         self.assertIlluminaData(illumina_data,self.mock_illumina_data)
 
     def test_illumina_data_multiple_projects_paired_end(self):
-        """Test with multiple projects & paired-end data
+        """Read CASAVA-style output with multiple projects & paired-end data
 
         """
         self.makeMockIlluminaData(multiple_projects=True,paired_end=True)
@@ -963,7 +1046,7 @@ class TestIlluminaData(unittest.TestCase):
         self.assertIlluminaData(illumina_data,self.mock_illumina_data)
 
     def test_illumina_data_multiple_projects_multiplexed(self):
-        """Test with multiple projects & multiplexing
+        """Read CASAVA-style output with multiple projects & multiplexing
 
         """
         self.makeMockIlluminaData(multiple_projects=True,multiplexed_run=True)
@@ -971,7 +1054,7 @@ class TestIlluminaData(unittest.TestCase):
         self.assertIlluminaData(illumina_data,self.mock_illumina_data)
 
     def test_illumina_data_multiple_projects_multiplexed_paired_end(self):
-        """Test with multiple projects, multiplexing & paired-end data
+        """Read CASAVA-style output with multiple projects, multiplexing & paired-end data
 
         """
         self.makeMockIlluminaData(multiple_projects=True,multiplexed_run=True,
@@ -1580,7 +1663,7 @@ class TestVerifyRunAgainstSampleSheet(unittest.TestCase):
         # Create a mock Illumina directory
         self.top_dir = tempfile.mkdtemp()
         self.mock_illumina_data = MockIlluminaData('test.MockIlluminaData',
-                                                   paired_end=True,
+                                                   'casava',paired_end=True,
                                                    top_dir=self.top_dir)
         self.mock_illumina_data.add_fastq_batch('AB','AB1','AB1_GCCAAT',lanes=(1,))
         self.mock_illumina_data.add_fastq_batch('AB','AB2','AB2_AGTCAA',lanes=(1,))
@@ -1651,7 +1734,7 @@ class TestSummariseProjects(unittest.TestCase):
         # Create a mock Illumina directory
         self.top_dir = tempfile.mkdtemp()
         self.mock_illumina_data = MockIlluminaData('test.MockIlluminaData',
-                                                   paired_end=True,
+                                                   'casava',paired_end=True,
                                                    top_dir=self.top_dir)
         self.mock_illumina_data.add_fastq_batch('AB','AB1','AB1_GCCAAT',lanes=(1,))
         self.mock_illumina_data.add_fastq_batch('AB','AB2','AB2_AGTCAA',lanes=(1,))
@@ -1679,7 +1762,7 @@ class TestDescribeProject(unittest.TestCase):
         # Create a mock Illumina directory
         self.top_dir = tempfile.mkdtemp()
         self.mock_illumina_data = MockIlluminaData('test.MockIlluminaData',
-                                                   paired_end=True,
+                                                   'casava',paired_end=True,
                                                    top_dir=self.top_dir)
         self.mock_illumina_data.add_fastq_batch('AB','AB1','AB1_GCCAAT',lanes=(1,))
         self.mock_illumina_data.add_fastq_batch('AB','AB2','AB2_AGTCAA',lanes=(1,))
