@@ -178,10 +178,7 @@ class IlluminaData:
     projects:      list of IlluminaProject objects (one for each project
                    defined at the fastq creation stage, expected to be in
                    subdirectories "Project_...")
-    undetermined:  IlluminaProject object for the "Undetermined_indices"
-                   subdirectory in the 'Unaligned' directry (or None if
-                   no "Undetermined_indices" subdirectory was found e.g.
-                   if the run wasn't multiplexed)
+    undetermined:  IlluminaProject object for the undetermined reads
     unaligned_dir: full path to the 'Unaligned' directory holding the
                    primary fastq.gz files
     paired_end:    True if all projects are paired end, False otherwise
@@ -208,10 +205,30 @@ class IlluminaData:
         self.projects = []
         self.undetermined = None
         self.paired_end = True
+        self.package = None
         # Look for "unaligned" data directory
         self.unaligned_dir = os.path.join(self.analysis_dir,unaligned_dir)
         if not os.path.exists(self.unaligned_dir):
-            raise IlluminaDataError, "Missing data directory %s" % self.unaligned_dir
+            raise IlluminaDataError("Missing data directory %s" %
+                                    self.unaligned_dir)
+        # Raise an exception if no projects found
+        try:
+            self._populate_casava_style()
+        except IlluminaDataError:
+            self._populate_bcl2fastq2_style()
+        if not self.projects:
+            raise IlluminaDataError("No projects found")
+        # Sort projects on name
+        self.projects.sort(lambda a,b: cmp(a.name,b.name))
+        # Determine whether data is paired end
+        for p in self.projects:
+            self.paired_end = (self.paired_end and p.paired_end)
+
+    def _populate_casava_style(self):
+        """
+        Find projects for a CASAVA-style directory structure
+
+        """
         # Look for projects
         for f in os.listdir(self.unaligned_dir):
             dirn = os.path.join(self.unaligned_dir,f)
@@ -222,13 +239,51 @@ class IlluminaData:
                 logging.debug("Undetermined dirn: %s" %f)
                 self.undetermined = IlluminaProject(dirn)
         # Raise an exception if no projects found
-        if not self.projects:
-            raise IlluminaDataError, "No projects found"
-        # Sort projects on name
-        self.projects.sort(lambda a,b: cmp(a.name,b.name))
-        # Determine whether data is paired end
-        for p in self.projects:
-            self.paired_end = (self.paired_end and p.paired_end)
+        if not self.projects :
+            raise IlluminaDataError("No CASAVA-style projects found")
+
+    def _populate_bcl2fastq2_style(self):
+        """
+        Find projects for a bcl2fastq2-style directory structure
+
+        """
+        # The output from bcl2fastq2 is flat
+        # We expect to find a number of 'undetermined' fastqs at
+        # the top level of the output (unaligned) directory,
+        # and one or more projects in subdirectories - each of
+        # which contains all the fastqs for all samples
+        # The strategy is to look for all these things together
+        # Look for undetermined fastqs
+        undetermined_fqs = filter(lambda f: f.startswith('Undetermined_S0_')
+                                  and f.endswith('.fastq.gz'),
+                                  os.listdir(self.unaligned_dir))
+        if not undetermined_fqs:
+            raise IlluminaDataError("No bcl2fastq2 undetermined fastqs found")
+        # Look for potential projects
+        project_dirs = []
+        for d in os.listdir(self.unaligned_dir):
+            dirn = os.path.join(self.unaligned_dir,d)
+            if not os.path.isdir(dirn):
+                continue
+            # Get a list of fastq files
+            fqs = filter(lambda f: f.endswith('.fastq.gz'),
+                         os.listdir(dirn))
+            if not fqs:
+                continue
+            # Check that fastqs have bcl2fastq2-style names
+            for fq in fqs:
+                if IlluminaFastq(fq).sample_number is None:
+                    break; continue
+            # Looks like a project
+            project_dirs.append(dirn)
+        # Raise an exception if no projects found
+        if not project_dirs:
+            raise IlluminaDataError("No bcl2fastq2-style projects found")
+        print "Projects = %s" % project_dirs
+        # Create project objects
+        self.undetermined = IlluminaProject(self.unaligned_dir)
+        for dirn in project_dirs:
+            self.projects.append(IlluminaProject(dirn))
 
     def get_project(self,name):
         """Return project that matches 'name'
@@ -248,14 +303,14 @@ class IlluminaData:
 class IlluminaProject:
     """Class for storing information on a 'project' within an Illumina run
 
-    A project is a subset of fastq files from a run of the Illumina GA2
+    A project is a subset of fastq files from a run of an Illumina
     sequencer; in the first instance projects are defined within the
     SampleSheet.csv file which is output by the sequencer.
 
-    Note that the "Undetermined_indices" directory (which holds fastq files
-    for each lane where any reads that couldn't be assigned to a barcode
-    during demultiplexing) is also considered as a project, and can be
-    processed using an IlluminaData object.
+    Note that the "undetermined" fastqs (which hold reads for each lane
+    which couldn't be assigned to a barcode during demultiplexing) is also
+    considered as a project, and can be processed using an IlluminaProject
+    object.
 
     Provides the following attributes:
 
@@ -267,6 +322,7 @@ class IlluminaProject:
     samples:   list of IlluminaSample objects for each sample within the
                project
     paired_end: True if all samples are paired end, False otherwise
+    undetermined: True if 'samples' are actually undetermined reads
 
     """
 
@@ -282,24 +338,75 @@ class IlluminaProject:
         self.expt_type = None
         self.samples = []
         self.paired_end = True
-        # Get name by removing prefix
+        self.undetermined = False
+        # Test if this looks like a CASAVA/bcl2fastq v1.8 output
         self.project_prefix = "Project_"
-        if os.path.basename(self.dirn).startswith(self.project_prefix):
-            self.name = os.path.basename(self.dirn)[len(self.project_prefix):]
-        else:
-            # Check if this is the "Undetermined_indices" directory
-            if os.path.basename(self.dirn) == "Undetermined_indices":
-                self.name = os.path.basename(self.dirn)
+        dirname = os.path.basename(self.dirn)
+        if dirname.startswith(self.project_prefix) or \
+           dirname == "Undetermined_indices":
+            # CASAVA/bcl2fastq v1.8
+            if dirname == "Undetermined_indices":
+                # "Undetermined_indices" from CASAVA/bcl2fastq v1.8
                 self.project_prefix = ""
+                self.undetermined = True
+                self.name = dirname
             else:
-                raise IlluminaDataError, "Bad project name '%s'" % self.dirn
-        logging.debug("Project name: %s" % self.name)
-        # Look for samples
-        self.sample_prefix = "Sample_"
-        for f in os.listdir(self.dirn):
-            sample_dirn = os.path.join(self.dirn,f)
-            if f.startswith(self.sample_prefix) and os.path.isdir(sample_dirn):
-                self.samples.append(IlluminaSample(sample_dirn))
+                # Standard project, strip prefix
+                self.name = dirname[len(self.project_prefix):]
+            logging.debug("CASAVA/bcl2fastq 1.8 project: %s" % self.name)
+            # Look for samples
+            self.sample_prefix = "Sample_"
+            for f in os.listdir(self.dirn):
+                sample_dirn = os.path.join(self.dirn,f)
+                if f.startswith(self.sample_prefix) and \
+                   os.path.isdir(sample_dirn):
+                    self.samples.append(IlluminaSample(sample_dirn))
+        else:
+            # Examine fastq files to see if naming scheme follows
+            # bcl2fastq v2 convention
+            fastqs = filter(lambda f: f.endswith('.fastq.gz'),
+                            os.listdir(self.dirn))
+            if fastqs and reduce(lambda x,y: x and
+                                 (IlluminaFastq(y).sample_number is not None),
+                                 fastqs,True):
+                # bcl2fastq v2
+                self.project_prefix = ""
+                if reduce(lambda x,y: x and
+                          os.path.basename(y).startswith('Undetermined_S'),
+                          fastqs,True):
+                    # These are undetermined fastqs
+                    self.undetermined = True
+                    self.name = "Undetermined_indices"
+                else:
+                    # Fastqs from an actual set of samples
+                    self.name = os.path.basename(self.dirn)
+                logging.debug("bcl2fastq 2 project: %s" % self.name)
+            else:
+                raise IlluminaDataError, "Not a project directory: " % self.dir
+            # Determine samples from fastq names
+            self.sample_prefix = ""
+            sample_names = []
+            for fq in fastqs:
+                if not self.undetermined:
+                    sample_name = IlluminaFastq(fq).sample_name
+                else:
+                    # Use laneX as sample name for undetermined
+                    sample_name = "lane%d" % IlluminaFastq(fq).lane_number
+                if sample_name not in sample_names:
+                    sample_names.append(sample_name)
+            # Create sample objects and populate with appropriate fastqs
+            for sample_name in sample_names:
+                if not self.undetermined:
+                    fqs = filter(lambda f:
+                                 IlluminaFastq(f).sample_name == sample_name,
+                                 fastqs)
+                else:
+                    fqs = filter(lambda f:
+                                 "lane%d" % IlluminaFastq(f).lane_number
+                                 == sample_name,
+                                 fastqs)
+                self.samples.append(IlluminaSample(self.dirn,
+                                                   fastqs=fqs))
         # Raise an exception if no samples found
         if not self.samples:
             raise IlluminaDataError, "No samples found for project %s" % \
@@ -336,7 +443,7 @@ class IlluminaProject:
 class IlluminaSample:
     """Class for storing information on a 'sample' within an Illumina project
 
-    A sample is a fastq file generated within an Illumina GA2 sequencer run.
+    A sample is a fastq file generated within an Illumina sequencer run.
 
     Provides the following attributes:
 
@@ -348,28 +455,45 @@ class IlluminaSample:
 
     """
 
-    def __init__(self,dirn):
+    def __init__(self,dirn,fastqs=None):
         """Create and populate a new IlluminaSample object
 
         Arguments:
-          dirn: path to the directory holding the fastq.gz file for the
-                sample
+          dirn:   path to the directory holding the fastq.gz files for
+                  the sample
+          fastqs: optional, a list of fastq files associated with the
+                  sample (expected to be under the directory 'dirn')
 
         """
         self.dirn = dirn
         self.fastq = []
         self.paired_end = False
-        # Get name by removing prefix
+        # Deal with fastq files
+        if fastqs is None:
+            fastqs = filter(lambda f: f.endswith(".fastq.gz"),
+                            os.listdir(self.dirn))
+        else:
+            fastqs = [os.path.basename(f) for f in fastqs]
+        # Set sample name from directory name
         self.sample_prefix = "Sample_"
-        self.name = os.path.basename(dirn)[len(self.sample_prefix):]
+        if os.path.basename(dirn).startswith(self.sample_prefix):
+            # Remove prefix
+            self.name = os.path.basename(dirn)[len(self.sample_prefix):]
+        else:
+            # No prefix, obtain name from fastqs
+            self.sample_prefix = ""
+            self.name = IlluminaFastq(fastqs[0]).sample_name
+            # Special case: undetermined 'sample' is 'laneX'
+            if self.name == 'Undetermined':
+                self.name = "lane%d" % IlluminaFastq(fastqs[0]).lane_number
         logging.debug("\tSample: %s" % self.name)
-        # Look for fastq files
-        for f in os.listdir(self.dirn):
-            if f.endswith(".fastq.gz"):
-                self.add_fastq(f)
-                logging.debug("\tFastq : %s" % f)
+        # Add fastq files
+        for f in fastqs:
+            self.add_fastq(f)
+            logging.debug("\tFastq : %s" % f)
         if not self.fastq:
-            logging.debug("\tUnable to find fastq.gz files for %s" % self.name)
+            logging.debug("\tUnable to find fastq.gz files for %s" %
+                          self.name)
 
     def add_fastq(self,fastq):
         """Add a reference to a fastq file in the sample
