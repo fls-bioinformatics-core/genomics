@@ -455,10 +455,7 @@ class MockIlluminaData:
         self.__package = package
         self.__unaligned_dir = unaligned_dir
         self.__paired_end = paired_end
-        if self.package == 'casava':
-            self.__undetermined_dir = 'Undetermined_indices'
-        else:
-            self.__undetermined_dir = self.__unaligned_dir
+        self.__undetermined_dir = 'Undetermined_indices'
         if top_dir is not None:
             self.__top_dir = os.path.abspath(top_dir)
         else:
@@ -510,6 +507,8 @@ class MockIlluminaData:
         for project_name in self.__projects:
             if project_name.startswith('Project_'):
                 projects.append(project_name.split('_')[1])
+            else:
+                projects.append(project_name)
         projects.sort()
         return projects
 
@@ -535,6 +534,8 @@ class MockIlluminaData:
         for sample_name in project:
             if sample_name.startswith('Sample_'):
                 samples.append(sample_name.split('_')[1])
+            else:
+                samples.append(sample_name)
         samples.sort()
         return samples
 
@@ -567,7 +568,7 @@ class MockIlluminaData:
 
         """
         if project_name.startswith('Project_'):
-           return project_name[8:]
+            return project_name[8:]
         else:
             return project_name
 
