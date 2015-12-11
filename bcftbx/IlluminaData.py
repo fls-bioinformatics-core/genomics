@@ -566,6 +566,7 @@ class SampleSheet:
         """
         # Input sample sheet
         self.sample_sheet = sample_sheet
+        self._format = None
         # Sections for IEM-format sample sheets
         self._header = utils.OrderedDictionary()
         self._reads = list()
@@ -600,8 +601,10 @@ class SampleSheet:
             if line.startswith('['):
                 # New section
                 try:
-                    i = line.index(']')
-                    section = line[1:i]
+                    ii = line.index(']')
+                    section = line[1:ii]
+                    if i == 0:
+                        self._format = 'IEM'
                     continue
                 except ValueError:
                     raise IlluminaDataError("Bad section line (#%d): %s" %
@@ -613,6 +616,9 @@ class SampleSheet:
                     # to set the header
                     self._data = TabFile.TabFile(column_names=line.split(','),
                                                  delimiter=',')
+                    # If this is the first line then assume CASAVA
+                    if i == 0:
+                        self._format = 'CASAVA'
                 else:
                     self._data.append(tabdata=line)
             elif section == 'Header':
@@ -645,6 +651,14 @@ class SampleSheet:
             for i,line in enumerate(self._data):
                 if str(line).startswith('#'):
                     del(self._data[i])
+        # Guess the format if not already set
+        if self._format is None:
+            if not self._header and \
+               not self._reads and \
+               not self._settings:
+                format_ = 'CASAVA'
+            else:
+                format_ = 'IEM'
 
     def _set_section_param_value(self,line,d):
         """
@@ -741,7 +755,7 @@ class SampleSheet:
         """
         return self._data
 
-    def show(self):
+    def show(self,fmt=None):
         """
         Reconstructed version of original sample sheet
 
@@ -754,13 +768,11 @@ class SampleSheet:
           String with the reconstructed sample sheet contents.
 
         """
-        # Guess the original format
-        if not self._header and \
-           not self._reads and \
-           not self._settings:
-            format_ = 'CASAVA'
+        # Set output format
+        if fmt is None:
+            format_ = self._format
         else:
-            format_ = 'IEM'
+            format_ = str(fmt)
         # Reconstruct the sample sheet
         s = []
         if format_ == 'IEM':
@@ -777,9 +789,43 @@ class SampleSheet:
                 s.append('%s,%s' % (param,self._settings[param]))
             s.append('')
             s.append('[Data]')
-        s.append(','.join(self._data.header()))
-        for line in self._data:
-            s.append(str(line))
+            s.append(','.join(self._data.header()))
+            for line in self._data:
+                s.append(str(line))
+        else:
+            header = ('FCID','Lane','SampleID','SampleRef','Index',
+                      'Description','Control','Recipe','Operator',
+                      'SampleProject')
+            s.append(','.join(header))
+            for line in self._data:
+                values = []
+                for item in header:
+                    try:
+                        values.append(str(line[item]))
+                    except KeyError:
+                        if item == 'FCID':
+                            values.append('FC0001')
+                        elif item == 'Lane':
+                            values.append('1')
+                        elif item == 'SampleID':
+                            values.append(line['Sample_ID'])
+                        elif item == 'Index':
+                            try:
+                                values.append("%s-%s" %
+                                              (line['index'].strip(),
+                                               line['index2'].strip()))
+                            except KeyError:
+                                # Assume not dual-indexed (no index2)
+                                try:
+                                    values.append(line['index'].strip())
+                                except KeyError:
+                                    # No index
+                                    values.append('')
+                        elif item == 'SampleProject':
+                            values.append(line['Sample_Project'])
+                        else:
+                            values.append('')
+                s.append(','.join(values))
         return '\n'.join(s)
 
 class IEMSampleSheet:

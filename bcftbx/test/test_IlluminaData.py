@@ -1487,6 +1487,18 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
 """
         for l1,l2 in zip(iem.show().split(),expected.split()):
             self.assertEqual(l1,l2)
+    def test_convert_hiseq_sample_sheet_to_casava(self):
+        """SampleSheet: convert HISeq IEM4 sample sheet to CASAVA format
+
+        """
+        iem = SampleSheet(fp=cStringIO.StringIO(
+            self.hiseq_sample_sheet_content))
+        expected = """FCID,Lane,SampleID,SampleRef,Index,Description,Control,Recipe,Operator,SampleProject
+FC0001,1,PJB1-1579,,CGATGTAT-TCTTTCCC,,,,,PeterBriggs
+FC0001,1,PJB2-1580,,TGACCAAT-TCTTTCCC,,,,,PeterBriggs
+"""
+        for l1,l2 in zip(iem.show(fmt='CASAVA').split(),expected.split()):
+            self.assertEqual(l1,l2)
     def test_load_miseq_sample_sheet(self):
         """SampleSheet: load a MiSEQ sample sheet
 
@@ -1538,6 +1550,18 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
             self.miseq_sample_sheet_content))
         expected = self.miseq_sample_sheet_content
         for l1,l2 in zip(iem.show().split(),expected.split()):
+            self.assertEqual(l1,l2)
+    def test_convert_miseq_sample_sheet_to_casava(self):
+        """SampleSheet: convert MISeq IEM4 sample sheet to CASAVA format
+
+        """
+        iem = SampleSheet(fp=cStringIO.StringIO(
+            self.miseq_sample_sheet_content))
+        expected = """FCID,Lane,SampleID,SampleRef,Index,Description,Control,Recipe,Operator,SampleProject
+FC0001,1,A8,,TAAGGCGA-TAGATCGC,,,,,PJB
+FC0001,1,B8,,CGTACTAG-TAGATCGC,,,,,PJB
+"""
+        for l1,l2 in zip(iem.show(fmt='CASAVA').split(),expected.split()):
             self.assertEqual(l1,l2)
     def test_load_casava_sample_sheet(self):
         """SampleSheet: load a CASAVA-style sample sheet
