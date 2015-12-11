@@ -1355,6 +1355,263 @@ class TestIlluminaFastq(unittest.TestCase):
         self.assertEqual(fq.set_number,1)
         self.assertEqual(str(fq),fastq_name)
 
+class TestSampleSheet(unittest.TestCase):
+    def setUp(self):
+        self.hiseq_sample_sheet_content = """[Header],,,,,,,,,,
+IEMFileVersion,4,,,,,,,,,
+Date,06/03/2014,,,,,,,,,
+Workflow,GenerateFASTQ,,,,,,,,,
+Application,HiSeq FASTQ Only,,,,,,,,,
+Assay,Nextera,,,,,,,,,
+Description,,,,,,,,,,
+Chemistry,Amplicon,,,,,,,,,
+,,,,,,,,,,
+[Reads],,,,,,,,,,
+101,,,,,,,,,,
+101,,,,,,,,,,
+,,,,,,,,,,
+[Settings],,,,,,,,,,
+ReverseComplement,0,,,,,,,,,
+Adapter,CTGTCTCTTATACACATCT,,,,,,,,,
+,,,,,,,,,,
+[Data],,,,,,,,,,
+Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_ID,index2,Sample_Project,Description
+1,PJB1-1579,PJB1-1579,,,N701,CGATGTAT ,N501,TCTTTCCC,PeterBriggs,
+1,PJB2-1580,PJB2-1580,,,N702,TGACCAAT ,N502,TCTTTCCC,PeterBriggs,
+"""
+        self.miseq_sample_sheet_content = """[Header]
+IEMFileVersion,4
+Date,4/11/2014
+Workflow,Metagenomics
+Application,Metagenomics 16S rRNA
+Assay,Nextera XT
+Description,
+Chemistry,Amplicon
+
+[Reads]
+150
+150
+
+[Settings]
+Adapter,CTGTCTCTTATACACATCT
+
+[Data]
+Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_ID,index2,Sample_Project,Description
+A8,A8,,,N701,TAAGGCGA,S501,TAGATCGC,PJB,
+B8,B8,,,N702,CGTACTAG,S501,TAGATCGC,PJB,
+"""
+        self.casava_sample_sheet_content = """FCID,Lane,SampleID,SampleRef,Index,Description,Control,Recipe,Operator,SampleProject
+DADA331XX,1,PhiX,PhiX control,,Control,,,Peter,Control
+DADA331XX,2,884-1,PB-884-1,AGTCAA,RNA-seq,,,Peter,AR
+DADA331XX,3,885-1,PB-885-1,AGTTCC,RNA-seq,,,Peter,AR
+DADA331XX,4,886-1,PB-886-1,ATGTCA,RNA-seq,,,Peter,AR
+DADA331XX,5,884-1,PB-884-1,AGTCAA,RNA-seq,,,Peter,AR
+DADA331XX,6,885-1,PB-885-1,AGTTCC,RNA-seq,,,Peter,AR
+DADA331XX,7,886-1,PB-886-1,ATGTCA,RNA-seq,,,Peter,AR
+DADA331XX,8,PhiX,PhiX control,,Control,,,Peter,Control
+"""
+
+    def test_load_hiseq_sample_sheet(self):
+        """SampleSheet: load a HiSEQ IEM-format sample sheet
+
+        """
+        iem = SampleSheet(fp=cStringIO.StringIO(
+            self.hiseq_sample_sheet_content))
+        # Check header
+        self.assertEqual(iem.header_items,['IEMFileVersion',
+                                           'Date',
+                                           'Workflow',
+                                           'Application',
+                                           'Assay',
+                                           'Description',
+                                           'Chemistry'])
+        self.assertEqual(iem.header['IEMFileVersion'],'4')
+        self.assertEqual(iem.header['Date'],'06/03/2014')
+        self.assertEqual(iem.header['Workflow'],'GenerateFASTQ')
+        self.assertEqual(iem.header['Application'],'HiSeq FASTQ Only')
+        self.assertEqual(iem.header['Assay'],'Nextera')
+        self.assertEqual(iem.header['Description'],'')
+        self.assertEqual(iem.header['Chemistry'],'Amplicon')
+        # Check reads
+        self.assertEqual(iem.reads,['101','101'])
+        # Check settings
+        self.assertEqual(iem.settings_items,['ReverseComplement',
+                                              'Adapter'])
+        self.assertEqual(iem.settings['ReverseComplement'],'0')
+        self.assertEqual(iem.settings['Adapter'],'CTGTCTCTTATACACATCT')
+        # Check data
+        self.assertEqual(iem.data.header(),['Lane','Sample_ID','Sample_Name',
+                                            'Sample_Plate','Sample_Well',
+                                            'I7_Index_ID','index',
+                                            'I5_Index_ID','index2',
+                                            'Sample_Project','Description'])
+        self.assertEqual(len(iem.data),2)
+        self.assertEqual(iem.data[0]['Lane'],1)
+        self.assertEqual(iem.data[0]['Sample_ID'],'PJB1-1579')
+        self.assertEqual(iem.data[0]['Sample_Name'],'PJB1-1579')
+        self.assertEqual(iem.data[0]['Sample_Plate'],'')
+        self.assertEqual(iem.data[0]['Sample_Well'],'')
+        self.assertEqual(iem.data[0]['I7_Index_ID'],'N701')
+        self.assertEqual(iem.data[0]['index'],'CGATGTAT')
+        self.assertEqual(iem.data[0]['I5_Index_ID'],'N501')
+        self.assertEqual(iem.data[0]['index2'],'TCTTTCCC')
+        self.assertEqual(iem.data[0]['Sample_Project'],'PeterBriggs')
+        self.assertEqual(iem.data[0]['Description'],'')
+    def test_show_hiseq_sample_sheet(self):
+        """SampleSheet: reconstruct a HiSEQ sample sheet
+
+        """
+        iem = SampleSheet(fp=cStringIO.StringIO(
+            self.hiseq_sample_sheet_content))
+        expected = """[Header]
+IEMFileVersion,4
+Date,06/03/2014
+Workflow,GenerateFASTQ
+Application,HiSeq FASTQ Only
+Assay,Nextera
+Description,
+Chemistry,Amplicon
+
+[Reads]
+101
+101
+
+[Settings]
+ReverseComplement,0
+Adapter,CTGTCTCTTATACACATCT
+
+[Data]
+Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_ID,index2,Sample_Project,Description
+1,PJB1-1579,PJB1-1579,,,N701,CGATGTAT,N501,TCTTTCCC,PeterBriggs,
+1,PJB2-1580,PJB2-1580,,,N702,TGACCAAT,N502,TCTTTCCC,PeterBriggs,
+"""
+        for l1,l2 in zip(iem.show().split(),expected.split()):
+            self.assertEqual(l1,l2)
+    def test_load_miseq_sample_sheet(self):
+        """SampleSheet: load a MiSEQ sample sheet
+
+        """
+        iem = SampleSheet(fp=cStringIO.StringIO(
+            self.miseq_sample_sheet_content))
+        # Check header
+        self.assertEqual(iem.header_items,['IEMFileVersion',
+                                           'Date',
+                                           'Workflow',
+                                           'Application',
+                                           'Assay',
+                                           'Description',
+                                           'Chemistry'])
+        self.assertEqual(iem.header['IEMFileVersion'],'4')
+        self.assertEqual(iem.header['Date'],'4/11/2014')
+        self.assertEqual(iem.header['Workflow'],'Metagenomics')
+        self.assertEqual(iem.header['Application'],'Metagenomics 16S rRNA')
+        self.assertEqual(iem.header['Assay'],'Nextera XT')
+        self.assertEqual(iem.header['Description'],'')
+        self.assertEqual(iem.header['Chemistry'],'Amplicon')
+        # Check reads
+        self.assertEqual(iem.reads,['150','150'])
+        # Check settings
+        self.assertEqual(iem.settings_items,['Adapter'])
+        self.assertEqual(iem.settings['Adapter'],'CTGTCTCTTATACACATCT')
+        # Check data
+        self.assertEqual(iem.data.header(),['Sample_ID','Sample_Name',
+                                            'Sample_Plate','Sample_Well',
+                                            'I7_Index_ID','index',
+                                            'I5_Index_ID','index2',
+                                            'Sample_Project','Description'])
+        self.assertEqual(len(iem.data),2)
+        self.assertEqual(iem.data[0]['Sample_ID'],'A8')
+        self.assertEqual(iem.data[0]['Sample_Name'],'A8')
+        self.assertEqual(iem.data[0]['Sample_Plate'],'')
+        self.assertEqual(iem.data[0]['Sample_Well'],'')
+        self.assertEqual(iem.data[0]['I7_Index_ID'],'N701')
+        self.assertEqual(iem.data[0]['index'],'TAAGGCGA')
+        self.assertEqual(iem.data[0]['I5_Index_ID'],'S501')
+        self.assertEqual(iem.data[0]['index2'],'TAGATCGC')
+        self.assertEqual(iem.data[0]['Sample_Project'],'PJB')
+        self.assertEqual(iem.data[0]['Description'],'')
+    def test_show_miseq_sample_sheet(self):
+        """SampleSheet: reconstruct a MiSEQ sample sheet
+
+        """
+        iem = SampleSheet(fp=cStringIO.StringIO(
+            self.miseq_sample_sheet_content))
+        expected = self.miseq_sample_sheet_content
+        for l1,l2 in zip(iem.show().split(),expected.split()):
+            self.assertEqual(l1,l2)
+    def test_load_casava_sample_sheet(self):
+        """SampleSheet: load a CASAVA-style sample sheet
+
+        """
+        casava = SampleSheet(fp=cStringIO.StringIO(
+            self.casava_sample_sheet_content))
+        # Check header
+        self.assertEqual(casava.header_items,[])
+        # Check reads
+        self.assertEqual(casava.reads,[])
+        # Check settings
+        self.assertEqual(casava.settings_items,[])
+        # Check data
+        self.assertEqual(casava.data.header(),['FCID','Lane',
+                                               'SampleID','SampleRef',
+                                               'Index','Description',
+                                               'Control','Recipe',
+                                               'Operator','SampleProject'])
+        self.assertEqual(len(casava.data),8)
+        self.assertEqual(casava.data[0]['FCID'],'DADA331XX')
+        self.assertEqual(casava.data[0]['Lane'],1)
+        self.assertEqual(casava.data[0]['SampleID'],'PhiX')
+        self.assertEqual(casava.data[0]['SampleRef'],'PhiX control')
+        self.assertEqual(casava.data[0]['Index'],'')
+        self.assertEqual(casava.data[0]['Description'],'Control')
+        self.assertEqual(casava.data[0]['Control'],'')
+        self.assertEqual(casava.data[0]['Recipe'],'')
+        self.assertEqual(casava.data[0]['Operator'],'Peter')
+        self.assertEqual(casava.data[0]['SampleProject'],'Control')
+        self.assertEqual(casava.data[1]['FCID'],'DADA331XX')
+        self.assertEqual(casava.data[1]['Lane'],2)
+        self.assertEqual(casava.data[1]['SampleID'],'884-1')
+        self.assertEqual(casava.data[1]['SampleRef'],'PB-884-1')
+        self.assertEqual(casava.data[1]['Index'],'AGTCAA')
+        self.assertEqual(casava.data[1]['Description'],'RNA-seq')
+        self.assertEqual(casava.data[1]['Control'],'')
+        self.assertEqual(casava.data[1]['Recipe'],'')
+        self.assertEqual(casava.data[1]['Operator'],'Peter')
+        self.assertEqual(casava.data[1]['SampleProject'],'AR')
+    def test_show_casava_sample_sheet(self):
+        """SampleSheet: reconstruct a CASAVA sample sheet
+
+        """
+        casava = SampleSheet(fp=cStringIO.StringIO(
+            self.casava_sample_sheet_content))
+        expected = self.casava_sample_sheet_content
+        for l1,l2 in zip(casava.show().split(),expected.split()):
+            self.assertEqual(l1,l2)
+    def test_bad_input_unrecognised_section(self):
+        """SampleSheet: raises exception for input with unrecognised section
+
+        """
+        fp = cStringIO.StringIO("""[Header]
+IEMFileVersion,4
+Date,06/03/2014
+
+[Footer]
+This,isTheEnd
+""")
+        self.assertRaises(IlluminaDataError,SampleSheet,fp=fp)
+    def test_bad_input_not_sample_sheet(self):
+        """SampleSheet: raises exception for non-IEM formatted input
+
+        """
+        fp = cStringIO.StringIO("""Something random
+IEMFileVersion,4
+Date,06/03/2014
+
+[Footer]
+This,isTheEnd
+""")
+        self.assertRaises(IlluminaDataError,SampleSheet,fp=fp)
+
 class TestIEMSampleSheet(unittest.TestCase):
     def setUp(self):
         self.hiseq_sample_sheet_content = """[Header],,,,,,,,,,

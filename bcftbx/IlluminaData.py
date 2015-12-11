@@ -30,6 +30,12 @@ import TabFile
 import cStringIO
 
 #######################################################################
+# Module constants
+#######################################################################
+
+SAMPLESHEET_ILLEGAL_CHARS = "?()[]/\=+<>:;\"',*^|&. \t"
+
+#######################################################################
 # Class definitions
 #######################################################################
 
@@ -546,6 +552,236 @@ class IlluminaSample:
         i.e. the sample name."""
         return str(self.name)
 
+class SampleSheet:
+    """
+    Class for handling Illumina sample sheets
+
+    This is a general class which tries to handle and convert
+    between older (i.e. 'CASAVA'-style) and newer (IEM-style) sample
+    sheet files for Illumina sequencers, in a transparent manner.
+
+    """
+    def __init__(self,sample_sheet=None,fp=None):
+        """
+        """
+        # Input sample sheet
+        self.sample_sheet = sample_sheet
+        # Sections for IEM-format sample sheets
+        self._header = utils.OrderedDictionary()
+        self._reads = list()
+        self._settings = utils.OrderedDictionary()
+        # Store raw data
+        self._data = None
+        # Read in file contents
+        if fp is None:
+            if self.sample_sheet is not None:
+                with open(self.sample_sheet,'rU') as fp:
+                    self._read_sample_sheet(fp)
+        else:
+            self._read_sample_sheet(fp)
+
+    def _read_sample_sheet(self,fp):
+        """
+        Internal: consumes and stores sample sheet data
+
+        Arguments:
+          fp (File): File-like object for the sample sheet
+            that has been opened for reading
+
+        """
+        # Assume that initial section is 'Data'
+        section = 'Data'
+        for i,line in enumerate(fp):
+            line = line.rstrip()
+            logging.debug(line)
+            if not line:
+                # Skip blank lines
+                continue
+            if line.startswith('['):
+                # New section
+                try:
+                    i = line.index(']')
+                    section = line[1:i]
+                    continue
+                except ValueError:
+                    raise IlluminaDataError("Bad section line (#%d): %s" %
+                                            (i+1,line))
+            if section == 'Data':
+                # Store data in TabFile object
+                if self._data is None:
+                    # Initialise TabFile using this first line
+                    # to set the header
+                    self._data = TabFile.TabFile(column_names=line.split(','),
+                                                 delimiter=',')
+                else:
+                    self._data.append(tabdata=line)
+            elif section == 'Header':
+                # Header lines are comma-separated PARAM,VALUE lines
+                self._set_section_param_value(line,self._header)
+            elif section == 'Reads':
+                # Read lines are one value per line
+                value = line.rstrip(',')
+                if value:
+                    self._reads.append(value)
+            elif section == 'Settings':
+                # Settings lines are comma-separated PARAM,VALUE lines
+                self._set_section_param_value(line,self._settings)
+            elif section is None:
+                raise IlluminaDataError("Not a valid sample sheet?")
+            else:
+                raise IlluminaDataError(
+                    "Unrecognised section '%s': not a valid IEM sample sheet?" %
+                    section)
+        # Clean up data items: remove surrounding whitespace and double
+        # quotes from values
+        if self._data is not None:
+            for line in self._data:
+                for item in self._data.header():
+                    try:
+                        line[item] = str(line[item]).strip('"').strip()
+                    except AttributeError:
+                        pass
+            # Remove lines that appear to be commented, after quote removal
+            for i,line in enumerate(self._data):
+                if str(line).startswith('#'):
+                    del(self._data[i])
+
+    def _set_section_param_value(self,line,d):
+        """
+        Internal: process a 'key,value' line
+
+        """
+        fields = line.split(',')
+        param = fields[0]
+        value = fields[1]
+        if param:
+            d[param] = value
+
+    @property
+    def header_items(self):
+        """
+        Return list of items listed in the '[Header]' section
+
+        If the sample sheet didn't contain a '[Header]' section
+        then returns an empty list.
+
+        Returns:
+          List of item names.
+
+        """
+        return self._header.keys()
+
+    @property
+    def header(self):
+        """Return ordered dictionary for the '[Header]' section
+
+        If the sample sheet didn't contain a '[Header]' section
+        then returns an empty OrderedDictionary.
+
+        Returns:
+          OrderedDictionary where keys are data items.
+
+        """
+        return self._header
+
+    @property
+    def reads(self):
+        """
+        Return list of values from the '[Reads'] section
+
+        If the sample sheet didn't contain a '[Reads]' section
+        then returns an empty list.
+        
+        Returns:
+          List of values.
+
+        """
+        return self._reads
+
+    @property
+    def settings_items(self):
+        """
+        Return list of items listed in the '[Settings]' section
+
+        If the sample sheet didn't contain a '[Settings]' section
+        then returns an empty list.
+
+        Returns:
+          List of item names.
+
+        """
+        return self._settings.keys()
+
+    @property
+    def settings(self):
+        """
+        Return ordered dictionary for the '[Settings]' section
+
+        If the sample sheet didn't contain a '[Settings]' section
+        then returns an empty OrderedDictionary.
+
+        Returns:
+          OrderedDictionary where keys are data items.
+
+        """
+        return self._settings
+
+    @property
+    def data(self):
+        """
+        Return TabFile object for the sample information
+
+        This returns the per-sample data from '[Data]' section (if
+        the original sample sheet was in IEM format), or the
+        entire file (if it was in CASAVA format).
+
+        Returns:
+          TabFile object.
+
+        """
+        return self._data
+
+    def show(self):
+        """
+        Reconstructed version of original sample sheet
+
+        Return a string containing a reconstructed version of
+        the original sample sheet, after any cleaning operations
+        (e.g. removal of unnecessary commas and whitespace) have
+        been applied.
+
+        Returns:
+          String with the reconstructed sample sheet contents.
+
+        """
+        # Guess the original format
+        if not self._header and \
+           not self._reads and \
+           not self._settings:
+            format_ = 'CASAVA'
+        else:
+            format_ = 'IEM'
+        # Reconstruct the sample sheet
+        s = []
+        if format_ == 'IEM':
+            s.append('[Header]')
+            for param in self._header:
+                s.append('%s,%s' % (param,self._header[param]))
+            s.append('')
+            s.append('[Reads]')
+            for value in self._reads:
+                s.append(value)
+            s.append('')
+            s.append('[Settings]')
+            for param in self._settings:
+                s.append('%s,%s' % (param,self._settings[param]))
+            s.append('')
+            s.append('[Data]')
+        s.append(','.join(self._data.header()))
+        for line in self._data:
+            s.append(str(line))
+        return '\n'.join(s)
+
 class IEMSampleSheet:
     """Class for handling Experimental Manager format sample sheet
     
@@ -739,7 +975,7 @@ class IEMSampleSheet:
     @property
     def reads(self):
         """Return list of values from the '[Reads'] section
-        
+
         Returns:
           List of values.
 
@@ -920,7 +1156,7 @@ class CasavaSampleSheet(TabFile.TabFile):
                                                'Index','Description','Control',
                                                'Recipe','Operator','SampleProject'))
         # Characters that can't be used in SampleID and SampleProject names
-        self.illegal_characters = "?()[]/\=+<>:;\"',*^|&. \t"
+        self.illegal_characters = SAMPLESHEET_ILLEGAL_CHARS
         # Remove double quotes from values
         for line in self:
             for name in self.header():
