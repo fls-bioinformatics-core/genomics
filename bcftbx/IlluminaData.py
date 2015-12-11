@@ -566,7 +566,10 @@ class SampleSheet:
         """
         # Input sample sheet
         self.sample_sheet = sample_sheet
+        # Format-specific settings
         self._format = None
+        self._sample_id = None
+        self._sample_project = None
         # Sections for IEM-format sample sheets
         self._header = utils.OrderedDictionary()
         self._reads = list()
@@ -659,6 +662,16 @@ class SampleSheet:
                 format_ = 'CASAVA'
             else:
                 format_ = 'IEM'
+        # Set the column names
+        column_names = self._data.header()
+        if 'SampleID' in column_names:
+            self._sample_id = 'SampleID'
+        elif 'Sample_ID' in column_names:
+            self._sample_id = 'Sample_ID'
+        if 'SampleProject' in column_names:
+            self._sample_project = 'SampleProject'
+        elif 'Sample_Project' in column_names:
+            self._sample_project = 'Sample_Project'
 
     def _set_section_param_value(self,line,d):
         """
@@ -755,6 +768,99 @@ class SampleSheet:
         """
         return self._data
 
+    @property
+    def duplicated_names(self):
+        """
+        List duplicate samples within a project
+
+        Returns a list where each item is another list with a group
+        of lines from the sample sheet which together consitute a set
+        of duplicates.
+
+        """
+        samples = {}
+        for line in self._data:
+            try:
+                index = line['Index']
+            except KeyError:
+                try:
+                    index = "%s-%s" % (line['index'],line['index2'])
+                except KeyError:
+                    index = line['index']
+            name = ((line[self._sample_id],
+                     line[self._sample_project],
+                     index,
+                     line['Lane']))
+            if name not in samples:
+                samples[name] = [line]
+            else:
+                samples[name].append(line)
+        duplicates = filter(lambda s: len(s) > 1,
+                            [samples[name] for name in samples])
+        print duplicates
+        return duplicates
+
+    @property
+    def illegal_names(self):
+        """
+        List lines with illegal characters in sample names or projects
+
+        Returns a list of lines where the sample names and/or sample project
+        names contain illegal characters.
+
+        """
+        illegal_names = []
+        for line in self._data:
+            for c in SAMPLESHEET_ILLEGAL_CHARS:
+                illegal = (str(line[self._sample_id]).count(c) > 0) \
+                          or (str(line[self._sample_project]).count(c) > 0)
+                if illegal:
+                    illegal_names.append(line)
+                    break
+        return illegal_names
+
+    @property
+    def empty_names(self):
+        """List lines with blank sample or project names
+
+        Returns a list of lines with blank sample or project names.
+
+        """
+        empty_names = []
+        for line in self._data:
+            if str(line[self._sample_id]).strip() == '' \
+               or str(line[self._sample_project]).strip() == '':
+                empty_names.append(line)
+        return empty_names
+
+    def fix_duplicated_names(self):
+        """
+        Rename samples to remove duplicated sample names within a project
+
+        Appends a numeric index to sample names in the duplicated lines
+        in order to remove the duplication.
+
+        """
+        for duplicate in self.duplicated_names:
+            for i in range(0,len(duplicate)):
+                duplicate[i][self._sample_id] = "%s_%d" % \
+                                                (duplicate[i][self._sample_id],
+                                                 i+1)
+
+    def fix_illegal_names(self):
+        """
+        Replace illegal characters in sample and project name pairs
+
+        Replaces any illegal characters with underscores.
+
+        """
+        for line in self.illegal_names:
+            for c in SAMPLESHEET_ILLEGAL_CHARS:
+                line[self._sample_id] = \
+                    str(line[self._sample_id]).strip().replace(c,'_').strip('_')
+                line[self._sample_project] = \
+                    str(line[self._sample_project]).strip().replace(c,'_').strip('_')
+
     def show(self,fmt=None):
         """
         Reconstructed version of original sample sheet
@@ -763,6 +869,13 @@ class SampleSheet:
         the original sample sheet, after any cleaning operations
         (e.g. removal of unnecessary commas and whitespace) have
         been applied.
+
+        The format of the output will be the same as that of the
+        input, unless explicitly reset using the 'fmt' option.
+
+        Arguments:
+           fmt (str): optional, explicitly set the format for
+             the output. Can be either 'CASAVA' or 'IEM'.
 
         Returns:
           String with the reconstructed sample sheet contents.

@@ -1635,6 +1635,104 @@ Date,06/03/2014
 This,isTheEnd
 """)
         self.assertRaises(IlluminaDataError,SampleSheet,fp=fp)
+    def test_duplicates_in_iem_format(self):
+        """
+        SampleSheet: check and fix duplicated names in IEM sample sheet
+
+        """
+        # Set up
+        iem = SampleSheet(fp=cStringIO.StringIO(
+            self.hiseq_sample_sheet_content))
+        # Shouldn't find any duplicates when lanes are different
+        self.assertEqual(len(iem.duplicated_names),0)
+        # Create 3 duplicates by resetting lane numbers
+        iem.data[1]['Sample_ID'] = iem.data[0]['Sample_ID']
+        iem.data[1]['Sample_Name'] = iem.data[0]['Sample_Name']
+        iem.data[1]['index'] = iem.data[0]['index']
+        iem.data[1]['index2'] = iem.data[0]['index2']
+        iem.data[1]['Sample_Project'] = iem.data[0]['Sample_Project']
+        self.assertEqual(len(iem.duplicated_names),1)
+        # Fix and check again (should be none)
+        iem.fix_duplicated_names()
+        self.assertEqual(iem.duplicated_names,[])
+    def test_illegal_names_in_iem_format(self):
+        """
+        SampleSheet: check for illegal characters in IEM sample sheet
+
+        """
+        # Set up and introduce bad names
+        iem = SampleSheet(fp=cStringIO.StringIO(
+            self.hiseq_sample_sheet_content))
+        iem.data[0]['Sample_ID'] = 'PJB1 1579'
+        iem.data[1]['Sample_Project'] = "PeterBriggs?"
+        # Check for illegal names
+        self.assertEqual(len(iem.illegal_names),2)
+        # Fix and check again
+        iem.fix_illegal_names()
+        self.assertEqual(iem.illegal_names,[])
+        # Verify that character replacement worked correctly
+        self.assertEqual(iem.data[0]['Sample_ID'],'PJB1_1579')
+        self.assertEqual(iem.data[1]['Sample_Project'],"PeterBriggs")
+    def test_empty_names_in_iem_format(self):
+        """
+        SampleSheet: check for empty sample/project names in IEM sample sheet
+
+        """
+        # Set up and introduce bad names
+        iem = SampleSheet(fp=cStringIO.StringIO(
+            self.hiseq_sample_sheet_content))
+        iem.data[0]['Sample_ID'] = ''
+        iem.data[1]['Sample_Project'] = ''
+        # Check for empty names
+        self.assertEqual(len(iem.empty_names),2)
+    def test_duplicates_in_casava_format(self):
+        """
+        SampleSheet: check and fix duplicated names in CASAVA sample sheet
+
+        """
+        # Set up
+        casava = SampleSheet(fp=cStringIO.StringIO(
+            self.casava_sample_sheet_content))
+        # Shouldn't find any duplicates when lanes are different
+        self.assertEqual(len(casava.duplicated_names),0)
+        # Create 3 duplicates by resetting lane numbers
+        casava.data[4]['Lane'] = 2
+        casava.data[5]['Lane'] = 3
+        casava.data[6]['Lane'] = 4
+        self.assertEqual(len(casava.duplicated_names),3)
+        # Fix and check again (should be none)
+        casava.fix_duplicated_names()
+        self.assertEqual(casava.duplicated_names,[])
+    def test_illegal_names_in_casava_format(self):
+        """
+        SampleSheet: check for illegal characters in CASAVA sample sheet
+
+        """
+        # Set up and introduce bad names
+        casava = SampleSheet(fp=cStringIO.StringIO(
+            self.casava_sample_sheet_content))
+        casava.data[3]['SampleID'] = '886 1'
+        casava.data[4]['SampleProject'] = "AR?"
+        # Check for illegal names
+        self.assertEqual(len(casava.illegal_names),2)
+        # Fix and check again
+        casava.fix_illegal_names()
+        self.assertEqual(casava.illegal_names,[])
+        # Verify that character replacement worked correctly
+        self.assertEqual(casava.data[3]['SampleID'],'886_1')
+        self.assertEqual(casava.data[4]['SampleProject'],"AR")
+    def test_empty_names_in_casava_format(self):
+        """
+        SampleSheet: check for empty sample/project names in CASAVA sample sheet
+
+        """
+        # Set up and introduce bad names
+        casava = SampleSheet(fp=cStringIO.StringIO(
+            self.casava_sample_sheet_content))
+        casava.data[3]['SampleID'] = ''
+        casava.data[4]['SampleProject'] = ""
+        # Check for illegal names
+        self.assertEqual(len(casava.empty_names),2)
 
 class TestIEMSampleSheet(unittest.TestCase):
     def setUp(self):
