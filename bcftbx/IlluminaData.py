@@ -941,6 +941,62 @@ class SampleSheet:
                 s.append(','.join(values))
         return '\n'.join(s)
 
+    def predict_output(self):
+        """
+        Predict the expected outputs from the sample sheet content
+
+        Constructs and returns a simple dictionary-based data structure
+        which predicts the output data structure that will produced by
+        running CASAVA using the sample sheet data.
+
+        The structure is:
+
+        { 'project_1': {
+                         'sample_1': [name1,name2...],
+                         'sample_2': [...],
+                         ... }
+          'project_2': {
+                         'sample_3': [...],
+                         ... }
+          ... }
+
+        """
+        projects = {}
+        for line in self.data:
+            # Sample and project names
+            project = "Project_%s" % line[self._sample_project]
+            sample = "Sample_%s" % line[self._sample_id]
+            if project not in projects:
+                samples = {}
+            else:
+                samples = projects[project]
+            if sample not in samples:
+                samples[sample] = []
+            # Index sequence
+            try:
+                # Try dual-indexed IEM4 format
+                indx = "%s-%s" %(line['index'].strip(),
+                                 line['index2'].strip())
+            except KeyError:
+                # Try single indexed IEM4 (no index2)
+                try:
+                    indx = line['index'].strip()
+                except KeyError:
+                    # Try CASAVA format
+                    indx = line['Index'].strip()
+            if not indx:
+                indx = "NoIndex"
+            # Lane
+            try:
+                lane = line['Lane']
+            except KeyError:
+                lane = 1
+            # Construct base name
+            samples[sample].append("%s_%s_L%03d" % (line[self._sample_id],
+                                                    indx,lane))
+            projects[project] = samples
+        return projects
+
 class IEMSampleSheet:
     """Class for handling Experimental Manager format sample sheet
     

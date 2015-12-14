@@ -1499,6 +1499,20 @@ FC0001,1,PJB2-1580,,TGACCAAT-TCTTTCCC,,,,,PeterBriggs
 """
         for l1,l2 in zip(iem.show(fmt='CASAVA').split(),expected.split()):
             self.assertEqual(l1,l2)
+    def test_hiseq_predict_output(self):
+        """SampleSheet: check predicted outputs for HISeq IEM4 sample sheet
+
+        """
+        iem = SampleSheet(fp=cStringIO.StringIO(
+            self.hiseq_sample_sheet_content))
+        output = iem.predict_output()
+        self.assertTrue('Project_PeterBriggs' in output)
+        self.assertTrue('Sample_PJB1-1579' in output['Project_PeterBriggs'])
+        self.assertTrue('Sample_PJB2-1580' in output['Project_PeterBriggs'])
+        self.assertEqual(output['Project_PeterBriggs']['Sample_PJB1-1579'],
+                         ['PJB1-1579_CGATGTAT-TCTTTCCC_L001',])
+        self.assertEqual(output['Project_PeterBriggs']['Sample_PJB2-1580'],
+                         ['PJB2-1580_TGACCAAT-TCTTTCCC_L001',])
     def test_load_miseq_sample_sheet(self):
         """SampleSheet: load a MiSEQ sample sheet
 
@@ -1563,6 +1577,20 @@ FC0001,1,B8,,CGTACTAG-TAGATCGC,,,,,PJB
 """
         for l1,l2 in zip(iem.show(fmt='CASAVA').split(),expected.split()):
             self.assertEqual(l1,l2)
+    def test_miseq_predict_output(self):
+        """SampleSheet: check predicted outputs for MISeq IEM4 sample sheet
+
+        """
+        iem = SampleSheet(fp=cStringIO.StringIO(
+            self.miseq_sample_sheet_content))
+        output = iem.predict_output()
+        self.assertTrue('Project_PJB' in output)
+        self.assertTrue('Sample_A8' in output['Project_PJB'])
+        self.assertTrue('Sample_B8' in output['Project_PJB'])
+        self.assertEqual(output['Project_PJB']['Sample_A8'],
+                         ['A8_TAAGGCGA-TAGATCGC_L001',])
+        self.assertEqual(output['Project_PJB']['Sample_B8'],
+                         ['B8_CGTACTAG-TAGATCGC_L001',])
     def test_load_casava_sample_sheet(self):
         """SampleSheet: load a CASAVA-style sample sheet
 
@@ -1611,6 +1639,31 @@ FC0001,1,B8,,CGTACTAG-TAGATCGC,,,,,PJB
         expected = self.casava_sample_sheet_content
         for l1,l2 in zip(casava.show().split(),expected.split()):
             self.assertEqual(l1,l2)
+    def test_casava_predict_output(self):
+        """SampleSheet: check predicted outputs for CASAVA sample sheet
+
+        """
+        casava = SampleSheet(fp=cStringIO.StringIO(
+            self.casava_sample_sheet_content))
+        output = casava.predict_output()
+        self.assertTrue('Project_Control' in output)
+        self.assertTrue('Sample_PhiX' in output['Project_Control'])
+        self.assertEqual(output['Project_Control']['Sample_PhiX'],
+                         ['PhiX_NoIndex_L001',
+                          'PhiX_NoIndex_L008'])
+        self.assertTrue('Project_AR' in output)
+        self.assertTrue('Sample_884-1' in output['Project_AR'])
+        self.assertTrue('Sample_885-1' in output['Project_AR'])
+        self.assertTrue('Sample_886-1' in output['Project_AR'])
+        self.assertEqual(output['Project_AR']['Sample_884-1'],
+                         ['884-1_AGTCAA_L002',
+                          '884-1_AGTCAA_L005'])
+        self.assertEqual(output['Project_AR']['Sample_885-1'],
+                         ['885-1_AGTTCC_L003',
+                          '885-1_AGTTCC_L006'])
+        self.assertEqual(output['Project_AR']['Sample_886-1'],
+                         ['886-1_ATGTCA_L004',
+                          '886-1_ATGTCA_L007'])
     def test_bad_input_unrecognised_section(self):
         """SampleSheet: raises exception for input with unrecognised section
 
