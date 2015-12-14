@@ -696,6 +696,42 @@ class SampleSheet:
         else:
             self._read_sample_sheet(fp)
 
+    def __getitem__(self,key):
+        """
+        Implement __getitem__ built-in: read 'data' directly
+
+        """
+        return self._data[key]
+
+    def __setitem__(self,key,value):
+        """
+        Implement __setitem__ built-in: write 'data' directly
+
+        """
+        self._data[key] = value
+
+    def __iter__(self):
+        """
+        """
+        return iter(self._data)
+
+    def __len__(self):
+        """
+        Implement len() built-in: returns number of lines of data
+
+        """
+        if self._data is not None:
+            return len(self._data)
+        else:
+            return 0
+
+    def append(self,*args):
+        """
+        Create and return a new line of data in the sample sheet
+
+        """
+        return self._data.append(*args)
+
     def _read_sample_sheet(self,fp):
         """
         Internal: consumes and stores sample sheet data
@@ -1053,6 +1089,33 @@ class SampleSheet:
                 s.append(','.join(values))
         return '\n'.join(s)
 
+    def write(self,filen=None,fp=None,fmt=None):
+        """
+        Output the sample sheet data to file or stream
+
+        The format of the output will be the same as that of the
+        input, unless explicitly reset using the 'fmt' option.
+
+        Arguments:
+          filen: (optional) name of file to write to; ignored if fp is
+            also specified
+          fp: (optional) a file-like object opened for writing; used in
+            preference to filen if set to a non-null value
+            Note that the calling program must close the stream in
+            these cases.
+          fmt (str): optional, explicitly set the format for
+            the output. Can be either 'CASAVA' or 'IEM'.
+
+        """
+        if fp is None:
+            if filen is None:
+                fp = sys.stdout
+            else:
+                fp = open(filen,'r')
+        fp.write("%s\n" % self.show(fmt=fmt))
+        if filen is not None:
+            fp.close()
+
     def predict_output(self):
         """
         Predict the expected outputs from the sample sheet content
@@ -1190,40 +1253,17 @@ class IEMSampleSheet(SampleSheet):
                 sample_sheet_line['SampleProject'] = line['Sample_Project']
         return sample_sheet
 
-class CasavaSampleSheet(TabFile.TabFile):
-    """Class for reading and manipulating sample sheet files for CASAVA
+class CasavaSampleSheet(SampleSheet):
+    """
+    Class for reading and manipulating sample sheet files for CASAVA
 
-    Sample sheets are CSV files with a header line and then one line per sample
-    with the following fields:
+    This class is a subclass of the SampleSheet class, and provides
+    an additional method ('casava_sample_sheet') to convert to a
+    CASAVA-style sample sheet, suitable for input into bcl2fastq
+    version 1.8.*.
 
-    FCID: flow cell ID
-    Lane: lane number (integer from 1 to 8)
-    SampleID: ID (name) for the sample
-    SampleRef: reference used for alignment for the sample
-    Index: index sequences (multiple index reads are separated by a hyphen e.g.
-           ACCAGTAA-GGACATGA
-    Description: Description of the sample
-    Control: Y indicates this lane is a control lane, N means sample
-    Recipe: Recipe used during sequencing
-    Operator: Name or ID of the operator
-    SampleProject: project the sample belongs to
-
-    The key fields are 'Lane', 'Index' (needed for demultiplexing), 'SampleID' (used
-    to name the output FASTQ files from CASAVA) and 'SampleProject' (used to name the
-    output directories that group together FASTQ files from samples with the same
-    project name).
-
-    The standard TabFile methods can be used to interrogate and manipulate the data:
-
-    >>> s = CasavaSampleSheet('SampleSheet.csv')
-    >>> print "Number of lines = %d" % len(s)
-    >>> line = s[0]   # Fetch reference to first line
-    >>> print "SampleID = %s" % line['SampleID']
-    >>> line['SampleID'] = 'New_name'
-
-    'SampleID' and 'SampleProject' must not contain any 'illegal' characters (e.g.
-    spaces, asterisks etc). The full set of illegal characters is listed in the
-    'illegal_characters' property of the CasavaSampleSheet object.
+    Raises IlluminaDataError exception if the input data doesn't
+    appear to be in the correct format.
 
     """
 
@@ -1246,150 +1286,44 @@ class CasavaSampleSheet(TabFile.TabFile):
               (Note that the calling program must close the stream itself)
 
         """
-        TabFile.TabFile.__init__(self,filen=samplesheet,fp=fp,
-                                 delimiter=',',skip_first_line=True,
-                                 column_names=('FCID','Lane','SampleID','SampleRef',
-                                               'Index','Description','Control',
-                                               'Recipe','Operator','SampleProject'))
-        # Characters that can't be used in SampleID and SampleProject names
-        self.illegal_characters = SAMPLESHEET_ILLEGAL_CHARS
-        # Remove double quotes from values
-        for line in self:
-            for name in self.header():
-                line[name] = str(line[name]).strip('"')
+        SampleSheet.__init__(self,samplesheet,fp)
+        if self._data is None:
+            self._data = TabFile.TabFile(delimiter=',',
+                                         column_names=('FCID','Lane',
+                                                       'SampleID','SampleRef',
+                                                       'Index','Description',
+                                                       'Control','Recipe',
+                                                       'Operator','SampleProject'))
+            self._format = 'CASAVA'
+        if self._format != 'CASAVA':
+            raise IlluminaDataError("Sample sheet is not CASAVA format")
         # Remove lines that appear to be commented, after quote removal
         for i,line in enumerate(self):
             if str(line).startswith('#'):
                 del(self[i])
 
-    def write(self,filen=None,fp=None):
-        """Output the sample sheet data to file or stream
+    def header(self):
+        """
+        Return header items from the CASAVA sample sheet
 
-        Overrides the TabFile.write method.
+        NB this over-rides the 'header' method from the base class.
+        """
+        return self._data.header()
+
+    def write(self,filen=None,fp=None):
+        """
+        Output the sample sheet data to file or stream
 
         Arguments:
           filen: (optional) name of file to write to; ignored if fp is
             also specified
           fp: (optional) a file-like object opened for writing; used in
             preference to filen if set to a non-null value
-              Note that the calling program must close the stream in
-              these cases.
-        
-        """
-        TabFile.TabFile.write(self,filen=filen,fp=fp,include_header=True,no_hash=True)
-
-    @property
-    def duplicated_names(self):
-        """List lines where the SampleID/SampleProject pairs are identical
-
-        Returns a list of lists, with each sublist consisting of the lines with
-        identical SampleID/SampleProject pairs.
+            Note that the calling program must close the stream in
+            these cases.
 
         """
-        samples = {}
-        for line in self:
-            name = ((line['SampleID'],line['SampleProject'],line['Index'],line['Lane']))
-            if name not in samples:
-                samples[name] = [line]
-            else:
-                samples[name].append(line)
-        duplicates = []
-        for name in samples:
-            if len(samples[name]) > 1: duplicates.append(samples[name])
-        return duplicates
-
-    @property
-    def empty_names(self):
-        """List lines with blank SampleID or SampleProject names
-
-        Returns a list of lines with blank SampleID or SampleProject names.
-
-        """
-        empty_names = []
-        for line in self:
-            if str(line['SampleID']).strip() == '' \
-               or str(line['SampleProject']).strip() == '':
-                empty_names.append(line)
-        return empty_names
-
-    @property
-    def illegal_names(self):
-        """List lines with illegal characters in SampleID or SampleProject names
-
-        Returns a list of lines with SampleID or SampleProject names containing
-        illegal characters.
-
-        """
-        illegal_names = []
-        for line in self:
-            for c in self.illegal_characters:
-                illegal = (str(line['SampleID']).count(c) > 0) \
-                          or (str(line['SampleProject']).count(c) > 0)
-                if illegal:
-                    illegal_names.append(line)
-                    break
-        return illegal_names
-
-    def fix_duplicated_names(self):
-        """Rename samples to remove duplicated SampleID/SampleProject pairs
-
-        Appends numeric index to SampleIDs in duplicated lines to remove the
-        duplication.
-
-        """
-        for duplicate in self.duplicated_names:
-            for i in range(0,len(duplicate)):
-                duplicate[i]['SampleID'] = "%s_%d" % (duplicate[i]['SampleID'],i+1)
-
-    def fix_illegal_names(self):
-        """Replace illegal characters in SampleID and SampleProject pairs
-
-        Replaces any illegal characters with underscores.
-        
-        """
-        for line in self.illegal_names:
-            for c in self.illegal_characters:
-                line['SampleID'] = str(line['SampleID']).strip().replace(c,'_').strip('_')
-                line['SampleProject'] = str(line['SampleProject']).strip().replace(c,'_').strip('_')
-
-    def predict_output(self):
-        """Predict the expected outputs from the sample sheet content
-
-        Constructs and returns a simple dictionary-based data structure
-        which predicts the output data structure that will produced by
-        running CASAVA using the sample sheet data.
-
-        The structure is:
-
-        { 'project_1': {
-                         'sample_1': [name1,name2...],
-                         'sample_2': [...],
-                         ... }
-          'project_2': {
-                         'sample_3': [...],
-                         ... }
-          ... }
-
-        """
-        projects = {}
-        for line in self:
-            project = "Project_%s" % line['SampleProject']
-            sample = "Sample_%s" % line['SampleID']
-            if project not in projects:
-                samples = {}
-            else:
-                samples = projects[project]
-            if sample not in samples:
-                samples[sample] = []
-            if line['Index'].strip() == "":
-                indx = "NoIndex"
-            else:
-                indx = line['Index']
-            samples[sample].append("%s_%s_L%03d" % (line['SampleID'],
-                                                    indx,
-                                                    line['Lane']))
-            projects[project] = samples
-        return projects
+        SampleSheet.write(self,filen=filen,fp=fp,fmt='CASAVA')
 
 class IlluminaFastq:
     """Class for extracting information about Fastq files

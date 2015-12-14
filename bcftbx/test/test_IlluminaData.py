@@ -1664,6 +1664,82 @@ FC0001,1,B8,,CGTACTAG-TAGATCGC,,,,,PJB
         self.assertEqual(output['Project_AR']['Sample_886-1'],
                          ['886-1_ATGTCA_L004',
                           '886-1_ATGTCA_L007'])
+    def test_len(self):
+        """SampleSheet: test __len__ built-in
+
+        """
+        empty = SampleSheet()
+        self.assertEqual(len(empty),0)
+        hiseq = SampleSheet(fp=cStringIO.StringIO(
+            self.hiseq_sample_sheet_content))
+        self.assertEqual(len(hiseq),2)
+        casava = SampleSheet(fp=cStringIO.StringIO(
+            self.casava_sample_sheet_content))
+        self.assertEqual(len(casava),8)
+    def test_iter(self):
+        """SampleSheet: test __iter__ built-in
+
+        """
+        hiseq = SampleSheet(fp=cStringIO.StringIO(
+            self.hiseq_sample_sheet_content))
+        for line0,line1 in zip(hiseq,hiseq.data):
+            self.assertEqual(line0,line1)
+        casava = SampleSheet(fp=cStringIO.StringIO(
+            self.casava_sample_sheet_content))
+        for line0,line1 in zip(casava,casava.data):
+            self.assertEqual(line0,line1)
+    def test_getitem(self):
+        """SampleSheet: test __getitem__ built-in
+
+        """
+        hiseq = SampleSheet(fp=cStringIO.StringIO(
+            self.hiseq_sample_sheet_content))
+        self.assertEqual(hiseq[0],hiseq.data[0])
+        self.assertEqual(hiseq[1],hiseq.data[1])
+        casava = SampleSheet(fp=cStringIO.StringIO(
+            self.casava_sample_sheet_content))
+        self.assertEqual(casava[0],casava.data[0])
+        self.assertEqual(casava[2],casava.data[2])
+        self.assertEqual(casava[7],casava.data[7])
+    def test_setitem(self):
+        """SampleSheet: test __setitem__ built-in
+
+        """
+        hiseq = SampleSheet(fp=cStringIO.StringIO(
+            self.hiseq_sample_sheet_content))
+        hiseq[0]['Sample_ID'] = 'NewSample1'
+        self.assertEqual(hiseq[0]['Sample_ID'],'NewSample1')
+        casava = SampleSheet(fp=cStringIO.StringIO(
+            self.casava_sample_sheet_content))
+        casava[0]['SampleID'] = 'NewSample2'
+        self.assertEqual(casava[0]['SampleID'],'NewSample2')
+    def test_append(self):
+        """SampleSheet: test append method
+
+        """
+        hiseq = SampleSheet(fp=cStringIO.StringIO(
+            self.hiseq_sample_sheet_content))
+        self.assertEqual(len(hiseq),2)
+        new_line = hiseq.append()
+        self.assertEqual(len(hiseq),3)
+    def test_write_iem(self):
+        """SampleSheet: write out IEM formatted sample sheet
+
+        """
+        miseq = SampleSheet(fp=cStringIO.StringIO(
+            self.miseq_sample_sheet_content))
+        fp=cStringIO.StringIO()
+        miseq.write(fp=fp)
+        self.assertEqual(fp.getvalue(),self.miseq_sample_sheet_content)
+    def test_write_casava(self):
+        """SampleSheet: write out CASAVA formatted sample sheet
+
+        """
+        casava = SampleSheet(fp=cStringIO.StringIO(
+            self.casava_sample_sheet_content))
+        fp=cStringIO.StringIO()
+        casava.write(fp=fp)
+        self.assertEqual(fp.getvalue(),self.casava_sample_sheet_content)
     def test_bad_input_unrecognised_section(self):
         """SampleSheet: raises exception for input with unrecognised section
 
