@@ -651,6 +651,34 @@ class SampleSheet:
     >>> casava.data[0]['Lane']
     1
 
+    Accessing data directly
+    -----------------------
+
+    The data in the 'Data' section can be accessed directly
+    from the SampleSheet instance, e.g.
+
+    >>> iem[0]['Lane']
+
+    is equivalent to
+
+    >>> iem.data[0]['Lane']
+
+    It is also possible to set new values for data items using
+    this notation.
+
+    The data lines can be iterated over using:
+
+    >>> for line in iem:
+    >>> ...
+
+    To find the number of lines that are stored:
+
+    >>> len(iem)
+
+    To append a new line:
+
+    >>> new_line = iem.append(...)
+
     Checking and clean-up methods
     -----------------------------
 
@@ -789,16 +817,16 @@ class SampleSheet:
                 raise IlluminaDataError(
                     "Unrecognised section '%s': not a valid IEM sample sheet?" %
                     section)
-        # Clean up data items: remove surrounding whitespace and double
-        # quotes from values
+        # Clean up data
         if self._data is not None:
+            # Remove surrounding whitespace and double quotes from values
             for line in self._data:
                 for item in self._data.header():
                     try:
                         line[item] = str(line[item]).strip('"').strip()
                     except AttributeError:
                         pass
-            # Remove lines that appear to be commented, after quote removal
+            # Remove lines that appear to be commented (after quote removal)
             for i,line in enumerate(self._data):
                 if str(line).startswith('#'):
                     del(self._data[i])
@@ -1297,10 +1325,6 @@ class CasavaSampleSheet(SampleSheet):
             self._format = 'CASAVA'
         if self._format != 'CASAVA':
             raise IlluminaDataError("Sample sheet is not CASAVA format")
-        # Remove lines that appear to be commented, after quote removal
-        for i,line in enumerate(self):
-            if str(line).startswith('#'):
-                del(self[i])
 
     def header(self):
         """
