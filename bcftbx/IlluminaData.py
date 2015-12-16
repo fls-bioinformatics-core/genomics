@@ -182,12 +182,14 @@ class IlluminaData:
     analysis_dir:  top-level directory holding the 'Unaligned' subdirectory
                    with the primary fastq.gz files
     projects:      list of IlluminaProject objects (one for each project
-                   defined at the fastq creation stage, expected to be in
-                   subdirectories "Project_...")
+                   defined at the fastq creation stage)
     undetermined:  IlluminaProject object for the undetermined reads
     unaligned_dir: full path to the 'Unaligned' directory holding the
                    primary fastq.gz files
     paired_end:    True if all projects are paired end, False otherwise
+    format:        Format of the directory structure layout (either
+                   'casava' or 'bcl2fastq2', or None if the format cannot
+                   be determined)
 
     Provides the following methods:
 
@@ -211,7 +213,7 @@ class IlluminaData:
         self.projects = []
         self.undetermined = None
         self.paired_end = True
-        self.package = None
+        self.format = None
         # Look for "unaligned" data directory
         self.unaligned_dir = os.path.join(self.analysis_dir,unaligned_dir)
         if not os.path.exists(self.unaligned_dir):
@@ -247,6 +249,8 @@ class IlluminaData:
         # Raise an exception if no projects found
         if not self.projects :
             raise IlluminaDataError("No CASAVA-style projects found")
+        else:
+            self.format = 'casava'
 
     def _populate_bcl2fastq2_style(self):
         """
@@ -285,11 +289,11 @@ class IlluminaData:
         # Raise an exception if no projects found
         if not project_dirs:
             raise IlluminaDataError("No bcl2fastq2-style projects found")
-        print "Projects = %s" % project_dirs
         # Create project objects
         self.undetermined = IlluminaProject(self.unaligned_dir)
         for dirn in project_dirs:
             self.projects.append(IlluminaProject(dirn))
+        self.format = 'bcl2fastq2'
 
     def get_project(self,name):
         """Return project that matches 'name'

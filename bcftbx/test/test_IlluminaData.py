@@ -1021,6 +1021,7 @@ class TestIlluminaDataForCasava(BaseTestIlluminaData):
         self.makeMockIlluminaData()
         illumina_data = IlluminaData(self.mock_illumina_data.dirn)
         self.assertIlluminaData(illumina_data,self.mock_illumina_data)
+        self.assertEqual(illumina_data.format,'casava')
 
     def test_illumina_data_paired_end(self):
         """Read CASAVA-style output with single project & paired-end data
@@ -1029,6 +1030,7 @@ class TestIlluminaDataForCasava(BaseTestIlluminaData):
         self.makeMockIlluminaData(paired_end=True)
         illumina_data = IlluminaData(self.mock_illumina_data.dirn)
         self.assertIlluminaData(illumina_data,self.mock_illumina_data)
+        self.assertEqual(illumina_data.format,'casava')
 
     def test_illumina_data_multiple_projects(self):
         """Read CASAVA-style output with multiple projects
@@ -1037,6 +1039,7 @@ class TestIlluminaDataForCasava(BaseTestIlluminaData):
         self.makeMockIlluminaData(multiple_projects=True)
         illumina_data = IlluminaData(self.mock_illumina_data.dirn)
         self.assertIlluminaData(illumina_data,self.mock_illumina_data)
+        self.assertEqual(illumina_data.format,'casava')
 
     def test_illumina_data_multiple_projects_paired_end(self):
         """Read CASAVA-style output with multiple projects & paired-end data
@@ -1045,6 +1048,7 @@ class TestIlluminaDataForCasava(BaseTestIlluminaData):
         self.makeMockIlluminaData(multiple_projects=True,paired_end=True)
         illumina_data = IlluminaData(self.mock_illumina_data.dirn)
         self.assertIlluminaData(illumina_data,self.mock_illumina_data)
+        self.assertEqual(illumina_data.format,'casava')
 
     def test_illumina_data_multiple_projects_multiplexed(self):
         """Read CASAVA-style output with multiple projects & multiplexing
@@ -1053,6 +1057,7 @@ class TestIlluminaDataForCasava(BaseTestIlluminaData):
         self.makeMockIlluminaData(multiple_projects=True,multiplexed_run=True)
         illumina_data = IlluminaData(self.mock_illumina_data.dirn)
         self.assertIlluminaData(illumina_data,self.mock_illumina_data)
+        self.assertEqual(illumina_data.format,'casava')
 
     def test_illumina_data_multiple_projects_multiplexed_paired_end(self):
         """Read CASAVA-style output with multiple projects, multiplexing & paired-end data
@@ -1062,6 +1067,7 @@ class TestIlluminaDataForCasava(BaseTestIlluminaData):
                                   paired_end=True)
         illumina_data = IlluminaData(self.mock_illumina_data.dirn)
         self.assertIlluminaData(illumina_data,self.mock_illumina_data)
+        self.assertEqual(illumina_data.format,'casava')
 
 class TestIlluminaDataForBcl2fastq2(BaseTestIlluminaData):
     """
@@ -1102,6 +1108,7 @@ class TestIlluminaDataForBcl2fastq2(BaseTestIlluminaData):
         self.makeMockIlluminaData()
         illumina_data = IlluminaData(self.mock_illumina_data.dirn)
         self.assertIlluminaData(illumina_data,self.mock_illumina_data)
+        self.assertEqual(illumina_data.format,'bcl2fastq2')
 
     def test_illumina_data_paired_end(self):
         """Read bcl2fastq2-style output with single project & paired-end data
@@ -1110,6 +1117,7 @@ class TestIlluminaDataForBcl2fastq2(BaseTestIlluminaData):
         self.makeMockIlluminaData(paired_end=True)
         illumina_data = IlluminaData(self.mock_illumina_data.dirn)
         self.assertIlluminaData(illumina_data,self.mock_illumina_data)
+        self.assertEqual(illumina_data.format,'bcl2fastq2')
 
     def test_illumina_data_multiple_projects(self):
         """Read bcl2fastq2-style output with multiple projects
@@ -1118,6 +1126,7 @@ class TestIlluminaDataForBcl2fastq2(BaseTestIlluminaData):
         self.makeMockIlluminaData(multiple_projects=True)
         illumina_data = IlluminaData(self.mock_illumina_data.dirn)
         self.assertIlluminaData(illumina_data,self.mock_illumina_data)
+        self.assertEqual(illumina_data.format,'bcl2fastq2')
 
     def test_illumina_data_multiple_projects_paired_end(self):
         """Read bcl2fastq2-style output with multiple projects & paired-end data
@@ -1126,6 +1135,7 @@ class TestIlluminaDataForBcl2fastq2(BaseTestIlluminaData):
         self.makeMockIlluminaData(multiple_projects=True,paired_end=True)
         illumina_data = IlluminaData(self.mock_illumina_data.dirn)
         self.assertIlluminaData(illumina_data,self.mock_illumina_data)
+        self.assertEqual(illumina_data.format,'bcl2fastq2')
 
     def test_illumina_data_multiple_projects_multiplexed(self):
         """Read bcl2fastq2-style output with multiple projects & multiplexing
@@ -1134,6 +1144,7 @@ class TestIlluminaDataForBcl2fastq2(BaseTestIlluminaData):
         self.makeMockIlluminaData(multiple_projects=True,multiplexed_run=True)
         illumina_data = IlluminaData(self.mock_illumina_data.dirn)
         self.assertIlluminaData(illumina_data,self.mock_illumina_data)
+        self.assertEqual(illumina_data.format,'bcl2fastq2')
 
     def test_illumina_data_multiple_projects_multiplexed_paired_end(self):
         """Read bcl2fastq2-style output with multiple projects, multiplexing & paired-end data
@@ -1143,6 +1154,7 @@ class TestIlluminaDataForBcl2fastq2(BaseTestIlluminaData):
                                   paired_end=True)
         illumina_data = IlluminaData(self.mock_illumina_data.dirn)
         self.assertIlluminaData(illumina_data,self.mock_illumina_data)
+        self.assertEqual(illumina_data.format,'bcl2fastq2')
 
 class TestCasavaSampleSheet(unittest.TestCase):
 
