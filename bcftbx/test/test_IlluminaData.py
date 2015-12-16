@@ -837,6 +837,7 @@ class TestIlluminaRun(unittest.TestCase):
                          os.path.join(self.mock_illumina_run.dirn,
                                       'RunInfo.xml'))
         self.assertEqual(run.bcl_extension,".bcl")
+        self.assertEqual(run.lanes,[1,])
 
     def test_illuminarun_hiseq(self):
         # Make a mock run directory for HISeq format
@@ -859,6 +860,7 @@ class TestIlluminaRun(unittest.TestCase):
                          os.path.join(self.mock_illumina_run.dirn,
                                       'RunInfo.xml'))
         self.assertEqual(run.bcl_extension,".bcl.gz")
+        self.assertEqual(run.lanes,[1,2,3,4,5,6,7,8])
 
     def test_illuminarun_nextseq(self):
         # Make a mock run directory for HISeq format
@@ -878,6 +880,7 @@ class TestIlluminaRun(unittest.TestCase):
                          os.path.join(self.mock_illumina_run.dirn,
                                       'RunInfo.xml'))
         self.assertEqual(run.bcl_extension,".bcl.bgzf")
+        self.assertEqual(run.lanes,[1,2,3,4])
 
 class BaseTestIlluminaData(unittest.TestCase):
     """

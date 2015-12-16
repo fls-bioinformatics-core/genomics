@@ -50,6 +50,7 @@ class IlluminaRun:
     runinfo_xml       : full path of the RunInfo.xml file
     platform          : platform e.g. 'miseq'
     bcl_extension     : file extension for bcl files (either "bcl" or "bcl.gz")
+    lanes             : list of (integer) lane numbers in the run
 
     """
 
@@ -109,6 +110,22 @@ class IlluminaRun:
                     return ext
         # Failed to match any known extension, raise exception
         raise Exception("Unable to determine bcl extension")
+
+    @property
+    def lanes(self):
+        """
+        Return list of lane numbers
+
+        Returns a list of integer lane numbers found in the
+        run directory
+
+        """
+        lanes = []
+        for d in os.listdir(self.basecalls_dir):
+            if d.startswith('L'):
+                lanes.append(int(d[1:]))
+        lanes.sort()
+        return lanes
 
 class IlluminaRunInfo:
     """Class for examining Illumina RunInfo.xml file
