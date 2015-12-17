@@ -1432,6 +1432,8 @@ DADA331XX,8,PhiX,PhiX control,,Control,,,Peter,Control
         """
         iem = SampleSheet(fp=cStringIO.StringIO(
             self.hiseq_sample_sheet_content))
+        # Check format
+        self.assertEqual(iem.format,'IEM')
         # Check header
         self.assertEqual(iem.header_items,['IEMFileVersion',
                                            'Date',
@@ -1534,6 +1536,8 @@ FC0001,1,PJB2-1580,,TGACCAAT-TCTTTCCC,,,,,PeterBriggs
         """
         iem = SampleSheet(fp=cStringIO.StringIO(
             self.miseq_sample_sheet_content))
+        # Check format
+        self.assertEqual(iem.format,'IEM')
         # Check header
         self.assertEqual(iem.header_items,['IEMFileVersion',
                                            'Date',
@@ -1612,6 +1616,8 @@ FC0001,1,B8,,CGTACTAG-TAGATCGC,,,,,PJB
         """
         casava = SampleSheet(fp=cStringIO.StringIO(
             self.casava_sample_sheet_content))
+        # Check format
+        self.assertEqual(casava.format,'CASAVA')
         # Check header
         self.assertEqual(casava.header_items,[])
         # Check reads

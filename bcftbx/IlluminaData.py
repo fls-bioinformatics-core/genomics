@@ -882,6 +882,17 @@ class SampleSheet:
             d[param] = value
 
     @property
+    def format(self):
+        """
+        Return format for sample sheet
+
+        Returns:
+          String: 'CASAVA', 'IEM' or None.
+
+        """
+        return self._format
+
+    @property
     def header_items(self):
         """
         Return list of items listed in the '[Header]' section
