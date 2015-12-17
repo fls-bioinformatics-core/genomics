@@ -995,10 +995,13 @@ class SampleSheet:
                     index = "%s-%s" % (line['index'],line['index2'])
                 except KeyError:
                     index = line['index']
+            try:
+                lane = line['Lane']
+            except KeyError:
+                lane = None
             name = ((line[self._sample_id],
                      line[self._sample_project],
-                     index,
-                     line['Lane']))
+                     index,lane))
             if name not in samples:
                 samples[name] = [line]
             else:

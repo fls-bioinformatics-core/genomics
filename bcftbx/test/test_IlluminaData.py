@@ -1787,7 +1787,7 @@ This,isTheEnd
         self.assertRaises(IlluminaDataError,SampleSheet,fp=fp)
     def test_duplicates_in_iem_format(self):
         """
-        SampleSheet: check and fix duplicated names in IEM sample sheet
+        SampleSheet: check & fix duplicated names in IEM sample sheet
 
         """
         # Set up
@@ -1796,6 +1796,26 @@ This,isTheEnd
         # Shouldn't find any duplicates when lanes are different
         self.assertEqual(len(iem.duplicated_names),0)
         # Create 3 duplicates by resetting lane numbers
+        iem.data[1]['Sample_ID'] = iem.data[0]['Sample_ID']
+        iem.data[1]['Sample_Name'] = iem.data[0]['Sample_Name']
+        iem.data[1]['index'] = iem.data[0]['index']
+        iem.data[1]['index2'] = iem.data[0]['index2']
+        iem.data[1]['Sample_Project'] = iem.data[0]['Sample_Project']
+        self.assertEqual(len(iem.duplicated_names),1)
+        # Fix and check again (should be none)
+        iem.fix_duplicated_names()
+        self.assertEqual(iem.duplicated_names,[])
+    def test_duplicates_in_iem_format_no_lanes(self):
+        """
+        SampleSheet: check & fix duplicated names in IEM sample sheet (no lanes)
+
+        """
+        # Set up
+        iem = SampleSheet(fp=cStringIO.StringIO(
+            self.miseq_sample_sheet_content))
+        # Shouldn't find any duplicates when lanes are different
+        self.assertEqual(len(iem.duplicated_names),0)
+        # Create duplicates by resetting sample names and projects
         iem.data[1]['Sample_ID'] = iem.data[0]['Sample_ID']
         iem.data[1]['Sample_Name'] = iem.data[0]['Sample_Name']
         iem.data[1]['index'] = iem.data[0]['index']
