@@ -1174,7 +1174,7 @@ class SampleSheet:
             if filen is None:
                 fp = sys.stdout
             else:
-                fp = open(filen,'r')
+                fp = open(filen,'w')
         fp.write("%s\n" % self.show(fmt=fmt))
         if filen is not None:
             fp.close()
