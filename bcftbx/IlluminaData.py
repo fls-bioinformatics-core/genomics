@@ -409,7 +409,7 @@ class IlluminaProject:
                     self.name = os.path.basename(self.dirn)
                 logging.debug("bcl2fastq 2 project: %s" % self.name)
             else:
-                raise IlluminaDataError, "Not a project directory: " % self.dir
+                raise IlluminaDataError, "Not a project directory: " % self.dirn
             # Determine samples from fastq names
             self.sample_prefix = ""
             sample_names = []
