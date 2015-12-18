@@ -430,7 +430,9 @@ class MockIlluminaData:
     """
     def __init__(self,name,package,
                  unaligned_dir='Unaligned',
-                 paired_end=False,top_dir=None):
+                 paired_end=False,
+                 no_lane_splitting=False,
+                 top_dir=None):
         """Create new MockIlluminaData instance
 
         Makes a new empty MockIlluminaData object.
@@ -438,11 +440,14 @@ class MockIlluminaData:
         Arguments:
           name: name of the directory for the mock data
           package: name of the conversion software package to mimic (can
-            be 'casava' or 'bcl2fastq')
+            be 'casava' or 'bcl2fastq2')
           unaligned_dir: directory holding the mock projects etc (default is
             'Unaligned')
           paired_end: specify whether mock data is paired end (True) or not
             (False) (default is False)
+          no_lane_splitting: (bcl2fastq2 only) mimick output from bcl2fastq2
+            run with --no-lane-splitting (i.e. fastq names don't contain
+            lane numbers) (default is False)
           top_dir: specify a parent directory for the mock data (default is
             the current working directory)
 
@@ -455,6 +460,10 @@ class MockIlluminaData:
         self.__package = package
         self.__unaligned_dir = unaligned_dir
         self.__paired_end = paired_end
+        if package == 'bcl2fastq2':
+            self.__no_lane_splitting = no_lane_splitting
+        else:
+            self.__no_lane_splitting = False
         self.__undetermined_dir = 'Undetermined_indices'
         if top_dir is not None:
             self.__top_dir = os.path.abspath(top_dir)
@@ -677,6 +686,11 @@ class MockIlluminaData:
         If the MockIlluminaData object was created with the paired_end flag
         set to True then matching R2 fastqs will also be added.
 
+        If the MockIlluminaData object was created with the no_lane_splitting
+        flag set to True and the package as 'bcl2fastq' then the 'lanes'
+        specification will be ignored and the fastq names will not contain
+        lane identifiers.
+
         Arguments:
           project_name: parent project
           sample_name: parent sample
@@ -691,11 +705,20 @@ class MockIlluminaData:
             reads = (1,2)
         else:
             reads = (1,)
-        for lane in lanes:
+        if not self.__no_lane_splitting:
+            # Include explicit lane information
+            for lane in lanes:
+                for read in reads:
+                    fastq = "%s_L%03d_R%d_001.%s" % (fastq_base,
+                                                     lane,read,
+                                                     fastq_ext)
+                    self.add_fastq(project_name,sample_name,fastq)
+        else:
+            # Replicate output from bcl2fastq --no-lane-splitting
             for read in reads:
-                fastq = "%s_L%03d_R%d_001.%s" % (fastq_base,
-                                                 lane,read,
-                                                 fastq_ext)
+                fastq = "%s_R%d_001.%s" % (fastq_base,
+                                           read,
+                                           fastq_ext)
                 self.add_fastq(project_name,sample_name,fastq)
 
     def add_undetermined(self,lanes=(1,)):
@@ -709,17 +732,25 @@ class MockIlluminaData:
             defaults to (1,))
 
         """
-        for lane in lanes:
-            sample_name = "lane%d" % lane
-            if self.package == 'casava':
-                # CASAVA-style naming
-                fastq_base = "lane%d_Undetermined" % lane
-            elif self.package == 'bcl2fastq2':
-                # bcl2fastq2-style naming
-                fastq_base = "Undetermined_S0"
+        if not self.__no_lane_splitting:
+            for lane in lanes:
+                sample_name = "lane%d" % lane
+                if self.package == 'casava':
+                    # CASAVA-style naming
+                    fastq_base = "lane%d_Undetermined" % lane
+                elif self.package == 'bcl2fastq2':
+                    # bcl2fastq2-style naming
+                    fastq_base = "Undetermined_S0"
+                self.add_sample(self.__undetermined_dir,sample_name)
+                self.add_fastq_batch(self.__undetermined_dir,sample_name,
+                                     fastq_base,lanes=(lane,))
+        else:
+            sample_name = "undetermined"
+            fastq_base = "Undetermined_S0"
             self.add_sample(self.__undetermined_dir,sample_name)
-            self.add_fastq_batch(self.__undetermined_dir,sample_name,fastq_base,
-                                 lanes=(lane,))
+            self.add_fastq_batch(self.__undetermined_dir,sample_name,
+                                 fastq_base,lanes=None)
+            
 
     def create(self):
         """Build and populate the directory structure
@@ -1079,16 +1110,21 @@ class TestIlluminaDataForBcl2fastq2(BaseTestIlluminaData):
     """
     def makeMockIlluminaData(self,paired_end=False,
                              multiple_projects=False,
-                             multiplexed_run=False):
+                             multiplexed_run=False,
+                             no_lane_splitting=False):
         # Create initial mock dir
         mock_illumina_data = MockIlluminaData('test.MockIlluminaData',
                                               'bcl2fastq2',
-                                              paired_end=paired_end)
+                                              paired_end=paired_end,
+                                              no_lane_splitting=no_lane_splitting)
         # Lanes to add
-        if multiplexed_run:
-            lanes=(1,4,5)
+        if not no_lane_splitting:
+            if multiplexed_run:
+                lanes=(1,4,5)
+            else:
+                lanes=(1,)
         else:
-            lanes=(1,)
+            lanes = None
         # Add first project with two samples
         mock_illumina_data.add_fastq_batch('AB','AB1','AB1_S1',lanes=lanes)
         mock_illumina_data.add_fastq_batch('AB','AB2','AB2_S2',lanes=lanes)
@@ -1155,6 +1191,43 @@ class TestIlluminaDataForBcl2fastq2(BaseTestIlluminaData):
         """
         self.makeMockIlluminaData(multiple_projects=True,multiplexed_run=True,
                                   paired_end=True)
+        illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertIlluminaData(illumina_data,self.mock_illumina_data)
+        self.assertEqual(illumina_data.format,'bcl2fastq2')
+
+    def test_illumina_data_no_lane_splitting(self):
+        """Read bcl2fastq2-style output with single project (--no-lane-splitting)
+
+        """
+        self.makeMockIlluminaData(no_lane_splitting=True)
+        illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertIlluminaData(illumina_data,self.mock_illumina_data)
+        self.assertEqual(illumina_data.format,'bcl2fastq2')
+
+    def test_illumina_data_paired_end_no_lane_splitting(self):
+        """Read bcl2fastq2-style output with single project & paired-end data (--no-lane-splitting)
+
+        """
+        self.makeMockIlluminaData(paired_end=True,no_lane_splitting=True)
+        illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertIlluminaData(illumina_data,self.mock_illumina_data)
+        self.assertEqual(illumina_data.format,'bcl2fastq2')
+
+    def test_illumina_data_multiple_projects_no_lane_splitting(self):
+        """Read bcl2fastq2-style output with multiple projects (--no-lane-splitting)
+
+        """
+        self.makeMockIlluminaData(multiple_projects=True,no_lane_splitting=True)
+        illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertIlluminaData(illumina_data,self.mock_illumina_data)
+        self.assertEqual(illumina_data.format,'bcl2fastq2')
+
+    def test_illumina_data_multiple_projects_paired_end_no_lane_splitting(self):
+        """Read bcl2fastq2-style output with multiple projects & paired-end data (--no-lane-splitting)
+
+        """
+        self.makeMockIlluminaData(multiple_projects=True,paired_end=True,
+                                  no_lane_splitting=True)
         illumina_data = IlluminaData(self.mock_illumina_data.dirn)
         self.assertIlluminaData(illumina_data,self.mock_illumina_data)
         self.assertEqual(illumina_data.format,'bcl2fastq2')

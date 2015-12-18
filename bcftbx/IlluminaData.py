@@ -419,7 +419,11 @@ class IlluminaProject:
                     sample_name = IlluminaFastq(fq).sample_name
                 else:
                     # Use laneX as sample name for undetermined
-                    sample_name = "lane%d" % IlluminaFastq(fq).lane_number
+                    try:
+                        sample_name = "lane%d" % IlluminaFastq(fq).lane_number
+                    except TypeError:
+                        # No lane, use undetermined as sample name
+                        sample_name = "undetermined"
                 if sample_name not in sample_names:
                     sample_names.append(sample_name)
             # Create sample objects and populate with appropriate fastqs
@@ -429,10 +433,14 @@ class IlluminaProject:
                                  IlluminaFastq(f).sample_name == sample_name,
                                  fastqs)
                 else:
-                    fqs = filter(lambda f:
-                                 "lane%d" % IlluminaFastq(f).lane_number
-                                 == sample_name,
-                                 fastqs)
+                    try:
+                        fqs = filter(lambda f:
+                                     "lane%d" % IlluminaFastq(f).lane_number
+                                     == sample_name,
+                                     fastqs)
+                    except TypeError:
+                        # No lane, take all fastqs
+                        fqs = [fq for fq in fastqs]
                 self.samples.append(IlluminaSample(self.dirn,
                                                    fastqs=fqs))
         # Raise an exception if no samples found
@@ -513,7 +521,11 @@ class IlluminaSample:
             self.name = IlluminaFastq(fastqs[0]).sample_name
             # Special case: undetermined 'sample' is 'laneX'
             if self.name == 'Undetermined':
-                self.name = "lane%d" % IlluminaFastq(fastqs[0]).lane_number
+                try:
+                    self.name = "lane%d" % IlluminaFastq(fastqs[0]).lane_number
+                except TypeError:
+                    # No lane number
+                    self.name = "undetermined"
         logging.debug("\tSample: %s" % self.name)
         # Add fastq files
         for f in fastqs:
