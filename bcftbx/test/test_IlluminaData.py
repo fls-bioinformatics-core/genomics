@@ -1370,6 +1370,22 @@ class TestIlluminaFastq(unittest.TestCase):
         self.assertEqual(fq.set_number,1)
         self.assertEqual(str(fq),fastq_name)
 
+    def test_illumina_fastq_from_bcl2fastq2_no_lane(self):
+        """
+        Check extraction of fastq name components for bcl2fastq2 output (no lane)
+
+        """
+        fastq_name = 'NA10831_S7_R1_001'
+        fq = IlluminaFastq(fastq_name)
+        self.assertEqual(fq.fastq,fastq_name)
+        self.assertEqual(fq.sample_name,'NA10831')
+        self.assertEqual(fq.sample_number,7)
+        self.assertEqual(fq.barcode_sequence,None)
+        self.assertEqual(fq.lane_number,None)
+        self.assertEqual(fq.read_number,1)
+        self.assertEqual(fq.set_number,1)
+        self.assertEqual(str(fq),fastq_name)
+
 class TestSampleSheet(unittest.TestCase):
     def setUp(self):
         self.hiseq_sample_sheet_content = """[Header],,,,,,,,,,

@@ -1463,18 +1463,22 @@ class IlluminaFastq:
         # Read number: single integer digit 'R1'
         self.read_number = int(fields[-2][1])
         # Lane number: zero-padded 3 digit integer 'L001'
-        self.lane_number = int(fields[-3][1:])
+        if fields[-3].startswith('L') and fields[-3][1:].isdigit():
+            self.lane_number = int(fields[-3][1:])
+            fields = fields[:-3]
+        else:
+            fields = fields[:-2]
         # Either barcode sequence or sample number
-        if fields[-4].startswith('S'):
+        if fields[-1].startswith('S'):
             # Sample number: integer
-            self.sample_number = int(fields[-4][1:])
+            self.sample_number = int(fields[-1][1:])
         else:
             # Barcode sequence: string (or None if 'NoIndex')
-            self.barcode_sequence = fields[-4]
+            self.barcode_sequence = fields[-1]
             if self.barcode_sequence == 'NoIndex':
                 self.barcode_sequence = None
         # Sample name: whatever's left over
-        self.sample_name = '_'.join(fields[:-4])
+        self.sample_name = '_'.join(fields[:-1])
 
     def __repr__(self):
         """Implement __repr__ built-in
@@ -1486,9 +1490,13 @@ class IlluminaFastq:
             sample_identifier = self.barcode_sequence
         else:
             sample_identifier = "NoIndex"
-        return "%s_%s_L%03d_R%d_%03d" % (self.sample_name,
+        if self.lane_number is not None:
+            lane_identifier = "L%03d_" % self.lane_number
+        else:
+            lane_identifier = ""
+        return "%s_%s_%sR%d_%03d" % (self.sample_name,
                                          sample_identifier,
-                                         self.lane_number,
+                                         lane_identifier,
                                          self.read_number,
                                          self.set_number)
 
