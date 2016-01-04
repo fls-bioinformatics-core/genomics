@@ -26,7 +26,9 @@ Information on the FASTQ file format: http://en.wikipedia.org/wiki/FASTQ_format
 
 """
 
-__version__ = "0.3.0"
+__version__ = "1.0.0"
+
+CHUNKSIZE = 102400
 
 #######################################################################
 # Import modules that this module depends on
@@ -37,6 +39,18 @@ import re
 import logging
 import gzip
 import itertools
+
+#######################################################################
+# Precompiled regular expressions
+#######################################################################
+
+# Match Illumina 1.8+ format, e.g.:
+# @EAS139:136:FC706VJ:2:2104:15343:197393 1:Y:18:ATCACG
+RE_ILLUMINA18 = re.compile(r"^@([^:]+):([0-9]+):([^:]+):([0-9]+):([0-9]+):([0-9]+):([0-9]+) (1|2):(Y|N):([0-9]+):(.*)$")
+#
+# Match  earlier Illumina format (1.3/1.5), e.g.:
+# @HWUSI-EAS100R:6:73:941:1973#0/1
+RE_ILLUMINA = re.compile(r"^@([^:]+):([0-9]+):([0-9]+):([0-9]+):([0-9]+)#([0-9]+)/(1|2)$")
 
 #######################################################################
 # Class definitions
@@ -80,21 +94,53 @@ class FastqIterator(Iterator):
             self.__fp = get_fastq_file_handle(self.__fastq_file)
         else:
             self.__fp = fp
+        self._buf = ''
+        self._lines = []
+        self._ip = 0
 
     def next(self):
         """Return next record from FASTQ file as a FastqRead object
         """
-        seqid_line = self.__fp.readline()
-        seq_line = self.__fp.readline()
-        optid_line = self.__fp.readline()
-        quality_line = self.__fp.readline()
-        if quality_line != '':
-            return FastqRead(seqid_line,seq_line,optid_line,quality_line)
-        else:
-            # Reached EOF
-            if self.__fastq_file is None:
-                self.__fp.close()
-            raise StopIteration
+        # Convenience variables
+        lines = self._lines
+        buf = self._buf
+        ip = self._ip
+        # Do we already have a read to return?
+        while len(lines) < 4:
+            # Fetch more data
+            data = self.__fp.read(CHUNKSIZE)
+            if not data:
+                # Reached EOF
+                if self.__fastq_file is None:
+                    self.__fp.close()
+                raise StopIteration
+            # Add to buffer and split into lines
+            buf = buf + data
+            if buf[0] == '\n':
+                buf = buf[1:]
+            if buf[-1] != '\n':
+                i = buf.rfind('\n')
+                if i == -1:
+                    continue
+                else:
+                    lines.extend(buf[:i].split('\n'))
+                    buf = buf[i+1:]
+            else:
+                lines.extend(buf[:-1].split('\n'))
+                buf = ''
+        # Return a read
+        read = lines[ip:ip + 4]
+        ip = ip + 4
+        if (len(lines) - ip) < 4:
+            # Not enough lines for another read so
+            # reset the buffer
+            lines = lines[ip:]
+            ip = 0
+        # Update internals
+        self._lines = lines
+        self._buf = buf
+        self._ip = ip
+        return FastqRead(*read)
 
 class FastqRead:
     """Class to store a FASTQ record with information about a read
@@ -133,9 +179,9 @@ class FastqRead:
           quality: fourth line of the record
         """
         self.raw_seqid = seqid_line
-        self.sequence = str(seq_line).strip()
-        self.optid = str(optid_line.strip())
-        self.quality = str(quality_line.strip())
+        self.sequence = str(seq_line).rstrip()
+        self.optid = str(optid_line).rstrip()
+        self.quality = str(quality_line).rstrip()
 
     @property
     def seqid(self):
@@ -147,33 +193,41 @@ class FastqRead:
 
     @property
     def seqlen(self):
-        if self.is_colorspace:
-            return len(self.sequence) - 1
-        else:
-            return len(self.sequence)
+        try:
+            return self._seqlen
+        except AttributeError:
+            if self.is_colorspace:
+                self._seqlen = len(self.sequence) - 1
+            else:
+                self._seqlen = len(self.sequence)
+            return self._seqlen
 
     @property
     def maxquality(self):
-        maxqual = None
-        for q in self.quality:
-            if maxqual is None:
-                maxqual = ord(q)
-            else:
-                maxqual = max(maxqual,ord(q))
-        return chr(maxqual)
+        try:
+            # Cached value
+            return self._maxqual
+        except AttributeError:
+            # Compute, store and return
+            self._maxqual = max(self.quality)
+        return self._maxqual
 
     @property
     def minquality(self):
-        minqual = None
-        for q in self.quality:
-            if minqual is None:
-                minqual = ord(q)
-            else:
-                minqual = min(minqual,ord(q))
-        return chr(minqual)
+        try:
+            # Cached value
+            return self._minqual
+        except AttributeError:
+            # Compute, store and return
+            self._minqual = min(self.quality)
+        return self._minqual
 
     @property
     def is_colorspace(self):
+        try:
+            return self._is_colorspace
+        except AttributeError:
+            pass
         if self.seqid.format is None:
             # Check if it looks like colorspace
             # Sequence starts with 'T' and only contains characters
@@ -182,11 +236,14 @@ class FastqRead:
             if sequence.startswith('T'):
                 for c in sequence[1:]:
                     if c not in '.0123':
-                        return False
+                        self._is_colorspace = False
+                        return self._is_colorspace
                 # Passed colorspace tests
-                return True
+                self._is_colorspace = True
+                return self._is_colorspace
         # Not colorspace
-        return False
+        self._is_colorspace = False
+        return self._is_colorspace
 
     def __repr__(self):
         return '\n'.join((str(self.seqid),
@@ -208,50 +265,65 @@ class SequenceIdentifier:
           seqid: the sequence identifier line (i.e. first line) from the
             FASTQ read record
         """
-        self.__seqid = str(seqid).strip()
-        self.format = None
+        # Initialise
+        self.__seqid = str(seqid).rstrip()
+        self.instrument_name = None
+        self.run_id = None
+        self.flowcell_id = None
+        self.flowcell_lane = None
+        self.tile_no = None
+        self.x_coord = None
+        self.y_coord = None
+        self.multiplex_index_no = None
+        self.pair_id =  None
+        self.bad_read = None
+        self.control_bit_flag = None
+        self.index_sequence = None
+        self._format = None
         # Identify sequence id line elements
-        if seqid.startswith('@'):
+        m = RE_ILLUMINA18.match(self.__seqid)
+        if m:
             # example of Illumina 1.8+ format:
             # @EAS139:136:FC706VJ:2:2104:15343:197393 1:Y:18:ATCACG
-            try:
-                fields = self.__seqid[1:].split(':')
-                self.instrument_name = fields[0]
-                self.run_id = fields[1]
-                self.flowcell_id = fields[2]
-                self.flowcell_lane = fields[3]
-                self.tile_no = fields[4]
-                self.x_coord = fields[5]
-                self.y_coord = fields[6].split(' ')[0]
-                self.multiplex_index_no = None
-                self.pair_id = fields[6].split(' ')[1]
-                self.bad_read = fields[7]
-                self.control_bit_flag = fields[8]
-                self.index_sequence = fields[9]
-                self.format = 'illumina18'
-                return
-            except IndexError:
-                pass
+            self._format = 'illumina18'
+            self.instrument_name = m.group(1)
+            self.run_id = m.group(2)
+            self.flowcell_id = m.group(3)
+            self.flowcell_lane = m.group(4)
+            self.tile_no = m.group(5)
+            self.x_coord = m.group(6)
+            self.y_coord = m.group(7)
+            self.pair_id = m.group(8)
+            self.bad_read = m.group(9)
+            self.control_bit_flag = m.group(10)
+            self.index_sequence = m.group(11)
+        else:
             # Example of earlier Illumina format (1.3/1.5):
             # @HWUSI-EAS100R:6:73:941:1973#0/1
-            try:
-                fields = self.__seqid[1:].split(':')
-                self.instrument_name = fields[0]
-                self.run_id = None
-                self.flowcell_id = None
-                self.flowcell_lane = fields[1]
-                self.tile_no = fields[2]
-                self.x_coord = fields[3]
-                self.y_coord = fields[4].split('#')[0]
-                self.multiplex_index_no = fields[4].split('#')[1].split('/')[0]
-                self.pair_id = fields[4].split('#')[1].split('/')[1]
-                self.bad_read = None
-                self.control_bit_flag = None
-                self.index_sequence = None
-                self.format = 'illumina'
-                return
-            except IndexError:
-                pass
+            m = RE_ILLUMINA.match(self.__seqid)
+            if m:
+                self._format = 'illumina'
+                self.instrument_name = m.group(1)
+                self.flowcell_lane = m.group(2)
+                self.tile_no = m.group(3)
+                self.x_coord = m.group(4)
+                self.y_coord = m.group(5)
+                self.multiplex_index_no = m.group(6)
+                self.pair_id = m.group(7)
+
+    @property
+    def format(self):
+        """
+        Identify the format of the sequence identifier
+
+        Returns:
+          String: 'illumina18', 'illumina' or None
+
+        """
+        try:
+            return self._format
+        except AttributeError:
+            pass
 
     def is_pair_of(self,seqid):
         """Check if this forms a pair with another SequenceIdentifier
@@ -361,11 +433,12 @@ def get_fastq_file_handle(fastq):
 
     Returns:
       File handle that can be used for read operations.
+
     """
     if os.path.splitext(fastq)[1] == '.gz':
-        return gzip.open(fastq,'r')
+        return gzip.open(fastq,'rb')
     else:
-        return open(fastq,'rU')
+        return open(fastq,'rb')
 
 def nreads(fastq=None,fp=None):
     """Return number of reads in a FASTQ file
