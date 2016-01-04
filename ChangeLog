@@ -1,3 +1,15 @@
+2016-01-04  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* genomics-bcftbx version 0.99.5
+	- extract_reads.py: updated to use a more efficient
+	  method for reading data from input files.
+	- bcftbx/FASTQFile: FastqIterator updated to use
+	  a more efficient method for reading data from
+	  FASTQ files.
+	- bcftbx/qc/report: updated to handle special case
+	  for Illumina data where the input FASTQ is empty
+	  (i.e. has no reads) so there are no QC outputs.
+
 2015-11-19  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* genomics-bcftbx version 0.99.4
