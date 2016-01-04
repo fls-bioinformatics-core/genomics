@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #     qc/report.py: utilities for generating reports for NGS qc runs
-#     Copyright (C) University of Manchester 2012-2014 Peter Briggs
+#     Copyright (C) University of Manchester 2012-2016 Peter Briggs
 #
 ########################################################################
 #
@@ -24,6 +24,7 @@ import zipfile
 import time
 import logging
 from bcftbx import TabFile,Pipeline,utils,htmlpagewriter,get_version
+from bcftbx import FASTQFile
 
 #######################################################################
 # Module level constants
@@ -82,6 +83,8 @@ class QCReporter:
         self.__regex_pattern = regex_pattern
         # HTML document
         self.__html = self.__init_html()
+        # Location of primary data
+        self.__primary_data_dir = None
 
     @property
     def name(self):
@@ -137,6 +140,12 @@ class QCReporter:
         """
         return self.__html
 
+    @property
+    def primary_data_dir(self):
+        """Return location of primary data files
+        """
+        return self.__primary_data_dir
+
     def addSample(self,sample):
         """Add a QCSample class or subclass to the sample list
         """
@@ -147,6 +156,10 @@ class QCReporter:
 
     def getPrimaryDataFiles(self):
         """Return list of primary data file sets
+
+        Returns a list of primary data file names; use
+        the 'primary_data_dir' property to get the directory
+        where the files are actually located.
 
         """
         primary_data = None
@@ -166,7 +179,9 @@ class QCReporter:
         for dirn in (os.path.join(self.dirn,'fastqs'),self.dirn):
             if os.path.exists(dirn):
                 primary_data = finder(dirn,pattern=self.__regex_pattern)
-                if primary_data: break
+                if primary_data:
+                    self.__primary_data_dir = dirn
+                    break
         if not primary_data:
             logging.warning("No primary data files of type '%s' found: try --format option?" %
                             self.data_format)
@@ -455,7 +470,7 @@ class QCSample:
                 html.add("<p class='no_print'>(See original data for <a href='qc/%s'>%s</a>)</p>" \
                              % (screen_txt,description))
         else:
-            html.add("<p>No screens found</p>")
+            html.add("<p>No screens</p>")
 
     def report_boxplots(self,html,paired_end=False,inline_pngs=True):
         """Write HTML code reporting the boxplots
@@ -543,7 +558,7 @@ class QCSample:
                 html.add("<p class='no_print'><a href='%s'>Full FastQC report for %s</a></p>" % \
                              (fastqc_report,self.name))
         else:
-            html.add("No FastQC report found")
+            html.add("<p>No FastQC report</p>")
 
     def report_programs(self,html):
         """Write HTML code reporting the program information
@@ -629,8 +644,10 @@ class IlluminaQCReporter(QCReporter):
         primary_data = self.getPrimaryDataFiles()
         for data in primary_data:
             sample = strip_ngs_extensions(os.path.basename(data[0]))
+            fq = os.path.join(self.primary_data_dir,data[0])
             logging.debug("Processing outputs for sample: '%s'" % sample)
-            self.addSample(IlluminaQCSample(sample,self.qc_dir))
+            self.addSample(IlluminaQCSample(sample,self.qc_dir,
+                                            fastq=fq))
         # Summarise data from fastqc
         self.__stats = TabFile.TabFile(column_names=('Sample',
                                                      'Reads',
@@ -670,7 +687,10 @@ class IlluminaQCReporter(QCReporter):
             else:
                 # No fastqc results
                 logging.debug("%s: no FastQC results found" % sample.name)
-                self.__stats[-1]['Reads'] = '?'
+                if sample.is_empty:
+                    self.__stats[-1]['Reads'] = '0'
+                else:
+                    self.__stats[-1]['Reads'] = '?'
                 self.__stats[-1]['FastQC Failures'] = 'No FastQC data'
                 self.__stats[-1]['FastQC Warnings'] = '&nbsp;'
             # Check for fastq_screens
@@ -753,7 +773,7 @@ class IlluminaQCSample(QCSample):
     and output from FastQC.
     """
 
-    def __init__(self,name,qc_dir):
+    def __init__(self,name,qc_dir,fastq=None):
         """Create a new IlluminaQCSample instance
 
         Note that the sample name is used as the base name for
@@ -761,10 +781,25 @@ class IlluminaQCSample(QCSample):
 
         Arguments:
           name: name for the sample
+          qc_dir: path to QC directory
           fastq: associated FASTQ file
+
         """
         # Initialise base class
         QCSample.__init__(self,name,qc_dir)
+        self._fastq = fastq
+
+    @property
+    def is_empty(self):
+        """
+        Return True if the sample has no reads, False otherwise
+
+        """
+        is_empty = True
+        for r in FASTQFile.FastqIterator(self._fastq):
+            is_empty = False
+            break
+        return is_empty
 
     def report(self,html):
         """Write HTML report for this sample
@@ -807,6 +842,12 @@ class IlluminaQCSample(QCSample):
         if self.fastqc is None:
             logging.warning("%s: no FastQC results" % self.name)
             status = False
+        # If QC appears to have failed then check if the source
+        # fastq actually contained any reads
+        if not status:
+            if self.is_empty:
+                logging.warning("%s: FASTQ file has no reads" % self.name)
+                status = True
         return status
 
 #######################################################################
