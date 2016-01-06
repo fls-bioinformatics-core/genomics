@@ -874,7 +874,6 @@ class SampleSheet:
                 format_ = 'IEM'
         # Set the column names
         column_names = self._data.header()
-        print "column_names = %s" % column_names
         if 'SampleID' in column_names:
             self._sample_id = 'SampleID'
         elif 'Sample_ID' in column_names:
