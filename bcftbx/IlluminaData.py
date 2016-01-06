@@ -1,5 +1,5 @@
 #     IlluminaData.py: module for handling data about Illumina sequencer runs
-#     Copyright (C) University of Manchester 2012-2013 Peter Briggs
+#     Copyright (C) University of Manchester 2012-2016 Peter Briggs
 #
 ########################################################################
 #
@@ -1162,7 +1162,7 @@ class SampleSheet:
                             values.append(line['Sample_Project'])
                         else:
                             values.append('')
-                s.append(','.join(values))
+                s.append(','.join([str(x) for x in values]))
         return '\n'.join(s)
 
     def write(self,filen=None,fp=None,fmt=None):
