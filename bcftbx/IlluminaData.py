@@ -874,14 +874,21 @@ class SampleSheet:
                 format_ = 'IEM'
         # Set the column names
         column_names = self._data.header()
+        print "column_names = %s" % column_names
         if 'SampleID' in column_names:
             self._sample_id = 'SampleID'
         elif 'Sample_ID' in column_names:
             self._sample_id = 'Sample_ID'
+        else:
+            raise IlluminaDataError("Unable to locate sample id "
+                                    "field in sample sheet header")
         if 'SampleProject' in column_names:
             self._sample_project = 'SampleProject'
         elif 'Sample_Project' in column_names:
             self._sample_project = 'Sample_Project'
+        else:
+            raise IlluminaDataError("Unable to locate sample project "
+                                    "field in sample sheet header")
 
     def _set_section_param_value(self,line,d):
         """
