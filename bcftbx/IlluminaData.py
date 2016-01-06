@@ -1027,7 +1027,6 @@ class SampleSheet:
                 samples[name].append(line)
         duplicates = filter(lambda s: len(s) > 1,
                             [samples[name] for name in samples])
-        print duplicates
         return duplicates
 
     @property
