@@ -1731,8 +1731,16 @@ def verify_run_against_sample_sheet(illumina_data,sample_sheet):
       found, False otherwise.
 
     """
-    # Get predicted outputs
-    predicted_projects = CasavaSampleSheet(sample_sheet).predict_output()
+    # Get predicted outputs based on directory structure format
+    data_format = illumina_data.format
+    if data_format == 'casava':
+        predicted_projects = SampleSheet(sample_sheet).predict_output()
+    elif data_format == 'bcl2fastq2':
+        raise NotImplementedError("Verification not implemented for %s" %
+                                  data_format)
+    else:
+        raise IlluminaDataError("Unknown format for directory structure: %s" %
+                                data_format)
     # Loop through projects and check that predicted outputs exist
     verified = True
     for proj in predicted_projects:
