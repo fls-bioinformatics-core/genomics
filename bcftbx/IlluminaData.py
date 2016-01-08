@@ -772,6 +772,13 @@ class SampleSheet:
         """
         self._data[key] = value
 
+    def __delitem__(self,key):
+        """
+        Implement __delitem__ built-in: delete from 'data' directly
+
+        """
+        del(self._data[key])
+
     def __iter__(self):
         """
         """
@@ -873,7 +880,7 @@ class SampleSheet:
             else:
                 format_ = 'IEM'
         # Set the column names
-        column_names = self._data.header()
+        column_names = self.column_names
         if 'SampleID' in column_names:
             self._sample_id = 'SampleID'
         elif 'Sample_ID' in column_names:
@@ -910,6 +917,39 @@ class SampleSheet:
 
         """
         return self._format
+
+    @property
+    def has_lanes(self):
+        """
+        Indicates whether 'Lane' column is defined
+
+        Returns:
+          Boolean: True if 'Lane' is present, False if not.
+
+        """
+        return ('Lane' in self.column_names)
+
+    @property
+    def sample_id_column(self):
+        """
+        Return name of column with sample ID
+
+        Returns:
+          String: column label e.g. 'SampleID'.
+
+        """
+        return self._sample_id
+
+    @property
+    def sample_project_column(self):
+        """
+        Return name of column with sample project name
+
+        Returns:
+          String: column label e.g. 'SampleProject'.
+
+        """
+        return self._sample_project
 
     @property
     def header_items(self):
@@ -994,6 +1034,17 @@ class SampleSheet:
 
         """
         return self._data
+
+    @property
+    def column_names(self):
+        """
+        Return list of column names for the data section
+
+        Returns:
+           List.
+
+        """
+        return [x for x in self._data.header()]
 
     @property
     def duplicated_names(self):
