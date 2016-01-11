@@ -207,6 +207,8 @@ class IlluminaData:
     format:        Format of the directory structure layout (either
                    'casava' or 'bcl2fastq2', or None if the format cannot
                    be determined)
+    lanes:         List of lane numbers present; if there are no lanes
+                   then this will be a list with 'None' as the only value
 
     Provides the following methods:
 
@@ -231,7 +233,7 @@ class IlluminaData:
         self.undetermined = None
         self.paired_end = True
         self.format = None
-        # Look for "unaligned" data directory
+        # Look for "Unaligned" data directory
         self.unaligned_dir = os.path.join(self.analysis_dir,unaligned_dir)
         if not os.path.exists(self.unaligned_dir):
             raise IlluminaDataError("Missing data directory %s" %
@@ -248,6 +250,15 @@ class IlluminaData:
         # Determine whether data is paired end
         for p in self.projects:
             self.paired_end = (self.paired_end and p.paired_end)
+        # Get list of lanes
+        self.lanes = []
+        for p in self.projects:
+            for s in p.samples:
+                for fq in s.fastq:
+                    lane = IlluminaFastq(fq).lane_number
+                    if lane not in self.lanes:
+                        self.lanes.append(lane)
+        self.lanes.sort()
 
     def _populate_casava_style(self):
         """
