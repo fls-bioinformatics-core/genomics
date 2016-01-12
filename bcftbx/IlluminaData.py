@@ -203,7 +203,7 @@ class IlluminaData:
     undetermined:  IlluminaProject object for the undetermined reads
     unaligned_dir: full path to the 'Unaligned' directory holding the
                    primary fastq.gz files
-    paired_end:    True if all projects are paired end, False otherwise
+    paired_end:    True if at least one project is paired end, False otherwise
     format:        Format of the directory structure layout (either
                    'casava' or 'bcl2fastq2', or None if the format cannot
                    be determined)
@@ -231,7 +231,7 @@ class IlluminaData:
         self.analysis_dir = os.path.abspath(illumina_analysis_dir)
         self.projects = []
         self.undetermined = None
-        self.paired_end = True
+        self.paired_end = False
         self.format = None
         # Look for "Unaligned" data directory
         self.unaligned_dir = os.path.join(self.analysis_dir,unaligned_dir)
@@ -249,7 +249,7 @@ class IlluminaData:
         self.projects.sort(lambda a,b: cmp(a.name,b.name))
         # Determine whether data is paired end
         for p in self.projects:
-            self.paired_end = (self.paired_end and p.paired_end)
+            self.paired_end = (self.paired_end or p.paired_end)
         # Get list of lanes
         self.lanes = []
         for p in self.projects:
