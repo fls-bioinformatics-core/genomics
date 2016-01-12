@@ -1259,60 +1259,101 @@ class SampleSheet:
         if filen is not None:
             fp.close()
 
-    def predict_output(self):
+    def predict_output(self,fmt='CASAVA'):
         """
         Predict the expected outputs from the sample sheet content
 
         Constructs and returns a simple dictionary-based data structure
         which predicts the output data structure that will produced by
-        running CASAVA using the sample sheet data.
+        running the bcl2fastq conversion software using the sample sheet
+        data.
 
-        The structure is:
+        The return structure depends on the format specified via the
+        ``fmt`` argument, either:
+
+        - 'CASAVA': reproduce the structure when running either
+          CASAVA or the bcl2fastq v1.8.* software, or
+        - 'bcl2fastq2': reproduce the structure from bcl2fastq v2.
+
+        For 'CASAVA' formatted output the returned structure is:
 
         { 'project_1': {
-                         'sample_1': [name1,name2...],
-                         'sample_2': [...],
+                         'sample_1': [ name1, name2, ... ],
+                         'sample_2': [ ... ],
                          ... }
           'project_2': {
-                         'sample_3': [...],
+                         'sample_3': [ ... ],
                          ... }
+          ... }
+
+        For 'bcl2fastq2' formatted output it is:
+
+        { 'project_1': [ name1, name2, ...],
+          'project_2': [ name1, name2, ...],
           ... }
 
         """
         projects = {}
-        for line in self.data:
-            # Sample and project names
-            project = "Project_%s" % line[self._sample_project]
-            sample = "Sample_%s" % line[self._sample_id]
-            if project not in projects:
-                samples = {}
-            else:
-                samples = projects[project]
-            if sample not in samples:
-                samples[sample] = []
-            # Index sequence
-            try:
-                # Try dual-indexed IEM4 format
-                indx = "%s-%s" %(line['index'].strip(),
-                                 line['index2'].strip())
-            except KeyError:
-                # Try single indexed IEM4 (no index2)
+        if str(fmt).upper() == 'CASAVA':
+            # CASAVA/bcl2fastq v1.8.*-style output
+            for line in self.data:
+                # Sample and project names
+                project = "Project_%s" % line[self._sample_project]
+                sample = "Sample_%s" % line[self._sample_id]
+                if project not in projects:
+                    samples = {}
+                else:
+                    samples = projects[project]
+                if sample not in samples:
+                    samples[sample] = []
+                # Index sequence
                 try:
-                    indx = line['index'].strip()
+                    # Try dual-indexed IEM4 format
+                    indx = "%s-%s" %(line['index'].strip(),
+                                     line['index2'].strip())
                 except KeyError:
-                    # Try CASAVA format
-                    indx = line['Index'].strip()
-            if not indx:
-                indx = "NoIndex"
-            # Lane
-            try:
-                lane = line['Lane']
-            except KeyError:
-                lane = 1
-            # Construct base name
-            samples[sample].append("%s_%s_L%03d" % (line[self._sample_id],
-                                                    indx,lane))
-            projects[project] = samples
+                    # Try single indexed IEM4 (no index2)
+                    try:
+                        indx = line['index'].strip()
+                    except KeyError:
+                        # Try CASAVA format
+                        indx = line['Index'].strip()
+                if not indx:
+                    indx = "NoIndex"
+                # Lane
+                try:
+                    lane = line['Lane']
+                except KeyError:
+                    lane = 1
+                # Construct base name
+                samples[sample].append("%s_%s_L%03d" % (line[self._sample_id],
+                                                        indx,lane))
+                projects[project] = samples
+        elif fmt == 'bcl2fastq2':
+            # bcl2fastq v2-style output
+            sample_names = []
+            for line in self.data:
+                project = line[self._sample_project]
+                sample = line[self._sample_id]
+                if self.has_lanes:
+                    lane_id = "_L%03d" % line['Lane']
+                else:
+                    lane_id = ""
+                if project not in projects:
+                    fqs = []
+                else:
+                    fqs = projects[project]
+                try:
+                    i = sample_names.index(sample) + 1
+                except ValueError:
+                    sample_names.append(sample)
+                    i = len(sample_names)
+                # Construct fastq basename
+                fqs.append("%s_S%d%s" % (sample,i,lane_id))
+                projects[project] = fqs
+        else:
+            # Unknown format
+            raise IlluminaDataError("Unknown format: '%s'" % fmt)
         return projects
 
 class IEMSampleSheet(SampleSheet):
@@ -1795,11 +1836,11 @@ def verify_run_against_sample_sheet(illumina_data,sample_sheet):
     """
     # Get predicted outputs based on directory structure format
     data_format = illumina_data.format
+    sample_sheet = SampleSheet(sample_sheet)
     if data_format == 'casava':
-        predicted_projects = SampleSheet(sample_sheet).predict_output()
+        predicted_projects = sample_sheet.predict_output(fmt='CASAVA')
     elif data_format == 'bcl2fastq2':
-        raise NotImplementedError("Verification not implemented for %s" %
-                                  data_format)
+        predicted_projects = sample_sheet.predict_output(fmt='bcl2fastq2')
     else:
         raise IlluminaDataError("Unknown format for directory structure: %s" %
                                 data_format)
@@ -1809,29 +1850,64 @@ def verify_run_against_sample_sheet(illumina_data,sample_sheet):
         # Locate project directory
         proj_dir = os.path.join(illumina_data.unaligned_dir,proj)
         if os.path.isdir(proj_dir):
-            predicted_samples = predicted_projects[proj]
-            for smpl in predicted_samples:
-                # Locate sample directory
-                smpl_dir = os.path.join(proj_dir,smpl)
-                if os.path.isdir(smpl_dir):
-                    # Check for output files
-                    predicted_names = predicted_samples[smpl]
-                    for name in predicted_names:
+            if data_format == 'casava':
+                predicted_samples = predicted_projects[proj]
+                for smpl in predicted_samples:
+                    # Locate sample directory
+                    smpl_dir = os.path.join(proj_dir,smpl)
+                    if os.path.isdir(smpl_dir):
+                        # Check for output files
+                        predicted_names = predicted_samples[smpl]
+                        for name in predicted_names:
+                            # Look for R1 file
+                            f = os.path.join(smpl_dir,
+                                             "%s_R1_001.fastq.gz" % name)
+                            if not os.path.exists(f):
+                                logging.warning("Verify: missing R1 file '%s'"
+                                                % f)
+                                verified = False
+                            # Look for R2 file (paired end only)
+                            if illumina_data.paired_end:
+                                f = os.path.join(smpl_dir,
+                                                 "%s_R2_001.fastq.gz" % name)
+                                if not os.path.exists(f):
+                                    logging.warning("Verify: missing R2 file '%s'"
+                                                    % f)
+                                    verified = False
+                    else:
+                        # Sample directory not found
+                        logging.warning("Verify: missing %s" % smpl_dir)
+                        verified = False
+            elif data_format == 'bcl2fastq2':
+                # Check for output files
+                predicted_names = predicted_projects[proj]
+                for name in predicted_names:
+                    # Loop over lanes
+                    for lane in illumina_data.lanes:
+                        # Lane identifier
+                        if not sample_sheet.has_lanes and \
+                           lane is not None:
+                            lane_id = "_L%03d" % lane
+                        else:
+                            lane_id = ""
                         # Look for R1 file
-                        f = os.path.join(smpl_dir,"%s_R1_001.fastq.gz" % name)
+                        f = os.path.join(proj_dir,
+                                         "%s%s_R1_001.fastq.gz" % (name,
+                                                                   lane_id))
                         if not os.path.exists(f):
-                            logging.warning("Verify: missing R1 file '%s'" % f)
+                            logging.warning("Verify: missing R1 file '%s'"
+                                            % f)
                             verified = False
                         # Look for R2 file (paired end only)
+                        logging.debug("Paired_end = %s" % illumina_data.paired_end)
                         if illumina_data.paired_end:
-                            f = os.path.join(smpl_dir,"%s_R2_001.fastq.gz" % name)
+                            f = os.path.join(proj_dir,
+                                             "%s%s_R2_001.fastq.gz" % (name,
+                                                                       lane_id))
                             if not os.path.exists(f):
-                                logging.warning("Verify: missing R2 file '%s'" % f)
+                                logging.warning("Verify: missing R2 file '%s'"
+                                                % f)
                                 verified = False
-                else:
-                    # Sample directory not found
-                    logging.warning("Verify: missing %s" % smpl_dir)
-                    verified = False
         else:
             # Project directory not found
             logging.warning("Verify: missing %s" % proj_dir)

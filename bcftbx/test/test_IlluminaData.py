@@ -1635,6 +1635,17 @@ FC0001,1,PJB2-1580,,TGACCAAT-TCTTTCCC,,,,,PeterBriggs
                          ['PJB1-1579_CGATGTAT-TCTTTCCC_L001',])
         self.assertEqual(output['Project_PeterBriggs']['Sample_PJB2-1580'],
                          ['PJB2-1580_TGACCAAT-TCTTTCCC_L001',])
+    def test_hiseq_predict_output_bcl2fastq2(self):
+        """SampleSheet: check predicted bcl2fastq2 outputs for HISeq IEM4
+        sample sheet
+
+        """
+        iem = SampleSheet(fp=cStringIO.StringIO(
+            self.hiseq_sample_sheet_content))
+        output = iem.predict_output(fmt='bcl2fastq2')
+        self.assertTrue('PeterBriggs' in output)
+        self.assertEqual(output['PeterBriggs'],
+                         ['PJB1-1579_S1_L001','PJB2-1580_S2_L001',])
     def test_load_miseq_sample_sheet(self):
         """SampleSheet: load a MiSEQ sample sheet
 
@@ -1715,6 +1726,17 @@ FC0001,1,B8,,CGTACTAG-TAGATCGC,,,,,PJB
                          ['A8_TAAGGCGA-TAGATCGC_L001',])
         self.assertEqual(output['Project_PJB']['Sample_B8'],
                          ['B8_CGTACTAG-TAGATCGC_L001',])
+    def test_miseq_predict_output_bcl2fastq2(self):
+        """SampleSheet: check predicted bcl2fastq2 outputs for MISeq IEM4
+        sample sheet
+
+        """
+        iem = SampleSheet(fp=cStringIO.StringIO(
+            self.miseq_sample_sheet_content))
+        output = iem.predict_output(fmt='bcl2fastq2')
+        self.assertTrue('PJB' in output)
+        self.assertEqual(output['PJB'],
+                         ['A8_S1','B8_S2',])
     def test_load_casava_sample_sheet(self):
         """SampleSheet: load a CASAVA-style sample sheet
 
@@ -2419,7 +2441,7 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
         self.assertEqual(line['SampleProject'],'PeterBriggs')
         self.assertEqual(line['Index'],'CTTGTAAT-TCTTTCCC')
 
-class TestVerifyRunAgainstSampleSheet(unittest.TestCase):
+class TestVerifyRunAgainstCasavaSampleSheet(unittest.TestCase):
 
     def setUp(self):
         # Create a mock Illumina directory
@@ -2453,14 +2475,14 @@ FC1,3,CDE4,,AGTCAA,,,,,CDE""")
         os.remove(self.sample_sheet)
 
     def test_verify_run_against_sample_sheet(self):
-        """Verify sample sheet against a matching run
+        """Verify sample sheet against a matching CASAVA run
         """
         illumina_data = IlluminaData(self.mock_illumina_data.dirn)
         self.assertTrue(verify_run_against_sample_sheet(illumina_data,
                                                         self.sample_sheet))
 
     def test_verify_run_against_sample_sheet_with_missing_project(self):
-        """Verify sample sheet against a run with a missing project
+        """Verify sample sheet against a CASAVA run with a missing project
         """
         shutil.rmtree(os.path.join(self.mock_illumina_data.dirn,
                                    self.mock_illumina_data.unaligned_dir,
@@ -2470,7 +2492,7 @@ FC1,3,CDE4,,AGTCAA,,,,,CDE""")
                                                         self.sample_sheet))
 
     def test_verify_run_against_sample_sheet_with_missing_sample(self):
-        """Verify sample sheet against a run with a missing sample
+        """Verify sample sheet against a CASAVA run with a missing sample
         """
         shutil.rmtree(os.path.join(self.mock_illumina_data.dirn,
                                    self.mock_illumina_data.unaligned_dir,
@@ -2480,12 +2502,180 @@ FC1,3,CDE4,,AGTCAA,,,,,CDE""")
                                                         self.sample_sheet))
 
     def test_verify_run_against_sample_sheet_with_missing_fastq(self):
-        """Verify sample sheet against a run with a missing fastq file
+        """Verify sample sheet against a CASAVA run with a missing fastq file
         """
         os.remove(os.path.join(self.mock_illumina_data.dirn,
                                self.mock_illumina_data.unaligned_dir,
                                "Project_CDE","Sample_CDE4",
                                "CDE4_AGTCAA_L002_R2_001.fastq.gz"))
+        illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertFalse(verify_run_against_sample_sheet(illumina_data,
+                                                        self.sample_sheet))
+
+class TestVerifyRunAgainstBcl2fastq2SampleSheet(unittest.TestCase):
+
+    def setUp(self):
+        # Create a mock Illumina directory
+        self.top_dir = tempfile.mkdtemp()
+        self.mock_illumina_data = MockIlluminaData('test.MockIlluminaData',
+                                                   'bcl2fastq2',paired_end=True,
+                                                   top_dir=self.top_dir)
+        self.mock_illumina_data.add_fastq_batch('AB','AB1','AB1_S1',lanes=(1,))
+        self.mock_illumina_data.add_fastq_batch('AB','AB2','AB2_S2',lanes=(1,))
+        self.mock_illumina_data.add_fastq_batch('CDE','CDE3','CDE3_S3',lanes=(2,3))
+        self.mock_illumina_data.add_fastq_batch('CDE','CDE4','CDE4_S4',lanes=(2,3))
+        self.mock_illumina_data.add_undetermined(lanes=(1,2,3))
+        self.mock_illumina_data.create()
+        # Sample sheet
+        fno,self.sample_sheet = tempfile.mkstemp()
+        fp = os.fdopen(fno,'w')
+        fp.write("""[Header]
+
+[Reads]
+
+[Settings]
+
+[Data]
+Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,Sample_Project,Description
+1,AB1,AB1,,,N0,GCCAAT,AB,
+1,AB2,AB2,,,N1,AGTCAA,AB,
+2,CDE3,CDE3,,,N2,GCCAAT,CDE,
+2,CDE4,CDE4,,,N3,AGTCAA,CDE,
+3,CDE3,CDE3,,,N2,GCCAAT,CDE,
+3,CDE4,CDE4,,,N3,AGTCAA,CDE,""")
+        fp.close()
+
+    def tearDown(self):
+        # Remove the test directory
+        if self.mock_illumina_data is not None:
+            self.mock_illumina_data.remove()
+        os.rmdir(self.top_dir)
+        os.remove(self.sample_sheet)
+
+    def test_verify_run_against_sample_sheet(self):
+        """Verify sample sheet against a matching bcl2fastq2 run
+        """
+        illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertTrue(verify_run_against_sample_sheet(illumina_data,
+                                                        self.sample_sheet))
+
+    def test_verify_run_against_sample_sheet_with_missing_project(self):
+        """Verify sample sheet against a bcl2fastq2 run with a missing project
+        """
+        shutil.rmtree(os.path.join(self.mock_illumina_data.dirn,
+                                   self.mock_illumina_data.unaligned_dir,
+                                   "AB"))
+        illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertFalse(verify_run_against_sample_sheet(illumina_data,
+                                                         self.sample_sheet))
+
+    def test_verify_run_against_sample_sheet_with_missing_sample(self):
+        """Verify sample sheet against a bcl2fastq2 run with a missing sample
+        """
+        for f in os.listdir(os.path.join(self.mock_illumina_data.dirn,
+                                         self.mock_illumina_data.unaligned_dir,
+                                         "AB")):
+            print f
+            if f.startswith("AB1"):
+                fq = os.path.join(self.mock_illumina_data.dirn,
+                                  self.mock_illumina_data.unaligned_dir,
+                                  "AB",f)
+                print "Removing %s" % fq
+                os.remove(fq)
+        illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertFalse(verify_run_against_sample_sheet(illumina_data,
+                                                        self.sample_sheet))
+
+    def test_verify_run_against_sample_sheet_with_missing_fastq(self):
+        """Verify sample sheet against a bcl2fastq2 run with a missing fastq file
+        """
+        os.remove(os.path.join(self.mock_illumina_data.dirn,
+                               self.mock_illumina_data.unaligned_dir,
+                               "CDE","CDE4_S4_L002_R2_001.fastq.gz"))
+        illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertFalse(verify_run_against_sample_sheet(illumina_data,
+                                                        self.sample_sheet))
+
+class TestVerifyRunAgainstBcl2fastq2SampleSheetNoLaneSplitting(unittest.TestCase):
+
+    def setUp(self):
+        # Create a mock Illumina directory
+        self.top_dir = tempfile.mkdtemp()
+        self.mock_illumina_data = MockIlluminaData('test.MockIlluminaData',
+                                                   'bcl2fastq2',
+                                                   paired_end=True,
+                                                   no_lane_splitting=True,
+                                                   top_dir=self.top_dir)
+        self.mock_illumina_data.add_fastq_batch('AB','AB1','AB1_S1')
+        self.mock_illumina_data.add_fastq_batch('AB','AB2','AB2_S2')
+        self.mock_illumina_data.add_fastq_batch('CDE','CDE3','CDE3_S3')
+        self.mock_illumina_data.add_fastq_batch('CDE','CDE4','CDE4_S4')
+        self.mock_illumina_data.add_undetermined()
+        self.mock_illumina_data.create()
+        # Sample sheet
+        fno,self.sample_sheet = tempfile.mkstemp()
+        fp = os.fdopen(fno,'w')
+        fp.write("""[Header]
+
+[Reads]
+
+[Settings]
+
+[Data]
+Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,Sample_Project,Description
+AB1,AB1,,,N0,GCCAAT,AB,
+AB2,AB2,,,N1,AGTCAA,AB,
+CDE3,CDE3,,,N2,GCCAAT,CDE,
+CDE4,CDE4,,,N3,AGTCAA,CDE,""")
+        fp.close()
+
+    def tearDown(self):
+        # Remove the test directory
+        if self.mock_illumina_data is not None:
+            self.mock_illumina_data.remove()
+        os.rmdir(self.top_dir)
+        os.remove(self.sample_sheet)
+
+    def test_verify_run_against_sample_sheet(self):
+        """Verify sample sheet against a matching bcl2fastq2 run (--no-lane-splitting)
+        """
+        illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertTrue(verify_run_against_sample_sheet(illumina_data,
+                                                        self.sample_sheet))
+
+    def test_verify_run_against_sample_sheet_with_missing_project(self):
+        """Verify sample sheet against a bcl2fastq2 run with a missing project (--no-lane-splitting)
+        """
+        shutil.rmtree(os.path.join(self.mock_illumina_data.dirn,
+                                   self.mock_illumina_data.unaligned_dir,
+                                   "AB"))
+        illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertFalse(verify_run_against_sample_sheet(illumina_data,
+                                                         self.sample_sheet))
+
+    def test_verify_run_against_sample_sheet_with_missing_sample(self):
+        """Verify sample sheet against a bcl2fastq2 run with a missing sample (--no-lane-splitting)
+        """
+        for f in os.listdir(os.path.join(self.mock_illumina_data.dirn,
+                                         self.mock_illumina_data.unaligned_dir,
+                                         "AB")):
+            print f
+            if f.startswith("AB1"):
+                fq = os.path.join(self.mock_illumina_data.dirn,
+                                  self.mock_illumina_data.unaligned_dir,
+                                  "AB",f)
+                print "Removing %s" % fq
+                os.remove(fq)
+        illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertFalse(verify_run_against_sample_sheet(illumina_data,
+                                                        self.sample_sheet))
+
+    def test_verify_run_against_sample_sheet_with_missing_fastq(self):
+        """Verify sample sheet against a bcl2fastq2 run with a missing fastq file (--no-lane-splitting)
+        """
+        os.remove(os.path.join(self.mock_illumina_data.dirn,
+                               self.mock_illumina_data.unaligned_dir,
+                               "CDE","CDE4_S4_R2_001.fastq.gz"))
         illumina_data = IlluminaData(self.mock_illumina_data.dirn)
         self.assertFalse(verify_run_against_sample_sheet(illumina_data,
                                                         self.sample_sheet))
