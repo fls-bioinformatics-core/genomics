@@ -1,3 +1,22 @@
+2016-01-19  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* genomics-bcftbx version 0.99.6
+	- Updates for handling sequencing data from NextSeq
+	  and bcl2fastq v2:
+	- bcftbx/IlluminaData: new generic SampleSheet
+	  class handles both IEM- and CASAVA-style sample
+	  sheets transparently; CasavaSampleSheet and
+	  IEMSampleSheet classes reimplemented as wrappers
+	  for SampleSheet.
+	- bcftbx/IlluminaData: IlluminaRun class updated
+	  to handle NextSeq output.
+	- bcftbx/IlluminaData: IlluminaData, IlluminaProject,
+	  IlluminaSample and IlluminaFastq classes updated
+	  to handle outputs from bcl2fastq v2.
+	- prep_sample_sheet.py: handles both IEM and CASAVA
+	  style sample sheets; use -f/--format option to
+	  convert one to the other.
+
 2016-01-04  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* genomics-bcftbx version 0.99.5
