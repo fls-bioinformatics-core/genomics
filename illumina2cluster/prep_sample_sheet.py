@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #     prep_sample_sheet.py: prepare sample sheet file for Illumina sequencers
-#     Copyright (C) University of Manchester 2012-3 Peter Briggs
+#     Copyright (C) University of Manchester 2012-16 Peter Briggs
 #
 ########################################################################
 #
@@ -15,7 +15,7 @@ Prepare sample sheet file for Illumina sequencers.
 
 """
 
-__version__ = "0.2.1"
+__version__ = "0.3.0"
 
 #######################################################################
 # Imports
@@ -39,7 +39,7 @@ import bcftbx.IlluminaData as IlluminaData
 def parse_name_expression(name_expr):
     """Break up a 'name expression' into lane numbers and associated name
 
-    name_expr: a string of the form '<lanes>:<name>', where <lanes> can
+    name_expr: a string of the form '[<lanes>:]<name>', where <lanes> can
     be a single integer (e.g. 1), a set of comma-separated integers (e.g.
     1,2,3), a range (e.g. 1-4), or a combination (e.g. 1,3,5-8).
 
@@ -50,12 +50,13 @@ def parse_name_expression(name_expr):
     try:
         # Extract components
         i = str(name_expr).index(':')
-        expr = str(name_expr)[:i]
         name = str(name_expr)[i+1:]
+        # Extract lane numbers from leading expression
+        lanes = parse_lane_expression(str(name_expr)[:i])
     except ValueError:
-        raise Exception, "name expression '%s' has incorrect format" % name_expr
-    # Extract lane numbers from leading expression
-    lanes = parse_lane_expression(expr)
+        # No lanes specified
+        name = str(name_expr)
+        lanes = None
     # Return tuple
     return (lanes,name)
 
@@ -125,6 +126,8 @@ class TestParseNameExpressionFunction(unittest.TestCase):
     def test_parse_mixtures_of_list_and_range(self):
         self.assertEqual(parse_name_expression("1-3,5:Test"),([1,2,3,5],'Test'))
         self.assertEqual(parse_name_expression("1,3-5:Test"),([1,3,4,5],'Test'))
+    def test_parse_no_lane(self):
+        self.assertEqual(parse_name_expression("Test"),(None,'Test'))
 
 class TestParseLaneExpressionFunction(unittest.TestCase):
     """Tests for the 'parse_lane_expression' function
@@ -173,26 +176,31 @@ if __name__ == "__main__":
                               "names before running BCL to FASTQ conversion.")
     p.add_option('-o',action="store",dest="samplesheet_out",default=None,
                  help="output new sample sheet to SAMPLESHEET_OUT")
+    p.add_option('-f','--format',action="store",dest="fmt",
+                 help="specify the format of the output sample sheet written by the -o "
+                 "option; can be either 'CASAVA' or 'IEM' (defaults to the format of the "
+                 "original file)")
     p.add_option('-v','--view',action="store_true",dest="view",
 	         help="view contents of sample sheet")
     p.add_option('--fix-spaces',action="store_true",dest="fix_spaces",
-                 help="replace spaces in SampleID and SampleProject fields with underscores")
+                 help="replace spaces in sample ID and project fields with underscores")
     p.add_option('--fix-duplicates',action="store_true",dest="fix_duplicates",
-                 help="append unique indices to SampleIDs where original "
-                 "SampleID/SampleProject combination are duplicated")
+                 help="append unique indices to sample IDs where the original "
+                 "ID and project name combination are duplicated")
     p.add_option('--fix-empty-projects',action="store_true",dest="fix_empty_projects",
-                 help="create SampleProject names where these are blank in the original "
+                 help="create sample project names where these are blank in the original "
                  "sample sheet")
     p.add_option('--set-id',action="append",dest="sample_id",default=[],
-                 help="update/set the values in the 'SampleID' field; "
+                 help="update/set the values in sample ID field; "
                  "SAMPLE_ID should be of the form '<lanes>:<name>', where <lanes> is a single "
                  "integer (e.g. 1), a set of integers (e.g. 1,3,...), a range (e.g. 1-3), or "
                  "a combination (e.g. 1,3-5,7)")
     p.add_option('--set-project',action="append",dest="sample_project",default=[],
-                 help="update/set values in the 'SampleProject' field; "
-                 "SAMPLE_PROJECT should be of the form '<lanes>:<name>', where <lanes> is a "
-                 "single integer (e.g. 1), a set of integers (e.g. 1,3,...), a range (e.g. 1-3), "
-                 "or a combination (e.g. 1,3-5,7)")
+                 help="update/set values in the sample project field; "
+                 "SAMPLE_PROJECT should be of the form '[<lanes>:]<name>', where the optional "
+                 "<lanes> part can be a single integer (e.g. 1), a set of integers (e.g. "
+                 "1,3,...), a range (e.g. 1-3), or a combination (e.g. 1,3-5,7). If no "
+                 "lanes are specified then all samples will have their project set to <name>")
     p.add_option('--ignore-warnings',action="store_true",dest="ignore_warnings",default=False,
                  help="ignore warnings about spaces and duplicated sampleID/sampleProject "
                  "combinations when writing new samplesheet.csv file")
@@ -201,15 +209,17 @@ if __name__ == "__main__":
                  "LANES should be single integer (e.g. 1), a list of integers (e.g. "
                  "1,3,...), a range (e.g. 1-3) or a combination (e.g. 1,3-5,7). Default "
                  "is to include all lanes")
-    p.add_option('--truncate-barcodes',action="store",dest="barcode_len",default=None,
-                 type='int',
-                 help="trim barcode sequences in sample sheet to number of bases specified "
-                 "by BARCODE_LEN. Default is to leave barcode sequences unmodified")
     deprecated_options = optparse.OptionGroup(p,"Deprecated options")
+    deprecated_options.add_option('--truncate-barcodes',action="store",dest="barcode_len",
+                                  default=None,type='int',
+                                  help="trim barcode sequences in sample sheet to number of "
+                                  "bases specified by BARCODE_LEN. Default is to leave "
+                                  "barcode sequences unmodified (deprecated; only works for "
+                                  "CASAVA-style sample sheets)")
     deprecated_options.add_option('--miseq',action="store_true",dest="miseq",
                                   help="convert input MiSEQ sample sheet to CASAVA-compatible "
-                                  "format (deprecated; conversion is performed automatically "
-                                  "if required)")
+                                  "format (deprecated; specify -f/--format CASAVA to convert "
+                                  "IEM sample sheet to older format)")
     p.add_option_group(deprecated_options)
     # Process command line
     options,args = p.parse_args()
@@ -223,34 +233,62 @@ if __name__ == "__main__":
     if not os.path.isfile(samplesheet):
         logging.error("sample sheet '%s': not found" % samplesheet)
         sys.exit(1)
-    # Read in the data as CSV
-    data = IlluminaData.get_casava_sample_sheet(samplesheet)
+    # Read in the sample sheet
+    data = IlluminaData.SampleSheet(samplesheet)
+    if data.format is None:
+        logging.error("Unable to determine samplesheet format")
+        sys.exit(1)
+    print "Sample sheet format: %s" % data.format
     # Remove lanes
     if options.lanes is not None:
+        if not data.has_lanes:
+            logging.error("sample sheet doesn't define any lanes")
+            sys.exit(1)
         lanes = parse_lane_expression(options.lanes)
         print "Keeping lanes %s, removing the rest" % ','.join([str(x) for x in lanes])
-        new_data = IlluminaData.CasavaSampleSheet()
-        for line in data:
+        i = 0
+        while i < len(data):
+            line = data[i]
             if line['Lane'] in lanes:
                 print "Keeping %s" % line
-                new_data.append(tabdata="%s" % line)
-        data = new_data
+                i += 1
+            else:
+                del(data[i])
     # Update the SampleID and SampleProject fields
     for sample_id in options.sample_id:
+        if not data.has_lanes:
+            logging.error("No lanes in sample sheet for assigning sample ids")
+            sys.exit(1)
         lanes,name = parse_name_expression(sample_id)
+        if lanes is None:
+            logging.error("No lanes specified for sample id assignment")
+            sys.exit(1)
         for line in data:
             if line['Lane'] in lanes:
                 print "Setting SampleID for lane %d: '%s'" % (line['Lane'],name)
-                line['SampleID'] = name
+                line[data.sample_id_column] = name
     # Update the SampleProject field
     for sample_project in options.sample_project:
         lanes,name = parse_name_expression(sample_project)
-        for line in data:
-            if line['Lane'] in lanes:
-                print "Setting SampleProject for lane %d: '%s'" % (line['Lane'],name)
-                line['SampleProject'] = name
+        if lanes is None:
+            logging.warning("Setting project for all samples to '%s'" % name)
+            for line in data:
+                line[data.sample_project_column] = name
+        else:
+            if not data.has_lanes:
+                logging.error("No lanes in sample sheet for assigning sample projects")
+                sys.exit(1)
+            for line in data:
+                if line['Lane'] in lanes:
+                    print "Setting SampleProject for lane %d: '%s'" % (line['Lane'],
+                                                                       name)
+                    line[data.sample_project_column] = name
     # Truncate barcodes
     if options.barcode_len is not None:
+        logging.warning("barcode truncation function is deprecated")
+        if 'Index' not in data.column_names:
+            logging.error("barcode truncation not possible without 'Index' column")
+            sys.exit(1)
         barcode_len = options.barcode_len
         for line in data:
             barcode = truncate_barcode(line['Index'],options.barcode_len)
@@ -267,8 +305,8 @@ if __name__ == "__main__":
     # Fix empty projects
     if options.fix_empty_projects:
         for line in data:
-            if not line['SampleProject']:
-                line['SampleProject'] = line['SampleID']
+            if not line[data.sample_project_column]:
+                line[data.sample_project_column] = line[data.sample_id_column]
     # Fix duplicates
     if options.fix_duplicates:
         data.fix_duplicated_names()
@@ -282,23 +320,29 @@ if __name__ == "__main__":
     if len(duplicates) > 0:
         check_status = 1
         for duplicate_set in duplicates:
-            for lane in duplicate_set:
-                logging.warning("Duplicated SampleID/SampleProject in lane %s (%s/%s)" % 
-                                (lane['Lane'],lane['SampleID'],lane['SampleProject']))
+            for line in duplicate_set:
+                logging.warning("Duplicated %s/%s in line:\n%s" %
+                                line,
+                                data.sample_id_column,
+                                data.sample_project_column)
     # Illegal characters/spaces in names
     illegal_names = data.illegal_names
     if len(illegal_names) > 0:
         check_status = 1
-        for lane in illegal_names:
-            logging.warning("Spaces in SampleID/SampleProject in lane %s (%s/%s)" %
-                            (lane['Lane'],lane['SampleID'],lane['SampleProject']))
+        for line in illegal_names:
+            logging.warning("Spaces in %s/%s in line:\n%s" %
+                            line,
+                            data.sample_id_column,
+                            data.sample_project_column)
     # Empty names
     empty_names = data.empty_names
     if len(empty_names) > 0:
         check_status = 1
-        for lane in empty_names:
-            logging.warning("Empty SampleID and/or SampleProject name in lane %s (%s/%s)" %
-                            (lane['Lane'],lane['SampleID'],lane['SampleProject']))
+        for line in empty_names:
+            logging.warning("Empty %s and/or %s in line:\n%s" %
+                            line,
+                            data.sample_id_column,
+                            data.sample_project_column)
     # Predict outputs
     if check_status == 0 or options.ignore_warnings:
         projects = data.predict_output()
@@ -315,7 +359,16 @@ if __name__ == "__main__":
         if check_status and not options.ignore_warnings:
             logging.error("please fix above errors in sample sheet data")
         else:
-            data.write(options.samplesheet_out)
+            if options.fmt is not None:
+                fmt = str(options.fmt).upper()
+            else:
+                fmt = data.format
+            if fmt not in ('CASAVA','IEM'):
+                logging.error("unknown output format '%s'" % fmt)
+                sys.exit(1)
+            print "Writing to %s in %s format" % (options.samplesheet_out,
+                                                  fmt)
+            data.write(options.samplesheet_out,fmt=fmt)
     # Finish
     sys.exit(check_status)
     

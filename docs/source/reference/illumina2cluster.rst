@@ -303,26 +303,32 @@ Options:
 
     output new sample sheet to ``SAMPLESHEET_OUT``
 
+.. cmdoption::  -f FMT, --format=FMT
+
+    specify the format of the output sample sheet written by the ``-o`` option;
+    can be either ``CASAVA`` or ``IEM`` (defaults to the format of the original
+    file)
+
 .. cmdoption:: -v, --view
 
     view contents of sample sheet
 
 .. cmdoption:: --fix-spaces
 
-    replace spaces in SampleID and SampleProject fields with underscores
+    replace spaces in sample ID and project fields with underscores
 
 .. cmdoption:: --fix-duplicates
 
-    append unique indices to SampleIDs where original SampleID/SampleProject
+    append unique indices to Sample IDs where original ID and project name
     combination are duplicated
 
 .. cmdoption:: --fix-empty-projects
 
-    create SampleProject names where these are blank in the original sample sheet
+    create sample project names where these are blank in the original sample sheet
 
 .. cmdoption:: --set-id=SAMPLE_ID
 
-    update/set the values in the 'SampleID' field;
+    update/set the values in the Sample ID field;
     SAMPLE_ID should be of the form ``<lanes>:<name>``,
     where ``<lanes>`` is a single integer (e.g. 1), a set of
     integers (e.g. 1,3,...), a range (e.g. 1-3), or a
@@ -330,11 +336,12 @@ Options:
 
 .. cmdoption:: --set-project=SAMPLE_PROJECT
 
-    update/set values in the 'SampleProject' field;
-    ``SAMPLE_PROJECT`` should be of the form '<lanes>:<name>',
-    where <lanes> is a single integer (e.g. 1), a set of
+    update/set values in the sample project field;
+    ``SAMPLE_PROJECT`` should be of the form ``[<lanes>:]<name>``,
+    where the optional ``<lanes>`` part can be a single integer (e.g. 1), a set of
     integers (e.g. 1,3,...), a range (e.g. 1-3), or a
-    combination (e.g. 1,3-5,7)
+    combination (e.g. 1,3-5,7). If no lanes are specified then all
+    samples will have their project set to ``<name>``
 
 .. cmdoption:: --ignore-warnings
 
@@ -348,17 +355,19 @@ Options:
     1,3,...), a range (e.g. 1-3) or a combination (e.g. 1,3-5,7).
     Default is to include all lanes
 
+Deprecated options:
+
 .. cmdoption:: --truncate-barcodes=BARCODE_LEN
 
     trim barcode sequences in sample sheet to number of bases specified
     by ``BARCODE_LEN``. Default is to leave barcode sequences unmodified
-
-Deprecated options:
+    (deprecated; only works for CASAVA-style sample sheets)
 
 .. cmdoption:: --miseq
 
     convert MiSEQ input sample sheet to CASAVA-compatible format (deprecated;
-    conversion is performed automatically if required)
+    conversion is performed specify -f/--format CASAVA to convert IEM sample
+    sheet to older format)
 
 
 Examples:

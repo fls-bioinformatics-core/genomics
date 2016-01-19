@@ -1,5 +1,5 @@
 #     IlluminaData.py: module for handling data about Illumina sequencer runs
-#     Copyright (C) University of Manchester 2012-2013 Peter Briggs
+#     Copyright (C) University of Manchester 2012-2016 Peter Briggs
 #
 ########################################################################
 #
@@ -30,6 +30,12 @@ import TabFile
 import cStringIO
 
 #######################################################################
+# Module constants
+#######################################################################
+
+SAMPLESHEET_ILLEGAL_CHARS = "?()[]/\=+<>:;\"',*^|&. \t"
+
+#######################################################################
 # Class definitions
 #######################################################################
 
@@ -44,6 +50,7 @@ class IlluminaRun:
     runinfo_xml       : full path of the RunInfo.xml file
     platform          : platform e.g. 'miseq'
     bcl_extension     : file extension for bcl files (either "bcl" or "bcl.gz")
+    lanes             : list of (integer) lane numbers in the run
 
     """
 
@@ -61,7 +68,7 @@ class IlluminaRun:
         self.platform = platforms.get_sequencer_platform(self.run_dir)
         if self.platform is None:
             raise Exception("Can't determine platform for %s" % self.run_dir)
-        elif self.platform not in ('illumina-ga2x','hiseq','miseq'):
+        elif self.platform not in ('illumina-ga2x','hiseq','miseq','nextseq'):
             raise Exception("%s: not an Illumina sequencer?" % self.run_dir)
         # Basecalls subdirectory
         self.basecalls_dir = os.path.join(self.run_dir,
@@ -82,20 +89,43 @@ class IlluminaRun:
     def bcl_extension(self):
         """Get extension of bcl files
 
-        Returns either 'bcl' or 'bcl.gz'.
+        Returns one of 'bcl', 'bcl.gz', 'bcl.bgzf'
+
+        Raises an exception if no matching files are found.
 
         """
-        # Locate the directory for the first cycle in the first
-        # lane, which should always be present
+        # Locate the directory for the first cycle in the first lane
+        # (HiSeq and MiSeq)
         lane1_cycle1 = os.path.join(self.basecalls_dir,'L001','C1.1')
-        # Examine filename extensions
-        for f in os.listdir(lane1_cycle1):
-            if str(f).endswith('.bcl'):
-                return 'bcl'
-            elif str(f).endswith('.bcl.gz'):
-                return 'bcl.gz'
+        if os.path.isdir(lane1_cycle1):
+            for f in os.listdir(lane1_cycle1):
+                for ext in ('.bcl','.bcl.gz',):
+                    if str(f).endswith(ext):
+                        return ext
+        # Look in the directory for the first lane (NextSeq)
+        lane1 = os.path.join(self.basecalls_dir,'L001')
+        for f in os.listdir(lane1):
+            for ext in ('.bcl.bgzf',):
+                if str(f).endswith(ext):
+                    return ext
         # Failed to match any known extension, raise exception
-        raise Exception("No bcl files found in %s" % lane1_cycle1)
+        raise Exception("Unable to determine bcl extension")
+
+    @property
+    def lanes(self):
+        """
+        Return list of lane numbers
+
+        Returns a list of integer lane numbers found in the
+        run directory
+
+        """
+        lanes = []
+        for d in os.listdir(self.basecalls_dir):
+            if d.startswith('L'):
+                lanes.append(int(d[1:]))
+        lanes.sort()
+        return lanes
 
 class IlluminaRunInfo:
     """Class for examining Illumina RunInfo.xml file
@@ -103,7 +133,7 @@ class IlluminaRunInfo:
     Extracts basic information from a RunInfo.xml file:
 
     run_id     : the run id e.g.'130805_PJ600412T_0012_ABCDEZXDYY'
-    run_number : the run numer e.g. '12'
+    run_number : the run number e.g. '12'
     bases_mask : bases mask string derived from the read information
                  e.g. 'y101,I6,y101'
     reads      : a list of Python dictionaries (one per read)
@@ -169,15 +199,16 @@ class IlluminaData:
     analysis_dir:  top-level directory holding the 'Unaligned' subdirectory
                    with the primary fastq.gz files
     projects:      list of IlluminaProject objects (one for each project
-                   defined at the fastq creation stage, expected to be in
-                   subdirectories "Project_...")
-    undetermined:  IlluminaProject object for the "Undetermined_indices"
-                   subdirectory in the 'Unaligned' directry (or None if
-                   no "Undetermined_indices" subdirectory was found e.g.
-                   if the run wasn't multiplexed)
+                   defined at the fastq creation stage)
+    undetermined:  IlluminaProject object for the undetermined reads
     unaligned_dir: full path to the 'Unaligned' directory holding the
                    primary fastq.gz files
-    paired_end:    True if all projects are paired end, False otherwise
+    paired_end:    True if at least one project is paired end, False otherwise
+    format:        Format of the directory structure layout (either
+                   'casava' or 'bcl2fastq2', or None if the format cannot
+                   be determined)
+    lanes:         List of lane numbers present; if there are no lanes
+                   then this will be a list with 'None' as the only value
 
     Provides the following methods:
 
@@ -200,11 +231,40 @@ class IlluminaData:
         self.analysis_dir = os.path.abspath(illumina_analysis_dir)
         self.projects = []
         self.undetermined = None
-        self.paired_end = True
-        # Look for "unaligned" data directory
+        self.paired_end = False
+        self.format = None
+        # Look for "Unaligned" data directory
         self.unaligned_dir = os.path.join(self.analysis_dir,unaligned_dir)
         if not os.path.exists(self.unaligned_dir):
-            raise IlluminaDataError, "Missing data directory %s" % self.unaligned_dir
+            raise IlluminaDataError("Missing data directory %s" %
+                                    self.unaligned_dir)
+        # Raise an exception if no projects found
+        try:
+            self._populate_casava_style()
+        except IlluminaDataError:
+            self._populate_bcl2fastq2_style()
+        if not self.projects:
+            raise IlluminaDataError("No projects found")
+        # Sort projects on name
+        self.projects.sort(lambda a,b: cmp(a.name,b.name))
+        # Determine whether data is paired end
+        for p in self.projects:
+            self.paired_end = (self.paired_end or p.paired_end)
+        # Get list of lanes
+        self.lanes = []
+        for p in self.projects:
+            for s in p.samples:
+                for fq in s.fastq:
+                    lane = IlluminaFastq(fq).lane_number
+                    if lane not in self.lanes:
+                        self.lanes.append(lane)
+        self.lanes.sort()
+
+    def _populate_casava_style(self):
+        """
+        Find projects for a CASAVA-style directory structure
+
+        """
         # Look for projects
         for f in os.listdir(self.unaligned_dir):
             dirn = os.path.join(self.unaligned_dir,f)
@@ -215,13 +275,53 @@ class IlluminaData:
                 logging.debug("Undetermined dirn: %s" %f)
                 self.undetermined = IlluminaProject(dirn)
         # Raise an exception if no projects found
-        if not self.projects:
-            raise IlluminaDataError, "No projects found"
-        # Sort projects on name
-        self.projects.sort(lambda a,b: cmp(a.name,b.name))
-        # Determine whether data is paired end
-        for p in self.projects:
-            self.paired_end = (self.paired_end and p.paired_end)
+        if not self.projects :
+            raise IlluminaDataError("No CASAVA-style projects found")
+        else:
+            self.format = 'casava'
+
+    def _populate_bcl2fastq2_style(self):
+        """
+        Find projects for a bcl2fastq2-style directory structure
+
+        """
+        # The output from bcl2fastq2 is flat
+        # We expect to find a number of 'undetermined' fastqs at
+        # the top level of the output (unaligned) directory,
+        # and one or more projects in subdirectories - each of
+        # which contains all the fastqs for all samples
+        # The strategy is to look for all these things together
+        # Look for undetermined fastqs
+        undetermined_fqs = filter(lambda f: f.startswith('Undetermined_S0_')
+                                  and f.endswith('.fastq.gz'),
+                                  os.listdir(self.unaligned_dir))
+        if not undetermined_fqs:
+            raise IlluminaDataError("No bcl2fastq2 undetermined fastqs found")
+        # Look for potential projects
+        project_dirs = []
+        for d in os.listdir(self.unaligned_dir):
+            dirn = os.path.join(self.unaligned_dir,d)
+            if not os.path.isdir(dirn):
+                continue
+            # Get a list of fastq files
+            fqs = filter(lambda f: f.endswith('.fastq.gz'),
+                         os.listdir(dirn))
+            if not fqs:
+                continue
+            # Check that fastqs have bcl2fastq2-style names
+            for fq in fqs:
+                if IlluminaFastq(fq).sample_number is None:
+                    break; continue
+            # Looks like a project
+            project_dirs.append(dirn)
+        # Raise an exception if no projects found
+        if not project_dirs:
+            raise IlluminaDataError("No bcl2fastq2-style projects found")
+        # Create project objects
+        self.undetermined = IlluminaProject(self.unaligned_dir)
+        for dirn in project_dirs:
+            self.projects.append(IlluminaProject(dirn))
+        self.format = 'bcl2fastq2'
 
     def get_project(self,name):
         """Return project that matches 'name'
@@ -241,14 +341,14 @@ class IlluminaData:
 class IlluminaProject:
     """Class for storing information on a 'project' within an Illumina run
 
-    A project is a subset of fastq files from a run of the Illumina GA2
+    A project is a subset of fastq files from a run of an Illumina
     sequencer; in the first instance projects are defined within the
     SampleSheet.csv file which is output by the sequencer.
 
-    Note that the "Undetermined_indices" directory (which holds fastq files
-    for each lane where any reads that couldn't be assigned to a barcode
-    during demultiplexing) is also considered as a project, and can be
-    processed using an IlluminaData object.
+    Note that the "undetermined" fastqs (which hold reads for each lane
+    which couldn't be assigned to a barcode during demultiplexing) is also
+    considered as a project, and can be processed using an IlluminaProject
+    object.
 
     Provides the following attributes:
 
@@ -260,6 +360,7 @@ class IlluminaProject:
     samples:   list of IlluminaSample objects for each sample within the
                project
     paired_end: True if all samples are paired end, False otherwise
+    undetermined: True if 'samples' are actually undetermined reads
 
     """
 
@@ -275,24 +376,84 @@ class IlluminaProject:
         self.expt_type = None
         self.samples = []
         self.paired_end = True
-        # Get name by removing prefix
+        self.undetermined = False
+        # Test if this looks like a CASAVA/bcl2fastq v1.8 output
         self.project_prefix = "Project_"
-        if os.path.basename(self.dirn).startswith(self.project_prefix):
-            self.name = os.path.basename(self.dirn)[len(self.project_prefix):]
-        else:
-            # Check if this is the "Undetermined_indices" directory
-            if os.path.basename(self.dirn) == "Undetermined_indices":
-                self.name = os.path.basename(self.dirn)
+        dirname = os.path.basename(self.dirn)
+        if dirname.startswith(self.project_prefix) or \
+           dirname == "Undetermined_indices":
+            # CASAVA/bcl2fastq v1.8
+            if dirname == "Undetermined_indices":
+                # "Undetermined_indices" from CASAVA/bcl2fastq v1.8
                 self.project_prefix = ""
+                self.undetermined = True
+                self.name = dirname
             else:
-                raise IlluminaDataError, "Bad project name '%s'" % self.dirn
-        logging.debug("Project name: %s" % self.name)
-        # Look for samples
-        self.sample_prefix = "Sample_"
-        for f in os.listdir(self.dirn):
-            sample_dirn = os.path.join(self.dirn,f)
-            if f.startswith(self.sample_prefix) and os.path.isdir(sample_dirn):
-                self.samples.append(IlluminaSample(sample_dirn))
+                # Standard project, strip prefix
+                self.name = dirname[len(self.project_prefix):]
+            logging.debug("CASAVA/bcl2fastq 1.8 project: %s" % self.name)
+            # Look for samples
+            self.sample_prefix = "Sample_"
+            for f in os.listdir(self.dirn):
+                sample_dirn = os.path.join(self.dirn,f)
+                if f.startswith(self.sample_prefix) and \
+                   os.path.isdir(sample_dirn):
+                    self.samples.append(IlluminaSample(sample_dirn))
+        else:
+            # Examine fastq files to see if naming scheme follows
+            # bcl2fastq v2 convention
+            fastqs = filter(lambda f: f.endswith('.fastq.gz'),
+                            os.listdir(self.dirn))
+            if fastqs and reduce(lambda x,y: x and
+                                 (IlluminaFastq(y).sample_number is not None),
+                                 fastqs,True):
+                # bcl2fastq v2
+                self.project_prefix = ""
+                if reduce(lambda x,y: x and
+                          os.path.basename(y).startswith('Undetermined_S'),
+                          fastqs,True):
+                    # These are undetermined fastqs
+                    self.undetermined = True
+                    self.name = "Undetermined_indices"
+                else:
+                    # Fastqs from an actual set of samples
+                    self.name = os.path.basename(self.dirn)
+                logging.debug("bcl2fastq 2 project: %s" % self.name)
+            else:
+                raise IlluminaDataError("Not a project directory: %s " %
+                                        self.dirn)
+            # Determine samples from fastq names
+            self.sample_prefix = ""
+            sample_names = []
+            for fq in fastqs:
+                if not self.undetermined:
+                    sample_name = IlluminaFastq(fq).sample_name
+                else:
+                    # Use laneX as sample name for undetermined
+                    try:
+                        sample_name = "lane%d" % IlluminaFastq(fq).lane_number
+                    except TypeError:
+                        # No lane, use undetermined as sample name
+                        sample_name = "undetermined"
+                if sample_name not in sample_names:
+                    sample_names.append(sample_name)
+            # Create sample objects and populate with appropriate fastqs
+            for sample_name in sample_names:
+                if not self.undetermined:
+                    fqs = filter(lambda f:
+                                 IlluminaFastq(f).sample_name == sample_name,
+                                 fastqs)
+                else:
+                    try:
+                        fqs = filter(lambda f:
+                                     "lane%d" % IlluminaFastq(f).lane_number
+                                     == sample_name,
+                                     fastqs)
+                    except TypeError:
+                        # No lane, take all fastqs
+                        fqs = [fq for fq in fastqs]
+                self.samples.append(IlluminaSample(self.dirn,
+                                                   fastqs=fqs))
         # Raise an exception if no samples found
         if not self.samples:
             raise IlluminaDataError, "No samples found for project %s" % \
@@ -329,7 +490,7 @@ class IlluminaProject:
 class IlluminaSample:
     """Class for storing information on a 'sample' within an Illumina project
 
-    A sample is a fastq file generated within an Illumina GA2 sequencer run.
+    A sample is a fastq file generated within an Illumina sequencer run.
 
     Provides the following attributes:
 
@@ -341,28 +502,49 @@ class IlluminaSample:
 
     """
 
-    def __init__(self,dirn):
+    def __init__(self,dirn,fastqs=None):
         """Create and populate a new IlluminaSample object
 
         Arguments:
-          dirn: path to the directory holding the fastq.gz file for the
-                sample
+          dirn:   path to the directory holding the fastq.gz files for
+                  the sample
+          fastqs: optional, a list of fastq files associated with the
+                  sample (expected to be under the directory 'dirn')
 
         """
         self.dirn = dirn
         self.fastq = []
         self.paired_end = False
-        # Get name by removing prefix
+        # Deal with fastq files
+        if fastqs is None:
+            fastqs = filter(lambda f: f.endswith(".fastq.gz"),
+                            os.listdir(self.dirn))
+        else:
+            fastqs = [os.path.basename(f) for f in fastqs]
+        # Set sample name from directory name
         self.sample_prefix = "Sample_"
-        self.name = os.path.basename(dirn)[len(self.sample_prefix):]
+        if os.path.basename(dirn).startswith(self.sample_prefix):
+            # Remove prefix
+            self.name = os.path.basename(dirn)[len(self.sample_prefix):]
+        else:
+            # No prefix, obtain name from fastqs
+            self.sample_prefix = ""
+            self.name = IlluminaFastq(fastqs[0]).sample_name
+            # Special case: undetermined 'sample' is 'laneX'
+            if self.name == 'Undetermined':
+                try:
+                    self.name = "lane%d" % IlluminaFastq(fastqs[0]).lane_number
+                except TypeError:
+                    # No lane number
+                    self.name = "undetermined"
         logging.debug("\tSample: %s" % self.name)
-        # Look for fastq files
-        for f in os.listdir(self.dirn):
-            if f.endswith(".fastq.gz"):
-                self.add_fastq(f)
-                logging.debug("\tFastq : %s" % f)
+        # Add fastq files
+        for f in fastqs:
+            self.add_fastq(f)
+            logging.debug("\tFastq : %s" % f)
         if not self.fastq:
-            logging.debug("\tUnable to find fastq.gz files for %s" % self.name)
+            logging.debug("\tUnable to find fastq.gz files for %s" %
+                          self.name)
 
     def add_fastq(self,fastq):
         """Add a reference to a fastq file in the sample
@@ -415,9 +597,17 @@ class IlluminaSample:
         i.e. the sample name."""
         return str(self.name)
 
-class IEMSampleSheet:
-    """Class for handling Experimental Manager format sample sheet
-    
+class SampleSheet:
+    """
+    Class for handling Illumina sample sheets
+
+    This is a general class which tries to handle and convert
+    between older (i.e. 'CASAVA'-style) and newer (IEM-style) sample
+    sheet files for Illumina sequencers, in a transparent manner.
+
+    Experimental Manager (IEM) sample sheet format
+    ----------------------------------------------
+
     The Experimental Manager (IEM) samplel sheets are text files
     with data delimited by '[...]' lines e.g. '[Header]', '[Reads]'
     etc.
@@ -427,7 +617,7 @@ class IEMSampleSheet:
 
     The 'Reads' section consists of values (one per line) (possibly
     number of bases per read?) e.g. '101'.
-    
+
     The 'Settings' section consists of comma-separated key-value
     pairs e.g. 'Adapter,CTGTCTCTTATACACATCT'.
 
@@ -436,12 +626,36 @@ class IEMSampleSheet:
     values, with the first line being a 'header', and the remainder
     being values for each of those fields.
 
+    CASAVA-style sample sheet format
+    --------------------------------
+
+    This older style of sample sheet is used by CASAVA and bcl2fastq
+    v1.8.*. It consists of lines of comma-separated values, with the
+    first line being a 'header' and the remainder being values for
+    each of the fields:
+
+    FCID: flow cell ID
+    Lane: lane number (integer from 1 to 8)
+    SampleID: ID (name) for the sample
+    SampleRef: reference used for alignment for the sample
+    Index: index sequences (multiple index reads are separated by a
+      hyphen e.g. ACCAGTAA-GGACATGA
+    Description: Description of the sample
+    Control: Y indicates this lane is a control lane, N means sample
+    Recipe: Recipe used during sequencing
+    Operator: Name or ID of the operator
+    SampleProject: project the sample belongs to
+
+    Although the CASAVA-style sample sheet looks much like the IEM
+    'Data' section, note that it has different fields and field
+    names.
+
     Basic usage
     -----------
 
-    To load data from a file:
+    To load data from an IEM-format file:
 
-    >>> iem = IEMSampleSheet('SampleSheet.csv')
+    >>> iem = SampleSheet('SampleSheet.csv')
 
     To access 'header' items:
 
@@ -471,6 +685,57 @@ class IEMSampleSheet:
 
     etc.
 
+    To load data from a CASAVA style sample sheet:
+
+    >>> casava = SampleSheet('SampleSheet.csv')
+
+    To access the data use the 'data' property:
+
+    >>> casava.data.header()
+    ['Lane','SampleID',...]
+    >>> casava.data[0]['Lane']
+    1
+
+    Accessing data directly
+    -----------------------
+
+    The data in the 'Data' section can be accessed directly
+    from the SampleSheet instance, e.g.
+
+    >>> iem[0]['Lane']
+
+    is equivalent to
+
+    >>> iem.data[0]['Lane']
+
+    It is also possible to set new values for data items using
+    this notation.
+
+    The data lines can be iterated over using:
+
+    >>> for line in iem:
+    >>> ...
+
+    To find the number of lines that are stored:
+
+    >>> len(iem)
+
+    To append a new line:
+
+    >>> new_line = iem.append(...)
+
+    Checking and clean-up methods
+    -----------------------------
+
+    A number of methods are available to check and fix common
+    problems, specifically:
+
+    - detect and replace 'illegal' characters in sample and project
+      names
+    - detect and fix duplicated sample name, project and lane
+      combinations
+    - detect blank sample and project names
+
     Sample sheet reconstruction
     ---------------------------
 
@@ -479,13 +744,626 @@ class IEMSampleSheet:
     The 'show' method returns a reconstructed version of the
     original sample sheet after the cleaning operations were
     performed.
-    
-    Conversion to CASAVA-style sample sheet
-    ---------------------------------------
 
-    The 'casava_sample_sheet' method can be used to convert the
-    IEM format to CASAVA-style i.e. suitable for input into
-    bcl2fastq in order to generate FASTQ files from raw bcls.
+    """
+    def __init__(self,sample_sheet=None,fp=None):
+        """
+        """
+        # Input sample sheet
+        self.sample_sheet = sample_sheet
+        # Format-specific settings
+        self._format = None
+        self._sample_id = None
+        self._sample_project = None
+        # Sections for IEM-format sample sheets
+        self._header = utils.OrderedDictionary()
+        self._reads = list()
+        self._settings = utils.OrderedDictionary()
+        # Store raw data
+        self._data = None
+        # Read in file contents
+        if fp is None:
+            if self.sample_sheet is not None:
+                with open(self.sample_sheet,'rU') as fp:
+                    self._read_sample_sheet(fp)
+        else:
+            self._read_sample_sheet(fp)
+
+    def __getitem__(self,key):
+        """
+        Implement __getitem__ built-in: read 'data' directly
+
+        """
+        return self._data[key]
+
+    def __setitem__(self,key,value):
+        """
+        Implement __setitem__ built-in: write 'data' directly
+
+        """
+        self._data[key] = value
+
+    def __delitem__(self,key):
+        """
+        Implement __delitem__ built-in: delete from 'data' directly
+
+        """
+        del(self._data[key])
+
+    def __iter__(self):
+        """
+        """
+        return iter(self._data)
+
+    def __len__(self):
+        """
+        Implement len() built-in: returns number of lines of data
+
+        """
+        if self._data is not None:
+            return len(self._data)
+        else:
+            return 0
+
+    def append(self,*args):
+        """
+        Create and return a new line of data in the sample sheet
+
+        """
+        return self._data.append(*args)
+
+    def _read_sample_sheet(self,fp):
+        """
+        Internal: consumes and stores sample sheet data
+
+        Arguments:
+          fp (File): File-like object for the sample sheet
+            that has been opened for reading
+
+        """
+        # Assume that initial section is 'Data'
+        section = 'Data'
+        for i,line in enumerate(fp):
+            line = line.rstrip()
+            logging.debug(line)
+            if not line:
+                # Skip blank lines
+                continue
+            if line.startswith('['):
+                # New section
+                try:
+                    ii = line.index(']')
+                    section = line[1:ii]
+                    if i == 0:
+                        self._format = 'IEM'
+                    continue
+                except ValueError:
+                    raise IlluminaDataError("Bad section line (#%d): %s" %
+                                            (i+1,line))
+            if section == 'Data':
+                # Store data in TabFile object
+                if self._data is None:
+                    # Initialise TabFile using this first line
+                    # to set the header
+                    self._data = TabFile.TabFile(column_names=line.split(','),
+                                                 delimiter=',')
+                    # If this is the first line then assume CASAVA
+                    if i == 0:
+                        self._format = 'CASAVA'
+                else:
+                    self._data.append(tabdata=line)
+            elif section == 'Header':
+                # Header lines are comma-separated PARAM,VALUE lines
+                self._set_section_param_value(line,self._header)
+            elif section == 'Reads':
+                # Read lines are one value per line
+                value = line.rstrip(',')
+                if value:
+                    self._reads.append(value)
+            elif section == 'Settings':
+                # Settings lines are comma-separated PARAM,VALUE lines
+                self._set_section_param_value(line,self._settings)
+            elif section is None:
+                raise IlluminaDataError("Not a valid sample sheet?")
+            else:
+                raise IlluminaDataError(
+                    "Unrecognised section '%s': not a valid IEM sample sheet?" %
+                    section)
+        # Clean up data
+        if self._data is not None:
+            # Remove surrounding whitespace and double quotes from values
+            for line in self._data:
+                for item in self._data.header():
+                    try:
+                        line[item] = str(line[item]).strip('"').strip()
+                    except AttributeError:
+                        pass
+            # Remove lines that appear to be commented (after quote removal)
+            for i,line in enumerate(self._data):
+                if str(line).startswith('#'):
+                    del(self._data[i])
+        # Guess the format if not already set
+        if self._format is None:
+            if not self._header and \
+               not self._reads and \
+               not self._settings:
+                format_ = 'CASAVA'
+            else:
+                format_ = 'IEM'
+        # Set the column names
+        column_names = self.column_names
+        if 'SampleID' in column_names:
+            self._sample_id = 'SampleID'
+        elif 'Sample_ID' in column_names:
+            self._sample_id = 'Sample_ID'
+        else:
+            raise IlluminaDataError("Unable to locate sample id "
+                                    "field in sample sheet header")
+        if 'SampleProject' in column_names:
+            self._sample_project = 'SampleProject'
+        elif 'Sample_Project' in column_names:
+            self._sample_project = 'Sample_Project'
+        else:
+            raise IlluminaDataError("Unable to locate sample project "
+                                    "field in sample sheet header")
+
+    def _set_section_param_value(self,line,d):
+        """
+        Internal: process a 'key,value' line
+
+        """
+        fields = line.split(',')
+        param = fields[0]
+        value = fields[1]
+        if param:
+            d[param] = value
+
+    @property
+    def format(self):
+        """
+        Return format for sample sheet
+
+        Returns:
+          String: 'CASAVA', 'IEM' or None.
+
+        """
+        return self._format
+
+    @property
+    def has_lanes(self):
+        """
+        Indicates whether 'Lane' column is defined
+
+        Returns:
+          Boolean: True if 'Lane' is present, False if not.
+
+        """
+        return ('Lane' in self.column_names)
+
+    @property
+    def sample_id_column(self):
+        """
+        Return name of column with sample ID
+
+        Returns:
+          String: column label e.g. 'SampleID'.
+
+        """
+        return self._sample_id
+
+    @property
+    def sample_project_column(self):
+        """
+        Return name of column with sample project name
+
+        Returns:
+          String: column label e.g. 'SampleProject'.
+
+        """
+        return self._sample_project
+
+    @property
+    def header_items(self):
+        """
+        Return list of items listed in the '[Header]' section
+
+        If the sample sheet didn't contain a '[Header]' section
+        then returns an empty list.
+
+        Returns:
+          List of item names.
+
+        """
+        return self._header.keys()
+
+    @property
+    def header(self):
+        """Return ordered dictionary for the '[Header]' section
+
+        If the sample sheet didn't contain a '[Header]' section
+        then returns an empty OrderedDictionary.
+
+        Returns:
+          OrderedDictionary where keys are data items.
+
+        """
+        return self._header
+
+    @property
+    def reads(self):
+        """
+        Return list of values from the '[Reads'] section
+
+        If the sample sheet didn't contain a '[Reads]' section
+        then returns an empty list.
+        
+        Returns:
+          List of values.
+
+        """
+        return self._reads
+
+    @property
+    def settings_items(self):
+        """
+        Return list of items listed in the '[Settings]' section
+
+        If the sample sheet didn't contain a '[Settings]' section
+        then returns an empty list.
+
+        Returns:
+          List of item names.
+
+        """
+        return self._settings.keys()
+
+    @property
+    def settings(self):
+        """
+        Return ordered dictionary for the '[Settings]' section
+
+        If the sample sheet didn't contain a '[Settings]' section
+        then returns an empty OrderedDictionary.
+
+        Returns:
+          OrderedDictionary where keys are data items.
+
+        """
+        return self._settings
+
+    @property
+    def data(self):
+        """
+        Return TabFile object for the sample information
+
+        This returns the per-sample data from '[Data]' section (if
+        the original sample sheet was in IEM format), or the
+        entire file (if it was in CASAVA format).
+
+        Returns:
+          TabFile object.
+
+        """
+        return self._data
+
+    @property
+    def column_names(self):
+        """
+        Return list of column names for the data section
+
+        Returns:
+           List.
+
+        """
+        return [x for x in self._data.header()]
+
+    @property
+    def duplicated_names(self):
+        """
+        List duplicate samples within a project
+
+        Returns a list where each item is another list with a group
+        of lines from the sample sheet which together consitute a set
+        of duplicates.
+
+        """
+        samples = {}
+        for line in self._data:
+            try:
+                index = line['Index']
+            except KeyError:
+                try:
+                    index = "%s-%s" % (line['index'],line['index2'])
+                except KeyError:
+                    index = line['index']
+            try:
+                lane = line['Lane']
+            except KeyError:
+                lane = None
+            name = ((line[self._sample_id],
+                     line[self._sample_project],
+                     index,lane))
+            if name not in samples:
+                samples[name] = [line]
+            else:
+                samples[name].append(line)
+        duplicates = filter(lambda s: len(s) > 1,
+                            [samples[name] for name in samples])
+        return duplicates
+
+    @property
+    def illegal_names(self):
+        """
+        List lines with illegal characters in sample names or projects
+
+        Returns a list of lines where the sample names and/or sample project
+        names contain illegal characters.
+
+        """
+        illegal_names = []
+        for line in self._data:
+            for c in SAMPLESHEET_ILLEGAL_CHARS:
+                illegal = (str(line[self._sample_id]).count(c) > 0) \
+                          or (str(line[self._sample_project]).count(c) > 0)
+                if illegal:
+                    illegal_names.append(line)
+                    break
+        return illegal_names
+
+    @property
+    def empty_names(self):
+        """List lines with blank sample or project names
+
+        Returns a list of lines with blank sample or project names.
+
+        """
+        empty_names = []
+        for line in self._data:
+            if str(line[self._sample_id]).strip() == '' \
+               or str(line[self._sample_project]).strip() == '':
+                empty_names.append(line)
+        return empty_names
+
+    def fix_duplicated_names(self):
+        """
+        Rename samples to remove duplicated sample names within a project
+
+        Appends a numeric index to sample names in the duplicated lines
+        in order to remove the duplication.
+
+        """
+        for duplicate in self.duplicated_names:
+            for i in range(0,len(duplicate)):
+                duplicate[i][self._sample_id] = "%s_%d" % \
+                                                (duplicate[i][self._sample_id],
+                                                 i+1)
+
+    def fix_illegal_names(self):
+        """
+        Replace illegal characters in sample and project name pairs
+
+        Replaces any illegal characters with underscores.
+
+        """
+        for line in self.illegal_names:
+            for c in SAMPLESHEET_ILLEGAL_CHARS:
+                line[self._sample_id] = \
+                    str(line[self._sample_id]).strip().replace(c,'_').strip('_')
+                line[self._sample_project] = \
+                    str(line[self._sample_project]).strip().replace(c,'_').strip('_')
+
+    def show(self,fmt=None):
+        """
+        Reconstructed version of original sample sheet
+
+        Return a string containing a reconstructed version of
+        the original sample sheet, after any cleaning operations
+        (e.g. removal of unnecessary commas and whitespace) have
+        been applied.
+
+        The format of the output will be the same as that of the
+        input, unless explicitly reset using the 'fmt' option.
+
+        Arguments:
+           fmt (str): optional, explicitly set the format for
+             the output. Can be either 'CASAVA' or 'IEM'.
+
+        Returns:
+          String with the reconstructed sample sheet contents.
+
+        """
+        # Set output format
+        if fmt is None:
+            format_ = self._format
+        else:
+            format_ = str(fmt)
+        # Reconstruct the sample sheet
+        s = []
+        if format_ == 'IEM':
+            s.append('[Header]')
+            for param in self._header:
+                s.append('%s,%s' % (param,self._header[param]))
+            s.append('')
+            s.append('[Reads]')
+            for value in self._reads:
+                s.append(value)
+            s.append('')
+            s.append('[Settings]')
+            for param in self._settings:
+                s.append('%s,%s' % (param,self._settings[param]))
+            s.append('')
+            s.append('[Data]')
+            s.append(','.join(self._data.header()))
+            for line in self._data:
+                s.append(str(line))
+        else:
+            header = ('FCID','Lane','SampleID','SampleRef','Index',
+                      'Description','Control','Recipe','Operator',
+                      'SampleProject')
+            s.append(','.join(header))
+            for line in self._data:
+                values = []
+                for item in header:
+                    try:
+                        values.append(str(line[item]))
+                    except KeyError:
+                        if item == 'FCID':
+                            values.append('FC0001')
+                        elif item == 'Lane':
+                            values.append('1')
+                        elif item == 'SampleID':
+                            values.append(line['Sample_ID'])
+                        elif item == 'Index':
+                            try:
+                                values.append("%s-%s" %
+                                              (line['index'].strip(),
+                                               line['index2'].strip()))
+                            except KeyError:
+                                # Assume not dual-indexed (no index2)
+                                try:
+                                    values.append(line['index'].strip())
+                                except KeyError:
+                                    # No index
+                                    values.append('')
+                        elif item == 'SampleProject':
+                            values.append(line['Sample_Project'])
+                        else:
+                            values.append('')
+                s.append(','.join([str(x) for x in values]))
+        return '\n'.join(s)
+
+    def write(self,filen=None,fp=None,fmt=None):
+        """
+        Output the sample sheet data to file or stream
+
+        The format of the output will be the same as that of the
+        input, unless explicitly reset using the 'fmt' option.
+
+        Arguments:
+          filen: (optional) name of file to write to; ignored if fp is
+            also specified
+          fp: (optional) a file-like object opened for writing; used in
+            preference to filen if set to a non-null value
+            Note that the calling program must close the stream in
+            these cases.
+          fmt (str): optional, explicitly set the format for
+            the output. Can be either 'CASAVA' or 'IEM'.
+
+        """
+        if fp is None:
+            if filen is None:
+                fp = sys.stdout
+            else:
+                fp = open(filen,'w')
+        fp.write("%s\n" % self.show(fmt=fmt))
+        if filen is not None:
+            fp.close()
+
+    def predict_output(self,fmt='CASAVA'):
+        """
+        Predict the expected outputs from the sample sheet content
+
+        Constructs and returns a simple dictionary-based data structure
+        which predicts the output data structure that will produced by
+        running the bcl2fastq conversion software using the sample sheet
+        data.
+
+        The return structure depends on the format specified via the
+        ``fmt`` argument, either:
+
+        - 'CASAVA': reproduce the structure when running either
+          CASAVA or the bcl2fastq v1.8.* software, or
+        - 'bcl2fastq2': reproduce the structure from bcl2fastq v2.
+
+        For 'CASAVA' formatted output the returned structure is:
+
+        { 'project_1': {
+                         'sample_1': [ name1, name2, ... ],
+                         'sample_2': [ ... ],
+                         ... }
+          'project_2': {
+                         'sample_3': [ ... ],
+                         ... }
+          ... }
+
+        For 'bcl2fastq2' formatted output it is:
+
+        { 'project_1': [ name1, name2, ...],
+          'project_2': [ name1, name2, ...],
+          ... }
+
+        """
+        projects = {}
+        if str(fmt).upper() == 'CASAVA':
+            # CASAVA/bcl2fastq v1.8.*-style output
+            for line in self.data:
+                # Sample and project names
+                project = "Project_%s" % line[self._sample_project]
+                sample = "Sample_%s" % line[self._sample_id]
+                if project not in projects:
+                    samples = {}
+                else:
+                    samples = projects[project]
+                if sample not in samples:
+                    samples[sample] = []
+                # Index sequence
+                try:
+                    # Try dual-indexed IEM4 format
+                    indx = "%s-%s" %(line['index'].strip(),
+                                     line['index2'].strip())
+                except KeyError:
+                    # Try single indexed IEM4 (no index2)
+                    try:
+                        indx = line['index'].strip()
+                    except KeyError:
+                        # Try CASAVA format
+                        indx = line['Index'].strip()
+                if not indx:
+                    indx = "NoIndex"
+                # Lane
+                try:
+                    lane = line['Lane']
+                except KeyError:
+                    lane = 1
+                # Construct base name
+                samples[sample].append("%s_%s_L%03d" % (line[self._sample_id],
+                                                        indx,lane))
+                projects[project] = samples
+        elif fmt == 'bcl2fastq2':
+            # bcl2fastq v2-style output
+            sample_names = []
+            for line in self.data:
+                project = line[self._sample_project]
+                sample = line[self._sample_id]
+                if self.has_lanes:
+                    lane_id = "_L%03d" % line['Lane']
+                else:
+                    lane_id = ""
+                if project not in projects:
+                    fqs = []
+                else:
+                    fqs = projects[project]
+                try:
+                    i = sample_names.index(sample) + 1
+                except ValueError:
+                    sample_names.append(sample)
+                    i = len(sample_names)
+                # Construct fastq basename
+                fqs.append("%s_S%d%s" % (sample,i,lane_id))
+                projects[project] = fqs
+        else:
+            # Unknown format
+            raise IlluminaDataError("Unknown format: '%s'" % fmt)
+        return projects
+
+class IEMSampleSheet(SampleSheet):
+    """
+    Class for handling Experimental Manager format sample sheet
+
+    This class is a subclass of the SampleSheet class, and provides
+    an additional method ('casava_sample_sheet') to convert to a
+    CASAVA-style sample sheet, suitable for input into bcl2fastq
+    version 1.8.*.
 
     """
     def __init__(self,sample_sheet=None,fp=None):
@@ -504,177 +1382,9 @@ class IEMSampleSheet:
              to 'sample_sheet' argument
 
         """
-        # Input sample sheet
-        self.sample_sheet = sample_sheet
-        # Store file sections
-        self._header = utils.OrderedDictionary()
-        self._reads = list()
-        self._settings = utils.OrderedDictionary()
-        self._data = None
-        # Read in file contents
-        if fp is None and self.sample_sheet is not None:
-            fp = open(self.sample_sheet,'rU')
-        if fp is not None:
-            self._load_data(fp)
-
-    def _load_data(self,fp):
-        """Internal: populate with data from external file
-
-        Arguments
-          fp: file-like object opened for reading which contains
-             sample sheet data
-
-        """
-        section = None
-        for i,line in enumerate(fp):
-            line = line.rstrip()
-            logging.debug(line)
-            if not line:
-                # Skip blank lines
-                continue
-            if line.startswith('['):
-                # New section
-                try:
-                    i = line.index(']')
-                    section = line[1:i]
-                    continue
-                except ValueError:
-                    logging.error("Bad line (#%d): %s" % (i+1,line))
-            if section == 'Header':
-                # Header lines are comma-separated PARAM,VALUE lines
-                self._set_param_value(line,self._header)
-            elif section == 'Reads':
-                # Read lines are one value per line
-                value = line.rstrip(',')
-                if value:
-                    self._reads.append(value)
-            elif section == 'Settings':
-                # Settings lines are comma-separated PARAM,VALUE lines
-                self._set_param_value(line,self._settings)
-            elif section == 'Data':
-                # Store data in TabFile object
-                if self._data is None:
-                    # Initialise TabFile using this first line
-                    # to set the header
-                    self._data = TabFile.TabFile(column_names=line.split(','),
-                                                 delimiter=',')
-                else:
-                    self._data.append(tabdata=line)
-            elif section is None:
-                raise IlluminaDataError("Not a valid IEM sample sheet?")
-            else:
-                raise IlluminaDataError(
-                    "Unrecognised section '%s': not a valid IEM sample sheet?" %
-                    section)
-        # Clean up data items: remove surrounding whitespace
-        if self._data is not None:
-            for line in self._data:
-                for item in self._data.header():
-                    try:
-                        line[item] = line[item].strip()
-                    except AttributeError:
-                        pass
-
-    def _set_param_value(self,line,d):
-        """Internal: process a 'key,value' line
-
-        """
-        fields = line.split(',')
-        param = fields[0]
-        value = fields[1]
-        if param:
-            d[param] = value
-
-    @property
-    def header_items(self):
-        """Return list of items listed in the '[Header]' section
-
-        Returns:
-          List of item names.
-
-        """
-        return self._header.keys()
-
-    @property
-    def header(self):
-        """Return ordered dictionary for the '[Header]' section
-
-        Returns:
-          OrderedDictionary where keys are data items.
-
-        """
-        return self._header
-
-    @property
-    def reads(self):
-        """Return list of values from the '[Reads'] section
-        
-        Returns:
-          List of values.
-
-        """
-        return self._reads
-
-    @property
-    def settings_items(self):
-        """Return list of items listed in the '[Settings]' section
-
-        Returns:
-          List of item names.
-
-        """
-        return self._settings.keys()
-
-    @property
-    def settings(self):
-        """Return ordered dictionary for the '[Settings]' section
-
-        Returns:
-          OrderedDictionary where keys are data items.
-
-        """
-        return self._settings
-
-    @property
-    def data(self):
-        """Return TabFile object for the '[Data]' section
-
-        Returns:
-          TabFile object.
-
-        """
-        return self._data
-
-    def show(self):
-        """Reconstructed version of original sample sheet
-
-        Return a string containing a reconstructed version of
-        the original sample sheet, after any cleaning operations
-        (e.g. removal of unnecessary commas and whitespace) have
-        been applied.
-
-        Returns:
-          String with the reconstructed sample sheet contents.
-
-        """
-        s = []
-        s.append('[Header]')
-        for param in self._header:
-            s.append('%s,%s' % (param,self._header[param]))
-        s.append('')
-        s.append('[Reads]')
-        for value in self._reads:
-            s.append(value)
-        s.append('')
-        s.append('[Settings]')
-        for param in self._settings:
-            s.append('%s,%s' % (param,self._settings[param]))
-        s.append('')
-        s.append('[Data]')
-        s.append(','.join(self._data.header()))
-        for line in self._data:
-            s.append(str(line))
-        return '\n'.join(s)
+        SampleSheet.__init__(self,sample_sheet,fp)
+        if self._format != 'IEM':
+            raise IlluminaDataError("Sample sheet is not IEM format")
 
     def casava_sample_sheet(self,FCID='FC1',fix_empty_projects=True):
         """Return data as a CASAVA formatted sample sheet
@@ -727,40 +1437,17 @@ class IEMSampleSheet:
                 sample_sheet_line['SampleProject'] = line['Sample_Project']
         return sample_sheet
 
-class CasavaSampleSheet(TabFile.TabFile):
-    """Class for reading and manipulating sample sheet files for CASAVA
+class CasavaSampleSheet(SampleSheet):
+    """
+    Class for reading and manipulating sample sheet files for CASAVA
 
-    Sample sheets are CSV files with a header line and then one line per sample
-    with the following fields:
+    This class is a subclass of the SampleSheet class, and provides
+    an additional method ('casava_sample_sheet') to convert to a
+    CASAVA-style sample sheet, suitable for input into bcl2fastq
+    version 1.8.*.
 
-    FCID: flow cell ID
-    Lane: lane number (integer from 1 to 8)
-    SampleID: ID (name) for the sample
-    SampleRef: reference used for alignment for the sample
-    Index: index sequences (multiple index reads are separated by a hyphen e.g.
-           ACCAGTAA-GGACATGA
-    Description: Description of the sample
-    Control: Y indicates this lane is a control lane, N means sample
-    Recipe: Recipe used during sequencing
-    Operator: Name or ID of the operator
-    SampleProject: project the sample belongs to
-
-    The key fields are 'Lane', 'Index' (needed for demultiplexing), 'SampleID' (used
-    to name the output FASTQ files from CASAVA) and 'SampleProject' (used to name the
-    output directories that group together FASTQ files from samples with the same
-    project name).
-
-    The standard TabFile methods can be used to interrogate and manipulate the data:
-
-    >>> s = CasavaSampleSheet('SampleSheet.csv')
-    >>> print "Number of lines = %d" % len(s)
-    >>> line = s[0]   # Fetch reference to first line
-    >>> print "SampleID = %s" % line['SampleID']
-    >>> line['SampleID'] = 'New_name'
-
-    'SampleID' and 'SampleProject' must not contain any 'illegal' characters (e.g.
-    spaces, asterisks etc). The full set of illegal characters is listed in the
-    'illegal_characters' property of the CasavaSampleSheet object.
+    Raises IlluminaDataError exception if the input data doesn't
+    appear to be in the correct format.
 
     """
 
@@ -783,150 +1470,40 @@ class CasavaSampleSheet(TabFile.TabFile):
               (Note that the calling program must close the stream itself)
 
         """
-        TabFile.TabFile.__init__(self,filen=samplesheet,fp=fp,
-                                 delimiter=',',skip_first_line=True,
-                                 column_names=('FCID','Lane','SampleID','SampleRef',
-                                               'Index','Description','Control',
-                                               'Recipe','Operator','SampleProject'))
-        # Characters that can't be used in SampleID and SampleProject names
-        self.illegal_characters = "?()[]/\=+<>:;\"',*^|&. \t"
-        # Remove double quotes from values
-        for line in self:
-            for name in self.header():
-                line[name] = str(line[name]).strip('"')
-        # Remove lines that appear to be commented, after quote removal
-        for i,line in enumerate(self):
-            if str(line).startswith('#'):
-                del(self[i])
+        SampleSheet.__init__(self,samplesheet,fp)
+        if self._data is None:
+            self._data = TabFile.TabFile(delimiter=',',
+                                         column_names=('FCID','Lane',
+                                                       'SampleID','SampleRef',
+                                                       'Index','Description',
+                                                       'Control','Recipe',
+                                                       'Operator','SampleProject'))
+            self._format = 'CASAVA'
+        if self._format != 'CASAVA':
+            raise IlluminaDataError("Sample sheet is not CASAVA format")
+
+    def header(self):
+        """
+        Return header items from the CASAVA sample sheet
+
+        NB this over-rides the 'header' method from the base class.
+        """
+        return self._data.header()
 
     def write(self,filen=None,fp=None):
-        """Output the sample sheet data to file or stream
-
-        Overrides the TabFile.write method.
+        """
+        Output the sample sheet data to file or stream
 
         Arguments:
           filen: (optional) name of file to write to; ignored if fp is
             also specified
           fp: (optional) a file-like object opened for writing; used in
             preference to filen if set to a non-null value
-              Note that the calling program must close the stream in
-              these cases.
-        
-        """
-        TabFile.TabFile.write(self,filen=filen,fp=fp,include_header=True,no_hash=True)
-
-    @property
-    def duplicated_names(self):
-        """List lines where the SampleID/SampleProject pairs are identical
-
-        Returns a list of lists, with each sublist consisting of the lines with
-        identical SampleID/SampleProject pairs.
+            Note that the calling program must close the stream in
+            these cases.
 
         """
-        samples = {}
-        for line in self:
-            name = ((line['SampleID'],line['SampleProject'],line['Index'],line['Lane']))
-            if name not in samples:
-                samples[name] = [line]
-            else:
-                samples[name].append(line)
-        duplicates = []
-        for name in samples:
-            if len(samples[name]) > 1: duplicates.append(samples[name])
-        return duplicates
-
-    @property
-    def empty_names(self):
-        """List lines with blank SampleID or SampleProject names
-
-        Returns a list of lines with blank SampleID or SampleProject names.
-
-        """
-        empty_names = []
-        for line in self:
-            if str(line['SampleID']).strip() == '' \
-               or str(line['SampleProject']).strip() == '':
-                empty_names.append(line)
-        return empty_names
-
-    @property
-    def illegal_names(self):
-        """List lines with illegal characters in SampleID or SampleProject names
-
-        Returns a list of lines with SampleID or SampleProject names containing
-        illegal characters.
-
-        """
-        illegal_names = []
-        for line in self:
-            for c in self.illegal_characters:
-                illegal = (str(line['SampleID']).count(c) > 0) \
-                          or (str(line['SampleProject']).count(c) > 0)
-                if illegal:
-                    illegal_names.append(line)
-                    break
-        return illegal_names
-
-    def fix_duplicated_names(self):
-        """Rename samples to remove duplicated SampleID/SampleProject pairs
-
-        Appends numeric index to SampleIDs in duplicated lines to remove the
-        duplication.
-
-        """
-        for duplicate in self.duplicated_names:
-            for i in range(0,len(duplicate)):
-                duplicate[i]['SampleID'] = "%s_%d" % (duplicate[i]['SampleID'],i+1)
-
-    def fix_illegal_names(self):
-        """Replace illegal characters in SampleID and SampleProject pairs
-
-        Replaces any illegal characters with underscores.
-        
-        """
-        for line in self.illegal_names:
-            for c in self.illegal_characters:
-                line['SampleID'] = str(line['SampleID']).strip().replace(c,'_').strip('_')
-                line['SampleProject'] = str(line['SampleProject']).strip().replace(c,'_').strip('_')
-
-    def predict_output(self):
-        """Predict the expected outputs from the sample sheet content
-
-        Constructs and returns a simple dictionary-based data structure
-        which predicts the output data structure that will produced by
-        running CASAVA using the sample sheet data.
-
-        The structure is:
-
-        { 'project_1': {
-                         'sample_1': [name1,name2...],
-                         'sample_2': [...],
-                         ... }
-          'project_2': {
-                         'sample_3': [...],
-                         ... }
-          ... }
-
-        """
-        projects = {}
-        for line in self:
-            project = "Project_%s" % line['SampleProject']
-            sample = "Sample_%s" % line['SampleID']
-            if project not in projects:
-                samples = {}
-            else:
-                samples = projects[project]
-            if sample not in samples:
-                samples[sample] = []
-            if line['Index'].strip() == "":
-                indx = "NoIndex"
-            else:
-                indx = line['Index']
-            samples[sample].append("%s_%s_L%03d" % (line['SampleID'],
-                                                    indx,
-                                                    line['Lane']))
-            projects[project] = samples
-        return projects
+        SampleSheet.write(self,filen=filen,fp=fp,fmt='CASAVA')
 
 class IlluminaFastq:
     """Class for extracting information about Fastq files
@@ -935,7 +1512,8 @@ class IlluminaFastq:
     data about the sample name, barcode sequence, lane number, read number
     and set number.
 
-    The format of the names follow the general form:
+    For Fastqs produced by CASAVA and bcl2fastq v1.8, the format of the names
+    follows the general form:
 
     <sample_name>_<barcode_sequence>_L<lane_number>_R<read_number>_<set_number>.fastq.gz
 
@@ -943,8 +1521,22 @@ class IlluminaFastq:
 
     NA10831_ATCACG_L002_R1_001.fastq.gz
 
-    sample_name = 'NA10831_ATCACG_L002_R1_001'
+    sample_name = 'NA10831'
     barcode_sequence = 'ATCACG'
+    lane_number = 2
+    read_number = 1
+    set_number = 1
+
+    For Fastqs produced by bcl2fast v2, the format looks like:
+
+    <sample_name>_S<sample_number>_L<lane_number>_R<read_number>_<set_number>.fastq.gz
+
+    e.g. for
+
+    NA10831_S4_L002_R1_001.fastq.gz
+
+    sample_name = 'NA10831'
+    sample_number = 4
     lane_number = 2
     read_number = 1
     set_number = 1
@@ -953,7 +1545,8 @@ class IlluminaFastq:
 
     fastq:            the original fastq file name
     sample_name:      name of the sample (leading part of the name)
-    barcode_sequence: barcode sequence (string or None)
+    sample_number:    number of the same (integer or None, bcl2fastq v2 only)
+    barcode_sequence: barcode sequence (string or None, CASAVA/bcl2fast v1.8 only)
     lane_number:      integer
     read_number:      integer
     set_number:       integer
@@ -970,10 +1563,11 @@ class IlluminaFastq:
         self.fastq = fastq
         # Values derived from the name
         self.sample_name = None
-        barcode_sequence = None
-        lane_number = None
-        read_number = None
-        set_number = None
+        self.sample_number = None
+        self.barcode_sequence = None
+        self.lane_number = None
+        self.read_number = None
+        self.set_number = None
         # Base name for sample (no leading path or extension)
         fastq_base = os.path.basename(fastq)
         try:
@@ -989,21 +1583,40 @@ class IlluminaFastq:
         # Read number: single integer digit 'R1'
         self.read_number = int(fields[-2][1])
         # Lane number: zero-padded 3 digit integer 'L001'
-        self.lane_number = int(fields[-3][1:])
-        # Barcode sequence: string (or None if 'NoIndex')
-        self.barcode_sequence = fields[-4]
-        if self.barcode_sequence == 'NoIndex':
-            self.barcode_sequence = None
+        if fields[-3].startswith('L') and fields[-3][1:].isdigit():
+            self.lane_number = int(fields[-3][1:])
+            fields = fields[:-3]
+        else:
+            fields = fields[:-2]
+        # Either barcode sequence or sample number
+        if fields[-1].startswith('S'):
+            # Sample number: integer
+            self.sample_number = int(fields[-1][1:])
+        else:
+            # Barcode sequence: string (or None if 'NoIndex')
+            self.barcode_sequence = fields[-1]
+            if self.barcode_sequence == 'NoIndex':
+                self.barcode_sequence = None
         # Sample name: whatever's left over
-        self.sample_name = '_'.join(fields[:-4])
+        self.sample_name = '_'.join(fields[:-1])
 
     def __repr__(self):
         """Implement __repr__ built-in
 
         """
-        return "%s_%s_L%03d_R%d_%03d" % (self.sample_name,
-                                         'NoIndex' if self.barcode_sequence is None else self.barcode_sequence,
-                                         self.lane_number,
+        if self.sample_number is not None:
+            sample_identifier = "S%d" % self.sample_number
+        elif self.barcode_sequence is not None:
+            sample_identifier = self.barcode_sequence
+        else:
+            sample_identifier = "NoIndex"
+        if self.lane_number is not None:
+            lane_identifier = "L%03d_" % self.lane_number
+        else:
+            lane_identifier = ""
+        return "%s_%s_%sR%d_%03d" % (self.sample_name,
+                                         sample_identifier,
+                                         lane_identifier,
                                          self.read_number,
                                          self.set_number)
 
@@ -1221,37 +1834,80 @@ def verify_run_against_sample_sheet(illumina_data,sample_sheet):
       found, False otherwise.
 
     """
-    # Get predicted outputs
-    predicted_projects = CasavaSampleSheet(sample_sheet).predict_output()
+    # Get predicted outputs based on directory structure format
+    data_format = illumina_data.format
+    sample_sheet = SampleSheet(sample_sheet)
+    if data_format == 'casava':
+        predicted_projects = sample_sheet.predict_output(fmt='CASAVA')
+    elif data_format == 'bcl2fastq2':
+        predicted_projects = sample_sheet.predict_output(fmt='bcl2fastq2')
+    else:
+        raise IlluminaDataError("Unknown format for directory structure: %s" %
+                                data_format)
     # Loop through projects and check that predicted outputs exist
     verified = True
     for proj in predicted_projects:
         # Locate project directory
         proj_dir = os.path.join(illumina_data.unaligned_dir,proj)
         if os.path.isdir(proj_dir):
-            predicted_samples = predicted_projects[proj]
-            for smpl in predicted_samples:
-                # Locate sample directory
-                smpl_dir = os.path.join(proj_dir,smpl)
-                if os.path.isdir(smpl_dir):
-                    # Check for output files
-                    predicted_names = predicted_samples[smpl]
-                    for name in predicted_names:
+            if data_format == 'casava':
+                predicted_samples = predicted_projects[proj]
+                for smpl in predicted_samples:
+                    # Locate sample directory
+                    smpl_dir = os.path.join(proj_dir,smpl)
+                    if os.path.isdir(smpl_dir):
+                        # Check for output files
+                        predicted_names = predicted_samples[smpl]
+                        for name in predicted_names:
+                            # Look for R1 file
+                            f = os.path.join(smpl_dir,
+                                             "%s_R1_001.fastq.gz" % name)
+                            if not os.path.exists(f):
+                                logging.warning("Verify: missing R1 file '%s'"
+                                                % f)
+                                verified = False
+                            # Look for R2 file (paired end only)
+                            if illumina_data.paired_end:
+                                f = os.path.join(smpl_dir,
+                                                 "%s_R2_001.fastq.gz" % name)
+                                if not os.path.exists(f):
+                                    logging.warning("Verify: missing R2 file '%s'"
+                                                    % f)
+                                    verified = False
+                    else:
+                        # Sample directory not found
+                        logging.warning("Verify: missing %s" % smpl_dir)
+                        verified = False
+            elif data_format == 'bcl2fastq2':
+                # Check for output files
+                predicted_names = predicted_projects[proj]
+                for name in predicted_names:
+                    # Loop over lanes
+                    for lane in illumina_data.lanes:
+                        # Lane identifier
+                        if not sample_sheet.has_lanes and \
+                           lane is not None:
+                            lane_id = "_L%03d" % lane
+                        else:
+                            lane_id = ""
                         # Look for R1 file
-                        f = os.path.join(smpl_dir,"%s_R1_001.fastq.gz" % name)
+                        f = os.path.join(proj_dir,
+                                         "%s%s_R1_001.fastq.gz" % (name,
+                                                                   lane_id))
                         if not os.path.exists(f):
-                            logging.warning("Verify: missing R1 file '%s'" % f)
+                            logging.warning("Verify: missing R1 file '%s'"
+                                            % f)
                             verified = False
                         # Look for R2 file (paired end only)
+                        logging.debug("Paired_end = %s" % illumina_data.paired_end)
                         if illumina_data.paired_end:
-                            f = os.path.join(smpl_dir,"%s_R2_001.fastq.gz" % name)
+                            f = os.path.join(proj_dir,
+                                             "%s%s_R2_001.fastq.gz" % (name,
+                                                                       lane_id))
                             if not os.path.exists(f):
-                                logging.warning("Verify: missing R2 file '%s'" % f)
+                                logging.warning("Verify: missing R2 file '%s'"
+                                                % f)
                                 verified = False
-                else:
-                    # Sample directory not found
-                    logging.warning("Verify: missing %s" % smpl_dir)
-                    verified = False
         else:
             # Project directory not found
             logging.warning("Verify: missing %s" % proj_dir)

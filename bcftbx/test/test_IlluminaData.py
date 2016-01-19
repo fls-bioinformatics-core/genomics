@@ -8,6 +8,367 @@ import cStringIO
 import tempfile
 import shutil
 
+class MockIlluminaRun:
+    """
+    Utility class for creating mock Illumina sequencer output dirctories
+
+    Example usage:
+
+    >>> mockrun = MockIlluminaRun('151125_AB12345_001_CD256X','miseq')
+    >>> mockrun.create()
+
+    To delete the physical directory structure when finished:
+
+    >>> mockrun.remove()
+
+    """
+    def __init__(self,name,platform,top_dir=None):
+        """
+        Create a new MockIlluminaRun instance
+
+        Arguments:
+          name (str): name for the run (used as top-level dir)
+          platform (str): sequencing platform e.g. 'miseq', 'hiseq'
+            'nextseq'
+          top_dir (str): optionally specify a parent directory for
+            the mock run (default is the current working directory)
+
+        """
+        self._created = False
+        self._name = name
+        if top_dir is not None:
+            self._top_dir = os.path.abspath(top_dir)
+        else:
+            self._top_dir = os.getcwd()
+        if platform not in ('miseq','hiseq','nextseq'):
+            raise Exception("Unrecognised platform: %s" % platform)
+        self._platform = platform
+
+    @property
+    def name(self):
+        """
+        Name of the mock run
+
+        """
+        return self._name
+
+    @property
+    def dirn(self):
+        """
+        Full path to the mock run directory
+
+        """
+        return os.path.join(self._top_dir,self._name)
+
+    def _path(self,*dirs):
+        """
+        Return path under run directory
+
+        """
+        dirs0 = [self.dirn]
+        dirs0.extend(dirs)
+        return os.path.join(*dirs0)
+
+    def _create_miseq(self):
+        """Internal: creates mock MISeq run directory structure
+
+        """
+        # Constants for MISeq
+        nlanes = 1
+        ntiles = 12 #158
+        ncycles = 218
+        bcl_ext = '.bcl'
+        # Basic directory structure
+        bcftbx.utils.mkdir(self._path('Data'))
+        bcftbx.utils.mkdir(self._path('Data','Intensities'))
+        bcftbx.utils.mkdir(self._path('Data','Intensities','BaseCalls'))
+        # Lanes
+        for i in xrange(1,nlanes+1):
+            # .locs files
+            bcftbx.utils.mkdir(self._path('Data','Intensities','L%03d' % i))
+            for j in xrange(1101,1101+ntiles):
+                open(self._path('Data','Intensities','L%03d' % i,
+                                's_%d_%d.locs' % (i,j)),'wb+').close()
+            # BaseCalls
+            bcftbx.utils.mkdir(self._path('Data','Intensities','BaseCalls',
+                                          'L%03d' % i))
+            for j in xrange(1101,1101+ntiles):
+                open(self._path('Data','Intensities','BaseCalls',
+                                'L%03d' % i,
+                                's_%d_%d.control' % (i,j)),'wb+').close()
+                open(self._path('Data','Intensities','BaseCalls',
+                                'L%03d' % i,
+                                's_%d_%d.filter' % (i,j)),'wb+').close()
+            for k in xrange(1,ncycles+1):
+                bcftbx.utils.mkdir(self._path('Data','Intensities','BaseCalls',
+                                              'L%03d' % i,'C%d.1' % k))
+                for j in xrange(1101,1101+ntiles):
+                    open(self._path('Data','Intensities','BaseCalls',
+                                    'L%03d' % i,'C%d.1' % k,
+                                    's_%d_%d.%s' % (i,j,bcl_ext)),'wb+').close()
+                    open(self._path('Data','Intensities','BaseCalls',
+                                    'L%03d' % i,'C%d.1' % k,
+                                    's_%d_%d.stats' % (i,j)),'wb+').close()
+        # RunInfo.xml
+        run_info_xml = """<?xml version="1.0"?>
+<RunInfo xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Version="2">
+  <Run Id="%s" Number="1">
+    <Flowcell>00000000-ABCD1</Flowcell>
+    <Instrument>M00001</Instrument>
+    <Date>150729</Date>
+    <Reads>
+      <Read Number="1" NumCycles="101" IsIndexedRead="N" />
+      <Read Number="2" NumCycles="8" IsIndexedRead="Y" />
+      <Read Number="3" NumCycles="8" IsIndexedRead="Y" />
+      <Read Number="4" NumCycles="101" IsIndexedRead="N" />
+    </Reads>
+    <FlowcellLayout LaneCount="1" SurfaceCount="2" SwathCount="1" TileCount="19" />
+  </Run>
+</RunInfo>
+"""
+        with open(self._path('RunInfo.xml'),'w') as fp:
+            fp.write(run_info_xml % self.name)
+        # SampleSheet.csv
+        sample_sheet_csv = """[Header],,,,,,,,,
+IEMFileVersion,4,,,,,,,,
+Date,11/23/2015,,,,,,,,
+Workflow,GenerateFASTQ,,,,,,,,
+Application,FASTQ Only,,,,,,,,
+Assay,TruSeq HT,,,,,,,,
+Description,,,,,,,,,
+Chemistry,Amplicon,,,,,,,,
+,,,,,,,,,
+[Reads],,,,,,,,,
+101,,,,,,,,,
+101,,,,,,,,,
+,,,,,,,,,
+[Settings],,,,,,,,,
+ReverseComplement,0,,,,,,,,
+Adapter,AGATCGGAAGAGCACACGTCTGAACTCCAGTCA,,,,,,,,
+AdapterRead2,AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT,,,,,,,,
+,,,,,,,,,
+[Data],,,,,,,,,
+Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_ID,index2,Sample_Project,Description
+Sample_1,Sample_1,,,D701,CGTGTAGG,D501,GACCTGTA,,
+Sample_2,Sample_2,,,D702,CGTGTAGG,D501,ATGTAACT,,
+"""
+        with open(self._path('Data','Intensities','BaseCalls',
+                             'SampleSheet.csv'),'w') as fp:
+            fp.write(sample_sheet_csv)
+        # (Empty) config.xml files
+        open(self._path('Data','Intensities','config.xml'),'wb+').close()
+        open(self._path('Data','Intensities','BaseCalls','config.xml'),
+             'wb+').close()
+
+    def _create_hiseq(self):
+        """
+        Internal: creates mock HISeq run directory structure
+
+        """
+        # Constants for HISeq
+        nlanes = 8
+        ntiles = 12 #1216
+        ncycles = 218
+        bcl_ext = '.bcl.gz'
+        # Basic directory structure
+        bcftbx.utils.mkdir(self._path('Data'))
+        bcftbx.utils.mkdir(self._path('Data','Intensities'))
+        bcftbx.utils.mkdir(self._path('Data','Intensities','BaseCalls'))
+        # Lanes
+        for i in xrange(1,nlanes+1):
+            # .clocs files
+            bcftbx.utils.mkdir(self._path('Data','Intensities','L%03d' % i))
+            for j in xrange(1101,1101+ntiles):
+                open(self._path('Data','Intensities','L%03d' % i,
+                                's_%d_%d.clocs' % (i,j)),'wb+').close()
+            # BaseCalls
+            bcftbx.utils.mkdir(self._path('Data','Intensities','BaseCalls',
+                                          'L%03d' % i))
+            for j in xrange(1101,1101+ntiles):
+                open(self._path('Data','Intensities','BaseCalls',
+                                'L%03d' % i,
+                                's_%d_%d.control' % (i,j)),'wb+').close()
+                open(self._path('Data','Intensities','BaseCalls',
+                                'L%03d' % i,
+                                's_%d_%d.filter' % (i,j)),'wb+').close()
+            for k in xrange(1,ncycles+1):
+                bcftbx.utils.mkdir(self._path('Data','Intensities','BaseCalls',
+                                              'L%03d' % i,'C%d.1' % k))
+                for j in xrange(1101,1101+ntiles):
+                    open(self._path('Data','Intensities','BaseCalls',
+                                    'L%03d' % i,'C%d.1' % k,
+                                    's_%d_%d.%s' % (i,j,bcl_ext)),'wb+').close()
+                    open(self._path('Data','Intensities','BaseCalls',
+                                    'L%03d' % i,'C%d.1' % k,
+                                    's_%d_%d.stats' % (i,j)),'wb+').close()
+        # RunInfo.xml
+        run_info_xml = """<?xml version="1.0"?>
+<RunInfo xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Version="2">
+  <Run Id="%s" Number="2">
+    <Flowcell>A00NAABXX</Flowcell>
+    <Instrument>H00002</Instrument>
+    <Date>151113</Date>
+    <Reads>
+      <Read Number="1" NumCycles="101" IsIndexedRead="N" />
+      <Read Number="2" NumCycles="8" IsIndexedRead="Y" />
+      <Read Number="3" NumCycles="8" IsIndexedRead="Y" />
+      <Read Number="4" NumCycles="101" IsIndexedRead="N" />
+    </Reads>
+    <FlowcellLayout LaneCount="8" SurfaceCount="2" SwathCount="3" TileCount="16" />
+    <AlignToPhiX>
+      <Lane>1</Lane>
+      <Lane>2</Lane>
+      <Lane>3</Lane>
+      <Lane>4</Lane>
+      <Lane>5</Lane>
+      <Lane>6</Lane>
+      <Lane>7</Lane>
+      <Lane>8</Lane>
+    </AlignToPhiX>
+  </Run>
+</RunInfo>
+"""
+        with open(self._path('RunInfo.xml'),'w') as fp:
+            fp.write(run_info_xml % self.name)
+        # SampleSheet.csv
+        sample_sheet_csv = """[Header],,,,,,,,,,
+IEMFileVersion,4,,,,,,,,,
+Date,11/11/2015,,,,,,,,,
+Workflow,GenerateFASTQ,,,,,,,,,
+Application,HiSeq FASTQ Only,,,,,,,,,
+Assay,Nextera XT,,,,,,,,,
+Description,,,,,,,,,,
+Chemistry,Amplicon,,,,,,,,,
+,,,,,,,,,,
+[Reads],,,,,,,,,,
+101,,,,,,,,,,
+101,,,,,,,,,,
+,,,,,,,,,,
+[Settings],,,,,,,,,,
+ReverseComplement,0,,,,,,,,,
+Adapter,CTGTCTCTTATACACATCT,,,,,,,,,
+,,,,,,,,,,
+[Data],,,,,,,,,,
+Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_ID,index2,Sample_Project,Description
+1,AB1,AB1,,,N701,TAAGGCGA,S504,AGAGTAGA,AB,
+2,TM2,TM1,,,N701,TAAGGCGA,S517,GCGTAAGA,TM,
+3,CD3,CD3,,,N701,GTGAAACG,S503,TCTTTCCC,CD,
+4,EB4,EB4,,A1,N701,TAAGGCGA,S501,TAGATCGC,EB,
+5,EB5,EB5,,A3,N703,AGGCAGAA,S501,TAGATCGC,EB,
+6,EB6,EB6,,F3,N703,AGGCAGAA,S506,ACTGCATA,EB,
+7,ML7,ML7,,,N701,GCCAATAT,S502,TCTTTCCC,ML,
+8,VL8,VL8,,,N701,GCCAATAT,S503,TCTTTCCC,VL,
+"""
+        with open(self._path('Data','Intensities','BaseCalls',
+                             'SampleSheet.csv'),'w') as fp:
+            fp.write(sample_sheet_csv)
+        # (Empty) config.xml files
+        open(self._path('Data','Intensities','config.xml'),'wb+').close()
+        open(self._path('Data','Intensities','BaseCalls','config.xml'),
+             'wb+').close()
+
+    def _create_nextseq(self):
+        """
+        Internal: creates mock NextSeq run directory structure
+
+        """
+        # Constants for NextSeq
+        nlanes = 4
+        ntiles = 12 #158
+        bcl_ext = '.bcl.bgzf'
+        # Basic directory structure
+        bcftbx.utils.mkdir(self._path('Data'))
+        bcftbx.utils.mkdir(self._path('Data','Intensities'))
+        bcftbx.utils.mkdir(self._path('Data','Intensities','BaseCalls'))
+        bcftbx.utils.mkdir(self._path('InterOp'))
+        # Lanes
+        for i in xrange(1,nlanes+1):
+            # .locs files
+            bcftbx.utils.mkdir(self._path('Data','Intensities','L%03d' % i))
+            open(self._path('Data','Intensities','L%03d' % i,'s_%d.locs' % i),
+                 'wb+').close()
+            # BaseCalls
+            bcftbx.utils.mkdir(self._path('Data','Intensities','BaseCalls',
+                                          'L%03d' % i))
+            open(self._path('Data','Intensities','BaseCalls','L%03d' % i,
+                            's_%d.bci' % i),'wb+').close()
+            open(self._path('Data','Intensities','BaseCalls','L%03d' % i,
+                            's_%d.filter' % i),'wb+').close()
+            for j in xrange(1,ntiles+1):
+                open(self._path('Data','Intensities','BaseCalls','L%03d' % i,
+                                '%04d%s' % (j,bcl_ext)),'wb+').close()
+                open(self._path('Data','Intensities','BaseCalls','L%03d' % i,
+                                '%04d%s.bci' % (j,bcl_ext)),'wb+').close()
+        # RunInfo.xml
+        run_info_xml = """<?xml version="1.0"?>
+<RunInfo xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.o
+rg/2001/XMLSchema-instance" Version="4">
+  <Run Id="%s" Number="1">
+    <Flowcell>ABC1234XX</Flowcell>
+    <Instrument>N000003</Instrument>
+    <Date>151123</Date>
+    <Reads>
+      <Read Number="1" NumCycles="76" IsIndexedRead="N" />
+      <Read Number="2" NumCycles="6" IsIndexedRead="Y" />
+      <Read Number="3" NumCycles="76" IsIndexedRead="N" />
+    </Reads>
+    <FlowcellLayout LaneCount="4" SurfaceCount="2" SwathCount="3" TileCount="12"
+ SectionPerLane="3" LanePerSection="2">
+      <TileSet TileNamingConvention="FiveDigit">
+        <Tiles>
+          <Tile>1_11101</Tile>
+          <Tile>1_21101</Tile></Tiles>
+      </TileSet>
+    </FlowcellLayout>
+    <ImageDimensions Width="2592" Height="1944" />
+    <ImageChannels>
+      <Name>Red</Name>
+      <Name>Green</Name>
+    </ImageChannels>
+  </Run>
+</RunInfo>"""
+        with open(self._path('RunInfo.xml'),'w') as fp:
+            fp.write(run_info_xml % self.name)
+
+    def create(self):
+        """
+        Build and populate the directory structure
+
+        Creates the directory structure on disk which has been defined
+        within the MockIlluminaRun object.
+
+        Invoke the 'remove' method to delete the directory structure.
+
+        'create' raises an OSError exception if any part of the directory
+        structure already exists.
+
+        """
+        # Create top level directory
+        if os.path.exists(self.dirn):
+            raise OSError,"%s already exists" % self.dirn
+        else:
+            bcftbx.utils.mkdir(self.dirn)
+            self._created = True
+        # Make platform-specific directory structure
+        if self._platform == 'miseq':
+            self._create_miseq()
+        elif self._platform == 'hiseq':
+            self._create_hiseq()
+        elif self._platform == 'nextseq':
+            self._create_nextseq()
+
+    def remove(self):
+        """
+        Delete the directory structure and contents
+
+        This removes the directory structure from disk that has
+        previously been created using the create method.
+
+        """
+        if self._created:
+            shutil.rmtree(self.dirn)
+            self._created = False
+
 class MockIlluminaData:
     """Utility class for creating mock Illumina analysis data directories
 
@@ -17,14 +378,19 @@ class MockIlluminaData:
     These artifical directories are intended to be used for testing
     purposes.
 
+    Two styles of analysis directories can be produced: 'casava'-style
+    aims to mimic that produced from the CASAVA and bcl2fastq 1.8
+    processing software; 'bcl2fastq2' mimics that from the bcl2fastq
+    2.* software.
+
     Basic example usage:
 
-    >>> mockdata = MockIlluminaData('130904_PJB_XXXXX')
+    >>> mockdata = MockIlluminaData('130904_PJB_XXXXX','casava')
     >>> mockdata.add_fastq('PJB','PJB1','PJB1_GCCAAT_L001_R1_001.fastq.gz')
     >>> ...
     >>> mockdata.create()
 
-    This will make a directory structure:
+    This will make a CASAVA-style directory structure like:
 
     1130904_PJB_XXXXX/
         Unaligned/
@@ -32,6 +398,20 @@ class MockIlluminaData:
                 Sample_PJB1/
                     PJB1_GCCAAT_L001_R1_001.fastq.gz
         ...
+
+    Using:
+
+    >>> mockdata = MockIlluminaData('130904_PJB_XXXXX','bcl2fastq2')
+    >>> mockdata.add_fastq('PJB','PJB1','PJB1_S1_L001_R1_001.fastq.gz')
+
+    will make a bcl2fast2-style directory structure like:
+
+    1130904_PJB_XXXXX/
+        Unaligned/
+            PJB/
+               PJB1_S1_L001_R1_001.fastq.gz
+        ...
+
 
     Multiple fastqs can be more easily added using e.g.:
 
@@ -48,25 +428,42 @@ class MockIlluminaData:
     >>> mockdata.remove()
 
     """
-    def __init__(self,name,unaligned_dir='Unaligned',paired_end=False,top_dir=None):
+    def __init__(self,name,package,
+                 unaligned_dir='Unaligned',
+                 paired_end=False,
+                 no_lane_splitting=False,
+                 top_dir=None):
         """Create new MockIlluminaData instance
 
         Makes a new empty MockIlluminaData object.
 
         Arguments:
           name: name of the directory for the mock data
+          package: name of the conversion software package to mimic (can
+            be 'casava' or 'bcl2fastq2')
           unaligned_dir: directory holding the mock projects etc (default is
             'Unaligned')
           paired_end: specify whether mock data is paired end (True) or not
             (False) (default is False)
+          no_lane_splitting: (bcl2fastq2 only) mimick output from bcl2fastq2
+            run with --no-lane-splitting (i.e. fastq names don't contain
+            lane numbers) (default is False)
           top_dir: specify a parent directory for the mock data (default is
             the current working directory)
 
         """
         self.__created = False
         self.__name = name
+        if package not in ('casava','bcl2fastq2'):
+            raise Exception("Unknown package '%s': cannot make mock output dir"
+                            % package)
+        self.__package = package
         self.__unaligned_dir = unaligned_dir
         self.__paired_end = paired_end
+        if package == 'bcl2fastq2':
+            self.__no_lane_splitting = no_lane_splitting
+        else:
+            self.__no_lane_splitting = False
         self.__undetermined_dir = 'Undetermined_indices'
         if top_dir is not None:
             self.__top_dir = os.path.abspath(top_dir)
@@ -80,6 +477,14 @@ class MockIlluminaData:
 
         """
         return self.__name
+
+    @property
+    def package(self):
+        """
+        Software package output that is being mimicked
+
+        """
+        return self.__package
 
     @property
     def dirn(self):
@@ -111,6 +516,8 @@ class MockIlluminaData:
         for project_name in self.__projects:
             if project_name.startswith('Project_'):
                 projects.append(project_name.split('_')[1])
+            else:
+                projects.append(project_name)
         projects.sort()
         return projects
 
@@ -136,6 +543,8 @@ class MockIlluminaData:
         for sample_name in project:
             if sample_name.startswith('Sample_'):
                 samples.append(sample_name.split('_')[1])
+            else:
+                samples.append(sample_name)
         samples.sort()
         return samples
 
@@ -157,8 +566,8 @@ class MockIlluminaData:
     def __project_dir(self,project_name):
         """Internal: convert project name to internal representation
 
-        Project names are prepended with "Project_" if not already
-        present, or if it is the "undetermined_indexes" directory.
+        Project names which are prepended with "Project_" will have this
+        part removed.
 
         Arguments:
           project_name: name of a project
@@ -167,17 +576,16 @@ class MockIlluminaData:
           Canonical project name for internal storage.
 
         """
-        if project_name.startswith('Project_') or \
-           project_name.startswith(self.__undetermined_dir):
-            return project_name
+        if project_name.startswith('Project_'):
+            return project_name[8:]
         else:
-            return 'Project_' + project_name
+            return project_name
 
     def __sample_dir(self,sample_name):
         """Internal: convert sample name to internal representation
 
-        Sample names are prepended with "Sample_" if not already
-        present.
+        Sample names which are prepended with "Sample_" will have this
+        part removed.
 
         Arguments:
           sample_name: name of a sample
@@ -187,9 +595,9 @@ class MockIlluminaData:
 
         """
         if sample_name.startswith('Sample_'):
-            return sample_name
+            return sample_name[7:]
         else:
-            return 'Sample_' + sample_name
+            return sample_name
 
     def add_project(self,project_name):
         """Add a project to the MockIlluminaData instance
@@ -278,6 +686,11 @@ class MockIlluminaData:
         If the MockIlluminaData object was created with the paired_end flag
         set to True then matching R2 fastqs will also be added.
 
+        If the MockIlluminaData object was created with the no_lane_splitting
+        flag set to True and the package as 'bcl2fastq' then the 'lanes'
+        specification will be ignored and the fastq names will not contain
+        lane identifiers.
+
         Arguments:
           project_name: parent project
           sample_name: parent sample
@@ -292,11 +705,20 @@ class MockIlluminaData:
             reads = (1,2)
         else:
             reads = (1,)
-        for lane in lanes:
+        if not self.__no_lane_splitting:
+            # Include explicit lane information
+            for lane in lanes:
+                for read in reads:
+                    fastq = "%s_L%03d_R%d_001.%s" % (fastq_base,
+                                                     lane,read,
+                                                     fastq_ext)
+                    self.add_fastq(project_name,sample_name,fastq)
+        else:
+            # Replicate output from bcl2fastq --no-lane-splitting
             for read in reads:
-                fastq = "%s_L%03d_R%d_001.%s" % (fastq_base,
-                                                 lane,read,
-                                                 fastq_ext)
+                fastq = "%s_R%d_001.%s" % (fastq_base,
+                                           read,
+                                           fastq_ext)
                 self.add_fastq(project_name,sample_name,fastq)
 
     def add_undetermined(self,lanes=(1,)):
@@ -310,15 +732,28 @@ class MockIlluminaData:
             defaults to (1,))
 
         """
-        for lane in lanes:
-            sample_name = "Sample_lane%d" % lane
-            fastq_base = "lane%d_Undetermined" % lane
+        if not self.__no_lane_splitting:
+            for lane in lanes:
+                sample_name = "lane%d" % lane
+                if self.package == 'casava':
+                    # CASAVA-style naming
+                    fastq_base = "lane%d_Undetermined" % lane
+                elif self.package == 'bcl2fastq2':
+                    # bcl2fastq2-style naming
+                    fastq_base = "Undetermined_S0"
+                self.add_sample(self.__undetermined_dir,sample_name)
+                self.add_fastq_batch(self.__undetermined_dir,sample_name,
+                                     fastq_base,lanes=(lane,))
+        else:
+            sample_name = "undetermined"
+            fastq_base = "Undetermined_S0"
             self.add_sample(self.__undetermined_dir,sample_name)
-            self.add_fastq_batch(self.__undetermined_dir,sample_name,fastq_base,
-                                 lanes=(lane,))
+            self.add_fastq_batch(self.__undetermined_dir,sample_name,
+                                 fastq_base,lanes=None)
+            
 
     def create(self):
-        """Build and populate the directory structure 
+        """Build and populate the directory structure
 
         Creates the directory structure on disk which has been defined
         within the MockIlluminaData object.
@@ -343,15 +778,47 @@ class MockIlluminaData:
             self.__created = True
         # "Unaligned" directory
         bcftbx.utils.mkdir(self.unaligned_dir)
+        if self.package == 'casava':
+            self._populate_casava()
+        elif self.package == 'bcl2fastq2':
+            self._populate_bcl2fastq2()
+
+    def _populate_casava(self):
+        """
+        Populate the MockIlluminaData structure in the style of CASAVA
+
+        """
         # Populate with projects, samples etc
         for project_name in self.__projects:
-            project_dirn = os.path.join(self.unaligned_dir,project_name)
+            if project_name == self.__undetermined_dir:
+                project_dirn = os.path.join(self.unaligned_dir,project_name)
+            else:
+                project_dirn = os.path.join(self.unaligned_dir,
+                                            "Project_%s" % project_name)
             bcftbx.utils.mkdir(project_dirn)
             for sample_name in self.__projects[project_name]:
-                sample_dirn = os.path.join(project_dirn,sample_name)
+                sample_dirn = os.path.join(project_dirn,
+                                           "Sample_%s" % sample_name)
                 bcftbx.utils.mkdir(sample_dirn)
                 for fastq in self.__projects[project_name][sample_name]:
                     fq = os.path.join(sample_dirn,fastq)
+                    # "Touch" the file (i.e. creates an empty file)
+                    open(fq,'wb+').close()
+
+    def _populate_bcl2fastq2(self):
+        """
+        Populate the MockIlluminaData structure in the style of bcl2fastq2
+
+        """
+        for project_name in self.__projects:
+            if project_name == self.__undetermined_dir:
+                project_dirn = self.unaligned_dir
+            else:
+                project_dirn = os.path.join(self.unaligned_dir,project_name)
+            bcftbx.utils.mkdir(project_dirn)
+            for sample_name in self.__projects[project_name]:
+                for fastq in self.__projects[project_name][sample_name]:
+                    fq = os.path.join(project_dirn,fastq)
                     # "Touch" the file (i.e. creates an empty file)
                     open(fq,'wb+').close()
 
@@ -366,8 +833,89 @@ class MockIlluminaData:
             shutil.rmtree(self.dirn)
             self.__created = False
 
-class TestIlluminaData(unittest.TestCase):
-    """Collective tests for IlluminaData, IlluminaProject and IlluminaSample
+class TestIlluminaRun(unittest.TestCase):
+    """
+    Tests for IlluminaRun against MISeq, HISeq and NextSeq
+
+    """
+    def setUp(self):
+        # Create a mock Illumina run directory
+        self.mock_illumina_run = None
+
+    def tearDown(self):
+        # Remove the test directory
+        if self.mock_illumina_run is not None:
+            self.mock_illumina_run.remove()
+
+    def test_illuminarun_miseq(self):
+        # Make a mock run directory for MISeq format
+        self.mock_illumina_run = MockIlluminaRun(
+            '151125_M00879_0001_000000000-ABCDE1','miseq')
+        self.mock_illumina_run.create()
+        # Load into an IlluminaRun object
+        run = IlluminaRun(self.mock_illumina_run.name)
+        # Check the properties
+        self.assertEqual(run.run_dir,self.mock_illumina_run.dirn)
+        self.assertEqual(run.platform,"miseq")
+        self.assertEqual(run.basecalls_dir,
+                         os.path.join(self.mock_illumina_run.dirn,
+                                      'Data','Intensities','BaseCalls'))
+        self.assertEqual(run.sample_sheet_csv,
+                         os.path.join(self.mock_illumina_run.dirn,
+                                      'Data','Intensities','BaseCalls',
+                                      'SampleSheet.csv'))
+        self.assertEqual(run.runinfo_xml,
+                         os.path.join(self.mock_illumina_run.dirn,
+                                      'RunInfo.xml'))
+        self.assertEqual(run.bcl_extension,".bcl")
+        self.assertEqual(run.lanes,[1,])
+
+    def test_illuminarun_hiseq(self):
+        # Make a mock run directory for HISeq format
+        self.mock_illumina_run = MockIlluminaRun(
+            '151125_SN700511R_0002_000000000-ABCDE1XX','hiseq')
+        self.mock_illumina_run.create()
+        # Load into an IlluminaRun object
+        run = IlluminaRun(self.mock_illumina_run.name)
+        # Check the properties
+        self.assertEqual(run.run_dir,self.mock_illumina_run.dirn)
+        self.assertEqual(run.platform,"hiseq")
+        self.assertEqual(run.basecalls_dir,
+                         os.path.join(self.mock_illumina_run.dirn,
+                                      'Data','Intensities','BaseCalls'))
+        self.assertEqual(run.sample_sheet_csv,
+                         os.path.join(self.mock_illumina_run.dirn,
+                                      'Data','Intensities','BaseCalls',
+                                      'SampleSheet.csv'))
+        self.assertEqual(run.runinfo_xml,
+                         os.path.join(self.mock_illumina_run.dirn,
+                                      'RunInfo.xml'))
+        self.assertEqual(run.bcl_extension,".bcl.gz")
+        self.assertEqual(run.lanes,[1,2,3,4,5,6,7,8])
+
+    def test_illuminarun_nextseq(self):
+        # Make a mock run directory for HISeq format
+        self.mock_illumina_run = MockIlluminaRun(
+            '151125_NB500968_0003_000000000-ABCDE1XX','nextseq')
+        self.mock_illumina_run.create()
+        # Load into an IlluminaRun object
+        run = IlluminaRun(self.mock_illumina_run.name)
+        # Check the properties
+        self.assertEqual(run.run_dir,self.mock_illumina_run.dirn)
+        self.assertEqual(run.platform,"nextseq")
+        self.assertEqual(run.basecalls_dir,
+                         os.path.join(self.mock_illumina_run.dirn,
+                                      'Data','Intensities','BaseCalls'))
+        self.assertEqual(run.sample_sheet_csv,None)
+        self.assertEqual(run.runinfo_xml,
+                         os.path.join(self.mock_illumina_run.dirn,
+                                      'RunInfo.xml'))
+        self.assertEqual(run.bcl_extension,".bcl.bgzf")
+        self.assertEqual(run.lanes,[1,2,3,4])
+
+class BaseTestIlluminaData(unittest.TestCase):
+    """
+    Base class for testing IlluminaData, IlluminaProject and IlluminaSample
 
     Test methods use the following pattern:
 
@@ -382,8 +930,12 @@ class TestIlluminaData(unittest.TestCase):
     assertIlluminaUndetermined; assertIlluminaProject invokes
     assertIlluminaSample.
 
-    """
+    Tests of IlluminaData for different styles of processing software
+    output can be based on this class. The subclass needs to implement
+    its own 'test_...' methods but can use the assert methods here to
+    verify that the results are correct.
 
+    """
     def setUp(self):
         # Create a mock Illumina directory
         self.mock_illumina_data = None
@@ -392,28 +944,6 @@ class TestIlluminaData(unittest.TestCase):
         # Remove the test directory
         if self.mock_illumina_data is not None:
             self.mock_illumina_data.remove()
-
-    def makeMockIlluminaData(self,paired_end=False,
-                             multiple_projects=False,
-                             multiplexed_run=False):
-        # Create initial mock dir
-        mock_illumina_data = MockIlluminaData('test.MockIlluminaData',
-                                              paired_end=paired_end)
-        # Add first project with two samples
-        mock_illumina_data.add_fastq_batch('AB','AB1','AB1_GCCAAT',lanes=(1,))
-        mock_illumina_data.add_fastq_batch('AB','AB2','AB2_AGTCAA',lanes=(1,))
-        # Additional projects?
-        if multiplexed_run:
-            if multiplexed_run:
-                lanes=(1,4,5)
-                mock_illumina_data.add_undetermined(lanes=lanes)
-            else:
-                lanes=(1,)
-            mock_illumina_data.add_fastq_batch('CDE','CDE3','CDE3_GCCAAT',lanes=lanes)
-            mock_illumina_data.add_fastq_batch('CDE','CDE4','CDE4_AGTCAA',lanes=lanes)
-        # Create and finish
-        self.mock_illumina_data = mock_illumina_data
-        self.mock_illumina_data.create()
 
     def assertIlluminaData(self,illumina_data,mock_illumina_data):
         """Verify that an IlluminaData object matches a MockIlluminaData object
@@ -492,54 +1022,231 @@ class TestIlluminaData(unittest.TestCase):
             self.assertIlluminaProject(undetermined,
                                        mock_illumina_data,undetermined.name)
 
+class TestIlluminaDataForCasava(BaseTestIlluminaData):
+    """
+    Test IlluminaData, IlluminaProject and IlluminaSample for CASAVA-style output
+
+    """
+    def makeMockIlluminaData(self,paired_end=False,
+                             multiple_projects=False,
+                             multiplexed_run=False):
+        # Create initial mock dir
+        mock_illumina_data = MockIlluminaData('test.MockIlluminaData',
+                                              'casava',paired_end=paired_end)
+        # Add first project with two samples
+        mock_illumina_data.add_fastq_batch('AB','AB1','AB1_GCCAAT',lanes=(1,))
+        mock_illumina_data.add_fastq_batch('AB','AB2','AB2_AGTCAA',lanes=(1,))
+        # Additional projects?
+        if multiplexed_run:
+            lanes = (1,4,5)
+            mock_illumina_data.add_fastq_batch('CDE','CDE3','CDE3_GCCAAT',
+                                               lanes=lanes)
+            mock_illumina_data.add_fastq_batch('CDE','CDE4','CDE4_AGTCAA',
+                                               lanes=lanes)
+            mock_illumina_data.add_undetermined(lanes=lanes)
+        # Create and finish
+        self.mock_illumina_data = mock_illumina_data
+        self.mock_illumina_data.create()
+
     def test_illumina_data(self):
-        """Basic test with single project
+        """Read CASAVA-style output with single project
 
         """
         self.makeMockIlluminaData()
         illumina_data = IlluminaData(self.mock_illumina_data.dirn)
         self.assertIlluminaData(illumina_data,self.mock_illumina_data)
+        self.assertEqual(illumina_data.format,'casava')
+        self.assertEqual(illumina_data.lanes,[1,])
 
     def test_illumina_data_paired_end(self):
-        """Test with single project & paired-end data
+        """Read CASAVA-style output with single project & paired-end data
 
         """
         self.makeMockIlluminaData(paired_end=True)
         illumina_data = IlluminaData(self.mock_illumina_data.dirn)
         self.assertIlluminaData(illumina_data,self.mock_illumina_data)
+        self.assertEqual(illumina_data.format,'casava')
+        self.assertEqual(illumina_data.lanes,[1,])
 
     def test_illumina_data_multiple_projects(self):
-        """Test with multiple projects
+        """Read CASAVA-style output with multiple projects
 
         """
         self.makeMockIlluminaData(multiple_projects=True)
         illumina_data = IlluminaData(self.mock_illumina_data.dirn)
         self.assertIlluminaData(illumina_data,self.mock_illumina_data)
+        self.assertEqual(illumina_data.format,'casava')
+        self.assertEqual(illumina_data.lanes,[1,])
 
     def test_illumina_data_multiple_projects_paired_end(self):
-        """Test with multiple projects & paired-end data
+        """Read CASAVA-style output with multiple projects & paired-end data
 
         """
         self.makeMockIlluminaData(multiple_projects=True,paired_end=True)
         illumina_data = IlluminaData(self.mock_illumina_data.dirn)
         self.assertIlluminaData(illumina_data,self.mock_illumina_data)
+        self.assertEqual(illumina_data.format,'casava')
+        self.assertEqual(illumina_data.lanes,[1,])
 
     def test_illumina_data_multiple_projects_multiplexed(self):
-        """Test with multiple projects & multiplexing
+        """Read CASAVA-style output with multiple projects & multiplexing
 
         """
         self.makeMockIlluminaData(multiple_projects=True,multiplexed_run=True)
         illumina_data = IlluminaData(self.mock_illumina_data.dirn)
         self.assertIlluminaData(illumina_data,self.mock_illumina_data)
+        self.assertEqual(illumina_data.format,'casava')
+        self.assertEqual(illumina_data.lanes,[1,4,5,])
 
     def test_illumina_data_multiple_projects_multiplexed_paired_end(self):
-        """Test with multiple projects, multiplexing & paired-end data
+        """Read CASAVA-style output with multiple projects, multiplexing & paired-end data
 
         """
         self.makeMockIlluminaData(multiple_projects=True,multiplexed_run=True,
                                   paired_end=True)
         illumina_data = IlluminaData(self.mock_illumina_data.dirn)
         self.assertIlluminaData(illumina_data,self.mock_illumina_data)
+        self.assertEqual(illumina_data.format,'casava')
+        self.assertEqual(illumina_data.lanes,[1,4,5,])
+
+class TestIlluminaDataForBcl2fastq2(BaseTestIlluminaData):
+    """
+    Test for IlluminaData, IlluminaProject and IlluminaSample for bcl2fastq2-style output
+
+    """
+    def makeMockIlluminaData(self,paired_end=False,
+                             multiple_projects=False,
+                             multiplexed_run=False,
+                             no_lane_splitting=False):
+        # Create initial mock dir
+        mock_illumina_data = MockIlluminaData('test.MockIlluminaData',
+                                              'bcl2fastq2',
+                                              paired_end=paired_end,
+                                              no_lane_splitting=no_lane_splitting)
+        # Lanes to add
+        if not no_lane_splitting:
+            if multiplexed_run:
+                lanes=(1,4,5)
+            else:
+                lanes=(1,)
+        else:
+            lanes = None
+        # Add first project with two samples
+        mock_illumina_data.add_fastq_batch('AB','AB1','AB1_S1',lanes=lanes)
+        mock_illumina_data.add_fastq_batch('AB','AB2','AB2_S2',lanes=lanes)
+        # Additional projects
+        if multiplexed_run:
+            mock_illumina_data.add_fastq_batch('CDE','CDE3','CDE3_S3',
+                                               lanes=lanes)
+            mock_illumina_data.add_fastq_batch('CDE','CDE4','CDE4_S4',
+                                               lanes=lanes)
+        # Undetermined reads
+        mock_illumina_data.add_undetermined(lanes=lanes)
+        # Create and finish
+        self.mock_illumina_data = mock_illumina_data
+        self.mock_illumina_data.create()
+
+    def test_illumina_data(self):
+        """Read bcl2fastq2-style output with single project
+
+        """
+        self.makeMockIlluminaData()
+        illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertIlluminaData(illumina_data,self.mock_illumina_data)
+        self.assertEqual(illumina_data.format,'bcl2fastq2')
+        self.assertEqual(illumina_data.lanes,[1,])
+
+    def test_illumina_data_paired_end(self):
+        """Read bcl2fastq2-style output with single project & paired-end data
+
+        """
+        self.makeMockIlluminaData(paired_end=True)
+        illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertIlluminaData(illumina_data,self.mock_illumina_data)
+        self.assertEqual(illumina_data.format,'bcl2fastq2')
+        self.assertEqual(illumina_data.lanes,[1,])
+
+    def test_illumina_data_multiple_projects(self):
+        """Read bcl2fastq2-style output with multiple projects
+
+        """
+        self.makeMockIlluminaData(multiple_projects=True)
+        illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertIlluminaData(illumina_data,self.mock_illumina_data)
+        self.assertEqual(illumina_data.format,'bcl2fastq2')
+        self.assertEqual(illumina_data.lanes,[1,])
+
+    def test_illumina_data_multiple_projects_paired_end(self):
+        """Read bcl2fastq2-style output with multiple projects & paired-end data
+
+        """
+        self.makeMockIlluminaData(multiple_projects=True,paired_end=True)
+        illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertIlluminaData(illumina_data,self.mock_illumina_data)
+        self.assertEqual(illumina_data.format,'bcl2fastq2')
+        self.assertEqual(illumina_data.lanes,[1,])
+
+    def test_illumina_data_multiple_projects_multiplexed(self):
+        """Read bcl2fastq2-style output with multiple projects & multiplexing
+
+        """
+        self.makeMockIlluminaData(multiple_projects=True,multiplexed_run=True)
+        illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertIlluminaData(illumina_data,self.mock_illumina_data)
+        self.assertEqual(illumina_data.format,'bcl2fastq2')
+        self.assertEqual(illumina_data.lanes,[1,4,5,])
+
+    def test_illumina_data_multiple_projects_multiplexed_paired_end(self):
+        """Read bcl2fastq2-style output with multiple projects, multiplexing & paired-end data
+
+        """
+        self.makeMockIlluminaData(multiple_projects=True,multiplexed_run=True,
+                                  paired_end=True)
+        illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertIlluminaData(illumina_data,self.mock_illumina_data)
+        self.assertEqual(illumina_data.format,'bcl2fastq2')
+        self.assertEqual(illumina_data.lanes,[1,4,5,])
+
+    def test_illumina_data_no_lane_splitting(self):
+        """Read bcl2fastq2-style output with single project (--no-lane-splitting)
+
+        """
+        self.makeMockIlluminaData(no_lane_splitting=True)
+        illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertIlluminaData(illumina_data,self.mock_illumina_data)
+        self.assertEqual(illumina_data.format,'bcl2fastq2')
+        self.assertEqual(illumina_data.lanes,[None,])
+
+    def test_illumina_data_paired_end_no_lane_splitting(self):
+        """Read bcl2fastq2-style output with single project & paired-end data (--no-lane-splitting)
+
+        """
+        self.makeMockIlluminaData(paired_end=True,no_lane_splitting=True)
+        illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertIlluminaData(illumina_data,self.mock_illumina_data)
+        self.assertEqual(illumina_data.format,'bcl2fastq2')
+        self.assertEqual(illumina_data.lanes,[None,])
+
+    def test_illumina_data_multiple_projects_no_lane_splitting(self):
+        """Read bcl2fastq2-style output with multiple projects (--no-lane-splitting)
+
+        """
+        self.makeMockIlluminaData(multiple_projects=True,no_lane_splitting=True)
+        illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertIlluminaData(illumina_data,self.mock_illumina_data)
+        self.assertEqual(illumina_data.format,'bcl2fastq2')
+        self.assertEqual(illumina_data.lanes,[None,])
+
+    def test_illumina_data_multiple_projects_paired_end_no_lane_splitting(self):
+        """Read bcl2fastq2-style output with multiple projects & paired-end data (--no-lane-splitting)
+
+        """
+        self.makeMockIlluminaData(multiple_projects=True,paired_end=True,
+                                  no_lane_splitting=True)
+        illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertIlluminaData(illumina_data,self.mock_illumina_data)
+        self.assertEqual(illumina_data.format,'bcl2fastq2')
+        self.assertEqual(illumina_data.lanes,[None,])
 
 class TestCasavaSampleSheet(unittest.TestCase):
 
@@ -669,10 +1376,12 @@ class TestIlluminaFastq(unittest.TestCase):
         fq = IlluminaFastq(fastq_name)
         self.assertEqual(fq.fastq,fastq_name)
         self.assertEqual(fq.sample_name,'NA10831')
+        self.assertEqual(fq.sample_number,None)
         self.assertEqual(fq.barcode_sequence,'ATCACG')
         self.assertEqual(fq.lane_number,2)
         self.assertEqual(fq.read_number,1)
         self.assertEqual(fq.set_number,1)
+        self.assertEqual(str(fq),fastq_name)
 
     def test_illumina_fastq_with_path_and_extension(self):
         """Check extraction of name components with leading path and extension
@@ -682,10 +1391,12 @@ class TestIlluminaFastq(unittest.TestCase):
         fq = IlluminaFastq(fastq_name)
         self.assertEqual(fq.fastq,fastq_name)
         self.assertEqual(fq.sample_name,'NA10831')
+        self.assertEqual(fq.sample_number,None)
         self.assertEqual(fq.barcode_sequence,'ATCACG')
         self.assertEqual(fq.lane_number,2)
         self.assertEqual(fq.read_number,1)
         self.assertEqual(fq.set_number,1)
+        self.assertEqual(str(fq),'NA10831_ATCACG_L002_R1_001')
 
     def test_illumina_fastq_r2(self):
         """Check extraction of fastq name components for R2 read
@@ -695,10 +1406,12 @@ class TestIlluminaFastq(unittest.TestCase):
         fq = IlluminaFastq(fastq_name)
         self.assertEqual(fq.fastq,fastq_name)
         self.assertEqual(fq.sample_name,'NA10831')
+        self.assertEqual(fq.sample_number,None)
         self.assertEqual(fq.barcode_sequence,'ATCACG')
         self.assertEqual(fq.lane_number,2)
         self.assertEqual(fq.read_number,2)
         self.assertEqual(fq.set_number,1)
+        self.assertEqual(str(fq),fastq_name)
 
     def test_illumina_fastq_no_index(self):
         """Check extraction of fastq name components without a barcode
@@ -708,10 +1421,12 @@ class TestIlluminaFastq(unittest.TestCase):
         fq = IlluminaFastq(fastq_name)
         self.assertEqual(fq.fastq,fastq_name)
         self.assertEqual(fq.sample_name,'NA10831')
+        self.assertEqual(fq.sample_number,None)
         self.assertEqual(fq.barcode_sequence,None)
         self.assertEqual(fq.lane_number,2)
         self.assertEqual(fq.read_number,1)
         self.assertEqual(fq.set_number,1)
+        self.assertEqual(str(fq),fastq_name)
 
     def test_illumina_fastq_dual_index(self):
         """Check extraction of fastq name components with dual index
@@ -721,10 +1436,600 @@ class TestIlluminaFastq(unittest.TestCase):
         fq = IlluminaFastq(fastq_name)
         self.assertEqual(fq.fastq,fastq_name)
         self.assertEqual(fq.sample_name,'NA10831')
+        self.assertEqual(fq.sample_number,None)
         self.assertEqual(fq.barcode_sequence,'ATCACG-GCACTA')
         self.assertEqual(fq.lane_number,2)
         self.assertEqual(fq.read_number,1)
         self.assertEqual(fq.set_number,1)
+        self.assertEqual(str(fq),fastq_name)
+
+    def test_illumina_fastq_from_bcl2fastq2(self):
+        """
+        Check extraction of fastq name components for bcl2fastq2 output
+
+        """
+        fastq_name = 'NA10831_S7_L002_R1_001'
+        fq = IlluminaFastq(fastq_name)
+        self.assertEqual(fq.fastq,fastq_name)
+        self.assertEqual(fq.sample_name,'NA10831')
+        self.assertEqual(fq.sample_number,7)
+        self.assertEqual(fq.barcode_sequence,None)
+        self.assertEqual(fq.lane_number,2)
+        self.assertEqual(fq.read_number,1)
+        self.assertEqual(fq.set_number,1)
+        self.assertEqual(str(fq),fastq_name)
+
+    def test_illumina_fastq_from_bcl2fastq2_no_lane(self):
+        """
+        Check extraction of fastq name components for bcl2fastq2 output (no lane)
+
+        """
+        fastq_name = 'NA10831_S7_R1_001'
+        fq = IlluminaFastq(fastq_name)
+        self.assertEqual(fq.fastq,fastq_name)
+        self.assertEqual(fq.sample_name,'NA10831')
+        self.assertEqual(fq.sample_number,7)
+        self.assertEqual(fq.barcode_sequence,None)
+        self.assertEqual(fq.lane_number,None)
+        self.assertEqual(fq.read_number,1)
+        self.assertEqual(fq.set_number,1)
+        self.assertEqual(str(fq),fastq_name)
+
+class TestSampleSheet(unittest.TestCase):
+    def setUp(self):
+        self.hiseq_sample_sheet_content = """[Header],,,,,,,,,,
+IEMFileVersion,4,,,,,,,,,
+Date,06/03/2014,,,,,,,,,
+Workflow,GenerateFASTQ,,,,,,,,,
+Application,HiSeq FASTQ Only,,,,,,,,,
+Assay,Nextera,,,,,,,,,
+Description,,,,,,,,,,
+Chemistry,Amplicon,,,,,,,,,
+,,,,,,,,,,
+[Reads],,,,,,,,,,
+101,,,,,,,,,,
+101,,,,,,,,,,
+,,,,,,,,,,
+[Settings],,,,,,,,,,
+ReverseComplement,0,,,,,,,,,
+Adapter,CTGTCTCTTATACACATCT,,,,,,,,,
+,,,,,,,,,,
+[Data],,,,,,,,,,
+Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_ID,index2,Sample_Project,Description
+1,PJB1-1579,PJB1-1579,,,N701,CGATGTAT ,N501,TCTTTCCC,PeterBriggs,
+1,PJB2-1580,PJB2-1580,,,N702,TGACCAAT ,N502,TCTTTCCC,PeterBriggs,
+"""
+        self.miseq_sample_sheet_content = """[Header]
+IEMFileVersion,4
+Date,4/11/2014
+Workflow,Metagenomics
+Application,Metagenomics 16S rRNA
+Assay,Nextera XT
+Description,
+Chemistry,Amplicon
+
+[Reads]
+150
+150
+
+[Settings]
+Adapter,CTGTCTCTTATACACATCT
+
+[Data]
+Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_ID,index2,Sample_Project,Description
+A8,A8,,,N701,TAAGGCGA,S501,TAGATCGC,PJB,
+B8,B8,,,N702,CGTACTAG,S501,TAGATCGC,PJB,
+"""
+        self.casava_sample_sheet_content = """FCID,Lane,SampleID,SampleRef,Index,Description,Control,Recipe,Operator,SampleProject
+DADA331XX,1,PhiX,PhiX control,,Control,,,Peter,Control
+DADA331XX,2,884-1,PB-884-1,AGTCAA,RNA-seq,,,Peter,AR
+DADA331XX,3,885-1,PB-885-1,AGTTCC,RNA-seq,,,Peter,AR
+DADA331XX,4,886-1,PB-886-1,ATGTCA,RNA-seq,,,Peter,AR
+DADA331XX,5,884-1,PB-884-1,AGTCAA,RNA-seq,,,Peter,AR
+DADA331XX,6,885-1,PB-885-1,AGTTCC,RNA-seq,,,Peter,AR
+DADA331XX,7,886-1,PB-886-1,ATGTCA,RNA-seq,,,Peter,AR
+DADA331XX,8,PhiX,PhiX control,,Control,,,Peter,Control
+"""
+
+    def test_load_hiseq_sample_sheet(self):
+        """SampleSheet: load a HiSEQ IEM-format sample sheet
+
+        """
+        iem = SampleSheet(fp=cStringIO.StringIO(
+            self.hiseq_sample_sheet_content))
+        # Check format
+        self.assertEqual(iem.format,'IEM')
+        # Check header
+        self.assertEqual(iem.header_items,['IEMFileVersion',
+                                           'Date',
+                                           'Workflow',
+                                           'Application',
+                                           'Assay',
+                                           'Description',
+                                           'Chemistry'])
+        self.assertEqual(iem.header['IEMFileVersion'],'4')
+        self.assertEqual(iem.header['Date'],'06/03/2014')
+        self.assertEqual(iem.header['Workflow'],'GenerateFASTQ')
+        self.assertEqual(iem.header['Application'],'HiSeq FASTQ Only')
+        self.assertEqual(iem.header['Assay'],'Nextera')
+        self.assertEqual(iem.header['Description'],'')
+        self.assertEqual(iem.header['Chemistry'],'Amplicon')
+        # Check reads
+        self.assertEqual(iem.reads,['101','101'])
+        # Check settings
+        self.assertEqual(iem.settings_items,['ReverseComplement',
+                                              'Adapter'])
+        self.assertEqual(iem.settings['ReverseComplement'],'0')
+        self.assertEqual(iem.settings['Adapter'],'CTGTCTCTTATACACATCT')
+        # Check data
+        self.assertEqual(iem.data.header(),['Lane','Sample_ID','Sample_Name',
+                                            'Sample_Plate','Sample_Well',
+                                            'I7_Index_ID','index',
+                                            'I5_Index_ID','index2',
+                                            'Sample_Project','Description'])
+        self.assertEqual(len(iem.data),2)
+        self.assertEqual(iem.data[0]['Lane'],1)
+        self.assertEqual(iem.data[0]['Sample_ID'],'PJB1-1579')
+        self.assertEqual(iem.data[0]['Sample_Name'],'PJB1-1579')
+        self.assertEqual(iem.data[0]['Sample_Plate'],'')
+        self.assertEqual(iem.data[0]['Sample_Well'],'')
+        self.assertEqual(iem.data[0]['I7_Index_ID'],'N701')
+        self.assertEqual(iem.data[0]['index'],'CGATGTAT')
+        self.assertEqual(iem.data[0]['I5_Index_ID'],'N501')
+        self.assertEqual(iem.data[0]['index2'],'TCTTTCCC')
+        self.assertEqual(iem.data[0]['Sample_Project'],'PeterBriggs')
+        self.assertEqual(iem.data[0]['Description'],'')
+    def test_show_hiseq_sample_sheet(self):
+        """SampleSheet: reconstruct a HiSEQ sample sheet
+
+        """
+        iem = SampleSheet(fp=cStringIO.StringIO(
+            self.hiseq_sample_sheet_content))
+        expected = """[Header]
+IEMFileVersion,4
+Date,06/03/2014
+Workflow,GenerateFASTQ
+Application,HiSeq FASTQ Only
+Assay,Nextera
+Description,
+Chemistry,Amplicon
+
+[Reads]
+101
+101
+
+[Settings]
+ReverseComplement,0
+Adapter,CTGTCTCTTATACACATCT
+
+[Data]
+Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_ID,index2,Sample_Project,Description
+1,PJB1-1579,PJB1-1579,,,N701,CGATGTAT,N501,TCTTTCCC,PeterBriggs,
+1,PJB2-1580,PJB2-1580,,,N702,TGACCAAT,N502,TCTTTCCC,PeterBriggs,
+"""
+        for l1,l2 in zip(iem.show().split(),expected.split()):
+            self.assertEqual(l1,l2)
+    def test_convert_hiseq_sample_sheet_to_casava(self):
+        """SampleSheet: convert HISeq IEM4 sample sheet to CASAVA format
+
+        """
+        iem = SampleSheet(fp=cStringIO.StringIO(
+            self.hiseq_sample_sheet_content))
+        expected = """FCID,Lane,SampleID,SampleRef,Index,Description,Control,Recipe,Operator,SampleProject
+FC0001,1,PJB1-1579,,CGATGTAT-TCTTTCCC,,,,,PeterBriggs
+FC0001,1,PJB2-1580,,TGACCAAT-TCTTTCCC,,,,,PeterBriggs
+"""
+        for l1,l2 in zip(iem.show(fmt='CASAVA').split(),expected.split()):
+            self.assertEqual(l1,l2)
+    def test_hiseq_predict_output(self):
+        """SampleSheet: check predicted outputs for HISeq IEM4 sample sheet
+
+        """
+        iem = SampleSheet(fp=cStringIO.StringIO(
+            self.hiseq_sample_sheet_content))
+        output = iem.predict_output()
+        self.assertTrue('Project_PeterBriggs' in output)
+        self.assertTrue('Sample_PJB1-1579' in output['Project_PeterBriggs'])
+        self.assertTrue('Sample_PJB2-1580' in output['Project_PeterBriggs'])
+        self.assertEqual(output['Project_PeterBriggs']['Sample_PJB1-1579'],
+                         ['PJB1-1579_CGATGTAT-TCTTTCCC_L001',])
+        self.assertEqual(output['Project_PeterBriggs']['Sample_PJB2-1580'],
+                         ['PJB2-1580_TGACCAAT-TCTTTCCC_L001',])
+    def test_hiseq_predict_output_bcl2fastq2(self):
+        """SampleSheet: check predicted bcl2fastq2 outputs for HISeq IEM4
+        sample sheet
+
+        """
+        iem = SampleSheet(fp=cStringIO.StringIO(
+            self.hiseq_sample_sheet_content))
+        output = iem.predict_output(fmt='bcl2fastq2')
+        self.assertTrue('PeterBriggs' in output)
+        self.assertEqual(output['PeterBriggs'],
+                         ['PJB1-1579_S1_L001','PJB2-1580_S2_L001',])
+    def test_load_miseq_sample_sheet(self):
+        """SampleSheet: load a MiSEQ sample sheet
+
+        """
+        iem = SampleSheet(fp=cStringIO.StringIO(
+            self.miseq_sample_sheet_content))
+        # Check format
+        self.assertEqual(iem.format,'IEM')
+        # Check header
+        self.assertEqual(iem.header_items,['IEMFileVersion',
+                                           'Date',
+                                           'Workflow',
+                                           'Application',
+                                           'Assay',
+                                           'Description',
+                                           'Chemistry'])
+        self.assertEqual(iem.header['IEMFileVersion'],'4')
+        self.assertEqual(iem.header['Date'],'4/11/2014')
+        self.assertEqual(iem.header['Workflow'],'Metagenomics')
+        self.assertEqual(iem.header['Application'],'Metagenomics 16S rRNA')
+        self.assertEqual(iem.header['Assay'],'Nextera XT')
+        self.assertEqual(iem.header['Description'],'')
+        self.assertEqual(iem.header['Chemistry'],'Amplicon')
+        # Check reads
+        self.assertEqual(iem.reads,['150','150'])
+        # Check settings
+        self.assertEqual(iem.settings_items,['Adapter'])
+        self.assertEqual(iem.settings['Adapter'],'CTGTCTCTTATACACATCT')
+        # Check data
+        self.assertEqual(iem.data.header(),['Sample_ID','Sample_Name',
+                                            'Sample_Plate','Sample_Well',
+                                            'I7_Index_ID','index',
+                                            'I5_Index_ID','index2',
+                                            'Sample_Project','Description'])
+        self.assertEqual(len(iem.data),2)
+        self.assertEqual(iem.data[0]['Sample_ID'],'A8')
+        self.assertEqual(iem.data[0]['Sample_Name'],'A8')
+        self.assertEqual(iem.data[0]['Sample_Plate'],'')
+        self.assertEqual(iem.data[0]['Sample_Well'],'')
+        self.assertEqual(iem.data[0]['I7_Index_ID'],'N701')
+        self.assertEqual(iem.data[0]['index'],'TAAGGCGA')
+        self.assertEqual(iem.data[0]['I5_Index_ID'],'S501')
+        self.assertEqual(iem.data[0]['index2'],'TAGATCGC')
+        self.assertEqual(iem.data[0]['Sample_Project'],'PJB')
+        self.assertEqual(iem.data[0]['Description'],'')
+    def test_show_miseq_sample_sheet(self):
+        """SampleSheet: reconstruct a MiSEQ sample sheet
+
+        """
+        iem = SampleSheet(fp=cStringIO.StringIO(
+            self.miseq_sample_sheet_content))
+        expected = self.miseq_sample_sheet_content
+        for l1,l2 in zip(iem.show().split(),expected.split()):
+            self.assertEqual(l1,l2)
+    def test_convert_miseq_sample_sheet_to_casava(self):
+        """SampleSheet: convert MISeq IEM4 sample sheet to CASAVA format
+
+        """
+        iem = SampleSheet(fp=cStringIO.StringIO(
+            self.miseq_sample_sheet_content))
+        expected = """FCID,Lane,SampleID,SampleRef,Index,Description,Control,Recipe,Operator,SampleProject
+FC0001,1,A8,,TAAGGCGA-TAGATCGC,,,,,PJB
+FC0001,1,B8,,CGTACTAG-TAGATCGC,,,,,PJB
+"""
+        for l1,l2 in zip(iem.show(fmt='CASAVA').split(),expected.split()):
+            self.assertEqual(l1,l2)
+    def test_miseq_predict_output(self):
+        """SampleSheet: check predicted outputs for MISeq IEM4 sample sheet
+
+        """
+        iem = SampleSheet(fp=cStringIO.StringIO(
+            self.miseq_sample_sheet_content))
+        output = iem.predict_output()
+        self.assertTrue('Project_PJB' in output)
+        self.assertTrue('Sample_A8' in output['Project_PJB'])
+        self.assertTrue('Sample_B8' in output['Project_PJB'])
+        self.assertEqual(output['Project_PJB']['Sample_A8'],
+                         ['A8_TAAGGCGA-TAGATCGC_L001',])
+        self.assertEqual(output['Project_PJB']['Sample_B8'],
+                         ['B8_CGTACTAG-TAGATCGC_L001',])
+    def test_miseq_predict_output_bcl2fastq2(self):
+        """SampleSheet: check predicted bcl2fastq2 outputs for MISeq IEM4
+        sample sheet
+
+        """
+        iem = SampleSheet(fp=cStringIO.StringIO(
+            self.miseq_sample_sheet_content))
+        output = iem.predict_output(fmt='bcl2fastq2')
+        self.assertTrue('PJB' in output)
+        self.assertEqual(output['PJB'],
+                         ['A8_S1','B8_S2',])
+    def test_load_casava_sample_sheet(self):
+        """SampleSheet: load a CASAVA-style sample sheet
+
+        """
+        casava = SampleSheet(fp=cStringIO.StringIO(
+            self.casava_sample_sheet_content))
+        # Check format
+        self.assertEqual(casava.format,'CASAVA')
+        # Check header
+        self.assertEqual(casava.header_items,[])
+        # Check reads
+        self.assertEqual(casava.reads,[])
+        # Check settings
+        self.assertEqual(casava.settings_items,[])
+        # Check data
+        self.assertEqual(casava.data.header(),['FCID','Lane',
+                                               'SampleID','SampleRef',
+                                               'Index','Description',
+                                               'Control','Recipe',
+                                               'Operator','SampleProject'])
+        self.assertEqual(len(casava.data),8)
+        self.assertEqual(casava.data[0]['FCID'],'DADA331XX')
+        self.assertEqual(casava.data[0]['Lane'],1)
+        self.assertEqual(casava.data[0]['SampleID'],'PhiX')
+        self.assertEqual(casava.data[0]['SampleRef'],'PhiX control')
+        self.assertEqual(casava.data[0]['Index'],'')
+        self.assertEqual(casava.data[0]['Description'],'Control')
+        self.assertEqual(casava.data[0]['Control'],'')
+        self.assertEqual(casava.data[0]['Recipe'],'')
+        self.assertEqual(casava.data[0]['Operator'],'Peter')
+        self.assertEqual(casava.data[0]['SampleProject'],'Control')
+        self.assertEqual(casava.data[1]['FCID'],'DADA331XX')
+        self.assertEqual(casava.data[1]['Lane'],2)
+        self.assertEqual(casava.data[1]['SampleID'],'884-1')
+        self.assertEqual(casava.data[1]['SampleRef'],'PB-884-1')
+        self.assertEqual(casava.data[1]['Index'],'AGTCAA')
+        self.assertEqual(casava.data[1]['Description'],'RNA-seq')
+        self.assertEqual(casava.data[1]['Control'],'')
+        self.assertEqual(casava.data[1]['Recipe'],'')
+        self.assertEqual(casava.data[1]['Operator'],'Peter')
+        self.assertEqual(casava.data[1]['SampleProject'],'AR')
+    def test_show_casava_sample_sheet(self):
+        """SampleSheet: reconstruct a CASAVA sample sheet
+
+        """
+        casava = SampleSheet(fp=cStringIO.StringIO(
+            self.casava_sample_sheet_content))
+        expected = self.casava_sample_sheet_content
+        for l1,l2 in zip(casava.show().split(),expected.split()):
+            self.assertEqual(l1,l2)
+    def test_casava_predict_output(self):
+        """SampleSheet: check predicted outputs for CASAVA sample sheet
+
+        """
+        casava = SampleSheet(fp=cStringIO.StringIO(
+            self.casava_sample_sheet_content))
+        output = casava.predict_output()
+        self.assertTrue('Project_Control' in output)
+        self.assertTrue('Sample_PhiX' in output['Project_Control'])
+        self.assertEqual(output['Project_Control']['Sample_PhiX'],
+                         ['PhiX_NoIndex_L001',
+                          'PhiX_NoIndex_L008'])
+        self.assertTrue('Project_AR' in output)
+        self.assertTrue('Sample_884-1' in output['Project_AR'])
+        self.assertTrue('Sample_885-1' in output['Project_AR'])
+        self.assertTrue('Sample_886-1' in output['Project_AR'])
+        self.assertEqual(output['Project_AR']['Sample_884-1'],
+                         ['884-1_AGTCAA_L002',
+                          '884-1_AGTCAA_L005'])
+        self.assertEqual(output['Project_AR']['Sample_885-1'],
+                         ['885-1_AGTTCC_L003',
+                          '885-1_AGTTCC_L006'])
+        self.assertEqual(output['Project_AR']['Sample_886-1'],
+                         ['886-1_ATGTCA_L004',
+                          '886-1_ATGTCA_L007'])
+    def test_len(self):
+        """SampleSheet: test __len__ built-in
+
+        """
+        empty = SampleSheet()
+        self.assertEqual(len(empty),0)
+        hiseq = SampleSheet(fp=cStringIO.StringIO(
+            self.hiseq_sample_sheet_content))
+        self.assertEqual(len(hiseq),2)
+        casava = SampleSheet(fp=cStringIO.StringIO(
+            self.casava_sample_sheet_content))
+        self.assertEqual(len(casava),8)
+    def test_iter(self):
+        """SampleSheet: test __iter__ built-in
+
+        """
+        hiseq = SampleSheet(fp=cStringIO.StringIO(
+            self.hiseq_sample_sheet_content))
+        for line0,line1 in zip(hiseq,hiseq.data):
+            self.assertEqual(line0,line1)
+        casava = SampleSheet(fp=cStringIO.StringIO(
+            self.casava_sample_sheet_content))
+        for line0,line1 in zip(casava,casava.data):
+            self.assertEqual(line0,line1)
+    def test_getitem(self):
+        """SampleSheet: test __getitem__ built-in
+
+        """
+        hiseq = SampleSheet(fp=cStringIO.StringIO(
+            self.hiseq_sample_sheet_content))
+        self.assertEqual(hiseq[0],hiseq.data[0])
+        self.assertEqual(hiseq[1],hiseq.data[1])
+        casava = SampleSheet(fp=cStringIO.StringIO(
+            self.casava_sample_sheet_content))
+        self.assertEqual(casava[0],casava.data[0])
+        self.assertEqual(casava[2],casava.data[2])
+        self.assertEqual(casava[7],casava.data[7])
+    def test_setitem(self):
+        """SampleSheet: test __setitem__ built-in
+
+        """
+        hiseq = SampleSheet(fp=cStringIO.StringIO(
+            self.hiseq_sample_sheet_content))
+        hiseq[0]['Sample_ID'] = 'NewSample1'
+        self.assertEqual(hiseq[0]['Sample_ID'],'NewSample1')
+        casava = SampleSheet(fp=cStringIO.StringIO(
+            self.casava_sample_sheet_content))
+        casava[0]['SampleID'] = 'NewSample2'
+        self.assertEqual(casava[0]['SampleID'],'NewSample2')
+    def test_append(self):
+        """SampleSheet: test append method
+
+        """
+        hiseq = SampleSheet(fp=cStringIO.StringIO(
+            self.hiseq_sample_sheet_content))
+        self.assertEqual(len(hiseq),2)
+        new_line = hiseq.append()
+        self.assertEqual(len(hiseq),3)
+    def test_write_iem(self):
+        """SampleSheet: write out IEM formatted sample sheet
+
+        """
+        miseq = SampleSheet(fp=cStringIO.StringIO(
+            self.miseq_sample_sheet_content))
+        fp=cStringIO.StringIO()
+        miseq.write(fp=fp)
+        self.assertEqual(fp.getvalue(),self.miseq_sample_sheet_content)
+    def test_write_casava(self):
+        """SampleSheet: write out CASAVA formatted sample sheet
+
+        """
+        casava = SampleSheet(fp=cStringIO.StringIO(
+            self.casava_sample_sheet_content))
+        fp=cStringIO.StringIO()
+        casava.write(fp=fp)
+        self.assertEqual(fp.getvalue(),self.casava_sample_sheet_content)
+    def test_bad_input_unrecognised_section(self):
+        """SampleSheet: raises exception for input with unrecognised section
+
+        """
+        fp = cStringIO.StringIO("""[Header]
+IEMFileVersion,4
+Date,06/03/2014
+
+[Footer]
+This,isTheEnd
+""")
+        self.assertRaises(IlluminaDataError,SampleSheet,fp=fp)
+    def test_bad_input_not_sample_sheet(self):
+        """SampleSheet: raises exception for non-IEM formatted input
+
+        """
+        fp = cStringIO.StringIO("""Something random
+IEMFileVersion,4
+Date,06/03/2014
+
+[Footer]
+This,isTheEnd
+""")
+        self.assertRaises(IlluminaDataError,SampleSheet,fp=fp)
+    def test_duplicates_in_iem_format(self):
+        """
+        SampleSheet: check & fix duplicated names in IEM sample sheet
+
+        """
+        # Set up
+        iem = SampleSheet(fp=cStringIO.StringIO(
+            self.hiseq_sample_sheet_content))
+        # Shouldn't find any duplicates when lanes are different
+        self.assertEqual(len(iem.duplicated_names),0)
+        # Create 3 duplicates by resetting lane numbers
+        iem.data[1]['Sample_ID'] = iem.data[0]['Sample_ID']
+        iem.data[1]['Sample_Name'] = iem.data[0]['Sample_Name']
+        iem.data[1]['index'] = iem.data[0]['index']
+        iem.data[1]['index2'] = iem.data[0]['index2']
+        iem.data[1]['Sample_Project'] = iem.data[0]['Sample_Project']
+        self.assertEqual(len(iem.duplicated_names),1)
+        # Fix and check again (should be none)
+        iem.fix_duplicated_names()
+        self.assertEqual(iem.duplicated_names,[])
+    def test_duplicates_in_iem_format_no_lanes(self):
+        """
+        SampleSheet: check & fix duplicated names in IEM sample sheet (no lanes)
+
+        """
+        # Set up
+        iem = SampleSheet(fp=cStringIO.StringIO(
+            self.miseq_sample_sheet_content))
+        # Shouldn't find any duplicates when lanes are different
+        self.assertEqual(len(iem.duplicated_names),0)
+        # Create duplicates by resetting sample names and projects
+        iem.data[1]['Sample_ID'] = iem.data[0]['Sample_ID']
+        iem.data[1]['Sample_Name'] = iem.data[0]['Sample_Name']
+        iem.data[1]['index'] = iem.data[0]['index']
+        iem.data[1]['index2'] = iem.data[0]['index2']
+        iem.data[1]['Sample_Project'] = iem.data[0]['Sample_Project']
+        self.assertEqual(len(iem.duplicated_names),1)
+        # Fix and check again (should be none)
+        iem.fix_duplicated_names()
+        self.assertEqual(iem.duplicated_names,[])
+    def test_illegal_names_in_iem_format(self):
+        """
+        SampleSheet: check for illegal characters in IEM sample sheet
+
+        """
+        # Set up and introduce bad names
+        iem = SampleSheet(fp=cStringIO.StringIO(
+            self.hiseq_sample_sheet_content))
+        iem.data[0]['Sample_ID'] = 'PJB1 1579'
+        iem.data[1]['Sample_Project'] = "PeterBriggs?"
+        # Check for illegal names
+        self.assertEqual(len(iem.illegal_names),2)
+        # Fix and check again
+        iem.fix_illegal_names()
+        self.assertEqual(iem.illegal_names,[])
+        # Verify that character replacement worked correctly
+        self.assertEqual(iem.data[0]['Sample_ID'],'PJB1_1579')
+        self.assertEqual(iem.data[1]['Sample_Project'],"PeterBriggs")
+    def test_empty_names_in_iem_format(self):
+        """
+        SampleSheet: check for empty sample/project names in IEM sample sheet
+
+        """
+        # Set up and introduce bad names
+        iem = SampleSheet(fp=cStringIO.StringIO(
+            self.hiseq_sample_sheet_content))
+        iem.data[0]['Sample_ID'] = ''
+        iem.data[1]['Sample_Project'] = ''
+        # Check for empty names
+        self.assertEqual(len(iem.empty_names),2)
+    def test_duplicates_in_casava_format(self):
+        """
+        SampleSheet: check and fix duplicated names in CASAVA sample sheet
+
+        """
+        # Set up
+        casava = SampleSheet(fp=cStringIO.StringIO(
+            self.casava_sample_sheet_content))
+        # Shouldn't find any duplicates when lanes are different
+        self.assertEqual(len(casava.duplicated_names),0)
+        # Create 3 duplicates by resetting lane numbers
+        casava.data[4]['Lane'] = 2
+        casava.data[5]['Lane'] = 3
+        casava.data[6]['Lane'] = 4
+        self.assertEqual(len(casava.duplicated_names),3)
+        # Fix and check again (should be none)
+        casava.fix_duplicated_names()
+        self.assertEqual(casava.duplicated_names,[])
+    def test_illegal_names_in_casava_format(self):
+        """
+        SampleSheet: check for illegal characters in CASAVA sample sheet
+
+        """
+        # Set up and introduce bad names
+        casava = SampleSheet(fp=cStringIO.StringIO(
+            self.casava_sample_sheet_content))
+        casava.data[3]['SampleID'] = '886 1'
+        casava.data[4]['SampleProject'] = "AR?"
+        # Check for illegal names
+        self.assertEqual(len(casava.illegal_names),2)
+        # Fix and check again
+        casava.fix_illegal_names()
+        self.assertEqual(casava.illegal_names,[])
+        # Verify that character replacement worked correctly
+        self.assertEqual(casava.data[3]['SampleID'],'886_1')
+        self.assertEqual(casava.data[4]['SampleProject'],"AR")
+    def test_empty_names_in_casava_format(self):
+        """
+        SampleSheet: check for empty sample/project names in CASAVA sample sheet
+
+        """
+        # Set up and introduce bad names
+        casava = SampleSheet(fp=cStringIO.StringIO(
+            self.casava_sample_sheet_content))
+        casava.data[3]['SampleID'] = ''
+        casava.data[4]['SampleProject'] = ""
+        # Check for illegal names
+        self.assertEqual(len(casava.empty_names),2)
 
 class TestIEMSampleSheet(unittest.TestCase):
     def setUp(self):
@@ -1136,13 +2441,13 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
         self.assertEqual(line['SampleProject'],'PeterBriggs')
         self.assertEqual(line['Index'],'CTTGTAAT-TCTTTCCC')
 
-class TestVerifyRunAgainstSampleSheet(unittest.TestCase):
+class TestVerifyRunAgainstCasavaSampleSheet(unittest.TestCase):
 
     def setUp(self):
         # Create a mock Illumina directory
         self.top_dir = tempfile.mkdtemp()
         self.mock_illumina_data = MockIlluminaData('test.MockIlluminaData',
-                                                   paired_end=True,
+                                                   'casava',paired_end=True,
                                                    top_dir=self.top_dir)
         self.mock_illumina_data.add_fastq_batch('AB','AB1','AB1_GCCAAT',lanes=(1,))
         self.mock_illumina_data.add_fastq_batch('AB','AB2','AB2_AGTCAA',lanes=(1,))
@@ -1170,14 +2475,14 @@ FC1,3,CDE4,,AGTCAA,,,,,CDE""")
         os.remove(self.sample_sheet)
 
     def test_verify_run_against_sample_sheet(self):
-        """Verify sample sheet against a matching run
+        """Verify sample sheet against a matching CASAVA run
         """
         illumina_data = IlluminaData(self.mock_illumina_data.dirn)
         self.assertTrue(verify_run_against_sample_sheet(illumina_data,
                                                         self.sample_sheet))
 
     def test_verify_run_against_sample_sheet_with_missing_project(self):
-        """Verify sample sheet against a run with a missing project
+        """Verify sample sheet against a CASAVA run with a missing project
         """
         shutil.rmtree(os.path.join(self.mock_illumina_data.dirn,
                                    self.mock_illumina_data.unaligned_dir,
@@ -1187,7 +2492,7 @@ FC1,3,CDE4,,AGTCAA,,,,,CDE""")
                                                         self.sample_sheet))
 
     def test_verify_run_against_sample_sheet_with_missing_sample(self):
-        """Verify sample sheet against a run with a missing sample
+        """Verify sample sheet against a CASAVA run with a missing sample
         """
         shutil.rmtree(os.path.join(self.mock_illumina_data.dirn,
                                    self.mock_illumina_data.unaligned_dir,
@@ -1197,12 +2502,180 @@ FC1,3,CDE4,,AGTCAA,,,,,CDE""")
                                                         self.sample_sheet))
 
     def test_verify_run_against_sample_sheet_with_missing_fastq(self):
-        """Verify sample sheet against a run with a missing fastq file
+        """Verify sample sheet against a CASAVA run with a missing fastq file
         """
         os.remove(os.path.join(self.mock_illumina_data.dirn,
                                self.mock_illumina_data.unaligned_dir,
                                "Project_CDE","Sample_CDE4",
                                "CDE4_AGTCAA_L002_R2_001.fastq.gz"))
+        illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertFalse(verify_run_against_sample_sheet(illumina_data,
+                                                        self.sample_sheet))
+
+class TestVerifyRunAgainstBcl2fastq2SampleSheet(unittest.TestCase):
+
+    def setUp(self):
+        # Create a mock Illumina directory
+        self.top_dir = tempfile.mkdtemp()
+        self.mock_illumina_data = MockIlluminaData('test.MockIlluminaData',
+                                                   'bcl2fastq2',paired_end=True,
+                                                   top_dir=self.top_dir)
+        self.mock_illumina_data.add_fastq_batch('AB','AB1','AB1_S1',lanes=(1,))
+        self.mock_illumina_data.add_fastq_batch('AB','AB2','AB2_S2',lanes=(1,))
+        self.mock_illumina_data.add_fastq_batch('CDE','CDE3','CDE3_S3',lanes=(2,3))
+        self.mock_illumina_data.add_fastq_batch('CDE','CDE4','CDE4_S4',lanes=(2,3))
+        self.mock_illumina_data.add_undetermined(lanes=(1,2,3))
+        self.mock_illumina_data.create()
+        # Sample sheet
+        fno,self.sample_sheet = tempfile.mkstemp()
+        fp = os.fdopen(fno,'w')
+        fp.write("""[Header]
+
+[Reads]
+
+[Settings]
+
+[Data]
+Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,Sample_Project,Description
+1,AB1,AB1,,,N0,GCCAAT,AB,
+1,AB2,AB2,,,N1,AGTCAA,AB,
+2,CDE3,CDE3,,,N2,GCCAAT,CDE,
+2,CDE4,CDE4,,,N3,AGTCAA,CDE,
+3,CDE3,CDE3,,,N2,GCCAAT,CDE,
+3,CDE4,CDE4,,,N3,AGTCAA,CDE,""")
+        fp.close()
+
+    def tearDown(self):
+        # Remove the test directory
+        if self.mock_illumina_data is not None:
+            self.mock_illumina_data.remove()
+        os.rmdir(self.top_dir)
+        os.remove(self.sample_sheet)
+
+    def test_verify_run_against_sample_sheet(self):
+        """Verify sample sheet against a matching bcl2fastq2 run
+        """
+        illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertTrue(verify_run_against_sample_sheet(illumina_data,
+                                                        self.sample_sheet))
+
+    def test_verify_run_against_sample_sheet_with_missing_project(self):
+        """Verify sample sheet against a bcl2fastq2 run with a missing project
+        """
+        shutil.rmtree(os.path.join(self.mock_illumina_data.dirn,
+                                   self.mock_illumina_data.unaligned_dir,
+                                   "AB"))
+        illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertFalse(verify_run_against_sample_sheet(illumina_data,
+                                                         self.sample_sheet))
+
+    def test_verify_run_against_sample_sheet_with_missing_sample(self):
+        """Verify sample sheet against a bcl2fastq2 run with a missing sample
+        """
+        for f in os.listdir(os.path.join(self.mock_illumina_data.dirn,
+                                         self.mock_illumina_data.unaligned_dir,
+                                         "AB")):
+            print f
+            if f.startswith("AB1"):
+                fq = os.path.join(self.mock_illumina_data.dirn,
+                                  self.mock_illumina_data.unaligned_dir,
+                                  "AB",f)
+                print "Removing %s" % fq
+                os.remove(fq)
+        illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertFalse(verify_run_against_sample_sheet(illumina_data,
+                                                        self.sample_sheet))
+
+    def test_verify_run_against_sample_sheet_with_missing_fastq(self):
+        """Verify sample sheet against a bcl2fastq2 run with a missing fastq file
+        """
+        os.remove(os.path.join(self.mock_illumina_data.dirn,
+                               self.mock_illumina_data.unaligned_dir,
+                               "CDE","CDE4_S4_L002_R2_001.fastq.gz"))
+        illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertFalse(verify_run_against_sample_sheet(illumina_data,
+                                                        self.sample_sheet))
+
+class TestVerifyRunAgainstBcl2fastq2SampleSheetNoLaneSplitting(unittest.TestCase):
+
+    def setUp(self):
+        # Create a mock Illumina directory
+        self.top_dir = tempfile.mkdtemp()
+        self.mock_illumina_data = MockIlluminaData('test.MockIlluminaData',
+                                                   'bcl2fastq2',
+                                                   paired_end=True,
+                                                   no_lane_splitting=True,
+                                                   top_dir=self.top_dir)
+        self.mock_illumina_data.add_fastq_batch('AB','AB1','AB1_S1')
+        self.mock_illumina_data.add_fastq_batch('AB','AB2','AB2_S2')
+        self.mock_illumina_data.add_fastq_batch('CDE','CDE3','CDE3_S3')
+        self.mock_illumina_data.add_fastq_batch('CDE','CDE4','CDE4_S4')
+        self.mock_illumina_data.add_undetermined()
+        self.mock_illumina_data.create()
+        # Sample sheet
+        fno,self.sample_sheet = tempfile.mkstemp()
+        fp = os.fdopen(fno,'w')
+        fp.write("""[Header]
+
+[Reads]
+
+[Settings]
+
+[Data]
+Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,Sample_Project,Description
+AB1,AB1,,,N0,GCCAAT,AB,
+AB2,AB2,,,N1,AGTCAA,AB,
+CDE3,CDE3,,,N2,GCCAAT,CDE,
+CDE4,CDE4,,,N3,AGTCAA,CDE,""")
+        fp.close()
+
+    def tearDown(self):
+        # Remove the test directory
+        if self.mock_illumina_data is not None:
+            self.mock_illumina_data.remove()
+        os.rmdir(self.top_dir)
+        os.remove(self.sample_sheet)
+
+    def test_verify_run_against_sample_sheet(self):
+        """Verify sample sheet against a matching bcl2fastq2 run (--no-lane-splitting)
+        """
+        illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertTrue(verify_run_against_sample_sheet(illumina_data,
+                                                        self.sample_sheet))
+
+    def test_verify_run_against_sample_sheet_with_missing_project(self):
+        """Verify sample sheet against a bcl2fastq2 run with a missing project (--no-lane-splitting)
+        """
+        shutil.rmtree(os.path.join(self.mock_illumina_data.dirn,
+                                   self.mock_illumina_data.unaligned_dir,
+                                   "AB"))
+        illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertFalse(verify_run_against_sample_sheet(illumina_data,
+                                                         self.sample_sheet))
+
+    def test_verify_run_against_sample_sheet_with_missing_sample(self):
+        """Verify sample sheet against a bcl2fastq2 run with a missing sample (--no-lane-splitting)
+        """
+        for f in os.listdir(os.path.join(self.mock_illumina_data.dirn,
+                                         self.mock_illumina_data.unaligned_dir,
+                                         "AB")):
+            print f
+            if f.startswith("AB1"):
+                fq = os.path.join(self.mock_illumina_data.dirn,
+                                  self.mock_illumina_data.unaligned_dir,
+                                  "AB",f)
+                print "Removing %s" % fq
+                os.remove(fq)
+        illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertFalse(verify_run_against_sample_sheet(illumina_data,
+                                                        self.sample_sheet))
+
+    def test_verify_run_against_sample_sheet_with_missing_fastq(self):
+        """Verify sample sheet against a bcl2fastq2 run with a missing fastq file (--no-lane-splitting)
+        """
+        os.remove(os.path.join(self.mock_illumina_data.dirn,
+                               self.mock_illumina_data.unaligned_dir,
+                               "CDE","CDE4_S4_R2_001.fastq.gz"))
         illumina_data = IlluminaData(self.mock_illumina_data.dirn)
         self.assertFalse(verify_run_against_sample_sheet(illumina_data,
                                                         self.sample_sheet))
@@ -1213,7 +2686,7 @@ class TestSummariseProjects(unittest.TestCase):
         # Create a mock Illumina directory
         self.top_dir = tempfile.mkdtemp()
         self.mock_illumina_data = MockIlluminaData('test.MockIlluminaData',
-                                                   paired_end=True,
+                                                   'casava',paired_end=True,
                                                    top_dir=self.top_dir)
         self.mock_illumina_data.add_fastq_batch('AB','AB1','AB1_GCCAAT',lanes=(1,))
         self.mock_illumina_data.add_fastq_batch('AB','AB2','AB2_AGTCAA',lanes=(1,))
@@ -1241,7 +2714,7 @@ class TestDescribeProject(unittest.TestCase):
         # Create a mock Illumina directory
         self.top_dir = tempfile.mkdtemp()
         self.mock_illumina_data = MockIlluminaData('test.MockIlluminaData',
-                                                   paired_end=True,
+                                                   'casava',paired_end=True,
                                                    top_dir=self.top_dir)
         self.mock_illumina_data.add_fastq_batch('AB','AB1','AB1_GCCAAT',lanes=(1,))
         self.mock_illumina_data.add_fastq_batch('AB','AB2','AB2_AGTCAA',lanes=(1,))
