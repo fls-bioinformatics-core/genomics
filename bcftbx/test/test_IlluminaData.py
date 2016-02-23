@@ -1961,6 +1961,7 @@ This,isTheEnd
         iem = SampleSheet(fp=cStringIO.StringIO(
             self.hiseq_sample_sheet_content))
         iem.data[0]['Sample_ID'] = 'PJB1 1579'
+        iem.data[0]['Sample_Name'] = 'PJB1 1579'
         iem.data[1]['Sample_Project'] = "PeterBriggs?"
         # Check for illegal names
         self.assertEqual(len(iem.illegal_names),2)
@@ -1969,6 +1970,7 @@ This,isTheEnd
         self.assertEqual(iem.illegal_names,[])
         # Verify that character replacement worked correctly
         self.assertEqual(iem.data[0]['Sample_ID'],'PJB1_1579')
+        self.assertEqual(iem.data[0]['Sample_Name'],'PJB1_1579')
         self.assertEqual(iem.data[1]['Sample_Project'],"PeterBriggs")
     def test_empty_names_in_iem_format(self):
         """

@@ -754,6 +754,7 @@ class SampleSheet:
         # Format-specific settings
         self._format = None
         self._sample_id = None
+        self._sample_name = None
         self._sample_project = None
         # Sections for IEM-format sample sheets
         self._header = utils.OrderedDictionary()
@@ -906,6 +907,8 @@ class SampleSheet:
         else:
             raise IlluminaDataError("Unable to locate sample project "
                                     "field in sample sheet header")
+        if 'Sample_Name' in column_names:
+            self._sample_name = 'Sample_Name'
 
     def _set_section_param_value(self,line,d):
         """
@@ -1105,6 +1108,8 @@ class SampleSheet:
             for c in SAMPLESHEET_ILLEGAL_CHARS:
                 illegal = (str(line[self._sample_id]).count(c) > 0) \
                           or (str(line[self._sample_project]).count(c) > 0)
+                if not illegal and self._sample_name is not None:
+                    illegal = str(line[self._sample_name]).count(c) > 0
                 if illegal:
                     illegal_names.append(line)
                     break
@@ -1151,6 +1156,9 @@ class SampleSheet:
                     str(line[self._sample_id]).strip().replace(c,'_').strip('_')
                 line[self._sample_project] = \
                     str(line[self._sample_project]).strip().replace(c,'_').strip('_')
+                if self._sample_name is not None:
+                    line[self._sample_name] = \
+                        str(line[self._sample_name]).strip().replace(c,'_').strip('_')
 
     def show(self,fmt=None):
         """
