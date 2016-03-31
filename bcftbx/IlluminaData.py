@@ -1351,6 +1351,15 @@ class SampleSheet:
           'project_2': [ name1, name2, ...],
           ... }
 
+        or:
+
+        { 'project_1': [ dir/name1, dir/name2, ...],
+          'project_2': [ name1, name2, ...],
+          ... }
+
+        if some samples will be written will be written to
+        subdirectories according to the sample sheet.
+
         """
         projects = {}
         if str(fmt).upper() == 'CASAVA':
@@ -1393,7 +1402,18 @@ class SampleSheet:
             sample_names = []
             for line in self.data:
                 project = line[self._sample_project]
-                sample = line[self._sample_id]
+                if self._sample_name:
+                    name = line[self._sample_name]
+                else:
+                    name = None
+                id_ = line[self._sample_id]
+                prefix = ''
+                if name:
+                    sample = name
+                    if id_ != name:
+                        prefix = '%s/' % id_
+                else:
+                    sample = id_
                 if self.has_lanes:
                     lane_id = "_L%03d" % line['Lane']
                 else:
@@ -1408,7 +1428,7 @@ class SampleSheet:
                     sample_names.append(sample)
                     i = len(sample_names)
                 # Construct fastq basename
-                fqs.append("%s_S%d%s" % (sample,i,lane_id))
+                fqs.append("%s%s_S%d%s" % (prefix,sample,i,lane_id))
                 projects[project] = fqs
         else:
             # Unknown format
