@@ -470,9 +470,9 @@ class IlluminaProject:
                     sample_names.append(sample_name)
             # Create sample objects and populate with appropriate fastqs
             for sample_name in sample_names:
+                sample_dirn = self.dirn
                 if not self.undetermined:
                     # Assume no subdir
-                    sample_dirn = self.dirn
                     fqs = filter(lambda f: IlluminaFastq(f).sample_name
                                  == sample_name,
                                  fastqs)
@@ -492,7 +492,7 @@ class IlluminaProject:
                     except TypeError:
                         # No lane, take all fastqs
                         fqs = [fq for fq in fastqs]
-                self.samples.append(IlluminaSample(self.dirn,
+                self.samples.append(IlluminaSample(sample_dirn,
                                                    fastqs=fqs,
                                                    name=sample_name,
                                                    prefix=''))
