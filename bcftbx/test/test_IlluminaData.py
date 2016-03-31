@@ -412,6 +412,24 @@ class MockIlluminaData:
                PJB1_S1_L001_R1_001.fastq.gz
         ...
 
+    NB if the sample name in the fastq file name differs from the supplied
+    sample name then the sample name will be used to create an additional
+    directory level, e.g.:
+
+    >>> mockdata = MockIlluminaData('130904_PJB_XXXXX','bcl2fastq2')
+    >>> mockdata.add_fastq('PJB','PJB2','PJB2_input_S1_L001_R1_001.fastq.gz')
+
+    will create:
+
+    1130904_PJB_XXXXX/
+        Unaligned/
+            PJB/
+               PJB2/
+                   PJB2_input_S1_L001_R1_001.fastq.gz
+        ...
+
+    (this replicates the situation for bcl2fastq v2 where Sample_ID and
+    Sample_Name differ.)
 
     Multiple fastqs can be more easily added using e.g.:
 
@@ -818,7 +836,16 @@ class MockIlluminaData:
             bcftbx.utils.mkdir(project_dirn)
             for sample_name in self.__projects[project_name]:
                 for fastq in self.__projects[project_name][sample_name]:
-                    fq = os.path.join(project_dirn,fastq)
+                    # Check if sample name matches that for fastq
+                    fq_sample_name = IlluminaFastq(fastq).sample_name
+                    if fq_sample_name != sample_name and \
+                       fq_sample_name != 'Undetermined':
+                        # Create an intermediate directory
+                        sample_dirn = os.path.join(project_dirn,sample_name)
+                        bcftbx.utils.mkdir(sample_dirn)
+                    else:
+                        sample_dirn = project_dirn
+                    fq = os.path.join(sample_dirn,fastq)
                     # "Touch" the file (i.e. creates an empty file)
                     open(fq,'wb+').close()
 
@@ -832,6 +859,19 @@ class MockIlluminaData:
         if self.__created:
             shutil.rmtree(self.dirn)
             self.__created = False
+
+    def __repr__(self):
+        """Implement __repr__ for debug purposes
+        """
+        if not self.__created:
+            return ("<%s: not created>" % self.dirn)
+        rep = []
+        for d in os.walk(self.dirn):
+            for d1 in d[1]:
+                rep.append(os.path.join(d[0],d1))
+            for f in d[2]:
+                rep.append(os.path.join(d[0],f))
+        return '\n'.join(sorted(rep))
 
 class TestIlluminaRun(unittest.TestCase):
     """
@@ -1247,6 +1287,58 @@ class TestIlluminaDataForBcl2fastq2(BaseTestIlluminaData):
         self.assertIlluminaData(illumina_data,self.mock_illumina_data)
         self.assertEqual(illumina_data.format,'bcl2fastq2')
         self.assertEqual(illumina_data.lanes,[None,])
+
+class TestIlluminaDataForBcl2fastq2SpecialCases(BaseTestIlluminaData):
+    """
+    Tests for IlluminaData, IlluminaProject and IlluminaSample for special cases of bcl2fastq2-style output
+
+    """
+    def makeMockIlluminaData(self,ids_differ_for_all=False):
+        # Create initial mock dir
+        mock_illumina_data = MockIlluminaData('test.MockIlluminaData',
+                                              'bcl2fastq2',
+                                              paired_end=True)
+        lanes=(1,2,)
+        # Add projects
+        mock_illumina_data.add_fastq_batch('AB','AB1','AB1_input_S1',
+                                           lanes=lanes)
+        mock_illumina_data.add_fastq_batch('AB','AB2','AB2_chip_S2',
+                                           lanes=lanes)
+        if ids_differ_for_all:
+            mock_illumina_data.add_fastq_batch('CDE','CDE3','CDE3_rep1_S3',
+                                               lanes=lanes)
+            mock_illumina_data.add_fastq_batch('CDE','CDE4','CDE4_rep2_S4',
+                                               lanes=lanes)
+        else:
+            mock_illumina_data.add_fastq_batch('CDE','CDE3','CDE3_S3',
+                                               lanes=lanes)
+            mock_illumina_data.add_fastq_batch('CDE','CDE4','CDE4_S4',
+                                               lanes=lanes)
+        # Undetermined reads
+        mock_illumina_data.add_undetermined(lanes=lanes)
+        # Create and finish
+        self.mock_illumina_data = mock_illumina_data
+        self.mock_illumina_data.create()
+
+    def test_illumina_data_all_sample_ids_differ_from_sample_names(self):
+        """Read bcl2fastq2 output when all sample ids differ from names
+
+        """
+        self.makeMockIlluminaData(ids_differ_for_all=True)
+        illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertIlluminaData(illumina_data,self.mock_illumina_data)
+        self.assertEqual(illumina_data.format,'bcl2fastq2')
+        self.assertEqual(illumina_data.lanes,[1,2])
+
+    def test_illumina_data_some_sample_ids_differ_from_sample_names(self):
+        """Read bcl2fastq2 output when some sample ids differ from names
+
+        """
+        self.makeMockIlluminaData(ids_differ_for_all=False)
+        illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertIlluminaData(illumina_data,self.mock_illumina_data)
+        self.assertEqual(illumina_data.format,'bcl2fastq2')
+        self.assertEqual(illumina_data.lanes,[1,2])
 
 class TestCasavaSampleSheet(unittest.TestCase):
 
