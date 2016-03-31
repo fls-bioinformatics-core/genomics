@@ -1030,6 +1030,11 @@ class BaseTestIlluminaData(unittest.TestCase):
                             mock_illumina_data.fastqs_in_sample(project_name,
                                                                 sample_name)):
             self.assertEqual(fastq,fq)
+        # Check fastqs exist
+        for fastq in illumina_sample.fastq:
+            fq = os.path.join(illumina_sample.dirn,fastq)
+            self.assertTrue(os.path.exists(fq),
+                            "missing fastq: %s" % fq)
         # Check fastq subsets
         r1_fastqs = illumina_sample.fastq_subset(read_number=1)
         r2_fastqs = illumina_sample.fastq_subset(read_number=2)
