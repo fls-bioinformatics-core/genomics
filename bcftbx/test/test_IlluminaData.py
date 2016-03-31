@@ -2773,6 +2773,53 @@ CDE4,CDE4,,,N3,AGTCAA,CDE,""")
         illumina_data = IlluminaData(self.mock_illumina_data.dirn)
         self.assertFalse(verify_run_against_sample_sheet(illumina_data,
                                                         self.sample_sheet))
+
+class TestVerifyRunAgainstBcl2fastq2SampleSheetSpecialCases(unittest.TestCase):
+
+    def setUp(self):
+        # Create a mock Illumina directory
+        self.top_dir = tempfile.mkdtemp()
+        self.mock_illumina_data = MockIlluminaData('test.MockIlluminaData',
+                                                   'bcl2fastq2',
+                                                   paired_end=True,
+                                                   no_lane_splitting=True,
+                                                   top_dir=self.top_dir)
+        self.mock_illumina_data.add_fastq_batch('AB','AB1','AB1_rep1_S1')
+        self.mock_illumina_data.add_fastq_batch('AB','AB2','AB2_rep1_S2')
+        self.mock_illumina_data.add_fastq_batch('CDE','CDE3','CDE3_S3')
+        self.mock_illumina_data.add_fastq_batch('CDE','CDE4','CDE4_S4')
+        self.mock_illumina_data.add_undetermined()
+        self.mock_illumina_data.create()
+        # Sample sheet
+        fno,self.sample_sheet = tempfile.mkstemp()
+        fp = os.fdopen(fno,'w')
+        fp.write("""[Header]
+
+[Reads]
+
+[Settings]
+
+[Data]
+Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,Sample_Project,Description
+AB1,AB1_rep1,,,N0,GCCAAT,AB,
+AB2,AB2_rep1,,,N1,AGTCAA,AB,
+CDE3,CDE3,,,N2,GCCAAT,CDE,
+CDE4,CDE4,,,N3,AGTCAA,CDE,""")
+        fp.close()
+
+    def tearDown(self):
+        # Remove the test directory
+        if self.mock_illumina_data is not None:
+            self.mock_illumina_data.remove()
+        os.rmdir(self.top_dir)
+        os.remove(self.sample_sheet)
+
+    def test_verify_run_against_sample_sheet_ids_and_names_differ(self):
+        """Verify sample sheet against a matching bcl2fastq2 run (ids and names differ)
+        """
+        illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertTrue(verify_run_against_sample_sheet(illumina_data,
+                                                        self.sample_sheet))
     
 class TestSummariseProjects(unittest.TestCase):
 
