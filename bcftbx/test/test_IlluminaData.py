@@ -1622,6 +1622,28 @@ DADA331XX,6,885-1,PB-885-1,AGTTCC,RNA-seq,,,Peter,AR
 DADA331XX,7,886-1,PB-886-1,ATGTCA,RNA-seq,,,Peter,AR
 DADA331XX,8,PhiX,PhiX control,,Control,,,Peter,Control
 """
+        self.hiseq_sample_sheet_id_and_name_differ_content = """[Header],,,,,,,,,,
+IEMFileVersion,4,,,,,,,,,
+Date,06/03/2014,,,,,,,,,
+Workflow,GenerateFASTQ,,,,,,,,,
+Application,HiSeq FASTQ Only,,,,,,,,,
+Assay,Nextera,,,,,,,,,
+Description,,,,,,,,,,
+Chemistry,Amplicon,,,,,,,,,
+,,,,,,,,,,
+[Reads],,,,,,,,,,
+101,,,,,,,,,,
+101,,,,,,,,,,
+,,,,,,,,,,
+[Settings],,,,,,,,,,
+ReverseComplement,0,,,,,,,,,
+Adapter,CTGTCTCTTATACACATCT,,,,,,,,,
+,,,,,,,,,,
+[Data],,,,,,,,,,
+Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_ID,index2,Sample_Project,Description
+1,PJB1,PJB1-1579,,,N701,CGATGTAT ,N501,TCTTTCCC,PeterBriggs,
+1,PJB2,PJB2-1580,,,N702,TGACCAAT ,N502,TCTTTCCC,PeterBriggs,
+"""
 
     def test_load_hiseq_sample_sheet(self):
         """SampleSheet: load a HiSEQ IEM-format sample sheet
@@ -1904,6 +1926,17 @@ FC0001,1,B8,,CGTACTAG-TAGATCGC,,,,,PJB
         self.assertEqual(output['Project_AR']['Sample_886-1'],
                          ['886-1_ATGTCA_L004',
                           '886-1_ATGTCA_L007'])
+    def test_hiseq_predict_output_bcl2fastq2_id_and_names_differ(self):
+        """SampleSheet: check predicted bcl2fastq2 outputs for HISeq IEM4
+        sample sheet when id and names differ
+
+        """
+        iem = SampleSheet(fp=cStringIO.StringIO(
+            self.hiseq_sample_sheet_id_and_name_differ_content))
+        output = iem.predict_output(fmt='bcl2fastq2')
+        self.assertTrue('PeterBriggs' in output)
+        self.assertEqual(output['PeterBriggs'],
+                         ['PJB1/PJB1-1579_S1_L001','PJB2/PJB2-1580_S2_L001',])
     def test_len(self):
         """SampleSheet: test __len__ built-in
 
