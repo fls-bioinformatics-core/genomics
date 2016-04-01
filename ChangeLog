@@ -1,3 +1,12 @@
+2016-04-01  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* genomics-bcftbx version 0.99.7
+	- bcftbx/IlluminaData: fixes for "illegal" name and
+	  ID detection and mitigation in IEM samplesheets;
+	  fixes to handle of outputs from bcl2fastq v2 in
+	  special cases when 'Sample_ID's and 'Sample_Name's
+	  are not consistent.
+
 2016-01-19  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* genomics-bcftbx version 0.99.6
