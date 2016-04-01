@@ -412,6 +412,24 @@ class MockIlluminaData:
                PJB1_S1_L001_R1_001.fastq.gz
         ...
 
+    NB if the sample name in the fastq file name differs from the supplied
+    sample name then the sample name will be used to create an additional
+    directory level, e.g.:
+
+    >>> mockdata = MockIlluminaData('130904_PJB_XXXXX','bcl2fastq2')
+    >>> mockdata.add_fastq('PJB','PJB2','PJB2_input_S1_L001_R1_001.fastq.gz')
+
+    will create:
+
+    1130904_PJB_XXXXX/
+        Unaligned/
+            PJB/
+               PJB2/
+                   PJB2_input_S1_L001_R1_001.fastq.gz
+        ...
+
+    (this replicates the situation for bcl2fastq v2 where Sample_ID and
+    Sample_Name differ.)
 
     Multiple fastqs can be more easily added using e.g.:
 
@@ -818,7 +836,16 @@ class MockIlluminaData:
             bcftbx.utils.mkdir(project_dirn)
             for sample_name in self.__projects[project_name]:
                 for fastq in self.__projects[project_name][sample_name]:
-                    fq = os.path.join(project_dirn,fastq)
+                    # Check if sample name matches that for fastq
+                    fq_sample_name = IlluminaFastq(fastq).sample_name
+                    if fq_sample_name != sample_name and \
+                       fq_sample_name != 'Undetermined':
+                        # Create an intermediate directory
+                        sample_dirn = os.path.join(project_dirn,sample_name)
+                        bcftbx.utils.mkdir(sample_dirn)
+                    else:
+                        sample_dirn = project_dirn
+                    fq = os.path.join(sample_dirn,fastq)
                     # "Touch" the file (i.e. creates an empty file)
                     open(fq,'wb+').close()
 
@@ -832,6 +859,19 @@ class MockIlluminaData:
         if self.__created:
             shutil.rmtree(self.dirn)
             self.__created = False
+
+    def __repr__(self):
+        """Implement __repr__ for debug purposes
+        """
+        if not self.__created:
+            return ("<%s: not created>" % self.dirn)
+        rep = []
+        for d in os.walk(self.dirn):
+            for d1 in d[1]:
+                rep.append(os.path.join(d[0],d1))
+            for f in d[2]:
+                rep.append(os.path.join(d[0],f))
+        return '\n'.join(sorted(rep))
 
 class TestIlluminaRun(unittest.TestCase):
     """
@@ -990,6 +1030,11 @@ class BaseTestIlluminaData(unittest.TestCase):
                             mock_illumina_data.fastqs_in_sample(project_name,
                                                                 sample_name)):
             self.assertEqual(fastq,fq)
+        # Check fastqs exist
+        for fastq in illumina_sample.fastq:
+            fq = os.path.join(illumina_sample.dirn,fastq)
+            self.assertTrue(os.path.exists(fq),
+                            "missing fastq: %s" % fq)
         # Check fastq subsets
         r1_fastqs = illumina_sample.fastq_subset(read_number=1)
         r2_fastqs = illumina_sample.fastq_subset(read_number=2)
@@ -1247,6 +1292,58 @@ class TestIlluminaDataForBcl2fastq2(BaseTestIlluminaData):
         self.assertIlluminaData(illumina_data,self.mock_illumina_data)
         self.assertEqual(illumina_data.format,'bcl2fastq2')
         self.assertEqual(illumina_data.lanes,[None,])
+
+class TestIlluminaDataForBcl2fastq2SpecialCases(BaseTestIlluminaData):
+    """
+    Tests for IlluminaData, IlluminaProject and IlluminaSample for special cases of bcl2fastq2-style output
+
+    """
+    def makeMockIlluminaData(self,ids_differ_for_all=False):
+        # Create initial mock dir
+        mock_illumina_data = MockIlluminaData('test.MockIlluminaData',
+                                              'bcl2fastq2',
+                                              paired_end=True)
+        lanes=(1,2,)
+        # Add projects
+        mock_illumina_data.add_fastq_batch('AB','AB1','AB1_input_S1',
+                                           lanes=lanes)
+        mock_illumina_data.add_fastq_batch('AB','AB2','AB2_chip_S2',
+                                           lanes=lanes)
+        if ids_differ_for_all:
+            mock_illumina_data.add_fastq_batch('CDE','CDE3','CDE3_rep1_S3',
+                                               lanes=lanes)
+            mock_illumina_data.add_fastq_batch('CDE','CDE4','CDE4_rep2_S4',
+                                               lanes=lanes)
+        else:
+            mock_illumina_data.add_fastq_batch('CDE','CDE3','CDE3_S3',
+                                               lanes=lanes)
+            mock_illumina_data.add_fastq_batch('CDE','CDE4','CDE4_S4',
+                                               lanes=lanes)
+        # Undetermined reads
+        mock_illumina_data.add_undetermined(lanes=lanes)
+        # Create and finish
+        self.mock_illumina_data = mock_illumina_data
+        self.mock_illumina_data.create()
+
+    def test_illumina_data_all_sample_ids_differ_from_sample_names(self):
+        """Read bcl2fastq2 output when all sample ids differ from names
+
+        """
+        self.makeMockIlluminaData(ids_differ_for_all=True)
+        illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertIlluminaData(illumina_data,self.mock_illumina_data)
+        self.assertEqual(illumina_data.format,'bcl2fastq2')
+        self.assertEqual(illumina_data.lanes,[1,2])
+
+    def test_illumina_data_some_sample_ids_differ_from_sample_names(self):
+        """Read bcl2fastq2 output when some sample ids differ from names
+
+        """
+        self.makeMockIlluminaData(ids_differ_for_all=False)
+        illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertIlluminaData(illumina_data,self.mock_illumina_data)
+        self.assertEqual(illumina_data.format,'bcl2fastq2')
+        self.assertEqual(illumina_data.lanes,[1,2])
 
 class TestCasavaSampleSheet(unittest.TestCase):
 
@@ -1530,6 +1627,28 @@ DADA331XX,6,885-1,PB-885-1,AGTTCC,RNA-seq,,,Peter,AR
 DADA331XX,7,886-1,PB-886-1,ATGTCA,RNA-seq,,,Peter,AR
 DADA331XX,8,PhiX,PhiX control,,Control,,,Peter,Control
 """
+        self.hiseq_sample_sheet_id_and_name_differ_content = """[Header],,,,,,,,,,
+IEMFileVersion,4,,,,,,,,,
+Date,06/03/2014,,,,,,,,,
+Workflow,GenerateFASTQ,,,,,,,,,
+Application,HiSeq FASTQ Only,,,,,,,,,
+Assay,Nextera,,,,,,,,,
+Description,,,,,,,,,,
+Chemistry,Amplicon,,,,,,,,,
+,,,,,,,,,,
+[Reads],,,,,,,,,,
+101,,,,,,,,,,
+101,,,,,,,,,,
+,,,,,,,,,,
+[Settings],,,,,,,,,,
+ReverseComplement,0,,,,,,,,,
+Adapter,CTGTCTCTTATACACATCT,,,,,,,,,
+,,,,,,,,,,
+[Data],,,,,,,,,,
+Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_ID,index2,Sample_Project,Description
+1,PJB1,PJB1-1579,,,N701,CGATGTAT ,N501,TCTTTCCC,PeterBriggs,
+1,PJB2,PJB2-1580,,,N702,TGACCAAT ,N502,TCTTTCCC,PeterBriggs,
+"""
 
     def test_load_hiseq_sample_sheet(self):
         """SampleSheet: load a HiSEQ IEM-format sample sheet
@@ -1812,6 +1931,17 @@ FC0001,1,B8,,CGTACTAG-TAGATCGC,,,,,PJB
         self.assertEqual(output['Project_AR']['Sample_886-1'],
                          ['886-1_ATGTCA_L004',
                           '886-1_ATGTCA_L007'])
+    def test_hiseq_predict_output_bcl2fastq2_id_and_names_differ(self):
+        """SampleSheet: check predicted bcl2fastq2 outputs for HISeq IEM4
+        sample sheet when id and names differ
+
+        """
+        iem = SampleSheet(fp=cStringIO.StringIO(
+            self.hiseq_sample_sheet_id_and_name_differ_content))
+        output = iem.predict_output(fmt='bcl2fastq2')
+        self.assertTrue('PeterBriggs' in output)
+        self.assertEqual(output['PeterBriggs'],
+                         ['PJB1/PJB1-1579_S1_L001','PJB2/PJB2-1580_S2_L001',])
     def test_len(self):
         """SampleSheet: test __len__ built-in
 
@@ -2680,6 +2810,53 @@ CDE4,CDE4,,,N3,AGTCAA,CDE,""")
                                "CDE","CDE4_S4_R2_001.fastq.gz"))
         illumina_data = IlluminaData(self.mock_illumina_data.dirn)
         self.assertFalse(verify_run_against_sample_sheet(illumina_data,
+                                                        self.sample_sheet))
+
+class TestVerifyRunAgainstBcl2fastq2SampleSheetSpecialCases(unittest.TestCase):
+
+    def setUp(self):
+        # Create a mock Illumina directory
+        self.top_dir = tempfile.mkdtemp()
+        self.mock_illumina_data = MockIlluminaData('test.MockIlluminaData',
+                                                   'bcl2fastq2',
+                                                   paired_end=True,
+                                                   no_lane_splitting=True,
+                                                   top_dir=self.top_dir)
+        self.mock_illumina_data.add_fastq_batch('AB','AB1','AB1_rep1_S1')
+        self.mock_illumina_data.add_fastq_batch('AB','AB2','AB2_rep1_S2')
+        self.mock_illumina_data.add_fastq_batch('CDE','CDE3','CDE3_S3')
+        self.mock_illumina_data.add_fastq_batch('CDE','CDE4','CDE4_S4')
+        self.mock_illumina_data.add_undetermined()
+        self.mock_illumina_data.create()
+        # Sample sheet
+        fno,self.sample_sheet = tempfile.mkstemp()
+        fp = os.fdopen(fno,'w')
+        fp.write("""[Header]
+
+[Reads]
+
+[Settings]
+
+[Data]
+Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,Sample_Project,Description
+AB1,AB1_rep1,,,N0,GCCAAT,AB,
+AB2,AB2_rep1,,,N1,AGTCAA,AB,
+CDE3,CDE3,,,N2,GCCAAT,CDE,
+CDE4,CDE4,,,N3,AGTCAA,CDE,""")
+        fp.close()
+
+    def tearDown(self):
+        # Remove the test directory
+        if self.mock_illumina_data is not None:
+            self.mock_illumina_data.remove()
+        os.rmdir(self.top_dir)
+        os.remove(self.sample_sheet)
+
+    def test_verify_run_against_sample_sheet_ids_and_names_differ(self):
+        """Verify sample sheet against a matching bcl2fastq2 run (ids and names differ)
+        """
+        illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertTrue(verify_run_against_sample_sheet(illumina_data,
                                                         self.sample_sheet))
     
 class TestSummariseProjects(unittest.TestCase):

@@ -284,13 +284,16 @@ class IlluminaData:
         """
         Find projects for a bcl2fastq2-style directory structure
 
+        The output from bcl2fastq2 can be "flat" (i.e. fastqs
+        directly under project dirs) or it can contain "sample"
+        subdirs within project dirs, or a mixture of both.
+
+        In all cases we expect to find a number of 'undetermined'
+        fastqs at the top level of the output (unaligned) directory,
+        and the fastq names will contain the 'S1' sample number
+        construct.
+
         """
-        # The output from bcl2fastq2 is flat
-        # We expect to find a number of 'undetermined' fastqs at
-        # the top level of the output (unaligned) directory,
-        # and one or more projects in subdirectories - each of
-        # which contains all the fastqs for all samples
-        # The strategy is to look for all these things together
         # Look for undetermined fastqs
         undetermined_fqs = filter(lambda f: f.startswith('Undetermined_S0_')
                                   and f.endswith('.fastq.gz'),
@@ -304,16 +307,26 @@ class IlluminaData:
             if not os.path.isdir(dirn):
                 continue
             # Get a list of fastq files
-            fqs = filter(lambda f: f.endswith('.fastq.gz'),
+            fqs = filter(lambda f: f.endswith('.fastq.gz') and
+                         IlluminaFastq(f).sample_number is not None,
                          os.listdir(dirn))
-            if not fqs:
-                continue
-            # Check that fastqs have bcl2fastq2-style names
-            for fq in fqs:
-                if IlluminaFastq(fq).sample_number is None:
-                    break; continue
-            # Looks like a project
-            project_dirs.append(dirn)
+            if fqs:
+                # Looks like a project
+                project_dirs.append(dirn)
+            else:
+                # Look in subdirs
+                subdirs = filter(lambda d:
+                                 os.path.isdir(os.path.join(dirn,d)),
+                                 os.listdir(dirn))
+                if subdirs:
+                    for sd in subdirs:
+                        fqs = filter(lambda f: f.endswith('.fastq.gz') and
+                                     IlluminaFastq(f).sample_number is not None,
+                                     os.listdir(os.path.join(dirn,sd)))
+                        if fqs:
+                            # Looks like a project
+                            project_dirs.append(dirn)
+                            break; continue
         # Raise an exception if no projects found
         if not project_dirs:
             raise IlluminaDataError("No bcl2fastq2-style projects found")
@@ -400,34 +413,52 @@ class IlluminaProject:
                    os.path.isdir(sample_dirn):
                     self.samples.append(IlluminaSample(sample_dirn))
         else:
-            # Examine fastq files to see if naming scheme follows
-            # bcl2fastq v2 convention
-            fastqs = filter(lambda f: f.endswith('.fastq.gz'),
+            # Examine fastq files in top-level dir to see if naming scheme
+            # follows bcl2fastq v2 convention
+            fastqs = filter(lambda f: f.endswith('.fastq.gz') and
+                            IlluminaFastq(f).sample_number is not None,
                             os.listdir(self.dirn))
-            if fastqs and reduce(lambda x,y: x and
-                                 (IlluminaFastq(y).sample_number is not None),
-                                 fastqs,True):
-                # bcl2fastq v2
-                self.project_prefix = ""
+            if fastqs:
+                # Check if this is the top level bcl2fastq v2 output
+                # i.e. does it contain undetermined reads
                 if reduce(lambda x,y: x and
                           os.path.basename(y).startswith('Undetermined_S'),
                           fastqs,True):
                     # These are undetermined fastqs
                     self.undetermined = True
-                    self.name = "Undetermined_indices"
-                else:
-                    # Fastqs from an actual set of samples
-                    self.name = os.path.basename(self.dirn)
-                logging.debug("bcl2fastq 2 project: %s" % self.name)
-            else:
+            if not self.undetermined:
+                # Even if we already have fastqs, we need to check
+                # subdirs for more bcl2fastq v2 style fastqs
+                subdirs = filter(lambda d:
+                                 os.path.isdir(os.path.join(self.dirn,d)),
+                                 os.listdir(self.dirn))
+                for subdir in subdirs:
+                    items = [os.path.join(subdir,x)
+                             for x in
+                             os.listdir(os.path.join(self.dirn,subdir))]
+                    fastqs.extend(filter(lambda f: f.endswith('.fastq.gz') and
+                                         IlluminaFastq(f).sample_number is not None,
+                                         items))
+            if not fastqs:
                 raise IlluminaDataError("Not a project directory: %s " %
                                         self.dirn)
-            # Determine samples from fastq names
+            # bcl2fastq v2 doesn't prefix project or sample dir names
+            self.project_prefix = ""
             self.sample_prefix = ""
+            # Determine project name
+            if not self.undetermined:
+                self.name = os.path.basename(self.dirn)
+            else:
+                self.name = "Undetermined_indices"
+            logging.debug("bcl2fastq 2 project: %s" % self.name)
+            # Determine samples from fastq paths/names
             sample_names = []
             for fq in fastqs:
                 if not self.undetermined:
-                    sample_name = IlluminaFastq(fq).sample_name
+                    try:
+                        sample_name,_ = fq.split(os.sep)
+                    except ValueError:
+                        sample_name = IlluminaFastq(fq).sample_name
                 else:
                     # Use laneX as sample name for undetermined
                     try:
@@ -439,11 +470,20 @@ class IlluminaProject:
                     sample_names.append(sample_name)
             # Create sample objects and populate with appropriate fastqs
             for sample_name in sample_names:
+                sample_dirn = self.dirn
                 if not self.undetermined:
-                    fqs = filter(lambda f:
-                                 IlluminaFastq(f).sample_name == sample_name,
+                    # Assume no subdir
+                    fqs = filter(lambda f: IlluminaFastq(f).sample_name
+                                 == sample_name,
                                  fastqs)
+                    if not fqs:
+                        # Look for fastqs within a subdir
+                        sample_dirn = os.path.join(self.dirn,sample_name)
+                        fqs = filter(lambda f:
+                                     f.startswith('%s/' % sample_name),
+                                     fastqs)
                 else:
+                    # Handle 'undetermined' data
                     try:
                         fqs = filter(lambda f:
                                      "lane%d" % IlluminaFastq(f).lane_number
@@ -452,8 +492,10 @@ class IlluminaProject:
                     except TypeError:
                         # No lane, take all fastqs
                         fqs = [fq for fq in fastqs]
-                self.samples.append(IlluminaSample(self.dirn,
-                                                   fastqs=fqs))
+                self.samples.append(IlluminaSample(sample_dirn,
+                                                   fastqs=fqs,
+                                                   name=sample_name,
+                                                   prefix=''))
         # Raise an exception if no samples found
         if not self.samples:
             raise IlluminaDataError, "No samples found for project %s" % \
@@ -502,7 +544,7 @@ class IlluminaSample:
 
     """
 
-    def __init__(self,dirn,fastqs=None):
+    def __init__(self,dirn,fastqs=None,name=None,prefix='Sample_'):
         """Create and populate a new IlluminaSample object
 
         Arguments:
@@ -510,6 +552,11 @@ class IlluminaSample:
                   the sample
           fastqs: optional, a list of fastq files associated with the
                   sample (expected to be under the directory 'dirn')
+          name: optional, the name of the sample (if not supplied then
+                  will attempt to determine automatically)
+          prefix: optional, explicitly specify the 'prefix' placed in
+                  front of the sample name to generate the matching
+                  directory
 
         """
         self.dirn = dirn
@@ -521,10 +568,14 @@ class IlluminaSample:
                             os.listdir(self.dirn))
         else:
             fastqs = [os.path.basename(f) for f in fastqs]
-        # Set sample name from directory name
-        self.sample_prefix = "Sample_"
-        if os.path.basename(dirn).startswith(self.sample_prefix):
-            # Remove prefix
+        self.sample_prefix = prefix
+        # Set sample name
+        if name is not None:
+            # Supplied explicitly
+            self.name = name
+        elif self.sample_prefix and \
+           os.path.basename(dirn).startswith(self.sample_prefix):
+            # Determine from prefixed directory name
             self.name = os.path.basename(dirn)[len(self.sample_prefix):]
         else:
             # No prefix, obtain name from fastqs
@@ -1300,6 +1351,15 @@ class SampleSheet:
           'project_2': [ name1, name2, ...],
           ... }
 
+        or:
+
+        { 'project_1': [ dir/name1, dir/name2, ...],
+          'project_2': [ name1, name2, ...],
+          ... }
+
+        if some samples will be written will be written to
+        subdirectories according to the sample sheet.
+
         """
         projects = {}
         if str(fmt).upper() == 'CASAVA':
@@ -1342,7 +1402,18 @@ class SampleSheet:
             sample_names = []
             for line in self.data:
                 project = line[self._sample_project]
-                sample = line[self._sample_id]
+                if self._sample_name:
+                    name = line[self._sample_name]
+                else:
+                    name = None
+                id_ = line[self._sample_id]
+                prefix = ''
+                if name:
+                    sample = name
+                    if id_ != name:
+                        prefix = '%s/' % id_
+                else:
+                    sample = id_
                 if self.has_lanes:
                     lane_id = "_L%03d" % line['Lane']
                 else:
@@ -1357,7 +1428,7 @@ class SampleSheet:
                     sample_names.append(sample)
                     i = len(sample_names)
                 # Construct fastq basename
-                fqs.append("%s_S%d%s" % (sample,i,lane_id))
+                fqs.append("%s%s_S%d%s" % (prefix,sample,i,lane_id))
                 projects[project] = fqs
         else:
             # Unknown format
