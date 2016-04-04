@@ -1969,6 +1969,55 @@ CDE4,CDE4,,,N3,AGTCAA,CDE,""")
         self.assertFalse(verify_run_against_sample_sheet(illumina_data,
                                                         self.sample_sheet))
 
+class TestVerifyRunAgainstBcl2fastq2MultiLaneSampleSheetNoLaneSplitting(unittest.TestCase):
+
+    def setUp(self):
+        # Create a mock Illumina directory
+        self.top_dir = tempfile.mkdtemp()
+        self.mock_illumina_data = MockIlluminaData('test.MockIlluminaData',
+                                                   'bcl2fastq2',
+                                                   no_lane_splitting=True,
+                                                   paired_end=True,
+                                                   top_dir=self.top_dir)
+        self.mock_illumina_data.add_fastq_batch('AB','AB1','AB1_S1',lanes=(1,))
+        self.mock_illumina_data.add_fastq_batch('AB','AB2','AB2_S2',lanes=(1,))
+        self.mock_illumina_data.add_fastq_batch('CDE','CDE3','CDE3_S3',lanes=(2,3))
+        self.mock_illumina_data.add_fastq_batch('CDE','CDE4','CDE4_S4',lanes=(2,3))
+        self.mock_illumina_data.add_undetermined(lanes=(1,2,3))
+        self.mock_illumina_data.create()
+        # Sample sheet
+        fno,self.sample_sheet = tempfile.mkstemp()
+        fp = os.fdopen(fno,'w')
+        fp.write("""[Header]
+
+[Reads]
+
+[Settings]
+
+[Data]
+Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,Sample_Project,Description
+1,AB1,AB1,,,N0,GCCAAT,AB,
+1,AB2,AB2,,,N1,AGTCAA,AB,
+2,CDE3,CDE3,,,N2,GCCAAT,CDE,
+2,CDE4,CDE4,,,N3,AGTCAA,CDE,
+3,CDE3,CDE3,,,N2,GCCAAT,CDE,
+3,CDE4,CDE4,,,N3,AGTCAA,CDE,""")
+        fp.close()
+
+    def tearDown(self):
+        # Remove the test directory
+        if self.mock_illumina_data is not None:
+            self.mock_illumina_data.remove()
+        os.rmdir(self.top_dir)
+        os.remove(self.sample_sheet)
+
+    def test_verify_run_against_multi_lane_sample_sheet(self):
+        """Verify multi-lane sample sheet against a matching bcl2fastq2 run (--no-lane-splitting)
+        """
+        illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertTrue(verify_run_against_sample_sheet(illumina_data,
+                                                        self.sample_sheet))
+
 class TestVerifyRunAgainstBcl2fastq2SampleSheetSampleNamesAreIntegers(unittest.TestCase):
 
     def setUp(self):
