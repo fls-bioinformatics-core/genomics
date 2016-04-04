@@ -1969,15 +1969,21 @@ def verify_run_against_sample_sheet(illumina_data,sample_sheet):
             elif data_format == 'bcl2fastq2':
                 # Check for output files
                 predicted_names = predicted_projects[proj]
+                no_lane_splitting = (len(illumina_data.lanes) == 1) \
+                                    and (illumina_data.lanes[0] is None)
                 for name in predicted_names:
                     # Loop over lanes
                     for lane in illumina_data.lanes:
-                        # Lane identifier
-                        if not sample_sheet.has_lanes and \
-                           lane is not None:
-                            lane_id = "_L%03d" % lane
+                        # Handle lane identifier
+                        lane_id = ""
+                        if no_lane_splitting:
+                            if sample_sheet.has_lanes:
+                                # Remove existing lane identifier
+                                name = '_'.join(name.split('_')[:-1])
                         else:
-                            lane_id = ""
+                            if not sample_sheet.has_lanes:
+                                # Add lane identifier
+                                lane_id = "_L%03d" % lane
                         # Look for R1 file
                         f = os.path.join(proj_dir,
                                          "%s%s_R1_001.fastq.gz" % (name,
