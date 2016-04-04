@@ -2832,6 +2832,50 @@ CDE4,CDE4,,,N3,AGTCAA,CDE,""")
         self.assertFalse(verify_run_against_sample_sheet(illumina_data,
                                                         self.sample_sheet))
 
+class TestVerifyRunAgainstBcl2fastq2SampleSheetSampleNamesAreIntegers(unittest.TestCase):
+
+    def setUp(self):
+        # Create a mock Illumina directory
+        self.top_dir = tempfile.mkdtemp()
+        self.mock_illumina_data = MockIlluminaData('test.MockIlluminaData',
+                                                   'bcl2fastq2',
+                                                   paired_end=True,
+                                                   no_lane_splitting=True,
+                                                   top_dir=self.top_dir)
+        self.mock_illumina_data.add_fastq_batch('12970','12970','12970_S1')
+        self.mock_illumina_data.add_fastq_batch('12513','12513','12513_S2')
+        self.mock_illumina_data.add_undetermined()
+        self.mock_illumina_data.create()
+        # Sample sheet
+        fno,self.sample_sheet = tempfile.mkstemp()
+        fp = os.fdopen(fno,'w')
+        fp.write("""[Header]
+
+[Reads]
+
+[Settings]
+
+[Data]
+Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_ID,index2,Sample_Project,Description
+12970,12970,,,D711,AAAGATAC,D507,AAACCGTC,12970,
+12513,12513,,,D710,TGGAGCTG,D508,AAACCGTC,12513,
+""")
+        fp.close()
+
+    def tearDown(self):
+        # Remove the test directory
+        if self.mock_illumina_data is not None:
+            self.mock_illumina_data.remove()
+        os.rmdir(self.top_dir)
+        os.remove(self.sample_sheet)
+
+    def test_verify_run_against_sample_sheet_names_are_integers(self):
+        """Verify sample sheet against a matching bcl2fastq2 run (names are integers)
+        """
+        illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertTrue(verify_run_against_sample_sheet(illumina_data,
+                                                        self.sample_sheet))
+
 class TestVerifyRunAgainstBcl2fastq2SampleSheetSpecialCases(unittest.TestCase):
 
     def setUp(self):

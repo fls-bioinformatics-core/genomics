@@ -1410,12 +1410,12 @@ class SampleSheet:
             # bcl2fastq v2-style output
             sample_names = []
             for line in self.data:
-                project = line[self._sample_project]
+                project = str(line[self._sample_project])
                 if self._sample_name:
-                    name = line[self._sample_name]
+                    name = str(line[self._sample_name])
                 else:
                     name = None
-                id_ = line[self._sample_id]
+                id_ = str(line[self._sample_id])
                 prefix = ''
                 if name:
                     sample = name
