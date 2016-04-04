@@ -79,6 +79,7 @@ class IlluminaRun:
             if not os.path.isfile(self.sample_sheet_csv):
                 self.sample_sheet_csv = None
         else:
+            self.sample_sheet_csv = None
             self.basecalls_dir = None
         # RunInfo.xml
         self.runinfo_xml = os.path.join(self.run_dir,'RunInfo.xml')
@@ -94,6 +95,11 @@ class IlluminaRun:
         Raises an exception if no matching files are found.
 
         """
+        # Check that the basecalls directory exists
+        if self.basecalls_dir is None or \
+           not os.path.isdir(self.basecalls_dir):
+            raise Exception(
+                "Unable to determine bcl extension (no basecalls dir)")
         # Locate the directory for the first cycle in the first lane
         # (HiSeq and MiSeq)
         lane1_cycle1 = os.path.join(self.basecalls_dir,'L001','C1.1')
@@ -120,6 +126,9 @@ class IlluminaRun:
         run directory
 
         """
+        if self.basecalls_dir is None or \
+           not os.path.isdir(self.basecalls_dir):
+            return []
         lanes = []
         for d in os.listdir(self.basecalls_dir):
             if d.startswith('L'):

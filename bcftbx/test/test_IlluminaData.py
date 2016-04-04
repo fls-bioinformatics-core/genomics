@@ -953,6 +953,26 @@ class TestIlluminaRun(unittest.TestCase):
         self.assertEqual(run.bcl_extension,".bcl.bgzf")
         self.assertEqual(run.lanes,[1,2,3,4])
 
+    def test_illuminarun_miseq_missing_directory(self):
+        # Check we can handle IlluminaRun when MISeq directory is missing
+        run = IlluminaRun('/does/not/exist/151125_M00879_0001_000000000-ABCDE1')
+        self.assertEqual(run.platform,"miseq")
+        self.assertEqual(run.basecalls_dir,None)
+        self.assertEqual(run.sample_sheet_csv,None)
+        self.assertEqual(run.runinfo_xml,None)
+        self.assertRaises(Exception,getattr,run,'bcl_extension')
+        self.assertEqual(run.lanes,[])
+
+    def test_illuminarun_nextseq_missing_directory(self):
+        # Check we can handle IlluminaRun when NextSeq directory is missing
+        run = IlluminaRun('/does/not/exist/151125_NB500968_0003_000000000-ABCDE1XX')
+        self.assertEqual(run.platform,"nextseq")
+        self.assertEqual(run.basecalls_dir,None)
+        self.assertEqual(run.sample_sheet_csv,None)
+        self.assertEqual(run.runinfo_xml,None)
+        self.assertRaises(Exception,getattr,run,'bcl_extension')
+        self.assertEqual(run.lanes,[])
+
 class BaseTestIlluminaData(unittest.TestCase):
     """
     Base class for testing IlluminaData, IlluminaProject and IlluminaSample
