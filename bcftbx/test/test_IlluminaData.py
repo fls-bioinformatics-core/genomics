@@ -912,8 +912,7 @@ FC0001,1,PJB2-1580,,TGACCAAT-TCTTTCCC,,,,,PeterBriggs
         self.assertEqual(output['Project_PeterBriggs']['Sample_PJB2-1580'],
                          ['PJB2-1580_TGACCAAT-TCTTTCCC_L001',])
     def test_hiseq_predict_output_bcl2fastq2(self):
-        """SampleSheet: check predicted bcl2fastq2 outputs for HISeq IEM4
-        sample sheet
+        """SampleSheet: check predicted bcl2fastq2 outputs for HISeq IEM4 sample sheet
 
         """
         iem = SampleSheet(fp=cStringIO.StringIO(
@@ -1089,8 +1088,7 @@ FC0001,1,B8,,CGTACTAG-TAGATCGC,,,,,PJB
                          ['886-1_ATGTCA_L004',
                           '886-1_ATGTCA_L007'])
     def test_hiseq_predict_output_bcl2fastq2_id_and_names_differ(self):
-        """SampleSheet: check predicted bcl2fastq2 outputs for HISeq IEM4
-        sample sheet when id and names differ
+        """SampleSheet: check predicted bcl2fastq2 outputs for HISeq IEM4 sample sheet when id and names differ
 
         """
         iem = SampleSheet(fp=cStringIO.StringIO(
