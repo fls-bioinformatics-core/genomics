@@ -1,3 +1,15 @@
+2016-04-05  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* genomics-bcftbx version 0.99.8
+	- bcftbx/IlluminaData: fixes for IlluminaRun when the
+	  target directory doesn't exist; fixes for prediction
+	  and verification of IlluminaData against sample
+	  sheets for bcl2fastq v2 outputs using
+	  --no-lane-splitting option.
+	- bcftbx/mock: new module with classes for creating
+	  "mock" Illumina directories for testing (moved from
+	  the unit tests).
+
 2016-04-01  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* genomics-bcftbx version 0.99.7
