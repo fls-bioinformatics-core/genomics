@@ -1,3 +1,10 @@
+2016-05-23  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* genomics-bcftbx version 0.99.9
+	- bcftbx/utils: fix pretty_print_names function, which
+	  was broken if consective sample name prefixes differed
+	  but their indices were consecutive.
+
 2016-04-05  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* genomics-bcftbx version 0.99.8
