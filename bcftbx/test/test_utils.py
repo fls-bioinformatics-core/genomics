@@ -859,6 +859,7 @@ class TestNameFunctions(unittest.TestCase):
         self.assertEqual('JC_SEQ26, JC_SEQ28, JC_SEQ30',pretty_print_names(('JC_SEQ26',
                                                            'JC_SEQ28',
                                                            'JC_SEQ30')))
+        self.assertEqual('ML1, Mmyr2',pretty_print_names(('ML1','Mmyr2')))
 
     def test_name_matches(self):
         # Cases which should match

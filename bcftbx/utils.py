@@ -1081,18 +1081,23 @@ def pretty_print_names(name_list):
     """
     # Create a list of string-type names sorted into prefix and index order
     names = [str(x) for x in sorted(name_list,
-                                    key=lambda n: (extract_prefix(n),extract_index(n)))]
+                                    key=lambda n: (extract_prefix(n),
+                                                   extract_index(n)))]
     # Go through and group
     groups = []
     group = []
+    last_prefix = None
     last_index = None
     for name in names:
         # Check if this is next in sequence
+        prefix = extract_prefix(name)
+        index_ = extract_index(name)
         try:
-            if extract_index(name) == last_index+1:
+            if prefix == last_prefix and index_ == last_index+1:
                 # Next in sequence
                 group.append(name)
-                last_index = extract_index(name)
+                last_prefix = prefix
+                last_index = index_
                 continue
         except TypeError:
             # One or both of the indexes was None
@@ -1102,7 +1107,8 @@ def pretty_print_names(name_list):
         if group:
             groups.append(group)
         group = [name]
-        last_index = extract_index(name)
+        last_prefix = prefix
+        last_index = index_
     # Capture last group
     if group:
         groups.append(group)
