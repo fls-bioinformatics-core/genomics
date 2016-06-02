@@ -11,6 +11,7 @@ function usage() {
     echo "Note that a gzipped <fastq_file> is also valid as input"
     echo ""
     echo "Options:"
+    echo "  --subset N: use subset of N reads (default 1000000, 0=use all reads)"
     echo "  --color: use colorspace bowtie indexes (SOLiD data)"
     echo "  --threads N: use N threads to run fastq_screen (default is 1)"
 }
@@ -23,8 +24,13 @@ fi
 options=
 color=
 threads=1
+subset=1000000
 while [ $# -gt 1 ] ; do
     case "$1" in
+	--subset)
+	    shift
+	    subset=$1
+	    ;;
 	--color)
 	    color=yes
 	    options="$options --color"
@@ -61,6 +67,7 @@ fi
 export PATH=$(dirname $0)/../share:${PATH}
 . bcftbx.functions.sh
 . bcftbx.ngs_utils.sh
+. bcftbx.versions.sh
 import_qc_settings
 #
 # Set the programs
@@ -69,7 +76,31 @@ import_qc_settings
 : ${FASTQ_SCREEN_CONF_DIR:=}
 #
 # fastq_screen options
-FASTQ_SCREEN_OPTIONS="$options --subset 1000000 --threads $threads"
+FASTQ_SCREEN_OPTIONS="$options --threads $threads"
+#
+# Subset options
+MAJOR_VERSION=$(get_version fastq_screen | cut -d. -f1)
+MINOR_VERSION=$(get_version fastq_screen | cut -d. -f2)
+if [ -z "$subset" ] || [ "$subset" == "0" ] ; then
+    # Handle no subset i.e. use all data
+    if [ $MAJOR_VERSION == "v0" ] ; then
+	if [ $MINOR_VERSION -le 4 ] ; then
+	    subset_option=
+	elif [  $MINOR_VERSION -eq 5 ] ; then
+	    subset_option="--subset 0"
+	else
+	    echo "ERROR don't know how to set subset for fastq_screen $MAJOR_VERSION.$MINOR_VERSION.*" >2
+	    exit 1
+	fi
+    else
+	echo "ERROR don't know how to set subset for fastq_screen $MAJOR_VERSION.$MINOR_VERSION.*" >2
+	exit 1
+    fi
+else
+    # Subset explicitly specified
+    subset_option="--subset $subset"
+fi
+FASTQ_SCREEN_OPTIONS="$FASTQ_SCREEN_OPTIONS $subset_option"
 #
 # Extension for conf file based on index type
 if [ -z "$color" ] ; then
@@ -92,6 +123,7 @@ echo fastq_screen: $FASTQ_SCREEN
 echo Location of conf files: $FASTQ_SCREEN_CONF_DIR
 echo Colorspace: $color
 echo Threads   : $threads
+echo Subset    : $subset
 #
 # Check that fastq file exists
 if [ ! -f "${datadir}/${fastq}" ] ; then
