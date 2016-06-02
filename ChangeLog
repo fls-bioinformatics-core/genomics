@@ -1,3 +1,12 @@
+2016-06-02  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* genomics-bcftbx version 0.99.10
+	- QC-pipeline/fastq_screen.sh & illumina_qc.sh: new
+	  --subset option allows explicit specification of
+	  subset size to be passed to fastq_screen (default
+	  is still 1000000, use 0 to use all reads as per
+	  fastq_screen 0.5.+)
+
 2016-05-23  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* genomics-bcftbx version 0.99.9
