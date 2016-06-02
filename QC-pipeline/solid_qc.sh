@@ -223,7 +223,7 @@ if [ ! -d "qc" ] ; then
 fi
 #
 # Run fastq_screen
-run_fastq_screen --color $fastq
+run_fastq_screen --color $fastq --subset 1000000
 #
 # QC_boxplots
 #
