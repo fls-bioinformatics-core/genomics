@@ -4,7 +4,7 @@
 #
 # Usage: illumina_qc.sh <fastq>
 #
-VERSION=1.2.2
+VERSION=1.3.0
 #
 function usage() {
     echo "Usage: $(basename $0) <fastq[.gz]> [options]"
@@ -33,6 +33,9 @@ function usage() {
     echo "  --threads N   number of threads (i.e. cores)"
     echo "                available to the script (default"
     echo "                is N=1)"
+    echo "  --subset N    number of reads to use in"
+    echo "                fastq_screen (default N=1000000,"
+    echo "                N=0 to use all reads)"
 }
 export PATH=$PATH:$(dirname $0)/../share
 function import_functions() {
@@ -80,6 +83,7 @@ import_functions bcftbx.versions.sh
 echo ========================================================
 echo ILLUMINA QC pipeline: version $VERSION
 echo ========================================================
+echo $@
 echo Started   : `date`
 #
 # Set umask to allow group read-write on all new files etc
@@ -95,6 +99,7 @@ fi
 # Check for additional options
 do_ungzip=no
 threads=1
+subset=1000000
 while [ ! -z "$2" ] ; do
     case "$2" in
 	--no-ungzip)
@@ -107,6 +112,10 @@ while [ ! -z "$2" ] ; do
 	    ;;
 	--ungzip-fastqs)
 	    do_ungzip=yes
+	    ;;
+        --subset)
+            shift
+	    subset=$2
 	    ;;
 	--threads)
 	    shift
@@ -175,6 +184,7 @@ echo fastqc    : $FASTQC
 echo fastqc contaminants: $FASTQC_CONTAMINANTS_FILE
 echo ungzip fastq: $do_ungzip
 echo threads   : $threads
+echo fastq_screen subset: $subset
 echo "--------------------------------------------------------"
 echo hostname  : $HOSTNAME
 echo job id    : $JOB_ID
@@ -230,7 +240,7 @@ fi
 #############################################
 #
 # Run fastq_screen
-run_fastq_screen --threads $threads $FASTQ
+run_fastq_screen --threads $threads --subset $subset $FASTQ
 #
 # Run FASTQC
 if [ ! -d qc/${fastq_base}_fastqc ] || [ ! -f qc/${fastq_base}_fastqc.zip ] ; then
