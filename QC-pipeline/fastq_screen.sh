@@ -79,6 +79,7 @@ import_qc_settings
 FASTQ_SCREEN_OPTIONS="$options --threads $threads"
 #
 # Subset options
+FASTQ_SCREEN_VERSION=$(get_version fastq_screen)
 MAJOR_VERSION=$(get_version fastq_screen | cut -d. -f1)
 MINOR_VERSION=$(get_version fastq_screen | cut -d. -f2)
 if [ -z "$subset" ] || [ "$subset" == "0" ] ; then
@@ -120,6 +121,7 @@ echo Running in: `pwd`
 echo data dir  : $datadir
 echo fastq     : $fastq
 echo fastq_screen: $FASTQ_SCREEN
+echo Version   : $FASTQ_SCREEN_VERSION
 echo Location of conf files: $FASTQ_SCREEN_CONF_DIR
 echo Colorspace: $color
 echo Threads   : $threads
@@ -161,8 +163,20 @@ for screen in $SCREENS ; do
 	    echo WARNING conf file $fastq_screen_conf not found, skipped
 	else
 	    # Names for output files
-	    fastq_screen_txt=${fastq%.fastq}_screen.txt
-	    fastq_screen_png=${fastq%.fastq}_screen.png
+	    case "$MAJOR_VERSION.$MINOR_VERSION" in
+		v0.4)
+		    fastq_screen_txt=${fastq%.fastq}_screen.txt
+		    fastq_screen_png=${fastq%.fastq}_screen.png
+		    ;;
+		v0.5)
+		    fastq_screen_txt=${fastq_base}_screen.txt
+		    fastq_screen_png=${fastq_base}_screen.png
+		    ;;
+		*)
+		    echo WARNING cannot handle output from fastq_screen $FASTQ_SCREEN_VERSION
+		    exit 1
+		    ;;
+	    esac
 	    # Check for and remove exisiting outputs
 	    if [ -f "${fastq_screen_txt}" ] ; then
 		echo "Removing old ${fastq_screen_txt}"
