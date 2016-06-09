@@ -14,7 +14,7 @@ conventions.
 
 """
 
-__version__ = "1.2.2"
+__version__ = "1.2.3"
 
 #######################################################################
 # Import modules that this module depends on
@@ -1013,6 +1013,17 @@ class SampleSheet:
 
         """
         return self._sample_id
+
+    @property
+    def sample_name_column(self):
+        """
+        Return name of column with sample name
+
+        Returns:
+          String: column label e.g. 'Sample_Name'.
+
+        """
+        return self._sample_name
 
     @property
     def sample_project_column(self):
