@@ -1,3 +1,14 @@
+2016-06-09  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* genomics-bcftbx version 0.99.11
+	- QC-pipeline/fastq_screen.sh: updated to handle output
+	  from `fastq_screen` v0.5.2.
+	- QC-pipeline/prep_sample_sheet.py 0.3.1: new options
+	  --set-adapter and --set-adapter-read2 allow updating
+	  of adapter sequences specified in IEM sample sheets.
+	- bcftbx/IlluminaData: new `sample_name_column`
+	  property added to the `SampleSheet` class.
+
 2016-06-02  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* genomics-bcftbx version 0.99.10
