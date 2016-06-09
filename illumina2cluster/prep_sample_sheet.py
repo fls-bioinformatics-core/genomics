@@ -15,7 +15,7 @@ Prepare sample sheet file for Illumina sequencers.
 
 """
 
-__version__ = "0.3.0"
+__version__ = "0.3.1"
 
 #######################################################################
 # Imports
@@ -209,6 +209,13 @@ if __name__ == "__main__":
                  "LANES should be single integer (e.g. 1), a list of integers (e.g. "
                  "1,3,...), a range (e.g. 1-3) or a combination (e.g. 1,3-5,7). Default "
                  "is to include all lanes")
+    p.add_option('--set-adapter',action="store",dest="adapter",default=None,
+                 help="set the adapter sequence in the 'Settings' section to "
+                 "ADAPTER")
+    p.add_option('--set-adapter-read2',action="store",dest="adapter_read2",
+                 default=None,
+                 help="set the adapter sequence for read 2 in the 'Settings'"
+                 "section to ADAPTER_READ2")
     deprecated_options = optparse.OptionGroup(p,"Deprecated options")
     deprecated_options.add_option('--truncate-barcodes',action="store",dest="barcode_len",
                                   default=None,type='int',
@@ -299,6 +306,11 @@ if __name__ == "__main__":
                    line['Index'],
                    barcode)
             line['Index'] = barcode
+    # Set adapter sequences
+    if options.adapter is not None:
+        data.settings['Adapter'] = options.adapter
+    if options.adapter_read2 is not None:
+        data.settings['AdapterRead2'] = options.adapter_read2
     # Fix spaces
     if options.fix_spaces:
         data.fix_illegal_names()
