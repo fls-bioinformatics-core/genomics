@@ -1365,8 +1365,8 @@ This,isTheEnd
         casava.data[4]['SampleProject'] = ""
         # Check for illegal names
         self.assertEqual(len(casava.empty_names),2)
-    def test_show_sample_sheet_with_missing_data_section(self):
-        """SampleSheet: rebuild IEM sample sheet with missing 'Data' section
+    def test_sample_sheet_with_missing_data_section(self):
+        """SampleSheet: handle IEM sample sheet with missing 'Data' section
 
         """
         contents = """[Header]

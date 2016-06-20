@@ -997,23 +997,24 @@ class SampleSheet:
             else:
                 format_ = 'IEM'
         # Set the column names
-        column_names = self.column_names
-        if 'SampleID' in column_names:
-            self._sample_id = 'SampleID'
-        elif 'Sample_ID' in column_names:
-            self._sample_id = 'Sample_ID'
-        else:
-            raise IlluminaDataError("Unable to locate sample id "
-                                    "field in sample sheet header")
-        if 'SampleProject' in column_names:
-            self._sample_project = 'SampleProject'
-        elif 'Sample_Project' in column_names:
-            self._sample_project = 'Sample_Project'
-        else:
-            raise IlluminaDataError("Unable to locate sample project "
-                                    "field in sample sheet header")
-        if 'Sample_Name' in column_names:
-            self._sample_name = 'Sample_Name'
+        if self._data is not None:
+            column_names = self.column_names
+            if 'SampleID' in column_names:
+                self._sample_id = 'SampleID'
+            elif 'Sample_ID' in column_names:
+                self._sample_id = 'Sample_ID'
+            else:
+                raise IlluminaDataError("Unable to locate sample id "
+                                        "field in sample sheet header")
+            if 'SampleProject' in column_names:
+                self._sample_project = 'SampleProject'
+            elif 'Sample_Project' in column_names:
+                self._sample_project = 'Sample_Project'
+            else:
+                raise IlluminaDataError("Unable to locate sample project "
+                                        "field in sample sheet header")
+            if 'Sample_Name' in column_names:
+                self._sample_name = 'Sample_Name'
 
     def _set_section_param_value(self,line,d):
         """
@@ -1174,7 +1175,10 @@ class SampleSheet:
            List.
 
         """
-        return [x for x in self._data.header()]
+        if self._data is not None:
+            return [x for x in self._data.header()]
+        else:
+            return []
 
     @property
     def duplicated_names(self):
@@ -1185,7 +1189,11 @@ class SampleSheet:
         of lines from the sample sheet which together consitute a set
         of duplicates.
 
+        If there is no 'Data' section in the sample sheet then an
+        empty list is returned.
+
         """
+        if self._data is None: return []
         samples = {}
         for line in self._data:
             try:
@@ -1218,7 +1226,11 @@ class SampleSheet:
         Returns a list of lines where the sample names and/or sample project
         names contain illegal characters.
 
+        If there is no 'Data' section in the sample sheet then an
+        empty list is returned.
+
         """
+        if self._data is None: return []
         illegal_names = []
         for line in self._data:
             for c in SAMPLESHEET_ILLEGAL_CHARS:
@@ -1237,7 +1249,11 @@ class SampleSheet:
 
         Returns a list of lines with blank sample or project names.
 
+        If there is no 'Data' section in the sample sheet then an
+        empty list is returned.
+
         """
+        if self._data is None: return []
         empty_names = []
         for line in self._data:
             if str(line[self._sample_id]).strip() == '' \
@@ -1315,11 +1331,12 @@ class SampleSheet:
             s.append('[Settings]')
             for param in self._settings:
                 s.append('%s,%s' % (param,self._settings[param]))
-            s.append('')
-            s.append('[Data]')
-            s.append(','.join(self._data.header()))
-            for line in self._data:
-                s.append(str(line))
+            if self._data is not None:
+                s.append('')
+                s.append('[Data]')
+                s.append(','.join(self._data.header()))
+                for line in self._data:
+                    s.append(str(line))
         else:
             header = ('FCID','Lane','SampleID','SampleRef','Index',
                       'Description','Control','Recipe','Operator',
