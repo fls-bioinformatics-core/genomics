@@ -539,7 +539,7 @@ class TestIlluminaDataForBcl2fastq2SpecialCases(BaseTestIlluminaData):
         illumina_data = IlluminaData(self.mock_illumina_data.dirn)
         self.assertIlluminaData(illumina_data,self.mock_illumina_data)
         self.assertEqual(illumina_data.format,'bcl2fastq2')
-        self.assertEqual(illumina_data.lanes,[])
+        self.assertEqual(illumina_data.lanes,[None,])
 
     def test_illumina_data_single_sample_no_undetermined_fastqs(self):
         """Read bcl2fastq2 output with single sample and no undetermined fastqs
@@ -548,7 +548,7 @@ class TestIlluminaDataForBcl2fastq2SpecialCases(BaseTestIlluminaData):
         illumina_data = IlluminaData(self.mock_illumina_data.dirn)
         self.assertIlluminaData(illumina_data,self.mock_illumina_data)
         self.assertEqual(illumina_data.format,'bcl2fastq2')
-        self.assertEqual(illumina_data.lanes,[])
+        self.assertEqual(illumina_data.lanes,[None,])
 
 class TestCasavaSampleSheet(unittest.TestCase):
 
