@@ -460,7 +460,7 @@ class TestIlluminaDataForBcl2fastq2SpecialCases(BaseTestIlluminaData):
     Tests for IlluminaData, IlluminaProject and IlluminaSample for special cases of bcl2fastq2-style output
 
     """
-    def makeMockIlluminaData(self,ids_differ_for_all=False):
+    def makeMockIlluminaDataIdsDiffer(self,ids_differ_for_all=False):
         # Create initial mock dir
         mock_illumina_data = MockIlluminaData('test.MockIlluminaData',
                                               'bcl2fastq2',
@@ -487,11 +487,36 @@ class TestIlluminaDataForBcl2fastq2SpecialCases(BaseTestIlluminaData):
         self.mock_illumina_data = mock_illumina_data
         self.mock_illumina_data.create()
 
+    def makeMockIlluminaDataOnlyUndetermined(self,no_lane_splitting=False):
+        # Create initial mock dir
+        mock_illumina_data = MockIlluminaData('test.MockIlluminaData',
+                                              'bcl2fastq2',
+                                              paired_end=True,
+                                              no_lane_splitting=no_lane_splitting)
+        # Add undetermined reads
+        mock_illumina_data.add_undetermined(lanes=[1,2,3,4])
+        # Create and finish
+        self.mock_illumina_data = mock_illumina_data
+        self.mock_illumina_data.create()
+
+    def makeMockIlluminaDataSingleSampleNoUndetermined(self,no_lane_splitting=False):
+        # Create initial mock dir
+        mock_illumina_data = MockIlluminaData('test.MockIlluminaData',
+                                              'bcl2fastq2',
+                                              paired_end=True,
+                                              no_lane_splitting=no_lane_splitting)
+        # Add projects
+        mock_illumina_data.add_fastq_batch('KL','KL_all','KL_all_S1',
+                                           lanes=[1,2,3,4])
+        # Create and finish
+        self.mock_illumina_data = mock_illumina_data
+        self.mock_illumina_data.create()
+
     def test_illumina_data_all_sample_ids_differ_from_sample_names(self):
         """Read bcl2fastq2 output when all sample ids differ from names
 
         """
-        self.makeMockIlluminaData(ids_differ_for_all=True)
+        self.makeMockIlluminaDataIdsDiffer(ids_differ_for_all=True)
         illumina_data = IlluminaData(self.mock_illumina_data.dirn)
         self.assertIlluminaData(illumina_data,self.mock_illumina_data)
         self.assertEqual(illumina_data.format,'bcl2fastq2')
@@ -501,11 +526,29 @@ class TestIlluminaDataForBcl2fastq2SpecialCases(BaseTestIlluminaData):
         """Read bcl2fastq2 output when some sample ids differ from names
 
         """
-        self.makeMockIlluminaData(ids_differ_for_all=False)
+        self.makeMockIlluminaDataIdsDiffer(ids_differ_for_all=False)
         illumina_data = IlluminaData(self.mock_illumina_data.dirn)
         self.assertIlluminaData(illumina_data,self.mock_illumina_data)
         self.assertEqual(illumina_data.format,'bcl2fastq2')
         self.assertEqual(illumina_data.lanes,[1,2])
+
+    def test_illumina_data_only_undetermined_fastqs(self):
+        """Read bcl2fastq2 output with only undetermined fastqs
+        """
+        self.makeMockIlluminaDataOnlyUndetermined(no_lane_splitting=True)
+        illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertIlluminaData(illumina_data,self.mock_illumina_data)
+        self.assertEqual(illumina_data.format,'bcl2fastq2')
+        self.assertEqual(illumina_data.lanes,[])
+
+    def test_illumina_data_single_sample_no_undetermined_fastqs(self):
+        """Read bcl2fastq2 output with single sample and no undetermined fastqs
+        """
+        self.makeMockIlluminaDataSingleSampleNoUndetermined(no_lane_splitting=True)
+        illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertIlluminaData(illumina_data,self.mock_illumina_data)
+        self.assertEqual(illumina_data.format,'bcl2fastq2')
+        self.assertEqual(illumina_data.lanes,[])
 
 class TestCasavaSampleSheet(unittest.TestCase):
 
