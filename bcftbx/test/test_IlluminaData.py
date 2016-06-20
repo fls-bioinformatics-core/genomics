@@ -1365,6 +1365,30 @@ This,isTheEnd
         casava.data[4]['SampleProject'] = ""
         # Check for illegal names
         self.assertEqual(len(casava.empty_names),2)
+    def test_show_sample_sheet_with_missing_data_section(self):
+        """SampleSheet: rebuild IEM sample sheet with missing 'Data' section
+
+        """
+        contents = """[Header]
+IEMFileVersion,4
+Date,06/03/2014
+Workflow,GenerateFASTQ
+Application,HiSeq FASTQ Only
+Assay,Nextera
+Description,
+Chemistry,Amplicon
+
+[Reads]
+101
+101
+
+[Settings]
+ReverseComplement,0
+Adapter,CTGTCTCTTATACACATCT
+"""
+        iem = SampleSheet(fp=cStringIO.StringIO(contents))
+        for l1,l2 in zip(iem.show().split(),contents.split()):
+            self.assertEqual(l1,l2)
 
 class TestIEMSampleSheet(unittest.TestCase):
     def setUp(self):
