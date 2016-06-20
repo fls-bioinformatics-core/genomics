@@ -271,6 +271,7 @@ class IlluminaData:
         self.projects = []
         self.undetermined = None
         self.paired_end = False
+        self.lanes = []
         self.format = None
         # Look for "Unaligned" data directory
         self.unaligned_dir = os.path.join(self.analysis_dir,unaligned_dir)
@@ -282,7 +283,7 @@ class IlluminaData:
             self._populate_casava_style()
         except IlluminaDataError:
             self._populate_bcl2fastq2_style()
-        if not self.projects:
+        if not self.projects and self.format != 'bcl2fastq2':
             raise IlluminaDataError("No projects found")
         # Sort projects on name
         self.projects.sort(lambda a,b: cmp(a.name,b.name))
@@ -290,9 +291,16 @@ class IlluminaData:
         for p in self.projects:
             self.paired_end = (self.paired_end or p.paired_end)
         # Get list of lanes
-        self.lanes = []
         for p in self.projects:
             for s in p.samples:
+                for fq in s.fastq:
+                    lane = IlluminaFastq(fq).lane_number
+                    if lane not in self.lanes:
+                        self.lanes.append(lane)
+        # Interrogate undetermined (in case there were no projects)
+        if self.undetermined:
+            self.paired_end = self.undetermined.paired_end
+            for s in self.undetermined.samples:
                 for fq in s.fastq:
                     lane = IlluminaFastq(fq).lane_number
                     if lane not in self.lanes:
@@ -338,7 +346,8 @@ class IlluminaData:
                                   and f.endswith('.fastq.gz'),
                                   os.listdir(self.unaligned_dir))
         if not undetermined_fqs:
-            raise IlluminaDataError("No bcl2fastq2 undetermined fastqs found")
+            logging.warning("%s: no bcl2fastq2 undetermined fastqs found" %
+                            self.unaligned_dir)
         # Look for potential projects
         project_dirs = []
         for d in os.listdir(self.unaligned_dir):
@@ -366,11 +375,17 @@ class IlluminaData:
                             # Looks like a project
                             project_dirs.append(dirn)
                             break; continue
-        # Raise an exception if no projects found
         if not project_dirs:
-            raise IlluminaDataError("No bcl2fastq2-style projects found")
+            logging.warning("%s: no bcl2fastq2-style projects found" %
+                            self.unaligned_dir)
+        # Raise an exception if no bcl2fastq2-style undetermined or
+        # projects found
+        if not undetermined_fqs and not project_dirs:
+            raise IlluminaDataError("%s: not a bcl2fastq2-style output "
+                                    "directory" % self.unaligned_dir)
         # Create project objects
-        self.undetermined = IlluminaProject(self.unaligned_dir)
+        if undetermined_fqs:
+            self.undetermined = IlluminaProject(self.unaligned_dir)
         for dirn in project_dirs:
             self.projects.append(IlluminaProject(dirn))
         self.format = 'bcl2fastq2'
