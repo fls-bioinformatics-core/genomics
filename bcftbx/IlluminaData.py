@@ -136,6 +136,36 @@ class IlluminaRun:
         lanes.sort()
         return lanes
 
+    @property
+    def cycles(self):
+        """
+        Return the number of cycles
+
+        """
+        lanes = self.lanes
+        if not lanes:
+            # No lanes found, cannot count the cycles
+            return None
+        # Look in first lane
+        lane1 = os.path.join(self.basecalls_dir,
+                             "L%03d" % lanes[0])
+        ncycles = 0
+        # Try C1.1 etc directories (MISeq/HISeq)
+        for d in os.listdir(lane1):
+            if d.startswith('C'):
+                cycle = int(d[1:].split('.')[0])
+                ncycles = max(ncycles,cycle)
+        # If no cycles counted, try .bcl.bgzf files
+        # (NextSeq)
+        if ncycles == 0:
+            for f in os.listdir(lane1):
+                if str(f).endswith('.bcl.bgzf'):
+                    cycle = int(f.split('.')[0])
+                    ncycles = max(ncycles,cycle)
+        if ncycles == 0:
+            return None
+        return ncycles
+
 class IlluminaRunInfo:
     """Class for examining Illumina RunInfo.xml file
 

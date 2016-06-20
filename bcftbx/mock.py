@@ -296,7 +296,7 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
         """
         # Constants for NextSeq
         nlanes = 4
-        ntiles = 12 #158
+        ntiles = 158
         bcl_ext = '.bcl.bgzf'
         # Basic directory structure
         bcftbx.utils.mkdir(self._path('Data'))

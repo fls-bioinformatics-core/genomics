@@ -46,6 +46,7 @@ class TestIlluminaRun(unittest.TestCase):
                                       'RunInfo.xml'))
         self.assertEqual(run.bcl_extension,".bcl")
         self.assertEqual(run.lanes,[1,])
+        self.assertEqual(run.cycles,218)
 
     def test_illuminarun_hiseq(self):
         # Make a mock run directory for HISeq format
@@ -69,6 +70,7 @@ class TestIlluminaRun(unittest.TestCase):
                                       'RunInfo.xml'))
         self.assertEqual(run.bcl_extension,".bcl.gz")
         self.assertEqual(run.lanes,[1,2,3,4,5,6,7,8])
+        self.assertEqual(run.cycles,218)
 
     def test_illuminarun_nextseq(self):
         # Make a mock run directory for HISeq format
@@ -89,6 +91,7 @@ class TestIlluminaRun(unittest.TestCase):
                                       'RunInfo.xml'))
         self.assertEqual(run.bcl_extension,".bcl.bgzf")
         self.assertEqual(run.lanes,[1,2,3,4])
+        self.assertEqual(run.cycles,158)
 
     def test_illuminarun_miseq_missing_directory(self):
         # Check we can handle IlluminaRun when MISeq directory is missing
@@ -99,6 +102,7 @@ class TestIlluminaRun(unittest.TestCase):
         self.assertEqual(run.runinfo_xml,None)
         self.assertRaises(Exception,getattr,run,'bcl_extension')
         self.assertEqual(run.lanes,[])
+        self.assertEqual(run.cycles,None)
 
     def test_illuminarun_nextseq_missing_directory(self):
         # Check we can handle IlluminaRun when NextSeq directory is missing
@@ -109,6 +113,7 @@ class TestIlluminaRun(unittest.TestCase):
         self.assertEqual(run.runinfo_xml,None)
         self.assertRaises(Exception,getattr,run,'bcl_extension')
         self.assertEqual(run.lanes,[])
+        self.assertEqual(run.cycles,None)
 
 class BaseTestIlluminaData(unittest.TestCase):
     """
