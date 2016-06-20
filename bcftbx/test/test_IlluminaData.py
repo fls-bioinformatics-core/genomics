@@ -1389,6 +1389,11 @@ Adapter,CTGTCTCTTATACACATCT
         iem = SampleSheet(fp=cStringIO.StringIO(contents))
         for l1,l2 in zip(iem.show().split(),contents.split()):
             self.assertEqual(l1,l2)
+        self.assertEqual(iem.column_names,[])
+        self.assertEqual(iem.duplicated_names,[])
+        self.assertEqual(iem.illegal_names,[])
+        self.assertEqual(iem.empty_names,[])
+        self.assertFalse(iem.has_lanes)
 
 class TestIEMSampleSheet(unittest.TestCase):
     def setUp(self):
