@@ -335,7 +335,7 @@ class IlluminaData:
         directly under project dirs) or it can contain "sample"
         subdirs within project dirs, or a mixture of both.
 
-        In all cases we expect to find a number of 'undetermined'
+        Generally we expect to find a number of 'undetermined'
         fastqs at the top level of the output (unaligned) directory,
         and the fastq names will contain the 'S1' sample number
         construct.
@@ -348,6 +348,9 @@ class IlluminaData:
         if not undetermined_fqs:
             logging.debug("%s: no bcl2fastq2 undetermined fastqs found" %
                           self.unaligned_dir)
+        # Look for 'Stats' and 'Reports' subdirs
+        got_stats = os.path.isdir(os.path.join(self.unaligned_dir,'Stats'))
+        got_reports = os.path.isdir(os.path.join(self.unaligned_dir,'Reports'))
         # Look for potential projects
         project_dirs = []
         for d in os.listdir(self.unaligned_dir):
@@ -380,7 +383,8 @@ class IlluminaData:
                           self.unaligned_dir)
         # Raise an exception if no bcl2fastq2-style undetermined or
         # projects found
-        if not undetermined_fqs and not project_dirs:
+        if (not undetermined_fqs and not project_dirs) or \
+           (not got_stats and not got_reports):
             raise IlluminaDataError("%s: not a bcl2fastq2-style output "
                                     "directory" % self.unaligned_dir)
         # Create project objects
