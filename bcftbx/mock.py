@@ -869,6 +869,10 @@ class MockIlluminaData:
                     fq = os.path.join(sample_dirn,fastq)
                     # "Touch" the file (i.e. creates an empty file)
                     open(fq,'wb+').close()
+            # Add 'Reports' and 'Stats' directories
+            for name in ('Reports','Stats',):
+                dirn = os.path.join(self.unaligned_dir,name)
+                bcftbx.utils.mkdir(dirn)
 
     def remove(self):
         """Delete the directory structure and contents
