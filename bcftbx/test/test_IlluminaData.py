@@ -234,12 +234,24 @@ class TestIlluminaDataForCasava(BaseTestIlluminaData):
     Test IlluminaData, IlluminaProject and IlluminaSample for CASAVA-style output
 
     """
+    def setUp(self):
+        # Create a container for the test directories
+        self.top_dir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        # Remove the test directory
+        try:
+            os.rmdir(self.top_dir)
+        except Exception:
+            pass
+
     def makeMockIlluminaData(self,paired_end=False,
                              multiple_projects=False,
                              multiplexed_run=False):
         # Create initial mock dir
         mock_illumina_data = MockIlluminaData('test.MockIlluminaData',
-                                              'casava',paired_end=paired_end)
+                                              'casava',paired_end=paired_end,
+                                              top_dir=self.top_dir)
         # Add first project with two samples
         mock_illumina_data.add_fastq_batch('AB','AB1','AB1_GCCAAT',lanes=(1,))
         mock_illumina_data.add_fastq_batch('AB','AB2','AB2_AGTCAA',lanes=(1,))
@@ -321,6 +333,17 @@ class TestIlluminaDataForBcl2fastq2(BaseTestIlluminaData):
     Test for IlluminaData, IlluminaProject and IlluminaSample for bcl2fastq2-style output
 
     """
+    def setUp(self):
+        # Create a container for the test directories
+        self.top_dir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        # Remove the test directory
+        try:
+            os.rmdir(self.top_dir)
+        except Exception:
+            pass
+
     def makeMockIlluminaData(self,paired_end=False,
                              multiple_projects=False,
                              multiplexed_run=False,
@@ -329,7 +352,8 @@ class TestIlluminaDataForBcl2fastq2(BaseTestIlluminaData):
         mock_illumina_data = MockIlluminaData('test.MockIlluminaData',
                                               'bcl2fastq2',
                                               paired_end=paired_end,
-                                              no_lane_splitting=no_lane_splitting)
+                                              no_lane_splitting=no_lane_splitting,
+                                              top_dir=self.top_dir)
         # Lanes to add
         if not no_lane_splitting:
             if multiplexed_run:
@@ -460,11 +484,23 @@ class TestIlluminaDataForBcl2fastq2SpecialCases(BaseTestIlluminaData):
     Tests for IlluminaData, IlluminaProject and IlluminaSample for special cases of bcl2fastq2-style output
 
     """
+    def setUp(self):
+        # Create a container for the test directories
+        self.top_dir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        # Remove the test directory
+        try:
+            os.rmdir(self.top_dir)
+        except Exception:
+            pass
+
     def makeMockIlluminaDataIdsDiffer(self,ids_differ_for_all=False):
         # Create initial mock dir
         mock_illumina_data = MockIlluminaData('test.MockIlluminaData',
                                               'bcl2fastq2',
-                                              paired_end=True)
+                                              paired_end=True,
+                                              top_dir=self.top_dir)
         lanes=(1,2,)
         # Add projects
         mock_illumina_data.add_fastq_batch('AB','AB1','AB1_input_S1',
@@ -492,7 +528,8 @@ class TestIlluminaDataForBcl2fastq2SpecialCases(BaseTestIlluminaData):
         mock_illumina_data = MockIlluminaData('test.MockIlluminaData',
                                               'bcl2fastq2',
                                               paired_end=True,
-                                              no_lane_splitting=no_lane_splitting)
+                                              no_lane_splitting=no_lane_splitting,
+                                              top_dir=self.top_dir)
         # Add undetermined reads
         mock_illumina_data.add_undetermined(lanes=[1,2,3,4])
         # Create and finish
@@ -504,7 +541,8 @@ class TestIlluminaDataForBcl2fastq2SpecialCases(BaseTestIlluminaData):
         mock_illumina_data = MockIlluminaData('test.MockIlluminaData',
                                               'bcl2fastq2',
                                               paired_end=True,
-                                              no_lane_splitting=no_lane_splitting)
+                                              no_lane_splitting=no_lane_splitting,
+                                              top_dir=self.top_dir)
         # Add projects
         mock_illumina_data.add_fastq_batch('KL','KL_all','KL_all_S1',
                                            lanes=[1,2,3,4])
