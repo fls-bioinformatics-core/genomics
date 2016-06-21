@@ -346,8 +346,8 @@ class IlluminaData:
                                   and f.endswith('.fastq.gz'),
                                   os.listdir(self.unaligned_dir))
         if not undetermined_fqs:
-            logging.warning("%s: no bcl2fastq2 undetermined fastqs found" %
-                            self.unaligned_dir)
+            logging.debug("%s: no bcl2fastq2 undetermined fastqs found" %
+                          self.unaligned_dir)
         # Look for potential projects
         project_dirs = []
         for d in os.listdir(self.unaligned_dir):
@@ -376,8 +376,8 @@ class IlluminaData:
                             project_dirs.append(dirn)
                             break; continue
         if not project_dirs:
-            logging.warning("%s: no bcl2fastq2-style projects found" %
-                            self.unaligned_dir)
+            logging.debug("%s: no bcl2fastq2-style projects found" %
+                          self.unaligned_dir)
         # Raise an exception if no bcl2fastq2-style undetermined or
         # projects found
         if not undetermined_fqs and not project_dirs:
