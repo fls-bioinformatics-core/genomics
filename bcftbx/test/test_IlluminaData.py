@@ -550,6 +550,20 @@ class TestIlluminaDataForBcl2fastq2SpecialCases(BaseTestIlluminaData):
         self.mock_illumina_data = mock_illumina_data
         self.mock_illumina_data.create()
 
+    def makeNonIlluminaDataDirectoryWithFastqs(self):
+        # Create a non-bcl2fastq directory which looks like
+        # a BCF-style 'analysis project'
+        os.mkdir(os.path.join(self.top_dir,'test.MockIlluminaData'))
+        os.mkdir(os.path.join(self.top_dir,'test.MockIlluminaData','fastqs'))
+        for fq in ('PJ1_S1_L001_R1_001.fastq.gz',
+                   'PJ1_S1_L001_R2_001.fastq.gz',
+                   'PJ2_S2_L001_R1_001.fastq.gz',
+                   'PJ2_S2_L001_R2_001.fastq.gz',):
+            open(os.path.join(self.top_dir,
+                              'test.MockIlluminaData',
+                              'fastqs',fq),'w').write('')
+        return os.path.join(self.top_dir,'test.MockIlluminaData')
+
     def test_illumina_data_all_sample_ids_differ_from_sample_names(self):
         """Read bcl2fastq2 output when all sample ids differ from names
 
@@ -587,6 +601,16 @@ class TestIlluminaDataForBcl2fastq2SpecialCases(BaseTestIlluminaData):
         self.assertIlluminaData(illumina_data,self.mock_illumina_data)
         self.assertEqual(illumina_data.format,'bcl2fastq2')
         self.assertEqual(illumina_data.lanes,[None,])
+
+    def test_illumina_data_not_bcl2fastq2_output(self):
+        """Reading non-bcl2fastq v2 output directory raises exception
+        """
+        # Attempt to read the directory as if it were the output
+        # from bcl2fastq v2
+        dirn = self.makeNonIlluminaDataDirectoryWithFastqs()
+        self.assertRaises(IlluminaDataError,IlluminaData,
+                          os.path.dirname(dirn),
+                          unaligned_dir=os.path.basename(dirn))
 
 class TestCasavaSampleSheet(unittest.TestCase):
 
