@@ -1,3 +1,12 @@
+2016-06-30  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* genomics-bcftbx version 0.99.12
+	- bcftbx/IlluminaData: new 'cycles' property for
+	  IlluminaRun class; update SampleSheet class to
+	  handle missing '[Data]' section in input file;
+	  improvements to IlluminaData class for handling
+	  bcl2fastq v2.* outputs.
+
 2016-06-09  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* genomics-bcftbx version 0.99.11
