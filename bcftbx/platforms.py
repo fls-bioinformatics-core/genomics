@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #     platforms.py: utilities and data to identify sequencer platforms
-#     Copyright (C) University of Manchester 2013 Peter Briggs
+#     Copyright (C) University of Manchester 2013-2016 Peter Briggs
 #
 ########################################################################
 #
@@ -21,8 +21,9 @@ PLATFORMS = OrderedDictionary()
 PLATFORMS['solid4'] = "SOLiD 4"
 PLATFORMS['solid5500'] = "SOLiD 5500"
 PLATFORMS['illumina-ga2x'] = "Illumina GAIIx"
-PLATFORMS['hiseq'] = "Illumina HiSEQ"
-PLATFORMS['miseq'] = "Illumina MiSEQ"
+PLATFORMS['hiseq4000'] = "Illumina HISeq 4000"
+PLATFORMS['hiseq'] = "Illumina HISeq"
+PLATFORMS['miseq'] = "Illumina MISeq"
 PLATFORMS['nextseq'] = "Illumina NextSeq"
 PLATFORMS['other'] = "Unknown/external"
 
@@ -32,6 +33,7 @@ SEQUENCERS = {
     '^.*_ILLUMINA-73D9FA_.*$': 'illumina-ga2x',
     '^.*_SN7001250_.*$': 'hiseq',
     '^.*_SN700511R_.*$': 'hiseq',
+    '^.*_K00311_.*$': 'hiseq4000',
     '^.*_M00879_.*$': 'miseq',
     '^.*_NB500968_.*$': 'nextseq',
     '^solid0127_.*$': 'solid4',
