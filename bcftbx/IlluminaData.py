@@ -34,6 +34,12 @@ import cStringIO
 #######################################################################
 
 SAMPLESHEET_ILLEGAL_CHARS = "?()[]/\=+<>:;\"',*^|&. \t"
+KNOWN_PLATFORMS = ('illumina-ga2x',
+                   'hiseq',
+                   'hiseq4000',
+                   'miseq',
+                   'nextseq',
+                   'miniseq')
 
 #######################################################################
 # Class definitions
@@ -68,8 +74,9 @@ class IlluminaRun:
         self.platform = platforms.get_sequencer_platform(self.run_dir)
         if self.platform is None:
             raise Exception("Can't determine platform for %s" % self.run_dir)
-        elif self.platform not in ('illumina-ga2x','hiseq','miseq','nextseq'):
-            raise Exception("%s: not an Illumina sequencer?" % self.run_dir)
+        elif self.platform not in KNOWN_PLATFORMS:
+            raise Exception("%s: not a recognised Illumina platform" %
+                            self.run_dir)
         # Basecalls subdirectory
         self.basecalls_dir = os.path.join(self.run_dir,
                                           'Data','Intensities','BaseCalls')
