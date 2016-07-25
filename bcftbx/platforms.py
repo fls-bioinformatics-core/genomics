@@ -24,6 +24,7 @@ PLATFORMS['illumina-ga2x'] = "Illumina GAIIx"
 PLATFORMS['hiseq4000'] = "Illumina HISeq 4000"
 PLATFORMS['hiseq'] = "Illumina HISeq"
 PLATFORMS['miseq'] = "Illumina MISeq"
+PLATFORMS['miniseq'] = "MiniSeq"
 PLATFORMS['nextseq'] = "Illumina NextSeq"
 PLATFORMS['other'] = "Unknown/external"
 
@@ -36,6 +37,7 @@ SEQUENCERS = {
     '^.*_K00311_.*$': 'hiseq4000',
     '^.*_M00879_.*$': 'miseq',
     '^.*_NB500968_.*$': 'nextseq',
+    '^.*_MN00218_.*$': 'miniseq',
     '^solid0127_.*$': 'solid4',
     }
 
