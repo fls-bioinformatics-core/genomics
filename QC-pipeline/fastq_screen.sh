@@ -85,17 +85,18 @@ MINOR_VERSION=$(get_version fastq_screen | cut -d. -f2)
 if [ -z "$subset" ] || [ "$subset" == "0" ] ; then
     # Handle no subset i.e. use all data
     if [ $MAJOR_VERSION == "v0" ] ; then
-	if [ $MINOR_VERSION -le 4 ] ; then
-	    subset_option=
-	elif [  $MINOR_VERSION -eq 5 ] ; then
-	    subset_option="--subset 0"
-	else
-	    echo "ERROR don't know how to set subset for fastq_screen $MAJOR_VERSION.$MINOR_VERSION.*" >2
-	    exit 1
-	fi
-    else
-	echo "ERROR don't know how to set subset for fastq_screen $MAJOR_VERSION.$MINOR_VERSION.*" >2
-	exit 1
+	case "$MINOR_VERSION" in
+	    [0-4])
+		subset_option=
+		;;
+	    [5-6])
+		subset_option="--subset 0"
+		;;
+	    *)
+		echo "ERROR don't know how to set subset for fastq_screen $MAJOR_VERSION.$MINOR_VERSION.*" >2
+		exit 1
+		;;
+	esac
     fi
 else
     # Subset explicitly specified
@@ -168,7 +169,7 @@ for screen in $SCREENS ; do
 		    fastq_screen_txt=${fastq%.fastq}_screen.txt
 		    fastq_screen_png=${fastq%.fastq}_screen.png
 		    ;;
-		v0.5)
+		v0.[5-6])
 		    fastq_screen_txt=${fastq_base}_screen.txt
 		    fastq_screen_png=${fastq_base}_screen.png
 		    ;;
