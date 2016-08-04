@@ -1039,6 +1039,12 @@ class XLSStyle:
     centre: whether text is centred in the cell (boolean)
     shrink_to_fit: whether to shrink cell to fit the contents.
 
+    The 'name' property can be used to generate a name for the style
+    based on the attributes that have been set, for example:
+
+    >>> XLSStyle(bold=true).name
+    ... '__bold__'
+
     """
     def __init__(self,bold=False,color=None,bgcolor=None,wrap=False,
                  border=None,number_format=None,font_size=None,centre=False,
@@ -1057,6 +1063,47 @@ class XLSStyle:
         self.font_size = font_size
         self.centre = centre
         self.shrink_to_fit = shrink_to_fit
+
+    def __nonzero__(self):
+        return \
+            (self.bold) or \
+            (self.color is not None) or \
+            (self.bgcolor is not None) or \
+            (self.wrap) or \
+            (self.border is not None) or \
+            (self.number_format is not None) or \
+            (self.font_size is not None) or \
+            (self.centre) or \
+            (self.shrink_to_fit)
+
+    @property
+    def name(self):
+        """Return a name based on the attributes
+        """
+        name = []
+        if self.bold:
+            name.append('bold')
+        if self.color is not None:
+            name.append('color=%s' % self.color)
+        if self.bgcolor is not None:
+            name.append('bgcolor=%s' % self.bgcolor)
+        if self.wrap:
+            name.append('wrap')
+        if self.border is not None:
+            name.append('border=%s' % self.border)
+        if self.number_format is not None:
+            name.append('number_format=%s' % self.number_format)
+        if self.font_size is not None:
+            name.append('font_size=%s' % self.font_size)
+        if self.centre:
+            name.append('centre')
+        if self.shrink_to_fit:
+            name.append('shrink_to_fit')
+        name = '__'.join(name)
+        if name:
+            return '__%s__' % name
+        else:
+            return ''
 
     def style(self,item):
         """Wrap 'item' with <style...>...</style> tags
