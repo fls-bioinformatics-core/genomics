@@ -4,6 +4,67 @@
 from bcftbx.simple_xls import *
 import unittest
 import itertools
+import os
+import tempfile
+
+class TestXLSWorkBook(unittest.TestCase):
+    """
+    """
+    def setUp(self):
+        # Store temp area, if needed
+        self.wd = None
+    def tearDown(self):
+        # Remove working area, if defined
+        if self.wd is not None and os.path.isdir(self.wd):
+            try:
+                os.rmdir(self.wd)
+            except Exception:
+                pass
+    def _add_test_worksheet(self,ws):
+        # Add content to example worksheet
+        ws['A1'] = "Arbitrary text"
+        # Formula
+        ws['A3'] = "Formula example:"
+        ws['A5'] = 2
+        ws['B5'] = 5
+        ws['A6'] = "Sum"
+        ws['B6'] = "=A5+B5"
+        # Set styles on formula
+        ws.set_style(XLSStyle(bold=True),'A6')
+        ws.set_style(XLSStyle(bold=True),'B6')
+        # More style examples
+        ws['A9'] = "Bold"
+        ws.set_style(XLSStyle(bold=True),'A9')
+        ws['A10'] = "Red"
+        ws.set_style(XLSStyle(color='red'),'A10')
+        ws['A11'] = "White on green"
+        ws.set_style(XLSStyle(bold=True,color='white',bgcolor='green'),'A11')
+    def test_work_book_add_worksheet(self):
+        wb = XLSWorkBook("Test")
+        ws1 = wb.add_work_sheet('wsheet1','Test #1')
+        self.assertEqual(ws1,wb.worksheet['wsheet1'])
+    def test_work_book_save_as_xls(self):
+        wb = XLSWorkBook("Test")
+        self.wd = tempfile.mkdtemp()
+        # Add content
+        ws = wb.add_work_sheet('test','Test')
+        self._add_test_worksheet(ws)
+        # Save out to XLS(X) files
+        xls_out = os.path.join(self.wd,'test.xls')
+        wb.save_as_xls(xls_out)
+        # Check file exists
+        self.assertTrue(os.path.isfile(xls_out))
+    def test_work_book_save_as_xlsx(self):
+        wb = XLSWorkBook("Test")
+        self.wd = tempfile.mkdtemp()
+        # Add content
+        ws = wb.add_work_sheet('test','Test')
+        self._add_test_worksheet(ws)
+        # Save out to XLS(X) files
+        xlsx_out = os.path.join(self.wd,'test.xlsx')
+        wb.save_as_xlsx(xlsx_out)
+        # Check file exists
+        self.assertTrue(os.path.isfile(xlsx_out))
 
 class TestXLSWorkSheet(unittest.TestCase):
     """
