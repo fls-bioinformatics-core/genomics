@@ -474,20 +474,19 @@ class TestXLSStyle(unittest.TestCase):
         self.assertTrue(XLSStyle(shrink_to_fit=True))
         self.assertTrue(XLSStyle(bold=True,bgcolor='green'))
     def test_name(self):
-        self.assertEqual(XLSStyle.name,'')
-        self.assertEqual(XLSStyle(bold=True),'__bold__')
-        self.assertEqual(XLSStyle(color=True),'__bold__')
-        self.assertEqual(XLSStyle(color='red'),'__color=red__')
-        self.assertEqual(XLSStyle(bgcolor='blue'),'__bgcolor=blue__')
-        self.assertEqual(XLSStyle(number_format=NumberFormats.PERCENTAGE),
+        self.assertEqual(XLSStyle().name,'')
+        self.assertEqual(XLSStyle(bold=True).name,'__bold__')
+        self.assertEqual(XLSStyle(color='red').name,'__color=red__')
+        self.assertEqual(XLSStyle(bgcolor='blue').name,'__bgcolor=blue__')
+        self.assertEqual(XLSStyle(number_format=NumberFormats.PERCENTAGE).name,
                          '__number_format=1__')
-        self.assertEqual(XLSStyle(border='thick'),'__border=thick__')
-        self.assertEqual(XLSStyle(font_size=14),'__font_size=14__')
-        self.assertEqual(XLSStyle(centre=True),'__centre__')
-        self.assertEqual(XLSStyle(shrink_to_fit=True),'__shrink_to_fit__')
-        self.assertEqual(XLSStyle(bold=True,bgcolor='green'),
+        self.assertEqual(XLSStyle(border='thick').name,'__border=thick__')
+        self.assertEqual(XLSStyle(font_size=14).name,'__font_size=14__')
+        self.assertEqual(XLSStyle(centre=True).name,'__centre__')
+        self.assertEqual(XLSStyle(shrink_to_fit=True).name,'__shrink_to_fit__')
+        self.assertEqual(XLSStyle(bold=True,bgcolor='green').name,
                          '__bold__bgcolor=green__')
-        self.assertEqual(XLSStyle(bold=True,font_size=14,centre=True),
+        self.assertEqual(XLSStyle(bold=True,font_size=14,centre=True).name,
                          '__bold__font_size=14__centre__')
 
 class TestCmpColumnIndices(unittest.TestCase):
