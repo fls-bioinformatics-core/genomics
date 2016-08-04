@@ -461,6 +461,34 @@ class TestXLSStyle(unittest.TestCase):
         self.assertEqual(XLSStyle(
             number_format=NumberFormats.PERCENTAGE).excel_number_format,
                          "0.0%")
+    def test_nonzero(self):
+        self.assertFalse(XLSStyle())
+        self.assertTrue(XLSStyle(bold=True))
+        self.assertTrue(XLSStyle(wrap=True))
+        self.assertTrue(XLSStyle(color='red'))
+        self.assertTrue(XLSStyle(bgcolor='blue'))
+        self.assertTrue(XLSStyle(number_format=NumberFormats.PERCENTAGE))
+        self.assertTrue(XLSStyle(border='thick'))
+        self.assertTrue(XLSStyle(font_size=14))
+        self.assertTrue(XLSStyle(centre=True))
+        self.assertTrue(XLSStyle(shrink_to_fit=True))
+        self.assertTrue(XLSStyle(bold=True,bgcolor='green'))
+    def test_name(self):
+        self.assertEqual(XLSStyle.name,'')
+        self.assertEqual(XLSStyle(bold=True),'__bold__')
+        self.assertEqual(XLSStyle(color=True),'__bold__')
+        self.assertEqual(XLSStyle(color='red'),'__color=red__')
+        self.assertEqual(XLSStyle(bgcolor='blue'),'__bgcolor=blue__')
+        self.assertEqual(XLSStyle(number_format=NumberFormats.PERCENTAGE),
+                         '__number_format=1__')
+        self.assertEqual(XLSStyle(border='thick'),'__border=thick__')
+        self.assertEqual(XLSStyle(font_size=14),'__font_size=14__')
+        self.assertEqual(XLSStyle(centre=True),'__centre__')
+        self.assertEqual(XLSStyle(shrink_to_fit=True),'__shrink_to_fit__')
+        self.assertEqual(XLSStyle(bold=True,bgcolor='green'),
+                         '__bold__bgcolor=green__')
+        self.assertEqual(XLSStyle(bold=True,font_size=14,centre=True),
+                         '__bold__font_size=14__centre__')
 
 class TestCmpColumnIndices(unittest.TestCase):
     """
