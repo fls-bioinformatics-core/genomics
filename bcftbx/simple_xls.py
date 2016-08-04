@@ -119,6 +119,7 @@ import re
 from collections import Iterator
 import logging
 import Spreadsheet
+import xlsxwriter
 from utils import OrderedDictionary
 
 #######################################################################
@@ -214,6 +215,80 @@ class XLSWorkBook:
             ws = xls.addSheet(worksheet.title)
             ws.addText(worksheet.render_as_text(include_styles=True))
         xls.save(filen)
+
+    def save_as_xlsx(self,filen):
+        """Output the workbook contents to an XLSX-format file
+
+        Arguments:
+          filen: name of the file to write the workbook to.
+
+        """
+        xlsx = xlsxwriter.Workbook(filen)
+        styles = {}
+        default_min_col_width = 7
+        for name in self.worksheet:
+            worksheet = self.worksheet[name]
+            ws = xlsx.add_worksheet(worksheet.title)
+            # Write content to worksheet cell by cell
+            start = CellIndex('A1')
+            end = CellIndex(cell(worksheet.last_column,
+                                 worksheet.last_row))
+            for col in ColumnRange(start.column,end.column):
+                # Maximum column width
+                max_width = default_min_col_width
+                for row in xrange(start.row,end.row+1):
+                    # Get the value
+                    value = worksheet.render_cell(cell(col,row),
+                                                  eval_formulae=False,
+                                                  apply_format=False)
+                    # Handle styles for this cell
+                    style = worksheet.get_style(cell(col,row))
+                    if style:
+                        style_name = style.name
+                        try:
+                            xlsx_fmt = styles[style_name]
+                        except KeyError:
+                            xlsx_fmt = xlsx.add_format()
+                            if style.bold:
+                                xlsx_fmt.set_bold()
+                            if style.color is not None:
+                                xlsx_fmt.set_color(style.color)
+                            if style.bgcolor is not None:
+                                xlsx_fmt.set_bg_color(style.bgcolor)
+                            if style.font_size is not None:
+                                xlsx_fmt.set_font_size(style.font_size)
+                            styles[style_name] = xlsx_fmt
+                    else:
+                        xlsx_fmt = None
+                    # Deal with cell content
+                    if value.startswith('='):
+                        # Cell contains formula
+                        result = eval_formula(value,worksheet)
+                        ws.write_formula(cell(col,row),value,xlsx_fmt,result)
+                        col_width = len(str(result))
+                    else:
+                        # Deal with a data item
+                        # Attempt to convert to a number type
+                        # i.e. integer/float
+                        try:
+                            # Try integer
+                            value = int(str(value))
+                        except ValueError:
+                            # Not an integer, try float
+                            try:
+                                value = float(str(value))
+                            except ValueError:
+                                # Not a float either
+                                pass
+                        # Write to the worksheet
+                        ws.write(cell(col,row),value,xlsx_fmt)
+                        col_width = len(str(value))
+                    # Handle column widths
+                    max_width = max(max_width,col_width)
+                # Set the column width
+                icol = column_index_to_integer(col)
+                ws.set_column(icol,icol,max_width*1.2)
+        xlsx.close()
 
 class XLSWorkSheet:
     """Class for creating sheets within an XLS workbook.
@@ -1553,5 +1628,28 @@ if __name__ == "__main__":
 
     print data.render_as_text(start='B1',end='C6',include_columns_and_rows=True)
 
+    # Examples rendering into XLS and XLSX output
+    wb = XLSWorkBook("Test")
+    ws = wb.add_work_sheet('test','Test')
+    # Text
+    ws['A1'] = "Arbitrary text"
+    # Formula
+    ws['A3'] = "Formula example:"
+    ws['A5'] = 2
+    ws['B5'] = 5
+    ws['A6'] = "Sum"
+    ws['B6'] = "=A5+B5"
+    # Set styles on formula
+    ws.set_style(XLSStyle(bold=True),'A6')
+    ws.set_style(XLSStyle(bold=True),'B6')
+    # More style examples
+    ws['A9'] = "Bold"
+    ws.set_style(XLSStyle(bold=True),'A9')
+    ws['A10'] = "Red"
+    ws.set_style(XLSStyle(color='red'),'A10')
+    ws['A11'] = "White on green"
+    ws.set_style(XLSStyle(bold=True,color='white',bgcolor='green'),'A11')
+    # Save out to XLS(X) files
     wb.save_as_xls('test.xls')
-                               
+    wb.save_as_xlsx('test.xlsx')
+
