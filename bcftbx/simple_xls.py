@@ -214,6 +214,11 @@ class XLSWorkBook:
             worksheet = self.worksheet[name]
             ws = xls.addSheet(worksheet.title)
             ws.addText(worksheet.render_as_text(include_styles=True))
+            if worksheet.freeze_panes is not None:
+                col = column_index_to_integer(
+                    CellIndex(worksheet.freeze_panes).column)
+                row = CellIndex(worksheet.freeze_panes).row - 1
+                ws.freezePanes(column=col,row=row)
         xls.save(filen)
 
     def save_as_xlsx(self,filen):
@@ -288,6 +293,9 @@ class XLSWorkBook:
                 # Set the column width
                 icol = column_index_to_integer(col)
                 ws.set_column(icol,icol,max_width*1.2)
+            # Handle freeze panes
+            if worksheet.freeze_panes is not None:
+                ws.freeze_panes(worksheet.freeze_panes)
         xlsx.close()
 
 class XLSWorkSheet:
@@ -367,6 +375,7 @@ class XLSWorkSheet:
         self.styles = {}
         self.rows = []
         self.columns = []
+        self.freeze_panes = None
 
     def __setitem__(self,idx,value):
         """Implement 'x[idx] = value'
@@ -1649,6 +1658,17 @@ if __name__ == "__main__":
     ws.set_style(XLSStyle(color='red'),'A10')
     ws['A11'] = "White on green"
     ws.set_style(XLSStyle(bold=True,color='white',bgcolor='green'),'A11')
+    ws['A12'] = "Black on gray"
+    ws.set_style(XLSStyle(bold=True,color='black',bgcolor='gray25'),'A12')
+    # Freeze panes
+    ws = wb.add_work_sheet('freeze','Freeze')
+    ws.append_row(data=('X','Y','Z'),
+                  style=XLSStyle(color='white',
+                                 bgcolor='green',
+                                 bold=True))
+    for i in xrange(100):
+        ws.append_row(data=(i,i*2,'=A?+B?'))
+    ws.freeze_panes = 'A2'
     # Save out to XLS(X) files
     wb.save_as_xls('test.xls')
     wb.save_as_xlsx('test.xlsx')
