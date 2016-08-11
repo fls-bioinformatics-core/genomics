@@ -135,10 +135,16 @@ class NumberFormats:
     PERCENTAGE=1
 
 # Spreadsheet limits
+# NB these are for XLS not XLSX
+# In XLSX file the limits are:
+# max rows=1048576
+# max cols=16384
+# Number of characters per cell may be 1024
 class Limits:
     MAX_LEN_WORKSHEET_TITLE = 31 # Max worksheet title length
     MAX_LEN_WORKSHEET_CELL_VALUE = 250 # Maximum no. of characters in cell
     MAX_NUMBER_ROWS_PER_WORKSHEET = 65536 # Max number of rows per worksheet
+    MAX_NUMBER_COLS_PER_WORKSHEET = 256 # Max nuber of columns per worksheet
 
 #######################################################################
 # Class definitions
