@@ -2205,3 +2205,41 @@ def fix_bases_mask(bases_mask,barcode_sequence):
         reads.append(new_read)
     # Assemble and return updated index tags
     return ','.join(reads)
+
+def samplesheet_index_sequence(line):
+    """
+    Return the index sequence for a sample sheet line
+
+    Arguments:
+      line (TabDataLine): line from a SampleSheet instance
+
+    """
+    # Index sequence
+    try:
+        # Try dual-indexed IEM4 format
+        return "%s-%s" % (line['index'].strip(),
+                          line['index2'].strip())
+    except KeyError:
+        pass
+    # Try single indexed IEM4 (no index2)
+    try:
+        return line['index'].strip()
+    except KeyError:
+        pass
+    # Try CASAVA format
+    indx = line['Index'].strip()
+    if not indx:
+        indx = None
+    return indx
+
+def normalise_barcode(seq):
+    """
+    Return normalised version of barcode sequence
+
+    This standardises the sequence so that:
+
+    - all bases are uppercase
+    - dual index barcodes have '-' and '+' removed
+
+    """
+    return str(seq).upper().replace('-','').replace('+','')

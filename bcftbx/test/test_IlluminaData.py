@@ -4,6 +4,7 @@
 from bcftbx.IlluminaData import *
 from bcftbx.mock import MockIlluminaRun
 from bcftbx.mock import MockIlluminaData
+from bcftbx.TabFile import TabDataLine
 import bcftbx.utils
 import unittest
 import cStringIO
@@ -2420,6 +2421,86 @@ class TestSplitRunName(unittest.TestCase):
                          (None,None,None))
         self.assertEqual(split_run_name('1402100_M00879_XYZ'),
                          (None,None,None))
+
+class TestSampleSheetIndexSequence(unittest.TestCase):
+
+    def test_casava_single_index(self):
+        """samplesheet_index_sequence: check CASAVA sample sheet single index
+        """
+        line = TabDataLine(line="FC1,1,AB_control,,CGATGT,,,,,Control",
+                           column_names=('FCID',
+                                         'Lane',
+                                         'SampleID',
+                                         'SampleRef',
+                                         'Index',
+                                         'Description',
+                                         'Control',
+                                         'Recipe',
+                                         'Operator',
+                                         'SampleProject'),
+                           delimiter=",")
+        self.assertEqual(samplesheet_index_sequence(line),'CGATGT')
+
+    def test_casava_dual_index(self):
+        """samplesheet_index_sequence: check CASAVA sample sheet dual index
+        """
+        line = TabDataLine(line="FC1,1,C01,,TAAGGCGA-GCGTAAGA,,,,,KP",
+                           column_names=('FCID',
+                                         'Lane',
+                                         'SampleID',
+                                         'SampleRef',
+                                         'Index',
+                                         'Description',
+                                         'Control',
+                                         'Recipe',
+                                         'Operator',
+                                         'SampleProject'),
+                           delimiter=",")
+        self.assertEqual(samplesheet_index_sequence(line),'TAAGGCGA-GCGTAAGA')
+
+    def test_iem_single_index(self):
+        """samplesheet_index_sequence: check IEM4 sample sheet single index
+        """
+        line = TabDataLine(line="1,ABT1,ABT1,,,A002,CGATGT,AB,",
+                           column_names=('Lane',
+                                         'Sample_ID',
+                                         'Sample_Name',
+                                         'Sample_Plate',
+                                         'Sample_Well',
+                                         'I7_Index_ID',
+                                         'index',
+                                         'Sample_Project',
+                                         'Description'),
+                           delimiter=",")
+        self.assertEqual(samplesheet_index_sequence(line),'CGATGT')
+
+    def test_iem_dual_index(self):
+        """samplesheet_index_sequence: check IEM4 sample sheet dual index
+        """
+        line = TabDataLine(line="1,S1,S1,,,D701,CGTGTAGG,D501,GACCTGTA,HO,",
+                           column_names=('Lane',
+                                         'Sample_ID',
+                                         'Sample_Name',
+                                         'Sample_Plate',
+                                         'Sample_Well',
+                                         'I7_Index_ID',
+                                         'index',
+                                         'I5_Index_ID',
+                                         'index2',
+                                         'Sample_Project',
+                                         'Description'),
+                           delimiter=",")
+        self.assertEqual(samplesheet_index_sequence(line),'CGTGTAGG-GACCTGTA')
+
+class TestNormaliseBarcode(unittest.TestCase):
+    def test_normalise_barcode(self):
+        self.assertEqual(normalise_barcode('CGATGT'),'CGATGT')
+        self.assertEqual(normalise_barcode('CGTGTAGG-GACCTGTA'),
+                         'CGTGTAGGGACCTGTA')
+        self.assertEqual(normalise_barcode('CGTGTAGG+GACCTGTA'),
+                         'CGTGTAGGGACCTGTA')
+        self.assertEqual(normalise_barcode('CGTGTAGGGACCTGTA'),
+                         'CGTGTAGGGACCTGTA')
 
 #######################################################################
 # Main program
