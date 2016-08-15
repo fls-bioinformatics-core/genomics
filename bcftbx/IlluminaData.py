@@ -695,7 +695,7 @@ class IlluminaSample:
         for fastq in self.fastq:
             fq = IlluminaFastq(fastq)
             if fq.read_number is None:
-                raise IlluminaDataException, \
+                raise IlluminaDataError, \
                     "Unable to determine read number for %s" % fastq
             if fq.read_number == read_number:
                 if full_path:
@@ -1734,9 +1734,18 @@ class IlluminaFastq:
         fields = fastq_base.split('_')
         nfields = len(fields)
         # Set number: zero-padded 3 digit integer '001'
-        self.set_number = int(fields[-1])
+        try:
+            self.set_number = int(fields[-1])
+        except ValueError:
+            raise IlluminaDataError(
+                "%s: not a canonical Illumina Fastq name" % fastq_base)
         # Read number: single integer digit 'R1'
-        self.read_number = int(fields[-2][1])
+        if fields[-2].startswith('R'):
+            try:
+                self.read_number = int(fields[-2][1])
+            except ValueError:
+                raise IlluminaDataError(
+                    "%s: not a canonical Illumina Fastq name" % fastq_base)
         # Lane number: zero-padded 3 digit integer 'L001'
         if fields[-3].startswith('L') and fields[-3][1:].isdigit():
             self.lane_number = int(fields[-3][1:])
