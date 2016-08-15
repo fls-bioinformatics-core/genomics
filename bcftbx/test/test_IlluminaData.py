@@ -2492,6 +2492,19 @@ class TestSampleSheetIndexSequence(unittest.TestCase):
                            delimiter=",")
         self.assertEqual(samplesheet_index_sequence(line),'CGTGTAGG-GACCTGTA')
 
+    def test_iem_no_index(self):
+        """samplesheet_index_sequence: check IEM4 sample sheet no index column
+        """
+        line = TabDataLine(line="PB2,PB2,,,PB,",
+                         column_names=('Sample_ID',
+                                       'Sample_Name',
+                                       'Sample_Plate',
+                                       'Sample_Well',
+                                       'Sample_Project',
+                                       'Description'),
+                           delimiter=",")
+        self.assertEqual(samplesheet_index_sequence(line),None)
+
 class TestNormaliseBarcode(unittest.TestCase):
     def test_normalise_barcode(self):
         self.assertEqual(normalise_barcode('CGATGT'),'CGATGT')

@@ -2227,7 +2227,10 @@ def samplesheet_index_sequence(line):
     except KeyError:
         pass
     # Try CASAVA format
-    indx = line['Index'].strip()
+    try:
+        indx = line['Index'].strip()
+    except KeyError:
+        indx = ''
     if not indx:
         indx = None
     return indx
