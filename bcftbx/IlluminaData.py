@@ -695,7 +695,7 @@ class IlluminaSample:
         for fastq in self.fastq:
             fq = IlluminaFastq(fastq)
             if fq.read_number is None:
-                raise IlluminaDataException, \
+                raise IlluminaDataError, \
                     "Unable to determine read number for %s" % fastq
             if fq.read_number == read_number:
                 if full_path:
