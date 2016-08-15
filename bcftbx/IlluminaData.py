@@ -1468,17 +1468,7 @@ class SampleSheet:
                 if sample not in samples:
                     samples[sample] = []
                 # Index sequence
-                try:
-                    # Try dual-indexed IEM4 format
-                    indx = "%s-%s" %(line['index'].strip(),
-                                     line['index2'].strip())
-                except KeyError:
-                    # Try single indexed IEM4 (no index2)
-                    try:
-                        indx = line['index'].strip()
-                    except KeyError:
-                        # Try CASAVA format
-                        indx = line['Index'].strip()
+                indx = samplesheet_index_sequence(line)
                 if not indx:
                     indx = "NoIndex"
                 # Lane
@@ -1585,16 +1575,9 @@ class IEMSampleSheet(SampleSheet):
                 # No lane column (e.g. MiSEQ)
                 lane = 1
             # Set the index tag (if any)
-            try:
-                index_tag = "%s-%s" % (line['index'].strip(),
-                                       line['index2'].strip())
-            except KeyError:
-                # Assume not dual-indexed (no index2)
-                try:
-                    index_tag = line['index'].strip()
-                except KeyError:
-                    # No index
-                    index_tag = ''
+            index_tag = samplesheet_index_sequence(line)
+            if not index_tag:
+                index_tag = ''
             sample_sheet_line['FCID'] = FCID
             sample_sheet_line['Lane'] = lane
             sample_sheet_line['Index'] = index_tag
@@ -2212,6 +2195,9 @@ def samplesheet_index_sequence(line):
 
     Arguments:
       line (TabDataLine): line from a SampleSheet instance
+
+    Returns:
+      String: barcode sequence, or 'None' if not defined.
 
     """
     # Index sequence
