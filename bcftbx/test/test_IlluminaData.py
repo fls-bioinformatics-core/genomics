@@ -565,6 +565,18 @@ class TestIlluminaDataForBcl2fastq2SpecialCases(BaseTestIlluminaData):
                               'fastqs',fq),'w').write('')
         return os.path.join(self.top_dir,'test.MockIlluminaData')
 
+    def makeNonIlluminaDataDirectoryWithNonCanonicalFastqs(self):
+        # Create a non-bcl2fastq directory which contains
+        # Fastq files with non-canonical-style names
+        os.mkdir(os.path.join(self.top_dir,'test.MockIlluminaData'))
+        os.mkdir(os.path.join(self.top_dir,'test.MockIlluminaData','fastqs'))
+        for fq in ('PB04_S4_R1_unpaired.fastq.gz',
+                   'PB04_trimmoPE_bowtie2_notHg38.1.fastq.gz'):
+            open(os.path.join(self.top_dir,
+                              'test.MockIlluminaData',
+                              'fastqs',fq),'w').write('')
+        return os.path.join(self.top_dir,'test.MockIlluminaData')
+
     def test_illumina_data_all_sample_ids_differ_from_sample_names(self):
         """Read bcl2fastq2 output when all sample ids differ from names
 
@@ -609,6 +621,16 @@ class TestIlluminaDataForBcl2fastq2SpecialCases(BaseTestIlluminaData):
         # Attempt to read the directory as if it were the output
         # from bcl2fastq v2
         dirn = self.makeNonIlluminaDataDirectoryWithFastqs()
+        self.assertRaises(IlluminaDataError,IlluminaData,
+                          os.path.dirname(dirn),
+                          unaligned_dir=os.path.basename(dirn))
+
+    def test_illumina_data_not_bcl2fastq2_output_non_canonical_fastqs(self):
+        """Reading non-bcl2fastq v2 output directory with non-canonical Fastqs raises exception
+        """
+        # Attempt to read the directory as if it were the output
+        # from bcl2fastq v2
+        dirn = self.makeNonIlluminaDataDirectoryWithNonCanonicalFastqs()
         self.assertRaises(IlluminaDataError,IlluminaData,
                           os.path.dirname(dirn),
                           unaligned_dir=os.path.basename(dirn))
@@ -839,6 +861,15 @@ class TestIlluminaFastq(unittest.TestCase):
         self.assertEqual(fq.read_number,1)
         self.assertEqual(fq.set_number,1)
         self.assertEqual(str(fq),fastq_name)
+
+    def test_illumina_fastq_for_non_canonical_fastq_names(self):
+        """
+        Check non-canonical Fastq names raise IlluminaDataError
+        """
+        fastq_name = 'PB04_S4_R1_unpaired.fastq.gz'
+        self.assertRaises(IlluminaDataError,IlluminaFastq,fastq_name)
+        fastq_name = 'PB04_trimmoPE_bowtie2_notHg38.1.fastq.gz'
+        self.assertRaises(IlluminaDataError,IlluminaFastq,fastq_name)
 
 class TestSampleSheet(unittest.TestCase):
     def setUp(self):
