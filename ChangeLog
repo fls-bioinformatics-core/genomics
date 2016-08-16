@@ -1,3 +1,16 @@
+2016-08-16  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* genomics-bcftbx version 0.99.13
+	- bcftbx/IlluminaData: updates to `IlluminaData` and
+	  `IlluminaFastq` classes to handle 'non-canonical'
+	  FASTQ file names (i.e. names which don't conform
+	  to Illumina naming scheme)
+	- bcftbx/IlluminaData: new function
+	  `samplesheet_index_sequence` (extracts barcodes
+	  from lines from `SampleSheet` objects)
+	- Add `HISeq4000` and `MiniSeq` to known platforms
+	  in `bcftbx/IlluminaData` and `bcftbx/platforms`.
+
 2016-06-30  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* genomics-bcftbx version 0.99.12
