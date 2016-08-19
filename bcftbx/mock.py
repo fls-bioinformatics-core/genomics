@@ -6,14 +6,20 @@
 """
 mock.py
 
-Provides classes for mocking up examples of outputs from Illumina-based
-sequencers pipeline (e.g. GA2x or HiSeq), including example directory
-structures, to be used in testing.
+Provides data and classes for mocking up examples of outputs from
+Illumina-based sequencer pipeline (e.g. GA2x or HiSeq), including example
+directory structures and input and output files, to be used in testing.
 
 These include:
 
-- MockIlluminaRun
-- MockIlluminaData
+- MockSampleSheet: synthesises a SampleSheet.csv
+- MockIlluminaRun: synthesises the raw data output from a sequencer
+- MockIlluminaData: synthesises the output from CASAVA/bcl2fastq run
+
+There are also static classes with example data:
+
+- SampleSheets: has properties with example SampleSheet.csv files
+- RunInfoXml: has static methods for making RunInfo.xml files
 
 """
 
@@ -23,12 +29,374 @@ These include:
 
 import os
 import shutil
+import cStringIO
 import bcftbx.utils
 from bcftbx.IlluminaData import IlluminaFastq
+from bcftbx.IlluminaData import SampleSheet
+from bcftbx.TabFile import TabFile
+from bcftbx.utils import OrderedDictionary
+
+#######################################################################
+# Module data
+#######################################################################
+
+class SampleSheets(object):
+    """
+    Class with example sample sheets
+
+    There is no need to instantiate this class, to access
+    a specific sample sheet use e.g.:
+
+    >>> print SampleSheets.miseq
+
+    """
+    miseq = """[Header],,,,,,,,,
+IEMFileVersion,4,,,,,,,,
+Date,11/23/2015,,,,,,,,
+Workflow,GenerateFASTQ,,,,,,,,
+Application,FASTQ Only,,,,,,,,
+Assay,TruSeq HT,,,,,,,,
+Description,,,,,,,,,
+Chemistry,Amplicon,,,,,,,,
+,,,,,,,,,
+[Reads],,,,,,,,,
+101,,,,,,,,,
+101,,,,,,,,,
+,,,,,,,,,
+[Settings],,,,,,,,,
+ReverseComplement,0,,,,,,,,
+Adapter,AGATCGGAAGAGCACACGTCTGAACTCCAGTCA,,,,,,,,
+AdapterRead2,AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT,,,,,,,,
+,,,,,,,,,
+[Data],,,,,,,,,
+Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_ID,index2,Sample_Project,Description
+Sample_1,Sample_1,,,D701,CGTGTAGG,D501,GACCTGTA,,
+Sample_2,Sample_2,,,D702,CGTGTAGG,D501,ATGTAACT,,"""
+    hiseq = """[Header],,,,,,,,,,
+IEMFileVersion,4,,,,,,,,,
+Date,11/11/2015,,,,,,,,,
+Workflow,GenerateFASTQ,,,,,,,,,
+Application,HiSeq FASTQ Only,,,,,,,,,
+Assay,Nextera XT,,,,,,,,,
+Description,,,,,,,,,,
+Chemistry,Amplicon,,,,,,,,,
+,,,,,,,,,,
+[Reads],,,,,,,,,,
+101,,,,,,,,,,
+101,,,,,,,,,,
+,,,,,,,,,,
+[Settings],,,,,,,,,,
+ReverseComplement,0,,,,,,,,,
+Adapter,CTGTCTCTTATACACATCT,,,,,,,,,
+,,,,,,,,,,
+[Data],,,,,,,,,,
+Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_ID,index2,Sample_Project,Description
+1,AB1,AB1,,,N701,TAAGGCGA,S504,AGAGTAGA,AB,
+2,TM2,TM1,,,N701,TAAGGCGA,S517,GCGTAAGA,TM,
+3,CD3,CD3,,,N701,GTGAAACG,S503,TCTTTCCC,CD,
+4,EB4,EB4,,A1,N701,TAAGGCGA,S501,TAGATCGC,EB,
+5,EB5,EB5,,A3,N703,AGGCAGAA,S501,TAGATCGC,EB,
+6,EB6,EB6,,F3,N703,AGGCAGAA,S506,ACTGCATA,EB,
+7,ML7,ML7,,,N701,GCCAATAT,S502,TCTTTCCC,ML,
+8,VL8,VL8,,,N701,GCCAATAT,S503,TCTTTCCC,VL,"""
+
+class RunInfoXml(object):
+    """
+    Class with example RunInfo.xml files
+
+    There is no need to instantiate this class, to access
+    a specific RunInfo.xml use e.g.:
+
+    >>> print RunInfoXml.hiseq('151125_AB12345_001_CD256X')
+
+    """
+    @staticmethod
+    def miseq(run_name):
+        return """<?xml version="1.0"?>
+<RunInfo xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Version="2">
+  <Run Id="%s" Number="1">
+    <Flowcell>00000000-ABCD1</Flowcell>
+    <Instrument>M00001</Instrument>
+    <Date>150729</Date>
+    <Reads>
+      <Read Number="1" NumCycles="101" IsIndexedRead="N" />
+      <Read Number="2" NumCycles="8" IsIndexedRead="Y" />
+      <Read Number="3" NumCycles="8" IsIndexedRead="Y" />
+      <Read Number="4" NumCycles="101" IsIndexedRead="N" />
+    </Reads>
+    <FlowcellLayout LaneCount="1" SurfaceCount="2" SwathCount="1" TileCount="19" />
+  </Run>
+</RunInfo>""" % run_name
+    @staticmethod
+    def hiseq(run_name):
+        return """<?xml version="1.0"?>
+<RunInfo xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Version="2">
+  <Run Id="%s" Number="2">
+    <Flowcell>A00NAABXX</Flowcell>
+    <Instrument>H00002</Instrument>
+    <Date>151113</Date>
+    <Reads>
+      <Read Number="1" NumCycles="101" IsIndexedRead="N" />
+      <Read Number="2" NumCycles="8" IsIndexedRead="Y" />
+      <Read Number="3" NumCycles="8" IsIndexedRead="Y" />
+      <Read Number="4" NumCycles="101" IsIndexedRead="N" />
+    </Reads>
+    <FlowcellLayout LaneCount="8" SurfaceCount="2" SwathCount="3" TileCount="16" />
+    <AlignToPhiX>
+      <Lane>1</Lane>
+      <Lane>2</Lane>
+      <Lane>3</Lane>
+      <Lane>4</Lane>
+      <Lane>5</Lane>
+      <Lane>6</Lane>
+      <Lane>7</Lane>
+      <Lane>8</Lane>
+    </AlignToPhiX>
+  </Run>
+</RunInfo>""" % run_name
+    @staticmethod
+    def nextseq(run_name):
+        return """<?xml version="1.0"?>
+<RunInfo xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.o
+rg/2001/XMLSchema-instance" Version="4">
+  <Run Id="%s" Number="1">
+    <Flowcell>ABC1234XX</Flowcell>
+    <Instrument>N000003</Instrument>
+    <Date>151123</Date>
+    <Reads>
+      <Read Number="1" NumCycles="76" IsIndexedRead="N" />
+      <Read Number="2" NumCycles="6" IsIndexedRead="Y" />
+      <Read Number="3" NumCycles="76" IsIndexedRead="N" />
+    </Reads>
+    <FlowcellLayout LaneCount="4" SurfaceCount="2" SwathCount="3" TileCount="12"
+ SectionPerLane="3" LanePerSection="2">
+      <TileSet TileNamingConvention="FiveDigit">
+        <Tiles>
+          <Tile>1_11101</Tile>
+          <Tile>1_21101</Tile></Tiles>
+      </TileSet>
+    </FlowcellLayout>
+    <ImageDimensions Width="2592" Height="1944" />
+    <ImageChannels>
+      <Name>Red</Name>
+      <Name>Green</Name>
+    </ImageChannels>
+  </Run>
+</RunInfo>""" % run_name
 
 #######################################################################
 # Class definitions
 #######################################################################
+
+class MockSampleSheet(SampleSheet):
+    """
+    Class for mocking up sample sheet files
+
+    Example making an IEM-style sample sheet:
+
+    >>> s = MockSampleSheet(fmt='IEM',has_lanes=False,dual_index=True)
+    >>> s.set_header(Date="08/19/2016",Assay="Nextera XT")
+    >>> s.set_reads(150,150)
+    >>> s.set_settings(Adapter="AGATCGG",AdapterRead2="")
+    >>> s.append_line(Sample_ID="Sample_1",
+    ...               Sample_Name="Sample_1",
+    ...               I7_Index_ID="D701",
+    ...               index="CGTGTAGG",
+    ...               I5_Index_ID="D501",
+    ...               index2="GACCTGTA")
+    >>> s.append_line(Sample_ID="Sample_2",
+    ...               Sample_Name="Sample_2",
+    ...               I7_Index_ID="D702",
+    ...               index="CGTGTAGG",
+    ...               I5_Index_ID="D502",
+    ...               index2="ATGTAACT")
+    >>> open("SampleSheet.csv","w").write(s.show())
+
+    Example making a CASAVA-style sample sheet:
+
+    >>> s = MockSampleSheet(fmt="CASAVA",has_lanes=True)
+    >>> s.append_line(FCID="ABC001XX",
+    ...               Lane=1,
+    ...               SampleID="884-1",
+    ...               SampleRef="PB-881-1",
+    ...               Index="AGTCAA",
+    ...               Description="RNA-seq",
+    ...               SampleProject="AR")
+    >>> open("SampleSheet.csv","w").write(s.show())
+
+    """
+    def __init__(self,fmt='IEM',has_lanes=False,dual_index=True,
+                 quote_values=False,pad=False):
+        """
+        Create a new MockSampleSheet instance
+
+        Arguments:
+          fmt (str): either 'IEM' or 'CASAVA'
+          has_lanes (boolean): if True then the output sample sheet
+            will include a 'Lane' field
+          dual_index (boolean): if True then IEM-style sample sheet
+            will have dual index fields (not relevant for CASAVA-style)
+          quote_values (boolean): if True then output data values will
+            be surrounded by double quotes (default is not to quote
+            values)
+          pad (boolean): if True then output sample sheet will have
+            additional commas on each line (simulates output from
+            Excel) (default is not to pad output)
+
+        """
+        # Store argument values
+        self._format = fmt
+        self._has_lanes = has_lanes
+        self._dual_index = dual_index
+        # Output formatting
+        self.quote_values = quote_values
+        self.pad = pad
+        # Instantiate the base object
+        SampleSheet.__init__(self,fp=cStringIO.StringIO(self._template()))
+        # Initialise additional sections for IEM
+        if self._format == 'IEM':
+            self.set_header(IEMFileVersion=4,
+                            Date="11/23/2015",
+                            Workflow="GenerateFASTQ",
+                            Application="FASTQ Only",
+                            Assay="TruSeq HT",
+                            Description="",
+                            Chemistry="Amplicon")
+            self.set_reads(101,101)
+            self.set_settings(ReverseComplement=0,
+                              Adapter="AGATCGGAAGAGCACACGTCTGAACTCCAGTCA",
+                              AdapterRead2="AGATCGGAAGAGCACACGTCTGAACTCCAGTCA")
+
+    def _template(self):
+        """
+        Return template for initialising sample sheet
+        """
+        if self._format == 'CASAVA':
+            cols = "SampleID,SampleRef,Index,Description,Control,Recipe,Operator,SampleProject"
+            if self._has_lanes:
+                cols = "Lane," + cols
+            cols = "FCID," + cols
+        elif self._format == 'IEM':
+            if self._dual_index:
+                cols = "Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_ID,index2,Sample_Project,Description"
+            else:
+                cols = "Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,Sample_Project,Description"
+            if self._has_lanes:
+                cols = "Lane," + cols
+            cols = "[Data]\n" + cols
+        return cols
+
+    def set_header(self,**kws):
+        """
+        Set items in the [Header] section
+
+        Supply keyword=value pairs to set the values for items
+        in the sample sheet header
+
+        For example:
+
+        >>> s.set_header(Date="08/19/2016",Assay="Nextera XT")
+
+        """
+        new_header = OrderedDictionary()
+        items = ('IEMFileVersion',
+                 'Date',
+                 'Workflow',
+                 'Application',
+                 'Assay',
+                 'Description',
+                 'Chemistry')
+        for item in items:
+            if item in kws:
+                new_header[item] = kws[item]
+            elif item in self._header:
+                new_header[item] = self._header[item]
+        for item in kws:
+            if item not in items:
+                new_header[item] = kws[item]
+        self._header = new_header
+
+    def set_reads(self,read1,read2=None):
+        """
+        Set values in the [Reads] section
+
+        Supply length of read1 and (optionally) read2
+
+        For example:
+
+        >>> s.set_reads(150,150)
+
+        """
+        self._reads = [str(read1)]
+        if read2 is not None:
+            self._reads.append(str(read2))
+
+    def set_settings(self,**kws):
+        """
+        Set items in the [Settings] section
+
+        Supply keyword=value pairs to set the values for items
+        in the sample sheet header
+
+        For example:
+
+        >>> s.set_settings(Adapter="AGATCGG",AdapterRead2="")
+
+        """
+        new_settings = OrderedDictionary()
+        items = ('ReverseComplement',
+                 'Adapter',
+                 'AdapterRead2')
+        for item in items:
+            if item in kws:
+                new_settings[item] = kws[item]
+            elif item in self._settings:
+                new_settings[item] = self._settings[item]
+        self._settings = new_settings
+
+    def append_line(self,**kws):
+        """
+        Add a line to the sample sheet
+
+        For IEM-style sample sheets the lines are appended to
+        the [Data] section.
+
+        Supply keyword=value pairs to set the values for items
+        in the line; the keywords should match the names of
+        header items.
+
+        For example:
+
+        >>> s.s.append_line(Sample_ID="SMPL1",Sample_Project="PRJ1")
+
+        """
+        line = []
+        for item in self.data.header():
+            if item in kws:
+                value = kws[item]
+                if self.quote_values:
+                    value = '"%s"' % value
+            else:
+                value = ''
+            line.append(value)
+        self.data.append(data=line)
+
+    def show(self,fmt=None):
+        """
+        Construct and return sample sheet contents
+
+        """
+        output = SampleSheet.show(self,fmt=fmt)
+        if self.pad:
+            ncols = len(self.data.header())
+            padded_output = []
+            for line in output.split('\n'):
+                ncols_in_line = len(line.split(','))
+                if ncols_in_line < ncols:
+                    line = line + ','*(ncols-ncols_in_line-1)
+                padded_output.append(line)
+            output = '\n'.join(padded_output)
+        return output
 
 class MockIlluminaRun:
     """
@@ -132,48 +500,11 @@ class MockIlluminaRun:
                                     'L%03d' % i,'C%d.1' % k,
                                     's_%d_%d.stats' % (i,j)),'wb+').close()
         # RunInfo.xml
-        run_info_xml = """<?xml version="1.0"?>
-<RunInfo xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Version="2">
-  <Run Id="%s" Number="1">
-    <Flowcell>00000000-ABCD1</Flowcell>
-    <Instrument>M00001</Instrument>
-    <Date>150729</Date>
-    <Reads>
-      <Read Number="1" NumCycles="101" IsIndexedRead="N" />
-      <Read Number="2" NumCycles="8" IsIndexedRead="Y" />
-      <Read Number="3" NumCycles="8" IsIndexedRead="Y" />
-      <Read Number="4" NumCycles="101" IsIndexedRead="N" />
-    </Reads>
-    <FlowcellLayout LaneCount="1" SurfaceCount="2" SwathCount="1" TileCount="19" />
-  </Run>
-</RunInfo>
-"""
+        run_info_xml = RunInfoXml.miseq(self.name)
         with open(self._path('RunInfo.xml'),'w') as fp:
-            fp.write(run_info_xml % self.name)
+            fp.write(run_info_xml)
         # SampleSheet.csv
-        sample_sheet_csv = """[Header],,,,,,,,,
-IEMFileVersion,4,,,,,,,,
-Date,11/23/2015,,,,,,,,
-Workflow,GenerateFASTQ,,,,,,,,
-Application,FASTQ Only,,,,,,,,
-Assay,TruSeq HT,,,,,,,,
-Description,,,,,,,,,
-Chemistry,Amplicon,,,,,,,,
-,,,,,,,,,
-[Reads],,,,,,,,,
-101,,,,,,,,,
-101,,,,,,,,,
-,,,,,,,,,
-[Settings],,,,,,,,,
-ReverseComplement,0,,,,,,,,
-Adapter,AGATCGGAAGAGCACACGTCTGAACTCCAGTCA,,,,,,,,
-AdapterRead2,AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT,,,,,,,,
-,,,,,,,,,
-[Data],,,,,,,,,
-Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_ID,index2,Sample_Project,Description
-Sample_1,Sample_1,,,D701,CGTGTAGG,D501,GACCTGTA,,
-Sample_2,Sample_2,,,D702,CGTGTAGG,D501,ATGTAACT,,
-"""
+        sample_sheet_csv = SampleSheets.miseq
         with open(self._path('Data','Intensities','BaseCalls',
                              'SampleSheet.csv'),'w') as fp:
             fp.write(sample_sheet_csv)
@@ -224,63 +555,11 @@ Sample_2,Sample_2,,,D702,CGTGTAGG,D501,ATGTAACT,,
                                     'L%03d' % i,'C%d.1' % k,
                                     's_%d_%d.stats' % (i,j)),'wb+').close()
         # RunInfo.xml
-        run_info_xml = """<?xml version="1.0"?>
-<RunInfo xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Version="2">
-  <Run Id="%s" Number="2">
-    <Flowcell>A00NAABXX</Flowcell>
-    <Instrument>H00002</Instrument>
-    <Date>151113</Date>
-    <Reads>
-      <Read Number="1" NumCycles="101" IsIndexedRead="N" />
-      <Read Number="2" NumCycles="8" IsIndexedRead="Y" />
-      <Read Number="3" NumCycles="8" IsIndexedRead="Y" />
-      <Read Number="4" NumCycles="101" IsIndexedRead="N" />
-    </Reads>
-    <FlowcellLayout LaneCount="8" SurfaceCount="2" SwathCount="3" TileCount="16" />
-    <AlignToPhiX>
-      <Lane>1</Lane>
-      <Lane>2</Lane>
-      <Lane>3</Lane>
-      <Lane>4</Lane>
-      <Lane>5</Lane>
-      <Lane>6</Lane>
-      <Lane>7</Lane>
-      <Lane>8</Lane>
-    </AlignToPhiX>
-  </Run>
-</RunInfo>
-"""
+        run_info_xml = RunInfoXml.hiseq(self.name)
         with open(self._path('RunInfo.xml'),'w') as fp:
-            fp.write(run_info_xml % self.name)
+            fp.write(run_info_xml)
         # SampleSheet.csv
-        sample_sheet_csv = """[Header],,,,,,,,,,
-IEMFileVersion,4,,,,,,,,,
-Date,11/11/2015,,,,,,,,,
-Workflow,GenerateFASTQ,,,,,,,,,
-Application,HiSeq FASTQ Only,,,,,,,,,
-Assay,Nextera XT,,,,,,,,,
-Description,,,,,,,,,,
-Chemistry,Amplicon,,,,,,,,,
-,,,,,,,,,,
-[Reads],,,,,,,,,,
-101,,,,,,,,,,
-101,,,,,,,,,,
-,,,,,,,,,,
-[Settings],,,,,,,,,,
-ReverseComplement,0,,,,,,,,,
-Adapter,CTGTCTCTTATACACATCT,,,,,,,,,
-,,,,,,,,,,
-[Data],,,,,,,,,,
-Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_ID,index2,Sample_Project,Description
-1,AB1,AB1,,,N701,TAAGGCGA,S504,AGAGTAGA,AB,
-2,TM2,TM1,,,N701,TAAGGCGA,S517,GCGTAAGA,TM,
-3,CD3,CD3,,,N701,GTGAAACG,S503,TCTTTCCC,CD,
-4,EB4,EB4,,A1,N701,TAAGGCGA,S501,TAGATCGC,EB,
-5,EB5,EB5,,A3,N703,AGGCAGAA,S501,TAGATCGC,EB,
-6,EB6,EB6,,F3,N703,AGGCAGAA,S506,ACTGCATA,EB,
-7,ML7,ML7,,,N701,GCCAATAT,S502,TCTTTCCC,ML,
-8,VL8,VL8,,,N701,GCCAATAT,S503,TCTTTCCC,VL,
-"""
+        sample_sheet_csv = SampleSheets.hiseq
         with open(self._path('Data','Intensities','BaseCalls',
                              'SampleSheet.csv'),'w') as fp:
             fp.write(sample_sheet_csv)
@@ -322,35 +601,9 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
                 open(self._path('Data','Intensities','BaseCalls','L%03d' % i,
                                 '%04d%s.bci' % (j,bcl_ext)),'wb+').close()
         # RunInfo.xml
-        run_info_xml = """<?xml version="1.0"?>
-<RunInfo xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.o
-rg/2001/XMLSchema-instance" Version="4">
-  <Run Id="%s" Number="1">
-    <Flowcell>ABC1234XX</Flowcell>
-    <Instrument>N000003</Instrument>
-    <Date>151123</Date>
-    <Reads>
-      <Read Number="1" NumCycles="76" IsIndexedRead="N" />
-      <Read Number="2" NumCycles="6" IsIndexedRead="Y" />
-      <Read Number="3" NumCycles="76" IsIndexedRead="N" />
-    </Reads>
-    <FlowcellLayout LaneCount="4" SurfaceCount="2" SwathCount="3" TileCount="12"
- SectionPerLane="3" LanePerSection="2">
-      <TileSet TileNamingConvention="FiveDigit">
-        <Tiles>
-          <Tile>1_11101</Tile>
-          <Tile>1_21101</Tile></Tiles>
-      </TileSet>
-    </FlowcellLayout>
-    <ImageDimensions Width="2592" Height="1944" />
-    <ImageChannels>
-      <Name>Red</Name>
-      <Name>Green</Name>
-    </ImageChannels>
-  </Run>
-</RunInfo>"""
+        run_info_xml = RunInfoXml.nextseq(self.name)
         with open(self._path('RunInfo.xml'),'w') as fp:
-            fp.write(run_info_xml % self.name)
+            fp.write(run_info_xml)
 
     def create(self):
         """

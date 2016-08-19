@@ -864,6 +864,19 @@ class SampleSheet:
     """
     def __init__(self,sample_sheet=None,fp=None):
         """
+        Create a new SampleSheet instance
+
+        The instance will be populated by reading data from
+        either a stream opened for reading, or from a file.
+
+        Arguments:
+          sample_sheet (str): path to a sample file to load
+            data from
+          fp (File): File-like object opened for reading; if
+            this is not None then the SampleSheet object will
+            be populated from this even if a file is also
+            specified
+
         """
         # Input sample sheet
         self.sample_sheet = sample_sheet
@@ -883,7 +896,7 @@ class SampleSheet:
             if self.sample_sheet is not None:
                 with open(self.sample_sheet,'rU') as fp:
                     self._read_sample_sheet(fp)
-        else:
+        elif fp is not None:
             self._read_sample_sheet(fp)
 
     def __getitem__(self,key):
@@ -1008,6 +1021,12 @@ class SampleSheet:
             else:
                 format_ = 'IEM'
         # Set the column names
+        self._set_column_names()
+
+    def _set_column_names(self):
+        """
+        Internal: determine and store the sample id, name and project columns
+        """
         if self._data is not None:
             column_names = self.column_names
             if 'SampleID' in column_names:
