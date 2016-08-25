@@ -27,6 +27,7 @@ class TestSimpleJobRunner(unittest.TestCase):
         return runner.run(*args)
 
     def wait_for_jobs(self,runner,*args):
+        poll_interval = 0.01
         ntries = 0
         running_jobs = True
         # Check running jobs
@@ -36,7 +37,7 @@ class TestSimpleJobRunner(unittest.TestCase):
                 if runner.isRunning(jobid):
                     running_jobs = True
             if running_jobs:
-                time.sleep(0.01)
+                time.sleep(poll_interval)
                 ntries += 1
         # All jobs finished
         if not running_jobs:
@@ -194,18 +195,22 @@ class TestGEJobRunner(unittest.TestCase):
             self.fail("Unable to run GE job")
 
     def wait_for_jobs(self,runner,*args):
-        poll_interval = .1
+        poll_interval = 0.1
         ntries = 0
-        while ntries < 100:
+        running_jobs = True
+        # Check running jobs
+        while ntries < 100 and running_jobs:
+            running_jobs = False
             for jobid in args:
-                # If we find one job still running then loop round
-                if runner.isRunning(jobid) or not os.path.exists(runner.logFile(jobid)):
-                    ntries += 1
-                    time.sleep(poll_interval)
-                    continue
-                # All jobs finished
-                return
-        # At this point we've reach the timeout limit
+                if runner.isRunning(jobid):
+                    running_jobs = True
+            if running_jobs:
+                time.sleep(poll_interval)
+                ntries += 1
+        # All jobs finished
+        if not running_jobs:
+            return
+        # Otherwise we've reached the timeout limit
         for jobid in args:
             # Terminate jobs
             if runner.isRunning(jobid):
