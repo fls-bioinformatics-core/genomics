@@ -75,11 +75,13 @@ class BaseJobRunner:
 
     A job runner needs to implement the following methods:
 
-      run      : starts a job running
-      terminate: kills a running job
-      list     : lists the running job ids
-      logFile  : returns the name of the log file for a job
-      errFile  : returns the name of the error file for a job
+      run        : starts a job running
+      terminate  : kills a running job
+      list       : lists the running job ids
+      logFile    : returns the name of the log file for a job
+      errFile    : returns the name of the error file for a job
+      exit_status: returns the exit status for the command (or
+                   None if the job is still running)
 
     Optionally it can also implement the methods:
 
@@ -144,6 +146,15 @@ class BaseJobRunner:
         """
         return False
 
+    def exit_status(self,job_id):
+        """Return the exit status code for the command
+
+        Return the exit status code from the command that was
+        run by the specified job, or None if the job hasn't
+        exited yet.
+        """
+        return None
+
     @property
     def log_dir(self):
         """Return the current log directory setting
@@ -191,6 +202,8 @@ class SimpleJobRunner(BaseJobRunner):
         # Keep track of log files etc
         self.__log_files = {}
         self.__err_files = {}
+        self.__exit_status = {}
+        self.__job_popen = {}
 
     def __repr__(self):
         return 'SimpleJobRunner'
@@ -245,6 +258,7 @@ class SimpleJobRunner(BaseJobRunner):
         # Do internal house keeping
         self.__job_list.append(job_id)
         self.__log_files[job_id] = lognames[0]
+        self.__job_popen[job_id] = p
         if not self.__join_logs:
             self.__err_files[job_id] = lognames[1]
         else:
@@ -296,36 +310,31 @@ class SimpleJobRunner(BaseJobRunner):
     def list(self):
         """Return a list of running job_ids
         """
-        jobs = self.__run_ps()
-        # Process the output to get job ids
         job_ids = []
-        for job_data in jobs:
-            # Id is second item for each job
-            job_id = job_data[1]
-            if job_id in self.__job_list:
+        for job_id in [jid for jid in self.__job_popen]:
+            p = self.__job_popen[job_id]
+            status = p.poll()
+            if status is None:
                 job_ids.append(job_id)
+            else:
+                logging.debug("Job id %s: finished (%s)" % (job_id,
+                                                            status))
+                self.__exit_status[job_id] = status
+                del(self.__job_popen[job_id])
         return job_ids
 
-    def __run_ps(self):
-        """Internal: run 'ps eu' and return output as list of lines
+    def exit_status(self,job_id):
+        """Return exit status from command run by a job
         """
-        cmd = ['ps','eu']
-        p = subprocess.Popen(cmd,stdout=subprocess.PIPE)
-        # Process the output
-        jobs = []
-        # Typical output is:
-        #USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
-        #mee       2451  0.0  0.0 116424  1928 pts/0    Ss   Oct14   0:00 bash LANG=....
-        # ...
-        # i.e. 1 header line then one line per job/process
-        for line in p.stdout:
-            try:
-                if line.split()[1].isdigit():
-                    jobs.append(line.split())
-            except IndexError:
-                # Skip this line
-                pass
-        return jobs
+        if job_id in self.__job_popen:
+            # Job exists but still running
+            return None
+        # Look for return code
+        try:
+            return self.__exit_status[job_id]
+        except KeyError:
+            logging.error("Don't know anything about job %s" % job_id)
+            return None
 
     def __assign_log_files(self,name,working_dir):
         """Internal: return log file names for stdout and stderr
