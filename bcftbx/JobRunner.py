@@ -282,8 +282,8 @@ class SimpleJobRunner(BaseJobRunner):
             return False
         # Attempt to terminate
         logging.debug("KillJob: deleting job")
-        kill=('kill','-9',job_id)
-        p = subprocess.Popen(kill)
+        p = self.__job_popen[job_id]
+        p.terminate()
         p.wait()
         if job_id not in self.list():
             logging.debug("KillJob: deleted job %s" % job_id)
