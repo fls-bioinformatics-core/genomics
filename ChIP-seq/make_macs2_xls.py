@@ -417,6 +417,10 @@ def xls_for_macs2(macs_xls,row_limit=None,cell_char_limit=None):
             logging.warning("No legend description found for column '%s'" % name)
             legends.append_row(data=(name,name.title()))
 
+    # "Freeze" top line of each 'data' sheet
+    for data in data_sheets:
+        data.freeze_panes = 'A2'
+
     # Return spreadsheet object
     return xls
 
