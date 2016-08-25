@@ -148,6 +148,7 @@ class XLSXLimits:
     """
     Limits for XLSX files
     """
+    MAX_LEN_WORKSHEET_TITLE = 31 # Max worksheet title length
     MAX_LEN_WORKSHEET_CELL_VALUE = 1024 # Maximum no. of characters in cell
     MAX_NUMBER_ROWS_PER_WORKSHEET = 1048576 # Max number of rows per worksheet
     MAX_NUMBER_COLS_PER_WORKSHEET = 16384 # Max nuber of columns per worksheet
