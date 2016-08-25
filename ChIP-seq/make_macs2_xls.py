@@ -329,7 +329,8 @@ def xls_for_macs2(macs_xls,row_limit=None,cell_char_limit=None):
                      'pileup': "Number of non-degenerate and position corrected reads at summit",
                      '-log10(pvalue)': "Transformed Pvalue -log10(Pvalue) for the binding region (e.g. if Pvalue=1e-10, then this value should be 10)",
                      'fold_enrichment': "Fold enrichment for this region against random Poisson distribution with local lambda",
-                     '-log10(qvalue)': "Transformed Qvalue -log10(Pvalue) for the binding region (e.g. if Qvalue=0.05, then this value should be 1.3)"
+                     '-log10(qvalue)': "Transformed Qvalue -log10(Pvalue) for the binding region (e.g. if Qvalue=0.05, then this value should be 1.3)",
+                     'name': "Name"
                  }
 
     # Create a new spreadsheet
