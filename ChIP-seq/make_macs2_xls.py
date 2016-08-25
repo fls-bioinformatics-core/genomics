@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
-#     make_macs2_xls.py: Convert MACS output file to XLS spreadsheet
-#     Copyright (C) University of Manchester 2013-2014 Peter Briggs, Ian Donaldson
+#     make_macs2_xls.py: Convert MACS output file to XLS(X) spreadsheet
+#     Copyright (C) University of Manchester 2013-2016 Peter Briggs, Ian Donaldson
 #
 ########################################################################
 #
@@ -11,9 +11,9 @@
 
 """make_macs2_xls.py
 
-Convert MACS output file to XLS spreadsheet
+Convert MACS output file to XLS(X) spreadsheet
 
-Given tab-delimited output from MACS, creates an XLS spreadsheet with
+Given tab-delimited output from MACS, creates an Excel spreadsheet with
 3 sheets: one containing the tabulated data plus extra columns derived
 from that data (e.g. summit+/-100bps); one containing the header
 information from the input; and one describing what each of the columns
@@ -48,7 +48,7 @@ import profile
 # Module metadata
 #######################################################################
 
-__version__ = '0.3.2'
+__version__ = '0.4.0'
 
 #######################################################################
 # Class definitions
@@ -278,13 +278,15 @@ class MacsXLS:
 # Functions
 #######################################################################
 
-def xls_for_macs2(macs_xls,row_limit=None):
+def xls_for_macs2(macs_xls,row_limit=None,cell_char_limit=None):
     """Create and return XLS workbook object for MACS2 output
 
     Arguments:
       macs_xls: populated MacsXLS object (must be from MACS2)
       row_limit: explicitly specify maximum number of rows per
         output sheet
+      cell_character_limit: explicitly specify maximum number
+        of characters per cell
 
     Returns:
       simple_xls.XLSWorkBook
@@ -303,6 +305,13 @@ def xls_for_macs2(macs_xls,row_limit=None):
         row_limit = simple_xls.Limits.MAX_NUMBER_ROWS_PER_WORKSHEET
     if len(macs_xls.data) > row_limit:
         logging.warning("Data will be split over multiple worksheets on output")
+
+    # Maximum number of characters per cell
+    if cell_char_limit is None:
+        cell_char_limit = simple_xls.Limits.MAX_LEN_WORKSHEET_CELL_VALUE
+
+    # Maximum length of a data sheet title
+    sheet_title_limit = simple_xls.Limits.MAX_LEN_WORKSHEET_TITLE
 
     # Legend descriptions for all possible columns
     legends_text = { 'order': "Sorting order FE",
@@ -340,7 +349,7 @@ def xls_for_macs2(macs_xls,row_limit=None):
         if data.last_row == row_limit:
             sheet_number += 1
             name = "data%d" % sheet_number
-            title = "%s(%d)" % (macs_xls.name[:simple_xls.Limits.MAX_LEN_WORKSHEET_TITLE-4],
+            title = "%s(%d)" % (macs_xls.name[:sheet_title_limit-4],
                                 sheet_number)
             print "Making additional data sheet '%s'" % title
             data = xls.add_work_sheet(name,title)
@@ -388,14 +397,13 @@ def xls_for_macs2(macs_xls,row_limit=None):
 
     # Check for and address too-long "Command line" cell i.e. if it
     # exceeds maximum size for a spreadsheet cell
-    char_limit = simple_xls.Limits.MAX_LEN_WORKSHEET_CELL_VALUE
     for row in range(1,notes.last_row+1):
         if notes['A'][row].startswith("# Command line:"):
             command_line = notes['A'][row]
-            if len(command_line) > char_limit:
+            if len(command_line) > cell_char_limit:
                 # Chop up command line string over multiple cells
                 logging.warning("Splitting command line over multiple cells")
-                row_data = chunk(command_line,char_limit,delimiter=' ')
+                row_data = chunk(command_line,cell_char_limit,delimiter=' ')
                 notes.write_row(row,data=row_data)
         
     # Build the 'legends' sheet based on content of 'data'
@@ -408,6 +416,10 @@ def xls_for_macs2(macs_xls,row_limit=None):
         except KeyError:
             logging.warning("No legend description found for column '%s'" % name)
             legends.append_row(data=(name,name.title()))
+
+    # "Freeze" top line of each 'data' sheet
+    for data in data_sheets:
+        data.freeze_panes = 'A2'
 
     # Return spreadsheet object
     return xls
@@ -976,7 +988,7 @@ class TestChunkFunction(unittest.TestCase):
 # Main program
 #######################################################################
 
-def main(macs_file,xls_out):
+def main(macs_file,xls_out,xls_format="xlsx"):
     """Driver function
 
     Wraps core functionality of program to facilitate
@@ -984,9 +996,14 @@ def main(macs_file,xls_out):
     
     Arguments:
       macs_file: output .xls file from MACS peak caller
-      xls_out: name to write output XL spreadsheet file to
+      xls_out: name to write output XLS spreadsheet file to
+      xls_format: optional, specify the XLS output format
+        (either 'xls' or 'xlsx'; default is 'xlsx')
     
     """
+    # Check requested XLS format
+    if xls_format not in ('xls','xlsx'):
+        raise Exception("Unrecognised XLS format: %s" % xls_format)
 
     # Load the data from the file
     print "Reading data...",
@@ -1003,41 +1020,62 @@ def main(macs_file,xls_out):
 
     # Create XLS file
     print "Generating XLS file"
+    if xls_format == "xlsx":
+        xls_max_rows = simple_xls.XLSXLimits.MAX_NUMBER_ROWS_PER_WORKSHEET
+        xls_cell_width = simple_xls.XLSXLimits.MAX_LEN_WORKSHEET_CELL_VALUE
+    elif xls_format == "xls":
+        xls_max_rows = simple_xls.XLSLimits.MAX_NUMBER_ROWS_PER_WORKSHEET
+        xls_cell_width = simple_xls.XLSLimits.MAX_LEN_WORKSHEET_CELL_VALUE
     try:
-        xls = xls_for_macs2(macs_xls)
+        xls = xls_for_macs2(macs_xls,
+                            row_limit=xls_max_rows,
+                            cell_char_limit=xls_cell_width)
     except Exception,ex:
         logging.error("failed to convert to XLS: %s" % ex)
         sys.exit(1)
-    xls.save_as_xls(xls_out)
+    if xls_format == "xlsx":
+        xls.save_as_xlsx(xls_out)
+    elif xls_format == "xls":
+        xls.save_as_xls(xls_out)
     print "Finished"
 
 if __name__ == "__main__":
     # Process command line
-    p = optparse.OptionParser(usage="%prog <MACS2_OUTPUT> [ <XLS_OUT> ]",
+    p = optparse.OptionParser(usage="%prog OPTIONS MACS2_XLS [ XLS_OUT ]",
                               version=__version__,
                               description=
-                              "Create an XLS spreadsheet from the output of version 2.0.10 "
-                              "of the MACS peak caller. <MACS2_OUTPUT> is the output '.xls' "
-                              "file from MACS2; if supplied then <XLS_OUT> is the name to use "
-                              "for the output file, otherwise it will be called "
-                              "'XLS_<MACS2_OUTPUT>.xls'.")
+                              "Create an XLS(X) spreadsheet from the output "
+                              "of the MACS2 peak caller. MACS2_XLS is the "
+                              "output '.xls' file from MACS2; if supplied "
+                              "then XLS_OUT is the name to use for the output "
+                              "file (otherwise it will be called "
+                              "'XLS_<MACS2_XLS>.xls(x)'.")
+    p.add_option("-f","--format",
+                 action="store",dest="xls_format",default="xlsx",
+                 help="specify the output Excel spreadsheet format; must be "
+                 "one of 'xlsx' or 'xls' (default is 'xlsx')")
     options,args = p.parse_args()
     # Get input file name
     if len(args) < 1 or len(args) > 2:
         p.error("Wrong number of arguments")
     macs_in = args[0]
+    # Get output Excel format
+    xls_format = str(options.xls_format).lower()
+    if xls_format not in ('xls','xlsx'):
+        p.error("Unrecognised Excel format: %s" % xls_format)
     # Report version
     print "%s %s" % (os.path.basename(sys.argv[0]),__version__)
     # Build output file name: if not explicitly supplied on the command
-    # line then use "XLS_<input_name>.xls"
+    # line then use "XLS_<input_name>.<xls_format>"
     if len(args) == 2:
         xls_out = args[1]
     else:
         # MACS output file might already have an .xls extension
         # but we'll add an explicit .xls extension
-        xls_out = "XLS_"+os.path.splitext(os.path.basename(macs_in))[0]+".xls"
+        xls_out = "XLS_"+os.path.splitext(os.path.basename(macs_in))[0]+\
+                  "."+xls_format
     print "Input file: %s" % macs_in
     print "Output XLS: %s" % xls_out
     ##profile.run("main(macs_in,xls_out)")
-    main(macs_in,xls_out)
+    main(macs_in,xls_out,xls_format=xls_format)
 

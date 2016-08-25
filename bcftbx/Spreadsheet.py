@@ -321,6 +321,9 @@ class Worksheet:
         self.styles = Styles()
         # Maximum column widths
         self.max_col_width = []
+        # Freeze panes
+        self.freeze_row = 0
+        self.freeze_col = 0
 
     def addTabData(self,rows):
         """Write a list of tab-delimited data rows to the sheet.
@@ -483,6 +486,16 @@ class Worksheet:
             # Column name not found
             raise IndexError, "Column '%s' not found" % name
 
+    def freezePanes(self,row=None,column=None):
+        """Split panes and mark as frozen
+
+        'row' and 'column' are integer indices specifying the
+        cell which defines the pane to be marked as frozen
+
+        """
+        self.freeze_row = int(row)
+        self.freeze_col = int(column)
+
     def column_id_from_index(self,i):
         """Get XLS column id from index of column
 
@@ -606,6 +619,11 @@ class Worksheet:
                 except ValueError, ex:
                     logging.error("couldn't write item to sheet '%s' (row %d col %d)" %
                                   (self.title,self.current_row+1,cindex+1))
+        # Freeze panes
+        self.worksheet.set_horz_split_pos(self.freeze_row)
+        self.worksheet.set_vert_split_pos(self.freeze_col)
+        if self.freeze_row or self.freeze_col:
+            self.worksheet.set_panes_frozen(True)
         # Update/reset the sheet properties etc
         self.data = []
         self.is_new = False

@@ -38,7 +38,8 @@ setup(name = "genomics-bcftbx",
       # Pull in dependencies
       install_requires = ['xlwt >= 0.7.2',
                           'xlrd >= 0.7.1',
-                          'xlutils >= 1.4.1'],
+                          'xlutils >= 1.4.1',
+                          'xlsxwriter >= 0.8.4',],
       # Enable 'python setup.py test'
       test_suite='nose.collector',
       tests_require=['nose'],

@@ -119,6 +119,7 @@ import re
 from collections import Iterator
 import logging
 import Spreadsheet
+import xlsxwriter
 from utils import OrderedDictionary
 
 #######################################################################
@@ -134,10 +135,27 @@ class NumberFormats:
     PERCENTAGE=1
 
 # Spreadsheet limits
-class Limits:
+class XLSLimits:
+    """
+    Limits for XLS files
+    """
     MAX_LEN_WORKSHEET_TITLE = 31 # Max worksheet title length
     MAX_LEN_WORKSHEET_CELL_VALUE = 250 # Maximum no. of characters in cell
     MAX_NUMBER_ROWS_PER_WORKSHEET = 65536 # Max number of rows per worksheet
+    MAX_NUMBER_COLS_PER_WORKSHEET = 256 # Max nuber of columns per worksheet
+
+class XLSXLimits:
+    """
+    Limits for XLSX files
+    """
+    MAX_LEN_WORKSHEET_CELL_VALUE = 1024 # Maximum no. of characters in cell
+    MAX_NUMBER_ROWS_PER_WORKSHEET = 1048576 # Max number of rows per worksheet
+    MAX_NUMBER_COLS_PER_WORKSHEET = 16384 # Max nuber of columns per worksheet
+
+class Limits(XLSLimits):
+    """
+    Limits for XLS files (kept for backwards compatibility)
+    """
 
 #######################################################################
 # Class definitions
@@ -213,7 +231,89 @@ class XLSWorkBook:
             worksheet = self.worksheet[name]
             ws = xls.addSheet(worksheet.title)
             ws.addText(worksheet.render_as_text(include_styles=True))
+            if worksheet.freeze_panes is not None:
+                col = column_index_to_integer(
+                    CellIndex(worksheet.freeze_panes).column)
+                row = CellIndex(worksheet.freeze_panes).row - 1
+                ws.freezePanes(column=col,row=row)
         xls.save(filen)
+
+    def save_as_xlsx(self,filen):
+        """Output the workbook contents to an XLSX-format file
+
+        Arguments:
+          filen: name of the file to write the workbook to.
+
+        """
+        xlsx = xlsxwriter.Workbook(filen)
+        styles = {}
+        default_min_col_width = 7
+        for name in self.worksheet:
+            worksheet = self.worksheet[name]
+            ws = xlsx.add_worksheet(worksheet.title)
+            # Write content to worksheet cell by cell
+            start = CellIndex('A1')
+            end = CellIndex(cell(worksheet.last_column,
+                                 worksheet.last_row))
+            for col in ColumnRange(start.column,end.column):
+                # Maximum column width
+                max_width = default_min_col_width
+                for row in xrange(start.row,end.row+1):
+                    # Get the value
+                    value = worksheet.render_cell(cell(col,row),
+                                                  eval_formulae=False,
+                                                  apply_format=False)
+                    # Handle styles for this cell
+                    style = worksheet.get_style(cell(col,row))
+                    if style:
+                        style_name = style.name
+                        try:
+                            xlsx_fmt = styles[style_name]
+                        except KeyError:
+                            xlsx_fmt = xlsx.add_format()
+                            if style.bold:
+                                xlsx_fmt.set_bold()
+                            if style.color is not None:
+                                xlsx_fmt.set_color(style.color)
+                            if style.bgcolor is not None:
+                                xlsx_fmt.set_bg_color(style.bgcolor)
+                            if style.font_size is not None:
+                                xlsx_fmt.set_font_size(style.font_size)
+                            styles[style_name] = xlsx_fmt
+                    else:
+                        xlsx_fmt = None
+                    # Deal with cell content
+                    if value.startswith('='):
+                        # Cell contains formula
+                        result = eval_formula(value,worksheet)
+                        ws.write_formula(cell(col,row),value,xlsx_fmt,result)
+                        col_width = len(str(result))
+                    else:
+                        # Deal with a data item
+                        # Attempt to convert to a number type
+                        # i.e. integer/float
+                        try:
+                            # Try integer
+                            value = int(str(value))
+                        except ValueError:
+                            # Not an integer, try float
+                            try:
+                                value = float(str(value))
+                            except ValueError:
+                                # Not a float either
+                                pass
+                        # Write to the worksheet
+                        ws.write(cell(col,row),value,xlsx_fmt)
+                        col_width = len(str(value))
+                    # Handle column widths
+                    max_width = max(max_width,col_width)
+                # Set the column width
+                icol = column_index_to_integer(col)
+                ws.set_column(icol,icol,max_width*1.2)
+            # Handle freeze panes
+            if worksheet.freeze_panes is not None:
+                ws.freeze_panes(worksheet.freeze_panes)
+        xlsx.close()
 
 class XLSWorkSheet:
     """Class for creating sheets within an XLS workbook.
@@ -292,6 +392,7 @@ class XLSWorkSheet:
         self.styles = {}
         self.rows = []
         self.columns = []
+        self.freeze_panes = None
 
     def __setitem__(self,idx,value):
         """Implement 'x[idx] = value'
@@ -1039,6 +1140,12 @@ class XLSStyle:
     centre: whether text is centred in the cell (boolean)
     shrink_to_fit: whether to shrink cell to fit the contents.
 
+    The 'name' property can be used to generate a name for the style
+    based on the attributes that have been set, for example:
+
+    >>> XLSStyle(bold=true).name
+    ... '__bold__'
+
     """
     def __init__(self,bold=False,color=None,bgcolor=None,wrap=False,
                  border=None,number_format=None,font_size=None,centre=False,
@@ -1057,6 +1164,47 @@ class XLSStyle:
         self.font_size = font_size
         self.centre = centre
         self.shrink_to_fit = shrink_to_fit
+
+    def __nonzero__(self):
+        return \
+            (self.bold) or \
+            (self.color is not None) or \
+            (self.bgcolor is not None) or \
+            (self.wrap) or \
+            (self.border is not None) or \
+            (self.number_format is not None) or \
+            (self.font_size is not None) or \
+            (self.centre) or \
+            (self.shrink_to_fit)
+
+    @property
+    def name(self):
+        """Return a name based on the attributes
+        """
+        name = []
+        if self.bold:
+            name.append('bold')
+        if self.color is not None:
+            name.append('color=%s' % self.color)
+        if self.bgcolor is not None:
+            name.append('bgcolor=%s' % self.bgcolor)
+        if self.wrap:
+            name.append('wrap')
+        if self.border is not None:
+            name.append('border=%s' % self.border)
+        if self.number_format is not None:
+            name.append('number_format=%s' % self.number_format)
+        if self.font_size is not None:
+            name.append('font_size=%s' % self.font_size)
+        if self.centre:
+            name.append('centre')
+        if self.shrink_to_fit:
+            name.append('shrink_to_fit')
+        name = '__'.join(name)
+        if name:
+            return '__%s__' % name
+        else:
+            return ''
 
     def style(self,item):
         """Wrap 'item' with <style...>...</style> tags
@@ -1506,5 +1654,39 @@ if __name__ == "__main__":
 
     print data.render_as_text(start='B1',end='C6',include_columns_and_rows=True)
 
+    # Examples rendering into XLS and XLSX output
+    wb = XLSWorkBook("Test")
+    ws = wb.add_work_sheet('test','Test')
+    # Text
+    ws['A1'] = "Arbitrary text"
+    # Formula
+    ws['A3'] = "Formula example:"
+    ws['A5'] = 2
+    ws['B5'] = 5
+    ws['A6'] = "Sum"
+    ws['B6'] = "=A5+B5"
+    # Set styles on formula
+    ws.set_style(XLSStyle(bold=True),'A6')
+    ws.set_style(XLSStyle(bold=True),'B6')
+    # More style examples
+    ws['A9'] = "Bold"
+    ws.set_style(XLSStyle(bold=True),'A9')
+    ws['A10'] = "Red"
+    ws.set_style(XLSStyle(color='red'),'A10')
+    ws['A11'] = "White on green"
+    ws.set_style(XLSStyle(bold=True,color='white',bgcolor='green'),'A11')
+    ws['A12'] = "Black on gray"
+    ws.set_style(XLSStyle(bold=True,color='black',bgcolor='gray25'),'A12')
+    # Freeze panes
+    ws = wb.add_work_sheet('freeze','Freeze')
+    ws.append_row(data=('X','Y','Z'),
+                  style=XLSStyle(color='white',
+                                 bgcolor='green',
+                                 bold=True))
+    for i in xrange(100):
+        ws.append_row(data=(i,i*2,'=A?+B?'))
+    ws.freeze_panes = 'A2'
+    # Save out to XLS(X) files
     wb.save_as_xls('test.xls')
-                               
+    wb.save_as_xlsx('test.xlsx')
+
