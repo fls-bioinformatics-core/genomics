@@ -1724,6 +1724,447 @@ This,isTheEnd
 """)
         self.assertRaises(IlluminaDataError,IEMSampleSheet,fp=fp)
 
+class TestSampleSheetPredictor(unittest.TestCase):
+    def setUp(self):
+        self.hiseq_sample_sheet_content = """[Header]
+IEMFileVersion,4
+Date,06/03/2014
+Workflow,GenerateFASTQ
+Application,HiSeq FASTQ Only
+Assay,Nextera
+Description,
+Chemistry,Amplicon
+
+[Reads]
+101
+101
+
+[Settings]
+ReverseComplement,0
+Adapter,CTGTCTCTTATACACATCT
+
+[Data]
+Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_ID,index2,Sample_Project,Description
+1,PJB1-1579,PJB1-1579,,,N701,CGATGTAT,N501,TCTTTCCC,PeterBriggs,
+1,PJB2-1580,PJB2-1580,,,N702,TGACCAAT,N502,TCTTTCCC,PeterBriggs,
+2,PJB1-1579,PJB1-1579,,,N701,CGATGTAT,N501,TCTTTCCC,PeterBriggs,
+2,PJB2-1580,PJB2-1580,,,N702,TGACCAAT,N502,TCTTTCCC,PeterBriggs,
+"""
+        self.miseq_sample_sheet_content = """[Header]
+IEMFileVersion,4
+Date,4/11/2014
+Workflow,Metagenomics
+Application,Metagenomics 16S rRNA
+Assay,Nextera XT
+Description,
+Chemistry,Amplicon
+
+[Reads]
+150
+150
+
+[Settings]
+Adapter,CTGTCTCTTATACACATCT
+
+[Data]
+Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_ID,index2,Sample_Project,Description
+A8,A8,,,N701,TAAGGCGA,S501,TAGATCGC,PJB,
+B8,B8,,,N702,CGTACTAG,S501,TAGATCGC,PJB,
+"""
+        self.casava_sample_sheet_content = """FCID,Lane,SampleID,SampleRef,Index,Description,Control,Recipe,Operator,SampleProject
+DADA331XX,1,PhiX,PhiX control,CTGCCT,Control,,,Peter,Control
+DADA331XX,2,884-1,PB-884-1,AGTCAA,RNA-seq,,,Peter,AR
+DADA331XX,3,885-1,PB-885-1,AGTTCC,RNA-seq,,,Peter,AR
+DADA331XX,4,886-1,PB-886-1,ATGTCA,RNA-seq,,,Peter,AR
+DADA331XX,5,884-1,PB-884-1,AGTCAA,RNA-seq,,,Peter,AR
+DADA331XX,6,885-1,PB-885-1,AGTTCC,RNA-seq,,,Peter,AR
+DADA331XX,7,886-1,PB-886-1,ATGTCA,RNA-seq,,,Peter,AR
+DADA331XX,8,PhiX,PhiX control,CTGCCT,Control,,,Peter,Control
+"""
+        self.hiseq_sample_sheet_id_and_name_differ_content = """[Header]
+IEMFileVersion,4
+Date,06/03/2014
+Workflow,GenerateFASTQ
+Application,HiSeq FASTQ Only
+Assay,Nextera
+Description,
+Chemistry,Amplicon
+
+[Reads]
+101
+101
+
+[Settings]
+ReverseComplement,0
+Adapter,CTGTCTCTTATACACATCT
+
+[Data]
+Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_ID,index2,Sample_Project,Description
+1,PJB1,PJB1-1579,,,N701,CGATGTAT,N501,TCTTTCCC,PeterBriggs,
+1,PJB2,PJB2-1580,,,N702,TGACCAAT,N502,TCTTTCCC,PeterBriggs,
+2,PJB1,PJB1-1579,,,N701,CGATGTAT,N501,TCTTTCCC,PeterBriggs,
+2,PJB2,PJB2-1580,,,N702,TGACCAAT,N502,TCTTTCCC,PeterBriggs,
+"""
+
+        self.hiseq_sample_sheet_no_barcodes = """[Header]
+IEMFileVersion,4
+Date,06/03/2014
+Workflow,GenerateFASTQ
+Application,HiSeq FASTQ Only
+Assay,Nextera
+Description,
+Chemistry,Amplicon
+
+[Reads]
+101
+101
+
+[Settings]
+ReverseComplement,0
+Adapter,CTGTCTCTTATACACATCT
+
+[Data]
+Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_ID,index2,Sample_Project,Description
+1,PJB1,PJB1,,,,,,,PeterBriggs,
+2,PJB2,PJB2,,,,,,,PeterBriggs,
+"""
+
+    def test_samplesheet_predictor_iem_with_lanes(self):
+        """SampleSheetPredictor: handle IEM4 sample sheet with lanes
+        """
+        iem = SampleSheet(fp=cStringIO.StringIO(
+            self.hiseq_sample_sheet_content))
+        predictor = SampleSheetPredictor(fp=iem)
+        # Get projects
+        self.assertEqual(predictor.nprojects,1)
+        self.assertEqual(predictor.project_names,["PeterBriggs"])
+        project = predictor.get_project("PeterBriggs")
+        self.assertRaises(KeyError,predictor.get_project,"DoesntExist")
+        # Get samples
+        self.assertEqual(project.sample_ids,["PJB1-1579","PJB2-1580"])
+        sample1 = project.get_sample("PJB1-1579")
+        sample2 = project.get_sample("PJB2-1580")
+        self.assertRaises(KeyError,project.get_sample,"DoesntExist")
+        # Check sample barcodes and lanes
+        self.assertEqual(sample1.barcode_seqs,["CGATGTAT-TCTTTCCC"])
+        self.assertEqual(sample2.barcode_seqs,["TGACCAAT-TCTTTCCC"])
+        self.assertEqual(sample1.lanes("CGATGTAT-TCTTTCCC"),(1,2))
+        self.assertEqual(sample2.lanes("TGACCAAT-TCTTTCCC"),(1,2))
+        self.assertEqual(sample1.s_index,1)
+        self.assertEqual(sample2.s_index,2)
+        # Predict output fastqs bcl2fastq2
+        predictor.set(package="bcl2fastq2")
+        self.assertEqual(project.dir_name,"PeterBriggs")
+        self.assertEqual(sample1.dir_name,None)
+        self.assertEqual(sample1.fastqs(),
+                         ["PJB1-1579_S1_L001_R1_001.fastq.gz",
+                          "PJB1-1579_S1_L002_R1_001.fastq.gz"])
+        self.assertEqual(sample2.dir_name,None)
+        self.assertEqual(sample2.fastqs(),
+                         ["PJB2-1580_S2_L001_R1_001.fastq.gz",
+                          "PJB2-1580_S2_L002_R1_001.fastq.gz"])
+        # Predict output fastqs bcl2fastq2 with no lane splitting
+        predictor.set(package="bcl2fastq2",
+                      no_lane_splitting=True)
+        self.assertEqual(project.dir_name,"PeterBriggs")
+        self.assertEqual(sample1.dir_name,None)
+        self.assertEqual(sample1.fastqs(),
+                         ["PJB1-1579_S1_R1_001.fastq.gz"])
+        self.assertEqual(sample2.fastqs(),
+                         ["PJB2-1580_S2_R1_001.fastq.gz"])
+        # Predict output fastqs bcl2fastq2 paired end
+        predictor.set(package="bcl2fastq2",
+                      paired_end=True)
+        self.assertEqual(project.dir_name,"PeterBriggs")
+        self.assertEqual(sample1.dir_name,None)
+        self.assertEqual(sample1.fastqs(),
+                         ["PJB1-1579_S1_L001_R1_001.fastq.gz",
+                          "PJB1-1579_S1_L001_R2_001.fastq.gz",
+                          "PJB1-1579_S1_L002_R1_001.fastq.gz",
+                          "PJB1-1579_S1_L002_R2_001.fastq.gz"])
+        self.assertEqual(sample2.dir_name,None)
+        self.assertEqual(sample2.fastqs(),
+                         ["PJB2-1580_S2_L001_R1_001.fastq.gz",
+                          "PJB2-1580_S2_L001_R2_001.fastq.gz",
+                          "PJB2-1580_S2_L002_R1_001.fastq.gz",
+                          "PJB2-1580_S2_L002_R2_001.fastq.gz"])
+        # Predict output fastqs bcl2fastq2 paired end with
+        # no lane splitting
+        predictor.set(package="bcl2fastq2",
+                      no_lane_splitting=True,
+                      paired_end=True)
+        self.assertEqual(project.dir_name,"PeterBriggs")
+        self.assertEqual(sample1.dir_name,None)
+        self.assertEqual(sample1.fastqs(),
+                         ["PJB1-1579_S1_R1_001.fastq.gz",
+                          "PJB1-1579_S1_R2_001.fastq.gz"])
+        self.assertEqual(sample2.dir_name,None)
+        self.assertEqual(sample2.fastqs(),
+                         ["PJB2-1580_S2_R1_001.fastq.gz",
+                          "PJB2-1580_S2_R2_001.fastq.gz"])
+        # Predict output fastqs CASAVA/bcl2fastq 1.8*
+        predictor.set(package="casava")
+        self.assertEqual(project.dir_name,"Project_PeterBriggs")
+        self.assertEqual(sample1.dir_name,"Sample_PJB1")
+        self.assertEqual(sample1.fastqs(),
+                         ["PJB1-1579_CGATGTAT-TCTTTCCC_L001_R1_001.fastq.gz",
+                          "PJB1-1579_CGATGTAT-TCTTTCCC_L002_R1_001.fastq.gz"])
+        self.assertEqual(sample2.dir_name,"Sample_PJB2")
+        self.assertEqual(sample2.fastqs(),
+                         ["PJB2-1580_TGACCAAT-TCTTTCCC_L001_R1_001.fastq.gz",
+                          "PJB2-1580_TGACCAAT-TCTTTCCC_L002_R1_001.fastq.gz"])
+        # Predict output fastqs CASAVA/bcl2fastq 1.8* paired end
+        predictor.set(package="casava",
+                      paired_end=True)
+        self.assertEqual(project.dir_name,"Project_PeterBriggs")
+        self.assertEqual(sample1.dir_name,"Sample_PJB1")
+        self.assertEqual(sample1.fastqs(),
+                         ["PJB1-1579_CGATGTAT-TCTTTCCC_L001_R1_001.fastq.gz",
+                          "PJB1-1579_CGATGTAT-TCTTTCCC_L001_R2_001.fastq.gz",
+                          "PJB1-1579_CGATGTAT-TCTTTCCC_L002_R1_001.fastq.gz",
+                          "PJB1-1579_CGATGTAT-TCTTTCCC_L002_R2_001.fastq.gz"])
+        self.assertEqual(sample2.dir_name,"Sample_PJB2")
+        self.assertEqual(sample2.fastqs(),
+                         ["PJB2-1580_TGACCAAT-TCTTTCCC_L001_R1_001.fastq.gz",
+                          "PJB2-1580_TGACCAAT-TCTTTCCC_L001_R2_001.fastq.gz",
+                          "PJB2-1580_TGACCAAT-TCTTTCCC_L002_R1_001.fastq.gz",
+                          "PJB2-1580_TGACCAAT-TCTTTCCC_L002_R2_001.fastq.gz"])
+
+    def test_samplesheet_predictor_iem_no_lanes(self):
+        """SampleSheetPredictor: handle IEM4 sample sheet with no lanes
+        """
+        iem = SampleSheet(fp=cStringIO.StringIO(
+            self.miseq_sample_sheet_content))
+        predictor = SampleSheetPredictor(fp=iem)
+        # Get projects
+        self.assertEqual(predictor.nprojects,1)
+        self.assertEqual(predictor.project_names,["PJB"])
+        project = predictor.get_project("PJB")
+        self.assertRaises(KeyError,predictor.get_project,"DoesntExist")
+        # Get samples
+        self.assertEqual(project.sample_ids,["A8","B8"])
+        sample1 = project.get_sample("A8")
+        sample2 = project.get_sample("B8")
+        self.assertRaises(KeyError,project.get_sample,"DoesntExist")
+        # Check barcodes and lanes
+        self.assertEqual(sample1.barcode_seqs,["TAAGGCGA-TAGATCGC"])
+        self.assertEqual(sample2.barcode_seqs,["CGTACTAG-TAGATCGC"])
+        self.assertEqual(sample1.lanes("TAAGGCGA-TAGATCGC"),())
+        self.assertEqual(sample2.lanes("CGTACTAG-TAGATCGC"),())
+        self.assertEqual(sample1.s_index,1)
+        self.assertEqual(sample2.s_index,2)
+        # Predict output fastqs bcl2fastq2
+        predictor.set(package="bcl2fastq2")
+        self.assertEqual(sample1.fastqs(),
+                         ["A8_S1_L001_R1_001.fastq.gz"])
+        self.assertEqual(sample2.fastqs(),
+                         ["B8_S2_L001_R1_001.fastq.gz"])
+        # Predict output fastqs bcl2fastq2 with no lane splitting
+        predictor.set(package="bcl2fastq2",
+                      no_lane_splitting=True)
+        self.assertEqual(sample1.fastqs(),
+                         ["A8_S1_R1_001.fastq.gz"])
+        self.assertEqual(sample2.fastqs(),
+                         ["B8_S2_R1_001.fastq.gz"])
+        # Predict output fastqs bcl2fastq2 paired end
+        predictor.set(package="bcl2fastq2",
+                      paired_end=True)
+        self.assertEqual(sample1.fastqs(),
+                         ["A8_S1_L001_R1_001.fastq.gz",
+                          "A8_S1_L001_R2_001.fastq.gz"])
+        self.assertEqual(sample2.fastqs(),
+                         ["B8_S2_L001_R1_001.fastq.gz",
+                          "B8_S2_L001_R2_001.fastq.gz"])
+        # Predict output fastqs bcl2fastq2 paired end with
+        # no lane splitting
+        predictor.set(package="bcl2fastq2",
+                      no_lane_splitting=True,
+                      paired_end=True)
+        self.assertEqual(sample1.fastqs(),
+                         ["A8_S1_R1_001.fastq.gz",
+                          "A8_S1_R2_001.fastq.gz"])
+        self.assertEqual(sample2.fastqs(),
+                         ["B8_S2_R1_001.fastq.gz",
+                          "B8_S2_R2_001.fastq.gz"])
+        # Predict output fastqs bcl2fastq2 paired end with
+        # explicitly specified lanes
+        predictor.set(package="bcl2fastq2",
+                      lanes=(1,2),
+                      paired_end=True)
+        self.assertEqual(sample1.fastqs(),
+                         ["A8_S1_L001_R1_001.fastq.gz",
+                          "A8_S1_L001_R2_001.fastq.gz",
+                          "A8_S1_L002_R1_001.fastq.gz",
+                          "A8_S1_L002_R2_001.fastq.gz"])
+        self.assertEqual(sample2.fastqs(),
+                         ["B8_S2_L001_R1_001.fastq.gz",
+                          "B8_S2_L001_R2_001.fastq.gz",
+                          "B8_S2_L002_R1_001.fastq.gz",
+                          "B8_S2_L002_R2_001.fastq.gz"])
+        # Predict output fastqs CASAVA/bcl2fastq 1.8*
+        predictor.set(package="casava")
+        self.assertEqual(sample1.fastqs(package="casava"),
+                         ["A8_TAAGGCGA-TAGATCGC_L001_R1_001.fastq.gz"])
+        self.assertEqual(sample2.fastqs(package="casava"),
+                         ["B8_CGTACTAG-TAGATCGC_L001_R1_001.fastq.gz"])
+        # Predict output fastqs CASAVA/bcl2fastq 1.8* paired end
+        predictor.set(package="casava",
+                      paired_end=True)
+        self.assertEqual(sample1.fastqs(),
+                         ["A8_TAAGGCGA-TAGATCGC_L001_R1_001.fastq.gz",
+                          "A8_TAAGGCGA-TAGATCGC_L001_R2_001.fastq.gz"])
+        self.assertEqual(sample2.fastqs(),
+                         ["B8_CGTACTAG-TAGATCGC_L001_R1_001.fastq.gz",
+                          "B8_CGTACTAG-TAGATCGC_L001_R2_001.fastq.gz"])
+        # Predict output fastqs CASAVA/bcl2fastq 1.8* paired end
+        # and explicitly specify lanes
+        predictor.set(package="casava",
+                      lanes=(1,2),
+                      paired_end=True)
+        self.assertEqual(sample1.fastqs(),
+                         ["A8_TAAGGCGA-TAGATCGC_L001_R1_001.fastq.gz",
+                          "A8_TAAGGCGA-TAGATCGC_L001_R2_001.fastq.gz",
+                          "A8_TAAGGCGA-TAGATCGC_L002_R1_001.fastq.gz",
+                          "A8_TAAGGCGA-TAGATCGC_L002_R2_001.fastq.gz"])
+        self.assertEqual(sample2.fastqs(),
+                          ["B8_CGTACTAG-TAGATCGC_L001_R1_001.fastq.gz",
+                           "B8_CGTACTAG-TAGATCGC_L001_R2_001.fastq.gz",
+                           "B8_CGTACTAG-TAGATCGC_L002_R1_001.fastq.gz",
+                           "B8_CGTACTAG-TAGATCGC_L002_R2_001.fastq.gz"])
+
+    def test_samplesheet_predictor_casava(self):
+        """SampleSheetPredictor: handle CASAVA-style sample sheet
+        """
+        casava = SampleSheet(fp=cStringIO.StringIO(
+            self.casava_sample_sheet_content))
+        predictor = SampleSheetPredictor(fp=casava)
+        self.assertEqual(predictor.nprojects,2)
+        self.assertEqual(predictor.project_names,["AR","Control"])
+        self.assertRaises(KeyError,predictor.get_project,"DoesntExist")
+        # Get projects
+        project1 = predictor.get_project("Control")
+        project2 = predictor.get_project("AR")
+        self.assertEqual(project1.sample_ids,["PhiX"])
+        self.assertEqual(project2.sample_ids,["884-1","885-1","886-1"])
+        # Get samples
+        sample1 = project1.get_sample("PhiX")
+        sample2 = project2.get_sample("884-1")
+        sample3 = project2.get_sample("885-1")
+        sample4 = project2.get_sample("886-1")
+        self.assertRaises(KeyError,project1.get_sample,"DoesntExist")
+        self.assertRaises(KeyError,project2.get_sample,"DoesntExist")
+        # Check assigned barcodes and lanes
+        self.assertEqual(sample1.barcode_seqs,["CTGCCT"])
+        self.assertEqual(sample2.barcode_seqs,["AGTCAA"])
+        self.assertEqual(sample3.barcode_seqs,["AGTTCC"])
+        self.assertEqual(sample4.barcode_seqs,["ATGTCA"])
+        self.assertEqual(sample1.lanes("CTGCCT"),(1,8))
+        self.assertEqual(sample2.lanes("AGTCAA"),(2,5))
+        self.assertEqual(sample3.lanes("AGTTCC"),(3,6))
+        self.assertEqual(sample4.lanes("ATGTCA"),(4,7))
+        self.assertEqual(sample1.s_index,1)
+        self.assertEqual(sample2.s_index,2)
+        self.assertEqual(sample3.s_index,3)
+        self.assertEqual(sample4.s_index,4)
+        # Predict output fastqs bcl2fastq2
+        predictor.set(package="bcl2fastq2")
+        self.assertEqual(sample1.fastqs(),
+                         ["PhiX_S1_L001_R1_001.fastq.gz"])
+        self.assertEqual(sample2.fastqs(),
+                         ["884-1_S2_L001_R1_001.fastq.gz"])
+        self.assertEqual(sample3.fastqs(),
+                         ["885-1_S3_L001_R1_001.fastq.gz"])
+        self.assertEqual(sample4.fastqs(),
+                         ["886-1_S4_L001_R1_001.fastq.gz"])
+        # Predict output fastqs CASAVA/bcl2fastq 1.8*
+        predictor.set(package="casava")
+        self.assertEqual(sample1.fastqs(),
+                         ["PhiX_CTGCCT_L001_R1_001.fastq.gz"])
+        self.assertEqual(sample2.fastqs(),
+                         ["884-1_AGTCAA_L001_R1_001.fastq.gz"])
+        self.assertEqual(sample3.fastqs(),
+                         ["885-1_AGTTCC_L001_R1_001.fastq.gz"])
+        self.assertEqual(sample3.fastqs(),
+                         ["886-1_ATGTCA_L001_R1_001.fastq.gz"])
+
+    def test_samplesheet_predictor_iem_id_and_names_differ(self):
+        iem = SampleSheet(fp=cStringIO.StringIO(
+            self.hiseq_sample_sheet_id_and_name_differ_content))
+        """SampleSheetPredictor: handle IEM4 sample sheet with lanes
+        """
+        iem = SampleSheet(fp=cStringIO.StringIO(
+            self.hiseq_sample_sheet_content))
+        predictor = SampleSheetPredictor(fp=iem)
+        # Get projects
+        self.assertEqual(predictor.nprojects,1)
+        self.assertEqual(predictor.project_names,["PeterBriggs"])
+        project = predictor.get_project("PeterBriggs")
+        self.assertRaises(KeyError,predictor.get_project,"DoesntExist")
+        # Get samples
+        self.assertEqual(project.sample_ids,["PJB1-1579","PJB2-1580"])
+        sample1 = project.get_sample("PJB1-1579")
+        sample2 = project.get_sample("PJB2-1580")
+        self.assertRaises(KeyError,project.get_sample,"DoesntExist")
+        # Check sample barcodes and lanes
+        self.assertEqual(sample1.barcode_seqs,["CGATGTAT-TCTTTCCC"])
+        self.assertEqual(sample2.barcode_seqs,["TGACCAAT-TCTTTCCC"])
+        self.assertEqual(sample1.lanes("CGATGTAT-TCTTTCCC"),(1,2))
+        self.assertEqual(sample2.lanes("TGACCAAT-TCTTTCCC"),(1,2))
+        self.assertEqual(sample1.s_index,1)
+        self.assertEqual(sample2.s_index,2)
+        # Predict output fastqs bcl2fastq2
+        predictor.set(package="bcl2fastq2")
+        self.assertEqual(sample1.fastqs(),
+                         ["PJB1/PJB1-1579_S1_L001_R1_001.fastq.gz",
+                          "PJB1/PJB1-1579_S1_L002_R1_001.fastq.gz"])
+        self.assertEqual(sample2.fastqs(),
+                         ["PJB2/PJB2-1580_S2_L001_R1_001.fastq.gz",
+                          "PJB2/PJB2-1580_S2_L002_R1_001.fastq.gz"])
+        # Predict output fastqs CASAVA/bcl2fastq 1.8*
+        predictor.set(package="casava")
+        self.assertEqual(sample1.fastqs(),
+                         ["PJB1-1579_CGATGTAT-TCTTTCCC_L001_R1_001.fastq.gz",
+                          "PJB1-1579_CGATGTAT-TCTTTCCC_L002_R1_001.fastq.gz"])
+        self.assertEqual(sample2.fastqs(package="casava"),
+                         ["PJB2-1580_TGACCAAT-TCTTTCCC_L001_R1_001.fastq.gz",
+                          "PJB2-1580_TGACCAAT-TCTTTCCC_L002_R1_001.fastq.gz"])
+
+    def test_samplesheet_predictor_iem_no_barcodes(self):
+        """SampleSheetPredictor: handle IEM4 sample sheet with lanes
+        """
+        iem = SampleSheet(fp=cStringIO.StringIO(
+            self.hiseq_sample_sheet_no_barcodes))
+        predictor = SampleSheetPredictor(fp=iem)
+        # Get projects
+        self.assertEqual(predictor.nprojects,1)
+        self.assertEqual(predictor.project_names,["PeterBriggs"])
+        project = predictor.get_project("PeterBriggs")
+        self.assertRaises(KeyError,predictor.get_project,"DoesntExist")
+        # Get samples
+        self.assertEqual(project.sample_ids,["PJB1","PJB2"])
+        sample1 = project.get_sample("PJB1")
+        sample2 = project.get_sample("PJB2")
+        self.assertRaises(KeyError,project.get_sample,"DoesntExist")
+        # Check sample barcodes and lanes
+        self.assertEqual(sample1.barcode_seqs,[])
+        self.assertEqual(sample2.barcode_seqs,[])
+        self.assertEqual(sample1.lanes(),(1,))
+        self.assertEqual(sample2.lanes(),(2,))
+        self.assertEqual(sample1.s_index,1)
+        self.assertEqual(sample2.s_index,2)
+        # Predict output fastqs bcl2fastq2
+        predictor.set(package="bcl2fastq2")
+        self.assertEqual(sample1.fastqs(),
+                         ["PJB1_S1_L001_R1_001.fastq.gz"])
+        self.assertEqual(sample2.fastqs(),
+                         ["PJB2_S2_L002_R1_001.fastq.gz"])
+        # Predict output fastqs CASAVA/bcl2fastq 1.8*
+        predictor.set(package="casava")
+        self.assertEqual(sample1.fastqs(package="casava"),
+                         ["PJB1_NoIndex_L001_R1_001.fastq.gz"])
+        self.assertEqual(sample2.fastqs(package="casava"),
+                         ["PJB2_NoIndex_L002_R1_001.fastq.gz"])
+    
 class TestMiseqToCasavaConversion(unittest.TestCase):
 
     def setUp(self):
