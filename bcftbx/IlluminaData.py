@@ -1679,6 +1679,386 @@ class CasavaSampleSheet(SampleSheet):
         """
         SampleSheet.write(self,filen=filen,fp=fp,fmt='CASAVA')
 
+class SampleSheetPredictor(object):
+    """
+    Class to predict outputs of a sample sheet file
+
+    Example usage:
+
+    >>> predictor = SampleSheetPredictor(sample_sheet_file="SampleSheet.txt")
+    
+    """
+    def __init__(self,sample_sheet=None,sample_sheet_file=None):
+        """
+        Create a new SampleSheetPredictor instance
+
+        Arguments:
+          sample_sheet (SampleSheet): a SampleSheet instance to use
+            for prediction (if None then must provide a file via
+            the `sample_sheet_file` argument; if both are provided
+            then `sample_sheet` takes precedence)
+          sample_sheet_file (str): path to a sample sheet file, if
+            `sample_sheet` argument is None
+
+        """
+        # Initialise
+        self.projects = []
+        self._predict_for_package = "bcl2fastq2"
+        self._predict_paired_end = False
+        self._predict_no_lane_splitting = False
+        self._predict_for_lanes = None
+        # Read in data
+        if sample_sheet is None:
+            sample_sheet = SampleSheet(sample_sheet_file)
+        s_index = 0
+        for line in sample_sheet:
+            # Get project and sample info
+            project_name = str(line[sample_sheet.sample_project_column])
+            sample_id = str(line[sample_sheet.sample_id_column])
+            try:
+                sample_name = str(line[sample_sheet.sample_name_column])
+            except TypeError:
+                sample_name = sample_id
+            project = self.add_project(project_name)
+            sample = project.add_sample(sample_id,
+                                        sample_name=sample_name)
+            # Fetch barcode and lane
+            index_seq = samplesheet_index_sequence(line)
+            if sample_sheet.has_lanes:
+                lane = line['Lane']
+            else:
+                lane = None
+            sample.add_barcode(index_seq,lane=lane)
+            # Sample index
+            if sample.s_index is None:
+                s_index += 1
+                sample.s_index = s_index
+
+    @property
+    def nprojects(self):
+        """
+        Return number of projects
+
+        """
+        return len(self.projects)
+
+    @property
+    def project_names(self):
+        """
+        Return list of project names stored in the predictor
+
+        """
+        return sorted([str(p) for p in self.projects])
+
+    def get_project(self,project_name):
+        """
+        Fetch a SampleSheetProject by name
+
+        Raises KeyError if the named project isn't found
+
+        """
+        for project in self.projects:
+            if project.name == project_name:
+                return project
+        raise KeyError("%s: project not found" % project_name)
+
+    def add_project(self,project_name):
+        """
+        Add a new project
+
+        Creates a new SampleSheetProject object for
+        project_name, or returns an existing one if it exists
+        for this name
+
+        Arguments:
+          project_name (str): name for project to add
+
+        Returns:
+          SampleSheetProject: SampleSheetProject for the
+            supplied project name
+
+        """
+        try:
+            return self.get_project(project_name)
+        except KeyError:
+            project = SampleSheetProject(project_name)
+            self.projects.append(project)
+            return project
+
+    def set(self,package="bcl2fastq2",paired_end=False,
+            no_lane_splitting=False,lanes=None):
+        """
+        Configure settings for prediction
+
+        - package: target bcl to fastq conversion package
+          (can be 'bcl2fastq2' or 'casava')
+        - paired_end: if True then predict outputs as if
+          data is paired end (i.e. R1 and R2 pairs)
+        - no_lane_splitting: if True then predict outputs
+          as if --no-lane-splitting was used for bcl2fastq
+        - lanes: if set then should be a list of lane
+          numbers that will be used when generating Fastq
+          names
+
+        """
+        self._predict_for_package = package
+        self._predict_paired_end = paired_end
+        self._predict_no_lane_splitting = no_lane_splitting
+        self._predict_for_lanes = lanes
+        # Configure projects with same settings
+        for project in self.projects:
+            project.set(package=package,
+                        paired_end=paired_end,
+                        no_lane_splitting=no_lane_splitting,
+                        lanes=lanes)
+
+class SampleSheetProject(object):
+    """
+    Class describing a project from a sample sheet file
+    
+    """
+    def __init__(self,project_name):
+        """
+        Create a new SampleSheetProject instance
+
+        Arguments:
+          project_name (str): name for the project
+
+        """
+        self.name = project_name
+        self.samples = []
+        self._predict_for_package = "bcl2fastq2"
+        self._predict_paired_end = False
+        self._predict_no_lane_splitting = False
+        self._predict_for_lanes = None
+
+    @property
+    def sample_ids(self):
+        """
+        Return a list of sample ID's in the project
+
+        """
+        return sorted([s.sample_id for s in self.samples])
+
+    @property
+    def dir_name(self):
+        """
+        Predict subdirectory name for project
+
+        """
+        if self._predict_for_package == "casava":
+            return "Project_%s" % self.name
+        elif self._predict_for_package == "bcl2fastq2":
+            return self.name
+
+    def get_sample(self,sample_id):
+        """
+        Fetch a SampleSheetSample by name
+
+        Raises KeyError if the specified sample id isn't found
+
+        """
+        for sample in self.samples:
+            if sample.sample_id == sample_id:
+                return sample
+        raise KeyError("%s: sample not found" % sample_id)
+
+    def add_sample(self,sample_id,sample_name=None,s_index=None):
+        """
+        Add a new sample
+
+        Creates a new SampleSheetSampleProject object for
+        sample_id, or returns an existing one if it exists for
+        this id.
+
+        Arguments:
+          sample_id (str): id for the sample
+          sample_name (str): (optional) corresponding sample
+            name
+          s_index (integer): (optional) the bcl2fastq sample
+            index
+
+        Returns:
+          SampleSheetProject: SampleSheetProject for the
+            supplied project name
+
+        """
+        try:
+            return self.get_sample(sample_id)
+        except KeyError:
+            sample = SampleSheetSample(sample_id,
+                                       sample_name=sample_name)
+            self.samples.append(sample)
+            return sample
+
+    def set(self,package="bcl2fastq2",paired_end=False,
+            no_lane_splitting=False,lanes=None):
+        """
+        Configure settings for prediction
+
+        - package: target bcl to fastq conversion package
+          (can be 'bcl2fastq2' or 'casava')
+        - paired_end: if True then predict outputs as if
+          data is paired end (i.e. R1 and R2 pairs)
+        - no_lane_splitting: if True then predict outputs
+          as if --no-lane-splitting was used for bcl2fastq
+        - lanes: if set then should be a list of lane
+          numbers that will be used when generating Fastq
+          names
+
+        """
+        self._predict_for_package = package
+        self._predict_paired_end = paired_end
+        self._predict_no_lane_splitting = no_lane_splitting
+        self._predict_for_lanes = lanes
+        # Cascade the settings to child samples
+        for sample in self.samples:
+            sample.set(package=package,
+                       paired_end=paired_end,
+                       no_lane_splitting=no_lane_splitting,
+                       lanes=lanes)
+
+    def __repr__(self):
+        # Implement repr built-in
+        return str(self.name)
+
+class SampleSheetSample(object):
+    """
+    Class describing a sample from a sample sheet file
+
+    """
+    def __init__(self,sample_id,sample_name=None,s_index=None):
+        """
+        Create a new SampleSheetSample instance
+
+        Arguments:
+          sample_id (str): id for the sample
+          sample_name (str): (optional) corresponding sample
+            name
+          s_index (integer): (optional) the bcl2fastq sample
+            index
+
+        """
+        self.sample_id = sample_id
+        self.sample_name = sample_name
+        self.s_index = s_index
+        self.barcodes = {}
+        self._predict_for_package = "bcl2fastq2"
+        self._predict_paired_end = False
+        self._predict_no_lane_splitting = False
+        self._predict_for_lanes = None
+
+    @property
+    def barcode_seqs(self):
+        """
+        Return a list of barcode (index) sequnces for the sample
+
+        """
+        return sorted([b for b in self.barcodes.keys()])
+
+    @property
+    def dir_name(self):
+        """
+        Predict subdirectory name for sample fastqs
+
+        """
+        if self._predict_for_package == "casava":
+            return "Sample_%s" % self.sample_id
+        elif self._predict_for_package == "bcl2fastq2":
+            return None
+        
+    def add_barcode(self,barcode_seq,lane=None):
+        """
+        Associate a barcode sequence with a sample
+
+        Arguments:
+          barcode_seq (str): barcode sequence to add
+          lane (int): lane to associate with the barcode
+            (None if no lane information is available)
+
+        """
+        if barcode_seq not in self.barcodes:
+            self.barcodes[barcode_seq] = []
+        if lane and lane not in self.barcodes[barcode_seq]:
+            self.barcodes[barcode_seq].append(int(lane))
+
+    def lanes(self,barcode_seq=None):
+        """
+        Fetch the lanes associated with the barcode
+        """
+        return sorted(self.barcodes[barcode_seq])
+
+    def fastqs(self):
+        """
+        Return list of predicted Fastq names
+
+        The predicted Fastq names are paths for the Fastq
+        files relative to the 'sample' directory, and are
+        constructed according to the settings supplied
+        via the 'set' method.
+
+        """
+        predicted_fastqs = []
+        if self._predict_paired_end:
+            reads = (1,2)
+        else:
+            reads = (1,)
+        if self._predict_for_package == "bcl2fastq2":
+            for barcode_seq in self.barcode_seqs:
+                # Check if we need to split lanes
+                if self._predict_no_lane_splitting:
+                    # No lanes
+                    for read in reads:
+                        fastq = "%s_S%d_R%d_001.fastq.gz" % \
+                                (self.sample_id,
+                                 self.s_index,
+                                 read)
+                        predicted_fastqs.append(fastq)
+                elif self.lanes(barcode_seq):
+                    # If there are lanes then add one per lane
+                    for lane in self.lanes(barcode_seq):
+                        for read in reads:
+                            fastq = "%s_S%d_L%03d_R%d_001.fastq.gz" % \
+                                    (self.sample_id,
+                                     self.s_index,
+                                     lane,
+                                     read)
+                            predicted_fastqs.append(fastq)
+                else:
+                    # Add a single fastq per read for lane 1
+                    for read in reads:
+                        fastq = "%s_S%d_L001_R%d_001.fastq.gz" % \
+                                (self.sample_id,
+                                 self.s_index,read)
+                        predicted_fastqs.append(fastq)
+            # Prepend sample name if different from the id
+            if self.sample_id != self.sample_name:
+                predicted_fastqs = ["%s/%s" % (self.sample_name,
+                                               fastq)
+                                    for fastq in predicted_fastqs]
+        return predicted_fastqs
+
+    def set(self,package="bcl2fastq2",paired_end=False,
+            no_lane_splitting=False,lanes=None):
+        """
+        Configure settings for prediction
+
+        - package: target bcl to fastq conversion package
+          (can be 'bcl2fastq2' or 'casava')
+        - paired_end: if True then predict outputs as if
+          data is paired end (i.e. R1 and R2 pairs)
+        - no_lane_splitting: if True then predict outputs
+          as if --no-lane-splitting was used for bcl2fastq
+        - lanes: if set then should be a list of lane
+          numbers that will be used when generating Fastq
+          names
+
+        """
+        self._predict_for_package = package
+        self._predict_paired_end = paired_end
+        self._predict_no_lane_splitting = no_lane_splitting
+        self._predict_for_lanes = lanes
+
 class IlluminaFastq:
     """Class for extracting information about Fastq files
 
