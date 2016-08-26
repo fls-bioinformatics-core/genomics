@@ -2023,7 +2023,7 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
         self.assertEqual(sample1.fastqs(),
                          ["A8_TAAGGCGA-TAGATCGC_L001_R1_001.fastq.gz"])
         self.assertEqual(sample2.dir_name,"Sample_B8")
-        self.assertEqual(sample2.fastqs(package="casava"),
+        self.assertEqual(sample2.fastqs(),
                          ["B8_CGTACTAG-TAGATCGC_L001_R1_001.fastq.gz"])
         # Predict output fastqs CASAVA/bcl2fastq 1.8* paired end
         predictor.set(package="casava",
@@ -2132,12 +2132,10 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
                           "886-1_ATGTCA_L007_R1_001.fastq.gz"])
 
     def test_samplesheet_predictor_iem_id_and_names_differ(self):
-        iem = SampleSheet(fp=cStringIO.StringIO(
-            self.hiseq_sample_sheet_id_and_name_differ_content))
-        """SampleSheetPredictor: handle IEM4 sample sheet with lanes
+        """SampleSheetPredictor: handle IEM4 sample sheet where sample ID differs from name
         """
         iem = SampleSheet(fp=cStringIO.StringIO(
-            self.hiseq_sample_sheet_content))
+            self.hiseq_sample_sheet_id_and_name_differ_content))
         predictor = SampleSheetPredictor(sample_sheet=iem)
         # Get projects
         self.assertEqual(predictor.nprojects,1)
@@ -2171,12 +2169,12 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
         self.assertEqual(sample1.fastqs(),
                          ["PJB1-1579_CGATGTAT-TCTTTCCC_L001_R1_001.fastq.gz",
                           "PJB1-1579_CGATGTAT-TCTTTCCC_L002_R1_001.fastq.gz"])
-        self.assertEqual(sample2.fastqs(package="casava"),
+        self.assertEqual(sample2.fastqs(),
                          ["PJB2-1580_TGACCAAT-TCTTTCCC_L001_R1_001.fastq.gz",
                           "PJB2-1580_TGACCAAT-TCTTTCCC_L002_R1_001.fastq.gz"])
 
     def test_samplesheet_predictor_iem_no_barcodes(self):
-        """SampleSheetPredictor: handle IEM4 sample sheet with lanes
+        """SampleSheetPredictor: handle IEM4 sample sheet with no barcodes
         """
         iem = SampleSheet(fp=cStringIO.StringIO(
             self.hiseq_sample_sheet_no_barcodes))
@@ -2192,10 +2190,10 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
         sample2 = project.get_sample("PJB2")
         self.assertRaises(KeyError,project.get_sample,"DoesntExist")
         # Check sample barcodes and lanes
-        self.assertEqual(sample1.barcode_seqs,[])
-        self.assertEqual(sample2.barcode_seqs,[])
-        self.assertEqual(sample1.lanes(),(1,))
-        self.assertEqual(sample2.lanes(),(2,))
+        self.assertEqual(sample1.barcode_seqs,["NoIndex"])
+        self.assertEqual(sample2.barcode_seqs,["NoIndex"])
+        self.assertEqual(sample1.lanes(),[1,])
+        self.assertEqual(sample2.lanes(),[2,])
         self.assertEqual(sample1.s_index,1)
         self.assertEqual(sample2.s_index,2)
         # Predict output fastqs bcl2fastq2
@@ -2208,9 +2206,9 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
         # Predict output fastqs CASAVA/bcl2fastq 1.8*
         predictor.set(package="casava")
         self.assertEqual(project.dir_name,"Project_PeterBriggs")
-        self.assertEqual(sample1.fastqs(package="casava"),
+        self.assertEqual(sample1.fastqs(),
                          ["PJB1_NoIndex_L001_R1_001.fastq.gz"])
-        self.assertEqual(sample2.fastqs(package="casava"),
+        self.assertEqual(sample2.fastqs(),
                          ["PJB2_NoIndex_L002_R1_001.fastq.gz"])
     
 class TestMiseqToCasavaConversion(unittest.TestCase):
