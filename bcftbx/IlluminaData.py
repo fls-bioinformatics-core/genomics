@@ -2036,6 +2036,25 @@ class SampleSheetSample(object):
                 predicted_fastqs = ["%s/%s" % (self.sample_name,
                                                fastq)
                                     for fastq in predicted_fastqs]
+        elif self._predict_for_package == "casava":
+            for barcode_seq in self.barcode_seqs:
+                if self.lanes(barcode_seq):
+                    for lane in self.lanes(barcode_seq):
+                        for read in reads:
+                            fastq = "%s_%s_L%03d_R%d_001.fastq.gz" % \
+                                    (self.sample_id,
+                                     barcode_seq,
+                                     lane,read)
+                            predicted_fastqs.append(fastq)
+                else:
+                    # Add a single fastq per read for lane 1
+                    for read in reads:
+                        fastq = "%s_%s_L001_R%d_001.fastq.gz" % \
+                                (self.sample_id,
+                                 barcode_seq,
+                                 read)
+                        predicted_fastqs.append(fastq)
+        # Return predicted Fastqs
         return predicted_fastqs
 
     def set(self,package="bcl2fastq2",paired_end=False,
