@@ -2630,12 +2630,18 @@ def samplesheet_index_sequence(line):
     # Index sequence
     try:
         # Try dual-indexed IEM4 format
+        if not line['index2'].strip():
+            # Blank index2, raise exception to break
+            raise KeyError
         return "%s-%s" % (line['index'].strip(),
                           line['index2'].strip())
     except KeyError:
         pass
     # Try single indexed IEM4 (no index2)
     try:
+        if not line['index'].strip():
+            # Blank index, raise exception to break
+            raise KeyError
         return line['index'].strip()
     except KeyError:
         pass
