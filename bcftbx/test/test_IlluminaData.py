@@ -1905,11 +1905,11 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
         # Predict output fastqs CASAVA/bcl2fastq 1.8*
         predictor.set(package="casava")
         self.assertEqual(project.dir_name,"Project_PeterBriggs")
-        self.assertEqual(sample1.dir_name,"Sample_PJB1")
+        self.assertEqual(sample1.dir_name,"Sample_PJB1-1579")
         self.assertEqual(sample1.fastqs(),
                          ["PJB1-1579_CGATGTAT-TCTTTCCC_L001_R1_001.fastq.gz",
                           "PJB1-1579_CGATGTAT-TCTTTCCC_L002_R1_001.fastq.gz"])
-        self.assertEqual(sample2.dir_name,"Sample_PJB2")
+        self.assertEqual(sample2.dir_name,"Sample_PJB2-1580")
         self.assertEqual(sample2.fastqs(),
                          ["PJB2-1580_TGACCAAT-TCTTTCCC_L001_R1_001.fastq.gz",
                           "PJB2-1580_TGACCAAT-TCTTTCCC_L002_R1_001.fastq.gz"])
@@ -1917,13 +1917,13 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
         predictor.set(package="casava",
                       paired_end=True)
         self.assertEqual(project.dir_name,"Project_PeterBriggs")
-        self.assertEqual(sample1.dir_name,"Sample_PJB1")
+        self.assertEqual(sample1.dir_name,"Sample_PJB1-1579")
         self.assertEqual(sample1.fastqs(),
                          ["PJB1-1579_CGATGTAT-TCTTTCCC_L001_R1_001.fastq.gz",
                           "PJB1-1579_CGATGTAT-TCTTTCCC_L001_R2_001.fastq.gz",
                           "PJB1-1579_CGATGTAT-TCTTTCCC_L002_R1_001.fastq.gz",
                           "PJB1-1579_CGATGTAT-TCTTTCCC_L002_R2_001.fastq.gz"])
-        self.assertEqual(sample2.dir_name,"Sample_PJB2")
+        self.assertEqual(sample2.dir_name,"Sample_PJB2-1580")
         self.assertEqual(sample2.fastqs(),
                          ["PJB2-1580_TGACCAAT-TCTTTCCC_L001_R1_001.fastq.gz",
                           "PJB2-1580_TGACCAAT-TCTTTCCC_L001_R2_001.fastq.gz",
@@ -2157,12 +2157,14 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
         # Predict output fastqs bcl2fastq2
         predictor.set(package="bcl2fastq2")
         self.assertEqual(project.dir_name,"PeterBriggs")
+        self.assertEqual(sample1.dir_name,"PJB1")
         self.assertEqual(sample1.fastqs(),
-                         ["PJB1/PJB1-1579_S1_L001_R1_001.fastq.gz",
-                          "PJB1/PJB1-1579_S1_L002_R1_001.fastq.gz"])
+                         ["PJB1-1579_S1_L001_R1_001.fastq.gz",
+                          "PJB1-1579_S1_L002_R1_001.fastq.gz"])
+        self.assertEqual(sample2.dir_name,"PJB2")
         self.assertEqual(sample2.fastqs(),
-                         ["PJB2/PJB2-1580_S2_L001_R1_001.fastq.gz",
-                          "PJB2/PJB2-1580_S2_L002_R1_001.fastq.gz"])
+                         ["PJB2-1580_S2_L001_R1_001.fastq.gz",
+                          "PJB2-1580_S2_L002_R1_001.fastq.gz"])
         # Predict output fastqs CASAVA/bcl2fastq 1.8*
         predictor.set(package="casava")
         self.assertEqual(project.dir_name,"Project_PeterBriggs")
