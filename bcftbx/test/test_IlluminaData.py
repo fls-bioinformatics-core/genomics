@@ -2127,7 +2127,7 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
                          ["885-1_AGTTCC_L003_R1_001.fastq.gz",
                           "885-1_AGTTCC_L006_R1_001.fastq.gz"])
         self.assertEqual(sample4.dir_name,"Sample_886-1")
-        self.assertEqual(sample3.fastqs(),
+        self.assertEqual(sample4.fastqs(),
                          ["886-1_ATGTCA_L004_R1_001.fastq.gz",
                           "886-1_ATGTCA_L007_R1_001.fastq.gz"])
 
