@@ -1885,6 +1885,12 @@ class SampleSheetProject(object):
             supplied project name
 
         """
+        if (sample_id is not None) and \
+           (sample_name is not None) and \
+           (sample_id != sample_name):
+            # Special case when ID and name differ, then swap
+            # over names
+            sample_id,sample_name = sample_name,sample_id
         try:
             return self.get_sample(sample_id)
         except KeyError:
@@ -1967,7 +1973,10 @@ class SampleSheetSample(object):
         if self._predict_for_package == "casava":
             return "Sample_%s" % self.sample_id
         elif self._predict_for_package == "bcl2fastq2":
-            return None
+            if self.sample_id != self.sample_name:
+                return self.sample_name
+            else:
+                return None
         
     def add_barcode(self,barcode_seq,lane=None):
         """
@@ -2032,11 +2041,6 @@ class SampleSheetSample(object):
                                      lane,
                                      read)
                             predicted_fastqs.append(fastq)
-            # Prepend sample name if different from the id
-            if self.sample_id != self.sample_name:
-                predicted_fastqs = ["%s/%s" % (self.sample_name,
-                                               fastq)
-                                    for fastq in predicted_fastqs]
         elif self._predict_for_package == "casava":
             for barcode_seq in self.barcode_seqs:
                 if self._predict_for_lanes:
