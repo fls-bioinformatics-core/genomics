@@ -1719,6 +1719,10 @@ class SampleSheetPredictor(object):
                 sample_name = str(line[sample_sheet.sample_name_column])
             except TypeError:
                 sample_name = sample_id
+            if not sample_id:
+                sample_id = None
+            if not sample_name:
+                sample_name = None
             project = self.add_project(project_name)
             sample = project.add_sample(sample_id,
                                         sample_name=sample_name)
@@ -1885,9 +1889,10 @@ class SampleSheetProject(object):
             supplied project name
 
         """
-        if (sample_id is not None) and \
-           (sample_name is not None) and \
-           (sample_id != sample_name):
+        if sample_id is None:
+            # Special case: no ID defined, use name instead
+            sample_id = sample_name
+        elif sample_name is not None and sample_id != sample_name:
             # Special case when ID and name differ, then swap
             # over names
             sample_id,sample_name = sample_name,sample_id
