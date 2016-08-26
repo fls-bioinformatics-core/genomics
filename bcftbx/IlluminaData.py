@@ -2423,90 +2423,35 @@ def verify_run_against_sample_sheet(illumina_data,sample_sheet):
       found, False otherwise.
 
     """
-    # Get predicted outputs based on directory structure format
-    data_format = illumina_data.format
+    # Gather information
     sample_sheet = SampleSheet(sample_sheet)
-    if data_format == 'casava':
-        predicted_projects = sample_sheet.predict_output(fmt='CASAVA')
-    elif data_format == 'bcl2fastq2':
-        predicted_projects = sample_sheet.predict_output(fmt='bcl2fastq2')
+    if sample_sheet.has_lanes:
+        lanes = None
     else:
-        raise IlluminaDataError("Unknown format for directory structure: %s" %
-                                data_format)
-    # Loop through projects and check that predicted outputs exist
+        lanes = illumina_data.lanes
+    no_lane_splitting = (len(illumina_data.lanes) == 1) \
+                        and (illumina_data.lanes[0] is None)
+    # Set up predictor instance
+    predictor = SampleSheetPredictor(sample_sheet=sample_sheet)
+    predictor.set(package=illumina_data.format,
+                  paired_end=illumina_data.paired_end,
+                  lanes=lanes,
+                  no_lane_splitting=no_lane_splitting)
+    # Loop over predictions and check corresponding outputs exist
     verified = True
-    for proj in predicted_projects:
-        # Locate project directory
-        proj_dir = os.path.join(illumina_data.unaligned_dir,proj)
-        if os.path.isdir(proj_dir):
-            if data_format == 'casava':
-                predicted_samples = predicted_projects[proj]
-                for smpl in predicted_samples:
-                    # Locate sample directory
-                    smpl_dir = os.path.join(proj_dir,smpl)
-                    if os.path.isdir(smpl_dir):
-                        # Check for output files
-                        predicted_names = predicted_samples[smpl]
-                        for name in predicted_names:
-                            # Look for R1 file
-                            f = os.path.join(smpl_dir,
-                                             "%s_R1_001.fastq.gz" % name)
-                            if not os.path.exists(f):
-                                logging.warning("Verify: missing R1 file '%s'"
-                                                % f)
-                                verified = False
-                            # Look for R2 file (paired end only)
-                            if illumina_data.paired_end:
-                                f = os.path.join(smpl_dir,
-                                                 "%s_R2_001.fastq.gz" % name)
-                                if not os.path.exists(f):
-                                    logging.warning("Verify: missing R2 file '%s'"
-                                                    % f)
-                                    verified = False
-                    else:
-                        # Sample directory not found
-                        logging.warning("Verify: missing %s" % smpl_dir)
-                        verified = False
-            elif data_format == 'bcl2fastq2':
-                # Check for output files
-                predicted_names = predicted_projects[proj]
-                no_lane_splitting = (len(illumina_data.lanes) == 1) \
-                                    and (illumina_data.lanes[0] is None)
-                for name in predicted_names:
-                    # Loop over lanes
-                    for lane in illumina_data.lanes:
-                        # Handle lane identifier
-                        lane_id = ""
-                        if no_lane_splitting:
-                            if sample_sheet.has_lanes:
-                                # Remove existing lane identifier
-                                name = '_'.join(name.split('_')[:-1])
-                        else:
-                            if not sample_sheet.has_lanes:
-                                # Add lane identifier
-                                lane_id = "_L%03d" % lane
-                        # Look for R1 file
-                        f = os.path.join(proj_dir,
-                                         "%s%s_R1_001.fastq.gz" % (name,
-                                                                   lane_id))
-                        if not os.path.exists(f):
-                            logging.warning("Verify: missing R1 file '%s'"
-                                            % f)
-                            verified = False
-                        # Look for R2 file (paired end only)
-                        logging.debug("Paired_end = %s" % illumina_data.paired_end)
-                        if illumina_data.paired_end:
-                            f = os.path.join(proj_dir,
-                                             "%s%s_R2_001.fastq.gz" % (name,
-                                                                       lane_id))
-                            if not os.path.exists(f):
-                                logging.warning("Verify: missing R2 file '%s'"
-                                                % f)
-                                verified = False
-        else:
-            # Project directory not found
-            logging.warning("Verify: missing %s" % proj_dir)
-            verified = False
+    for proj in predictor.project_names:
+        project = predictor.get_project(proj)
+        for smpl in project.sample_ids:
+            sample = project.get_sample(smpl)
+            path = os.path.join(illumina_data.unaligned_dir,
+                                project.dir_name)
+            if sample.dir_name:
+                path = os.path.join(path,sample.dir_name)
+            for fq in sample.fastqs():
+                fastq = os.path.join(path,fq)
+                if not os.path.exists(fastq):
+                    logging.warning("Verify: missing %s" % fastq)
+                    verified = False
     # Return verification status
     return verified
 
