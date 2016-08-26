@@ -1724,6 +1724,8 @@ class SampleSheetPredictor(object):
                                         sample_name=sample_name)
             # Fetch barcode and lane
             index_seq = samplesheet_index_sequence(line)
+            if index_seq is None:
+                index_seq = "NoIndex"
             if sample_sheet.has_lanes:
                 lane = line['Lane']
             else:
@@ -1982,7 +1984,7 @@ class SampleSheetSample(object):
         if lane and lane not in self.barcodes[barcode_seq]:
             self.barcodes[barcode_seq].append(int(lane))
 
-    def lanes(self,barcode_seq=None):
+    def lanes(self,barcode_seq="NoIndex"):
         """
         Fetch the lanes associated with the barcode
         """
@@ -2014,9 +2016,15 @@ class SampleSheetSample(object):
                                  self.s_index,
                                  read)
                         predicted_fastqs.append(fastq)
-                elif self.lanes(barcode_seq):
-                    # If there are lanes then add one per lane
-                    for lane in self.lanes(barcode_seq):
+                else:
+                    # Output with lane information
+                    if self._predict_for_lanes:
+                        lanes = self._predict_for_lanes
+                    elif self.lanes(barcode_seq):
+                        lanes = self.lanes(barcode_seq)
+                    else:
+                        lanes = (1,)
+                    for lane in lanes:
                         for read in reads:
                             fastq = "%s_S%d_L%03d_R%d_001.fastq.gz" % \
                                     (self.sample_id,
@@ -2024,13 +2032,6 @@ class SampleSheetSample(object):
                                      lane,
                                      read)
                             predicted_fastqs.append(fastq)
-                else:
-                    # Add a single fastq per read for lane 1
-                    for read in reads:
-                        fastq = "%s_S%d_L001_R%d_001.fastq.gz" % \
-                                (self.sample_id,
-                                 self.s_index,read)
-                        predicted_fastqs.append(fastq)
             # Prepend sample name if different from the id
             if self.sample_id != self.sample_name:
                 predicted_fastqs = ["%s/%s" % (self.sample_name,
@@ -2038,21 +2039,18 @@ class SampleSheetSample(object):
                                     for fastq in predicted_fastqs]
         elif self._predict_for_package == "casava":
             for barcode_seq in self.barcode_seqs:
-                if self.lanes(barcode_seq):
-                    for lane in self.lanes(barcode_seq):
-                        for read in reads:
-                            fastq = "%s_%s_L%03d_R%d_001.fastq.gz" % \
-                                    (self.sample_id,
-                                     barcode_seq,
-                                     lane,read)
-                            predicted_fastqs.append(fastq)
+                if self._predict_for_lanes:
+                    lanes = self._predict_for_lanes
+                elif self.lanes(barcode_seq):
+                    lanes = self.lanes(barcode_seq)
                 else:
-                    # Add a single fastq per read for lane 1
+                    lanes = (1,)
+                for lane in lanes:
                     for read in reads:
-                        fastq = "%s_%s_L001_R%d_001.fastq.gz" % \
+                        fastq = "%s_%s_L%03d_R%d_001.fastq.gz" % \
                                 (self.sample_id,
                                  barcode_seq,
-                                 read)
+                                 lane,read)
                         predicted_fastqs.append(fastq)
         # Return predicted Fastqs
         return predicted_fastqs
