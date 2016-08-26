@@ -1834,7 +1834,7 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
         """
         iem = SampleSheet(fp=cStringIO.StringIO(
             self.hiseq_sample_sheet_content))
-        predictor = SampleSheetPredictor(fp=iem)
+        predictor = SampleSheetPredictor(sample_sheet=iem)
         # Get projects
         self.assertEqual(predictor.nprojects,1)
         self.assertEqual(predictor.project_names,["PeterBriggs"])
@@ -1848,8 +1848,8 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
         # Check sample barcodes and lanes
         self.assertEqual(sample1.barcode_seqs,["CGATGTAT-TCTTTCCC"])
         self.assertEqual(sample2.barcode_seqs,["TGACCAAT-TCTTTCCC"])
-        self.assertEqual(sample1.lanes("CGATGTAT-TCTTTCCC"),(1,2))
-        self.assertEqual(sample2.lanes("TGACCAAT-TCTTTCCC"),(1,2))
+        self.assertEqual(sample1.lanes("CGATGTAT-TCTTTCCC"),[1,2])
+        self.assertEqual(sample2.lanes("TGACCAAT-TCTTTCCC"),[1,2])
         self.assertEqual(sample1.s_index,1)
         self.assertEqual(sample2.s_index,2)
         # Predict output fastqs bcl2fastq2
@@ -1935,7 +1935,7 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
         """
         iem = SampleSheet(fp=cStringIO.StringIO(
             self.miseq_sample_sheet_content))
-        predictor = SampleSheetPredictor(fp=iem)
+        predictor = SampleSheetPredictor(sample_sheet=iem)
         # Get projects
         self.assertEqual(predictor.nprojects,1)
         self.assertEqual(predictor.project_names,["PJB"])
@@ -1949,29 +1949,38 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
         # Check barcodes and lanes
         self.assertEqual(sample1.barcode_seqs,["TAAGGCGA-TAGATCGC"])
         self.assertEqual(sample2.barcode_seqs,["CGTACTAG-TAGATCGC"])
-        self.assertEqual(sample1.lanes("TAAGGCGA-TAGATCGC"),())
-        self.assertEqual(sample2.lanes("CGTACTAG-TAGATCGC"),())
+        self.assertEqual(sample1.lanes("TAAGGCGA-TAGATCGC"),[])
+        self.assertEqual(sample2.lanes("CGTACTAG-TAGATCGC"),[])
         self.assertEqual(sample1.s_index,1)
         self.assertEqual(sample2.s_index,2)
         # Predict output fastqs bcl2fastq2
         predictor.set(package="bcl2fastq2")
+        self.assertEqual(project.dir_name,"PJB")
+        self.assertEqual(sample1.dir_name,None)
         self.assertEqual(sample1.fastqs(),
                          ["A8_S1_L001_R1_001.fastq.gz"])
+        self.assertEqual(sample2.dir_name,None)
         self.assertEqual(sample2.fastqs(),
                          ["B8_S2_L001_R1_001.fastq.gz"])
         # Predict output fastqs bcl2fastq2 with no lane splitting
         predictor.set(package="bcl2fastq2",
                       no_lane_splitting=True)
+        self.assertEqual(project.dir_name,"PJB")
+        self.assertEqual(sample1.dir_name,None)
         self.assertEqual(sample1.fastqs(),
                          ["A8_S1_R1_001.fastq.gz"])
+        self.assertEqual(sample2.dir_name,None)
         self.assertEqual(sample2.fastqs(),
                          ["B8_S2_R1_001.fastq.gz"])
         # Predict output fastqs bcl2fastq2 paired end
         predictor.set(package="bcl2fastq2",
                       paired_end=True)
+        self.assertEqual(project.dir_name,"PJB")
+        self.assertEqual(sample1.dir_name,None)
         self.assertEqual(sample1.fastqs(),
                          ["A8_S1_L001_R1_001.fastq.gz",
                           "A8_S1_L001_R2_001.fastq.gz"])
+        self.assertEqual(sample2.dir_name,None)
         self.assertEqual(sample2.fastqs(),
                          ["B8_S2_L001_R1_001.fastq.gz",
                           "B8_S2_L001_R2_001.fastq.gz"])
@@ -1980,9 +1989,12 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
         predictor.set(package="bcl2fastq2",
                       no_lane_splitting=True,
                       paired_end=True)
+        self.assertEqual(project.dir_name,"PJB")
+        self.assertEqual(sample1.dir_name,None)
         self.assertEqual(sample1.fastqs(),
                          ["A8_S1_R1_001.fastq.gz",
                           "A8_S1_R2_001.fastq.gz"])
+        self.assertEqual(sample2.dir_name,None)
         self.assertEqual(sample2.fastqs(),
                          ["B8_S2_R1_001.fastq.gz",
                           "B8_S2_R2_001.fastq.gz"])
@@ -1991,11 +2003,14 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
         predictor.set(package="bcl2fastq2",
                       lanes=(1,2),
                       paired_end=True)
+        self.assertEqual(project.dir_name,"PJB")
+        self.assertEqual(sample1.dir_name,None)
         self.assertEqual(sample1.fastqs(),
                          ["A8_S1_L001_R1_001.fastq.gz",
                           "A8_S1_L001_R2_001.fastq.gz",
                           "A8_S1_L002_R1_001.fastq.gz",
                           "A8_S1_L002_R2_001.fastq.gz"])
+        self.assertEqual(sample2.dir_name,None)
         self.assertEqual(sample2.fastqs(),
                          ["B8_S2_L001_R1_001.fastq.gz",
                           "B8_S2_L001_R2_001.fastq.gz",
@@ -2003,16 +2018,22 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
                           "B8_S2_L002_R2_001.fastq.gz"])
         # Predict output fastqs CASAVA/bcl2fastq 1.8*
         predictor.set(package="casava")
-        self.assertEqual(sample1.fastqs(package="casava"),
+        self.assertEqual(project.dir_name,"Project_PJB")
+        self.assertEqual(sample1.dir_name,"Sample_A8")
+        self.assertEqual(sample1.fastqs(),
                          ["A8_TAAGGCGA-TAGATCGC_L001_R1_001.fastq.gz"])
+        self.assertEqual(sample2.dir_name,"Sample_B8")
         self.assertEqual(sample2.fastqs(package="casava"),
                          ["B8_CGTACTAG-TAGATCGC_L001_R1_001.fastq.gz"])
         # Predict output fastqs CASAVA/bcl2fastq 1.8* paired end
         predictor.set(package="casava",
                       paired_end=True)
+        self.assertEqual(project.dir_name,"Project_PJB")
+        self.assertEqual(sample1.dir_name,"Sample_A8")
         self.assertEqual(sample1.fastqs(),
                          ["A8_TAAGGCGA-TAGATCGC_L001_R1_001.fastq.gz",
                           "A8_TAAGGCGA-TAGATCGC_L001_R2_001.fastq.gz"])
+        self.assertEqual(sample2.dir_name,"Sample_B8")
         self.assertEqual(sample2.fastqs(),
                          ["B8_CGTACTAG-TAGATCGC_L001_R1_001.fastq.gz",
                           "B8_CGTACTAG-TAGATCGC_L001_R2_001.fastq.gz"])
@@ -2021,11 +2042,14 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
         predictor.set(package="casava",
                       lanes=(1,2),
                       paired_end=True)
+        self.assertEqual(project.dir_name,"Project_PJB")
+        self.assertEqual(sample1.dir_name,"Sample_A8")
         self.assertEqual(sample1.fastqs(),
                          ["A8_TAAGGCGA-TAGATCGC_L001_R1_001.fastq.gz",
                           "A8_TAAGGCGA-TAGATCGC_L001_R2_001.fastq.gz",
                           "A8_TAAGGCGA-TAGATCGC_L002_R1_001.fastq.gz",
                           "A8_TAAGGCGA-TAGATCGC_L002_R2_001.fastq.gz"])
+        self.assertEqual(sample2.dir_name,"Sample_B8")
         self.assertEqual(sample2.fastqs(),
                           ["B8_CGTACTAG-TAGATCGC_L001_R1_001.fastq.gz",
                            "B8_CGTACTAG-TAGATCGC_L001_R2_001.fastq.gz",
@@ -2037,7 +2061,7 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
         """
         casava = SampleSheet(fp=cStringIO.StringIO(
             self.casava_sample_sheet_content))
-        predictor = SampleSheetPredictor(fp=casava)
+        predictor = SampleSheetPredictor(sample_sheet=casava)
         self.assertEqual(predictor.nprojects,2)
         self.assertEqual(predictor.project_names,["AR","Control"])
         self.assertRaises(KeyError,predictor.get_project,"DoesntExist")
@@ -2058,34 +2082,54 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
         self.assertEqual(sample2.barcode_seqs,["AGTCAA"])
         self.assertEqual(sample3.barcode_seqs,["AGTTCC"])
         self.assertEqual(sample4.barcode_seqs,["ATGTCA"])
-        self.assertEqual(sample1.lanes("CTGCCT"),(1,8))
-        self.assertEqual(sample2.lanes("AGTCAA"),(2,5))
-        self.assertEqual(sample3.lanes("AGTTCC"),(3,6))
-        self.assertEqual(sample4.lanes("ATGTCA"),(4,7))
+        self.assertEqual(sample1.lanes("CTGCCT"),[1,8])
+        self.assertEqual(sample2.lanes("AGTCAA"),[2,5])
+        self.assertEqual(sample3.lanes("AGTTCC"),[3,6])
+        self.assertEqual(sample4.lanes("ATGTCA"),[4,7])
         self.assertEqual(sample1.s_index,1)
         self.assertEqual(sample2.s_index,2)
         self.assertEqual(sample3.s_index,3)
         self.assertEqual(sample4.s_index,4)
         # Predict output fastqs bcl2fastq2
         predictor.set(package="bcl2fastq2")
+        self.assertEqual(project1.dir_name,"Control")
+        self.assertEqual(project2.dir_name,"AR")
+        self.assertEqual(sample1.dir_name,None)
         self.assertEqual(sample1.fastqs(),
-                         ["PhiX_S1_L001_R1_001.fastq.gz"])
+                         ["PhiX_S1_L001_R1_001.fastq.gz",
+                          "PhiX_S1_L008_R1_001.fastq.gz"])
+        self.assertEqual(sample2.dir_name,None)
         self.assertEqual(sample2.fastqs(),
-                         ["884-1_S2_L001_R1_001.fastq.gz"])
+                         ["884-1_S2_L002_R1_001.fastq.gz",
+                          "884-1_S2_L005_R1_001.fastq.gz"])
+        self.assertEqual(sample3.dir_name,None)
         self.assertEqual(sample3.fastqs(),
-                         ["885-1_S3_L001_R1_001.fastq.gz"])
+                         ["885-1_S3_L003_R1_001.fastq.gz",
+                          "885-1_S3_L006_R1_001.fastq.gz"])
+        self.assertEqual(sample4.dir_name,None)
         self.assertEqual(sample4.fastqs(),
-                         ["886-1_S4_L001_R1_001.fastq.gz"])
+                         ["886-1_S4_L004_R1_001.fastq.gz",
+                          "886-1_S4_L007_R1_001.fastq.gz"])
         # Predict output fastqs CASAVA/bcl2fastq 1.8*
         predictor.set(package="casava")
+        self.assertEqual(project1.dir_name,"Project_Control")
+        self.assertEqual(project2.dir_name,"Project_AR")
+        self.assertEqual(sample1.dir_name,"Sample_PhiX")
         self.assertEqual(sample1.fastqs(),
-                         ["PhiX_CTGCCT_L001_R1_001.fastq.gz"])
+                         ["PhiX_CTGCCT_L001_R1_001.fastq.gz",
+                          "PhiX_CTGCCT_L008_R1_001.fastq.gz"])
+        self.assertEqual(sample2.dir_name,"Sample_884-1")
         self.assertEqual(sample2.fastqs(),
-                         ["884-1_AGTCAA_L001_R1_001.fastq.gz"])
+                         ["884-1_AGTCAA_L002_R1_001.fastq.gz",
+                          "884-1_AGTCAA_L005_R1_001.fastq.gz"])
+        self.assertEqual(sample3.dir_name,"Sample_885-1")
         self.assertEqual(sample3.fastqs(),
-                         ["885-1_AGTTCC_L001_R1_001.fastq.gz"])
+                         ["885-1_AGTTCC_L003_R1_001.fastq.gz",
+                          "885-1_AGTTCC_L006_R1_001.fastq.gz"])
+        self.assertEqual(sample4.dir_name,"Sample_886-1")
         self.assertEqual(sample3.fastqs(),
-                         ["886-1_ATGTCA_L001_R1_001.fastq.gz"])
+                         ["886-1_ATGTCA_L004_R1_001.fastq.gz",
+                          "886-1_ATGTCA_L007_R1_001.fastq.gz"])
 
     def test_samplesheet_predictor_iem_id_and_names_differ(self):
         iem = SampleSheet(fp=cStringIO.StringIO(
@@ -2094,7 +2138,7 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
         """
         iem = SampleSheet(fp=cStringIO.StringIO(
             self.hiseq_sample_sheet_content))
-        predictor = SampleSheetPredictor(fp=iem)
+        predictor = SampleSheetPredictor(sample_sheet=iem)
         # Get projects
         self.assertEqual(predictor.nprojects,1)
         self.assertEqual(predictor.project_names,["PeterBriggs"])
@@ -2108,12 +2152,13 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
         # Check sample barcodes and lanes
         self.assertEqual(sample1.barcode_seqs,["CGATGTAT-TCTTTCCC"])
         self.assertEqual(sample2.barcode_seqs,["TGACCAAT-TCTTTCCC"])
-        self.assertEqual(sample1.lanes("CGATGTAT-TCTTTCCC"),(1,2))
-        self.assertEqual(sample2.lanes("TGACCAAT-TCTTTCCC"),(1,2))
+        self.assertEqual(sample1.lanes("CGATGTAT-TCTTTCCC"),[1,2])
+        self.assertEqual(sample2.lanes("TGACCAAT-TCTTTCCC"),[1,2])
         self.assertEqual(sample1.s_index,1)
         self.assertEqual(sample2.s_index,2)
         # Predict output fastqs bcl2fastq2
         predictor.set(package="bcl2fastq2")
+        self.assertEqual(project.dir_name,"PeterBriggs")
         self.assertEqual(sample1.fastqs(),
                          ["PJB1/PJB1-1579_S1_L001_R1_001.fastq.gz",
                           "PJB1/PJB1-1579_S1_L002_R1_001.fastq.gz"])
@@ -2122,6 +2167,7 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
                           "PJB2/PJB2-1580_S2_L002_R1_001.fastq.gz"])
         # Predict output fastqs CASAVA/bcl2fastq 1.8*
         predictor.set(package="casava")
+        self.assertEqual(project.dir_name,"Project_PeterBriggs")
         self.assertEqual(sample1.fastqs(),
                          ["PJB1-1579_CGATGTAT-TCTTTCCC_L001_R1_001.fastq.gz",
                           "PJB1-1579_CGATGTAT-TCTTTCCC_L002_R1_001.fastq.gz"])
@@ -2134,7 +2180,7 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
         """
         iem = SampleSheet(fp=cStringIO.StringIO(
             self.hiseq_sample_sheet_no_barcodes))
-        predictor = SampleSheetPredictor(fp=iem)
+        predictor = SampleSheetPredictor(sample_sheet=iem)
         # Get projects
         self.assertEqual(predictor.nprojects,1)
         self.assertEqual(predictor.project_names,["PeterBriggs"])
@@ -2154,12 +2200,14 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
         self.assertEqual(sample2.s_index,2)
         # Predict output fastqs bcl2fastq2
         predictor.set(package="bcl2fastq2")
+        self.assertEqual(project.dir_name,"PeterBriggs")
         self.assertEqual(sample1.fastqs(),
                          ["PJB1_S1_L001_R1_001.fastq.gz"])
         self.assertEqual(sample2.fastqs(),
                          ["PJB2_S2_L002_R1_001.fastq.gz"])
         # Predict output fastqs CASAVA/bcl2fastq 1.8*
         predictor.set(package="casava")
+        self.assertEqual(project.dir_name,"Project_PeterBriggs")
         self.assertEqual(sample1.fastqs(package="casava"),
                          ["PJB1_NoIndex_L001_R1_001.fastq.gz"])
         self.assertEqual(sample2.fastqs(package="casava"),
