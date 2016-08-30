@@ -1,8 +1,243 @@
 #######################################################################
 # Tests for Pipeline.py module
 #######################################################################
+import os
 import unittest
-from bcftbx.Pipeline import *
+import tempfile
+import shutil
+import time
+import bcftbx.utils
+from bcftbx.JobRunner import SimpleJobRunner
+from bcftbx.JobRunner import GEJobRunner
+from bcftbx.Pipeline import Job
+from bcftbx.Pipeline import GetSolidDataFiles
+from bcftbx.Pipeline import GetSolidPairedEndFiles
+from bcftbx.Pipeline import GetFastqFiles
+from bcftbx.Pipeline import GetFastqGzFiles
+
+class TestJobWithSimpleJobRunner(unittest.TestCase):
+    """Unit tests for the the Job class using SimpleJobRunner
+
+    """
+    def setUp(self):
+        # Create a temporary directory to work in
+        self.working_dir = self.make_tmp_dir()
+        self.log_dir = None
+
+    def tearDown(self):
+        shutil.rmtree(self.working_dir)
+        if self.log_dir is not None:
+            shutil.rmtree(self.log_dir)
+
+    def make_tmp_dir(self):
+        return tempfile.mkdtemp()
+
+    def test_job_with_simplejobrunner(self):
+        """Test Job using SimpleJobRunner to run basic shell command
+        """
+        # Create a job
+        cmd = "sleep"
+        args = ("2",)
+        job = Job(SimpleJobRunner(),"shell_cmd",self.working_dir,cmd,args)
+        # Check properties before starting
+        self.assertEqual(job.name,"shell_cmd")
+        self.assertEqual(job.working_dir,self.working_dir)
+        self.assertEqual(job.script,cmd)
+        self.assertEqual(job.args,args)
+        self.assertEqual(job.label,None)
+        self.assertEqual(job.group_label,None)
+        self.assertEqual(job.job_id,None)
+        self.assertEqual(job.log,None)
+        self.assertEqual(job.start_time,None)
+        self.assertEqual(job.end_time,None)
+        self.assertEqual(job.exit_status,None)
+        # Check status
+        self.assertFalse(job.isRunning())
+        self.assertFalse(job.errorState())
+        self.assertEqual(job.status(),"Waiting")
+        # Start the job and check
+        job_id = job.start()
+        time.sleep(1)
+        self.assertEqual(job.name,"shell_cmd")
+        self.assertEqual(job.working_dir,self.working_dir)
+        self.assertEqual(job.script,cmd)
+        self.assertEqual(job.args,args)
+        self.assertEqual(job.label,None)
+        self.assertEqual(job.group_label,None)
+        self.assertEqual(job.job_id,job_id)
+        self.assertNotEqual(job.log,None)
+        self.assertNotEqual(job.start_time,None)
+        self.assertEqual(job.end_time,None)
+        self.assertEqual(job.exit_status,None)
+        self.assertTrue(job.isRunning())
+        self.assertFalse(job.errorState())
+        self.assertEqual(job.status(),"Running")
+        # Wait to let job complete and check last time
+        time.sleep(2)
+        job.update()
+        self.assertEqual(job.name,"shell_cmd")
+        self.assertEqual(job.working_dir,self.working_dir)
+        self.assertEqual(job.script,cmd)
+        self.assertEqual(job.args,args)
+        self.assertEqual(job.label,None)
+        self.assertEqual(job.group_label,None)
+        self.assertEqual(job.job_id,job_id)
+        self.assertNotEqual(job.log,None)
+        self.assertNotEqual(job.start_time,None)
+        self.assertNotEqual(job.end_time,None)
+        self.assertFalse(job.isRunning())
+        self.assertEqual(job.exit_status,0)
+        self.assertFalse(job.errorState())
+        self.assertEqual(job.status(),"Finished")
+
+    def test_failing_job_with_simplejobrunner(self):
+        """Test Job using SimpleJobRunner to run failing shell command
+        """
+        # Create a job
+        cmd = "ls"
+        args = ("*.whereisit",)
+        job = Job(SimpleJobRunner(),"failing_cmd",self.working_dir,cmd,args)
+        # Start the job
+        job_id = job.start()
+        # Wait to let job complete and check
+        time.sleep(1)
+        job.update()
+        self.assertEqual(job.name,"failing_cmd")
+        self.assertEqual(job.working_dir,self.working_dir)
+        self.assertEqual(job.script,cmd)
+        self.assertEqual(job.args,args)
+        self.assertEqual(job.label,None)
+        self.assertEqual(job.group_label,None)
+        self.assertEqual(job.job_id,job_id)
+        self.assertNotEqual(job.log,None)
+        self.assertNotEqual(job.start_time,None)
+        self.assertNotEqual(job.end_time,None)
+        self.assertFalse(job.isRunning())
+        self.assertEqual(job.exit_status,2)
+        self.assertFalse(job.errorState())
+        self.assertEqual(job.status(),"Finished")
+
+class TestJobWithGEJobRunner(unittest.TestCase):
+    """Unit tests for the the Job class using GEJobRunner
+
+    """
+    def setUp(self):
+        # Skip the test if Grid Engine not available
+        if bcftbx.utils.find_program('qstat') is None:
+            raise unittest.SkipTest("'qstat' not found, Grid Engine "
+                                    "not available")
+        # Create a temporary directory to work in
+        # Nb can't make it in /tmp because that might not be
+        # shared between submit host and the compute node
+        # so check that TMPDIR is set and skip test if not
+        try:
+            tmpdir = os.environ['TMPDIR']
+        except KeyError:
+            raise unittest.SkipTest("'TMPDIR' environment variable not set - "
+                                    "set this to point to a temporary dir "
+                                    "shared by submit and compute nodes")
+        # Set up working dir
+        self.working_dir = self.make_tmp_dir()
+        self.log_dir = None
+
+    def tearDown(self):
+        shutil.rmtree(self.working_dir)
+        if self.log_dir is not None:
+            shutil.rmtree(self.log_dir)
+
+    def make_tmp_dir(self):
+        return tempfile.mkdtemp()
+
+    def test_job_with_gejobrunner(self):
+        """Test Job using GEJobRunner to run basic shell command
+        """
+        # Create a job
+        cmd = "sleep"
+        args = ("2",)
+        job = Job(GEJobRunner(),"shell_cmd",self.working_dir,cmd,args)
+        # Check properties before starting
+        self.assertEqual(job.name,"shell_cmd")
+        self.assertEqual(job.working_dir,self.working_dir)
+        self.assertEqual(job.script,cmd)
+        self.assertEqual(job.args,args)
+        self.assertEqual(job.label,None)
+        self.assertEqual(job.group_label,None)
+        self.assertEqual(job.job_id,None)
+        self.assertEqual(job.log,None)
+        self.assertEqual(job.start_time,None)
+        self.assertEqual(job.end_time,None)
+        self.assertEqual(job.exit_status,None)
+        # Check status
+        self.assertFalse(job.isRunning())
+        self.assertFalse(job.errorState())
+        self.assertEqual(job.status(),"Waiting")
+        # Start the job and check
+        job_id = job.start()
+        time.sleep(1)
+        self.assertEqual(job.name,"shell_cmd")
+        self.assertEqual(job.working_dir,self.working_dir)
+        self.assertEqual(job.script,cmd)
+        self.assertEqual(job.args,args)
+        self.assertEqual(job.label,None)
+        self.assertEqual(job.group_label,None)
+        self.assertEqual(job.job_id,job_id)
+        self.assertNotEqual(job.log,None)
+        self.assertNotEqual(job.start_time,None)
+        self.assertEqual(job.end_time,None)
+        self.assertEqual(job.exit_status,None)
+        self.assertTrue(job.isRunning())
+        self.assertFalse(job.errorState())
+        self.assertEqual(job.status(),"Running")
+        # Wait for job to complete and check last time
+        ntries = 1
+        timeout = 20
+        while job.isRunning() and ntries < timeout:
+            ntries += 1
+            time.sleep(1)
+        self.assertEqual(job.name,"shell_cmd")
+        self.assertEqual(job.working_dir,self.working_dir)
+        self.assertEqual(job.script,cmd)
+        self.assertEqual(job.args,args)
+        self.assertEqual(job.label,None)
+        self.assertEqual(job.group_label,None)
+        self.assertEqual(job.job_id,job_id)
+        self.assertNotEqual(job.log,None)
+        self.assertNotEqual(job.start_time,None)
+        self.assertNotEqual(job.end_time,None)
+        self.assertFalse(job.isRunning())
+        self.assertEqual(job.exit_status,0)
+        self.assertFalse(job.errorState())
+        self.assertEqual(job.status(),"Finished")
+
+    def test_failing_job_with_gejobrunner(self):
+        """Test Job using GeJobRunner to run failing shell command
+        """
+        # Create a job
+        cmd = "ls"
+        args = ("*.whereisit",)
+        job = Job(GEJobRunner(),"failing_cmd",self.working_dir,cmd,args)
+        # Start the job
+        job_id = job.start()
+        # Wait to let job complete and check
+        ntries = 1
+        timeout = 20
+        while job.isRunning() and ntries < timeout:
+            ntries += 1
+            time.sleep(1)
+        self.assertEqual(job.name,"failing_cmd")
+        self.assertEqual(job.working_dir,self.working_dir)
+        self.assertEqual(job.script,cmd)
+        self.assertEqual(job.args,args)
+        self.assertEqual(job.label,None)
+        self.assertEqual(job.group_label,None)
+        self.assertEqual(job.job_id,job_id)
+        self.assertNotEqual(job.log,None)
+        self.assertNotEqual(job.start_time,None)
+        self.assertNotEqual(job.end_time,None)
+        self.assertFalse(job.isRunning())
+        self.assertEqual(job.exit_status,2)
+        self.assertFalse(job.errorState())
+        self.assertEqual(job.status(),"Finished")
 
 class TestGetSolidDataFiles(unittest.TestCase):
     """Unit tests for GetSolidDataFiles function

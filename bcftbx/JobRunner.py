@@ -75,11 +75,13 @@ class BaseJobRunner:
 
     A job runner needs to implement the following methods:
 
-      run      : starts a job running
-      terminate: kills a running job
-      list     : lists the running job ids
-      logFile  : returns the name of the log file for a job
-      errFile  : returns the name of the error file for a job
+      run        : starts a job running
+      terminate  : kills a running job
+      list       : lists the running job ids
+      logFile    : returns the name of the log file for a job
+      errFile    : returns the name of the error file for a job
+      exit_status: returns the exit status for the command (or
+                   None if the job is still running)
 
     Optionally it can also implement the methods:
 
@@ -144,6 +146,15 @@ class BaseJobRunner:
         """
         return False
 
+    def exit_status(self,job_id):
+        """Return the exit status code for the command
+
+        Return the exit status code from the command that was
+        run by the specified job, or None if the job hasn't
+        exited yet.
+        """
+        return None
+
     @property
     def log_dir(self):
         """Return the current log directory setting
@@ -191,6 +202,8 @@ class SimpleJobRunner(BaseJobRunner):
         # Keep track of log files etc
         self.__log_files = {}
         self.__err_files = {}
+        self.__exit_status = {}
+        self.__job_popen = {}
 
     def __repr__(self):
         return 'SimpleJobRunner'
@@ -245,6 +258,7 @@ class SimpleJobRunner(BaseJobRunner):
         # Do internal house keeping
         self.__job_list.append(job_id)
         self.__log_files[job_id] = lognames[0]
+        self.__job_popen[job_id] = p
         if not self.__join_logs:
             self.__err_files[job_id] = lognames[1]
         else:
@@ -268,8 +282,8 @@ class SimpleJobRunner(BaseJobRunner):
             return False
         # Attempt to terminate
         logging.debug("KillJob: deleting job")
-        kill=('kill','-9',job_id)
-        p = subprocess.Popen(kill)
+        p = self.__job_popen[job_id]
+        p.terminate()
         p.wait()
         if job_id not in self.list():
             logging.debug("KillJob: deleted job %s" % job_id)
@@ -296,36 +310,31 @@ class SimpleJobRunner(BaseJobRunner):
     def list(self):
         """Return a list of running job_ids
         """
-        jobs = self.__run_ps()
-        # Process the output to get job ids
         job_ids = []
-        for job_data in jobs:
-            # Id is second item for each job
-            job_id = job_data[1]
-            if job_id in self.__job_list:
+        for job_id in [jid for jid in self.__job_popen]:
+            p = self.__job_popen[job_id]
+            status = p.poll()
+            if status is None:
                 job_ids.append(job_id)
+            else:
+                logging.debug("Job id %s: finished (%s)" % (job_id,
+                                                            status))
+                self.__exit_status[job_id] = status
+                del(self.__job_popen[job_id])
         return job_ids
 
-    def __run_ps(self):
-        """Internal: run 'ps eu' and return output as list of lines
+    def exit_status(self,job_id):
+        """Return exit status from command run by a job
         """
-        cmd = ['ps','eu']
-        p = subprocess.Popen(cmd,stdout=subprocess.PIPE)
-        # Process the output
-        jobs = []
-        # Typical output is:
-        #USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
-        #mee       2451  0.0  0.0 116424  1928 pts/0    Ss   Oct14   0:00 bash LANG=....
-        # ...
-        # i.e. 1 header line then one line per job/process
-        for line in p.stdout:
-            try:
-                if line.split()[1].isdigit():
-                    jobs.append(line.split())
-            except IndexError:
-                # Skip this line
-                pass
-        return jobs
+        if job_id in self.__job_popen:
+            # Job exists but still running
+            return None
+        # Look for return code
+        try:
+            return self.__exit_status[job_id]
+        except KeyError:
+            logging.error("Don't know anything about job %s" % job_id)
+            return None
 
     def __assign_log_files(self,name,working_dir):
         """Internal: return log file names for stdout and stderr
@@ -356,13 +365,18 @@ class GEJobRunner(BaseJobRunner):
     queue on initialisation.
     """
 
-    def __init__(self,queue=None,log_dir=None,ge_extra_args=None):
+    def __init__(self,queue=None,log_dir=None,ge_extra_args=None,
+                 poll_interval=1.0,timeout=30.0):
         """Create a new GEJobRunner instance
 
         Arguments:
           queue:   Name of GE queue to use (set to 'None' to use default queue)
           log_dir: Directory to write log files to (set to 'None' to use cwd)
           ge_extra_args: Arbitrary additional arguments to supply to qsub
+          poll_interval: time interval to use when polling Grid Engine e.g.
+            to acquire qacct information (default 1s)
+          timeout: maximum length of time to wait before giving up when
+            polling Grid Engine (default 30s)
         """
         self.__queue = queue
         # Directory for log files
@@ -370,7 +384,11 @@ class GEJobRunner(BaseJobRunner):
         # Keep track of names and log dirs for each job
         self.__names = {}
         self.__log_dirs = {}
+        self.__exit_status = {}
         self.__ge_extra_args = ge_extra_args
+        # Polling intervals and timeout periods (seconds)
+        self.__ge_poll_interval = poll_interval
+        self.__ge_timeout = timeout
 
     def __repr__(self):
         name = 'GEJobRunner'
@@ -441,7 +459,9 @@ class GEJobRunner(BaseJobRunner):
         if not os.path.exists(cwd):
             logging.error("QsubScript: cwd doesn't exist!")
             return None
-        p = subprocess.Popen(qsub,cwd=cwd,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        p = subprocess.Popen(qsub,cwd=cwd,
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE)
         p.wait()
         # Check stderr
         error = p.stderr.read().strip()
@@ -535,6 +555,44 @@ class GEJobRunner(BaseJobRunner):
                 job_ids.append(job_data[0])
         return job_ids
 
+    def exit_status(self,job_id):
+        """Return exit status from command run by a job
+        """
+        if job_id in self.__exit_status:
+            # Return cached exit status
+            return self.__exit_status[job_id]
+        if self.isRunning(job_id):
+            # Return None if job is still running
+            return None
+        # Try to get qacct info
+        # This might not be available immediately after the job
+        # completes as the accounting system will only flush the
+        # information periodically
+        # Therefore we will retry retrieval based on the polling
+        # interval and timeout period defined on initialisation
+        job_info = self.__run_qacct(job_id)
+        retries = 0
+        while not job_info and \
+              (retries*self.__ge_poll_interval) < self.__ge_timeout:
+            time.sleep(self.__ge_poll_interval)
+            job_info = self.__run_qacct(job_id)
+            retries += 1
+        logging.debug("qacct: %s (%s retries), returned %s" %
+                      (job_id,retries,job_info))
+        # Check if we have qacct info after multiple attempts
+        if not job_info:
+            logging.warning("No qacct info for job %s after %d attempts" %
+                            (job_id,retries))
+            return None
+        # Extract, store and return exit status
+        try:
+            exit_status = int(job_info['exit_status'])
+            self.__exit_status[job_id] = exit_status
+            return exit_status
+        except KeyError:
+            logging.error("No exit_status returned for job %s" % job_id)
+            return None
+
     def __run_qstat(self):
         """Internal: run qstat and return data as a list of lists
 
@@ -567,6 +625,81 @@ class GEJobRunner(BaseJobRunner):
                 # Skip this line
                 pass
         return jobs
+
+    def __run_qacct(self,job_id):
+        """Internal: run qacct and return data as a dictionary
+
+        Runs 'qacct -j' command to get the accounting information
+        for the specified job ID, processes the output and returns
+        it as a dictionary, for example:
+
+        { 'qname': 'serial.q', 'exit_status': '0', ... }
+
+        The full set of accounting parameters are listed in the
+        Grid Engine 'accounting (5)' manpage, for example:
+
+        https://arc.liv.ac.uk/SGE/htmlman/htmlman5/accounting.html
+
+        Note also that there may be a lag between job completion
+        and the accounting information becoming available to qacct.
+        According to the documentation this interval is governed
+        by the `accounting_flush_time` parameter in the
+        `reporting_params` line of the Grid Engine configuration
+        file - for example:
+
+        > grep $SGE_ROOT/$SGE_CELL/common/configuration
+        reporting_params             accounting=true reporting=false flush_time=00:00:15 joblog=false sharelog=00:00:00
+
+        NB it is also possible that accounting is turned off and
+        that no information is available at all.
+
+        """
+        cmd = ['qacct','-j',"%s" % job_id]
+        # Run the qacct command
+        p = subprocess.Popen(cmd,
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE)
+        p.wait()
+        # Check stderr in case output is not available
+        # e.g. "error: job id 18384 not found"
+        stderr = p.stderr.read()
+        if stderr.startswith("error: job id"):
+            logging.warning("Job %s: uable to get qacct info"
+                            % job_id)
+            return None
+        # Process the output
+        qacct_dict = {}
+        # Typical output is:
+        # qname        serial.q
+        # hostname     node015.prv.cluster
+        # group        users
+        # owner        pjb
+        # jobname      copy.MH
+        # jobnumber    9859
+        # taskid       undefined
+        # account      sge
+        # priority     0
+        # qsub_time    Thu Aug 18 11:28:50 2016
+        # start_time   Thu Aug 18 11:28:50 2016
+        # end_time     Thu Aug 18 12:27:09 2016
+        # granted_pe   NONE
+        # slots        1
+        # failed       0
+        # exit_status  0
+        # ...
+        # i.e. key-value pairs, one pair per line
+        print "__run_qacct: stdout for %s:" % job_id
+        for line in p.stdout:
+            print line.rstrip()
+            try:
+                i = line.index(" ")
+                key = line[:i].strip()
+                value = line[i:].strip()
+                qacct_dict[key] = value
+            except ValueError:
+                # Skip this line
+                pass
+        return qacct_dict
 
     def __job_state_code(self,job_id):
         """Internal: get the state code for the specified job id

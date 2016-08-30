@@ -5,6 +5,7 @@ from bcftbx.JobRunner import *
 import bcftbx.utils
 import unittest
 import tempfile
+import time
 import shutil
 
 class TestSimpleJobRunner(unittest.TestCase):
@@ -26,16 +27,22 @@ class TestSimpleJobRunner(unittest.TestCase):
         return runner.run(*args)
 
     def wait_for_jobs(self,runner,*args):
+        poll_interval = 0.01
         ntries = 0
-        while ntries < 100:
+        running_jobs = True
+        # Check running jobs
+        while ntries < 100 and running_jobs:
+            running_jobs = False
             for jobid in args:
-                # If we find one job still running then loop round
                 if runner.isRunning(jobid):
-                    ntries += 1
-                    continue
-                # All jobs finished
-                return
-        # At this point we've reach the timeout limit
+                    running_jobs = True
+            if running_jobs:
+                time.sleep(poll_interval)
+                ntries += 1
+        # All jobs finished
+        if not running_jobs:
+            return
+        # Otherwise we've reached the timeout limit
         self.fail("Timed out waiting for test job")
 
     def test_simple_job_runner(self):
@@ -45,14 +52,30 @@ class TestSimpleJobRunner(unittest.TestCase):
         # Create a runner and execute the echo command
         runner = SimpleJobRunner()
         jobid = self.run_job(runner,'test',self.working_dir,'echo',('this is a test',))
+        self.assertEqual(runner.exit_status(jobid),None)
         self.wait_for_jobs(runner,jobid)
         # Check outputs
         self.assertEqual(runner.name(jobid),'test')
         self.assertTrue(os.path.isfile(runner.logFile(jobid)))
         self.assertTrue(os.path.isfile(runner.errFile(jobid)))
+        self.assertEqual(runner.exit_status(jobid),0)
         # Check log files are in the working directory
         self.assertEqual(os.path.dirname(runner.logFile(jobid)),self.working_dir)
         self.assertEqual(os.path.dirname(runner.errFile(jobid)),self.working_dir)
+
+    def test_simple_job_runner_exit_status(self):
+        """Test SimpleJobRunner returns correct exit status
+        """
+        # Create a runner and execute commands with known exit codes
+        runner = SimpleJobRunner()
+        jobid_ok = self.run_job(runner,'test_ok',self.working_dir,
+                                       '/bin/bash',('-c','exit 0',))
+        jobid_error = self.run_job(runner,'test_error',self.working_dir,
+                                   '/bin/bash',('-c','exit 1',))
+        self.wait_for_jobs(runner,jobid_ok,jobid_error)
+        # Check exit codes
+        self.assertEqual(runner.exit_status(jobid_ok),0)
+        self.assertEqual(runner.exit_status(jobid_error),1)
 
     def test_simple_job_runner_termination(self):
         """Test SimpleJobRunner can terminate a running job
@@ -71,6 +94,7 @@ class TestSimpleJobRunner(unittest.TestCase):
         # Terminate job
         runner.terminate(jobid)
         self.assertFalse(runner.isRunning(jobid))
+        self.assertNotEqual(runner.exit_status(jobid),0)
 
     def test_simple_job_runner_join_logs(self):
         """Test SimpleJobRunner joining stderr to stdout
@@ -171,18 +195,22 @@ class TestGEJobRunner(unittest.TestCase):
             self.fail("Unable to run GE job")
 
     def wait_for_jobs(self,runner,*args):
-        poll_interval = .1
+        poll_interval = 0.1
         ntries = 0
-        while ntries < 100:
+        running_jobs = True
+        # Check running jobs
+        while ntries < 100 and running_jobs:
+            running_jobs = False
             for jobid in args:
-                # If we find one job still running then loop round
-                if runner.isRunning(jobid) or not os.path.exists(runner.logFile(jobid)):
-                    ntries += 1
-                    time.sleep(poll_interval)
-                    continue
-                # All jobs finished
-                return
-        # At this point we've reach the timeout limit
+                if runner.isRunning(jobid):
+                    running_jobs = True
+            if running_jobs:
+                time.sleep(poll_interval)
+                ntries += 1
+        # All jobs finished
+        if not running_jobs:
+            return
+        # Otherwise we've reached the timeout limit
         for jobid in args:
             # Terminate jobs
             if runner.isRunning(jobid):
@@ -196,14 +224,30 @@ class TestGEJobRunner(unittest.TestCase):
         # Create a runner and execute the echo command
         runner = GEJobRunner(ge_extra_args=self.ge_extra_args)
         jobid = self.run_job(runner,'test',self.working_dir,'echo',('this is a test',))
+        self.assertEqual(runner.exit_status(jobid),None)
         self.wait_for_jobs(runner,jobid)
         # Check outputs
         self.assertEqual(runner.name(jobid),'test')
         self.assertTrue(os.path.isfile(runner.logFile(jobid)))
         self.assertTrue(os.path.isfile(runner.errFile(jobid)))
+        self.assertEqual(runner.exit_status(jobid),0)
         # Check log files are in the working directory
         self.assertEqual(os.path.dirname(runner.logFile(jobid)),self.working_dir)
         self.assertEqual(os.path.dirname(runner.errFile(jobid)),self.working_dir)
+
+    def test_ge_job_runner_exit_status(self):
+        """Test GEJobRunner returns correct exit status
+        """
+        # Create a runner and execute commands with known exit codes
+        runner = GEJobRunner(ge_extra_args=self.ge_extra_args)
+        jobid_ok = self.run_job(runner,'test_ok',self.working_dir,
+                                       '/bin/bash',('-c','\'exit 0\'',))
+        jobid_error = self.run_job(runner,'test_error',self.working_dir,
+                                   '/bin/bash',('-c','\'exit 1\'',))
+        self.wait_for_jobs(runner,jobid_ok,jobid_error)
+        # Check exit codes
+        self.assertEqual(runner.exit_status(jobid_ok),0)
+        self.assertEqual(runner.exit_status(jobid_error),1)
 
     def test_ge_job_runner_termination(self):
         """Test GEJobRunner can terminate a running job
@@ -222,6 +266,7 @@ class TestGEJobRunner(unittest.TestCase):
         # Terminate job
         runner.terminate(jobid)
         self.assertFalse(runner.isRunning(jobid))
+        self.assertNotEqual(runner.exit_status(jobid),0)
 
     def test_ge_job_runner_join_logs(self):
         """Test GEJobRunner with '-j y' option (i.e. join stderr and stdout)

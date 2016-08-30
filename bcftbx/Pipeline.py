@@ -91,6 +91,7 @@ class Job:
       log         The log file for the job (relative to working_dir)
       start_time  The start time (seconds since the epoch)
       end_time    The end time (seconds since the epoch)
+      exit_status The exit code from the command that was run (integer, or None)
 
     The Job class uses a JobRunner instance (which supplies the necessary methods for
     starting, stopping and monitoring) for low-level job interactions.
@@ -124,6 +125,7 @@ class Job:
         self.terminated = False
         self.start_time = None
         self.end_time = None
+        self.exit_status = None
         self.home_dir = os.getcwd()
         self.__finished = False
         self.__runner = runner
@@ -165,7 +167,8 @@ class Job:
                     logging.error("Timed out waiting for job to start")
                     self.failed = True
                     self.__finished = True
-                    self.end_time = self.start_time
+                    ##self.__end_time = self.start_time
+                    self.update()
                     return self.job_id
         logging.debug("Job %s started (%s)" % (self.job_id,
                                                time.asctime(time.localtime(self.start_time))))
@@ -182,7 +185,9 @@ class Job:
         if self.isRunning():
             self.__runner.terminate(self.job_id)
             self.terminated = True
-            self.end_time = time.time()
+            self.update()
+            ##self.__end_time = time.time()
+            ##self.__exit_status = self.__runner.exit_status(self.job_id)
 
     def restart(self):
         """Restart the job
@@ -199,6 +204,7 @@ class Job:
         self.terminated = False
         self.start_time = None
         self.end_time = None
+        self.exit_status = None
         # Resubmit
         return self.start()
 
@@ -207,10 +213,7 @@ class Job:
         """
         if not self.submitted:
             return False
-        if not self.__finished:
-            if not self.__runner.isRunning(self.job_id):
-                self.end_time = time.time()
-                self.__finished = True
+        self.update()
         return not self.__finished
 
     def errorState(self):
@@ -233,6 +236,15 @@ class Job:
                 return "Running"
         else:
             return "Waiting"
+
+    def update(self):
+        """Update status of job
+        """
+        if not self.__finished:
+            if not self.__runner.isRunning(self.job_id):
+                self.__finished = True
+                self.end_time = time.time()
+                self.exit_status = self.__runner.exit_status(self.job_id)
 
     def wait(self):
         """Wait for job to complete
