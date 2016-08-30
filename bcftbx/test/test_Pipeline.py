@@ -121,7 +121,7 @@ class TestJobWithGEJobRunner(unittest.TestCase):
     def make_tmp_dir(self):
         return tempfile.mkdtemp()
 
-    def test_job_with_simplejobrunner(self):
+    def test_job_with_gejobrunner(self):
         """Test Job using GEJobRunner to run basic shell command
         """
         # Create a job
@@ -161,9 +161,12 @@ class TestJobWithGEJobRunner(unittest.TestCase):
         self.assertTrue(job.isRunning())
         self.assertFalse(job.errorState())
         self.assertEqual(job.status(),"Running")
-        # Wait to let job complete and check last time
-        time.sleep(2)
-        job.update()
+        # Wait for job to complete and check last time
+        ntries = 1
+        timeout = 20
+        while job.isRunning() and ntries < timeout:
+            ntries += 1
+            time.sleep(1)
         self.assertEqual(job.name,"shell_cmd")
         self.assertEqual(job.working_dir,self.working_dir)
         self.assertEqual(job.script,cmd)
