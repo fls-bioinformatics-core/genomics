@@ -1,6 +1,7 @@
 #######################################################################
 # Tests for Pipeline.py module
 #######################################################################
+import os
 import unittest
 import tempfile
 import shutil
@@ -99,6 +100,16 @@ class TestJobWithGEJobRunner(unittest.TestCase):
             raise unittest.SkipTest("'qstat' not found, Grid Engine "
                                     "not available")
         # Create a temporary directory to work in
+        # Nb can't make it in /tmp because that might not be
+        # shared between submit host and the compute node
+        # so check that TMPDIR is set and skip test if not
+        try:
+            tmpdir = os.environ['TMPDIR']
+        except KeyError:
+            raise unittest.SkipTest("'TMPDIR' environment variable not set - "
+                                    "set this to point to a temporary dir "
+                                    "shared by submit and compute nodes")
+        # Set up working dir
         self.working_dir = self.make_tmp_dir()
         self.log_dir = None
 
