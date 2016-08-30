@@ -10,6 +10,9 @@ function usage() {
     echo "Run fastq_screen against model organisms, other organisms and rRNA"
     echo "Note that a gzipped <fastq_file> is also valid as input"
     echo ""
+    echo "Output is written to the subdirectory 'qc' of the current directory"
+    echo "(will be created if not found)"
+    echo ""
     echo "Options:"
     echo "  --subset N: use subset of N reads (default 1000000, 0=use all reads)"
     echo "  --color: use colorspace bowtie indexes (SOLiD data)"
@@ -82,20 +85,28 @@ FASTQ_SCREEN_OPTIONS="$options --threads $threads"
 FASTQ_SCREEN_VERSION=$(get_version fastq_screen)
 MAJOR_VERSION=$(get_version fastq_screen | cut -d. -f1)
 MINOR_VERSION=$(get_version fastq_screen | cut -d. -f2)
+PATCH_VERSION=$(get_version fastq_screen | cut -d. -f3)
 if [ -z "$subset" ] || [ "$subset" == "0" ] ; then
     # Handle no subset i.e. use all data
     if [ $MAJOR_VERSION == "v0" ] ; then
-	if [ $MINOR_VERSION -le 4 ] ; then
-	    subset_option=
-	elif [  $MINOR_VERSION -eq 5 ] ; then
-	    subset_option="--subset 0"
-	else
-	    echo "ERROR don't know how to set subset for fastq_screen $MAJOR_VERSION.$MINOR_VERSION.*" >2
-	    exit 1
-	fi
-    else
-	echo "ERROR don't know how to set subset for fastq_screen $MAJOR_VERSION.$MINOR_VERSION.*" >2
-	exit 1
+	case "$MINOR_VERSION" in
+	    [0-4])
+		subset_option=
+		;;
+	    [5-7])
+		case "$PATCH_VERSION" in
+		    [0-2])
+			echo "ERROR --subset 0 broken for fastq_screen $FASTQ_SCREEN_VERSION; switch to 0.6.3 or later" >&2
+			exit 1
+			;;
+		esac
+		subset_option="--subset 0"
+		;;
+	    *)
+		echo "ERROR don't know how to set subset for fastq_screen $MAJOR_VERSION.$MINOR_VERSION.*" >&2
+		exit 1
+		;;
+	esac
     fi
 else
     # Subset explicitly specified
@@ -168,7 +179,7 @@ for screen in $SCREENS ; do
 		    fastq_screen_txt=${fastq%.fastq}_screen.txt
 		    fastq_screen_png=${fastq%.fastq}_screen.png
 		    ;;
-		v0.5)
+		v0.[5-6])
 		    fastq_screen_txt=${fastq_base}_screen.txt
 		    fastq_screen_png=${fastq_base}_screen.png
 		    ;;
