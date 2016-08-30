@@ -90,6 +90,33 @@ class TestJobWithSimpleJobRunner(unittest.TestCase):
         self.assertFalse(job.errorState())
         self.assertEqual(job.status(),"Finished")
 
+    def test_failing_job_with_simplejobrunner(self):
+        """Test Job using SimpleJobRunner to run failing shell command
+        """
+        # Create a job
+        cmd = "ls"
+        args = ("*.whereisit",)
+        job = Job(SimpleJobRunner(),"failing_cmd",self.working_dir,cmd,args)
+        # Start the job
+        job_id = job.start()
+        # Wait to let job complete and check
+        time.sleep(1)
+        job.update()
+        self.assertEqual(job.name,"failing_cmd")
+        self.assertEqual(job.working_dir,self.working_dir)
+        self.assertEqual(job.script,cmd)
+        self.assertEqual(job.args,args)
+        self.assertEqual(job.label,None)
+        self.assertEqual(job.group_label,None)
+        self.assertEqual(job.job_id,job_id)
+        self.assertNotEqual(job.log,None)
+        self.assertNotEqual(job.start_time,None)
+        self.assertNotEqual(job.end_time,None)
+        self.assertFalse(job.isRunning())
+        self.assertEqual(job.exit_status,2)
+        self.assertFalse(job.errorState())
+        self.assertEqual(job.status(),"Finished")
+
 class TestJobWithGEJobRunner(unittest.TestCase):
     """Unit tests for the the Job class using GEJobRunner
 
@@ -179,6 +206,36 @@ class TestJobWithGEJobRunner(unittest.TestCase):
         self.assertNotEqual(job.end_time,None)
         self.assertFalse(job.isRunning())
         self.assertEqual(job.exit_status,0)
+        self.assertFalse(job.errorState())
+        self.assertEqual(job.status(),"Finished")
+
+    def test_failing_job_with_gejobrunner(self):
+        """Test Job using GeJobRunner to run failing shell command
+        """
+        # Create a job
+        cmd = "ls"
+        args = ("*.whereisit",)
+        job = Job(GEJobRunner(),"failing_cmd",self.working_dir,cmd,args)
+        # Start the job
+        job_id = job.start()
+        # Wait to let job complete and check
+        ntries = 1
+        timeout = 20
+        while job.isRunning() and ntries < timeout:
+            ntries += 1
+            time.sleep(1)
+        self.assertEqual(job.name,"failing_cmd")
+        self.assertEqual(job.working_dir,self.working_dir)
+        self.assertEqual(job.script,cmd)
+        self.assertEqual(job.args,args)
+        self.assertEqual(job.label,None)
+        self.assertEqual(job.group_label,None)
+        self.assertEqual(job.job_id,job_id)
+        self.assertNotEqual(job.log,None)
+        self.assertNotEqual(job.start_time,None)
+        self.assertNotEqual(job.end_time,None)
+        self.assertFalse(job.isRunning())
+        self.assertEqual(job.exit_status,2)
         self.assertFalse(job.errorState())
         self.assertEqual(job.status(),"Finished")
 
