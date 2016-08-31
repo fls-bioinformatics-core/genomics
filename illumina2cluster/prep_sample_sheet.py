@@ -15,7 +15,7 @@ Prepare sample sheet file for Illumina sequencers.
 
 """
 
-__version__ = "0.3.1"
+__version__ = "0.4.0"
 
 #######################################################################
 # Imports
@@ -25,6 +25,7 @@ import os
 import sys
 import optparse
 import logging
+import pydoc
 # Put .. onto Python search path for modules
 SHARE_DIR = os.path.abspath(
     os.path.normpath(
@@ -181,7 +182,7 @@ if __name__ == "__main__":
                  "option; can be either 'CASAVA' or 'IEM' (defaults to the format of the "
                  "original file)")
     p.add_option('-v','--view',action="store_true",dest="view",
-	         help="view contents of sample sheet")
+	         help="view predicted outputs from sample sheet")
     p.add_option('--fix-spaces',action="store_true",dest="fix_spaces",
                  help="replace spaces in sample ID and project fields with underscores")
     p.add_option('--fix-duplicates',action="store_true",dest="fix_duplicates",
@@ -287,8 +288,10 @@ if __name__ == "__main__":
                 sys.exit(1)
             for line in data:
                 if line['Lane'] in lanes:
-                    print "Setting SampleProject for lane %d: '%s'" % (line['Lane'],
-                                                                       name)
+                    print "Setting SampleProject for lane %d: '%s' " \
+                        " (%s)"% (line['Lane'],
+                                  name,
+                                  line[data.sample_id_column])
                     line[data.sample_project_column] = name
     # Truncate barcodes
     if options.barcode_len is not None:
@@ -322,9 +325,6 @@ if __name__ == "__main__":
     # Fix duplicates
     if options.fix_duplicates:
         data.fix_duplicated_names()
-    # Print transposed data in tab-delimited format
-    if options.view:
-        data.transpose().write(fp=sys.stdout,delimiter='\t')
     # Check for non-unique id/project combinations, spaces and empty names
     check_status = 0
     # Duplicated names
@@ -356,15 +356,51 @@ if __name__ == "__main__":
                             data.sample_id_column,
                             data.sample_project_column)
     # Predict outputs
-    if check_status == 0 or options.ignore_warnings:
-        projects = data.predict_output()
-        print "Predicted output:"
-        for project in projects:
-            print "%s (%d samples)" % (project,len(projects[project]))
-            for sample in projects[project]:
-                print "\t%s" % sample
-                for sub_sample in projects[project][sample]:
-                    print "\t\t%s" % sub_sample
+    if check_status == 0 or options.ignore_warnings or options.view:
+        # Generate prediction
+        prediction = []
+        predictor = IlluminaData.SampleSheetPredictor(sample_sheet=data)
+        title = "Predicted projects:"
+        prediction.append("%s\n%s" % (title,('='*len(title))))
+        for project_name in predictor.project_names:
+            prediction.append("- %s" % project_name)
+        for project_name in predictor.project_names:
+            project = predictor.get_project(project_name)
+            title = "%s (%d samples)" % (project_name,
+                                       len(project.sample_ids))
+            prediction.append("\n%s\n%s" % (title,('-'*len(title))))
+            for sample_id in project.sample_ids:
+                sample = project.get_sample(sample_id)
+                for barcode in sample.barcode_seqs:
+                    lanes = sample.lanes(barcode)
+                    if lanes:
+                        lanes = "L%s" % (','.join([str(l)
+                                                   for l in lanes]))
+                    else:
+                        lanes = "L*"
+                    line = [sample_id,
+                            "S%d" % sample.s_index,
+                            barcode,
+                            lanes]
+                    prediction.append("%s" % '\t'.join([str(i) for i in line]))
+        prediction = '\n'.join(prediction)
+        # Handle paginated output
+        if os.isatty(sys.stdout.fileno()):
+            # Detected that stdout is a terminal
+            prediction += '\n'
+            # Acquire a pager command
+            try:
+                pager = os.environ["PAGER"]
+            except KeyError:
+                pager = None
+            # Output the prediction with paging
+            if pager is not None:
+                pydoc.pipepager(prediction,cmd=pager)
+            else:
+                pydoc.pager(prediction)
+        else:
+            # Stdout not a terminal
+            print prediction
 
     # Write out new sample sheet
     if options.samplesheet_out:
