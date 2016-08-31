@@ -1844,7 +1844,8 @@ class SampleSheetProject(object):
         Return a list of sample ID's in the project
 
         """
-        return sorted([s.sample_id for s in self.samples])
+        return sorted([s.sample_id for s in self.samples],
+                      cmp=lambda x,y: cmp_sample_names(x,y))
 
     @property
     def dir_name(self):
@@ -2617,3 +2618,26 @@ def normalise_barcode(seq):
 
     """
     return str(seq).upper().replace('-','').replace('+','')
+
+def cmp_sample_names(s1,s2):
+    """
+    Compare two sample names and return integer depending on the outcome
+
+    The sample names are compared first by prefix and then by index.
+
+    Arguments:
+      s1 (str): first sample name
+      s2 (str): second sample name
+
+    Returns:
+      Integer: the return value is negative if s1 < s2, zero if
+      s1 == s2 and strictly positive if s1 > s2.
+
+    """
+    prefix1 = utils.extract_prefix(s1)
+    prefix2 = utils.extract_prefix(s2)
+    if prefix1 != prefix2:
+        return cmp(prefix1,prefix2)
+    indx1 = utils.extract_index(s1)
+    indx2 = utils.extract_index(s2)
+    return cmp(indx1,indx2)

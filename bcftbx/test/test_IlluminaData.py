@@ -3102,6 +3102,16 @@ class TestNormaliseBarcode(unittest.TestCase):
         self.assertEqual(normalise_barcode('CGTGTAGGGACCTGTA'),
                          'CGTGTAGGGACCTGTA')
 
+class TestCmpSampleNames(unittest.TestCase):
+    def test_cmp_sample_names(self):
+        self.assertTrue(cmp_sample_names("PJB01","PJB02") < 0)
+        self.assertTrue(cmp_sample_names("PJB02","PJB01") > 0)
+        self.assertEqual(cmp_sample_names("PJB01","PJB01"),0)
+        self.assertTrue(cmp_sample_names("PJB01","PJB10") < 0)
+        self.assertTrue(cmp_sample_names("PJB1","PJB10") < 0)
+        self.assertTrue(cmp_sample_names("ABC10","PJB10") < 0)
+        self.assertTrue(cmp_sample_names("PJB10","ABC10") > 0)
+
 #######################################################################
 # Main program
 #######################################################################
