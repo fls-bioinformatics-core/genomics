@@ -22,6 +22,8 @@
 	  to `XLSWorkBook` class, to enable output to XLSX
 	  format Excel files; new `freeze_panes` function
 	  added to `XLSWorkSheet` class
+	- ChIP-seq/make_macs2_xls.py: default output is now
+	  XLSX (use `--format` option to switch back to XLS)
 
 2016-08-16  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
