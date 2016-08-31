@@ -1,3 +1,28 @@
+2016-08-31  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* genomics-bcftbx version 0.99.14
+	- bcftbx/IlluminaData: new class `SampleSheetPredictor`
+	  (and supporting classes) for improved prediction of
+	  sample sheet outputs; new function `cmp_sample_names`
+	  added (use for sorting sample names)
+	- illumina2cluster/prep_sample_sheet.py 0.4.0: update
+	  prediction of outputs and add automatic pagination
+	  when run in a terminal window
+	- QC-pipeline/fastq_screen.sh: updated to handle
+	  `fastq_screen` 0.6.* and 0.7.0.
+	- bcftbx/JobRunner: update `SimpleJobRunner` and
+	  `GEJobRunner` classes to capture exit code from the
+	  underlying jobs (via `exit_status` property)
+	- bcftbx/Pipeline: update `Job` class to add new
+	  `update` method (checks job status and updates
+	  internals) and expose the exit code from the
+	  underlying job (as returned via the job runner)
+	  via `exit_code` property
+	- bcftbx/simple_xls: new `save_as_xlsx` method added
+	  to `XLSWorkBook` class, to enable output to XLSX
+	  format Excel files; new `freeze_panes` function
+	  added to `XLSWorkSheet` class
+
 2016-08-16  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* genomics-bcftbx version 0.99.13
