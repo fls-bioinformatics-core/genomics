@@ -25,6 +25,7 @@ import os
 import sys
 import optparse
 import logging
+import pydoc
 # Put .. onto Python search path for modules
 SHARE_DIR = os.path.abspath(
     os.path.normpath(
@@ -181,7 +182,7 @@ if __name__ == "__main__":
                  "option; can be either 'CASAVA' or 'IEM' (defaults to the format of the "
                  "original file)")
     p.add_option('-v','--view',action="store_true",dest="view",
-	         help="view contents of sample sheet")
+	         help="view predicted outputs from sample sheet")
     p.add_option('--fix-spaces',action="store_true",dest="fix_spaces",
                  help="replace spaces in sample ID and project fields with underscores")
     p.add_option('--fix-duplicates',action="store_true",dest="fix_duplicates",
@@ -356,16 +357,18 @@ if __name__ == "__main__":
                             data.sample_project_column)
     # Predict outputs
     if check_status == 0 or options.ignore_warnings or options.view:
+        # Generate prediction
+        prediction = []
         predictor = IlluminaData.SampleSheetPredictor(sample_sheet=data)
         title = "Predicted projects:"
-        print "\n%s\n%s" % (title,('='*len(title)))
+        prediction.append("%s\n%s" % (title,('='*len(title))))
         for project_name in predictor.project_names:
-            print "- %s" % project_name
+            prediction.append("- %s" % project_name)
         for project_name in predictor.project_names:
             project = predictor.get_project(project_name)
             title = "%s (%d samples)" % (project_name,
                                        len(project.sample_ids))
-            print "\n%s\n%s" % (title,('-'*len(title)))
+            prediction.append("\n%s\n%s" % (title,('-'*len(title))))
             for sample_id in project.sample_ids:
                 sample = project.get_sample(sample_id)
                 for barcode in sample.barcode_seqs:
@@ -379,7 +382,25 @@ if __name__ == "__main__":
                             "S%d" % sample.s_index,
                             barcode,
                             lanes]
-                    print "%s" % '\t'.join([str(i) for i in line])
+                    prediction.append("%s" % '\t'.join([str(i) for i in line]))
+        prediction = '\n'.join(prediction)
+        # Handle paginated output
+        if os.isatty(sys.stdout.fileno()):
+            # Detected that stdout is a terminal
+            prediction += '\n'
+            # Acquire a pager command
+            try:
+                pager = os.environ["PAGER"]
+            except KeyError:
+                pager = None
+            # Output the prediction with paging
+            if pager is not None:
+                pydoc.pipepager(prediction,cmd=pager)
+            else:
+                pydoc.pager(prediction)
+        else:
+            # Stdout not a terminal
+            print prediction
 
     # Write out new sample sheet
     if options.samplesheet_out:
