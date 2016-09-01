@@ -581,8 +581,9 @@ class GEJobRunner(BaseJobRunner):
                       (job_id,retries,job_info))
         # Check if we have qacct info after multiple attempts
         if not job_info:
-            logging.warning("No qacct info for job %s after %d attempts" %
-                            (job_id,retries))
+            logging.warning("No qacct info for job %s after %d attempts "
+                            "(timeout %ss)" %
+                            (job_id,retries,self.__ge_timeout))
             return None
         # Extract, store and return exit status
         try:
@@ -664,8 +665,8 @@ class GEJobRunner(BaseJobRunner):
         # e.g. "error: job id 18384 not found"
         stderr = p.stderr.read()
         if stderr.startswith("error: job id"):
-            logging.warning("Job %s: uable to get qacct info"
-                            % job_id)
+            logging.deubg("Job %s: uable to get qacct info"
+                          % job_id)
             return None
         # Process the output
         qacct_dict = {}
