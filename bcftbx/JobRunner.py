@@ -688,9 +688,7 @@ class GEJobRunner(BaseJobRunner):
         # exit_status  0
         # ...
         # i.e. key-value pairs, one pair per line
-        print "__run_qacct: stdout for %s:" % job_id
         for line in p.stdout:
-            print line.rstrip()
             try:
                 i = line.index(" ")
                 key = line[:i].strip()
