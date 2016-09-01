@@ -665,7 +665,7 @@ class GEJobRunner(BaseJobRunner):
         # e.g. "error: job id 18384 not found"
         stderr = p.stderr.read()
         if stderr.startswith("error: job id"):
-            logging.deubg("Job %s: uable to get qacct info"
+            logging.debug("Job %s: uable to get qacct info"
                           % job_id)
             return None
         # Process the output
