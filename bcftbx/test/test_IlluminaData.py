@@ -2357,7 +2357,7 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
         self.assertEqual(project2.dir_name,"Project_CarlDavis")
         self.assertEqual(sample3.fastqs(),
                          ["CD3_GTATCGAT-TCTTTCCC_L001_R1_001.fastq.gz"])
-        self.assertEqual(sample3.fastqs(),
+        self.assertEqual(sample4.fastqs(),
                          ["CD4_CAATTGAC-TCTTTCCC_L001_R1_001.fastq.gz"])
     
 class TestMiseqToCasavaConversion(unittest.TestCase):
