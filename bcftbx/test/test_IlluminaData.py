@@ -1851,6 +1851,30 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
 1,PJB1,PJB1,,,,,,,PeterBriggs,
 2,PJB2,PJB2,,,,,,,PeterBriggs,
 """
+        self.hiseq_sample_sheet_lanes_out_of_order = """[Header]
+IEMFileVersion,4
+Date,06/03/2014
+Workflow,GenerateFASTQ
+Application,HiSeq FASTQ Only
+Assay,Nextera
+Description,
+Chemistry,Amplicon
+
+[Reads]
+101
+101
+
+[Settings]
+ReverseComplement,0
+Adapter,CTGTCTCTTATACACATCT
+
+[Data]
+Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_ID,index2,Sample_Project,Description
+2,AB1,AB1,,,N701,CGATGTAT,N501,TCTTTCCC,AlanBarclay,
+2,AB2,AB2,,,N702,TGACCAAT,N502,TCTTTCCC,AlanBarclay,
+1,CD3,CD3,,,N701,GTATCGAT,N501,TCTTTCCC,CarlDavis,
+1,CD4,CD4,,,N702,CAATTGAC,N502,TCTTTCCC,CarlDavis,
+"""
 
     def test_samplesheet_predictor_iem_with_lanes(self):
         """SampleSheetPredictor: handle IEM4 sample sheet with lanes
@@ -2279,6 +2303,62 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
                          ["PJB1_NoIndex_L001_R1_001.fastq.gz"])
         self.assertEqual(sample2.fastqs(),
                          ["PJB2_NoIndex_L002_R1_001.fastq.gz"])
+
+    def test_samplesheet_predictor_iem_lanes_out_of_order(self):
+        """SampleSheetPredictor: handle IEM4 sample sheet with lane order reversed
+        """
+        iem = SampleSheet(fp=cStringIO.StringIO(
+            self.hiseq_sample_sheet_lanes_out_of_order))
+        predictor = SampleSheetPredictor(sample_sheet=iem)
+        # Check projects
+        self.assertEqual(predictor.nprojects,2)
+        self.assertEqual(predictor.project_names,["AlanBarclay","CarlDavis"])
+        # Check sample barcodes and lanes for first project
+        project1 = predictor.get_project("AlanBarclay")
+        self.assertEqual(project1.sample_ids,["AB1","AB2"])
+        sample1 = project1.get_sample("AB1")
+        sample2 = project1.get_sample("AB2")
+        self.assertEqual(sample1.barcode_seqs,["CGATGTAT-TCTTTCCC"])
+        self.assertEqual(sample2.barcode_seqs,["TGACCAAT-TCTTTCCC"])
+        self.assertEqual(sample1.lanes("CGATGTAT-TCTTTCCC"),[2,])
+        self.assertEqual(sample2.lanes("TGACCAAT-TCTTTCCC"),[2,])
+        self.assertEqual(sample1.s_index,3)
+        self.assertEqual(sample2.s_index,4)
+        # Check sample barcodes and lanes for second project
+        project2 = predictor.get_project("CarlDavis")
+        self.assertEqual(project2.sample_ids,["CD3","CD4"])
+        sample3 = project2.get_sample("CD3")
+        sample4 = project2.get_sample("CD4")
+        self.assertEqual(sample3.barcode_seqs,["GTATCGAT-TCTTTCCC"])
+        self.assertEqual(sample4.barcode_seqs,["CAATTGAC-TCTTTCCC"])
+        self.assertEqual(sample3.lanes("GTATCGAT-TCTTTCCC"),[1,])
+        self.assertEqual(sample4.lanes("CAATTGAC-TCTTTCCC"),[1,])
+        self.assertEqual(sample3.s_index,1)
+        self.assertEqual(sample4.s_index,2)
+        # Predict output fastqs bcl2fastq2
+        predictor.set(package="bcl2fastq2")
+        self.assertEqual(project1.dir_name,"AlanBarclay")
+        self.assertEqual(sample1.fastqs(),
+                         ["AB1_S3_L002_R1_001.fastq.gz"])
+        self.assertEqual(sample2.fastqs(),
+                         ["AB2_S4_L002_R1_001.fastq.gz"])
+        self.assertEqual(project2.dir_name,"CarlDavis")
+        self.assertEqual(sample3.fastqs(),
+                         ["CD3_S1_L001_R1_001.fastq.gz"])
+        self.assertEqual(sample4.fastqs(),
+                         ["CD4_S2_L001_R1_001.fastq.gz"])
+        # Predict output fastqs CASAVA/bcl2fastq 1.8*
+        predictor.set(package="casava")
+        self.assertEqual(project1.dir_name,"Project_AlanBarclay")
+        self.assertEqual(sample1.fastqs(),
+                         ["AB1_CGATGTAT-TCTTTCCC_L002_R1_001.fastq.gz"])
+        self.assertEqual(sample2.fastqs(),
+                         ["AB2_TGACCAAT-TCTTTCCC_L002_R1_001.fastq.gz"])
+        self.assertEqual(project2.dir_name,"Project_CarlDavis")
+        self.assertEqual(sample3.fastqs(),
+                         ["CD3_GTATCGAT-TCTTTCCC_L001_R1_001.fastq.gz"])
+        self.assertEqual(sample4.fastqs(),
+                         ["CD4_CAATTGAC-TCTTTCCC_L001_R1_001.fastq.gz"])
     
 class TestMiseqToCasavaConversion(unittest.TestCase):
 
