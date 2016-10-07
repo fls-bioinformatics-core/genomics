@@ -2572,6 +2572,7 @@ FC1,3,CDE4,,AGTCAA,,,,,CDE""")
         """Verify sample sheet against a matching CASAVA run
         """
         illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertEqual(list_missing_fastqs(illumina_data,self.sample_sheet),[])
         self.assertTrue(verify_run_against_sample_sheet(illumina_data,
                                                         self.sample_sheet))
 
@@ -2582,6 +2583,11 @@ FC1,3,CDE4,,AGTCAA,,,,,CDE""")
                                    self.mock_illumina_data.unaligned_dir,
                                    "Project_AB"))
         illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertEqual(list_missing_fastqs(illumina_data,self.sample_sheet),
+                         ["Project_AB/Sample_AB1/AB1_GCCAAT_L001_R1_001.fastq.gz",
+                          "Project_AB/Sample_AB1/AB1_GCCAAT_L001_R2_001.fastq.gz",
+                          "Project_AB/Sample_AB2/AB2_AGTCAA_L001_R1_001.fastq.gz",
+                          "Project_AB/Sample_AB2/AB2_AGTCAA_L001_R2_001.fastq.gz"])
         self.assertFalse(verify_run_against_sample_sheet(illumina_data,
                                                         self.sample_sheet))
 
@@ -2592,6 +2598,9 @@ FC1,3,CDE4,,AGTCAA,,,,,CDE""")
                                    self.mock_illumina_data.unaligned_dir,
                                    "Project_AB","Sample_AB1"))
         illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertEqual(list_missing_fastqs(illumina_data,self.sample_sheet),
+                         ["Project_AB/Sample_AB1/AB1_GCCAAT_L001_R1_001.fastq.gz",
+                          "Project_AB/Sample_AB1/AB1_GCCAAT_L001_R2_001.fastq.gz"])
         self.assertFalse(verify_run_against_sample_sheet(illumina_data,
                                                         self.sample_sheet))
 
@@ -2603,6 +2612,8 @@ FC1,3,CDE4,,AGTCAA,,,,,CDE""")
                                "Project_CDE","Sample_CDE4",
                                "CDE4_AGTCAA_L002_R2_001.fastq.gz"))
         illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertEqual(list_missing_fastqs(illumina_data,self.sample_sheet),
+                         ["Project_CDE/Sample_CDE4/CDE4_AGTCAA_L002_R2_001.fastq.gz"])
         self.assertFalse(verify_run_against_sample_sheet(illumina_data,
                                                         self.sample_sheet))
 
@@ -2650,6 +2661,7 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,Sample_Pro
         """Verify sample sheet against a matching bcl2fastq2 run
         """
         illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertEqual(list_missing_fastqs(illumina_data,self.sample_sheet),[])
         self.assertTrue(verify_run_against_sample_sheet(illumina_data,
                                                         self.sample_sheet))
 
@@ -2660,6 +2672,11 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,Sample_Pro
                                    self.mock_illumina_data.unaligned_dir,
                                    "AB"))
         illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertEqual(list_missing_fastqs(illumina_data,self.sample_sheet),
+                         ["AB/AB1_S1_L001_R1_001.fastq.gz",
+                          "AB/AB1_S1_L001_R2_001.fastq.gz",
+                          "AB/AB2_S2_L001_R1_001.fastq.gz",
+                          "AB/AB2_S2_L001_R2_001.fastq.gz"])
         self.assertFalse(verify_run_against_sample_sheet(illumina_data,
                                                          self.sample_sheet))
 
@@ -2677,6 +2694,9 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,Sample_Pro
                 print "Removing %s" % fq
                 os.remove(fq)
         illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertEqual(list_missing_fastqs(illumina_data,self.sample_sheet),
+                         ["AB/AB1_S1_L001_R1_001.fastq.gz",
+                          "AB/AB1_S1_L001_R2_001.fastq.gz"])
         self.assertFalse(verify_run_against_sample_sheet(illumina_data,
                                                         self.sample_sheet))
 
@@ -2687,6 +2707,8 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,Sample_Pro
                                self.mock_illumina_data.unaligned_dir,
                                "CDE","CDE4_S4_L002_R2_001.fastq.gz"))
         illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertEqual(list_missing_fastqs(illumina_data,self.sample_sheet),
+                         ["CDE/CDE4_S4_L002_R2_001.fastq.gz"])
         self.assertFalse(verify_run_against_sample_sheet(illumina_data,
                                                         self.sample_sheet))
 
@@ -2734,6 +2756,7 @@ CDE4,CDE4,,,N3,AGTCAA,CDE,""")
         """Verify sample sheet against a matching bcl2fastq2 run (--no-lane-splitting)
         """
         illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertEqual(list_missing_fastqs(illumina_data,self.sample_sheet),[])
         self.assertTrue(verify_run_against_sample_sheet(illumina_data,
                                                         self.sample_sheet))
 
@@ -2744,6 +2767,11 @@ CDE4,CDE4,,,N3,AGTCAA,CDE,""")
                                    self.mock_illumina_data.unaligned_dir,
                                    "AB"))
         illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertEqual(list_missing_fastqs(illumina_data,self.sample_sheet),
+                         ["AB/AB1_S1_R1_001.fastq.gz",
+                          "AB/AB1_S1_R2_001.fastq.gz",
+                          "AB/AB2_S2_R1_001.fastq.gz",
+                          "AB/AB2_S2_R2_001.fastq.gz"])
         self.assertFalse(verify_run_against_sample_sheet(illumina_data,
                                                          self.sample_sheet))
 
@@ -2761,6 +2789,9 @@ CDE4,CDE4,,,N3,AGTCAA,CDE,""")
                 print "Removing %s" % fq
                 os.remove(fq)
         illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertEqual(list_missing_fastqs(illumina_data,self.sample_sheet),
+                         ["AB/AB1_S1_R1_001.fastq.gz",
+                          "AB/AB1_S1_R2_001.fastq.gz"])
         self.assertFalse(verify_run_against_sample_sheet(illumina_data,
                                                         self.sample_sheet))
 
@@ -2820,6 +2851,7 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,Sample_Pro
         """Verify multi-lane sample sheet against a matching bcl2fastq2 run (--no-lane-splitting)
         """
         illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertEqual(list_missing_fastqs(illumina_data,self.sample_sheet),[])
         self.assertTrue(verify_run_against_sample_sheet(illumina_data,
                                                         self.sample_sheet))
 
@@ -2864,6 +2896,7 @@ Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_ID,ind
         """Verify sample sheet against a matching bcl2fastq2 run (names are integers)
         """
         illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertEqual(list_missing_fastqs(illumina_data,self.sample_sheet),[])
         self.assertTrue(verify_run_against_sample_sheet(illumina_data,
                                                         self.sample_sheet))
 
@@ -2911,6 +2944,7 @@ CDE4,CDE4,,,N3,AGTCAA,CDE,""")
         """Verify sample sheet against a matching bcl2fastq2 run (ids and names differ)
         """
         illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertEqual(list_missing_fastqs(illumina_data,self.sample_sheet),[])
         self.assertTrue(verify_run_against_sample_sheet(illumina_data,
                                                         self.sample_sheet))
     

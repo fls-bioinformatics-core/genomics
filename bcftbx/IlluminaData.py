@@ -2415,18 +2415,23 @@ def convert_miseq_samplesheet_to_casava(samplesheet=None,fp=None):
     return get_casava_sample_sheet(samplesheet=samplesheet,fp=fp,
                                    FCID_default='660DMAAXX')
 
-def verify_run_against_sample_sheet(illumina_data,sample_sheet):
-    """Checks existence of predicted outputs from a sample sheet
+def list_missing_fastqs(illumina_data,sample_sheet):
+    """
+    Lists missing Fastq files predicted from sample sheet
 
     Arguments:
       illumina_data: a populated IlluminaData directory
       sample_sheet : path and name of a CSV sample sheet
 
     Returns:
-      True if all the predicted outputs from the sample sheet are
-      found, False otherwise.
+      List: list of paths of missing Fastq files, relative
+        to the unaligned directory. List is empty if there
+        are no missing files.
 
     """
+    # Initialise
+    missing_fastqs = []
+    unaligned_dir = illumina_data.unaligned_dir
     # Gather information
     sample_sheet = SampleSheet(sample_sheet)
     if sample_sheet.has_lanes:
@@ -2447,17 +2452,32 @@ def verify_run_against_sample_sheet(illumina_data,sample_sheet):
         project = predictor.get_project(proj)
         for smpl in project.sample_ids:
             sample = project.get_sample(smpl)
-            path = os.path.join(illumina_data.unaligned_dir,
-                                project.dir_name)
+            path = os.path.join(unaligned_dir,project.dir_name)
             if sample.dir_name:
                 path = os.path.join(path,sample.dir_name)
             for fq in sample.fastqs():
                 fastq = os.path.join(path,fq)
                 if not os.path.exists(fastq):
-                    logging.warning("Verify: missing %s" % fastq)
-                    verified = False
-    # Return verification status
-    return verified
+                    missing_fastqs.append(
+                        os.path.relpath(fastq,unaligned_dir))
+    # Return list of missing files
+    return missing_fastqs
+
+def verify_run_against_sample_sheet(illumina_data,sample_sheet):
+    """Checks existence of predicted outputs from a sample sheet
+
+    Arguments:
+      illumina_data: a populated IlluminaData directory
+      sample_sheet : path and name of a CSV sample sheet
+
+    Returns:
+      True if all the predicted outputs from the sample sheet are
+        found, False otherwise.
+
+    """
+    if not list_missing_fastqs(illumina_data,sample_sheet):
+        return True
+    return False
 
 def get_unique_fastq_names(fastqs):
     """Generate mapping of full fastq names to shorter unique names
