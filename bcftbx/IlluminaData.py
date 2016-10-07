@@ -1710,6 +1710,9 @@ class SampleSheetPredictor(object):
         # Read in data
         if sample_sheet is None:
             sample_sheet = SampleSheet(sample_sheet_file)
+        # Put data into lane order (if lanes specified)
+        if sample_sheet.has_lanes:
+            sample_sheet.data.sort(lambda line: line['Lane'])
         s_index = 0
         for line in sample_sheet:
             # Get project and sample info
