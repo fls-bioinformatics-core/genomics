@@ -1,3 +1,17 @@
+2016-10-07  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* genomics-bcftbx version 0.99.15
+	- bcftbx/IlluminaData: fix bug in `SampleSheetPredictor`
+	  class which generated incorrect sample indexes for
+	  `bcl2fastq2` output when the sample sheet contained
+	  lanes out of order (e.g. 2 appearing before 1).
+	- bcftbx/IlluminaData: new function
+	  `list_missing_fastqs` (returns list of Fastqs
+	  predicted from sample sheet which are missing from
+	  the output of `CASAVA` or `bcl2fastq`); update
+	  `verify_run_against_sample_sheet` to wrap this
+	  (functionality should be unchanged).
+
 2016-08-31  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* genomics-bcftbx version 0.99.14
