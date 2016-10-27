@@ -466,10 +466,7 @@ def nreads(fastq=None,fp=None):
     """
     nlines = 0
     if fp is None:
-        if os.path.splitext(fastq)[1] == '.gz':
-            fp = gzip.open(fastq)
-        else:
-            fp = open(fastq)
+        fp = get_fastq_file_handle(fastq)
     buf_size = 1024 * 1024
     read_fp = fp.read # optimise the loop
     buf = read_fp(buf_size)
