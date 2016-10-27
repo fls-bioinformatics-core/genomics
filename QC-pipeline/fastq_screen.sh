@@ -94,12 +94,14 @@ if [ -z "$subset" ] || [ "$subset" == "0" ] ; then
 		subset_option=
 		;;
 	    [5-7])
-		case "$PATCH_VERSION" in
-		    [0-2])
-			echo "ERROR --subset 0 broken for fastq_screen $FASTQ_SCREEN_VERSION; switch to 0.6.3 or later" >&2
-			exit 1
-			;;
-		esac
+		if [ "$MINOR_VERSION" == "6" ] ; then
+		    case "$PATCH_VERSION" in
+			[0-2])
+			    echo "ERROR --subset 0 broken for fastq_screen $FASTQ_SCREEN_VERSION; switch to 0.6.3 or later" >&2
+			    exit 1
+			    ;;
+		    esac
+		fi
 		subset_option="--subset 0"
 		;;
 	    *)
