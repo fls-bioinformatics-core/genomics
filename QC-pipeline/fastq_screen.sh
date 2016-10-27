@@ -121,6 +121,13 @@ if [ -z "$color" ] ; then
     # Letterspace indexes
     conf_ext=${FASTQ_SCREEN_CONF_NT_EXT}
 else
+    # --colorspace option removed in v0.6.0
+    if [ $MAJOR_VERSION == "v0" ] ; then
+	if [ $MINOR_VERSION -ge 6 ] ; then
+	    echo "ERROR --color option unavailable for fastq_screen $ASTQ_SCREEN_VERSION and later" >&2
+	    exit 1
+	fi
+    fi
     # Colorspace indexes
     conf_ext=${FASTQ_SCREEN_CONF_CS_EXT}
 fi
