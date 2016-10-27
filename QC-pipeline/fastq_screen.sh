@@ -93,7 +93,7 @@ if [ -z "$subset" ] || [ "$subset" == "0" ] ; then
 	    [0-4])
 		subset_option=
 		;;
-	    [5-7])
+	    [5-9])
 		if [ "$MINOR_VERSION" == "6" ] ; then
 		    case "$PATCH_VERSION" in
 			[0-2])
