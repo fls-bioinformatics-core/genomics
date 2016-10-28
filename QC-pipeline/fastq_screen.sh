@@ -188,7 +188,7 @@ for screen in $SCREENS ; do
 		    fastq_screen_txt=${fastq%.fastq}_screen.txt
 		    fastq_screen_png=${fastq%.fastq}_screen.png
 		    ;;
-		v0.[5-6])
+		v0.[5-9])
 		    fastq_screen_txt=${fastq_base}_screen.txt
 		    fastq_screen_png=${fastq_base}_screen.png
 		    ;;
