@@ -36,7 +36,12 @@ function get_version() {
 	    fastq_screen)
 		# fastq_screen --version
 		# fastq_screen v0.3.1
-		echo `$get_version_exe --version | cut -d" " -f2`
+		# fastq_screen v0.4.2
+		# fastq_screen v0.5.2
+		# fastq_screen v0.6.2
+		# fastq_screen v0.7.0
+		# FastQ Screen v0.9.2
+		echo `$get_version_exe --version | tr -s '_' ' ' | cut -d" " -f3`
 		;;
 	    fastqc)
 		# fastqc -v
