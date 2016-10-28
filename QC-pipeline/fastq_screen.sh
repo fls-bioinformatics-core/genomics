@@ -93,13 +93,15 @@ if [ -z "$subset" ] || [ "$subset" == "0" ] ; then
 	    [0-4])
 		subset_option=
 		;;
-	    [5-7])
-		case "$PATCH_VERSION" in
-		    [0-2])
-			echo "ERROR --subset 0 broken for fastq_screen $FASTQ_SCREEN_VERSION; switch to 0.6.3 or later" >&2
-			exit 1
-			;;
-		esac
+	    [5-9])
+		if [ "$MINOR_VERSION" == "6" ] ; then
+		    case "$PATCH_VERSION" in
+			[0-2])
+			    echo "ERROR --subset 0 broken for fastq_screen $FASTQ_SCREEN_VERSION; switch to 0.6.3 or later" >&2
+			    exit 1
+			    ;;
+		    esac
+		fi
 		subset_option="--subset 0"
 		;;
 	    *)
@@ -119,6 +121,13 @@ if [ -z "$color" ] ; then
     # Letterspace indexes
     conf_ext=${FASTQ_SCREEN_CONF_NT_EXT}
 else
+    # --colorspace option removed in v0.6.0
+    if [ $MAJOR_VERSION == "v0" ] ; then
+	if [ $MINOR_VERSION -ge 6 ] ; then
+	    echo "ERROR --color option unavailable for fastq_screen $ASTQ_SCREEN_VERSION and later" >&2
+	    exit 1
+	fi
+    fi
     # Colorspace indexes
     conf_ext=${FASTQ_SCREEN_CONF_CS_EXT}
 fi
@@ -179,7 +188,7 @@ for screen in $SCREENS ; do
 		    fastq_screen_txt=${fastq%.fastq}_screen.txt
 		    fastq_screen_png=${fastq%.fastq}_screen.png
 		    ;;
-		v0.[5-6])
+		v0.[5-9])
 		    fastq_screen_txt=${fastq_base}_screen.txt
 		    fastq_screen_png=${fastq_base}_screen.png
 		    ;;
