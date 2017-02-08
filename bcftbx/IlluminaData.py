@@ -1232,7 +1232,11 @@ class SampleSheet:
                 try:
                     index = "%s-%s" % (line['index'],line['index2'])
                 except KeyError:
-                    index = line['index']
+                    try:
+                        index = line['index']
+                    except KeyError:
+                        # No index columns
+                        index = None
             try:
                 lane = line['Lane']
             except KeyError:

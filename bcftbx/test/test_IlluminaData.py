@@ -948,6 +948,27 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
 1,PJB1,PJB1-1579,,,N701,CGATGTAT ,N501,TCTTTCCC,PeterBriggs,
 1,PJB2,PJB2-1580,,,N702,TGACCAAT ,N502,TCTTTCCC,PeterBriggs,
 """
+        self.nextseq_no_index_columns = """
+[Header]
+IEMFileVersion,4
+Date,2/7/2017
+Workflow,GenerateFASTQ
+Application,NextSeq FASTQ Only
+Assay,Nextera XT
+Description,
+Chemistry,Default
+
+[Reads]
+26
+130
+
+[Settings]
+Adapter,CTGTCTCTTATACACATCT
+
+[Data]
+Sample_ID,Sample_Name,Sample_Plate,Sample_Well,Sample_Project,Description
+PJB1,,,,,
+"""
 
     def test_load_hiseq_sample_sheet(self):
         """SampleSheet: load a HiSEQ IEM-format sample sheet
@@ -1379,6 +1400,19 @@ This,isTheEnd
         # Fix and check again (should be none)
         iem.fix_duplicated_names()
         self.assertEqual(iem.duplicated_names,[])
+    def test_duplicates_in_iem_format_no_index_columns(self):
+        """
+        SampleSheet: check duplicated names in IEM sample sheet (no index cols)
+
+        """
+        # Set up
+        iem = SampleSheet(fp=cStringIO.StringIO(
+            self.nextseq_no_index_columns))
+        # Shouldn't find any duplicates
+        self.assertEqual(len(iem.duplicated_names),0)
+        # Fix and check again (should have no change)
+        iem.fix_duplicated_names()
+        self.assertEqual(len(iem.duplicated_names),0)
     def test_illegal_names_in_iem_format(self):
         """
         SampleSheet: check for illegal characters in IEM sample sheet
