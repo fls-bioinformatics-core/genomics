@@ -167,6 +167,48 @@ class TestSequenceIdentifier(unittest.TestCase):
         self.assertEqual('0',seqid.multiplex_index_no)
         self.assertEqual('1',seqid.pair_id)
 
+    def test_read_illumina18_id_fastq_screen_tags(self):
+        """Process an 'illumina18'-style sequence id with fastq_screen tags
+        """
+        # Format for first read in a tagged FASTQ
+        seqid_string = "@NB500968:70:HCYMKBGX2:1:11101:22672:1659 2:N:0:1#FQST:Human:Mouse:01"
+        seqid = SequenceIdentifier(seqid_string)
+        # Check we get back what we put in
+        self.assertEqual(str(seqid),seqid_string)
+        # Check the format
+        self.assertEqual('illumina18',seqid.format)
+        # Check attributes were correctly extracted
+        self.assertEqual('NB500968',seqid.instrument_name)
+        self.assertEqual('70',seqid.run_id)
+        self.assertEqual('HCYMKBGX2',seqid.flowcell_id)
+        self.assertEqual('1',seqid.flowcell_lane)
+        self.assertEqual('11101',seqid.tile_no)
+        self.assertEqual('22672',seqid.x_coord)
+        self.assertEqual('1659',seqid.y_coord)
+        self.assertEqual('2',seqid.pair_id)
+        self.assertEqual('N',seqid.bad_read)
+        self.assertEqual('0',seqid.control_bit_flag)
+        self.assertEqual('1#FQST:Human:Mouse:01',seqid.index_sequence)
+        # Format of second and subsequent read IDs
+        seqid_string = "@NB500968:70:HCYMKBGX2:1:11101:24365:2047 2:N:0:1#FQST:22"
+        seqid = SequenceIdentifier(seqid_string)
+        # Check we get back what we put in
+        self.assertEqual(str(seqid),seqid_string)
+        # Check the format
+        self.assertEqual('illumina18',seqid.format)
+        # Check attributes were correctly extracted
+        self.assertEqual('NB500968',seqid.instrument_name)
+        self.assertEqual('70',seqid.run_id)
+        self.assertEqual('HCYMKBGX2',seqid.flowcell_id)
+        self.assertEqual('1',seqid.flowcell_lane)
+        self.assertEqual('11101',seqid.tile_no)
+        self.assertEqual('24365',seqid.x_coord)
+        self.assertEqual('2047',seqid.y_coord)
+        self.assertEqual('2',seqid.pair_id)
+        self.assertEqual('N',seqid.bad_read)
+        self.assertEqual('0',seqid.control_bit_flag)
+        self.assertEqual('1#FQST:22',seqid.index_sequence)
+
     def test_unrecognised_id_format(self):
         """Process an unrecognised sequence identifier
         """
