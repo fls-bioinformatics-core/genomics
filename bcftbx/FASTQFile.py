@@ -251,6 +251,9 @@ class FastqRead:
                           self.optid,
                           self.quality))
 
+    def __eq__(self,other):
+        return (str(self) == str(other))
+
 class SequenceIdentifier:
     """Class to store/manipulate sequence identifier information from a FASTQ record
 
