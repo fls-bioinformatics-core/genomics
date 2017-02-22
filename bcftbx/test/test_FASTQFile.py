@@ -101,6 +101,25 @@ class TestFastqRead(unittest.TestCase):
                          "BBA!>AA,B>;;=A%39%B8====>0?-?%9A2<)3?(4*36%A%4&+9%")
         self.assertTrue(read.is_colorspace)
 
+    def test_equality(self):
+        """Check FastqRead handles equality operator ('==')
+        """
+        readn1_data = """@73D9FA:3:FC:1:1:7507:1000 1:N:0:
+NACAACCTGATTAGCGGCGTTGACAGATGTATCCAT
++
+#))))55445@@@@@C@@@@@@@@@:::::<<:::<"""
+        readn1 = FastqRead(*readn1_data.split('\n'))
+        readn2 = FastqRead(*readn1_data.split('\n'))
+        readn3_data = """@73D9FA:3:FC:1:1:7507:1000 2:N:0:
+NACAACCTGATTAGCGGCGTTGACAGATGTATCCAT
++
+#))))55445@@@@@C@@@@@@@@@:::::<<:::<"""
+        readn3 = FastqRead(*readn3_data.split('\n'))
+        self.assertTrue(readn1 == readn2)
+        self.assertTrue(readn1 == readn1_data)
+        self.assertFalse(readn1 == readn3)
+        self.assertFalse(readn1 == readn3_data)
+
 class TestSequenceIdentifier(unittest.TestCase):
     """Tests of the SequenceIdentifier class
     """
