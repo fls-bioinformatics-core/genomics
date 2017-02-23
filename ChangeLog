@@ -1,3 +1,21 @@
+2017-02-23  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* genomics-bcftbx version 1.0.0
+	- bcftbx/FASTQFile:
+	  - `FastqRead` now supports equality operator (`==`)
+	     to check if two reads are the same.
+	  - `nreads` function updated to implicitly handle
+	    gzipped FASTQs.
+	- bcftbx/IlluminaData: `duplicated_names` function
+	  handles duplicates in IEM samplesheets which don't
+	  have an `index` column.
+	- QC-pipeline/fastq_screen.sh:
+	  - updated to support `fastq_screen` versions 0.9.*
+	  - trap for unsupported `--color` option for later
+	    versions of `fastq_screen` (0.6.0+)
+	  - trap for broken `--subset` option in versions
+	    0.6.0-2 of `fastq_screen`
+
 2016-10-07  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* genomics-bcftbx version 0.99.15
