@@ -114,7 +114,23 @@ else
     # Subset explicitly specified
     subset_option="--subset $subset"
 fi
-FASTQ_SCREEN_OPTIONS="$FASTQ_SCREEN_OPTIONS $subset_option"
+#
+# Force option to overwrite existing outputs rather than stopping
+if [ $MAJOR_VERSION == "v0" ] ; then
+    case "$MINOR_VERSION" in
+        [0-8])
+            force_option=
+            ;;
+        9)
+            force_option="--force"
+            ;;
+        *)
+            echo "ERROR don't know how to set force option for fastq_screen $MAJOR_VERSION.$MINOR_VERSION.*" >&2
+            exit 1
+            ;;
+    esac
+fi
+FASTQ_SCREEN_OPTIONS="$FASTQ_SCREEN_OPTIONS $subset_option $force_option"
 #
 # Extension for conf file based on index type
 if [ -z "$color" ] ; then
