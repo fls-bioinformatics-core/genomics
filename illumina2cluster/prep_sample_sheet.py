@@ -32,61 +32,12 @@ SHARE_DIR = os.path.abspath(
         os.path.join(os.path.dirname(sys.argv[0]),'..')))
 sys.path.append(SHARE_DIR)
 import bcftbx.IlluminaData as IlluminaData
+from bcftbx.utils import parse_lanes
+from bcftbx.utils import parse_named_lanes
 
 #######################################################################
 # Functions
 #######################################################################
-
-def parse_name_expression(name_expr):
-    """Break up a 'name expression' into lane numbers and associated name
-
-    name_expr: a string of the form '[<lanes>:]<name>', where <lanes> can
-    be a single integer (e.g. 1), a set of comma-separated integers (e.g.
-    1,2,3), a range (e.g. 1-4), or a combination (e.g. 1,3,5-8).
-
-    Returns a tuple (lanes,name) where lanes is a Python list of integers
-    representing lanes, and name is a string with the associated name.
-    """
-    # Name expressions are of the form 'expr:name'
-    try:
-        # Extract components
-        i = str(name_expr).index(':')
-        name = str(name_expr)[i+1:]
-        # Extract lane numbers from leading expression
-        lanes = parse_lane_expression(str(name_expr)[:i])
-    except ValueError:
-        # No lanes specified
-        name = str(name_expr)
-        lanes = None
-    # Return tuple
-    return (lanes,name)
-
-def parse_lane_expression(lane_expr):
-    """Break up a 'lane expression' into a list of lane numbers
-
-    lane_expr: a string consisting of a single integer (e.g. 1), a set of
-    comma-separated integers (e.g. 1,2,3), a range (e.g. 1-4), or a
-    combination (e.g. 1,3,5-8).
-
-    Returns a list of integers representing lane numbers.
-
-    """
-    # Extract lane numbers
-    fields = lane_expr.split(',')
-    lanes = []
-    for field in fields:
-        # Check for ranges i.e. 1-3
-        try:
-            i = field.index('-')
-            l1 = int(field[:i])
-            l2 = int(field[i+1:])
-            for i in xrange(l1,l2+1): lanes.append(i)
-        except ValueError:
-            # Not a range
-            lanes.append(int(field))
-    # Sort into order
-    lanes.sort()
-    return lanes
 
 def truncate_barcode(seq,length):
     """Return barcode sequence truncated to requested length
@@ -113,36 +64,6 @@ def truncate_barcode(seq,length):
 #######################################################################
 
 import unittest
-
-class TestParseNameExpressionFunction(unittest.TestCase):
-    """Tests for the 'parse_name_expression' function
-
-    """
-    def test_parse_single_lane(self):
-        self.assertEqual(parse_name_expression("1:Test"),([1],'Test'))
-    def test_parse_list_of_lanes(self):
-        self.assertEqual(parse_name_expression("1,2,4:Test"),([1,2,4],'Test'))
-    def test_parse_range_of_lanes(self):
-        self.assertEqual(parse_name_expression("2-4:Test"),([2,3,4],'Test'))
-    def test_parse_mixtures_of_list_and_range(self):
-        self.assertEqual(parse_name_expression("1-3,5:Test"),([1,2,3,5],'Test'))
-        self.assertEqual(parse_name_expression("1,3-5:Test"),([1,3,4,5],'Test'))
-    def test_parse_no_lane(self):
-        self.assertEqual(parse_name_expression("Test"),(None,'Test'))
-
-class TestParseLaneExpressionFunction(unittest.TestCase):
-    """Tests for the 'parse_lane_expression' function
-
-    """
-    def test_parse_single_lane(self):
-        self.assertEqual(parse_lane_expression("1"),[1])
-    def test_parse_list_of_lanes(self):
-        self.assertEqual(parse_lane_expression("1,2,4"),[1,2,4])
-    def test_parse_range_of_lanes(self):
-        self.assertEqual(parse_lane_expression("2-4"),[2,3,4])
-    def test_parse_mixtures_of_list_and_range(self):
-        self.assertEqual(parse_lane_expression("1-3,5"),[1,2,3,5])
-        self.assertEqual(parse_lane_expression("1,3-5"),[1,3,4,5])
 
 class TestTruncateBarcodeFunction(unittest.TestCase):
     """Tests for the 'truncate_barcode' function
@@ -252,7 +173,7 @@ if __name__ == "__main__":
         if not data.has_lanes:
             logging.error("sample sheet doesn't define any lanes")
             sys.exit(1)
-        lanes = parse_lane_expression(options.lanes)
+        lanes = parse_lanes(options.lanes)
         print "Keeping lanes %s, removing the rest" % ','.join([str(x) for x in lanes])
         i = 0
         while i < len(data):
@@ -267,7 +188,7 @@ if __name__ == "__main__":
         if not data.has_lanes:
             logging.error("No lanes in sample sheet for assigning sample ids")
             sys.exit(1)
-        lanes,name = parse_name_expression(sample_id)
+        lanes,name = parse_named_lanes(sample_id)
         if lanes is None:
             logging.error("No lanes specified for sample id assignment")
             sys.exit(1)
@@ -277,7 +198,7 @@ if __name__ == "__main__":
                 line[data.sample_id_column] = name
     # Update the SampleProject field
     for sample_project in options.sample_project:
-        lanes,name = parse_name_expression(sample_project)
+        lanes,name = parse_named_lanes(sample_project)
         if lanes is None:
             logging.warning("Setting project for all samples to '%s'" % name)
             for line in data:
@@ -334,27 +255,27 @@ if __name__ == "__main__":
         for duplicate_set in duplicates:
             for line in duplicate_set:
                 logging.warning("Duplicated %s/%s in line:\n%s" %
-                                line,
-                                data.sample_id_column,
-                                data.sample_project_column)
+                                (data.sample_id_column,
+                                 data.sample_project_column,
+                                 line))
     # Illegal characters/spaces in names
     illegal_names = data.illegal_names
     if len(illegal_names) > 0:
         check_status = 1
         for line in illegal_names:
             logging.warning("Spaces in %s/%s in line:\n%s" %
-                            line,
-                            data.sample_id_column,
-                            data.sample_project_column)
+                            (data.sample_id_column,
+                             data.sample_project_column,
+                             line))
     # Empty names
     empty_names = data.empty_names
     if len(empty_names) > 0:
         check_status = 1
         for line in empty_names:
             logging.warning("Empty %s and/or %s in line:\n%s" %
-                            line,
-                            data.sample_id_column,
-                            data.sample_project_column)
+                            (data.sample_id_column,
+                             data.sample_project_column,
+                             line))
     # Predict outputs
     if check_status == 0 or options.ignore_warnings or options.view:
         # Generate prediction
