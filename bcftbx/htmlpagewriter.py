@@ -138,7 +138,7 @@ class HTMLPageWriter:
             fp.write("<script language='javascript' type='text/javascript'><!--\n")
             fp.write('\n'.join(self.__javascript))
             fp.write("\n--></script>\n")
-        fp.write("<head>\n")
+        fp.write("</head>\n")
         # Body and content
         fp.write("<body>\n")
         fp.write('\n'.join(self.__content))

@@ -16,7 +16,7 @@ class TestHTMLPageWriter(unittest.TestCase):
                          """<html>
 <head>
 <title></title>
-<head>
+</head>
 <body>
 </body>
 </html>
@@ -31,7 +31,7 @@ class TestHTMLPageWriter(unittest.TestCase):
                          """<html>
 <head>
 <title>Test</title>
-<head>
+</head>
 <body>
 This is a test</body>
 </html>
@@ -47,7 +47,7 @@ This is a test</body>
                          """<html>
 <head>
 <title>Test</title>
-<head>
+</head>
 <body>
 <p>This is a test</p>
 <p>We can see how well it works...</p></body>
@@ -67,7 +67,7 @@ This is a test</body>
 <title>Test</title>
 <style type=\"text/css\">
 body { color: blue; }</style>
-<head>
+</head>
 <body>
 <p>This is a test</p>
 <p>We can see how well it works...</p></body>
@@ -88,7 +88,7 @@ body { color: blue; }</style>
 <script language='javascript' type='text/javascript'><!--
 // Comment
 --></script>
-<head>
+</head>
 <body>
 <p>This is a test</p>
 <p>We can see how well it works...</p></body>
