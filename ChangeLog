@@ -1,3 +1,14 @@
+2017-03-31  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* genomics-bcftbx version 1.0.1
+	- bcftbx/htmlpagewriter: fix bug writing closing
+	  `</head>` tag to HTML documents
+	- illumina2cluster/prep_sample_sheet.py: move the
+	  lane/name parsing functions into `utils` library
+	- QC-pipeline/fastq_screen.sh: explicitly specify
+	  `fastq_screen` `--force` option to overwrite
+	  existing outputs
+
 2017-02-23  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* genomics-bcftbx version 1.0.0
