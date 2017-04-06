@@ -493,6 +493,7 @@ class GEJobRunner(BaseJobRunner):
         p.wait()
         message = p.stdout.read()
         logging.debug("qdel: %s" % message)
+        self.__exit_status[job_id] = -1
         return True
 
     def logFile(self,job_id):
