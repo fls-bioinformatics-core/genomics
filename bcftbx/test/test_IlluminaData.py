@@ -768,6 +768,7 @@ class TestIlluminaFastq(unittest.TestCase):
         self.assertEqual(fq.lane_number,2)
         self.assertEqual(fq.read_number,1)
         self.assertEqual(fq.set_number,1)
+        self.assertFalse(fq.is_index_read)
         self.assertEqual(str(fq),fastq_name)
 
     def test_illumina_fastq_with_path_and_extension(self):
@@ -783,6 +784,7 @@ class TestIlluminaFastq(unittest.TestCase):
         self.assertEqual(fq.lane_number,2)
         self.assertEqual(fq.read_number,1)
         self.assertEqual(fq.set_number,1)
+        self.assertFalse(fq.is_index_read)
         self.assertEqual(str(fq),'NA10831_ATCACG_L002_R1_001')
 
     def test_illumina_fastq_r2(self):
@@ -798,6 +800,7 @@ class TestIlluminaFastq(unittest.TestCase):
         self.assertEqual(fq.lane_number,2)
         self.assertEqual(fq.read_number,2)
         self.assertEqual(fq.set_number,1)
+        self.assertFalse(fq.is_index_read)
         self.assertEqual(str(fq),fastq_name)
 
     def test_illumina_fastq_no_index(self):
@@ -813,6 +816,7 @@ class TestIlluminaFastq(unittest.TestCase):
         self.assertEqual(fq.lane_number,2)
         self.assertEqual(fq.read_number,1)
         self.assertEqual(fq.set_number,1)
+        self.assertFalse(fq.is_index_read)
         self.assertEqual(str(fq),fastq_name)
 
     def test_illumina_fastq_dual_index(self):
@@ -828,6 +832,7 @@ class TestIlluminaFastq(unittest.TestCase):
         self.assertEqual(fq.lane_number,2)
         self.assertEqual(fq.read_number,1)
         self.assertEqual(fq.set_number,1)
+        self.assertFalse(fq.is_index_read)
         self.assertEqual(str(fq),fastq_name)
 
     def test_illumina_fastq_from_bcl2fastq2(self):
@@ -844,6 +849,7 @@ class TestIlluminaFastq(unittest.TestCase):
         self.assertEqual(fq.lane_number,2)
         self.assertEqual(fq.read_number,1)
         self.assertEqual(fq.set_number,1)
+        self.assertFalse(fq.is_index_read)
         self.assertEqual(str(fq),fastq_name)
 
     def test_illumina_fastq_from_bcl2fastq2_no_lane(self):
@@ -860,6 +866,24 @@ class TestIlluminaFastq(unittest.TestCase):
         self.assertEqual(fq.lane_number,None)
         self.assertEqual(fq.read_number,1)
         self.assertEqual(fq.set_number,1)
+        self.assertFalse(fq.is_index_read)
+        self.assertEqual(str(fq),fastq_name)
+
+    def test_illumina_fastq_from_bcl2fastq2_index_read(self):
+        """
+        Check extraction of fastq name components for bcl2fastq2 index read (I1/2)
+
+        """
+        fastq_name = 'NA10831_S7_L002_I1_001'
+        fq = IlluminaFastq(fastq_name)
+        self.assertEqual(fq.fastq,fastq_name)
+        self.assertEqual(fq.sample_name,'NA10831')
+        self.assertEqual(fq.sample_number,7)
+        self.assertEqual(fq.barcode_sequence,None)
+        self.assertEqual(fq.lane_number,2)
+        self.assertEqual(fq.read_number,1)
+        self.assertEqual(fq.set_number,1)
+        self.assertTrue(fq.is_index_read)
         self.assertEqual(str(fq),fastq_name)
 
     def test_illumina_fastq_for_non_canonical_fastq_names(self):
