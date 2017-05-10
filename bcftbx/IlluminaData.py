@@ -2156,6 +2156,8 @@ class IlluminaFastq:
         self.lane_number = None
         self.read_number = None
         self.set_number = None
+        # Other properties
+        self.is_index_read = False
         # Base name for sample (no leading path or extension)
         fastq_base = os.path.basename(fastq)
         try:
@@ -2172,13 +2174,14 @@ class IlluminaFastq:
         except ValueError:
             raise IlluminaDataError(
                 "%s: not a canonical Illumina Fastq name" % fastq_base)
-        # Read number: single integer digit 'R1'
-        if fields[-2].startswith('R'):
+        # Read number: single integer digit 'R1' or 'I1'
+        if fields[-2].startswith('R') or fields[-2].startswith('I'):
             try:
                 self.read_number = int(fields[-2][1])
             except ValueError:
                 raise IlluminaDataError(
                     "%s: not a canonical Illumina Fastq name" % fastq_base)
+            self.is_index_read = fields[-2].startswith('I')
         # Lane number: zero-padded 3 digit integer 'L001'
         if fields[-3].startswith('L') and fields[-3][1:].isdigit():
             self.lane_number = int(fields[-3][1:])
@@ -2211,11 +2214,16 @@ class IlluminaFastq:
             lane_identifier = "L%03d_" % self.lane_number
         else:
             lane_identifier = ""
-        return "%s_%s_%sR%d_%03d" % (self.sample_name,
-                                         sample_identifier,
-                                         lane_identifier,
-                                         self.read_number,
-                                         self.set_number)
+        if self.is_index_read:
+            read_type = "I"
+        else:
+            read_type = "R"
+        return "%s_%s_%s%s%d_%03d" % (self.sample_name,
+                                      sample_identifier,
+                                      lane_identifier,
+                                      read_type,
+                                      self.read_number,
+                                      self.set_number)
 
 class IlluminaDataError(Exception):
     """Base class for errors with Illumina-related code"""
