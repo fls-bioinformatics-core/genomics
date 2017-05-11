@@ -213,7 +213,10 @@ class FastqRead:
             return self._maxqual
         except AttributeError:
             # Compute, store and return
-            self._maxqual = max(self.quality)
+            if self.quality:
+                self._maxqual = max(self.quality)
+            else:
+                self._maxqual = ''
         return self._maxqual
 
     @property
@@ -223,7 +226,10 @@ class FastqRead:
             return self._minqual
         except AttributeError:
             # Compute, store and return
-            self._minqual = min(self.quality)
+            if self.quality:
+                self._minqual = min(self.quality)
+            else:
+                self._minqual = ''
         return self._minqual
 
     @property
