@@ -120,8 +120,6 @@ class FastqIterator(Iterator):
                 raise StopIteration
             # Add to buffer and split into lines
             buf = buf + data
-            if buf[0] == '\n':
-                buf = buf[1:]
             if buf[-1] != '\n':
                 i = buf.rfind('\n')
                 if i == -1:
