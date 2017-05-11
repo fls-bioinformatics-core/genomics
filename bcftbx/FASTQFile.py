@@ -77,7 +77,7 @@ class FastqIterator(Iterator):
 
     """
 
-    def __init__(self,fastq_file=None,fp=None):
+    def __init__(self,fastq_file=None,fp=None,bufsize=CHUNKSIZE):
         """Create a new FastqIterator
 
         The input FASTQ can be either a text file or a compressed (gzipped)
@@ -87,9 +87,12 @@ class FastqIterator(Iterator):
         Args:
            fastq_file: name of the FASTQ file to iterate through
            fp: file-like object opened for reading
+           bufsize: optional; integer specifying number of bytes to
+             read as a single 'chunk' from disk
 
         """
         self.__fastq_file = fastq_file
+        self.__bufsize = bufsize
         if fp is None:
             self.__fp = get_fastq_file_handle(self.__fastq_file)
         else:
@@ -105,10 +108,11 @@ class FastqIterator(Iterator):
         lines = self._lines
         buf = self._buf
         ip = self._ip
+        bufsize = self.__bufsize
         # Do we already have a read to return?
         while len(lines) < 4:
             # Fetch more data
-            data = self.__fp.read(CHUNKSIZE)
+            data = self.__fp.read(bufsize)
             if not data:
                 # Reached EOF
                 if self.__fastq_file is None:
