@@ -49,6 +49,28 @@ NATAAATCACCTCACTTAAGTGGCTGGAGACAAATA
 #--,,55777@@@@@@@CC@@C@@@@@@@@:::::<
 """
 
+fastq_empty_sequence = """@73D9FA:3:FC:1:1:7507:1000 1:N:0:
+NACAACCTGATTAGCGGCGTTGACAGATGTATCCAT
++
+#))))55445@@@@@C@@@@@@@@@:::::<<:::<
+@73D9FA:3:FC:1:1:15740:1000 1:N:0:
+NTCTTGCTGGTGGCGCCATGTCTAAATTGTTTGGAG
++
+#+.))/0200<<<<<:::::CC@@C@CC@@@22@@@
+@73D9FA:3:FC:1:1:8103:1000 1:N:0:
+NGACCGATTAGAGGCGTTTTATGATAATCCCAATGC
++
+#(,((,)*))/.0--2255282299@@@@@@@@@@@
+@73D9FA:3:FC:1:1:7488:1000 1:N:0:
+
++
+
+@73D9FA:3:FC:1:1:6680:1000 1:N:0:
+NATAAATCACCTCACTTAAGTGGCTGGAGACAAATA
++
+#--,,55777@@@@@@@CC@@C@@@@@@@@:::::<
+"""
+
 class TestFastqIterator(unittest.TestCase):
     """Tests of the FastqIterator class
     """
@@ -60,6 +82,42 @@ class TestFastqIterator(unittest.TestCase):
         fastq = FastqIterator(fp=fp)
         nreads = 0
         fastq_source = cStringIO.StringIO(fastq_data)
+        for read in fastq:
+            nreads += 1
+            self.assertTrue(isinstance(read.seqid,SequenceIdentifier))
+            self.assertEqual(str(read.seqid),fastq_source.readline().rstrip('\n'))
+            self.assertEqual(read.sequence,fastq_source.readline().rstrip('\n'))
+            self.assertEqual(read.optid,fastq_source.readline().rstrip('\n'))
+            self.assertEqual(read.quality,fastq_source.readline().rstrip('\n'))
+        self.assertEqual(nreads,5)
+
+    def test_fastq_iterator_empty_sequence(self):
+        """Check iteration over small FASTQ file with 'empty' sequence
+        """
+        fp = cStringIO.StringIO(fastq_empty_sequence)
+        fastq = FastqIterator(fp=fp)
+        nreads = 0
+        fastq_source = cStringIO.StringIO(fastq_empty_sequence)
+        for read in fastq:
+            nreads += 1
+            self.assertTrue(isinstance(read.seqid,SequenceIdentifier))
+            self.assertEqual(str(read.seqid),fastq_source.readline().rstrip('\n'))
+            self.assertEqual(read.sequence,fastq_source.readline().rstrip('\n'))
+            self.assertEqual(read.optid,fastq_source.readline().rstrip('\n'))
+            self.assertEqual(read.quality,fastq_source.readline().rstrip('\n'))
+        self.assertEqual(nreads,5)
+
+    def test_fastq_iterator_empty_sequence_at_buffer_start(self):
+        """Check iteration over small FASTQ file with 'empty' sequence (small buffer)
+
+        Checks we can handle an edge case where the newline
+        terminating the 'empty' sequence falls at the start
+        of the read buffer.
+        """
+        fp = cStringIO.StringIO(fastq_empty_sequence)
+        fastq = FastqIterator(fp=fp,bufsize=2)
+        nreads = 0
+        fastq_source = cStringIO.StringIO(fastq_empty_sequence)
         for read in fastq:
             nreads += 1
             self.assertTrue(isinstance(read.seqid,SequenceIdentifier))
@@ -90,6 +148,25 @@ class TestFastqRead(unittest.TestCase):
         self.assertEqual(read.seqlen,len(seq.rstrip('\n')))
         self.assertEqual(read.maxquality,'J')
         self.assertEqual(read.minquality,'3')
+        self.assertFalse(read.is_colorspace)
+
+    def test_fastqread_empty_sequence(self):
+        """Check FastqRead handles 'empty' sequence
+        """
+        seqid = "@HWI-ST1250:47:c0tr3acxx:4:1101:1283:2323 1:N:0:ACAGTGATTCTTTCCC"
+        seq = ""
+        optid = "+"
+        quality = ""
+        read = FastqRead(seqid,seq,optid,quality)
+        self.assertTrue(isinstance(read.seqid,SequenceIdentifier))
+        self.assertEqual(str(read.seqid),seqid.rstrip('\n'))
+        self.assertEqual(read.raw_seqid,seqid)
+        self.assertEqual(read.sequence,seq.rstrip('\n'))
+        self.assertEqual(read.optid,optid.rstrip('\n'))
+        self.assertEqual(read.quality,quality.rstrip('\n'))
+        self.assertEqual(read.seqlen,len(seq.rstrip('\n')))
+        self.assertEqual(read.maxquality,'')
+        self.assertEqual(read.minquality,'')
         self.assertFalse(read.is_colorspace)
 
     def test_is_colorspace(self):
