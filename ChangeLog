@@ -1,3 +1,13 @@
+2017-05-12  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* genomics-bcftbx version 1.0.2
+	- bcftbx/FASTQFile: `FastqIterator` & `FastqRead`
+	  updated to handle reads with zero-length sequences
+	- bcftbx/JobRunner: `GEJobRunner` skips `qacct` call
+	  when job is terminated.
+	- bcftbx/IlluminaData: `IlluminaFastq` updated to
+	  handle "index read" (i.e. I1/I2) Fastq file names
+
 2017-03-31  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* genomics-bcftbx version 1.0.1

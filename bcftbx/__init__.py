@@ -1,5 +1,5 @@
 # Current version of the bcftbx package
-__version__ = '1.0.1'
+__version__ = '1.0.2'
 
 def get_version():
     """Returns a string with the current version of the bcftbx package (e.g., "0.2.0")
