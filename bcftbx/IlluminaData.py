@@ -547,6 +547,15 @@ class IlluminaProject:
                         fqs = filter(lambda f:
                                      f.startswith('%s/' % sample_name),
                                      fastqs)
+                    else:
+                        # Do fastqs have a leading subdir?
+                        leading_dir = list(set([os.path.dirname(fq)
+                                                for fq in fqs]))
+                        if len(leading_dir) == 1:
+                            # Same leading subdir for all fastqs
+                            # Update the sample dir
+                            sample_dirn = os.path.join(self.dirn,
+                                                       leading_dir[0])
                 else:
                     # Handle 'undetermined' data
                     try:
