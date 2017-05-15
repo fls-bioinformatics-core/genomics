@@ -496,6 +496,27 @@ class TestIlluminaDataForBcl2fastq2SpecialCases(BaseTestIlluminaData):
         except Exception:
             pass
 
+    def makeMockIlluminaDataSampleDirs(self):
+        # Create initial mock dir
+        mock_illumina_data = MockIlluminaData('test.MockIlluminaData',
+                                              'bcl2fastq2',
+                                              paired_end=True,
+                                              top_dir=self.top_dir)
+        lanes=(1,2,)
+        mock_illumina_data.add_fastq_batch('AB','AB1','AB1/AB1_S1',
+                                           lanes=lanes)
+        mock_illumina_data.add_fastq_batch('AB','AB2','AB2/AB2_S2',
+                                           lanes=lanes)
+        mock_illumina_data.add_fastq_batch('CDE','CDE3','CDE3/CDE3_S3',
+                                           lanes=lanes)
+        mock_illumina_data.add_fastq_batch('CDE','CDE4','CDE4/CDE4_S4',
+                                           lanes=lanes)
+        # Undetermined reads
+        mock_illumina_data.add_undetermined(lanes=lanes)
+        # Create and finish
+        self.mock_illumina_data = mock_illumina_data
+        self.mock_illumina_data.create()
+
     def makeMockIlluminaDataIdsDiffer(self,ids_differ_for_all=False):
         # Create initial mock dir
         mock_illumina_data = MockIlluminaData('test.MockIlluminaData',
@@ -592,6 +613,15 @@ class TestIlluminaDataForBcl2fastq2SpecialCases(BaseTestIlluminaData):
 
         """
         self.makeMockIlluminaDataIdsDiffer(ids_differ_for_all=False)
+        illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        self.assertIlluminaData(illumina_data,self.mock_illumina_data)
+        self.assertEqual(illumina_data.format,'bcl2fastq2')
+        self.assertEqual(illumina_data.lanes,[1,2])
+
+    def test_illumina_data_sample_subdirs(self):
+        """Read bcl2fastq output when samples are in subdirs
+        """
+        self.makeMockIlluminaDataSampleDirs()
         illumina_data = IlluminaData(self.mock_illumina_data.dirn)
         self.assertIlluminaData(illumina_data,self.mock_illumina_data)
         self.assertEqual(illumina_data.format,'bcl2fastq2')

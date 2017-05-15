@@ -1109,6 +1109,7 @@ class MockIlluminaData:
                 project_dirn = os.path.join(self.unaligned_dir,project_name)
             bcftbx.utils.mkdir(project_dirn)
             for sample_name in self.__projects[project_name]:
+                fastqs = []
                 for fastq in self.__projects[project_name][sample_name]:
                     # Check if sample name matches that for fastq
                     fq_sample_name = IlluminaFastq(fastq).sample_name
@@ -1119,9 +1120,17 @@ class MockIlluminaData:
                         bcftbx.utils.mkdir(sample_dirn)
                     else:
                         sample_dirn = project_dirn
-                    fq = os.path.join(sample_dirn,fastq)
+                    # Check for leading directory on fastq name
+                    if os.path.dirname(fastq):
+                        leading_dir = os.path.join(sample_dirn,
+                                                   os.path.dirname(fastq))
+                        bcftbx.utils.mkdir(leading_dir)
                     # "Touch" the file (i.e. creates an empty file)
+                    fq = os.path.join(sample_dirn,fastq)
                     open(fq,'wb+').close()
+                    fastqs.append(os.path.basename(fastq))
+                # Update the list of fastqs
+                self.__projects[project_name][sample_name] = fastqs
             # Add 'Reports' and 'Stats' directories
             for name in ('Reports','Stats',):
                 dirn = os.path.join(self.unaligned_dir,name)
