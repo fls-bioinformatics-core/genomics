@@ -711,12 +711,12 @@ def GetFastqFiles(dirn,pattern=None,file_list=None):
     # Regular expression pattern
     if pattern is not None:
         regex = re.compile(pattern)
-    # Look for csfasta and matching qual files
+    # Look for Fastq files
     for filen in all_files:
         logging.debug("Examining file %s" % filen)
         root = os.path.splitext(filen)[0]
         ext = os.path.splitext(filen)[1]
-        if ext == ".fastq":
+        if ext in (".fastq",".fq"):
             # If a regex pattern is specified then also filter on it
             if pattern is None or regex.search(root):
                 data_files.append((filen,))
@@ -762,7 +762,7 @@ def GetFastqGzFiles(dirn,pattern=None,file_list=None):
         if filen.split('.')[-1] == "gz":
             # Ends with gz
             try:
-                if filen.split('.')[-2] == "fastq":
+                if filen.split('.')[-2] in ("fastq","fq"):
                     # If a regex pattern is specified then also filter on it
                     if pattern is None or regex.search(filen.split('.')[-3]):
                         data_files.append((filen,))
