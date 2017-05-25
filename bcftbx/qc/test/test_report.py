@@ -28,8 +28,12 @@ class TestStripNGSExtensions(unittest.TestCase):
         self.assertEqual(strip_ngs_extensions("ED2_QV.qual"),"ED2_QV")
     def test_strip_ngs_extensions_fastq(self):
         self.assertEqual(strip_ngs_extensions("ED2.fastq"),"ED2")
+    def test_strip_ngs_extensions_fq(self):
+        self.assertEqual(strip_ngs_extensions("ED2.fq"),"ED2")
     def test_strip_ngs_extensions_fastq_gz(self):
         self.assertEqual(strip_ngs_extensions("ED2.fastq.gz"),"ED2")
+    def test_strip_ngs_extensions_fq_gz(self):
+        self.assertEqual(strip_ngs_extensions("ED2.fq.gz"),"ED2")
     def test_strip_ngs_extensions_dots_in_name(self):
         self.assertEqual(strip_ngs_extensions("ED2.1.fastq"),"ED2.1")
         self.assertEqual(strip_ngs_extensions("ED2.1.fastq.gz"),"ED2.1")
