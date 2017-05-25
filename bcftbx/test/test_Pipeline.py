@@ -426,6 +426,24 @@ class TestGetFastqFiles(unittest.TestCase):
         for fq1,fq2 in zip(expected,fastqs):
             self.assertEqual(fq1,fq2)
 
+    def test_get_fastq_files_fq_extension(self):
+        file_list = ['sample1.fq.gz',
+                     'sample2.fq.gz',
+                     'sample3_R1.fq',
+                     'sample3_R2.fq',
+                     'sample4_R1.fq',
+                     'sample4_R2.fq',
+                     'out.log',
+                     'README']
+        expected = [('sample3_R1.fq',),
+                    ('sample3_R2.fq',),
+                    ('sample4_R1.fq',),
+                    ('sample4_R2.fq',)]
+        fastqs = GetFastqFiles('test',file_list=file_list)
+        self.assertEqual(len(expected),len(fastqs))
+        for fq1,fq2 in zip(expected,fastqs):
+            self.assertEqual(fq1,fq2)
+
 class TestGetFastqGzFiles(unittest.TestCase):
     """Unit tests for GetFastqGzFiles function
 
@@ -462,6 +480,25 @@ class TestGetFastqGzFiles(unittest.TestCase):
         self.assertEqual(len(expected),len(fastqgzs))
         for fq1,fq2 in zip(expected,fastqgzs):
             self.assertEqual(fq1,fq2)
+
+    def test_get_fastq_gz_files_fq_extension(self):
+        file_list = ['sample1_R1.fq.gz',
+                     'sample1_R2.fq.gz',
+                     'sample2_R1.fq.gz',
+                     'sample2_R2.fq.gz',
+                     'sample3.fq',
+                     'sample4.fq',
+                     'out.log',
+                     'README']
+        expected = [('sample1_R1.fq.gz',),
+                    ('sample1_R2.fq.gz',),
+                    ('sample2_R1.fq.gz',),
+                    ('sample2_R2.fq.gz',)]
+        fastqgzs = GetFastqGzFiles('test',file_list=file_list)
+        self.assertEqual(len(expected),len(fastqgzs))
+        for fq1,fq2 in zip(expected,fastqgzs):
+            self.assertEqual(fq1,fq2)
+        
 
 #######################################################################
 # Main program
