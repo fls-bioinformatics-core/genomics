@@ -209,7 +209,7 @@ fi
 # Report program paths and versions
 #############################################
 #
-program_info=qc/$fastq_base.$qc.programs
+program_info=qc/${fastq_base%%.fq}.$qc.programs
 echo "# Program versions and paths used for $fastq_base:" > $program_info
 report_program_info $FASTQ_SCREEN >> $program_info
 report_program_info $FASTQC >> $program_info
@@ -243,7 +243,8 @@ fi
 run_fastq_screen --threads $threads --subset $subset $FASTQ
 #
 # Run FASTQC
-if [ ! -d qc/${fastq_base}_fastqc ] || [ ! -f qc/${fastq_base}_fastqc.zip ] ; then
+fastqc_base=${fastq_base%%.fq}_fastqc
+if [ ! -d qc/${fastqc_base} ] || [ ! -f qc/${fastqc_base}.zip ] ; then
     fastqc_cmd="${FASTQC} --outdir qc --nogroup --extract --threads $threads"
     if [ ! -z "$FASTQC_CONTAMINANTS_FILE" ] ; then
 	# Nb avoid -c even though this should be valid it seems to
@@ -256,8 +257,16 @@ if [ ! -d qc/${fastq_base}_fastqc ] || [ ! -f qc/${fastq_base}_fastqc.zip ] ; th
     if [ $? -ne 0 ] ; then
 	echo FASTQC failed >&2
     fi
+    # Deal with non-standard .fq extension
+    fastqc_out=${fastq_base}_fastqc
+    if [ "$fastqc_out" != "$fastqc_base" ] ; then
+	echo "Moving $fastqc_out to $fastqc_base..."
+	/bin/mv qc/$fastqc_out qc/$fastqc_base
+	/bin/mv qc/$fastqc_out.html qc/$fastqc_base.html
+	/bin/mv qc/$fastqc_out.zip qc/$fastqc_base.zip
+    fi
 else
-    echo "FastQC output already exists: qc/${fastq_base}_fastqc(.zip)"
+    echo "FastQC output already exists: qc/${fastqc_base}(.zip)"
 fi
 #
 # Update permissions and group (if specified)
