@@ -4,7 +4,7 @@
 #
 # Usage: illumina_qc.sh <fastq>
 #
-VERSION=1.3.0
+VERSION=1.3.1
 #
 function usage() {
     echo "Usage: $(basename $0) <fastq[.gz]> [options]"
