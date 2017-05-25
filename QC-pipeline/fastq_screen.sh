@@ -59,6 +59,7 @@ fastq=`basename $1`
 # Strip "fastq(.gz)" extension
 fastq_base=${fastq%.gz}
 fastq_base=${fastq_base%.fastq}
+fastq_base=${fastq_base%.fq}
 #
 # Get the data directory i.e. location of the input file
 datadir=`dirname $1`
