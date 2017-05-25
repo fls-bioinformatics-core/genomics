@@ -1174,7 +1174,7 @@ def strip_ngs_extensions(name):
     for ext in ('.gz','.bz2'):
         strip_name = utils.strip_ext(strip_name,ext)
     # Then remove bioinf extensions
-    for ext in ('.fastq','.csfasta','.qual'):
+    for ext in ('.fastq','.fq','.csfasta','.qual'):
         strip_name = utils.strip_ext(strip_name,ext)
     return strip_name
 
