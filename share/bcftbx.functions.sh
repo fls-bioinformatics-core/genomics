@@ -181,16 +181,49 @@ function make_temp() {
 #
 # The new group and permissions mode can be empty strings if no
 # change is required
+#
+# If target is not specified then defaults to PWD/*
+#
+# Supports the following options for chmod/chgrp:
+#
+# -R: perform operations recursively
+#
+# --quiet: suppress most error messages
+#
+# Usage: set_permissions_and_group [-R] [--quiet] PERMS GROUP [TARGET]
 function set_permissions_and_group() {
+    # Process the arguments
+    local options=
+    while [ ! -z $1 ] ; do
+	case "$1" in
+	    -R)
+		options="$options -R"
+		;;
+	    --quiet)
+	        options="$options --quiet"
+		;;
+	    *)
+		# Assume end of options
+		break
+		;;
+	esac
+	shift
+    done
     local permissions_mode=$1
     local new_group=$2
+    local target=$3
+    if [ ! -z "$dir" ] ; then
+	target="$(pwd)/*"
+    else
+	target=$(abs_path $target)
+    fi
     if [ ! -z "$permissions_mode" ] ; then
-	echo Recursively setting permissions to $permissions_mode
-	chmod -R --quiet $permissions_mode *
+	echo Setting permissions to $permissions_mode for $target
+	chmod $options $permissions_mode $target
     fi
     if [ ! -z "$new_group" ] ; then
-	echo Recursively setting group to $new_group
-	chgrp -R --quiet $new_group *
+	echo Setting group to $new_group for $target
+	chgrp $options $new_group $target
     fi
 }
 #

@@ -256,7 +256,7 @@ fi
 cd ..
 #
 # Set permissions and group (if specified)
-set_permissions_and_group "$SET_PERMISSIONS" "$SET_GROUP"
+set_permissions_and_group -R --quiet "$SET_PERMISSIONS" "$SET_GROUP"
 #
 echo SOLiD QC pipeline completed: `date`
 exit

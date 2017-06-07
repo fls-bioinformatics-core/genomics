@@ -97,7 +97,7 @@ else
 fi
 #
 # Update permissions and group (if specified)
-set_permissions_and_group "$SET_PERMISSIONS" "$SET_GROUP"
+set_permissions_and_group -R --quiet "$SET_PERMISSIONS" "$SET_GROUP"
 #
 echo UNCOMPRESS FASTQ.GZ completed: `date`
 exit
