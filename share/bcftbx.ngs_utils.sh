@@ -38,6 +38,21 @@ function import_qc_settings() {
     fi
 }
 #
+# get_fastq_basename: strip fastq extension from filename
+#
+# Removes the leading directory and the ".fastq(.gz)"/".fq(.gz)" file
+# extensions from the supplied file name.
+#
+# Usage: get_fastq_basename FASTQ
+#
+function get_fastq_basename() {
+    local fastq_base=$(basename $1)
+    fastq_base=${fastq_base%.gz}
+    fastq_base=${fastq_base%.fastq}
+    fastq_base=${fastq_base%.fq}
+    echo $fastq_base
+}
+#
 # run_solid2fastq: create fastq file
 #
 # Provide names of csfasta and qual files (can include leading paths)
