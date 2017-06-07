@@ -50,16 +50,18 @@ while [ $# -gt 1 ] ; do
     shift
 done
 #
+# Set up environment
+export PATH=$(dirname $0)/../share:${PATH}
+. bcftbx.functions.sh
+. bcftbx.ngs_utils.sh
+. bcftbx.versions.sh
+import_qc_settings
+#
 # Set umask to allow group read-write on all new files etc
 umask 0002
 #
 # Get the input file
 fastq=`basename $1`
-#
-# Strip "fastq(.gz)" extension
-fastq_base=${fastq%.gz}
-fastq_base=${fastq_base%.fastq}
-fastq_base=${fastq_base%.fq}
 #
 # Get the data directory i.e. location of the input file
 datadir=`dirname $1`
@@ -67,12 +69,8 @@ if [ "$datadir" == "." ] ; then
     datadir=`pwd`
 fi
 #
-# Set up environment
-export PATH=$(dirname $0)/../share:${PATH}
-. bcftbx.functions.sh
-. bcftbx.ngs_utils.sh
-. bcftbx.versions.sh
-import_qc_settings
+# Strip "fastq(.gz)" extension
+fastq_base=$(get_fastq_basename $fastq)
 #
 # Set the programs
 # Override these defaults by setting them in qc.setup
