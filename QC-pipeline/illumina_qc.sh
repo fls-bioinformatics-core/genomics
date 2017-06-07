@@ -269,14 +269,17 @@ else
     echo "FastQC output already exists: qc/${fastqc_base}(.zip)"
 fi
 #
-# Update permissions and group (if specified)
-set_permissions_and_group "$SET_PERMISSIONS" "$SET_GROUP"
-#
 # Remove local temp
 if [ -d $local_tmp ] ; then
     echo "Removing local tmp dir $local_tmp"
     /bin/rm -rf $local_tmp
 fi
+#
+# Update permissions and group (if specified)
+set_permissions_and_group "$SET_PERMISSIONS" "$SET_GROUP" qc
+set_permissions_and_group "$SET_PERMISSIONS" "$SET_GROUP" "$program_info"
+set_permissions_and_group "$SET_PERMISSIONS" "$SET_GROUP" "qc/$(get_fastq_basename $FASTQ)_*_screen.*"
+set_permissions_and_group -R "$SET_PERMISSIONS" "$SET_GROUP" "qc/${fastqc_base}*"
 #
 echo ILLUMINA QC pipeline completed: `date`
 exit
