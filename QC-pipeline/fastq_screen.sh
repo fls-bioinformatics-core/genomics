@@ -10,13 +10,15 @@ function usage() {
     echo "Run fastq_screen against model organisms, other organisms and rRNA"
     echo "Note that a gzipped <fastq_file> is also valid as input"
     echo ""
-    echo "Output is written to the subdirectory 'qc' of the current directory"
-    echo "(will be created if not found)"
+    echo "By default output is written to the subdirectory 'qc' of the"
+    echo "current directory (over-ride using --qc_dir; the output directory"
+    echo "will be created if not found)"
     echo ""
     echo "Options:"
     echo "  --subset N: use subset of N reads (default 1000000, 0=use all reads)"
     echo "  --color: use colorspace bowtie indexes (SOLiD data)"
     echo "  --threads N: use N threads to run fastq_screen (default is 1)"
+    echo "  --qc_dir DIR: output QC to DIR (default is 'qc')"
 }
 # Check command line
 if [ $# -eq 0 ] || [ "$1" == "-h" ] || [ "$1" == "--help" ] ; then
@@ -28,6 +30,7 @@ options=
 color=
 threads=1
 subset=1000000
+qc_dir=qc
 while [ $# -gt 1 ] ; do
     case "$1" in
 	--subset)
@@ -41,6 +44,10 @@ while [ $# -gt 1 ] ; do
 	--threads)
 	    shift
 	    threads=$1
+	    ;;
+	--qc_dir)
+	    shift
+	    qc_dir=$1
 	    ;;
 	*)
 	    echo Unrecognised option: $1 >&2
@@ -161,6 +168,7 @@ echo Location of conf files: $FASTQ_SCREEN_CONF_DIR
 echo Colorspace: $color
 echo Threads   : $threads
 echo Subset    : $subset
+echo Output dir: $qc_dir
 #
 # Check that fastq file exists
 if [ ! -f "${datadir}/${fastq}" ] ; then
@@ -168,11 +176,11 @@ if [ ! -f "${datadir}/${fastq}" ] ; then
     exit 1
 fi
 #
-# Create 'qc' subdirectory
-if [ ! -d "qc" ] ; then
-    mkdir qc
+# Create output directory
+if [ ! -d "$qc_dir" ] ; then
+    mkdir $qc_dir
 fi
-cd qc
+cd $qc_dir
 #
 # fastq_screen
 #
