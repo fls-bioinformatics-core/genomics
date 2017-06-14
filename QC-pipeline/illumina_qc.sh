@@ -36,6 +36,7 @@ function usage() {
     echo "  --subset N    number of reads to use in"
     echo "                fastq_screen (default N=1000000,"
     echo "                N=0 to use all reads)"
+    echo "  --qc_dir DIR  output QC to DIR (default 'qc')"
 }
 export PATH=$PATH:$(dirname $0)/../share
 function import_functions() {
@@ -100,6 +101,7 @@ fi
 do_ungzip=no
 threads=1
 subset=1000000
+qc_dir=qc
 while [ ! -z "$2" ] ; do
     case "$2" in
 	--no-ungzip)
@@ -120,6 +122,10 @@ while [ ! -z "$2" ] ; do
 	--threads)
 	    shift
 	    threads=$2
+	    ;;
+        --qc_dir)
+            shift
+	    qc_dir=$2
 	    ;;
 	*)
 	    echo "Unrecognised option: $2"
@@ -185,6 +191,7 @@ echo fastqc contaminants: $FASTQC_CONTAMINANTS_FILE
 echo ungzip fastq: $do_ungzip
 echo threads   : $threads
 echo fastq_screen subset: $subset
+echo output dir: $qc_dir
 echo "--------------------------------------------------------"
 echo hostname  : $HOSTNAME
 echo job id    : $JOB_ID
@@ -199,17 +206,17 @@ echo "--------------------------------------------------------"
 # SET UP QC DIRECTORY
 #############################################
 #
-# Create 'qc' subdirectory
-if [ ! -d "qc" ] ; then
-    echo Making qc subdirectory
-    mkdir qc
+# Create output directory
+if [ ! -d "$qc_dir" ] ; then
+    echo Making QC directory $qc_dir
+    mkdir "$qc_dir"
 fi
 #
 #############################################
 # Report program paths and versions
 #############################################
 #
-program_info=qc/${fastq_base%%.fq}.$qc.programs
+program_info=${qc_dir}/${fastq_base%%.fq}.$qc.programs
 echo "# Program versions and paths used for $fastq_base:" > $program_info
 report_program_info $FASTQ_SCREEN >> $program_info
 report_program_info $FASTQC >> $program_info
@@ -240,12 +247,12 @@ fi
 #############################################
 #
 # Run fastq_screen
-run_fastq_screen --threads $threads --subset $subset $FASTQ
+run_fastq_screen --threads $threads --subset $subset $FASTQ --qc_dir $qc_dir
 #
 # Run FASTQC
 fastqc_base=${fastq_base%%.fq}_fastqc
-if [ ! -d qc/${fastqc_base} ] || [ ! -f qc/${fastqc_base}.zip ] ; then
-    fastqc_cmd="${FASTQC} --outdir qc --nogroup --extract --threads $threads"
+if [ ! -d ${qc_dir}/${fastqc_base} ] || [ ! -f ${qc_dir}/${fastqc_base}.zip ] ; then
+    fastqc_cmd="${FASTQC} --outdir $qc_dir --nogroup --extract --threads $threads"
     if [ ! -z "$FASTQC_CONTAMINANTS_FILE" ] ; then
 	# Nb avoid -c even though this should be valid it seems to
 	# confuse fastqc
@@ -261,12 +268,12 @@ if [ ! -d qc/${fastqc_base} ] || [ ! -f qc/${fastqc_base}.zip ] ; then
     fastqc_out=${fastq_base}_fastqc
     if [ "$fastqc_out" != "$fastqc_base" ] ; then
 	echo "Moving $fastqc_out to $fastqc_base..."
-	/bin/mv qc/$fastqc_out qc/$fastqc_base
-	/bin/mv qc/$fastqc_out.html qc/$fastqc_base.html
-	/bin/mv qc/$fastqc_out.zip qc/$fastqc_base.zip
+	/bin/mv $qc_dir/$fastqc_out $qc_dir/$fastqc_base
+	/bin/mv $qc_dir/$fastqc_out.html $qc_dir/$fastqc_base.html
+	/bin/mv $qc_dir/$fastqc_out.zip $qc_dir/$fastqc_base.zip
     fi
 else
-    echo "FastQC output already exists: qc/${fastqc_base}(.zip)"
+    echo "FastQC output already exists: $qc_dir/${fastqc_base}(.zip)"
 fi
 #
 # Remove local temp
@@ -276,10 +283,10 @@ if [ -d $local_tmp ] ; then
 fi
 #
 # Update permissions and group (if specified)
-set_permissions_and_group "$SET_PERMISSIONS" "$SET_GROUP" qc
+set_permissions_and_group "$SET_PERMISSIONS" "$SET_GROUP" $qc_dir
 set_permissions_and_group "$SET_PERMISSIONS" "$SET_GROUP" "$program_info"
-set_permissions_and_group "$SET_PERMISSIONS" "$SET_GROUP" "qc/$(get_fastq_basename $FASTQ)_*_screen.*"
-set_permissions_and_group -R "$SET_PERMISSIONS" "$SET_GROUP" "qc/${fastqc_base}*"
+set_permissions_and_group "$SET_PERMISSIONS" "$SET_GROUP" "$qc_dir/$(get_fastq_basename $FASTQ)_*_screen.*"
+set_permissions_and_group -R "$SET_PERMISSIONS" "$SET_GROUP" "$qc_dir/${fastqc_base}*"
 #
 echo ILLUMINA QC pipeline completed: `date`
 exit
