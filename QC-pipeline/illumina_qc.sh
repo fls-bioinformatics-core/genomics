@@ -247,7 +247,7 @@ fi
 #############################################
 #
 # Run fastq_screen
-run_fastq_screen --threads $threads --subset $subset $FASTQ --qc_dir $qc_dir
+run_fastq_screen --threads $threads --subset $subset --qc_dir $qc_dir $FASTQ
 #
 # Run FASTQC
 fastqc_base=${fastq_base%%.fq}_fastqc
