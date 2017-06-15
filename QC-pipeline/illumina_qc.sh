@@ -202,6 +202,23 @@ echo TMP_DIR   : $TMP_DIR
 echo _JAVA_OPTIONS: $_JAVA_OPTIONS
 echo "--------------------------------------------------------"
 #
+# Check for required programs
+echo "Checking for required programs:"
+missing=
+for prog in "$FASTQ_SCREEN" "$FASTQC" ; do
+    echo -n "* ${prog}..."
+    if [ -z "$(which $prog 2>/dev/null)" ] ; then
+	echo "not found"
+	missing="$missing $prog"
+    else
+	echo "ok"
+    fi
+done
+if [ ! -z "$missing" ] ; then
+    echo "ERROR required programs not found" >&2
+    exit 1
+fi
+#
 #############################################
 # SET UP QC DIRECTORY
 #############################################
