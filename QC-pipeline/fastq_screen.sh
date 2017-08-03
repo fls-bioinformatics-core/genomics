@@ -15,7 +15,7 @@ function usage() {
     echo "will be created if not found)"
     echo ""
     echo "Options:"
-    echo "  --subset N: use subset of N reads (default 1000000, 0=use all reads)"
+    echo "  --subset N: use subset of N reads (default 100000, 0=use all reads)"
     echo "  --color: use colorspace bowtie indexes (SOLiD data)"
     echo "  --threads N: use N threads to run fastq_screen (default is 1)"
     echo "  --qc_dir DIR: output QC to DIR (default is 'qc')"
@@ -29,7 +29,7 @@ fi
 options=
 color=
 threads=1
-subset=1000000
+subset=100000
 qc_dir=qc
 while [ $# -gt 1 ] ; do
     case "$1" in

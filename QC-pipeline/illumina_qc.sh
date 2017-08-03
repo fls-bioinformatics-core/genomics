@@ -34,7 +34,7 @@ function usage() {
     echo "                available to the script (default"
     echo "                is N=1)"
     echo "  --subset N    number of reads to use in"
-    echo "                fastq_screen (default N=1000000,"
+    echo "                fastq_screen (default N=100000,"
     echo "                N=0 to use all reads)"
     echo "  --qc_dir DIR  output QC to DIR (default 'qc')"
 }
@@ -100,7 +100,7 @@ fi
 # Check for additional options
 do_ungzip=no
 threads=1
-subset=1000000
+subset=100000
 qc_dir=qc
 while [ ! -z "$2" ] ; do
     case "$2" in
