@@ -1,3 +1,25 @@
+2017-08-31  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* genomics-bcftbx version 1.0.3
+	- QC-pipeline/illumina_qc.sh:
+	  - version 1.3.1
+	  - reduce the default subset size for `fastq_screen`
+	    to 10000
+	  - can now handle Fastqs with `.fq[.gz]` extension
+	  - new option `--qc_dir` (specify target QC output
+	    directory
+	  - checks that required programs are on the path at
+	    start up
+	- QC-pipeline/fastq_screen.sh:
+	  - reduce the default subset size to 10000
+	  - can now handle Fastqs with `.fq[.gz]` extension
+	  - new option `--qc_dir` (specify target QC output
+	    directory
+	- bcftbx/Pipeline: `GetFastq[Gz]Files` now also
+	  detects `.fq[.gz]` files
+	- bcftbx/qc/report: 'strip_ngs_extensions' now also
+	  handles `.fq[.gz]` files
+
 2017-05-12  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* genomics-bcftbx version 1.0.2
