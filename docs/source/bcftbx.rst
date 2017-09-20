@@ -18,3 +18,4 @@
    bcftbx/qc
    bcftbx/htmlpagewriter
    bcftbx/utils
+   bcftbx/ngsutils

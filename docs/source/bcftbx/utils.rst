@@ -9,6 +9,11 @@ General utility classes
 .. autoclass:: AttributeDictionary
 .. autoclass:: OrderedDictionary
 
+File handling utilities
+***********************
+
+.. autofunction:: getlines
+
 File system wrappers and utilities
 **********************************
 
