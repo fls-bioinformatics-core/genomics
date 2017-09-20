@@ -32,14 +32,13 @@ import gzip
 import optparse
 import random
 import re
+from bcftbx.utils import getlines
 
 #######################################################################
 # Module metadata
 #######################################################################
 
 __version__ = "0.2.0"
-
-CHUNKSIZE = 102400
 
 __description__ = """Extract subsets of reads from each of the
 supplied files according to specified criteria (e.g. random,
@@ -49,67 +48,6 @@ matching a pattern etc). Input files can be any mixture of FASTQ
 #######################################################################
 # Functions
 #######################################################################
-
-def getlines(filen):
-    """
-    Fetch lines from a file and return them one by one
-
-    This generator function tries to implement an efficient
-    method of reading lines sequentially from a file, by
-    minimising the number of reads from the file and
-    performing the line splitting in memory. It attempts
-    to replicate the idiom:
-
-    >>> for line in open(filen):
-    >>> ...
-
-    using:
-
-    >>> for line in getlines(filen):
-    >>> ...
-
-    The file can be gzipped; this function should handle
-    this invisibly provided that the file extension is
-    '.gz'.
-
-    Arguments:
-      filen (str): path of the file to read lines from
-
-    Yields:
-      String: next line of text from the file, with any
-        newline character removed.
-    
-    """
-    if filen.split('.')[-1] == 'gz':
-        fp = gzip.open(filen,'rb')
-    else:
-        fp = open(filen,'rb')
-    # Read in data in chunks
-    buf = ''
-    lines = []
-    while True:
-        # Grab a chunk of data
-        data = fp.read(CHUNKSIZE)
-        # Check for EOF
-        if not data:
-            break
-        # Add to buffer and split into lines
-        buf = buf + data
-        if buf[0] == '\n':
-            buf = buf[1:]
-        if buf[-1] != '\n':
-            i = buf.rfind('\n')
-            if i == -1:
-                continue
-            else:
-                lines = buf[:i].split('\n')
-                buf = buf[i+1:]
-        else:
-            lines = buf[:-1].split('\n')
-            buf = ''
-        # Return the lines one at a time
-        for line in lines:
-            yield line
 
 def getreads(filen):
     """

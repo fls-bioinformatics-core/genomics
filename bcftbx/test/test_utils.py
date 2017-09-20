@@ -5,6 +5,7 @@ import unittest
 import os
 import tempfile
 import shutil
+import gzip
 import bcftbx.test.mock_data as mock_data
 from bcftbx.utils import *
 
@@ -106,6 +107,49 @@ class TestOrderedDictionary(unittest.TestCase):
                 pass
         except KeyError:
             self.fail("Iteration over OrderedDictionary failed")
+
+class TestGetlinesFunction(unittest.TestCase):
+    """Unit tests for the getlines function
+    """
+    def setUp(self):
+        self.wd = tempfile.mkdtemp()
+        self.example_text = """@K00311:43:HL3LWBBXX:8:1101:21440:1121 1:N:0:CNATGT
+GCCNGACAGCAGAAAT
++
+AAF#FJJJJJJJJJJJ
+@K00311:43:HL3LWBBXX:8:1101:21460:1121 1:N:0:CNATGT
+GGGNGTCATTGATCAT
++
+AAF#FJJJJJJJJJJJ
+@K00311:43:HL3LWBBXX:8:1101:21805:1121 1:N:0:CNATGT
+CCCNACCCTTGCCTAC
++
+AAF#FJJJJJJJJJJJ
+"""
+    def tearDown(self):
+        shutil.rmtree(self.wd)
+    def test_getlines(self):
+        """getlines: read lines from a file
+        """
+        # Make an example file
+        example_file = os.path.join(self.wd,"example.txt")
+        with open(example_file,'w') as fp:
+            fp.write(self.example_text)
+        # Read lines
+        lines = getlines(example_file)
+        for l1,l2 in zip(self.example_text.split('\n'),lines):
+            self.assertEqual(l1,l2)
+    def test_getlines_from_gzipped_file(self):
+        """getlines: read lines from a gzipped file
+        """
+        # Make an example gzipped file
+        example_file = os.path.join(self.wd,"example.txt.gz")
+        with gzip.open(example_file,'w') as fp:
+            fp.write(self.example_text)
+        # Read lines
+        lines = getlines(example_file)
+        for l1,l2 in zip(self.example_text.split('\n'),lines):
+            self.assertEqual(l1,l2)
 
 class TestPathInfo(unittest.TestCase):
     """Unit tests for the PathInfo utility class
