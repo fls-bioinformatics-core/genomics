@@ -1,5 +1,7 @@
-#     utils.py: utility classes and functions shared between BCF codes
-#     Copyright (C) University of Manchester 2013-14 Peter Briggs
+#!/usr/bin/env python
+#
+#     ngsutils.py: utility classes & functions specific to NGS applications
+#     Copyright (C) University of Manchester 2017 Peter Briggs
 #
 ########################################################################
 #
@@ -7,7 +9,7 @@
 #
 #########################################################################
 
-__version__ = "1.5.2"
+__version__ = "1.6.0"
 
 """utils
 
