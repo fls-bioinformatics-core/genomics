@@ -14,10 +14,11 @@ ngsutils
 
 Utility classes and functions specific to NGS applications.
 
-- getreads
-- getreads_subset
-- getreads_regexp
-- read_size
+Extracting reads from Fastq, cfasta and qual files:
+
+- getreads: fetch reads one-by-one from Fastq, cfasta or qual file
+- getreads_subset: fetch subset of reads specified by index
+- getreads_regexp: fetch subset of reads matching regular expression
 
 """
 
@@ -25,6 +26,7 @@ Utility classes and functions specific to NGS applications.
 # Imports
 #######################################################################
 
+import os
 import re
 from .utils import getlines
 
@@ -34,11 +36,12 @@ from .utils import getlines
 
 def getreads(filen):
     """
-    Fetch reads from a file and return them one by one
+    Return Fastq, csfasta or qual file reads one-by-one
 
     This generator function iterates through a
-    sequence file (for example fastq), and yields read
-    records as a list of lines.
+    sequence file (Fastq, csfasta or qual), and yields
+    read records one at a time. The read records are
+    returned as lists of lines.
 
     The file can be gzipped; this function should handle
     this invisibly provided that the file extension is
@@ -50,6 +53,11 @@ def getreads(filen):
     after one or more lines of data) will be treated as
     data.
 
+    Example usage:
+
+    >>> for r in getreads('illumina_R1.fq'):
+    >>> ... print r
+
     Arguments:
       filen (str): path of the file to fetch reads from
 
@@ -57,8 +65,15 @@ def getreads(filen):
       List: next read record from the file, as a list
         of lines.
     """
+    fields = os.path.basename(filen).split('.')
+    if fields[-1] == 'gz':
+        fields = fields[:-1]
+    ext = fields[-1]
+    if ext in ('fastq','fq'):
+        read_size = 4
+    elif ext in ('csfasta','qual'):
+        read_size = 2
     header = True
-    size = read_size(filen)
     read = []
     for i,line in enumerate(getlines(filen),start=1):
         if header:
@@ -67,7 +82,7 @@ def getreads(filen):
             else:
                 header = False
         read.append(line)
-        if i%size == 0:
+        if i%read_size == 0:
             yield read
             read = []
     if read:
@@ -76,20 +91,26 @@ def getreads(filen):
 
 def getreads_subset(filen,indices):
     """
-    Fetch subset of reads from a file
+    Fetch subset of reads from Fastq, csfasta or qual file
 
     This generator function iterates through a
-    sequence file (for example fastq), and yields a subset
-    of read records. Each read is returned as a list of
-    lines.
+    sequence file (Fastq, csfasta or qual), and yields a
+    subset of the read records which are referenced by the
+    supplied iterable indices.
 
     The subset compromises of reads at the index positions
     specified by the list of indices, with index 0 being the
-    first read in the file.
+    first read in the file. Each read is returned as a list
+    of lines.
 
     The file can be gzipped; this function should handle
     this invisibly provided that the file extension is
     '.gz'.
+
+    Example usage (returns 1st, 3rd and 5th reads only):
+
+    >>> for r in getreads_subset('illumina_R1.fq',(0,2,4)):
+    >>> ... print r
 
     Arguments:
       filen (str): path of the file to fetch reads from
@@ -118,12 +139,12 @@ def getreads_subset(filen,indices):
 
 def getreads_regex(filen,pattern):
     """
-    Fetch subset of reads from a file
+    Fetch matching reads from  Fastq, csfasta or qual file
 
     This generator function iterates through a
-    sequence file (for example fastq), and yields a subset
-    of read records. Each read is returned as a list of
-    lines.
+    sequence file (Fastq, csfasta or qual), and yields a
+    subset of read records. Each read is returned as a list
+    of lines.
 
     The subset compromises of reads which match the
     supplied regular expression.
@@ -131,6 +152,11 @@ def getreads_regex(filen,pattern):
     The file can be gzipped; this function should handle
     this invisibly provided that the file extension is
     '.gz'.
+
+    Example usage:
+
+    >>> for r in getreads_regexp('illumina_R1.fq',"2102:3130"):
+    >>> ... print r
 
     Arguments:
       filen (str): path of the file to fetch reads from
@@ -144,24 +170,3 @@ def getreads_regex(filen,pattern):
     for read in getreads(filen):
         if regex.search(''.join(read)):
             yield read
-
-def read_size(filen):
-    """
-    Return size of read based on file type
-
-    Arguments:
-      filen (str): name of file
-
-    Returns:
-      int: number of lines that each read
-        record occupies in this type of file
-    """
-    # Strip trailing .gz
-    if filen.endswith('.gz'):
-        filen = filen[:-3]
-    # Identify file type from extension
-    ext = filen.split('.')[-1]
-    if ext in ('fastq','fq'):
-        return 4
-    elif ext in ('csfasta','qual'):
-        return 2

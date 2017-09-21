@@ -145,6 +145,19 @@ AAF#FJJJJJJJJJJJ
                            for i in (0,8)]
         for r1,r2 in zip(reference_reads,fastq_reads):
             self.assertEqual(r1,r2)
+    def test_getreads_subset_fastq_index_out_of_range(self):
+        """getreads: requesting non-existent read raises exception
+        """
+        # Make an example file
+        example_fastq = os.path.join(self.wd,"example.fastq")
+        with open(example_fastq,'w') as fp:
+            fp.write(self.example_fastq_data)
+        # Attempt to get subset with indices outside the range
+        # of reads
+        fastq_reads = getreads_subset(example_fastq,
+                                      indices=(-1,0))
+        fastq_reads = getreads_subset(example_fastq,
+                                      indices=(0,99999))
 
 class TestGetreadsRegexpFunction(unittest.TestCase):
     """Tests for the 'getreads_regex' function
@@ -180,48 +193,3 @@ AAF#FJJJJJJJJJJJ
                            for i in (0,)]
         for r1,r2 in zip(reference_reads,fastq_reads):
             self.assertEqual(r1,r2)
-
-class TestReadSizeFunction(unittest.TestCase):
-    """Tests for the 'read_size' function
-    """
-    def test_read_size_fastq(self):
-        """
-        read_size: check '.fastq' extension
-        """
-        self.assertEqual(read_size("test.fastq"),4)
-    def test_read_size_fastq_gz(self):
-        """
-        read_size: check '.fastq.gz' extension
-        """
-        self.assertEqual(read_size("test.fastq.gz"),4)
-    def test_read_size_fq(self):
-        """
-        read_size: check '.fq' extension
-        """
-        self.assertEqual(read_size("test.fq"),4)
-    def test_read_size_fq_gz(self):
-        """
-        read_size: check '.fq.gz' extension
-        """
-        self.assertEqual(read_size("test.fq.gz"),4)
-    def test_read_size_csfasta(self):
-        """
-        read_size: check '.csfasta' extension
-        """
-        self.assertEqual(read_size("test.csfasta"),2)
-    def test_read_size_csfasta_gz(self):
-        """
-        read_size: check '.csfasta.gz' extension
-        """
-        self.assertEqual(read_size("test.csfasta.gz"),2)
-    def test_read_size_qual(self):
-        """
-        read_size: check '.qual' extension
-        """
-        self.assertEqual(read_size("test.qual"),2)
-    def test_read_size_qual_gz(self):
-        """
-        read_size: check '.qual.gz' extension
-        """
-        self.assertEqual(read_size("test.qual.gz"),2)
-
