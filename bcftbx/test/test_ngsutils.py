@@ -154,14 +154,22 @@ AAF#FJJJJJJJJJJJ
             fp.write(self.example_fastq_data)
         # Attempt to get subset with indices outside the range
         # of reads
-        self.assertRaises(Exception,
-                          getreads_subset,
-                          example_fastq,
-                          indices=(-1,0))
-        self.assertRaises(Exception,
-                          getreads_subset,
-                          example_fastq,
-                          indices=(0,99999))
+        # NB would prefer to use assertRaises, however we need to
+        # actually yeild the reads in order to raise the exceptions
+        try:
+            [r for r in getreads_subset(example_fastq,indices=(-1,0))]
+            failed = True
+        except Exception:
+            # This is expected, test passes
+            failed = False
+        self.assertFalse(failed,"Exception not raised")
+        try:
+            [r for r in getreads_subset(example_fastq,indices=(0,99))]
+            failed = True
+        except Exception:
+            # This is expected, test passes
+            failed = False
+        self.assertFalse(failed,"Exception not raised")
 
 class TestGetreadsRegexpFunction(unittest.TestCase):
     """Tests for the 'getreads_regex' function
