@@ -289,7 +289,13 @@ class IlluminaData:
         try:
             self._populate_casava_style()
         except IlluminaDataError:
-            self._populate_bcl2fastq2_style()
+            try:
+                self._populate_bcl2fastq2_style()
+            except Exception as ex:
+                logging.warning("Exception attempting to read "
+                                "bcl2fastq2-style data (ignored): "
+                                "%s" % ex)
+                pass
         if not self.projects and self.format != 'bcl2fastq2':
             raise IlluminaDataError("No projects found")
         # Sort projects on name
