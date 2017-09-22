@@ -122,6 +122,8 @@ def getreads_subset(filen,indices):
     """
     indices_ = [int(i) for i in indices]
     indices_.sort()
+    if indices_[0] < 0:
+        raise Exception("One or more requested read indices out of range")
     i = 0
     next_idx = indices_[i]
     for idx,read in enumerate(getreads(filen)):
