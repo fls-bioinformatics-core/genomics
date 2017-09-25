@@ -1725,6 +1725,7 @@ class SampleSheetPredictor(object):
         self._predict_paired_end = False
         self._predict_no_lane_splitting = False
         self._predict_for_lanes = None
+        self._force_sample_dir = False
         # Read in data
         if sample_sheet is None:
             sample_sheet = SampleSheet(sample_sheet_file)
@@ -1813,7 +1814,8 @@ class SampleSheetPredictor(object):
             return project
 
     def set(self,package="bcl2fastq2",paired_end=False,
-            no_lane_splitting=False,lanes=None):
+            no_lane_splitting=False,lanes=None,
+            force_sample_dir=False):
         """
         Configure settings for prediction
 
@@ -1826,18 +1828,23 @@ class SampleSheetPredictor(object):
         - lanes: if set then should be a list of lane
           numbers that will be used when generating Fastq
           names
+        - force_sample_dir: if True then force insertion
+          of a 'sample name' directory for IEM4 sample
+          sheets where sample name and ID are the same
 
         """
         self._predict_for_package = package
         self._predict_paired_end = paired_end
         self._predict_no_lane_splitting = no_lane_splitting
         self._predict_for_lanes = lanes
+        self._force_sample_dir = force_sample_dir
         # Configure projects with same settings
         for project in self.projects:
             project.set(package=package,
                         paired_end=paired_end,
                         no_lane_splitting=no_lane_splitting,
-                        lanes=lanes)
+                        lanes=lanes,
+                        force_sample_dir=force_sample_dir)
 
 class SampleSheetProject(object):
     """
@@ -1858,6 +1865,7 @@ class SampleSheetProject(object):
         self._predict_paired_end = False
         self._predict_no_lane_splitting = False
         self._predict_for_lanes = None
+        self._force_sample_dir = False
 
     @property
     def sample_ids(self):
@@ -1927,7 +1935,8 @@ class SampleSheetProject(object):
             return sample
 
     def set(self,package="bcl2fastq2",paired_end=False,
-            no_lane_splitting=False,lanes=None):
+            no_lane_splitting=False,lanes=None,
+            force_sample_dir=False):
         """
         Configure settings for prediction
 
@@ -1940,18 +1949,23 @@ class SampleSheetProject(object):
         - lanes: if set then should be a list of lane
           numbers that will be used when generating Fastq
           names
+        - force_sample_dir: if True then force insertion
+          of a 'sample name' directory for IEM4 sample
+          sheets where sample name and ID are the same
 
         """
         self._predict_for_package = package
         self._predict_paired_end = paired_end
         self._predict_no_lane_splitting = no_lane_splitting
         self._predict_for_lanes = lanes
+        self._force_sample_dir = force_sample_dir
         # Cascade the settings to child samples
         for sample in self.samples:
             sample.set(package=package,
                        paired_end=paired_end,
                        no_lane_splitting=no_lane_splitting,
-                       lanes=lanes)
+                       lanes=lanes,
+                       force_sample_dir=force_sample_dir)
 
     def __repr__(self):
         # Implement repr built-in
@@ -1982,6 +1996,7 @@ class SampleSheetSample(object):
         self._predict_paired_end = False
         self._predict_no_lane_splitting = False
         self._predict_for_lanes = None
+        self._force_sample_dir = False
 
     @property
     def barcode_seqs(self):
@@ -2000,7 +2015,8 @@ class SampleSheetSample(object):
         if self._predict_for_package == "casava":
             return "Sample_%s" % self.sample_id
         elif self._predict_for_package == "bcl2fastq2":
-            if self.sample_id != self.sample_name:
+            if (self.sample_id != self.sample_name) or \
+               self._force_sample_dir:
                 return self.sample_name
             else:
                 return None
@@ -2087,7 +2103,8 @@ class SampleSheetSample(object):
         return predicted_fastqs
 
     def set(self,package="bcl2fastq2",paired_end=False,
-            no_lane_splitting=False,lanes=None):
+            no_lane_splitting=False,lanes=None,
+            force_sample_dir=False):
         """
         Configure settings for prediction
 
@@ -2100,12 +2117,16 @@ class SampleSheetSample(object):
         - lanes: if set then should be a list of lane
           numbers that will be used when generating Fastq
           names
+        - force_sample_dir: if True then force insertion
+          of a 'sample name' directory for IEM4 sample
+          sheets where sample name and ID are the same
 
         """
         self._predict_for_package = package
         self._predict_paired_end = paired_end
         self._predict_no_lane_splitting = no_lane_splitting
         self._predict_for_lanes = lanes
+        self._force_sample_dir = force_sample_dir
 
 class IlluminaFastq:
     """Class for extracting information about Fastq files
@@ -2441,13 +2462,17 @@ def convert_miseq_samplesheet_to_casava(samplesheet=None,fp=None):
     return get_casava_sample_sheet(samplesheet=samplesheet,fp=fp,
                                    FCID_default='660DMAAXX')
 
-def list_missing_fastqs(illumina_data,sample_sheet):
+def list_missing_fastqs(illumina_data,sample_sheet,
+                        include_sample_dir=False):
     """
     Lists missing Fastq files predicted from sample sheet
 
     Arguments:
       illumina_data: a populated IlluminaData directory
       sample_sheet : path and name of a CSV sample sheet
+      include_sample_dir: if True then always include a
+        'sample_name' directory level when checking for
+        bcl2fastq2 outputs
 
     Returns:
       List: list of paths of missing Fastq files, relative
@@ -2471,7 +2496,8 @@ def list_missing_fastqs(illumina_data,sample_sheet):
     predictor.set(package=illumina_data.format,
                   paired_end=illumina_data.paired_end,
                   lanes=lanes,
-                  no_lane_splitting=no_lane_splitting)
+                  no_lane_splitting=no_lane_splitting,
+                  force_sample_dir=include_sample_dir)
     # Loop over predictions and check corresponding outputs exist
     verified = True
     for proj in predictor.project_names:
@@ -2489,19 +2515,24 @@ def list_missing_fastqs(illumina_data,sample_sheet):
     # Return list of missing files
     return missing_fastqs
 
-def verify_run_against_sample_sheet(illumina_data,sample_sheet):
+def verify_run_against_sample_sheet(illumina_data,sample_sheet,
+                                    include_sample_dir=False):
     """Checks existence of predicted outputs from a sample sheet
 
     Arguments:
       illumina_data: a populated IlluminaData directory
       sample_sheet : path and name of a CSV sample sheet
+      include_sample_dir: if True then always include a
+        'sample_name' directory level when checking for
+        bcl2fastq2 outputs
 
     Returns:
       True if all the predicted outputs from the sample sheet are
         found, False otherwise.
 
     """
-    if not list_missing_fastqs(illumina_data,sample_sheet):
+    if not list_missing_fastqs(illumina_data,sample_sheet,
+                               include_sample_dir=include_sample_dir):
         return True
     return False
 
