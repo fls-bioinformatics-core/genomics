@@ -3,6 +3,9 @@
 #     strand_tsar.py: determine strandedness of fastq pair using STAR
 #     Copyright (C) University of Manchester 2017 Peter Briggs
 #
+
+__version__ = "0.0.1"
+
 #######################################################################
 # Imports
 #######################################################################
@@ -27,7 +30,8 @@ if __name__ == "__main__":
     # Process command line
     p = argparse.ArgumentParser(
         description="Generate strandedness statistics "
-        "for FASTQ pair")
+        "for FASTQ pair",
+        version=__version__)
     p.add_argument("r1",metavar="R1",
                    default=None,
                    help="R1 Fastq file")
@@ -42,16 +46,30 @@ if __name__ == "__main__":
                    default=10000,
                    help="use a random subset of read pairs "
                    "from the input Fastqs (default: 10000)")
+    p.add_argument("-o","--outdir",
+                   default=None,
+                   help="specify directory to write final "
+                   "outputs to (default: current directory)")
     p.add_argument("-n",
                    type=int,
                    default=1,
                    help="number of threads to run STAR with "
-                   "(--runThreadN; default: 1)")
+                   "(default: 1)")
     args = p.parse_args()
     # Check that STAR is on the path
     star_exe = find_program("STAR")
     if star_exe is None:
         logging.critical("STAR not found")
+        sys.exit(1)
+    print "Using STAR from %s" % star_exe
+    # Output directory
+    if args.outdir is None:
+        outdir = os.getcwd()
+    else:
+        outdir = os.path.abspath(args.outdir)
+    if not os.path.exists(outdir):
+        logging.critical("Output directory doesn't exist: %s" %
+                         outdir)
         sys.exit(1)
     # Prefix for output
     prefix = "strand_tsar_"
@@ -122,5 +140,20 @@ if __name__ == "__main__":
     print "Strand percentages:"
     print "- 1st forward: %.2f%%" % forward_1st
     print "- 2nd reverse: %.2f%%" % reverse_2nd
+    # Write output file
+    outfile = "%s_strand_tsar.txt" % os.path.join(
+        outdir,
+        os.path.basename(strip_ngs_extensions(args.r1)))
+    with open(outfile,'w') as fp:
+        # Header
+        fp.write("#Strand_tsar version: %s\t"
+                 "#Aligner: %s\t"
+                 "#Reads in subset: %s\n" % (__version__,
+                                             "STAR",
+                                             subset))
+        fp.write("#Genome\t1st forward\t2nd reverse\n")
+        fp.write("%s\t%.2f\t%.2f\n" % (args.star_genomedir,
+                                       forward_1st,
+                                       reverse_2nd))
     # Clean up the working dir
     shutil.rmtree(working_dir)
