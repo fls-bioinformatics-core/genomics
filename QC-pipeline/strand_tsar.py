@@ -42,7 +42,7 @@ if __name__ == "__main__":
                    help="R2 Fastq file")
     p.add_argument("star_genomedirs",metavar="GENOMEDIR",
                    default=None,
-                   nargs="+",
+                   nargs="*",
                    help="path to directory with STAR index "
                    "for genome to use")
     p.add_argument("--subset",
@@ -54,6 +54,13 @@ if __name__ == "__main__":
                    default=None,
                    help="specify directory to write final "
                    "outputs to (default: current directory)")
+    p.add_argument("-c","--conf",metavar="FILE",
+                   default=None,
+                   help="specify delimited 'conf' file with "
+                   "list of NAME and STAR index directory "
+                   "pairs. NB if a conf file is supplied "
+                   "then any indices specifed on the command "
+                   "line will be ignored")
     p.add_argument("-n",
                    type=int,
                    default=1,
@@ -66,6 +73,24 @@ if __name__ == "__main__":
         logging.critical("STAR not found")
         sys.exit(1)
     print "Using STAR from %s" % star_exe
+    # Gather genome indices
+    genome_names = {}
+    if args.conf is not None:
+        print "Using genomes from conf file: %s" % args.conf
+        star_genomedirs = []
+        with open(args.conf,'r') as fp:
+            for line in fp:
+                if line.startswith('#'):
+                    continue
+                name,star_genomedir = line.rstrip().split('\t')
+                star_genomedirs.append(star_genomedir)
+                # Store an associated name
+                genome_names[star_genomedir] = name
+    else:
+        star_genomedirs = args.star_genomedirs
+    if not star_genomedirs:
+        logging.critical("No genome indices specified")
+        sys.exit(1)
     # Output directory
     if args.outdir is None:
         outdir = os.getcwd()
@@ -115,7 +140,7 @@ if __name__ == "__main__":
                                              subset))
         fp.write("#Genome\t1st forward\t2nd reverse\n")
     # Iterate over genome indices
-    for star_genomedir in args.star_genomedirs:
+    for star_genomedir in star_genomedirs:
         # Build a command line to run STAR
         star_cmd = [star_exe,
                     '--runMode','alignReads',
@@ -160,7 +185,11 @@ if __name__ == "__main__":
             print "- 2nd reverse: %.2f%%" % reverse_2nd
             # Append to output file
             with open(outfile,'a') as fp:
-                fp.write("%s\t%.2f\t%.2f\n" % (star_genomedir,
+                try:
+                    name = genome_names[star_genomedir]
+                except KeyError:
+                    name = star_genomedir
+                fp.write("%s\t%.2f\t%.2f\n" % (name,
                                                forward_1st,
                                                reverse_2nd))
     # Clean up the working dir
