@@ -11,6 +11,7 @@ sequencing data prior to library-specific analyses.
 * :ref:`boxplotps2png`: make PNGs of PS plots from :ref:`qc_boxplotter`
 * :ref:`solid_preprocess_filter`
 * :ref:`solid_preprocess_truncation_filter`
+* :ref:`strand_tsar`
 
 .. _run_qc_pipeline:
 
@@ -385,3 +386,18 @@ The script also writes statistics on the numbers of input/output reads to the
 
 Other options supplied to the script are directly passed to the underlying
 ``SOLiD_preprocess_filter_v2.pl`` program
+
+.. _strand_tsar:
+
+strand_tsar.py
+**************
+
+Utility to determine the strandedness (forward, reverse, or both) from
+an R1/R2 pair of Fastq files.
+
+Requires that the ``STAR`` mapper is also installed and available on the
+user's ``PATH``.
+
+Example usage::
+
+    strand_tsar.py R1.fastq.gz R2.fastq.gz STARindex/mm10
