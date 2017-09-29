@@ -24,6 +24,172 @@ from bcftbx.ngsutils import getreads_subset
 from bcftbx.qc.report import strip_ngs_extensions
 
 #######################################################################
+# Tests
+#######################################################################
+
+import unittest
+
+def mockSTAR(argv):
+    # Implements a "fake" STAR executable which produces
+    # a single output (ReadsPerGene.out.tab file)
+    p = argparse.ArgumentParser()
+    p.add_argument('--runMode',action="store")
+    p.add_argument('--genomeLoad',action="store")
+    p.add_argument('--genomeDir',action="store")
+    p.add_argument('--readFilesIn',action="store",nargs=2)
+    p.add_argument('--quantMode',action="store")
+    p.add_argument('--outSAMtype',action="store",nargs=2)
+    p.add_argument('--outSAMstrandField',action="store")
+    p.add_argument('--outFileNamePrefix',action="store",dest='prefix')
+    p.add_argument('--runThreadN',action="store")
+    args = p.parse_args(argv)
+    with open("%sReadsPerGene.out.tab" % args.prefix,'w') as fp:
+        fp.write("""N_unmapped	2026581	2026581	2026581
+N_multimapping	4020538	4020538	4020538
+N_noFeature	8533504	24725707	8782932
+N_ambiguous	618069	13658	192220
+ENSMUSG00000102592.1	0	0	0
+ENSMUSG00000088333.2	0	0	0
+ENSMUSG00000103265.1	4	0	4
+ENSMUSG00000103922.1	23	23	0
+ENSMUSG00000033845.13	437	0	437
+ENSMUSG00000102275.1	19	0	19
+ENSMUSG00000025903.14	669	2	667
+ENSMUSG00000104217.1	0	0	0
+ENSMUSG00000033813.15	805	0	805
+ENSMUSG00000062588.4	11	11	0
+ENSMUSG00000103280.1	9	9	0
+ENSMUSG00000002459.17	3	3	0
+ENSMUSG00000064363.1	74259	393	73866
+ENSMUSG00000064364.1	0	0	0
+ENSMUSG00000064365.1	0	0	0
+ENSMUSG00000064366.1	0	0	0
+ENSMUSG00000064367.1	148640	7892	152477
+ENSMUSG00000064368.1	44003	42532	13212
+ENSMUSG00000064369.1	6	275	6
+ENSMUSG00000064370.1	122199	199	123042
+""")
+
+class TestStrandTsar(unittest.TestCase):
+    def setUp(self):
+        # Store the initial PATH
+        self.path = os.environ['PATH']
+        # Make a temporary working directory
+        self.wd = tempfile.mkdtemp(prefix="TestStrandTsar")
+        # Make a mock STAR executable
+        star_bin = os.path.join(self.wd,"mock_star")
+        os.mkdir(star_bin)
+        mock_star = os.path.join(star_bin,"STAR")
+        with open(mock_star,'w') as fp:
+            fp.write("""#!/bin/bash
+export PYTHONPATH=%s:$PYTHONPATH
+python -c "import sys ; from strand_tsar import mockSTAR ; mockSTAR(sys.argv[1:])" $@
+exit $?
+""" % os.path.dirname(__file__))
+        os.chmod(mock_star,0775)
+        # Prepend mock STAR location to the path
+        os.environ['PATH'] = "%s:%s" % (star_bin,os.environ['PATH'])
+        # Make some mock Fastqs
+        self.fqs = []
+        for r in ("R1","R2"):
+            fq = os.path.join(self.wd,"mock_%s.fq" %r)
+            with open(fq,'w') as fp:
+                if r == "R1":
+                    fp.write("""@K00311:43:HL3LWBBXX:8:1101:21440:1121 1:N:0:CNATGT
+GCCNGACAGCAGAAATGGAATGCGGACCCCTTCNACCACCANAATATTCTTNATNTTGGGTNTTGCNAANGTCTTC
++
+AAF#FJJJJJJJJJJJJJJJJJJJJJJJJJJJJ#JJJJJJJ#JJJJJJJJJ#JJ#JJJJJJ#JJJJ#JJ#JJJJJJ
+@K00311:43:HL3LWBBXX:8:1101:21460:1121 1:N:0:CNATGT
+GGGNGTCATTGATCATTTCTTCAGTCATTTCCANTTTCATGNTTTCCTTCTNGANATTCTGNATTGNTTNTAGTGT
++
+AAF#FJJJJJJJJJJJJJJJJJJJJJJJJJJJJ#JJJJJJJ#JJJJJJJJJ#JJ#JJJJJJ#JJJJ#JJ#JJJJJJ
+@K00311:43:HL3LWBBXX:8:1101:21805:1121 1:N:0:CNATGT
+CCCNACCCTTGCCTACCCACCATACCAAGTGCTNGGATTACNGGCATGTATNGCNGCGTCCNGCTTNAANTTAA
++
+AAF#FJJJJJJJJJJJJJJJJJJJJJJJJJJJJ#JJJJJJJ#JJJJJJJJJ#JJ#JJJAJJ#JJJJ#JJ#JJJJ
+""")
+                else:
+                    fp.write("""@K00311:43:HL3LWBBXX:8:1101:21440:1121 2:N:0:CNATGT
+CAANANGGNNTCNCNGNTNTNCTNTNAGANCNNTGANCNGTTCTTCCCANCTGCACTCTGCCCCAGCTGTCCAGNC
++
+AAF#F#JJ##JJ#J#J#J#J#JJ#J#JJJ#J##JJJ#J#JJJJJJJJJJ#JJJJJJJJJJJJJJJJJJJJJJJJ#J
+@K00311:43:HL3LWBBXX:8:1101:21460:1121 2:N:0:CNATGT
+ATANGNAANNGTNCNGNGNTNTANCNAAGNANNTTGNCNACCTACGGAAACAGAAGACAAGAACGTTCGCTGTA
++
+AAF#F#JJ##JJ#J#J#J#J#JJ#J#JJJ#J##JJJ#J#JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ
+@K00311:43:HL3LWBBXX:8:1101:21805:1121 2:N:0:CNATGT
+GAANANGCNNACNGNGNTNANTGNTNATGNANNTAGNGNTTCTCTCTGAGGTGACAGAAATACTTTAAATTTAANC
++
+AAF#F#JJ##JJ#J#J#J#J#JJ#J#JJJ#F##JJJ#J#JJJJJJFAJJJJFJJJJJJJJJJJJJJJJJFFFJJ#J
+""")
+            self.fqs.append(fq)
+        # Make some mock STAR indices
+        for i in ("Genome1","Genome2"):
+            os.mkdir(os.path.join(self.wd,i))
+        # Make a conf file
+        self.conf_file = os.path.join(self.wd,"genomes.conf")
+        with open(self.conf_file,'w') as fp:
+            for i in ("Genome1","Genome2"):
+                fp.write("%s\t%s\n" % (i,os.path.join(self.wd,i)))
+    def tearDown(self):
+        # Reset the PATH
+        os.environ['PATH'] = self.path
+        # Remove the working dir
+        shutil.rmtree(self.wd)
+    def test_strand_tsar_one_genome_index(self):
+        """
+        strand_tsar: test with single genome index
+        """
+        subprocess.check_output([__file__,
+                                 self.fqs[0],
+                                 self.fqs[1],
+                                 "Genome1"],
+                                cwd=self.wd)
+        outfile = os.path.join(self.wd,"mock_R1_strand_tsar.txt")
+        self.assertTrue(os.path.exists(outfile))
+        self.assertEqual(open(outfile,'r').read(),
+                         """#Strand_tsar version: 0.0.1	#Aligner: STAR	#Reads in subset: 3
+#Genome	1st forward	2nd reverse
+Genome1	14.08	107.28
+""")
+    def test_strand_tsar_two_genome_indices(self):
+        """
+        strand_tsar: test with two genome indices
+        """
+        subprocess.check_output([__file__,
+                                 self.fqs[0],
+                                 self.fqs[1],
+                                 "Genome1",
+                                 "Genome2"],
+                                cwd=self.wd)
+        outfile = os.path.join(self.wd,"mock_R1_strand_tsar.txt")
+        self.assertTrue(os.path.exists(outfile))
+        self.assertEqual(open(outfile,'r').read(),
+                         """#Strand_tsar version: 0.0.1	#Aligner: STAR	#Reads in subset: 3
+#Genome	1st forward	2nd reverse
+Genome1	14.08	107.28
+Genome2	14.08	107.28
+""")
+    def test_strand_tsar_using_conf_file(self):
+        """
+        strand_tsar: test with genome indices specified via conf file
+        """
+        subprocess.check_output([__file__,
+                                 "-c",
+                                 self.conf_file,
+                                 self.fqs[0],
+                                 self.fqs[1]],
+                                cwd=self.wd)
+        outfile = os.path.join(self.wd,"mock_R1_strand_tsar.txt")
+        self.assertTrue(os.path.exists(outfile))
+        self.assertEqual(open(outfile,'r').read(),
+                         """#Strand_tsar version: 0.0.1	#Aligner: STAR	#Reads in subset: 3
+#Genome	1st forward	2nd reverse
+Genome1	14.08	107.28
+Genome2	14.08	107.28
+""")
+
+#######################################################################
 # Main script
 #######################################################################
 
