@@ -21,6 +21,7 @@ import logging
 from bcftbx.utils import find_program
 from bcftbx.ngsutils import getreads
 from bcftbx.ngsutils import getreads_subset
+from bcftbx.qc.report import strip_ngs_extensions
 
 #######################################################################
 # Main script
