@@ -31,17 +31,20 @@ if __name__ == "__main__":
     # Process command line
     p = argparse.ArgumentParser(
         description="Generate strandedness statistics "
-        "for FASTQ pair",
+        "for FASTQ pair: run STAR to generate statistics for "
+        "one or more genomes specified via the command line",
         version=__version__)
-    p.add_argument("r1",metavar="R1",
+    p.add_argument("r1",metavar="READ1",
                    default=None,
                    help="R1 Fastq file")
-    p.add_argument("r2",metavar="R2",
+    p.add_argument("r2",metavar="READ2",
                    default=None,
                    help="R2 Fastq file")
-    p.add_argument("star_genomedir",metavar="STAR_GENOMEDIR",
+    p.add_argument("star_genomedirs",metavar="GENOMEDIR",
                    default=None,
-                   help="STAR genomeDir")
+                   nargs="+",
+                   help="path to directory with STAR index "
+                   "for genome to use")
     p.add_argument("--subset",
                    type=int,
                    default=10000,
@@ -72,7 +75,7 @@ if __name__ == "__main__":
         logging.critical("Output directory doesn't exist: %s" %
                          outdir)
         sys.exit(1)
-    # Prefix for output
+    # Prefix for temporary output
     prefix = "strand_tsar_"
     # Create a temporary working directory
     working_dir = tempfile.mkdtemp(suffix=".strand_tsar",
@@ -99,49 +102,7 @@ if __name__ == "__main__":
                                         subset_indices):
                 fp.write('\n'.join(read) + '\n')
         fastqs.append(fq_subset)
-    # Build a command line to run STAR
-    star_cmd = [star_exe,
-                '--runMode','alignReads',
-                '--genomeLoad','NoSharedMemory',
-                '--genomeDir',os.path.abspath(args.star_genomedir),
-                '--readFilesIn',
-                fastqs[0],
-                fastqs[1],
-                '--quantMode','GeneCounts',
-                '--outSAMtype','BAM','Unsorted',
-                '--outSAMstrandField','intronMotif',
-                '--outFileNamePrefix',prefix,
-                '--runThreadN',str(args.n)]
-    print "Running %s" % ' '.join(star_cmd)
-    subprocess.check_output(star_cmd,cwd=working_dir)
-    # Process the STAR output
-    out_file = os.path.join(working_dir,
-                            "%sReadsPerGene.out.tab" % prefix)
-    if not os.path.exists(out_file):
-        raise Exception("Failed to find .out file: %s" % out_file)
-    sum_col2 = 0
-    sum_col3 = 0
-    sum_col4 = 0
-    with open(out_file) as out:
-        for i,line in enumerate(out):
-            if i < 4:
-                # Skip first four lines
-                continue
-            # Process remaining delimited columns
-            cols = line.rstrip('\n').split('\t')
-            sum_col2 += int(cols[1])
-            sum_col3 += int(cols[2])
-            sum_col4 += int(cols[3])
-    print "Sums:"
-    print "- col2: %d" % sum_col2
-    print "- col3: %d" % sum_col3
-    print "- col4: %d" % sum_col4
-    forward_1st = float(sum_col3)/float(sum_col4)*100.0
-    reverse_2nd = float(sum_col2)/float(sum_col4)*100.0
-    print "Strand percentages:"
-    print "- 1st forward: %.2f%%" % forward_1st
-    print "- 2nd reverse: %.2f%%" % reverse_2nd
-    # Write output file
+    # Initialise output file
     outfile = "%s_strand_tsar.txt" % os.path.join(
         outdir,
         os.path.basename(strip_ngs_extensions(args.r1)))
@@ -153,8 +114,54 @@ if __name__ == "__main__":
                                              "STAR",
                                              subset))
         fp.write("#Genome\t1st forward\t2nd reverse\n")
-        fp.write("%s\t%.2f\t%.2f\n" % (args.star_genomedir,
-                                       forward_1st,
-                                       reverse_2nd))
+    # Iterate over genome indices
+    for star_genomedir in args.star_genomedirs:
+        # Build a command line to run STAR
+        star_cmd = [star_exe,
+                    '--runMode','alignReads',
+                    '--genomeLoad','NoSharedMemory',
+                    '--genomeDir',os.path.abspath(star_genomedir),
+                    '--readFilesIn',
+                    fastqs[0],
+                    fastqs[1],
+                    '--quantMode','GeneCounts',
+                    '--outSAMtype','BAM','Unsorted',
+                    '--outSAMstrandField','intronMotif',
+                    '--outFileNamePrefix',prefix,
+                    '--runThreadN',str(args.n)]
+        print "Running %s" % ' '.join(star_cmd)
+        subprocess.check_output(star_cmd,cwd=working_dir)
+        # Process the STAR output
+        out_file = os.path.join(working_dir,
+                                "%sReadsPerGene.out.tab" % prefix)
+        if not os.path.exists(out_file):
+            raise Exception("Failed to find .out file: %s" % out_file)
+        sum_col2 = 0
+        sum_col3 = 0
+        sum_col4 = 0
+        with open(out_file) as out:
+            for i,line in enumerate(out):
+                if i < 4:
+                    # Skip first four lines
+                    continue
+                # Process remaining delimited columns
+                cols = line.rstrip('\n').split('\t')
+                sum_col2 += int(cols[1])
+                sum_col3 += int(cols[2])
+                sum_col4 += int(cols[3])
+            print "Sums:"
+            print "- col2: %d" % sum_col2
+            print "- col3: %d" % sum_col3
+            print "- col4: %d" % sum_col4
+            forward_1st = float(sum_col3)/float(sum_col4)*100.0
+            reverse_2nd = float(sum_col2)/float(sum_col4)*100.0
+            print "Strand percentages:"
+            print "- 1st forward: %.2f%%" % forward_1st
+            print "- 2nd reverse: %.2f%%" % reverse_2nd
+            # Append to output file
+            with open(outfile,'a') as fp:
+                fp.write("%s\t%.2f\t%.2f\n" % (star_genomedir,
+                                               forward_1st,
+                                               reverse_2nd))
     # Clean up the working dir
     shutil.rmtree(working_dir)
