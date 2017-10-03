@@ -150,7 +150,7 @@ AAF#F#JJ##JJ#J#J#J#J#JJ#J#JJJ#F##JJJ#J#JJJJJJFAJJJJFJJJJJJJJJJJJJJJJJFFFJJ#J
         self.assertEqual(open(outfile,'r').read(),
                          """#Strand_tsar version: 0.0.1	#Aligner: STAR	#Reads in subset: 3
 #Genome	1st forward	2nd reverse
-Genome1	14.08	107.28
+Genome1	13.13	93.21
 """)
     def test_strand_tsar_two_genome_indices(self):
         """
@@ -167,8 +167,8 @@ Genome1	14.08	107.28
         self.assertEqual(open(outfile,'r').read(),
                          """#Strand_tsar version: 0.0.1	#Aligner: STAR	#Reads in subset: 3
 #Genome	1st forward	2nd reverse
-Genome1	14.08	107.28
-Genome2	14.08	107.28
+Genome1	13.13	93.21
+Genome2	13.13	93.21
 """)
     def test_strand_tsar_using_conf_file(self):
         """
@@ -185,8 +185,8 @@ Genome2	14.08	107.28
         self.assertEqual(open(outfile,'r').read(),
                          """#Strand_tsar version: 0.0.1	#Aligner: STAR	#Reads in subset: 3
 #Genome	1st forward	2nd reverse
-Genome1	14.08	107.28
-Genome2	14.08	107.28
+Genome1	13.13	93.21
+Genome2	13.13	93.21
 """)
 
 #######################################################################
@@ -344,8 +344,8 @@ if __name__ == "__main__":
             print "- col2: %d" % sum_col2
             print "- col3: %d" % sum_col3
             print "- col4: %d" % sum_col4
-            forward_1st = float(sum_col3)/float(sum_col4)*100.0
-            reverse_2nd = float(sum_col2)/float(sum_col4)*100.0
+            forward_1st = float(sum_col3)/float(sum_col2)*100.0
+            reverse_2nd = float(sum_col4)/float(sum_col2)*100.0
             print "Strand percentages:"
             print "- 1st forward: %.2f%%" % forward_1st
             print "- 2nd reverse: %.2f%%" % reverse_2nd
