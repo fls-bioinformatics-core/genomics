@@ -654,11 +654,28 @@ class TestMkdirFunction(unittest.TestCase):
         self.assertTrue(os.path.exists(new_dir))
 
     def test_mkdir_dir_recursive(self):
-        """mkdir: make a subdirectory recursive
+        """mkdir: make a subdirectory recursively
         """
         new_dir = os.path.join(self.test_dir,"new_dir","subdir","test")
         self.assertFalse(os.path.exists(new_dir))
         mkdir(new_dir,recursive=True)
+        self.assertTrue(os.path.exists(new_dir))
+
+class TestMkdirsFunction(unittest.TestCase):
+
+    def setUp(self):
+        self.test_dir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        if os.path.exists(self.test_dir):
+            shutil.rmtree(self.test_dir)
+
+    def test_mkdir_dir_recursive(self):
+        """mkdirs: make a subdirectory recursively
+        """
+        new_dir = os.path.join(self.test_dir,"new_dir","subdir","test")
+        self.assertFalse(os.path.exists(new_dir))
+        mkdirs(new_dir)
         self.assertTrue(os.path.exists(new_dir))
 
 class TestChmodFunction(unittest.TestCase):

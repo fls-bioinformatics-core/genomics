@@ -28,6 +28,7 @@ File system wrappers and utilities:
 
   PathInfo
   mkdir
+  mkdirs
   mklink
   chmod
   touch
@@ -613,6 +614,16 @@ def mkdir(dirn,mode=None,recursive=False):
     logging.debug("Making dir:%s" % dirn)
     os.mkdir(dirn)
     if mode is not None: chmod(dirn,mode)
+
+def mkdirs(dirn,mode=None):
+    """Make a directory recursively
+
+    Arguments:
+      dirn: the path of the directory to be created
+      mode: (optional) a mode specifier to be applied to the
+        new directory once it has been created e.g. 0775 or 0664
+    """
+    return mkdir(dirn,mode=mode,recursive=True)
 
 def mklink(target,link_name,relative=False):
     """Make a symbolic link
