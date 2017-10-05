@@ -1,3 +1,23 @@
+2017-10-05  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* genomics-bcftbx version 1.0.4
+	- bcftbx/utils:
+	  - `mkdir` function supports new `recursive` option
+	    (creates any intermediate directories that are
+	    required)
+	  - New `mkdirs` function creates intermediate
+	    directories automatically (wraps `mkdir`)
+	- bcftbx/IlluminaData: samplesheet prediction and
+	  validation allows invoking subprogram to force
+	  insertion of 'sample' directory level even if
+	  `bcl2fastq` wouldn't normally produce one (needed
+	  for 10xGenomics `cellranger mkfastq` output)
+	- bcftbx/ngsutils: new library module with file
+	  reading and Fastq read extraction functions taken
+	  from `NGS-general/extract_reads.py` utility
+	- NGS-general/extract_reads.py: read extraction
+	  functions moved into new `bcftbx.ngsutils` module
+
 2017-08-31  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* genomics-bcftbx version 1.0.3
