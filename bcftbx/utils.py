@@ -593,19 +593,26 @@ class PathInfo:
         """
         return str(self.__path)
 
-def mkdir(dirn,mode=None):
+def mkdir(dirn,mode=None,recursive=False):
     """Make a directory
 
     Arguments:
       dirn: the path of the directory to be created
       mode: (optional) a mode specifier to be applied to the
         new directory once it has been created e.g. 0775 or 0664
-
+      recursive: (optional) if True then also create any
+        intermediate parent directories if they don't already
+        exist
     """
-    logging.debug("Making %s" % dirn)
-    if not os.path.isdir(dirn):
-        os.mkdir(dirn)
-        if mode is not None: chmod(dirn,mode)
+    if os.path.exists(dirn):
+	return
+    if recursive:
+        parent = os.path.dirname(dirn)
+        if not os.path.exists(parent):
+            mkdir(parent,recursive=True)
+    logging.debug("Making dir:%s" % dirn)
+    os.mkdir(dirn)
+    if mode is not None: chmod(dirn,mode)
 
 def mklink(target,link_name,relative=False):
     """Make a symbolic link

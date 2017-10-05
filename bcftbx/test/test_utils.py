@@ -618,6 +618,49 @@ class TestFileSystemFunctions(unittest.TestCase):
         self.assertEqual('name',strip_ext('name.fastq'))
         self.assertEqual('name.fastq',strip_ext('name.fastq.gz'))
 
+class TestMkdirFunction(unittest.TestCase):
+
+    def setUp(self):
+        self.test_dir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        if os.path.exists(self.test_dir):
+            shutil.rmtree(self.test_dir)
+
+    def test_mkdir(self):
+        """mkdir: make a single subdirectory
+        """
+        new_dir = os.path.join(self.test_dir,"new_dir")
+        self.assertFalse(os.path.exists(new_dir))
+        mkdir(new_dir)
+        self.assertTrue(os.path.exists(new_dir))
+
+    def test_mkdir_chmod(self):
+        """mkdir: make a subdirectory and set permissions
+        """
+        new_dir = os.path.join(self.test_dir,"new_dir")
+        self.assertFalse(os.path.exists(new_dir))
+        mkdir(new_dir,mode=0644)
+        self.assertTrue(os.path.exists(new_dir))
+        self.assertEqual(stat.S_IMODE(os.lstat(new_dir).st_mode),0644)
+
+    def test_mkdir_dir_already_exists(self):
+        """mkdir: try to make a subdirectory that already exists
+        """
+        new_dir = os.path.join(self.test_dir,"new_dir")
+        os.mkdir(new_dir)
+        self.assertTrue(os.path.exists(new_dir))
+        mkdir(new_dir)
+        self.assertTrue(os.path.exists(new_dir))
+
+    def test_mkdir_dir_recursive(self):
+        """mkdir: make a subdirectory recursive
+        """
+        new_dir = os.path.join(self.test_dir,"new_dir","subdir","test")
+        self.assertFalse(os.path.exists(new_dir))
+        mkdir(new_dir,recursive=True)
+        self.assertTrue(os.path.exists(new_dir))
+
 class TestChmodFunction(unittest.TestCase):
 
     def setUp(self):
