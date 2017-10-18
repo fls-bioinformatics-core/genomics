@@ -1813,9 +1813,9 @@ class SampleSheetPredictor(object):
             self.projects.append(project)
             return project
 
-    def set(self,package="bcl2fastq2",paired_end=False,
-            no_lane_splitting=False,lanes=None,
-            force_sample_dir=False):
+    def set(self,package=None,paired_end=None,
+            no_lane_splitting=None,lanes=None,
+            force_sample_dir=None):
         """
         Configure settings for prediction
 
@@ -1833,11 +1833,15 @@ class SampleSheetPredictor(object):
           sheets where sample name and ID are the same
 
         """
-        self._predict_for_package = package
-        self._predict_paired_end = paired_end
-        self._predict_no_lane_splitting = no_lane_splitting
+        if package is not None:
+            self._predict_for_package = package
+        if paired_end is not None:
+            self._predict_paired_end = paired_end
+        if no_lane_splitting is not None:
+            self._predict_no_lane_splitting = no_lane_splitting
         self._predict_for_lanes = lanes
-        self._force_sample_dir = force_sample_dir
+        if force_sample_dir is not None:
+            self._force_sample_dir = force_sample_dir
         # Configure projects with same settings
         for project in self.projects:
             project.set(package=package,
@@ -1934,9 +1938,9 @@ class SampleSheetProject(object):
             self.samples.append(sample)
             return sample
 
-    def set(self,package="bcl2fastq2",paired_end=False,
-            no_lane_splitting=False,lanes=None,
-            force_sample_dir=False):
+    def set(self,package=None,paired_end=None,
+            no_lane_splitting=None,lanes=None,
+            force_sample_dir=None):
         """
         Configure settings for prediction
 
@@ -1954,11 +1958,15 @@ class SampleSheetProject(object):
           sheets where sample name and ID are the same
 
         """
-        self._predict_for_package = package
-        self._predict_paired_end = paired_end
-        self._predict_no_lane_splitting = no_lane_splitting
+        if package is not None:
+            self._predict_for_package = package
+        if paired_end is not None:
+            self._predict_paired_end = paired_end
+        if no_lane_splitting is not None:
+            self._predict_no_lane_splitting = no_lane_splitting
         self._predict_for_lanes = lanes
-        self._force_sample_dir = force_sample_dir
+        if force_sample_dir is not None:
+            self._force_sample_dir = force_sample_dir
         # Cascade the settings to child samples
         for sample in self.samples:
             sample.set(package=package,
@@ -2102,9 +2110,9 @@ class SampleSheetSample(object):
         # Return predicted Fastqs
         return predicted_fastqs
 
-    def set(self,package="bcl2fastq2",paired_end=False,
-            no_lane_splitting=False,lanes=None,
-            force_sample_dir=False):
+    def set(self,package=None,paired_end=None,
+            no_lane_splitting=None,lanes=None,
+            force_sample_dir=None):
         """
         Configure settings for prediction
 
@@ -2122,11 +2130,15 @@ class SampleSheetSample(object):
           sheets where sample name and ID are the same
 
         """
-        self._predict_for_package = package
-        self._predict_paired_end = paired_end
-        self._predict_no_lane_splitting = no_lane_splitting
+        if package is not None:
+            self._predict_for_package = package
+        if paired_end is not None:
+            self._predict_paired_end = paired_end
+        if no_lane_splitting is not None:
+            self._predict_no_lane_splitting = no_lane_splitting
         self._predict_for_lanes = lanes
-        self._force_sample_dir = force_sample_dir
+        if force_sample_dir is not None:
+            self._force_sample_dir = force_sample_dir
 
 class IlluminaFastq:
     """Class for extracting information about Fastq files
