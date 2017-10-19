@@ -205,6 +205,23 @@ Genome2	13.13	93.21
 #Genome	1st forward	2nd reverse
 Genome1	13.13	93.21
 """)
+    def test_strand_tsar_include_counts(self):
+        """
+        strand_tsar: test including the counts
+        """
+        subprocess.check_output([__file__,
+                                 self.fqs[0],
+                                 self.fqs[1],
+                                 "Genome1",
+                                 "--counts"],
+                                cwd=self.wd)
+        outfile = os.path.join(self.wd,"mock_R1_strand_tsar.txt")
+        self.assertTrue(os.path.exists(outfile))
+        self.assertEqual(open(outfile,'r').read(),
+                         """#Strand_tsar version: 0.0.1	#Aligner: STAR	#Reads in subset: 3
+#Genome	1st forward	2nd reverse	Unstranded	1st read strand aligned	2nd read strand aligned
+Genome1	13.13	93.21	391087	51339	364535
+""")
 
 #######################################################################
 # Main script
@@ -250,6 +267,10 @@ if __name__ == "__main__":
                    default=1,
                    help="number of threads to run STAR with "
                    "(default: 1)")
+    p.add_argument("--counts",
+                   action="store_true",
+                   help="include the count sums in the output "
+                   "file (default: only include percentages)")
     args = p.parse_args()
     # Check that STAR is on the path
     star_exe = find_program("STAR")
@@ -328,7 +349,12 @@ if __name__ == "__main__":
                  "#Reads in subset: %s\n" % (__version__,
                                              "STAR",
                                              subset))
-        fp.write("#Genome\t1st forward\t2nd reverse\n")
+        columns = ["Genome","1st forward","2nd reverse"]
+        if args.counts:
+            columns.extend(["Unstranded",
+                            "1st read strand aligned",
+                            "2nd read strand aligned"])
+        fp.write("#%s\n" % "\t".join(columns))
     # Iterate over genome indices
     for star_genomedir in star_genomedirs:
         # Build a command line to run STAR
@@ -379,8 +405,11 @@ if __name__ == "__main__":
                     name = genome_names[star_genomedir]
                 except KeyError:
                     name = star_genomedir
-                fp.write("%s\t%.2f\t%.2f\n" % (name,
-                                               forward_1st,
-                                               reverse_2nd))
+                data = [name,
+                        "%.2f" % forward_1st,
+                        "%.2f" % reverse_2nd]
+                if args.counts:
+                    data.extend([sum_col2,sum_col3,sum_col4])
+                fp.write("%s\n" % "\t".join([str(d) for d in data]))
     # Clean up the working dir
     shutil.rmtree(working_dir)
