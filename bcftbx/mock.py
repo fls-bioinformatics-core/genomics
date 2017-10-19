@@ -109,80 +109,77 @@ class RunInfoXml(object):
 
     >>> print RunInfoXml.hiseq('151125_AB12345_001_CD256X')
 
+    Arbitrary RunInfo.xml content can be created
+    directly using the 'create' method.
+
     """
     @staticmethod
-    def miseq(run_name):
-        return """<?xml version="1.0"?>
+    def create(run_name,bases_mask,nlanes,tilecount=None,
+               align_to_phix=False):
+        # Split the run name
+        items = run_name.split("_")
+        try:
+            datestamp = items[0]
+        except IndexError:
+            datestamp = "171018"
+        try:
+            instrument = items[1]
+        except IndexError:
+            instrument = "S00001"
+        try:
+            number = items[2]
+        except IndexError:
+            number = "1"
+        try:
+            flowcell = items[3]
+        except IndexError:
+            flowcell = "XXXXABCD1"
+        # Bases mask
+        reads = []
+        for item in bases_mask.split(","):
+            is_indexed_read = ('Y' if item.upper().startswith("I")
+                               else 'N')
+            num_cycles = item[1:]
+            reads.append({ 'is_indexed_read': is_indexed_read,
+                           'num_cycles': num_cycles})
+        # Other attributes
+        if tilecount is None:
+            tilecount = 16
+        # Construct the XML
+        xml = """<?xml version="1.0"?>
 <RunInfo xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Version="2">
-  <Run Id="%s" Number="1">
-    <Flowcell>00000000-ABCD1</Flowcell>
-    <Instrument>M00001</Instrument>
-    <Date>150729</Date>
-    <Reads>
-      <Read Number="1" NumCycles="101" IsIndexedRead="N" />
-      <Read Number="2" NumCycles="8" IsIndexedRead="Y" />
-      <Read Number="3" NumCycles="8" IsIndexedRead="Y" />
-      <Read Number="4" NumCycles="101" IsIndexedRead="N" />
-    </Reads>
-    <FlowcellLayout LaneCount="1" SurfaceCount="2" SwathCount="1" TileCount="19" />
-  </Run>
-</RunInfo>""" % run_name
+  <Run Id="%s" Number="%s">
+    <Flowcell>%s</Flowcell>
+    <Instrument>%s</Instrument>
+    <Date>%s</Date>
+""" % (run_name,number,flowcell,instrument,datestamp)
+        # Add reads
+        xml += "    <Reads>\n"
+        for n,rd in enumerate(reads):
+            xml += "      <Read Number=\"%s\" NumCycles=\"%s\" IsIndexedRead=\"%s\" />\n" % (n+1,rd['num_cycles'],rd['is_indexed_read'])
+        xml += "    </Reads>\n"
+        # Flowcell layout
+        xml += "    <FlowcellLayout LaneCount=\"%s\" SurfaceCount=\"2\" SwathCount=\"1\" TileCount=\"%s\" />\n"  % (nlanes,tilecount)
+        # AlignToPhiX
+        if align_to_phix:
+            xml += "    <AlignToPhiX>\n"
+            for i in xrange(nlanes):
+                xml += "      <Lane>%s</Lane>\n" % (i+1)
+            xml += "    </AlignToPhiX>\n"
+        # Footer
+        xml += """  </Run>
+</RunInfo>"""
+        return xml
+    @staticmethod
+    def miseq(run_name):
+        return RunInfoXml.create(run_name,"y101,I8,I8,y101",1,19)
     @staticmethod
     def hiseq(run_name):
-        return """<?xml version="1.0"?>
-<RunInfo xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Version="2">
-  <Run Id="%s" Number="2">
-    <Flowcell>A00NAABXX</Flowcell>
-    <Instrument>H00002</Instrument>
-    <Date>151113</Date>
-    <Reads>
-      <Read Number="1" NumCycles="101" IsIndexedRead="N" />
-      <Read Number="2" NumCycles="8" IsIndexedRead="Y" />
-      <Read Number="3" NumCycles="8" IsIndexedRead="Y" />
-      <Read Number="4" NumCycles="101" IsIndexedRead="N" />
-    </Reads>
-    <FlowcellLayout LaneCount="8" SurfaceCount="2" SwathCount="3" TileCount="16" />
-    <AlignToPhiX>
-      <Lane>1</Lane>
-      <Lane>2</Lane>
-      <Lane>3</Lane>
-      <Lane>4</Lane>
-      <Lane>5</Lane>
-      <Lane>6</Lane>
-      <Lane>7</Lane>
-      <Lane>8</Lane>
-    </AlignToPhiX>
-  </Run>
-</RunInfo>""" % run_name
+        return RunInfoXml.create(run_name,"y101,I8,I8,y101",8,16,
+                                 align_to_phix=True)
     @staticmethod
     def nextseq(run_name):
-        return """<?xml version="1.0"?>
-<RunInfo xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.o
-rg/2001/XMLSchema-instance" Version="4">
-  <Run Id="%s" Number="1">
-    <Flowcell>ABC1234XX</Flowcell>
-    <Instrument>N000003</Instrument>
-    <Date>151123</Date>
-    <Reads>
-      <Read Number="1" NumCycles="76" IsIndexedRead="N" />
-      <Read Number="2" NumCycles="6" IsIndexedRead="Y" />
-      <Read Number="3" NumCycles="76" IsIndexedRead="N" />
-    </Reads>
-    <FlowcellLayout LaneCount="4" SurfaceCount="2" SwathCount="3" TileCount="12"
- SectionPerLane="3" LanePerSection="2">
-      <TileSet TileNamingConvention="FiveDigit">
-        <Tiles>
-          <Tile>1_11101</Tile>
-          <Tile>1_21101</Tile></Tiles>
-      </TileSet>
-    </FlowcellLayout>
-    <ImageDimensions Width="2592" Height="1944" />
-    <ImageChannels>
-      <Name>Red</Name>
-      <Name>Green</Name>
-    </ImageChannels>
-  </Run>
-</RunInfo>""" % run_name
+        return RunInfoXml.create(run_name,"y76,I6,y76",4,12)
 
 #######################################################################
 # Class definitions
