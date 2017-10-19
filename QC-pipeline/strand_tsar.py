@@ -188,6 +188,23 @@ Genome2	13.13	93.21
 Genome1	13.13	93.21
 Genome2	13.13	93.21
 """)
+    def test_strand_tsar_no_subset(self):
+        """
+        strand_tsar: test with no subset
+        """
+        subprocess.check_output([__file__,
+                                 self.fqs[0],
+                                 self.fqs[1],
+                                 "Genome1",
+                                 "--subset=0"],
+                                cwd=self.wd)
+        outfile = os.path.join(self.wd,"mock_R1_strand_tsar.txt")
+        self.assertTrue(os.path.exists(outfile))
+        self.assertEqual(open(outfile,'r').read(),
+                         """#Strand_tsar version: 0.0.1	#Aligner: STAR	#Reads in subset: 3
+#Genome	1st forward	2nd reverse
+Genome1	13.13	93.21
+""")
 
 #######################################################################
 # Main script
@@ -215,7 +232,8 @@ if __name__ == "__main__":
                    type=int,
                    default=10000,
                    help="use a random subset of read pairs "
-                   "from the input Fastqs (default: 10000)")
+                   "from the input Fastqs; set to zero to "
+                   "use all reads (default: 10000)")
     p.add_argument("-o","--outdir",
                    default=None,
                    help="specify directory to write final "
@@ -274,13 +292,19 @@ if __name__ == "__main__":
     # Make subset of input read pairs
     nreads = sum(1 for i in getreads(os.path.abspath(args.r1)))
     print "%d reads" % nreads
-    if args.subset > nreads:
+    if args.subset == 0:
+        print "Using all read pairs in Fastq files"
+        subset = nreads
+    elif args.subset > nreads:
         print "Actual number of read pairs smaller than requested subset"
         subset = nreads
     else:
         subset = args.subset
         print "Using random subset of %d read pairs" % subset
-    subset_indices = random.sample(xrange(nreads),subset)
+    if subset == nreads:
+        subset_indices = [i for i in xrange(nreads)]
+    else:
+        subset_indices = random.sample(xrange(nreads),subset)
     fastqs = []
     for fq in (args.r1,args.r2):
         fq_subset = os.path.join(working_dir,
