@@ -222,6 +222,35 @@ Genome1	13.13	93.21
 #Genome	1st forward	2nd reverse	Unstranded	1st read strand aligned	2nd read strand aligned
 Genome1	13.13	93.21	391087	51339	364535
 """)
+    def test_strand_tsar_keep_star_output(self):
+        """
+        strand_tsar: test keeping the output from STAR
+        """
+        subprocess.check_output([__file__,
+                                 self.fqs[0],
+                                 self.fqs[1],
+                                 "Genome1",
+                                 "--keep-star-output"],
+                                cwd=self.wd)
+        outfile = os.path.join(self.wd,"mock_R1_strand_tsar.txt")
+        self.assertTrue(os.path.exists(outfile))
+        self.assertEqual(open(outfile,'r').read(),
+                         """#Strand_tsar version: 0.0.1	#Aligner: STAR	#Reads in subset: 3
+#Genome	1st forward	2nd reverse
+Genome1	13.13	93.21
+""")
+        self.assertTrue(os.path.exists(
+            os.path.join(self.wd,
+                         "STAR.mock_R1.outputs")))
+        self.assertTrue(os.path.exists(
+            os.path.join(self.wd,
+                         "STAR.mock_R1.outputs",
+                         "Genome1")))
+        self.assertTrue(os.path.exists(
+            os.path.join(self.wd,
+                         "STAR.mock_R1.outputs",
+                         "Genome1",
+                         "strand_tsar_ReadsPerGene.out.tab")))
 
 #######################################################################
 # Main script
@@ -269,8 +298,14 @@ if __name__ == "__main__":
                    "(default: 1)")
     p.add_argument("--counts",
                    action="store_true",
-                   help="include the count sums in the output "
+                   help="include the count sums for "
+                   "unstranded, 1st read strand aligned and "
+                   "2nd read strand aligned in the output "
                    "file (default: only include percentages)")
+    p.add_argument("--keep-star-output",
+                   action="store_true",
+                   help="keep the output from STAR (default: "
+                   "delete outputs on completion)")
     args = p.parse_args()
     # Check that STAR is on the path
     star_exe = find_program("STAR")
@@ -355,6 +390,26 @@ if __name__ == "__main__":
                             "1st read strand aligned",
                             "2nd read strand aligned"])
         fp.write("#%s\n" % "\t".join(columns))
+    # Make directory to keep output from STAR
+    if args.keep_star_output:
+        star_output_dir = os.path.join(outdir,
+                                       "STAR.%s.outputs" %
+                                       os.path.basename(
+                                           strip_ngs_extensions(args.r1)))
+        print "Output from STAR will be copied to %s" % star_output_dir
+        # Check if directory already exists from earlier run
+        if os.path.exists(star_output_dir):
+            # Move out of the way
+            i = 0
+            backup_dir = "%s.bak" % star_output_dir
+            while os.path.exists(backup_dir):
+                i += 1
+                backup_dir = "%s.bak%s" % (star_output_dir,i)
+            logging.warning("Moving existing output directory to %s" %
+                            backup_dir)
+            os.rename(star_output_dir,backup_dir)
+        # Make the directory
+        os.mkdir(star_output_dir)
     # Iterate over genome indices
     for star_genomedir in star_genomedirs:
         # Build a command line to run STAR
@@ -373,14 +428,14 @@ if __name__ == "__main__":
         print "Running %s" % ' '.join(star_cmd)
         subprocess.check_output(star_cmd,cwd=working_dir)
         # Process the STAR output
-        out_file = os.path.join(working_dir,
-                                "%sReadsPerGene.out.tab" % prefix)
-        if not os.path.exists(out_file):
-            raise Exception("Failed to find .out file: %s" % out_file)
+        star_tab_file = os.path.join(working_dir,
+                                     "%sReadsPerGene.out.tab" % prefix)
+        if not os.path.exists(star_tab_file):
+            raise Exception("Failed to find .out file: %s" % star_tab_file)
         sum_col2 = 0
         sum_col3 = 0
         sum_col4 = 0
-        with open(out_file) as out:
+        with open(star_tab_file) as out:
             for i,line in enumerate(out):
                 if i < 4:
                     # Skip first four lines
@@ -411,5 +466,16 @@ if __name__ == "__main__":
                 if args.counts:
                     data.extend([sum_col2,sum_col3,sum_col4])
                 fp.write("%s\n" % "\t".join([str(d) for d in data]))
+            # Save the outputs
+            if args.keep_star_output:
+                # Make a subdirectory for this genome index
+                genome_dir = os.path.join(star_output_dir,
+                                          name.replace(os.sep,"_"))
+                print "Copying STAR outputs to %s" % genome_dir
+                os.mkdir(genome_dir)
+                for f in os.listdir(working_dir):
+                    if f.startswith(prefix):
+                        shutil.copy(os.path.join(working_dir,f),
+                                    os.path.join(genome_dir,f))
     # Clean up the working dir
     shutil.rmtree(working_dir)
