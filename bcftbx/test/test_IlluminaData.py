@@ -2000,7 +2000,8 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
                           "PJB2-1580_S2_L002_R1_001.fastq.gz"])
         # Predict output fastqs bcl2fastq2 with no lane splitting
         predictor.set(package="bcl2fastq2",
-                      no_lane_splitting=True)
+                      no_lane_splitting=True,
+                      paired_end=False)
         self.assertEqual(project.dir_name,"PeterBriggs")
         self.assertEqual(sample1.dir_name,None)
         self.assertEqual(sample1.fastqs(),
@@ -2009,6 +2010,7 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
                          ["PJB2-1580_S2_R1_001.fastq.gz"])
         # Predict output fastqs bcl2fastq2 paired end
         predictor.set(package="bcl2fastq2",
+                      no_lane_splitting=False,
                       paired_end=True)
         self.assertEqual(project.dir_name,"PeterBriggs")
         self.assertEqual(sample1.dir_name,None)
@@ -2038,7 +2040,8 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
                          ["PJB2-1580_S2_R1_001.fastq.gz",
                           "PJB2-1580_S2_R2_001.fastq.gz"])
         # Predict output fastqs CASAVA/bcl2fastq 1.8*
-        predictor.set(package="casava")
+        predictor.set(package="casava",
+                      paired_end=False)
         self.assertEqual(project.dir_name,"Project_PeterBriggs")
         self.assertEqual(sample1.dir_name,"Sample_PJB1-1579")
         self.assertEqual(sample1.fastqs(),
@@ -2109,6 +2112,7 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
                          ["B8_S2_R1_001.fastq.gz"])
         # Predict output fastqs bcl2fastq2 paired end
         predictor.set(package="bcl2fastq2",
+                      no_lane_splitting=False,
                       paired_end=True)
         self.assertEqual(project.dir_name,"PJB")
         self.assertEqual(sample1.dir_name,None)
@@ -2136,6 +2140,7 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
         # Predict output fastqs bcl2fastq2 paired end with
         # explicitly specified lanes
         predictor.set(package="bcl2fastq2",
+                      no_lane_splitting=False,
                       lanes=(1,2),
                       paired_end=True)
         self.assertEqual(project.dir_name,"PJB")
@@ -2152,7 +2157,9 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
                           "B8_S2_L002_R1_001.fastq.gz",
                           "B8_S2_L002_R2_001.fastq.gz"])
         # Predict output fastqs CASAVA/bcl2fastq 1.8*
-        predictor.set(package="casava")
+        predictor.set(package="casava",
+                      lanes=None,
+                      paired_end=False)
         self.assertEqual(project.dir_name,"Project_PJB")
         self.assertEqual(sample1.dir_name,"Sample_A8")
         self.assertEqual(sample1.fastqs(),

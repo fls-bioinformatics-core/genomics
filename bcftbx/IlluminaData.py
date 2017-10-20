@@ -1701,10 +1701,64 @@ class SampleSheetPredictor(object):
     """
     Class to predict outputs of a sample sheet file
 
-    Example usage:
+    Supplied with a sample sheet file, or the contents of a
+    sample sheet, this class can predict the expected output
+    projects, sample names and Fastq file names according to
+    the bcl-to-fastq conversion software that is used and the
+    type of data that is present.
+
+    By default the predicted outputs are for single-ended data
+    converted using 'bcl2fastq2' with no lane information. The
+    `set` method can be invoked to predict outputs for other
+    configurations.
+
+    It uses two additional helper classes `SampleSheetProject`
+    and `SampleSheetSample`, which hold information about
+    the predicted projects and samples.
+
+    Example usage: create a new predictor object:
 
     >>> predictor = SampleSheetPredictor(sample_sheet_file="SampleSheet.txt")
-    
+
+    To get a list of the expected project names:
+
+    >>> project_names = predictor.project_names
+
+    To get a `SampleSheetProject` corresponding to a project
+    name:
+
+    >>> predicted_project = predictor.get_project("MyProject")
+
+    To loop over the `SampleSheetSamples` in the project
+    corresponding to the expected samples and get a list of the
+    expected Fastqs:
+
+    >>> for predicted_sample in predicted_project.samples:
+    ...    for fq in predicted_sample.fastqs:
+    ...       print "Predicted Fastq: %s" % fq
+
+    To predict Fastqs for paired-end data:
+
+    >>> predictor.set(paired_end=True)
+    >>> for p in predictor.projects:
+    ...    for s in p.samples:
+    ...       for fq in s.fastqs:
+    ...          print fq
+
+    (See also the `SampleSheetProject` and `SampleSheetSample`)
+
+    Available properties:
+
+    - projects: list of the associated SampleSheetProjects
+    - nprojects: number of predicted projects
+    - project_names: list of the predicted project names
+
+    Available methods:
+
+    - get_project: fetch SampleSheetProject for project name
+    - set: configure the predictor for different bcl-to-fastq
+        software, conversion options, and data endedness
+
     """
     def __init__(self,sample_sheet=None,sample_sheet_file=None):
         """
@@ -1813,9 +1867,9 @@ class SampleSheetPredictor(object):
             self.projects.append(project)
             return project
 
-    def set(self,package="bcl2fastq2",paired_end=False,
-            no_lane_splitting=False,lanes=None,
-            force_sample_dir=False):
+    def set(self,package=None,paired_end=None,
+            no_lane_splitting=None,lanes=None,
+            force_sample_dir=None):
         """
         Configure settings for prediction
 
@@ -1833,11 +1887,15 @@ class SampleSheetPredictor(object):
           sheets where sample name and ID are the same
 
         """
-        self._predict_for_package = package
-        self._predict_paired_end = paired_end
-        self._predict_no_lane_splitting = no_lane_splitting
+        if package is not None:
+            self._predict_for_package = package
+        if paired_end is not None:
+            self._predict_paired_end = paired_end
+        if no_lane_splitting is not None:
+            self._predict_no_lane_splitting = no_lane_splitting
         self._predict_for_lanes = lanes
-        self._force_sample_dir = force_sample_dir
+        if force_sample_dir is not None:
+            self._force_sample_dir = force_sample_dir
         # Configure projects with same settings
         for project in self.projects:
             project.set(package=package,
@@ -1849,6 +1907,28 @@ class SampleSheetPredictor(object):
 class SampleSheetProject(object):
     """
     Class describing a project from a sample sheet file
+
+    This class describes a predicted project from a
+    samplesheet. It is normally created, managed and
+    returned by a `SampleSheetPredictor` instance, rather
+    than being created directly.
+
+    The predicted samples within the project are
+    described by a set of SampleSheetSample instances.
+
+    Available properties:
+
+    - name: project name
+    - samples: list of associated SampleSheetSamples
+    - sample_ids: list of associated sample IDs
+    - dir_name: predicted subdirectory name for the
+        project
+
+    Available methods:
+
+    - get_sample: fetch SampleSheetSample by sample ID
+    - set: configure the predictor for different bcl-to-fastq
+        software, conversion options, and data endedness
     
     """
     def __init__(self,project_name):
@@ -1934,9 +2014,9 @@ class SampleSheetProject(object):
             self.samples.append(sample)
             return sample
 
-    def set(self,package="bcl2fastq2",paired_end=False,
-            no_lane_splitting=False,lanes=None,
-            force_sample_dir=False):
+    def set(self,package=None,paired_end=None,
+            no_lane_splitting=None,lanes=None,
+            force_sample_dir=None):
         """
         Configure settings for prediction
 
@@ -1954,11 +2034,15 @@ class SampleSheetProject(object):
           sheets where sample name and ID are the same
 
         """
-        self._predict_for_package = package
-        self._predict_paired_end = paired_end
-        self._predict_no_lane_splitting = no_lane_splitting
+        if package is not None:
+            self._predict_for_package = package
+        if paired_end is not None:
+            self._predict_paired_end = paired_end
+        if no_lane_splitting is not None:
+            self._predict_no_lane_splitting = no_lane_splitting
         self._predict_for_lanes = lanes
-        self._force_sample_dir = force_sample_dir
+        if force_sample_dir is not None:
+            self._force_sample_dir = force_sample_dir
         # Cascade the settings to child samples
         for sample in self.samples:
             sample.set(package=package,
@@ -1974,6 +2058,30 @@ class SampleSheetProject(object):
 class SampleSheetSample(object):
     """
     Class describing a sample from a sample sheet file
+
+    This class describes a predicted sample from a
+    samplesheet. It is normally created, managed and
+    returned by a `SampleSheetProject` instance, rather
+    than being created directly.
+
+    Available properties and data:
+
+    - sample_id: sample ID
+    - sample_name: sample name
+    - s_index: index number for the sample, for bcl2fastq
+    - barcode_seqs: list of barcode sequences associated
+        with the sample
+    - barcodes: dictionary mapping barcodes to lists of
+        lanes for the sample
+    - dir_name: predicted subdirectory name for the sample
+
+    Available methods:
+
+    - lanes: list lanes associated with the sample, or with a
+        specific barcode
+    - fastqs: list of predicted Fastq files for the sample
+    - set: configure the predictor for different bcl-to-fastq
+        software, conversion options, and data endedness
 
     """
     def __init__(self,sample_id,sample_name=None,s_index=None):
@@ -2001,7 +2109,7 @@ class SampleSheetSample(object):
     @property
     def barcode_seqs(self):
         """
-        Return a list of barcode (index) sequnces for the sample
+        Return a list of barcode (index) sequences for the sample
 
         """
         return sorted([b for b in self.barcodes.keys()])
@@ -2102,9 +2210,9 @@ class SampleSheetSample(object):
         # Return predicted Fastqs
         return predicted_fastqs
 
-    def set(self,package="bcl2fastq2",paired_end=False,
-            no_lane_splitting=False,lanes=None,
-            force_sample_dir=False):
+    def set(self,package=None,paired_end=None,
+            no_lane_splitting=None,lanes=None,
+            force_sample_dir=None):
         """
         Configure settings for prediction
 
@@ -2122,11 +2230,15 @@ class SampleSheetSample(object):
           sheets where sample name and ID are the same
 
         """
-        self._predict_for_package = package
-        self._predict_paired_end = paired_end
-        self._predict_no_lane_splitting = no_lane_splitting
+        if package is not None:
+            self._predict_for_package = package
+        if paired_end is not None:
+            self._predict_paired_end = paired_end
+        if no_lane_splitting is not None:
+            self._predict_no_lane_splitting = no_lane_splitting
         self._predict_for_lanes = lanes
-        self._force_sample_dir = force_sample_dir
+        if force_sample_dir is not None:
+            self._force_sample_dir = force_sample_dir
 
 class IlluminaFastq:
     """Class for extracting information about Fastq files
