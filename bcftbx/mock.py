@@ -71,8 +71,8 @@ AdapterRead2,AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT,,,,,,,,
 ,,,,,,,,,
 [Data],,,,,,,,,
 Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_ID,index2,Sample_Project,Description
-Sample_1,Sample_1,,,D701,CGTGTAGG,D501,GACCTGTA,,
-Sample_2,Sample_2,,,D702,CGTGTAGG,D501,ATGTAACT,,"""
+Sample1,Sample1,,,D701,CGTGTAGG,D501,GACCTGTA,,
+Sample2,Sample2,,,D702,CGTGTAGG,D501,ATGTAACT,,"""
     hiseq = """[Header],,,,,,,,,,
 IEMFileVersion,4,,,,,,,,,
 Date,11/11/2015,,,,,,,,,
@@ -196,14 +196,14 @@ class MockSampleSheet(SampleSheet):
     >>> s.set_header(Date="08/19/2016",Assay="Nextera XT")
     >>> s.set_reads(150,150)
     >>> s.set_settings(Adapter="AGATCGG",AdapterRead2="")
-    >>> s.append_line(Sample_ID="Sample_1",
-    ...               Sample_Name="Sample_1",
+    >>> s.append_line(Sample_ID="Sample1",
+    ...               Sample_Name="Sample1",
     ...               I7_Index_ID="D701",
     ...               index="CGTGTAGG",
     ...               I5_Index_ID="D501",
     ...               index2="GACCTGTA")
-    >>> s.append_line(Sample_ID="Sample_2",
-    ...               Sample_Name="Sample_2",
+    >>> s.append_line(Sample_ID="Sample2",
+    ...               Sample_Name="Sample2",
     ...               I7_Index_ID="D702",
     ...               index="CGTGTAGG",
     ...               I5_Index_ID="D502",
