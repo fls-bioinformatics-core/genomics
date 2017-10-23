@@ -30,6 +30,7 @@ There are also static classes with example data:
 import os
 import shutil
 import cStringIO
+import gzip
 import bcftbx.utils
 from bcftbx.IlluminaData import IlluminaFastq
 from bcftbx.IlluminaData import SampleSheet
@@ -1111,8 +1112,7 @@ class MockIlluminaData:
                 bcftbx.utils.mkdir(sample_dirn)
                 for fastq in self.__projects[project_name][sample_name]:
                     fq = os.path.join(sample_dirn,fastq)
-                    # "Touch" the file (i.e. creates an empty file)
-                    open(fq,'wb+').close()
+                    self._touch(fq)
 
     def _populate_bcl2fastq2(self):
         """
@@ -1144,7 +1144,7 @@ class MockIlluminaData:
                         bcftbx.utils.mkdir(leading_dir)
                     # "Touch" the file (i.e. creates an empty file)
                     fq = os.path.join(sample_dirn,fastq)
-                    open(fq,'wb+').close()
+                    self._touch(fq)
                     fastqs.append(os.path.basename(fastq))
                 # Update the list of fastqs
                 self.__projects[project_name][sample_name] = fastqs
@@ -1152,6 +1152,18 @@ class MockIlluminaData:
             for name in ('Reports','Stats',):
                 dirn = os.path.join(self.unaligned_dir,name)
                 bcftbx.utils.mkdir(dirn)
+
+    def _touch(self,f):
+        """Internal: create empty file
+        """
+        if f.endswith(".gz"):
+            # Make empty gzipped file
+            with gzip.open(f,'wb') as fp:
+                fp.write("")
+        else:
+            # Make regular empty file
+            with open(f,'wb') as fp:
+                fp.write("")
 
     def remove(self):
         """Delete the directory structure and contents
