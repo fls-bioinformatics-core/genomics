@@ -1963,7 +1963,10 @@ class SampleSheetProject(object):
 
         """
         if self._predict_for_package == "casava":
-            return "Project_%s" % self.name
+            if self.name:
+                return "Project_%s" % self.name
+            else:
+                return self.name
         elif self._predict_for_package == "bcl2fastq2":
             return self.name
 

@@ -1963,6 +1963,51 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
 1,CD3,CD3,,,N701,GTATCGAT,N501,TCTTTCCC,CarlDavis,
 1,CD4,CD4,,,N702,CAATTGAC,N502,TCTTTCCC,CarlDavis,
 """
+        self.hiseq_sample_sheet_no_barcodes = """[Header]
+IEMFileVersion,4
+Date,06/03/2014
+Workflow,GenerateFASTQ
+Application,HiSeq FASTQ Only
+Assay,Nextera
+Description,
+Chemistry,Amplicon
+
+[Reads]
+101
+101
+
+[Settings]
+ReverseComplement,0
+Adapter,CTGTCTCTTATACACATCT
+
+[Data]
+Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_ID,index2,Sample_Project,Description
+1,PJB1,PJB1,,,,,,,PeterBriggs,
+2,PJB2,PJB2,,,,,,,PeterBriggs,
+"""
+        self.miseq_sample_sheet_no_projects = """[Header]
+IEMFileVersion,4
+Date,11/23/2015
+Workflow,GenerateFASTQ
+Application,FASTQ Only
+Assay,TruSeq HT
+Description,
+Chemistry,Amplicon
+
+[Reads]
+101
+101
+
+[Settings]
+ReverseComplement,0
+Adapter,AGATCGGAAGAGCACACGTCTGAACTCCAGTCA
+AdapterRead2,AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT
+
+[Data]
+Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_ID,index2,Sample_Project,Description
+Sample1,Sample1,,,D701,CGTGTAGG,D501,GACCTGTA,,
+Sample2,Sample2,,,D702,CGTGTAGG,D501,ATGTAACT,,
+"""
 
     def test_samplesheet_predictor_iem_with_lanes(self):
         """SampleSheetPredictor: handle IEM4 sample sheet with lanes
@@ -2499,6 +2544,46 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
                          ["CD3_GTATCGAT-TCTTTCCC_L001_R1_001.fastq.gz"])
         self.assertEqual(sample4.fastqs(),
                          ["CD4_CAATTGAC-TCTTTCCC_L001_R1_001.fastq.gz"])
+
+    def test_samplesheet_predictor_iem_no_projects(self):
+        """SampleSheetPredictor: handle IEM4 sample sheet with no projects
+        """
+        iem = SampleSheet(fp=cStringIO.StringIO(
+            self.miseq_sample_sheet_no_projects))
+        predictor = SampleSheetPredictor(sample_sheet=iem)
+        # Get projects
+        self.assertEqual(predictor.nprojects,1)
+        self.assertEqual(predictor.project_names,[""])
+        project = predictor.get_project("")
+        self.assertRaises(KeyError,predictor.get_project,"DoesntExist")
+        # Get samples
+        self.assertEqual(project.sample_ids,["Sample1","Sample2"])
+        sample1 = project.get_sample("Sample1")
+        sample2 = project.get_sample("Sample2")
+        self.assertRaises(KeyError,project.get_sample,"DoesntExist")
+        # Check sample barcodes and lanes
+        self.assertEqual(sample1.barcode_seqs,["CGTGTAGG-GACCTGTA"])
+        self.assertEqual(sample2.barcode_seqs,["CGTGTAGG-ATGTAACT"])
+        self.assertEqual(sample1.lanes("CGTGTAGG-GACCTGTA"),[])
+        self.assertEqual(sample2.lanes("CGTGTAGG-ATGTAACT"),[])
+        self.assertEqual(sample1.s_index,1)
+        self.assertEqual(sample2.s_index,2)
+        # Predict output fastqs bcl2fastq2
+        predictor.set(package="bcl2fastq2")
+        self.assertEqual(project.dir_name,"")
+        self.assertEqual(sample1.fastqs(),
+                         ["Sample1_S1_L001_R1_001.fastq.gz"])
+        self.assertEqual(sample1.dir_name,None)
+        self.assertEqual(sample2.fastqs(),
+                         ["Sample2_S2_L001_R1_001.fastq.gz"])
+        self.assertEqual(sample2.dir_name,None)
+        # Predict output fastqs CASAVA/bcl2fastq 1.8*
+        predictor.set(package="casava")
+        self.assertEqual(project.dir_name,"")
+        self.assertEqual(sample1.fastqs(),
+                         ["Sample1_CGTGTAGG-GACCTGTA_L001_R1_001.fastq.gz"])
+        self.assertEqual(sample2.fastqs(),
+                         ["Sample2_CGTGTAGG-ATGTAACT_L001_R1_001.fastq.gz"])
     
 class TestMiseqToCasavaConversion(unittest.TestCase):
 
