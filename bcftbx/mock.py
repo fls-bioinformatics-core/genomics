@@ -623,7 +623,7 @@ class MockIlluminaRun:
                                         'BaseCalls',
                                         'L%03d' % i,
                                         'C%d.1' % k,
-                                        's_%d_%d.%s' % (i,j,bcl_ext)),
+                                        's_%d_%d%s' % (i,j,bcl_ext)),
                              'wb+').close()
                         # .stats files
                         open(self._path('Data',
