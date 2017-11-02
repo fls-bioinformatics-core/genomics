@@ -320,7 +320,11 @@ class SimpleJobRunner(BaseJobRunner):
                 logging.debug("Job id %s: finished (%s)" % (job_id,
                                                             status))
                 self.__exit_status[job_id] = status
-                del(self.__job_popen[job_id])
+                try:
+                    del(self.__job_popen[job_id])
+                except KeyError:
+                    logging.warning("Job id %s: already deleted"
+                                    % job_id)
         return job_ids
 
     def exit_status(self,job_id):
