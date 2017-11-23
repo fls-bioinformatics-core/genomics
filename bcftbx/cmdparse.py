@@ -33,6 +33,7 @@ __version__ = "1.0.1"
 
 import os
 import sys
+import optparse
 import argparse
 from utils import OrderedDictionary
 
@@ -74,7 +75,8 @@ class CommandParser(object):
     methods from optparse.
 
     """
-    def __init__(self, description=None, version=None):
+    def __init__(self, description=None, version=None,
+                 subparser=optparse.OptionParser):
         """Create a command line parser
 
         This parser can process command lines of the form
@@ -90,6 +92,8 @@ class CommandParser(object):
         self._version = version
         self._commands = OrderedDictionary()
         self._help = dict()
+        self._subparser = subparser
+
 
     def add_command(self, cmd, help=None, **args):
         """Add a major command to the CommandParser
@@ -116,7 +120,7 @@ class CommandParser(object):
             raise Exception("Command '%s' already defined" % cmd)
         if 'version' not in args:
             args['version'] = self._version
-        p = argparse.ArgumentParser(**args)
+        p = self._subparser(**args)
         self._commands[cmd] = p
         self._help[cmd] = help
         return p
@@ -140,7 +144,7 @@ class CommandParser(object):
         Returns:
           A tuple of (cmd,options,args) where 'cmd' is the
           command, and 'options' and 'args' are the options and
-          arguments as returned by ArgumentParser.parse_args.
+          arguments as returned by ArgumentParser.parse_known_args.
 
         """
         # Collect arguments to process
@@ -161,7 +165,9 @@ class CommandParser(object):
                        (self._name, self._name, cmd))
 
         # Parse the remaining arguments and return
-        options, arguments = p.parse_args(argv[1:])
+        if isinstance(p, argparse.ArgumentParser):
+            options, arguments = p.parse_known_args(argv[1:])
+        else: options, arguments = p.parse_args(argv[1:])
         return (cmd, options, arguments)
 
     def error(self, message):
@@ -251,11 +257,13 @@ def add_nprocessors_option(parser, default_nprocessors, default_display=None):
     """
     if default_display is None:
         default_display = default_nprocessors
-    parser.add_argument('--nprocessors', action='store',
-                        dest='nprocessors', default=default_nprocessors,
-                        help="explicitly specify number of processors/cores to use "
-                        "(default %s)" %
-                        default_display)
+    if isinstance(parser, argparse.ArgumentParser):
+        add_cmd = parser.add_argument
+    else: add_cmd = parser.add_option
+    add_cmd('--nprocessors', action='store',
+            dest='nprocessors', default=default_nprocessors,
+            help="explicitly specify number of processors/cores to use "
+            "(default %s)" %default_display)
     return parser
 
 def add_runner_option(parser):
@@ -271,10 +279,13 @@ def add_runner_option(parser):
     Returns the input ArgumentParser object.
 
     """
-    parser.add_argument('--runner', action='store',
-                        dest='runner', default=None,
-                        help="explicitly specify runner definition (e.g. "
-                        "'GEJobRunner(-j y)')")
+    if isinstance(parser, argparse.ArgumentParser):
+        add_cmd = parser.add_argument
+    else: add_cmd = parser.add_option
+    add_cmd('--runner', action='store',
+            dest='runner', default=None,
+            help="explicitly specify runner definition (e.g. "
+            "'GEJobRunner(-j y)')")
     return parser
 
 def add_no_save_option(parser):
@@ -288,8 +299,11 @@ def add_no_save_option(parser):
     Returns the input ArgumentParser object.
 
     """
-    parser.add_argument('--no-save', action='store_true', dest='no_save', default=False,
-                        help="Don't save parameter changes to the auto_process.info file")
+    if isinstance(parser, argparse.ArgumentParser):
+        add_cmd = parser.add_argument
+    else: add_cmd = parser.add_option
+    add_cmd('--no-save', action='store_true', dest='no_save', default=False,
+            help="Don't save parameter changes to the auto_process.info file")
     return parser
 
 def add_dry_run_option(parser):
@@ -303,9 +317,12 @@ def add_dry_run_option(parser):
     Returns the input ArgumentParser object.
 
     """
-    parser.add_argument('--dry-run', action='store_true', dest='dry_run', default=False,
-                        help="Dry run i.e. report what would be done but don't perform "
-                        "any actions")
+    if isinstance(parser, argparse.ArgumentParser):
+        add_cmd = parser.add_argument
+    else: add_cmd = parser.add_option
+    add_cmd('--dry-run', action='store_true', dest='dry_run', default=False,
+            help="Dry run i.e. report what would be done but don't perform "
+                 "any actions")
     return parser
 
 def add_debug_option(parser):
@@ -319,6 +336,9 @@ def add_debug_option(parser):
     Returns the input ArgumentParser object.
 
     """
-    parser.add_argument('--debug', action='store_true', dest='debug', default=False,
-                        help="Turn on debugging output")
+    if isinstance(parser, argparse.ArgumentParser):
+        add_cmd = parser.add_argument
+    else: add_cmd = parser.add_option
+    add_cmd('--debug', action='store_true', dest='debug',
+            default=False, help="Turn on debugging output")
     return parser
