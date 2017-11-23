@@ -75,8 +75,7 @@ class CommandParser(object):
     methods from optparse.
 
     """
-    def __init__(self, description=None, version=None,
-                 subparser=optparse.OptionParser):
+    def __init__(self, description=None, version=None, subparser=None):
         """Create a command line parser
 
         This parser can process command lines of the form
@@ -92,6 +91,8 @@ class CommandParser(object):
         self._version = version
         self._commands = OrderedDictionary()
         self._help = dict()
+        if not subparser:
+            subparser = optparse.OptionParser
         self._subparser = subparser
 
 
