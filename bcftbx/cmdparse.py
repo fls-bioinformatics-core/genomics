@@ -151,7 +151,7 @@ class CommandParser(object):
         # Collect arguments to process
         if argv is None:
             argv = sys.argv[1:]
-        if argv:
+        if not argv:
             self.error("Need to supply a command\n%s" %
                        self.print_available_commands())
         # Determine the major command and get the parser
