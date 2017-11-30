@@ -103,11 +103,13 @@ class TestCommandParserWithArgumentParser(unittest.TestCase):
         slow_cmd = p.add_command('slow')
         fast_cmd = p.add_command('fast')
         slow_cmd.add_argument('-a',action='store',dest='a_value')
+        slow_cmd.add_argument('name')
         fast_cmd.add_argument('-b',action='store',dest='b_value')
+        fast_cmd.add_argument('name')
         cmd,args = p.parse_args(['slow','-a','unspeedy','input'])
         self.assertEqual(cmd,'slow')
         self.assertEqual(args.a_value,'unspeedy')
-        self.assertEqual(args,['input'])
+        self.assertEqual(args.name,'input')
         try:
             args.b_value
             self.fail("Accessing 'b_value' for 'slow' command didn't raise AttributeError")
@@ -116,7 +118,7 @@ class TestCommandParserWithArgumentParser(unittest.TestCase):
         cmd,args = p.parse_args(['fast','-b','zippy','input2'])
         self.assertEqual(cmd,'fast')
         self.assertEqual(args.b_value,'zippy')
-        self.assertEqual(args,['input2'])
+        self.assertEqual(args.name,'input2')
         try:
             args.a_value
             self.fail("Accessing 'a_value' for 'fast' command didn't raise AttributeError")
