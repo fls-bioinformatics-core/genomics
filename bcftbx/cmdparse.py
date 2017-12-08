@@ -5,7 +5,7 @@
 #########################################################################
 
 """
-Provides a CommandParser class built on top of the 'optparse.OptionParser'
+Provides a CommandParser class built on top of the 'argparse.ArgumentParser'
 class, that can be used for handling command lines of the form::
 
     PROG COMMAND OPTION ARGS
@@ -104,7 +104,7 @@ class CommandParser(object):
         self._subparser = subparser
 
 
-    def add_command(self,cmd,help=None,**args):
+    def add_command(self, cmd, help=None, **args):
         """Add a major command to the CommandParser
 
         Adds a command and creates an initial ArgumentParser
@@ -114,7 +114,7 @@ class CommandParser(object):
           cmd: the command to be added
           help: (optional) help text for the command
 
-        Other arguments are passed to the OptionParser object
+        Other arguments are passed to the ArgumentParser object
         when it is created i.e. 'usage', 'version',
         'description'.
 
@@ -122,7 +122,7 @@ class CommandParser(object):
         supplied to the CommandParser object will be used.
 
         Returns:
-          OptionParser object for the command.
+          ArgumentParser object for the command.
 
         """
         if cmd in self._commands:
@@ -143,7 +143,7 @@ class CommandParser(object):
         """
         return self._commands[cmd]
 
-    def parse_args(self,argv=None):
+    def parse_args(self, argv=None):
         """Process a command line
 
         Arguments:
@@ -185,14 +185,14 @@ class CommandParser(object):
         options, arguments = p.parse_args(argv[1:])
         return (cmd, options, arguments)
 
-    def error(self,message):
+    def error(self, message):
         """Exit with error message
 
         """
         sys.stderr.write("%s\n" % message)
         sys.exit(1)
 
-    def handle_generic_commands(self,cmd):
+    def handle_generic_commands(self, cmd):
         """Process 'generic' commands e.g. 'help'
 
         """
@@ -235,7 +235,7 @@ class CommandParser(object):
         lines.append("")
         return '\n'.join(lines)
 
-    def print_command(self,cmd,message=None):
+    def print_command(self, cmd, message=None):
         """Print a line for a single command
 
         Returns a 'pretty-printed' line for the specified command
@@ -256,7 +256,7 @@ class CommandParser(object):
 # Functions
 #######################################################################
 
-def add_nprocessors_option(parser,default_nprocessors,default_display=None):
+def add_nprocessors_option(parser, default_nprocessors, default_display=None):
     """Add a '--nprocessors' option to a parser
 
     Given an OptionParser 'parser', add a '--nprocessors' option.
@@ -267,7 +267,7 @@ def add_nprocessors_option(parser,default_nprocessors,default_display=None):
     If 'default_display' is not None then this value will be shown
     in the help text, rather than the value supplied for the default.
 
-    Returns the input OptionParser object.
+    Returns the input ArgumentParser object.
 
     """
     if default_display is None:
@@ -292,7 +292,7 @@ def add_runner_option(parser):
     function to return a JobRunner object from the supplied
     value).
 
-    Returns the input OptionParser object.
+    Returns the input ArgumentParser object.
 
     """
     if isinstance(parser, argparse.ArgumentParser):
@@ -313,7 +313,7 @@ def add_no_save_option(parser):
     The value of this option can be accessed via the 'no_save'
     attribute of the parser options.
 
-    Returns the input OptionParser object.
+    Returns the input ArgumentParser object.
 
     """
     if isinstance(parser, argparse.ArgumentParser):
@@ -352,7 +352,7 @@ def add_debug_option(parser):
     The value of this option can be accessed via the 'debug'
     attribute of the parser options.
 
-    Returns the input OptionParser object.
+    Returns the input ArgumentParser object.
 
     """
     if isinstance(parser, argparse.ArgumentParser):
