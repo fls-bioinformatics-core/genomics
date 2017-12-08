@@ -5,13 +5,15 @@
 #########################################################################
 
 """
-Provides a CommandParser class built on top of the 'argparse.ArgumentParser'
+Provides a CommandParser class built on top of the 'optparse.OptionParser'
 class, that can be used for handling command lines of the form::
 
     PROG COMMAND OPTION ARGS
 
 where different sets of options can be defined based on the initial
 command.
+
+The argparse.ArgumentParser may be specified to be used in place of optparse.OptionParser.
 
 In addition to the core CommandParser class, there are a number of
 supporting functions that can be used with any argparse-based object to
@@ -54,15 +56,21 @@ class CommandParser(object):
 
     Usage:
 
-    Create a simple CommandParser using:
+    Create a simple CommandParser
+    with OptionParser as the default backend using:
 
     >>> p = CommandParser()
+    
+    or with ArgumentParser as the backend using:
+
+    >>> p = CommandParser(subparser=argparser.ArgumentParser)
+
 
     Add a 'setup' command:
 
     >>> p.add_command('setup',usage='%prog setup OPTIONS ARGS')
 
-    Add options to the 'setup' command using normal ArgumentParser methods,
+    Add options to the 'setup' command using normal OptionParser/ ArgumentParser methods,
     e.g.
 
     >>> p.parser_for('info').add_option('-f',...)
@@ -75,9 +83,9 @@ class CommandParser(object):
     methods from optparse.
 
     """
-    def __init__(self, description=None, version=None, subparser=None):
+    def __init__(self,description=None,version=None,subparser=None):
         """Create a command line parser
-
+        with 'subparser' as the backend (default=OptionParser)
         This parser can process command lines of the form
 
         PROG CMD OPTIONS ARGS
@@ -96,7 +104,7 @@ class CommandParser(object):
         self._subparser = subparser
 
 
-    def add_command(self, cmd, help=None, **args):
+    def add_command(self,cmd,help=None,**args):
         """Add a major command to the CommandParser
 
         Adds a command and creates an initial ArgumentParser
@@ -106,7 +114,7 @@ class CommandParser(object):
           cmd: the command to be added
           help: (optional) help text for the command
 
-        Other arguments are passed to the ArgumentParser object
+        Other arguments are passed to the OptionParser object
         when it is created i.e. 'usage', 'version',
         'description'.
 
@@ -114,7 +122,7 @@ class CommandParser(object):
         supplied to the CommandParser object will be used.
 
         Returns:
-          ArgumentParser object for the command.
+          OptionParser object for the command.
 
         """
         if cmd in self._commands:
@@ -126,16 +134,16 @@ class CommandParser(object):
         self._help[cmd] = help
         return p
 
-    def parser_for(self, cmd):
-        """Return ArgumentParser for specified command
+    def parser_for(self,cmd):
+        """Return OptionParser for specified command
 
         Returns:
-          The ArgumentParser object for the specified command.
+          The OptionParser object for the specified command.
 
         """
         return self._commands[cmd]
 
-    def parse_args(self, argv=None):
+    def parse_args(self,argv=None):
         """Process a command line
 
         Arguments:
@@ -143,9 +151,13 @@ class CommandParser(object):
             If not supplied then defaults to sys.argv[1:].
 
         Returns:
-          A tuple of (cmd,options,args) where 'cmd' is the
-          command, and 'options' and 'args' are the options and
-          arguments as returned by ArgumentParser.parse_known_args.
+          A tuple of (cmd,options,arguments) if OptionParser (default)
+          backend is used where 'cmd' is the
+          command, and 'options' and 'arguments' are the options and
+          arguments as returned by OptionParser.parse_args.
+          A tuple of (cmd,options) if ArgumentParser is used as backend
+          where 'cmd' is the command and 'options' is as returned by
+          ArgumentParser.parse_args
 
         """
         # Collect arguments to process
@@ -167,18 +179,20 @@ class CommandParser(object):
 
         # Parse the remaining arguments and return
         if isinstance(p, argparse.ArgumentParser):
-            options, arguments = p.parse_known_args(argv[1:])
-        else: options, arguments = p.parse_args(argv[1:])
+            options = p.parse_args(argv[1:])
+            return (cmd, options)
+        # else:
+        options, arguments = p.parse_args(argv[1:])
         return (cmd, options, arguments)
 
-    def error(self, message):
+    def error(self,message):
         """Exit with error message
 
         """
         sys.stderr.write("%s\n" % message)
         sys.exit(1)
 
-    def handle_generic_commands(self, cmd):
+    def handle_generic_commands(self,cmd):
         """Process 'generic' commands e.g. 'help'
 
         """
@@ -221,7 +235,7 @@ class CommandParser(object):
         lines.append("")
         return '\n'.join(lines)
 
-    def print_command(self, cmd, message=None):
+    def print_command(self,cmd,message=None):
         """Print a line for a single command
 
         Returns a 'pretty-printed' line for the specified command
@@ -242,10 +256,10 @@ class CommandParser(object):
 # Functions
 #######################################################################
 
-def add_nprocessors_option(parser, default_nprocessors, default_display=None):
+def add_nprocessors_option(parser,default_nprocessors,default_display=None):
     """Add a '--nprocessors' option to a parser
 
-    Given an ArgumentParser 'parser', add a '--nprocessors' option.
+    Given an OptionParser 'parser', add a '--nprocessors' option.
 
     The value of this option can be accessed via the 'nprocessors'
     attribute of the parser options.
@@ -253,14 +267,15 @@ def add_nprocessors_option(parser, default_nprocessors, default_display=None):
     If 'default_display' is not None then this value will be shown
     in the help text, rather than the value supplied for the default.
 
-    Returns the input ArgumentParser object.
+    Returns the input OptionParser object.
 
     """
     if default_display is None:
         default_display = default_nprocessors
     if isinstance(parser, argparse.ArgumentParser):
         add_cmd = parser.add_argument
-    else: add_cmd = parser.add_option
+    else:
+        add_cmd = parser.add_option
     add_cmd('--nprocessors', action='store',
             dest='nprocessors', default=default_nprocessors,
             help="explicitly specify number of processors/cores to use "
@@ -270,19 +285,20 @@ def add_nprocessors_option(parser, default_nprocessors, default_display=None):
 def add_runner_option(parser):
     """Add a '--runner' option to a parser
 
-    Given an ArgumentParser 'parser', add a '--runner' option.
+    Given an OptionParser 'parser', add a '--runner' option.
 
     The value of this option can be accessed via the 'runner'
     attribute of the parser options (use the 'fetch_runner'
     function to return a JobRunner object from the supplied
     value).
 
-    Returns the input ArgumentParser object.
+    Returns the input OptionParser object.
 
     """
     if isinstance(parser, argparse.ArgumentParser):
         add_cmd = parser.add_argument
-    else: add_cmd = parser.add_option
+    else:
+        add_cmd = parser.add_option
     add_cmd('--runner', action='store',
             dest='runner', default=None,
             help="explicitly specify runner definition (e.g. "
@@ -292,17 +308,18 @@ def add_runner_option(parser):
 def add_no_save_option(parser):
     """Add a '--no-save' option to a parser
 
-    Given an ArgumentParser 'parser', add a '--no-save' option.
+    Given an OptionParser 'parser', add a '--no-save' option.
 
     The value of this option can be accessed via the 'no_save'
     attribute of the parser options.
 
-    Returns the input ArgumentParser object.
+    Returns the input OptionParser object.
 
     """
     if isinstance(parser, argparse.ArgumentParser):
         add_cmd = parser.add_argument
-    else: add_cmd = parser.add_option
+    else:
+        add_cmd = parser.add_option
     add_cmd('--no-save', action='store_true', dest='no_save', default=False,
             help="Don't save parameter changes to the auto_process.info file")
     return parser
@@ -310,17 +327,18 @@ def add_no_save_option(parser):
 def add_dry_run_option(parser):
     """Add a '--dry-run' option to a parser
 
-    Given an ArgumentParser 'parser', add a '--dry-run' option.
+    Given an OptionParser 'parser', add a '--dry-run' option.
 
     The value of this option can be accessed via the 'dry_run'
     attribute of the parser options.
 
-    Returns the input ArgumentParser object.
+    Returns the input OptionParser object.
 
     """
     if isinstance(parser, argparse.ArgumentParser):
         add_cmd = parser.add_argument
-    else: add_cmd = parser.add_option
+    else:
+        add_cmd = parser.add_option
     add_cmd('--dry-run', action='store_true', dest='dry_run', default=False,
             help="Dry run i.e. report what would be done but don't perform "
                  "any actions")
@@ -329,17 +347,18 @@ def add_dry_run_option(parser):
 def add_debug_option(parser):
     """Add a '--debug' option to a parser
 
-    Given an ArgumentParser 'parser', add a '--debug' option.
+    Given an OptionParser 'parser', add a '--debug' option.
 
     The value of this option can be accessed via the 'debug'
     attribute of the parser options.
 
-    Returns the input ArgumentParser object.
+    Returns the input OptionParser object.
 
     """
     if isinstance(parser, argparse.ArgumentParser):
         add_cmd = parser.add_argument
-    else: add_cmd = parser.add_option
+    else:
+        add_cmd = parser.add_option
     add_cmd('--debug', action='store_true', dest='debug',
             default=False, help="Turn on debugging output")
     return parser
