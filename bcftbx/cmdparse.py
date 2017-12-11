@@ -270,14 +270,10 @@ def add_nprocessors_option(parser,default_nprocessors,default_display=None):
     """
     if default_display is None:
         default_display = default_nprocessors
-    if isinstance(parser,argparse.ArgumentParser):
-        add_cmd = parser.add_argument
-    else:
-        add_cmd = parser.add_option
-    add_cmd('--nprocessors',action='store',
+    add_arg(parser,'--nprocessors',action='store',
             dest='nprocessors',default=default_nprocessors,
-            help="explicitly specify number of processors/cores to use "
-            "(default %s)" %default_display)
+            help="explicitly specify number of processors/cores "
+            "to use (default %s)" %default_display)
     return parser
 
 def add_runner_option(parser):
@@ -293,11 +289,7 @@ def add_runner_option(parser):
     Returns the input ArgumentParser object.
 
     """
-    if isinstance(parser,argparse.ArgumentParser):
-        add_cmd = parser.add_argument
-    else:
-        add_cmd = parser.add_option
-    add_cmd('--runner',action='store',
+    add_arg(parser,'--runner',action='store',
             dest='runner',default=None,
             help="explicitly specify runner definition (e.g. "
             "'GEJobRunner(-j y)')")
@@ -314,12 +306,10 @@ def add_no_save_option(parser):
     Returns the input ArgumentParser object.
 
     """
-    if isinstance(parser,argparse.ArgumentParser):
-        add_cmd = parser.add_argument
-    else:
-        add_cmd = parser.add_option
-    add_cmd('--no-save',action='store_true',dest='no_save',default=False,
-            help="Don't save parameter changes to the auto_process.info file")
+    add_arg(parser,'--no-save',action='store_true',
+            dest='no_save',default=False,
+            help="Don't save parameter changes to "
+            "the auto_process.info file")
     return parser
 
 def add_dry_run_option(parser):
@@ -333,13 +323,10 @@ def add_dry_run_option(parser):
     Returns the input OptionParser object.
 
     """
-    if isinstance(parser,argparse.ArgumentParser):
-        add_cmd = parser.add_argument
-    else:
-        add_cmd = parser.add_option
-    add_cmd('--dry-run',action='store_true',dest='dry_run',default=False,
-            help="Dry run i.e. report what would be done but don't perform "
-                 "any actions")
+    add_arg(parser,'--dry-run',action='store_true',
+            dest='dry_run',default=False,
+            help="Dry run i.e. report what would "
+            "be done but don't perform any actions")
     return parser
 
 def add_debug_option(parser):
@@ -353,10 +340,37 @@ def add_debug_option(parser):
     Returns the input ArgumentParser object.
 
     """
-    if isinstance(parser,argparse.ArgumentParser):
-        add_cmd = parser.add_argument
-    else:
-        add_cmd = parser.add_option
-    add_cmd('--debug',action='store_true',dest='debug',
-            default=False,help="Turn on debugging output")
+    add_arg(parser,'--debug',action='store_true',
+            dest='debug',default=False,
+            help="Turn on debugging output")
     return parser
+
+def add_arg(p,*args,**kwds):
+    """Add an argument or option to a parser
+
+    Given an arbitrary parser instance, adds a new
+    option or argument using the appropriate method
+    call and passing the supplied arguments and
+    keywords.
+
+    For example, if the parser is an instance of
+    argparse.ArgumentParser, then the 'add_argument'
+    method will be invoked to add a new
+
+    Arguments:
+      p (Object): parser instance; can be an instance
+        of one of: optparse.OptionParser or
+        argparse.ArgumentParser
+      args (List): list of argument values to pass
+        directly to the argument-addition method
+      kwds (mapping): keyword-value mapping to pass
+        directly to the argument-addition method
+
+    """
+    if isinstance(p,argparse.ArgumentParser):
+        add_arg = p.add_argument
+    elif isinstance(p,optparse.OptionParser):
+        add_arg = p.add_option
+    else:
+        raise Exception("Unrecognised subparser class")
+    return add_arg(*args,**kwds)
