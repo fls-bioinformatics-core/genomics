@@ -102,7 +102,6 @@ class CommandParser(object):
             subparser = optparse.OptionParser
         self._subparser = subparser
 
-
     def add_command(self,cmd,help=None,**args):
         """Add a major command to the CommandParser
 
