@@ -4,20 +4,21 @@
 
 import unittest
 from optparse import OptionParser
+from argparse import ArgumentParser
 from bcftbx.cmdparse import *
 
-class TestCommandParser(unittest.TestCase):
-    """
+class TestCommandParserOptionParser(unittest.TestCase):
+    """Tests for CommandParser using default OptionParser backend
     """
     def test_add_command(self):
-        """CommandParser.add_command works for a single command
+        """CommandParser.add_command works for a single command using optparse
         """
         p = CommandParser()
         cmd = p.add_command('slow')
         self.assertTrue(isinstance(cmd,OptionParser))
         self.assertEqual(p.list_commands(),['slow'])
     def test_add_multiple_commands(self):
-        """CommandParser.add_command works for multiple commands
+        """CommandParser.add_command works for multiple commands using optparse
         """
         p = CommandParser()
         slow_cmd = p.add_command('slow')
@@ -38,7 +39,7 @@ class TestCommandParser(unittest.TestCase):
         self.assertEqual(p.parser_for('fast'),fast_cmd)
         self.assertEqual(p.parser_for('medium'),medium_cmd)
     def test_parse_args(self):
-        """CommandParser.parse_args works for simple cases
+        """CommandParser.parse_args works for simple cases using optparse
         """
         p = CommandParser()
         slow_cmd = p.add_command('slow')
@@ -64,6 +65,66 @@ class TestCommandParser(unittest.TestCase):
         except AttributeError:
             pass
 
+class TestCommandParserWithArgumentParser(unittest.TestCase):
+    """Tests for CommandParser using explicit ArgumentParser backend
+    """
+    def test_add_command(self):
+        """CommandParser.add_command works for a single command using argparse
+        """
+        p = CommandParser(subparser=ArgumentParser)
+        cmd = p.add_command('slow')
+        self.assertTrue(isinstance(cmd,ArgumentParser))
+        self.assertEqual(p.list_commands(),['slow'])
+    def test_add_multiple_commands(self):
+        """CommandParser.add_command works for multiple commands using argparse
+        """
+        p = CommandParser(subparser=ArgumentParser)
+        slow_cmd = p.add_command('slow')
+        fast_cmd = p.add_command('fast')
+        medium_cmd = p.add_command('medium')
+        self.assertTrue(isinstance(slow_cmd,ArgumentParser))
+        self.assertTrue(isinstance(fast_cmd,ArgumentParser))
+        self.assertTrue(isinstance(medium_cmd,ArgumentParser))
+        self.assertEqual(p.list_commands(),['slow','fast','medium'])
+    def test_parser_for(self):
+        """CommandParser.parser_for returns the correct ArgumentParser
+        """
+        p = CommandParser(subparser=ArgumentParser)
+        slow_cmd = p.add_command('slow')
+        fast_cmd = p.add_command('fast')
+        medium_cmd = p.add_command('medium')
+        self.assertEqual(p.parser_for('slow'),slow_cmd)
+        self.assertEqual(p.parser_for('fast'),fast_cmd)
+        self.assertEqual(p.parser_for('medium'),medium_cmd)
+    def test_parse_args(self):
+        """CommandParser.parse_args works for simple cases using argparse
+        """
+        p = CommandParser(subparser=ArgumentParser)
+        slow_cmd = p.add_command('slow')
+        fast_cmd = p.add_command('fast')
+        slow_cmd.add_argument('-a',action='store',dest='a_value')
+        slow_cmd.add_argument('name')
+        fast_cmd.add_argument('-b',action='store',dest='b_value')
+        fast_cmd.add_argument('name')
+        cmd,args = p.parse_args(['slow','-a','unspeedy','input'])
+        self.assertEqual(cmd,'slow')
+        self.assertEqual(args.a_value,'unspeedy')
+        self.assertEqual(args.name,'input')
+        try:
+            args.b_value
+            self.fail("Accessing 'b_value' for 'slow' command didn't raise AttributeError")
+        except AttributeError:
+            pass
+        cmd,args = p.parse_args(['fast','-b','zippy','input2'])
+        self.assertEqual(cmd,'fast')
+        self.assertEqual(args.b_value,'zippy')
+        self.assertEqual(args.name,'input2')
+        try:
+            args.a_value
+            self.fail("Accessing 'a_value' for 'fast' command didn't raise AttributeError")
+        except AttributeError:
+            pass
+
 class TestAddOptionFunctions(unittest.TestCase):
     """Tests for the various 'add_..._option' functions
     """
@@ -74,6 +135,13 @@ class TestAddOptionFunctions(unittest.TestCase):
         add_nprocessors_option(p,1)
         options,args = p.parse_args(['--nprocessors','4'])
         self.assertEqual(options.nprocessors,'4')
+    def test_add_nprocessors_option_with_argparse(self):
+        """add_nprocessors_option enables '--nprocessors' with ArgumentParser
+        """
+        p = ArgumentParser()
+        add_nprocessors_option(p,1)
+        args = p.parse_args(['--nprocessors','4'])
+        self.assertEqual(args.nprocessors,'4')
     def test_add_runner_option(self):
         """add_runner_option enables '--runner'
         """
@@ -81,6 +149,13 @@ class TestAddOptionFunctions(unittest.TestCase):
         add_runner_option(p)
         options,args = p.parse_args(['--runner','SimpleJobRunner'])
         self.assertEqual(options.runner,'SimpleJobRunner')
+    def test_add_runner_option_with_argparse(self):
+        """add_runner_option enables '--runner' with ArgumentParser
+        """
+        p = ArgumentParser()
+        add_runner_option(p)
+        args = p.parse_args(['--runner','SimpleJobRunner'])
+        self.assertEqual(args.runner,'SimpleJobRunner')
     def test_add_no_save_option(self):
         """add_no_save_option enables '--no-save'
         """
@@ -88,6 +163,13 @@ class TestAddOptionFunctions(unittest.TestCase):
         add_no_save_option(p)
         options,args = p.parse_args(['--no-save'])
         self.assertTrue(options.no_save)
+    def test_add_no_save_option_with_argparse(self):
+        """add_no_save_option enables '--no-save' with ArgumentParser
+        """
+        p = ArgumentParser()
+        add_no_save_option(p)
+        args = p.parse_args(['--no-save'])
+        self.assertTrue(args.no_save)
     def test_add_dry_run_option(self):
         """add_dry_run_option enables '--dry-run'
         """
@@ -95,6 +177,13 @@ class TestAddOptionFunctions(unittest.TestCase):
         add_dry_run_option(p)
         options,args = p.parse_args(['--dry-run'])
         self.assertTrue(options.dry_run)
+    def test_add_dry_run_option_with_argparse(self):
+        """add_dry_run_option enables '--dry-run' with ArgumentParser
+        """
+        p = ArgumentParser()
+        add_dry_run_option(p)
+        args = p.parse_args(['--dry-run'])
+        self.assertTrue(args.dry_run)
     def test_add_debug_option(self):
         """add_debug_option enables '--debug'
         """
@@ -102,3 +191,10 @@ class TestAddOptionFunctions(unittest.TestCase):
         add_debug_option(p)
         options,args = p.parse_args(['--debug'])
         self.assertTrue(options.debug)
+    def test_add_debug_option_with_argparse(self):
+        """add_debug_option enables '--debug' with ArgumentParser
+        """
+        p = ArgumentParser()
+        add_debug_option(p)
+        args = p.parse_args(['--debug'])
+        self.assertTrue(args.debug)
