@@ -380,11 +380,13 @@ def add_arg(p,*args,**kwds):
 
     For example, if the parser is an instance of
     argparse.ArgumentParser, then the 'add_argument'
-    method will be invoked to add a new
+    method will be invoked to add a new argument to
+    the parser.
 
     Arguments:
       p (Object): parser instance; can be an instance
-        of one of: optparse.OptionParser or
+        of one of: optparse.OptionContainer (i.e.
+        OptionParser or OptionGroup), or
         argparse.ArgumentParser
       args (List): list of argument values to pass
         directly to the argument-addition method
@@ -394,7 +396,7 @@ def add_arg(p,*args,**kwds):
     """
     if isinstance(p,argparse.ArgumentParser):
         add_arg = p.add_argument
-    elif isinstance(p,optparse.OptionParser):
+    elif isinstance(p,optparse.OptionContainer):
         add_arg = p.add_option
     else:
         raise Exception("Unrecognised subparser class")

@@ -4,6 +4,7 @@
 
 import unittest
 from optparse import OptionParser
+from optparse import OptionGroup
 from argparse import ArgumentParser
 from bcftbx.cmdparse import *
 
@@ -198,3 +199,25 @@ class TestAddOptionFunctions(unittest.TestCase):
         add_debug_option(p)
         args = p.parse_args(['--debug'])
         self.assertTrue(args.debug)
+    def test_add_arg_with_optionparser(self):
+        """add_arg works with OptionParser
+        """
+        p = OptionParser()
+        add_arg(p,'-n',action='store',dest='n')
+        options,args = p.parse_args(['-n','4'])
+        self.assertEqual(options.n,'4')
+    def test_add_arg_with_optiongroup(self):
+        """add_arg works with OptionGroup
+        """
+        p = OptionParser()
+        g = OptionGroup(p,'Suboptions')
+        add_arg(g,'-n',action='store',dest='n')
+        options,args = p.parse_args(['-n','4'])
+        self.assertEqual(options.n,'4')
+    def test_add_arg_with_argumentparser(self):
+        """add_arg works with ArgumentParser
+        """
+        p = ArgumentParser()
+        add_arg(p,'-n',action='store',dest='n')
+        args = p.parse_args(['-n','4'])
+        self.assertEqual(args.n,'4')
