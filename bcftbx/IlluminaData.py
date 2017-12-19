@@ -1064,10 +1064,31 @@ class SampleSheet:
         """
         Internal: process a 'key,value' line
 
+        This method determines the value associated with
+        a parameter (aka 'key') from the supplied line, and
+        assigns the value to the parameter in the supplied
+        dictionary.
+
+        It is assumed that the line consists of a key-value
+        pair separated by a comma, and any additional
+        trailing comma characters are discarded.
+
+        One execption is if the value is double-quoted and
+        also contains one or more comma characters; in this
+        case the whole of the double-quoted value will be
+        retained (including the quotes).
+
         """
         fields = line.split(',')
         param = fields[0]
         value = fields[1]
+        # Handle quoted value containing commas
+        if value.startswith('"'):
+            for f in fields[2:]:
+                if value.endswith('"'):
+                    break
+                else:
+                    value += ",%s" % f
         if param:
             d[param] = value
 
