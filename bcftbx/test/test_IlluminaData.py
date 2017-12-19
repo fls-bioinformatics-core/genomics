@@ -1023,6 +1023,31 @@ Adapter,CTGTCTCTTATACACATCT
 Sample_ID,Sample_Name,Sample_Plate,Sample_Well,Sample_Project,Description
 PJB1,,,,,
 """
+        self.miseq_header_values_have_commas = """
+[Header]
+IEMFileVersion,5
+Date,12/12/2017
+Workflow,GenerateFASTQ
+Application,FASTQ Only
+Instrument Type,MiSeq
+Assay,Nextera XT
+Index Adapters,"Nextera XT Index Kit (96 Indexes, 384 Samples)"
+Description,
+Chemistry,Amplicon
+
+[Reads]
+301
+301
+
+[Settings]
+ReverseComplement,0
+Adapter,CTGTCTCTTATACACATCT
+
+[Data]
+Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_ID,index2,Sample_Project,Description
+AO1,AO1,,,N701,TAAGGCGA,S517,GCGTAAGA,Anne Other,
+AO2,AO2,,,N701,TAAGGCGA,S502,CTCTCTAT,Anne Other,
+"""
 
     def test_load_hiseq_sample_sheet(self):
         """SampleSheet: load a HiSEQ IEM-format sample sheet
@@ -1576,6 +1601,22 @@ Adapter,CTGTCTCTTATACACATCT
         self.assertEqual(iem.illegal_names,[])
         self.assertEqual(iem.empty_names,[])
         self.assertFalse(iem.has_lanes)
+
+    def test_sample_sheet_with_commas_and_quotes_in_header_section(self):
+        """SampleSheet: handle IEM sample sheet with double quotes and comma in 'Header' section
+
+        """
+        iem = SampleSheet(fp=cStringIO.StringIO(self.miseq_header_values_have_commas))
+        self.assertEqual(iem.header['IEMFileVersion'],"5")
+        self.assertEqual(iem.header['Date'],"12/12/2017")
+        self.assertEqual(iem.header['Workflow'],"GenerateFASTQ")
+        self.assertEqual(iem.header['Application'],"FASTQ Only")
+        self.assertEqual(iem.header['Instrument Type'],"MiSeq")
+        self.assertEqual(iem.header['Assay'],"Nextera XT")
+        self.assertEqual(iem.header['Index Adapters'],
+                         "\"Nextera XT Index Kit (96 Indexes, 384 Samples)\"")
+        self.assertEqual(iem.header['Description'],"")
+        self.assertEqual(iem.header['Chemistry'],"Amplicon")
 
 class TestIEMSampleSheet(unittest.TestCase):
     def setUp(self):
