@@ -1,3 +1,20 @@
+2018-01-24  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* genomics-bcftbx version 1.1.0
+	- bcftbx/cmdparse: major update to enable
+	  `argparse` to used as an alternative to `optparse`
+	  when parsing subcommands (thanks to Mohit Agrawal
+	  `@mohit2agrawal`)
+	- bcftbx/IlluminaData:
+	  - Enable `SampleSheet` class to handle quoted header
+	    values with commas in IEM-format sample sheets
+	  - Update `SampleSheetPredictor` to handle missing
+	    (blank) projects; fix bugs with the `set` method
+	    and update documentation.
+	- bcftbx/JobRunner: trap for attempt to delete a
+	  a missing/already deleted job in
+	  `SimpleJobRunner.list()`
+
 2017-10-05  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* genomics-bcftbx version 1.0.4
