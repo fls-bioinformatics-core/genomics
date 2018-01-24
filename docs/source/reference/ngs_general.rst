@@ -11,6 +11,7 @@ General NGS scripts that are used for both ChIP-seq and RNA-seq.
 * :ref:`splitBarcodes`: separate multiple barcodes in SOLiD data
 * :ref:`remove_mispairs`: remove "singleton" reads from paired end fastq
 * :ref:`remove_mispairs`: remove "singleton" reads from paired end fastq
+* :ref:`reorder_fasta`: reorder chromosomes in FASTA file in karyotypic order
 * :ref:`sam2soap`: convert from SAM file to SOAP format
 * :ref:`separate_paired_fastq`: separate F3 and F5 reads from fastq
 * :ref:`split_fasta`: extract individual chromosome sequences from fasta file
@@ -176,6 +177,28 @@ remove_mispairs.py
 Python implementation of ``remove_mispairs.pl`` which can also remove
 singletons for paired end fastq data file where the reads are not
 interleaved.
+
+.. _reorder_fasta:
+
+reorder_fasta.py
+****************
+
+Reorder the chromosome records in a FASTA file into karyotypic order.
+
+Usage::
+
+    reorder_fasta.py INFILE.fa
+
+Reorders the chromosome records from a FASTA file into 'kayrotypic'
+order, e.g.::
+
+    chr1
+    chr2
+    ...
+    chr10
+    chr11
+
+The output FASTA file will be called ``INFILE.karyotypic.fa``.
 
 .. _sam2soap:
 
