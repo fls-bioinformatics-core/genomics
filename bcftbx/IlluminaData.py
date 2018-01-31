@@ -2418,21 +2418,84 @@ def split_run_name(dirname):
 
     ('140210','M00879','0031')
 
+    Note that this function doesn't return the flow cell ID;
+    use the ``split_run_name_full`` function to also extract
+    the flow cell information.
     """
-    date_stamp = None
-    instrument_name = None
-    run_number = None
+    try:
+        date_stamp,instrument_name,run_number,flow_cell_prefix,flow_cell = \
+            split_run_name_full(dirname)
+        return (date_stamp,instrument_name,run_number)
+    except IlluminaDataError as ex:
+        return (None,None,None)
+
+def split_run_name_full(dirname):
+    """Split an Illumina directory run name into components
+
+    Given a directory for an Illumina run, e.g.
+
+    140210_M00879_0031_000000000-A69NA
+
+    split the name into components and return as a tuple:
+
+    (date_stamp,
+     instrument_name,
+     run_number,
+     flow_cell_prefix,
+     flow_cell_id)
+
+    e.g.
+
+    ('140210','M00879','0031','','000000000-A69NA')
+
+    Note on flow cell IDs
+    =====================
+
+    For run names of the form e.g.
+
+    151216_NB500968_0008_AH5CFGAFXX
+
+    the flow cell component of the name (i.e. 'AH5CFGAFXX')
+    is broken down into a prefix part ('A') and an ID part
+    ('H5CFGAFXX'). The ID (i.e. without the prefix) is the
+    flow cell ID that is used in FASTQ read headers.
+
+    This function assumes that if the flow cell component of
+    the name starts with an 'A' or 'B' then this is the prefix;
+    otherwise the prefix is a blank. The remainder of the
+    component is used as the ID.
+    """
     fields = os.path.basename(dirname).split('_')
     if len(fields) > 3 and len(fields[0]) == 6 and fields[0].isdigit:
         date_stamp = fields[0]
+    else:
+        raise IlluminaDataError("Unable to extract date stamp from "
+                                "'%s'" % dirname)
     if len(fields) >= 2:
         instrument_name = fields[1]
+    else:
+        raise IlluminaDataError("Unable to extract instrument name "
+                                "from '%s'" % dirname)
     if len(fields) >= 3 and fields[2].isdigit:
         run_number = fields[2]
-    if date_stamp and instrument_name and run_number:
-        return (date_stamp,instrument_name,run_number)
     else:
-        return (None,None,None)
+        raise IlluminaDataError("Unable to extract run number from "
+                                "'%s'" % dirname)
+    if len(fields) > 3:
+        flow_cell = fields[3]
+    else:
+        raise IlluminaDataError("Unable to extract flow cell ID from "
+                                "'%s'" % dirname)
+    if flow_cell[0] in ('A','B',):
+        flow_cell_prefix = flow_cell[0]
+        flow_cell = flow_cell[1:]
+    else:
+        flow_cell_prefix = ''
+    return (date_stamp,
+            instrument_name,
+            run_number,
+            flow_cell_prefix,
+            flow_cell)
 
 def summarise_projects(illumina_data):
     """Short summary of projects, suitable for logging file
