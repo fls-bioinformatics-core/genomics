@@ -3374,7 +3374,7 @@ class TestSplitRunName(unittest.TestCase):
         self.assertEqual(split_run_name('/mnt/data/140210_M00879_0031_000000000-A69NA'),
                          ('140210','M00879','0031'))
 
-    def test_split_run_name_with_leading_path(self):
+    def test_split_run_name_with_bad_names(self):
         """Check split_run_name with 'bad' names
 
         """
@@ -3388,6 +3388,53 @@ class TestSplitRunName(unittest.TestCase):
                          (None,None,None))
         self.assertEqual(split_run_name('1402100_M00879_XYZ'),
                          (None,None,None))
+
+class TestSplitRunNameFull(unittest.TestCase):
+
+    def test_split_run_name_full(self):
+        """Check split_run_name_full for various cases
+        """
+        self.assertEqual(
+            split_run_name_full('120919_SN7001250_0035_BC133VACXX'),
+            ('120919','SN7001250','0035','B','C133VACXX'))
+        self.assertEqual(
+            split_run_name_full('121210_M00879_0001_000000000-A2Y1L'),
+            ('121210','M00879','0001','','000000000-A2Y1L'))
+        self.assertEqual(
+            split_run_name_full('120518_ILLUMINA-73D9FA_00002_FC'),
+            ('120518','ILLUMINA-73D9FA','00002','','FC'))
+        self.assertEqual(split_run_name_full('151216_NB500968_0008_AH5CFGAFXX'),
+                         ('151216','NB500968','0008','A','H5CFGAFXX'))
+
+    def test_split_run_name_full_with_leading_path(self):
+        """Check split_run_name_full with leading path
+        """
+        self.assertEqual(
+            split_run_name_full(
+                '/mnt/data/140210_M00879_0031_000000000-A69NA'),
+            ('140210','M00879','0031','','000000000-A69NA'))
+
+    def test_split_run_name_full_with_bad_names(self):
+        """Check split_run_name_full with 'bad' names
+        """
+        self.assertRaises(IlluminaDataError,
+                          split_run_name_full,
+                          'this_is_nonsense')
+        self.assertRaises(IlluminaDataError,
+                          split_run_name_full,
+                          '140210')
+        self.assertRaises(IlluminaDataError,
+                          split_run_name_full,
+                          '14021_M00879_0031_000000000-A69NA')
+        self.assertRaises(IlluminaDataError,
+                          split_run_name_full,
+                          '140210_M00879')
+        self.assertRaises(IlluminaDataError,
+                          split_run_name_full,
+                          '140210_M00879_0031')
+        self.assertRaises(IlluminaDataError,
+                          split_run_name_full,
+                          '1402100_M00879_XYZ')
 
 class TestSampleSheetIndexSequence(unittest.TestCase):
 
