@@ -1,3 +1,18 @@
+2018-03-29  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* genomics-bcftbx version 1.2.0
+	- NGS-general/reorder_fasta.py: new utility program
+	  to reorder chromosomes into karyotypical order in
+	  a FASTA file
+	- bcftbx/IlluminaData: new function
+	  `split_run_name_full`, which also extracts the
+	  datestamp, instrument name, flow cell ID and prefix
+	  from the run name
+	- bcftbx/IlluminaData: allow platform to be specified
+	  explicitly when creating `IlluminaRun` objects
+	  (for when platform cannot be extracted from the
+	  data directory name)
+
 2018-01-24  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* genomics-bcftbx version 1.1.0
