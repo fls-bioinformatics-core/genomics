@@ -94,6 +94,39 @@ class TestIlluminaRun(unittest.TestCase):
         self.assertEqual(run.lanes,[1,2,3,4])
         self.assertEqual(run.cycles,158)
 
+    def test_illuminarun_unknown_platform(self):
+        # Make a mock run directory for MISeq data with unknown instrument
+        self.mock_illumina_run = MockIlluminaRun(
+            '180329_UNKNOWN0001_0001_000000000-ABCDE1','miseq')
+        self.mock_illumina_run.create()
+        self.assertRaises(IlluminaDataPlatformError,
+                          IlluminaRun,
+                          self.mock_illumina_run.name)
+
+    def test_illuminarun_specify_platform(self):
+        # Make a mock run directory for MISeq data with unknown instrument
+        self.mock_illumina_run = MockIlluminaRun(
+            '180329_UNKNOWN0001_0001_000000000-ABCDE1','miseq')
+        self.mock_illumina_run.create()
+        # Load into an IlluminaRun object
+        run = IlluminaRun(self.mock_illumina_run.name,platform="miseq")
+        # Check the properties
+        self.assertEqual(run.run_dir,self.mock_illumina_run.dirn)
+        self.assertEqual(run.platform,"miseq")
+        self.assertEqual(run.basecalls_dir,
+                         os.path.join(self.mock_illumina_run.dirn,
+                                      'Data','Intensities','BaseCalls'))
+        self.assertEqual(run.sample_sheet_csv,
+                         os.path.join(self.mock_illumina_run.dirn,
+                                      'Data','Intensities','BaseCalls',
+                                      'SampleSheet.csv'))
+        self.assertEqual(run.runinfo_xml,
+                         os.path.join(self.mock_illumina_run.dirn,
+                                      'RunInfo.xml'))
+        self.assertEqual(run.bcl_extension,".bcl")
+        self.assertEqual(run.lanes,[1,])
+        self.assertEqual(run.cycles,218)
+
     def test_illuminarun_miseq_missing_directory(self):
         # Check we can handle IlluminaRun when MISeq directory is missing
         run = IlluminaRun('/does/not/exist/151125_M00879_0001_000000000-ABCDE1')
