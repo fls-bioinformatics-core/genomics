@@ -60,23 +60,31 @@ class IlluminaRun:
 
     """
 
-    def __init__(self,illumina_run_dir):
+    def __init__(self,illumina_run_dir,platform=None):
         """Create and populate a new IlluminaRun object
 
         Arguments:
           illumina_run_dir: path to the top-level directory holding
             the 'raw' sequencing data
+          platform: (optional) string specificying the sequencer
+            platform. The platform should be detected automatically
+            so only specify this if the sequencer is not in the
+            list in platforms.py.
 
         """
         # Top-level directory
         self.run_dir = os.path.abspath(illumina_run_dir)
         # Platform
-        self.platform = platforms.get_sequencer_platform(self.run_dir)
+        if platform is None:
+            self.platform = platforms.get_sequencer_platform(self.run_dir)
+        else:
+            self.platform = str(platform)
         if self.platform is None:
-            raise Exception("Can't determine platform for %s" % self.run_dir)
+            raise IlluminaDataPlatformError("Can't determine platform for "
+                                            "%s" % self.run_dir)
         elif self.platform not in KNOWN_PLATFORMS:
-            raise Exception("%s: not a recognised Illumina platform" %
-                            self.run_dir)
+            raise IlluminaDataPlatformError("%s: not a recognised Illumina "
+                                            "platform" % self.run_dir)
         # Basecalls subdirectory
         self.basecalls_dir = os.path.join(self.run_dir,
                                           'Data','Intensities','BaseCalls')
@@ -2398,6 +2406,9 @@ class IlluminaFastq:
 
 class IlluminaDataError(Exception):
     """Base class for errors with Illumina-related code"""
+
+class IlluminaDataPlatformError(IlluminaDataError):
+    """Exception for errors due to platform issues"""
 
 #######################################################################
 # Module Functions
