@@ -3394,7 +3394,18 @@ class TestFixBasesMask(unittest.TestCase):
                          'y250,I8,nnnnnnnn,y250')
         self.assertEqual(fix_bases_mask('y250,I8,I8,y250','TAAGGC'),
                          'y250,I6nn,nnnnnnnn,y250')
+
+    def test_fix_bases_mask_single_index_no_barcode(self):
+        """Check fix_bases_mask for single index with no barcode
+        """
+        self.assertEqual(fix_bases_mask('y76,I8,y76',''),
+                         'y76,nnnnnnnn,y76')
         
+    def test_fix_bases_dual_index_no_barcode(self):
+        """Check fix_bases_mask for dual index with no barcode
+        """
+        self.assertEqual(fix_bases_mask('y76,I8,I8,y76',''),
+                         'y76,nnnnnnnn,nnnnnnnn,y76')
 
 class TestSplitRunName(unittest.TestCase):
 

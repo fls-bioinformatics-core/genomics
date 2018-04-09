@@ -2844,10 +2844,12 @@ def fix_bases_mask(bases_mask,barcode_sequence):
             input_index_length = int(read[1:])
             try:
                 actual_index_length = len(indexes[i])
-                new_read = "I%d" % actual_index_length
             except IndexError:
                 # No barcode for this read
                 actual_index_length = 0
+            if actual_index_length > 0:
+                new_read = "I%d" % actual_index_length
+            else:
                 new_read = ""
             if input_index_length > actual_index_length:
                 # Actual index sequence is shorter so adjust
