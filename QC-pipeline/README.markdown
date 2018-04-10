@@ -47,7 +47,7 @@ There are other scripts which perform QC substeps:
 
 These also use `functions.sh` and `ngs_utils.sh` from the `share` directory.
 
-The `strand_tsar.py` utility can be used to determine the strandedness of
+The `fastq_strand.py` utility can be used to determine the strandedness of
 paired-end data.
 
 Finally there is a reporting utility which generates HTML reports from QC runs:

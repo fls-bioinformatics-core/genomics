@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
-#     strand_tsar.py: determine strandedness of fastq pair using STAR
-#     Copyright (C) University of Manchester 2017 Peter Briggs
+#     fastq_strand.py: determine strandedness of fastq pair using STAR
+#     Copyright (C) University of Manchester 2017-2018 Peter Briggs
 #
 
 __version__ = "0.0.1"
@@ -83,7 +83,7 @@ class TestStrandTsar(unittest.TestCase):
         with open(mock_star,'w') as fp:
             fp.write("""#!/bin/bash
 export PYTHONPATH=%s:$PYTHONPATH
-python -c "import sys ; from strand_tsar import mockSTAR ; mockSTAR(sys.argv[1:])" $@
+python -c "import sys ; from fastq_strand import mockSTAR ; mockSTAR(sys.argv[1:])" $@
 exit $?
 """ % os.path.dirname(__file__))
         os.chmod(mock_star,0775)
@@ -136,25 +136,25 @@ AAF#F#JJ##JJ#J#J#J#J#JJ#J#JJJ#F##JJJ#J#JJJJJJFAJJJJFJJJJJJJJJJJJJJJJJFFFJJ#J
         os.environ['PATH'] = self.path
         # Remove the working dir
         shutil.rmtree(self.wd)
-    def test_strand_tsar_one_genome_index(self):
+    def test_fastq_strand_one_genome_index(self):
         """
-        strand_tsar: test with single genome index
+        fastq_strand: test with single genome index
         """
         subprocess.check_output([__file__,
                                  self.fqs[0],
                                  self.fqs[1],
                                  "Genome1"],
                                 cwd=self.wd)
-        outfile = os.path.join(self.wd,"mock_R1_strand_tsar.txt")
+        outfile = os.path.join(self.wd,"mock_R1_fastq_strand.txt")
         self.assertTrue(os.path.exists(outfile))
         self.assertEqual(open(outfile,'r').read(),
-                         """#Strand_tsar version: 0.0.1	#Aligner: STAR	#Reads in subset: 3
+                         """#fastq_strand version: 0.0.1	#Aligner: STAR	#Reads in subset: 3
 #Genome	1st forward	2nd reverse
 Genome1	13.13	93.21
 """)
-    def test_strand_tsar_two_genome_indices(self):
+    def test_fastq_strand_two_genome_indices(self):
         """
-        strand_tsar: test with two genome indices
+        fastq_strand: test with two genome indices
         """
         subprocess.check_output([__file__,
                                  self.fqs[0],
@@ -162,17 +162,17 @@ Genome1	13.13	93.21
                                  "Genome1",
                                  "Genome2"],
                                 cwd=self.wd)
-        outfile = os.path.join(self.wd,"mock_R1_strand_tsar.txt")
+        outfile = os.path.join(self.wd,"mock_R1_fastq_strand.txt")
         self.assertTrue(os.path.exists(outfile))
         self.assertEqual(open(outfile,'r').read(),
-                         """#Strand_tsar version: 0.0.1	#Aligner: STAR	#Reads in subset: 3
+                         """#fastq_strand version: 0.0.1	#Aligner: STAR	#Reads in subset: 3
 #Genome	1st forward	2nd reverse
 Genome1	13.13	93.21
 Genome2	13.13	93.21
 """)
-    def test_strand_tsar_using_conf_file(self):
+    def test_fastq_strand_using_conf_file(self):
         """
-        strand_tsar: test with genome indices specified via conf file
+        fastq_strand: test with genome indices specified via conf file
         """
         subprocess.check_output([__file__,
                                  "-c",
@@ -180,17 +180,17 @@ Genome2	13.13	93.21
                                  self.fqs[0],
                                  self.fqs[1]],
                                 cwd=self.wd)
-        outfile = os.path.join(self.wd,"mock_R1_strand_tsar.txt")
+        outfile = os.path.join(self.wd,"mock_R1_fastq_strand.txt")
         self.assertTrue(os.path.exists(outfile))
         self.assertEqual(open(outfile,'r').read(),
-                         """#Strand_tsar version: 0.0.1	#Aligner: STAR	#Reads in subset: 3
+                         """#fastq_strand version: 0.0.1	#Aligner: STAR	#Reads in subset: 3
 #Genome	1st forward	2nd reverse
 Genome1	13.13	93.21
 Genome2	13.13	93.21
 """)
-    def test_strand_tsar_no_subset(self):
+    def test_fastq_strand_no_subset(self):
         """
-        strand_tsar: test with no subset
+        fastq_strand: test with no subset
         """
         subprocess.check_output([__file__,
                                  self.fqs[0],
@@ -198,16 +198,16 @@ Genome2	13.13	93.21
                                  "Genome1",
                                  "--subset=0"],
                                 cwd=self.wd)
-        outfile = os.path.join(self.wd,"mock_R1_strand_tsar.txt")
+        outfile = os.path.join(self.wd,"mock_R1_fastq_strand.txt")
         self.assertTrue(os.path.exists(outfile))
         self.assertEqual(open(outfile,'r').read(),
-                         """#Strand_tsar version: 0.0.1	#Aligner: STAR	#Reads in subset: 3
+                         """#fastq_strand version: 0.0.1	#Aligner: STAR	#Reads in subset: 3
 #Genome	1st forward	2nd reverse
 Genome1	13.13	93.21
 """)
-    def test_strand_tsar_include_counts(self):
+    def test_fastq_strand_include_counts(self):
         """
-        strand_tsar: test including the counts
+        fastq_strand: test including the counts
         """
         subprocess.check_output([__file__,
                                  self.fqs[0],
@@ -215,16 +215,16 @@ Genome1	13.13	93.21
                                  "Genome1",
                                  "--counts"],
                                 cwd=self.wd)
-        outfile = os.path.join(self.wd,"mock_R1_strand_tsar.txt")
+        outfile = os.path.join(self.wd,"mock_R1_fastq_strand.txt")
         self.assertTrue(os.path.exists(outfile))
         self.assertEqual(open(outfile,'r').read(),
-                         """#Strand_tsar version: 0.0.1	#Aligner: STAR	#Reads in subset: 3
+                         """#fastq_strand version: 0.0.1	#Aligner: STAR	#Reads in subset: 3
 #Genome	1st forward	2nd reverse	Unstranded	1st read strand aligned	2nd read strand aligned
 Genome1	13.13	93.21	391087	51339	364535
 """)
-    def test_strand_tsar_keep_star_output(self):
+    def test_fastq_strand_keep_star_output(self):
         """
-        strand_tsar: test keeping the output from STAR
+        fastq_strand: test keeping the output from STAR
         """
         subprocess.check_output([__file__,
                                  self.fqs[0],
@@ -232,10 +232,10 @@ Genome1	13.13	93.21	391087	51339	364535
                                  "Genome1",
                                  "--keep-star-output"],
                                 cwd=self.wd)
-        outfile = os.path.join(self.wd,"mock_R1_strand_tsar.txt")
+        outfile = os.path.join(self.wd,"mock_R1_fastq_strand.txt")
         self.assertTrue(os.path.exists(outfile))
         self.assertEqual(open(outfile,'r').read(),
-                         """#Strand_tsar version: 0.0.1	#Aligner: STAR	#Reads in subset: 3
+                         """#fastq_strand version: 0.0.1	#Aligner: STAR	#Reads in subset: 3
 #Genome	1st forward	2nd reverse
 Genome1	13.13	93.21
 """)
@@ -250,7 +250,7 @@ Genome1	13.13	93.21
             os.path.join(self.wd,
                          "STAR.mock_R1.outputs",
                          "Genome1",
-                         "strand_tsar_ReadsPerGene.out.tab")))
+                         "fastq_strand_ReadsPerGene.out.tab")))
 
 #######################################################################
 # Main script
@@ -341,9 +341,9 @@ if __name__ == "__main__":
                          outdir)
         sys.exit(1)
     # Prefix for temporary output
-    prefix = "strand_tsar_"
+    prefix = "fastq_strand_"
     # Create a temporary working directory
-    working_dir = tempfile.mkdtemp(suffix=".strand_tsar",
+    working_dir = tempfile.mkdtemp(suffix=".fastq_strand",
                                    dir=os.getcwd())
     # Make subset of input read pairs
     nreads = sum(1 for i in getreads(os.path.abspath(args.r1)))
@@ -374,12 +374,12 @@ if __name__ == "__main__":
                 fp.write('\n'.join(read) + '\n')
         fastqs.append(fq_subset)
     # Initialise output file
-    outfile = "%s_strand_tsar.txt" % os.path.join(
+    outfile = "%s_fastq_strand.txt" % os.path.join(
         outdir,
         os.path.basename(strip_ngs_extensions(args.r1)))
     with open(outfile,'w') as fp:
         # Header
-        fp.write("#Strand_tsar version: %s\t"
+        fp.write("#fastq_strand version: %s\t"
                  "#Aligner: %s\t"
                  "#Reads in subset: %s\n" % (__version__,
                                              "STAR",
