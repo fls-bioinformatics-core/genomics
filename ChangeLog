@@ -1,5 +1,15 @@
 2018-03-29  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
+	* genomics-bcftbx version 1.3.0
+	- QC-pipeline/fastq_strand.py: new utility program
+	  which runs the STAR aligner to generate statistics
+	  on the strandedness of Fastq R1/R2 file pairs
+	- bcftbx/IlluminaData: fix the `fix_bases_mask`
+	  function to correctly handle empty barcode
+	  sequences
+
+2018-03-29  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
 	* genomics-bcftbx version 1.2.0
 	- NGS-general/reorder_fasta.py: new utility program
 	  to reorder chromosomes into karyotypical order in
