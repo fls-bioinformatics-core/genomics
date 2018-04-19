@@ -440,7 +440,11 @@ class GEJobRunner(BaseJobRunner):
         logging.debug("Arguments  : %s" % str(args))
         # Build command to be submitted
         cmd_args = [script]
-        cmd_args.extend(args)
+        for arg in args:
+            # Quote arguments containing whitespace
+            if arg.count(' ') or arg.count('\t'):
+                arg = "\"%s\"" % arg
+            cmd_args.append(arg)
         cmd = ' '.join(cmd_args)
         # Build qsub command to submit it
         qsub = ['qsub','-b','y','-V','-N',name]
