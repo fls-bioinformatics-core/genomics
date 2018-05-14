@@ -446,8 +446,12 @@ class GEJobRunner(BaseJobRunner):
                 arg = "\"%s\"" % arg
             cmd_args.append(arg)
         cmd = ' '.join(cmd_args)
+        # Sanitize name for GE by replacing invalid characters
+        # (colon, asterisk...)
+        ge_name = self.__ge_name(name)
+        logging.debug("GE job name: %s" % ge_name)
         # Build qsub command to submit it
-        qsub = ['qsub','-b','y','-V','-N',name]
+        qsub = ['qsub','-b','y','-V','-N',ge_name]
         if self.__queue:
             qsub.extend(('-q',self.__queue))
         if self.log_dir:
@@ -509,7 +513,8 @@ class GEJobRunner(BaseJobRunner):
 
         The name should be '<name>.o<job_id>'
         """
-        log_file = "%s.o%s" % (self.__names[job_id],job_id)
+        name = self.__ge_name(self.__names[job_id])
+        log_file = "%s.o%s" % (name,job_id)
         if self.__log_dirs[job_id] is not None:
             log_file = os.path.join(self.__log_dirs[job_id],log_file)
         return log_file
@@ -519,7 +524,8 @@ class GEJobRunner(BaseJobRunner):
 
         The name should be '<name>.e<job_id>'
         """
-        err_file = "%s.e%s" % (self.__names[job_id],job_id)
+        name = self.__ge_name(self.__names[job_id])
+        err_file = "%s.e%s" % (self.name,job_id)
         if self.__log_dirs[job_id] is not None:
             err_file = os.path.join(self.__log_dirs[job_id],err_file)
         return err_file
@@ -722,6 +728,14 @@ class GEJobRunner(BaseJobRunner):
                 return job_data[4]
         # Job not found
         return ''
+
+    def __ge_name(self,name):
+        """Internal: sanitize a name for use with GE
+        """
+        ge_name = str(name)
+        for c in ":*":
+            ge_name = ge_name.replace(c,'_')
+        return ge_name
 
 class DRMAAJobRunner(BaseJobRunner):
     """Class implementing job runner using DRMAA
