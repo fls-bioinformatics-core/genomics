@@ -425,6 +425,38 @@ def xls_for_macs2(macs_xls,row_limit=None,cell_char_limit=None):
     # Return spreadsheet object
     return xls
 
+def bed_for_macs2(macs_xls):
+    """
+    Create and return TabFile instance for MACS2 output
+
+    Arguments:
+      macs_xls: populated MacsXLS object (must be from MACS2)
+
+    Returns:
+      TabFile.TabFile
+    """
+    # Check MACS version - can't handle MACS 1.*
+    if macs_xls.macs_version.startswith("1."):
+        raise Exception("Only handles output from MACS 2.0*")
+
+    if macs_xls.with_broad_option:
+        raise Exception("BED output only available if MACS2 was "
+                        "run without --broad option")
+
+    # Sort into order by fold_enrichment column
+    macs_xls.sort_on('fold_enrichment',reverse=True)
+
+    # Create a new TabFile
+    bed = TabFile(column_names=('chr',
+                                'abs_summit-100',
+                                'abs_summit+100',))
+    for line in macs_xls.data:
+        chrom = line['chr']
+        start = line['abs_summit'] - 100
+        end = line['abs_summit'] + 100
+        bed.append(data=(chrom,start,end))
+    return bed
+
 def chunk(line,chunksize,delimiter=None):
     """Chop a string into 'chunks' no greater than a specified size
 
@@ -968,6 +1000,62 @@ class TestXlsForMacs2Function(unittest.TestCase):
         macsxls = MacsXLS(fp=cStringIO.StringIO(MACS140beta_data))
         self.assertRaises(Exception,xls_for_macs2,macsxls)
 
+class TestBedForMacs2Function(unittest.TestCase):
+
+    def test_bed_for_macs2_with_2010_20130419(self):
+        """Generate BED for MACS2.0.10.20130419 data
+
+        """
+        macsxls = MacsXLS(fp=cStringIO.StringIO(MACS2010_20130419_data))
+        bed = bed_for_macs2(macsxls)
+        # Check header
+        self.assertEqual(bed.header(),['chr',
+                                        'abs_summit-100',
+                                        'abs_summit+100'])
+        # Check first line of data
+        self.assertEqual(bed[0]['chr'],'chr1')
+        self.assertEqual(bed[0]['abs_summit-100'],11969905-100)
+        self.assertEqual(bed[0]['abs_summit+100'],11969905+100)
+        # Check last line of data
+        self.assertEqual(bed[4]['chr'],'chr1')
+        self.assertEqual(bed[4]['abs_summit-100'],11739812-100)
+        self.assertEqual(bed[4]['abs_summit+100'],11739812+100)
+
+    def test_bed_for_macs2_with_2010_20131216(self):
+        """Generate BED for MACS2.0.10.20131216 data
+
+        """
+        macsxls = MacsXLS(fp=cStringIO.StringIO(MACS2010_20131216_data))
+        bed = bed_for_macs2(macsxls)
+        # Check header
+        self.assertEqual(bed.header(),['chr',
+                                        'abs_summit-100',
+                                        'abs_summit+100'])
+        # Check first line of data
+        self.assertEqual(bed[0]['chr'],'chr1')
+        self.assertEqual(bed[0]['abs_summit-100'],6214792-100)
+        self.assertEqual(bed[0]['abs_summit+100'],6214792+100)
+        # Check last line of data
+        self.assertEqual(bed[4]['chr'],'chr1')
+        self.assertEqual(bed[4]['abs_summit-100'],4858423-100)
+        self.assertEqual(bed[4]['abs_summit+100'],4858423+100)
+
+    def test_bed_for_macs2_with_2010_20131216_broad(self):
+        """Check 'bed_for_macs2' raises exception MACS2.0.10.20131216 with --broad option
+        """
+        macsxls = MacsXLS(fp=cStringIO.StringIO(MACS2010_20131216_broad_data))
+        self.assertRaises(Exception,
+                          bed_for_macs2,
+                          macsxls)
+
+    def test_bed_for_macs2_with_140beta(self):
+        """Check 'bed_for_macs2' raises exception for MACS14 data
+        """
+        macsxls = MacsXLS(fp=cStringIO.StringIO(MACS140beta_data))
+        self.assertRaises(Exception,
+                          bed_for_macs2,
+                          macsxls)
+
 class TestChunkFunction(unittest.TestCase):
     def test_chunk_no_delimiter(self):
         """Test chunk function with no delimiter
@@ -989,7 +1077,7 @@ class TestChunkFunction(unittest.TestCase):
 # Main program
 #######################################################################
 
-def main(macs_file,xls_out,xls_format="xlsx"):
+def main(macs_file,xls_out,xls_format="xlsx",bed_out=None):
     """Driver function
 
     Wraps core functionality of program to facilitate
@@ -1000,6 +1088,7 @@ def main(macs_file,xls_out,xls_format="xlsx"):
       xls_out: name to write output XLS spreadsheet file to
       xls_format: optional, specify the XLS output format
         (either 'xls' or 'xlsx'; default is 'xlsx')
+      bed_out: optional, name to write output BED file to
     
     """
     # Check requested XLS format
@@ -1038,7 +1127,17 @@ def main(macs_file,xls_out,xls_format="xlsx"):
         xls.save_as_xlsx(xls_out)
     elif xls_format == "xls":
         xls.save_as_xls(xls_out)
-    print "Finished"
+
+    # Create BED file
+    if bed_out is not None:
+        print "Generate BED file"
+        try:
+            bed = bed_for_macs2(macs_xls)
+        except Exception as ex:
+            logging.error("failed to generate BED data: %s" % ex)
+            sys.exit(1)
+        bed.write(bed_out,include_header=True)
+        print "Finished"
 
 if __name__ == "__main__":
     # Process command line
@@ -1055,6 +1154,11 @@ if __name__ == "__main__":
                  action="store",dest="xls_format",default="xlsx",
                  help="specify the output Excel spreadsheet format; must be "
                  "one of 'xlsx' or 'xls' (default is 'xlsx')")
+    p.add_option("-b","--bed",
+                 action="store_true",dest="bed",
+                 help="write an additional TSV file with chrom, "
+                 "abs_summit+100 and abs_summit-100 data as the columns. "
+                 "(NB only possible for MACS2 run without --broad)")
     options,args = p.parse_args()
     # Get input file name
     if len(args) < 1 or len(args) > 2:
@@ -1075,8 +1179,15 @@ if __name__ == "__main__":
         # but we'll add an explicit .xls extension
         xls_out = "XLS_"+os.path.splitext(os.path.basename(macs_in))[0]+\
                   "."+xls_format
+    # Also generate BED file?
+    if options.bed:
+        bed_out = os.path.splitext(xls_out)[0]+".bed"
+    else:
+        bed_out = None
     print "Input file: %s" % macs_in
     print "Output XLS: %s" % xls_out
+    if bed_out:
+        print "Output BED: %s" % bed_out
     ##profile.run("main(macs_in,xls_out)")
-    main(macs_in,xls_out,xls_format=xls_format)
+    main(macs_in,xls_out,xls_format=xls_format,bed_out=bed_out)
 
