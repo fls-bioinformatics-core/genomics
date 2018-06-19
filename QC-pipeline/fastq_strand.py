@@ -4,7 +4,7 @@
 #     Copyright (C) University of Manchester 2017-2018 Peter Briggs
 #
 
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 
 #######################################################################
 # Imports
@@ -36,7 +36,7 @@ def mockSTAR(argv):
     p.add_argument('--runMode',action="store")
     p.add_argument('--genomeLoad',action="store")
     p.add_argument('--genomeDir',action="store")
-    p.add_argument('--readFilesIn',action="store",nargs=2)
+    p.add_argument('--readFilesIn',action="store",nargs='+')
     p.add_argument('--quantMode',action="store")
     p.add_argument('--outSAMtype',action="store",nargs=2)
     p.add_argument('--outSAMstrandField',action="store")
@@ -72,10 +72,13 @@ ENSMUSG00000064370.1	122199	199	123042
 
 class TestStrandTsar(unittest.TestCase):
     def setUp(self):
-        # Store the initial PATH
-        self.path = os.environ['PATH']
         # Make a temporary working directory
         self.wd = tempfile.mkdtemp(prefix="TestStrandTsar")
+        # Move to the working directory
+        self.pwd = os.getcwd()
+        os.chdir(self.wd)
+        # Store the initial PATH
+        self.path = os.environ['PATH']
         # Make a mock STAR executable
         star_bin = os.path.join(self.wd,"mock_star")
         os.mkdir(star_bin)
@@ -132,120 +135,130 @@ AAF#F#JJ##JJ#J#J#J#J#JJ#J#JJJ#F##JJJ#J#JJJJJJFAJJJJFJJJJJJJJJJJJJJJJJFFFJJ#J
             for i in ("Genome1","Genome2"):
                 fp.write("%s\t%s\n" % (i,os.path.join(self.wd,i)))
     def tearDown(self):
+        # Move back to the original directory
+        os.chdir(self.pwd)
         # Reset the PATH
         os.environ['PATH'] = self.path
         # Remove the working dir
         shutil.rmtree(self.wd)
-    @property
-    def __file(self):
-        f = __file__
-        if f.endswith(".pyc"):
-            return f[:-1]
-        else:
-            return f
-    def test_fastq_strand_one_genome_index(self):
+    def test_fastq_strand_one_genome_index_SE(self):
         """
-        fastq_strand: test with single genome index
+        fastq_strand: test with single genome index (SE)
         """
-        subprocess.check_output([self.__file,
-                                 self.fqs[0],
-                                 self.fqs[1],
-                                 "Genome1"],
-                                cwd=self.wd)
+        fastq_strand(["-g","Genome1",self.fqs[0]])
         outfile = os.path.join(self.wd,"mock_R1_fastq_strand.txt")
         self.assertTrue(os.path.exists(outfile))
         self.assertEqual(open(outfile,'r').read(),
-                         """#fastq_strand version: 0.0.1	#Aligner: STAR	#Reads in subset: 3
+                         """#fastq_strand version: %s	#Aligner: STAR	#Reads in subset: 3
 #Genome	1st forward	2nd reverse
 Genome1	13.13	93.21
-""")
-    def test_fastq_strand_two_genome_indices(self):
+""" % __version__)
+    def test_fastq_strand_two_genome_indices_SE(self):
         """
-        fastq_strand: test with two genome indices
+        fastq_strand: test with two genome indices (SE)
         """
-        subprocess.check_output([self.__file,
-                                 self.fqs[0],
-                                 self.fqs[1],
-                                 "Genome1",
-                                 "Genome2"],
-                                cwd=self.wd)
+        fastq_strand(["-g","Genome1",
+                      "-g","Genome2",
+                      self.fqs[0],
+                      self.fqs[1]])
         outfile = os.path.join(self.wd,"mock_R1_fastq_strand.txt")
         self.assertTrue(os.path.exists(outfile))
         self.assertEqual(open(outfile,'r').read(),
-                         """#fastq_strand version: 0.0.1	#Aligner: STAR	#Reads in subset: 3
+                         """#fastq_strand version: %s	#Aligner: STAR	#Reads in subset: 3
 #Genome	1st forward	2nd reverse
 Genome1	13.13	93.21
 Genome2	13.13	93.21
-""")
+""" % __version__)
+    def test_fastq_strand_one_genome_index_PE(self):
+        """
+        fastq_strand: test with single genome index (PE)
+        """
+        fastq_strand(["-g","Genome1",
+                      self.fqs[0],
+                      self.fqs[1]])
+        outfile = os.path.join(self.wd,"mock_R1_fastq_strand.txt")
+        self.assertTrue(os.path.exists(outfile))
+        self.assertEqual(open(outfile,'r').read(),
+                         """#fastq_strand version: %s	#Aligner: STAR	#Reads in subset: 3
+#Genome	1st forward	2nd reverse
+Genome1	13.13	93.21
+""" % __version__)
+    def test_fastq_strand_two_genome_indices_PE(self):
+        """
+        fastq_strand: test with two genome indices (PE)
+        """
+        fastq_strand(["-g","Genome1",
+                      "-g","Genome2",
+                      self.fqs[0],
+                      self.fqs[1]])
+        outfile = os.path.join(self.wd,"mock_R1_fastq_strand.txt")
+        self.assertTrue(os.path.exists(outfile))
+        self.assertEqual(open(outfile,'r').read(),
+                         """#fastq_strand version: %s	#Aligner: STAR	#Reads in subset: 3
+#Genome	1st forward	2nd reverse
+Genome1	13.13	93.21
+Genome2	13.13	93.21
+""" % __version__)
     def test_fastq_strand_using_conf_file(self):
         """
         fastq_strand: test with genome indices specified via conf file
         """
-        subprocess.check_output([self.__file,
-                                 "-c",
-                                 self.conf_file,
-                                 self.fqs[0],
-                                 self.fqs[1]],
-                                cwd=self.wd)
+        fastq_strand(["-c",self.conf_file,
+                      self.fqs[0],
+                      self.fqs[1]])
         outfile = os.path.join(self.wd,"mock_R1_fastq_strand.txt")
         self.assertTrue(os.path.exists(outfile))
         self.assertEqual(open(outfile,'r').read(),
-                         """#fastq_strand version: 0.0.1	#Aligner: STAR	#Reads in subset: 3
+                         """#fastq_strand version: %s	#Aligner: STAR	#Reads in subset: 3
 #Genome	1st forward	2nd reverse
 Genome1	13.13	93.21
 Genome2	13.13	93.21
-""")
+""" % __version__)
     def test_fastq_strand_no_subset(self):
         """
         fastq_strand: test with no subset
         """
-        subprocess.check_output([self.__file,
-                                 self.fqs[0],
-                                 self.fqs[1],
-                                 "Genome1",
-                                 "--subset=0"],
-                                cwd=self.wd)
+        fastq_strand(["-g","Genome1",
+                      "--subset=0",
+                      self.fqs[0],
+                      self.fqs[1]])
         outfile = os.path.join(self.wd,"mock_R1_fastq_strand.txt")
         self.assertTrue(os.path.exists(outfile))
         self.assertEqual(open(outfile,'r').read(),
-                         """#fastq_strand version: 0.0.1	#Aligner: STAR	#Reads in subset: 3
+                         """#fastq_strand version: %s	#Aligner: STAR	#Reads in subset: 3
 #Genome	1st forward	2nd reverse
 Genome1	13.13	93.21
-""")
+""" % __version__)
     def test_fastq_strand_include_counts(self):
         """
         fastq_strand: test including the counts
         """
-        subprocess.check_output([self.__file,
-                                 self.fqs[0],
-                                 self.fqs[1],
-                                 "Genome1",
-                                 "--counts"],
-                                cwd=self.wd)
+        fastq_strand(["-g","Genome1",
+                      "--counts",
+                      self.fqs[0],
+                      self.fqs[1]])
         outfile = os.path.join(self.wd,"mock_R1_fastq_strand.txt")
         self.assertTrue(os.path.exists(outfile))
         self.assertEqual(open(outfile,'r').read(),
-                         """#fastq_strand version: 0.0.1	#Aligner: STAR	#Reads in subset: 3
+                         """#fastq_strand version: %s	#Aligner: STAR	#Reads in subset: 3
 #Genome	1st forward	2nd reverse	Unstranded	1st read strand aligned	2nd read strand aligned
 Genome1	13.13	93.21	391087	51339	364535
-""")
+""" % __version__)
     def test_fastq_strand_keep_star_output(self):
         """
         fastq_strand: test keeping the output from STAR
         """
-        subprocess.check_output([self.__file,
-                                 self.fqs[0],
-                                 self.fqs[1],
-                                 "Genome1",
-                                 "--keep-star-output"],
-                                cwd=self.wd)
+        fastq_strand(["-g","Genome1",
+                      "--keep-star-output",
+                      self.fqs[0],
+                      self.fqs[1]])
         outfile = os.path.join(self.wd,"mock_R1_fastq_strand.txt")
         self.assertTrue(os.path.exists(outfile))
         self.assertEqual(open(outfile,'r').read(),
-                         """#fastq_strand version: 0.0.1	#Aligner: STAR	#Reads in subset: 3
+                         """#fastq_strand version: %s	#Aligner: STAR	#Reads in subset: 3
 #Genome	1st forward	2nd reverse
 Genome1	13.13	93.21
-""")
+""" % __version__)
         self.assertTrue(os.path.exists(
             os.path.join(self.wd,
                          "STAR.mock_R1.outputs")))
@@ -263,24 +276,35 @@ Genome1	13.13	93.21
 # Main script
 #######################################################################
 
-if __name__ == "__main__":
+def fastq_strand(argv):
+    """
+    Driver for fastq_strand
+
+    Generate strandedness statistics for single FASTQ or
+    FASTQ pair, by running STAR using one or more genome
+    indexes
+    """
     # Process command line
     p = argparse.ArgumentParser(
         description="Generate strandedness statistics "
-        "for FASTQ pair: run STAR to generate statistics for "
-        "one or more genomes specified via the command line",
+        "for FASTQ or FASTQpair, by running STAR using "
+        "one or more genome indexes",
         version=__version__)
     p.add_argument("r1",metavar="READ1",
                    default=None,
                    help="R1 Fastq file")
     p.add_argument("r2",metavar="READ2",
                    default=None,
+                   nargs="?",
                    help="R2 Fastq file")
-    p.add_argument("star_genomedirs",metavar="GENOMEDIR",
+    p.add_argument("-g","--genome",
+                   dest="star_genomedirs",metavar="GENOMEDIR",
                    default=None,
-                   nargs="*",
+                   action="append",
                    help="path to directory with STAR index "
-                   "for genome to use")
+                   "for genome to use (use as an alternative "
+                   "to -c/--conf; can be specified multiple "
+                   "times to include additional genomes)")
     p.add_argument("--subset",
                    type=int,
                    default=10000,
@@ -313,17 +337,20 @@ if __name__ == "__main__":
                    action="store_true",
                    help="keep the output from STAR (default: "
                    "delete outputs on completion)")
-    args = p.parse_args()
+    args = p.parse_args(argv)
+    # Print parameters
+    print "READ1\t: %s" % args.r1
+    print "READ2\t: %s" % args.r2
     # Check that STAR is on the path
     star_exe = find_program("STAR")
     if star_exe is None:
         logging.critical("STAR not found")
-        sys.exit(1)
-    print "Using STAR from %s" % star_exe
+        return 1
+    print "STAR\t: %s" % star_exe
     # Gather genome indices
     genome_names = {}
     if args.conf is not None:
-        print "Using genomes from conf file: %s" % args.conf
+        print "Conf file\t: %s" % args.conf
         star_genomedirs = []
         with open(args.conf,'r') as fp:
             for line in fp:
@@ -337,7 +364,10 @@ if __name__ == "__main__":
         star_genomedirs = args.star_genomedirs
     if not star_genomedirs:
         logging.critical("No genome indices specified")
-        sys.exit(1)
+        return 1
+    print "Genomes:"
+    for genome in star_genomedirs:
+        print "- %s" % genome
     # Output directory
     if args.outdir is None:
         outdir = os.getcwd()
@@ -346,7 +376,7 @@ if __name__ == "__main__":
     if not os.path.exists(outdir):
         logging.critical("Output directory doesn't exist: %s" %
                          outdir)
-        sys.exit(1)
+        return 1
     # Prefix for temporary output
     prefix = "fastq_strand_"
     # Create a temporary working directory
@@ -368,8 +398,9 @@ if __name__ == "__main__":
         subset_indices = [i for i in xrange(nreads)]
     else:
         subset_indices = random.sample(xrange(nreads),subset)
+    fqs_in = filter(lambda fq: fq is not None,(args.r1,args.r2))
     fastqs = []
-    for fq in (args.r1,args.r2):
+    for fq in fqs_in:
         fq_subset = os.path.join(working_dir,
                                  os.path.basename(fq))
         if fq_subset.endswith(".gz"):
@@ -420,18 +451,21 @@ if __name__ == "__main__":
     # Iterate over genome indices
     for star_genomedir in star_genomedirs:
         # Build a command line to run STAR
-        star_cmd = [star_exe,
-                    '--runMode','alignReads',
-                    '--genomeLoad','NoSharedMemory',
-                    '--genomeDir',os.path.abspath(star_genomedir),
-                    '--readFilesIn',
-                    fastqs[0],
-                    fastqs[1],
-                    '--quantMode','GeneCounts',
-                    '--outSAMtype','BAM','Unsorted',
-                    '--outSAMstrandField','intronMotif',
-                    '--outFileNamePrefix',prefix,
-                    '--runThreadN',str(args.n)]
+        star_cmd = [star_exe]
+        star_cmd.extend([
+            '--runMode','alignReads',
+            '--genomeLoad','NoSharedMemory',
+            '--genomeDir',os.path.abspath(star_genomedir)])
+        star_cmd.extend(['--readFilesIn',
+                         fastqs[0]])
+        if len(fastqs) > 1:
+            star_cmd.append(fastqs[1])
+        star_cmd.extend([
+            '--quantMode','GeneCounts',
+            '--outSAMtype','BAM','Unsorted',
+            '--outSAMstrandField','intronMotif',
+            '--outFileNamePrefix',prefix,
+            '--runThreadN',str(args.n)])
         print "Running %s" % ' '.join(star_cmd)
         subprocess.check_output(star_cmd,cwd=working_dir)
         # Process the STAR output
@@ -486,3 +520,15 @@ if __name__ == "__main__":
                                     os.path.join(genome_dir,f))
     # Clean up the working dir
     shutil.rmtree(working_dir)
+    return 0
+
+if __name__ == "__main__":
+    # Start up
+    print "Fastq_strand: version %s" % __version__
+    try:
+        retval = fastq_strand(sys.argv[1:])
+    except Exception as ex:
+        logging.critical("Exception: %s" % ex)
+        retval = 1
+    print "Fast_strand: finished"
+    sys.exit(retval)
