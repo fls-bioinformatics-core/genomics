@@ -136,11 +136,18 @@ AAF#F#JJ##JJ#J#J#J#J#JJ#J#JJJ#F##JJJ#J#JJJJJJFAJJJJFJJJJJJJJJJJJJJJJJFFFJJ#J
         os.environ['PATH'] = self.path
         # Remove the working dir
         shutil.rmtree(self.wd)
+    @property
+    def __file(self):
+        f = __file__
+        if f.endswith(".pyc"):
+            return f[:-1]
+        else:
+            return f
     def test_fastq_strand_one_genome_index(self):
         """
         fastq_strand: test with single genome index
         """
-        subprocess.check_output([__file__,
+        subprocess.check_output([self.__file,
                                  self.fqs[0],
                                  self.fqs[1],
                                  "Genome1"],
@@ -156,7 +163,7 @@ Genome1	13.13	93.21
         """
         fastq_strand: test with two genome indices
         """
-        subprocess.check_output([__file__,
+        subprocess.check_output([self.__file,
                                  self.fqs[0],
                                  self.fqs[1],
                                  "Genome1",
@@ -174,7 +181,7 @@ Genome2	13.13	93.21
         """
         fastq_strand: test with genome indices specified via conf file
         """
-        subprocess.check_output([__file__,
+        subprocess.check_output([self.__file,
                                  "-c",
                                  self.conf_file,
                                  self.fqs[0],
@@ -192,7 +199,7 @@ Genome2	13.13	93.21
         """
         fastq_strand: test with no subset
         """
-        subprocess.check_output([__file__,
+        subprocess.check_output([self.__file,
                                  self.fqs[0],
                                  self.fqs[1],
                                  "Genome1",
@@ -209,7 +216,7 @@ Genome1	13.13	93.21
         """
         fastq_strand: test including the counts
         """
-        subprocess.check_output([__file__,
+        subprocess.check_output([self.__file,
                                  self.fqs[0],
                                  self.fqs[1],
                                  "Genome1",
@@ -226,7 +233,7 @@ Genome1	13.13	93.21	391087	51339	364535
         """
         fastq_strand: test keeping the output from STAR
         """
-        subprocess.check_output([__file__,
+        subprocess.check_output([self.__file,
                                  self.fqs[0],
                                  self.fqs[1],
                                  "Genome1",
