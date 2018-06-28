@@ -4,7 +4,7 @@
 #
 # Usage: illumina_qc.sh <fastq>
 #
-VERSION=1.3.1
+VERSION=1.3.2
 #
 function usage() {
     echo "Usage: $(basename $0) <fastq[.gz]> [options]"
@@ -36,6 +36,7 @@ function usage() {
     echo "  --subset N    number of reads to use in"
     echo "                fastq_screen (default N=100000,"
     echo "                N=0 to use all reads)"
+    echo "  --no-screens  don't run fastq_screen"
     echo "  --qc_dir DIR  output QC to DIR (default 'qc')"
 }
 export PATH=$PATH:$(dirname $0)/../share
@@ -99,6 +100,7 @@ fi
 #
 # Check for additional options
 do_ungzip=no
+do_fastq_screen=yes
 threads=1
 subset=100000
 qc_dir=qc
@@ -126,6 +128,9 @@ while [ ! -z "$2" ] ; do
         --qc_dir)
             shift
 	    qc_dir=$2
+	    ;;
+	--no-screens)
+	    do_fastq_screen=no
 	    ;;
 	*)
 	    echo "Unrecognised option: $2"
@@ -188,6 +193,7 @@ echo fastq_screen: $FASTQ_SCREEN
 echo fastq_screen conf files in: $FASTQ_SCREEN_CONF_DIR
 echo fastqc    : $FASTQC
 echo fastqc contaminants: $FASTQC_CONTAMINANTS_FILE
+echo run screens: $do_fastq_screen
 echo ungzip fastq: $do_ungzip
 echo threads   : $threads
 echo fastq_screen subset: $subset
@@ -204,8 +210,12 @@ echo "--------------------------------------------------------"
 #
 # Check for required programs
 echo "Checking for required programs:"
+required="$FASTQC"
+if [ $do_fastq_screen != "no" ] ; then
+    required="$FASTQ_SCREEN $required"
+fi
 missing=
-for prog in "$FASTQ_SCREEN" "$FASTQC" ; do
+for prog in $required ; do
     echo -n "* ${prog}..."
     if [ -z "$(which $prog 2>/dev/null)" ] ; then
 	echo "not found"
@@ -235,8 +245,9 @@ fi
 #
 program_info=${qc_dir}/${fastq_base%%.fq}.$qc.programs
 echo "# Program versions and paths used for $fastq_base:" > $program_info
-report_program_info $FASTQ_SCREEN >> $program_info
-report_program_info $FASTQC >> $program_info
+for prog in $required ; do
+    report_program_info $prog >> $program_info
+fi
 #
 # Echo to log
 cat $program_info
@@ -264,7 +275,9 @@ fi
 #############################################
 #
 # Run fastq_screen
-run_fastq_screen --threads $threads --subset $subset --qc_dir $qc_dir $FASTQ
+if [ $do_fastq_screen == "yes" ] ; then
+    run_fastq_screen --threads $threads --subset $subset --qc_dir $qc_dir $FASTQ
+fi
 #
 # Run FASTQC
 fastqc_base=${fastq_base%%.fq}_fastqc
