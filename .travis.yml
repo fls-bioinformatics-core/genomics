@@ -13,6 +13,8 @@ install:
 script:
 # Run the unit tests for bcftbx
   - "python setup.py test"
+# Run the make_macs2_xls tests
+  - "nosetests --exe -v ChIP-seq/make_macs2_xls.py"
 # Run the fastq_strand tests
   - "nosetests --exe -v QC-pipeline/fastq_strand.py"
 # Run the best_exons example
