@@ -247,7 +247,7 @@ program_info=${qc_dir}/${fastq_base%%.fq}.$qc.programs
 echo "# Program versions and paths used for $fastq_base:" > $program_info
 for prog in $required ; do
     report_program_info $prog >> $program_info
-fi
+done
 #
 # Echo to log
 cat $program_info
