@@ -1,3 +1,20 @@
+2018-07-03  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* genomics-bcftbx version 1.4.0
+	- ChIP-seq/make_macs2_xls.py
+	  - version 0.5.0: add '-b'/'--bed' option to
+	    output additional TSV file with { chrom,
+	    abs_summit+/-100 } columns
+	- QC-pipeline/fastq_strand.py:
+	  - version 0.0.2:
+	  - can be run on a single Fastq (as well as pairs)
+	  - changes to command line if specifying STAR
+	    indexes directly: now needs '-g'/'--genome'
+	    option for this
+	- QC-pipeline/illumina_qc.sh:
+	  - version 1.3.2: new '--no-screens' option
+	    suppresses running of 'fastq_screen'
+
 2018-05-14  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* genomics-bcftbx version 1.3.2
