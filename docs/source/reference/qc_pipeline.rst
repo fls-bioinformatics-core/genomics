@@ -5,6 +5,7 @@ Scripts for running general QC and data preparation on SOLiD and Illumina
 sequencing data prior to library-specific analyses.
 
 * :ref:`run_qc_pipeline`
+* :ref:`illumina_qc_sh`
 * :ref:`qcreporter`
 * :ref:`fastq_screen`
 * :ref:`qc_boxplotter`: generate QC boxplot from SOLiD qual file
@@ -153,6 +154,42 @@ Useful additional options for ``run_qc_pipeline.py`` include:
 
     It is recommended to run ``run_qc_pipeline.py`` within a Linux ``screen`` session.
 
+.. _illumina_qc_sh:
+
+illumina_qc.sh
+**************
+
+``illumina_qc.sh`` implements a basic QC script for a single input Fastq
+from Illumina sequencer platfroms; specifically:
+
+ * Check for contaminations against a panel of genome indexes using
+   ``fastq_screen`` (via the :ref:`fastq_screen` script)
+ * Generate QC metrics using ``fastQC``
+ * (optionally) Create uncompressed copies of Fastq file
+
+The input can be a compressed (gzipped) or uncompressed Fastq.
+
+Usage::
+
+    illumina_qc.sh <fastq[.gz]> [options]
+
+Options::
+
+    --ungzip-fastqs
+                  create uncompressed versions of
+                  fastq files, if gzipped copies
+                  exist
+    --no-ungzip   don't create uncompressed fastqs
+                  (ignored, this is the default)
+    --threads N   number of threads (i.e. cores)
+                  available to the script (default
+                  is N=1)
+    --subset N    number of reads to use in
+                  fastq_screen (default N=100000,
+                  N=0 to use all reads)
+    --no-screens  don't run fastq_screen
+    --qc_dir DIR  output QC to DIR (default 'qc')
+
 .. _qcreporter:
 
 qcreporter.py
@@ -238,38 +275,52 @@ fastq_screen.sh
 ***************
 
 The fastq_screen part of the QC pipeline is implemented as a shell script
-fastq_screen.sh which can be run independently of the main qc.sh script. It
-takes a single FASTQ file as input, e.g.::
+``fastq_screen.sh`` which can be run independently of the main qc.sh script. It
+takes a single FASTQ file as input, e.g::
 
-    qsub -V -b Y -N fastq_screen -wd /path/to/dir/with/data fastq_screen.sh sample.fastq
+    fastq_screen.sh sample.fastq
 
-This runs the ``fastq_screen`` program using three sets of genome indexes: common
-"model" organisms (e.g. human, mouse, rat, fly etc), "other" organisms (e.g.
-dictystelium), and a set of rRNa indexes.
+This runs the ``fastq_screen`` program using three sets of genome indexes:
+common "model" organisms (e.g. human, mouse, rat, fly etc), "other" organisms
+(e.g. dictystelium), and a set of rRNA indexes.
+
+The script gets its configuration from the following environment variables:
+
+ +------------------------------+------------------------------------------+
+ | Variable                     | Function                                 |
+ +==============================+==========================================+
+ | ``FASTQ_SCREEN_CONF_DIR``    | Location of fastq_screen configuration   |
+ |                              | files                                    |
+ +------------------------------+------------------------------------------+
+ | ``FASTQ_SCREEN_CONF_NT_EXT`` | Base filename extensions for letterspace |
+ |                              | fastq_screen configuration files         |
+ |                              | (e.g. if conf file is                    |
+ |                              | ``fastq_screen_model_organisms_nt.conf`` |
+ |                              | for  letterspace then the extension is   |
+ |                              | ``_nt``                                  |
+ +------------------------------+------------------------------------------+
+ | ``FASTQC_CONTAMINANTS_FILE`` | custom contaminants file for fastQC      |
+ +------------------------------+------------------------------------------+
+
+These can be set in the ``qc.setup`` file, where the script will read the
+values from unless over-ridden by the environment.
+
+The three sets of genome indexes are represented by three ``fastq_screen``
+configuration files which should be present in the ``FASTQ_SCREEN_CONF_DIR``
+directory, with the following naming conventions:
+
+ * Model organisms: ``fastq_screen_model_organisms[EXT].conf``
+ * Other organisms: ``fastq_screen_other_organisms[EXT].conf``
+ * rRNA: ``fastq_screen_rRNA[EXT].conf``
+
+The outputs are written to a ``qc`` subdirectory of the working directory,
+and consist of a tab-file and a plot (in PNG format) for each screen
+indicating the percentage of reads in the input which mapped against each
+genome. This acts as a check on whether your sample contains what you expect,
+or whether it has contamination from other sources.
 
 Information on the ``fastq_screen`` program can be found at
 http://www.bioinformatics.bbsrc.ac.uk/projects/fastq_screen/
-
-The outputs are written to a ``qc`` subdirectory of the working directory, and consist
-of a tab-file and a plot (in PNG format) for each screen indicating the percentage of
-reads in the input which mapped against each genome. This acts as a check on whether
-your sample contains what you expect, or whether it has contamination from other sources.
-
-An example::
-
-    Library	Unmapped	Mapped	Multi_mapped
-    hg18	99.86	0.05	0.10
-    mm9	99.79	0.04	0.17
-    rn4	99.43	0.35	0.22
-    dm3	99.86	0.00	0.14
-    ws200	99.91	0.04	0.05
-    ecoli	100.00	0.00	0.00
-    saccer	39.63	54.42	5.95
-    PhiX	100.00	0.00	0
-    Vectors	99.87	0.11	0.02
-    SpR6	100.00	0.00	0
-
-which indicates that a large percentage of reads (~54%) mapped to 'C.elegans' (ws200).
 
 .. _qc_boxplotter:
 

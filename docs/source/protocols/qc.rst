@@ -63,8 +63,8 @@ command reference for the utilities.
 QC for Illumina sequencing data
 *******************************
 
-The full QC pipeline for Illumina data (GA2x, MiSEQ and HiSEQ sequencers) is
-encoded in the ``illumina_qc.sh`` script.
+The full QC pipeline for Illumina data (e.g. GA2x, MiSEQ, HiSEQ etc sequencer
+platforms) is encoded in the :ref:`illumina_qc_sh` script.
 
 This can be run for a set of Illumina ``fastq`` or ``fastq.gz`` format files
 in a specific directory using the :ref:`run_qc_pipeline` utility. In its
