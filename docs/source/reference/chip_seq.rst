@@ -7,7 +7,7 @@ Scripts and tools for ChIP-seq specific tasks.
 * :ref:`convertFastq2Fasta`: convert consensus fastq to fasta format
 * :ref:`CreateChIPalignFileFromBed`: convert csfasta->BED for GLITR
 * :ref:`getRandomTags_index`: extract random subsets of reads
-* :ref:`make_macs_xls`: convert a MACS output file into an Excel spreadsheet
+* :ref:`make_macs2_xls`: convert a MACS output file into an Excel spreadsheet
 * :ref:`mean_coverage`: mean depth of read coverage from BAM file
 * :ref:`run_DESeq`
 
@@ -77,21 +77,34 @@ Usage::
     getRandomTags_index_fastq.pl in.fastq N out.fastq
 
 .. _make_macs_xls:
+.. _make_macs2_xls:
 
-make_macs_xls.py, make_macs2_xls.py
-***********************************
+make_macs2_xls.py
+*****************
 
-Convert a MACS tab-delimited output file into an Excel (XLS) spreadsheet.
+Convert a MACS2 tab-delimited output file into an Excel (XLSX) spreadsheet.
 
 Usage::
 
-    make_macs[2]_xls.py <macs_output_file>.xls
+    make_macs2_xls.py OPTIONS <macs_output_file>.xls [<xlsx_output_file>]
 
-To process output from MACS 1.4.2 and earlier use ``make_macs_xls.py``; for MACS2
-(i.e. version 2.0.10 and higher, which has a different format from that output
-by earlier versions), use ``make_macs2_xls.py``.
+Options::
 
-Creates an XLS spreadsheet called ``<macs_output_file>_XLS.xls``
+  -f XLS_FORMAT, --format=XLS_FORMAT
+                        specify the output Excel spreadsheet format; must be
+                        one of 'xlsx' or 'xls' (default is 'xlsx')
+  -b, --bed             write an additional TSV file with chrom,
+                        abs_summit+100 and abs_summit-100 data as the columns.
+                        (NB only possible for MACS2 run without --broad)
+
+If the ``xlsx_output_file`` isn't specified then it defaults to
+``XLS_<macs_output_file>.xlsx``.
+
+.. note::
+
+   To process output from MACS 1.4.2 and earlier use ``make_macs_xls.py``;
+   this version only supports ``.xls`` output and doesn't provide either of
+   the ``-f`` or ``-b`` options.
 
 .. _mean_coverage:
 

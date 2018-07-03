@@ -402,7 +402,7 @@ user's ``PATH``.
 
 The simplest example checks the strandedness for a single genome::
 
-    fastq_strand.py R1.fastq.gz R2.fastq.gz STARindex/mm10
+    fastq_strand.py R1.fastq.gz R2.fastq.gz -g STARindex/mm10
 
 In this example, ``STARindex/mm10`` is a directory which contains the
 ``STAR`` indexes for the ``mm10`` genome build.
@@ -423,9 +423,10 @@ option::
     STARindex/mm10	13.13	93.21	391087	51339	364535
 
 Strandedness can be checked for multiple genomes by specifying
-additional ``STAR`` indexes on the command line::
+additional ``STAR`` indexes on the command line with multiple ``-g``
+flags::
 
-    fastq_strand.py R1.fastq.gz R2.fastq.gz STARindex/hg38 STARindex/mm10
+    fastq_strand.py R1.fastq.gz R2.fastq.gz -g STARindex/hg38 -g STARindex/mm10
 
 Alternatively a panel of indexes can be supplied via a configuration
 file of the form::
@@ -447,3 +448,8 @@ subset is set to zero then all reads are used.
 The number of threads used to run ``STAR`` can be set via the ``-n``
 option; to keep all the outputs from ``STAR`` specify the
 ``--keep-star-output`` option.
+
+The strandedness statistics can also be generated for a single Fastq
+file, by only specifying one file on the command line. E.g.::
+
+    fastq_strand.py -c model_organisms.conf R1.fastq.gz
