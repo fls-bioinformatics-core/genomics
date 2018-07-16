@@ -415,6 +415,9 @@ def fastq_strand(argv):
     outfile = "%s_fastq_strand.txt" % os.path.join(
         outdir,
         os.path.basename(strip_ngs_extensions(args.r1)))
+    if os.path.exists(outfile):
+        logging.warning("Removing existing output file '%s'" % outfile)
+        shutil.remove(outfile)
     with open(outfile,'w') as fp:
         # Header
         fp.write("#fastq_strand version: %s\t"
