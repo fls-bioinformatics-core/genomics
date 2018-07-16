@@ -163,8 +163,7 @@ Genome1	13.13	93.21
         """
         fastq_strand(["-g","Genome1",
                       "-g","Genome2",
-                      self.fqs[0],
-                      self.fqs[1]])
+                      self.fqs[0]])
         outfile = os.path.join(self.wd,"mock_R1_fastq_strand.txt")
         self.assertTrue(os.path.exists(outfile))
         self.assertEqual(open(outfile,'r').read(),
@@ -305,9 +304,9 @@ exit 1
         outfile = os.path.join(self.wd,"mock_R1_fastq_strand.txt")
         with open(outfile,'w') as fp:
             fp.write("Pre-existing file should be removed")
-        fastq_strand(["-g","Genome1",
-                      self.fqs[0],
-                      self.fqs[1]])
+        self.assertRaises(Exception,
+                          fastq_strand,
+                          ["-g","Genome1",self.fqs[0],self.fqs[1]])
         self.assertFalse(os.path.exists(outfile))
     def test_fastq_strand_no_output_file_on_failure(self):
         """
@@ -323,20 +322,36 @@ exit 0
         outfile = os.path.join(self.wd,"mock_R1_fastq_strand.txt")
         with open(outfile,'w') as fp:
             fp.write("Pre-existing file should be removed")
-        fastq_strand(["-g","Genome1",
-                      self.fqs[0],
-                      self.fqs[1]])
+        self.assertRaises(Exception,
+                          fastq_strand,
+                          ["-g","Genome1",self.fqs[0],self.fqs[1]])
         self.assertFalse(os.path.exists(outfile))
     def test_fastq_strand_handle_bad_fastq(self):
         """
         fastq_strand: gracefully handle bad Fastq input
         """
+        self.assertRaises(Exception,
+                          fastq_strand,
+                          ["-g","Genome1",self.bad_fastq,self.fqs[1]])
+        outfile = os.path.join(self.wd,"mock_R1_fastq_strand.txt")
+        self.assertFalse(os.path.exists(outfile))
+    def test_fastq_strand_overwrite_existing_output_file_on_failure(self):
+        """
+        fastq_strand: test overwrite existing output file on failure
+        """
+        # Make a failing mock STAR executable
+        mock_star = os.path.join(self.wd,"mock_star","STAR")
+        with open(mock_star,'w') as fp:
+            fp.write("""#!/bin/bash
+exit 0
+""")
+        os.chmod(mock_star,0775)
         outfile = os.path.join(self.wd,"mock_R1_fastq_strand.txt")
         with open(outfile,'w') as fp:
             fp.write("Pre-existing file should be overwritten")
-        fastq_strand(["-g","Genome1",
-                      self.bad_fastq,
-                      self.fqs[1]])
+        self.assertRaises(Exception,
+                          fastq_strand,
+                          ["-g","Genome1",self.fqs[0],self.fqs[1]])
         self.assertFalse(os.path.exists(outfile))
 
 #######################################################################
