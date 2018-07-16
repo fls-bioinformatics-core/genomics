@@ -459,6 +459,13 @@ def fastq_strand(argv):
         logging.critical("Output directory doesn't exist: %s" %
                          outdir)
         return 1
+    # Output file
+    outfile = "%s_fastq_strand.txt" % os.path.join(
+        outdir,
+        os.path.basename(strip_ngs_extensions(args.r1)))
+    if os.path.exists(outfile):
+        logging.warning("Removing existing output file '%s'" % outfile)
+        os.remove(outfile)
     # Prefix for temporary output
     prefix = "fastq_strand_"
     # Create a temporary working directory
@@ -493,26 +500,6 @@ def fastq_strand(argv):
                                         subset_indices):
                 fp.write('\n'.join(read) + '\n')
         fastqs.append(fq_subset)
-    # Initialise output file
-    outfile = "%s_fastq_strand.txt" % os.path.join(
-        outdir,
-        os.path.basename(strip_ngs_extensions(args.r1)))
-    if os.path.exists(outfile):
-        logging.warning("Removing existing output file '%s'" % outfile)
-        os.remove(outfile)
-    with open(outfile,'w') as fp:
-        # Header
-        fp.write("#fastq_strand version: %s\t"
-                 "#Aligner: %s\t"
-                 "#Reads in subset: %s\n" % (__version__,
-                                             "STAR",
-                                             subset))
-        columns = ["Genome","1st forward","2nd reverse"]
-        if args.counts:
-            columns.extend(["Unstranded",
-                            "1st read strand aligned",
-                            "2nd read strand aligned"])
-        fp.write("#%s\n" % "\t".join(columns))
     # Make directory to keep output from STAR
     if args.keep_star_output:
         star_output_dir = os.path.join(outdir,
@@ -533,44 +520,50 @@ def fastq_strand(argv):
             os.rename(star_output_dir,backup_dir)
         # Make the directory
         os.mkdir(star_output_dir)
-    # Iterate over genome indices
-    for star_genomedir in star_genomedirs:
-        # Build a command line to run STAR
-        star_cmd = [star_exe]
-        star_cmd.extend([
-            '--runMode','alignReads',
-            '--genomeLoad','NoSharedMemory',
-            '--genomeDir',os.path.abspath(star_genomedir)])
-        star_cmd.extend(['--readFilesIn',
-                         fastqs[0]])
-        if len(fastqs) > 1:
-            star_cmd.append(fastqs[1])
-        star_cmd.extend([
-            '--quantMode','GeneCounts',
-            '--outSAMtype','BAM','Unsorted',
-            '--outSAMstrandField','intronMotif',
-            '--outFileNamePrefix',prefix,
-            '--runThreadN',str(args.n)])
-        print "Running %s" % ' '.join(star_cmd)
-        subprocess.check_output(star_cmd,cwd=working_dir)
-        # Process the STAR output
-        star_tab_file = os.path.join(working_dir,
-                                     "%sReadsPerGene.out.tab" % prefix)
-        if not os.path.exists(star_tab_file):
-            raise Exception("Failed to find .out file: %s" % star_tab_file)
-        sum_col2 = 0
-        sum_col3 = 0
-        sum_col4 = 0
-        with open(star_tab_file) as out:
-            for i,line in enumerate(out):
-                if i < 4:
-                    # Skip first four lines
-                    continue
-                # Process remaining delimited columns
-                cols = line.rstrip('\n').split('\t')
-                sum_col2 += int(cols[1])
-                sum_col3 += int(cols[2])
-                sum_col4 += int(cols[3])
+    # Write output to a temporary file
+    with tempfile.TemporaryFile() as fp:
+        # Iterate over genome indices
+        for star_genomedir in star_genomedirs:
+            # Build a command line to run STAR
+            star_cmd = [star_exe]
+            star_cmd.extend([
+                '--runMode','alignReads',
+                '--genomeLoad','NoSharedMemory',
+                '--genomeDir',os.path.abspath(star_genomedir)])
+            star_cmd.extend(['--readFilesIn',
+                             fastqs[0]])
+            if len(fastqs) > 1:
+                star_cmd.append(fastqs[1])
+            star_cmd.extend([
+                '--quantMode','GeneCounts',
+                '--outSAMtype','BAM','Unsorted',
+                '--outSAMstrandField','intronMotif',
+                '--outFileNamePrefix',prefix,
+                '--runThreadN',str(args.n)])
+            print "Running %s" % ' '.join(star_cmd)
+            try:
+                subprocess.check_output(star_cmd,cwd=working_dir)
+            except subprocess.CalledProcessError as ex:
+                raise Exception("STAR returned non-zero exit code: %s" %
+                                ex.returncode)
+            # Process the STAR output
+            star_tab_file = os.path.join(working_dir,
+                                         "%sReadsPerGene.out.tab" % prefix)
+            if not os.path.exists(star_tab_file):
+                raise Exception("Failed to find .out file: %s" % star_tab_file)
+            sum_col2 = 0
+            sum_col3 = 0
+            sum_col4 = 0
+            with open(star_tab_file) as out:
+                for i,line in enumerate(out):
+                    if i < 4:
+                        # Skip first four lines
+                        continue
+                    # Process remaining delimited columns
+                    cols = line.rstrip('\n').split('\t')
+                    sum_col2 += int(cols[1])
+                    sum_col3 += int(cols[2])
+                    sum_col4 += int(cols[3])
             print "Sums:"
             print "- col2: %d" % sum_col2
             print "- col3: %d" % sum_col3
@@ -581,17 +574,16 @@ def fastq_strand(argv):
             print "- 1st forward: %.2f%%" % forward_1st
             print "- 2nd reverse: %.2f%%" % reverse_2nd
             # Append to output file
-            with open(outfile,'a') as fp:
-                try:
-                    name = genome_names[star_genomedir]
-                except KeyError:
-                    name = star_genomedir
-                data = [name,
-                        "%.2f" % forward_1st,
-                        "%.2f" % reverse_2nd]
-                if args.counts:
-                    data.extend([sum_col2,sum_col3,sum_col4])
-                fp.write("%s\n" % "\t".join([str(d) for d in data]))
+            try:
+                name = genome_names[star_genomedir]
+            except KeyError:
+                name = star_genomedir
+            data = [name,
+                    "%.2f" % forward_1st,
+                    "%.2f" % reverse_2nd]
+            if args.counts:
+                data.extend([sum_col2,sum_col3,sum_col4])
+            fp.write("%s\n" % "\t".join([str(d) for d in data]))
             # Save the outputs
             if args.keep_star_output:
                 # Make a subdirectory for this genome index
@@ -603,6 +595,25 @@ def fastq_strand(argv):
                     if f.startswith(prefix):
                         shutil.copy(os.path.join(working_dir,f),
                                     os.path.join(genome_dir,f))
+        # Finished iterating over genomes
+        # Rewind temporary output file
+        fp.seek(0)
+        with open(outfile,'w') as out:
+            # Header
+            out.write("#fastq_strand version: %s\t"
+                      "#Aligner: %s\t"
+                      "#Reads in subset: %s\n" % (__version__,
+                                                  "STAR",
+                                                  subset))
+            columns = ["Genome","1st forward","2nd reverse"]
+            if args.counts:
+                columns.extend(["Unstranded",
+                                "1st read strand aligned",
+                                "2nd read strand aligned"])
+            out.write("#%s\n" % "\t".join(columns))
+            # Copy content from temp to final file
+            for line in fp:
+                out.write(line)
     # Clean up the working dir
     shutil.rmtree(working_dir)
     return 0
