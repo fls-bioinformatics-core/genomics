@@ -134,6 +134,10 @@ AAF#F#JJ##JJ#J#J#J#J#JJ#J#JJJ#F##JJJ#J#JJJJJJFAJJJJFJJJJJJJJJJJJJJJJJFFFJJ#J
         with open(self.conf_file,'w') as fp:
             for i in ("Genome1","Genome2"):
                 fp.write("%s\t%s\n" % (i,os.path.join(self.wd,i)))
+        # Make a "bad" Fastq
+        self.bad_fastq = os.path.join(self.wd,"bad_R1.fq")
+        with open(self.bad_fastq,'w') as fp:
+            fp.write("NOT A FASTQ FILE")
     def tearDown(self):
         # Move back to the original directory
         os.chdir(self.pwd)
@@ -271,6 +275,69 @@ Genome1	13.13	93.21
                          "STAR.mock_R1.outputs",
                          "Genome1",
                          "fastq_strand_ReadsPerGene.out.tab")))
+    def test_fastq_strand_overwrite_existing_output_file(self):
+        """
+        fastq_strand: test overwrite existing output file
+        """
+        outfile = os.path.join(self.wd,"mock_R1_fastq_strand.txt")
+        with open(outfile,'w') as fp:
+            fp.write("Pre-existing file should be overwritten")
+        fastq_strand(["-g","Genome1",
+                      self.fqs[0],
+                      self.fqs[1]])
+        self.assertTrue(os.path.exists(outfile))
+        self.assertEqual(open(outfile,'r').read(),
+                         """#fastq_strand version: %s	#Aligner: STAR	#Reads in subset: 3
+#Genome	1st forward	2nd reverse
+Genome1	13.13	93.21
+""" % __version__)
+    def test_fastq_strand_handle_STAR_non_zero_exit_code(self):
+        """
+        fastq_strand: handle STAR exiting with non-zero exit code
+        """
+        # Make a failing mock STAR executable
+        mock_star = os.path.join(self.wd,"mock_star","STAR")
+        with open(mock_star,'w') as fp:
+            fp.write("""#!/bin/bash
+exit 1
+""")
+        os.chmod(mock_star,0775)
+        outfile = os.path.join(self.wd,"mock_R1_fastq_strand.txt")
+        with open(outfile,'w') as fp:
+            fp.write("Pre-existing file should be removed")
+        fastq_strand(["-g","Genome1",
+                      self.fqs[0],
+                      self.fqs[1]])
+        self.assertFalse(os.path.exists(outfile))
+    def test_fastq_strand_no_output_file_on_failure(self):
+        """
+        fastq_strand: don't produce output file on failure
+        """
+        # Make a failing mock STAR executable
+        mock_star = os.path.join(self.wd,"mock_star","STAR")
+        with open(mock_star,'w') as fp:
+            fp.write("""#!/bin/bash
+exit 0
+""")
+        os.chmod(mock_star,0775)
+        outfile = os.path.join(self.wd,"mock_R1_fastq_strand.txt")
+        with open(outfile,'w') as fp:
+            fp.write("Pre-existing file should be removed")
+        fastq_strand(["-g","Genome1",
+                      self.fqs[0],
+                      self.fqs[1]])
+        self.assertFalse(os.path.exists(outfile))
+    def test_fastq_strand_handle_bad_fastq(self):
+        """
+        fastq_strand: gracefully handle bad Fastq input
+        """
+        outfile = os.path.join(self.wd,"mock_R1_fastq_strand.txt")
+        with open(outfile,'w') as fp:
+            fp.write("Pre-existing file should be overwritten")
+        fastq_strand(["-g","Genome1",
+                      self.bad_fastq,
+                      self.fqs[1]])
+        self.assertFalse(os.path.exists(outfile))
 
 #######################################################################
 # Main script
@@ -417,7 +484,7 @@ def fastq_strand(argv):
         os.path.basename(strip_ngs_extensions(args.r1)))
     if os.path.exists(outfile):
         logging.warning("Removing existing output file '%s'" % outfile)
-        shutil.remove(outfile)
+        os.remove(outfile)
     with open(outfile,'w') as fp:
         # Header
         fp.write("#fastq_strand version: %s\t"
