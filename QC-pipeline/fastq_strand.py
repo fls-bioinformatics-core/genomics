@@ -358,7 +358,7 @@ exit 0
 # Main script
 #######################################################################
 
-def fastq_strand(argv):
+def fastq_strand(argv,working_dir=None):
     """
     Driver for fastq_strand
 
@@ -468,9 +468,14 @@ def fastq_strand(argv):
         os.remove(outfile)
     # Prefix for temporary output
     prefix = "fastq_strand_"
-    # Create a temporary working directory
-    working_dir = tempfile.mkdtemp(suffix=".fastq_strand",
-                                   dir=os.getcwd())
+    # Working directory
+    if working_dir is None:
+        working_dir = os.getcwd()
+    else:
+        working_dir = os.path.abspath(working_dir)
+        if not os.path.isdir(working_dir):
+            raise Exception("Bad working directory: %s" % working_dir)
+    print "Working directory: %s" % working_dir
     # Make subset of input read pairs
     nreads = sum(1 for i in getreads(os.path.abspath(args.r1)))
     print "%d reads" % nreads
@@ -614,17 +619,22 @@ def fastq_strand(argv):
             # Copy content from temp to final file
             for line in fp:
                 out.write(line)
-    # Clean up the working dir
-    shutil.rmtree(working_dir)
     return 0
 
 if __name__ == "__main__":
     # Start up
     print "Fastq_strand: version %s" % __version__
+    # Create a temporary working directory
+    working_dir = tempfile.mkdtemp(suffix=".fastq_strand",
+                                   dir=os.getcwd())
     try:
-        retval = fastq_strand(sys.argv[1:])
+        retval = fastq_strand(sys.argv[1:],
+                              working_dir=working_dir)
     except Exception as ex:
         logging.critical("Exception: %s" % ex)
         retval = 1
+    # Clean up the working dir
+    print "Cleaning up working directory"
+    shutil.rmtree(working_dir)
     print "Fast_strand: finished"
     sys.exit(retval)
