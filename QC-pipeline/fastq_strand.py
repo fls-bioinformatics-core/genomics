@@ -4,7 +4,7 @@
 #     Copyright (C) University of Manchester 2017-2018 Peter Briggs
 #
 
-__version__ = "0.0.2"
+__version__ = "0.0.3"
 
 #######################################################################
 # Imports
