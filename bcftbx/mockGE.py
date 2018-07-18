@@ -54,6 +54,8 @@ class MockGE(object):
             '$HOME/.mockGE')
           debug (bool): if True then turn on debugging output
         """
+        if debug:
+            logging.getLogger().setLevel(logging.DEBUG)
         if database_dir is None:
             database_dir = os.path.join(self._user_home(),
                                         ".mockGE")
@@ -77,8 +79,6 @@ class MockGE(object):
         self._shell = shell
         self._max_jobs = max_jobs
         self._qacct_delay = qacct_delay
-        if debug:
-            logging.getLogger().setLevel(logging.DEBUG)
 
     def _init_db(self):
         """
@@ -124,15 +124,25 @@ class MockGE(object):
             cmd.append(arg)
         command = ' '.join(cmd)
         logging.debug("_init_job: cmd: %s" % cmd)
-        sql = """
-        INSERT INTO jobs (user,state,qsub_time,name,command,working_dir,queue,output_name,join_output)
-        VALUES ('%s','%s',%f,'%s','%s','%s','%s','%s','%s')
-        """ % (self._user(),'qw',time.time(),name,command,working_dir,
-               queue,output_name,join_output)
-        cu = self._cx.cursor()
-        cu.execute(sql)
-        self._cx.commit()
-        return cu.lastrowid
+        try:
+            sql = """
+            INSERT INTO jobs (user,state,qsub_time,name,command,working_dir,queue,output_name,join_output)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """
+            cu = self._cx.cursor()
+            cu.execute(sql,(self._user(),
+                            'qw',
+                            time.time(),
+                            name,
+                            command,
+                            working_dir,
+                            queue,
+                            output_name,
+                            join_output))
+            self._cx.commit()
+            return cu.lastrowid
+        except Exception as ex:
+            logging.error("qsub failed with exception: %s" % ex)
 
     def _start_job(self,job_id):
         """
@@ -141,61 +151,75 @@ class MockGE(object):
         # Get job info
         sql = """
         SELECT name,command,working_dir,output_name,join_output
-        FROM jobs WHERE id==%d
-        """ % job_id
+        FROM jobs WHERE id==?
+        """
         cu = self._cx.cursor()
-        cu.execute(sql)
+        cu.execute(sql,(job_id,))
         job = cu.fetchone()
         name = job[0]
         command = job[1]
         working_dir = job[2]
         output_name = job[3]
         join_output = job[4]
-        # Output file basename
-        if output_name:
-            out = os.path.abspath(output_name)
-            if os.path.isdir(out):
-                out = os.path.join(out,name)
-            elif not os.path.isabs(out):
-                out = os.path.join(working_dir,out)
-        else:
-            out = os.path.join(working_dir,name)
-        logging.debug("Output basename: %s" % out)
-        # Set up stdout and stderr targets
-        stdout_file = "%s.o%s" % (out,job_id)
-        stdout = open(stdout_file,'w')
-        logging.debug("Stdout: %s" % stdout_file)
-        if join_output == 'y':
-            stderr = subprocess.STDOUT
-        else:
-            stderr_file = "%s.e%s" % (out,job_id)
-            stderr = open(stderr_file,'w')
-            logging.debug("Stderr: %s" % stderr_file)
-        # Build a script to run the command
-        script_file = os.path.join(self._database_dir,
-                                   "__job%d.sh" % job_id)
-        with open(script_file,'w') as fp:
-            fp.write("""#!%s
+        # Try to run the job
+        try:
+            # Output file basename
+            if output_name:
+                out = os.path.abspath(output_name)
+                if os.path.isdir(out):
+                    out = os.path.join(out,name)
+                elif not os.path.isabs(out):
+                    out = os.path.join(working_dir,out)
+            else:
+                out = os.path.join(working_dir,name)
+            logging.debug("Output basename: %s" % out)
+            # Set up stdout and stderr targets
+            stdout_file = "%s.o%s" % (out,job_id)
+            stdout = open(stdout_file,'w')
+            logging.debug("Stdout: %s" % stdout_file)
+            if join_output == 'y':
+                stderr = subprocess.STDOUT
+            else:
+                stderr_file = "%s.e%s" % (out,job_id)
+                stderr = open(stderr_file,'w')
+                logging.debug("Stderr: %s" % stderr_file)
+            # Build a script to run the command
+            script_file = os.path.join(self._database_dir,
+                                       "__job%d.sh" % job_id)
+            with open(script_file,'w') as fp:
+                fp.write("""#!%s
 %s
 exit_code=$?
 echo "$exit_code" > %s/__exit_code.%d
 """ % (self._shell,command,self._database_dir,job_id))
-        os.chmod(script_file,0775)
-        # Run the command
-        p = subprocess.Popen(script_file,
-                             cwd=working_dir,
-                             stdout=stdout,
-                             stderr=stderr)
-        # Capture the job id from the output
-        pid = str(p.pid)
-        # Update the database
-        sql = """
-        UPDATE jobs SET pid=%s,state='r',start_time=%f
-        WHERE id=%s
-        """ % (pid,time.time(),job_id)
-        cu = self._cx.cursor()
-        cu.execute(sql)
-        self._cx.commit()
+            os.chmod(script_file,0775)
+            # Run the command
+            p = subprocess.Popen(script_file,
+                                 cwd=working_dir,
+                                 stdout=stdout,
+                                 stderr=stderr)
+            # Capture the job id from the output
+            pid = str(p.pid)
+            # Update the database
+            sql = """
+            UPDATE jobs SET pid=?,state='r',start_time=?
+            WHERE id=?
+            """
+            cu = self._cx.cursor()
+            cu.execute(sql,(pid,time.time(),job_id))
+            self._cx.commit()
+        except Exception as ex:
+            # Put job into error state
+            logging.debug("Exception trying to start job '%s'"
+                          % job_id)
+            logging.debug("%s" % ex)
+            sql = """
+            UPDATE jobs SET state='Eqw',start_time=?
+            WHERE id=?
+            """
+            cu = self._cx.cursor()
+            cu.execute(sql,(time.time(),job_id))
+            self._cx.commit()
 
     def _update_jobs(self):
         """
@@ -236,19 +260,46 @@ echo "$exit_code" > %s/__exit_code.%d
                 os.remove(exit_code_file)
             else:
                 logging.error("Missing __exit_code file for job %s"
-                            % job_id)
+                              % job_id)
                 end_time = time.time()
                 exit_code = 1
             # Update database
             sql = """
-            UPDATE jobs SET state='c',exit_code=%d,end_time=%f
-            WHERE id==%d
-            """ % (exit_code,end_time,job_id)
+            UPDATE jobs SET state='c',exit_code=?,end_time=?
+            WHERE id==?
+            """
             logging.debug("SQL: %s" % sql)
-            cu.execute(sql)
+            cu.execute(sql,(exit_code,end_time,job_id))
         if finished_jobs:
             self._cx.commit()
-        # Get jobs that are waiting
+        # Deal with jobs that are marked for deletion
+        sql = """
+        SELECT id FROM jobs WHERE state == 'd'
+        """
+        cu.execute(sql)
+        jobs = cu.fetchall()
+        deleted_jobs = [job[0] for job in jobs]
+        for job_id in deleted_jobs:
+            sql = """
+            SELECT pid FROM jobs WHERE id==?
+            """
+            cu.execute(sql,(job_id,))
+            job = cu.fetchone()
+            if job is None:
+                continue
+            # Try to stop the job
+            try:
+                pid = int(job[0])
+                os.kill(pid,9)
+            except Exception:
+                pass
+            # Update the database
+            sql = """
+            UPDATE jobs SET state='c' WHERE id=?
+            """
+            cu.execute(sql,(job_id,))
+            self._cx.commit()
+        # Deal with jobs that are waiting
         sql = """
         SELECT id FROM jobs WHERE state == 'qw'
         """
@@ -273,10 +324,12 @@ echo "$exit_code" > %s/__exit_code.%d
         sql = """
         SELECT id,name,user,state,qsub_time,start_time,queue FROM jobs WHERE state != 'c'
         """
+        args = []
         if user != "\*" and user != "*":
-            sql += "AND user == '%s'" % user
+            sql += "AND user == ?"
+            args.append(user)
         cu = self._cx.cursor()
-        cu.execute(sql)
+        cu.execute(sql,args)
         return cu.fetchall()
 
     def _job_info(self,job_id):
@@ -285,11 +338,35 @@ echo "$exit_code" > %s/__exit_code.%d
         """
         sql = """
         SELECT id,name,user,exit_code,qsub_time,start_time,end_time,queue
-        FROM jobs WHERE id==%d AND state=='c'
-        """ % (job_id)
+        FROM jobs WHERE id==? AND state=='c'
+        """
         cu = self._cx.cursor()
-        cu.execute(sql)
+        cu.execute(sql,(job_id,))
         return cu.fetchone()
+
+    def _mark_for_deletion(self,job_id):
+        """
+        Mark a job for termination/deletion
+        """
+        # Look up the job and check it can be deleted
+        sql = """
+        SELECT state FROM jobs WHERE id=?
+        """
+        cu = self._cx.cursor()
+        cu.execute(sql,(job_id,))
+        job = cu.fetchone()
+        if job is None:
+            return
+        state = job[0]
+        if state not in ('qw','r','Eqw'):
+            return
+        new_state = 'd'
+        sql = """
+        UPDATE jobs SET state=? WHERE id=?
+        """
+        cu = self._cx.cursor()
+        cu.execute(sql,(new_state,job_id,))
+        self._cx.commit()
 
     def _user(self):
         """
@@ -442,7 +519,7 @@ echo "$exit_code" > %s/__exit_code.%d
         job_info = self._job_info(job_id)
         if job_info is None:
             logging.debug("qacct: no info returned for job %s" %
-                          job_id)
+                         job_id)
             sys.stderr.write("error: job id %s not found\n" % job_id)
             return
         # Check delay time
@@ -481,41 +558,51 @@ exit_status  %s""" % (queue,user,name,job_id,
                       qsub_time,start_time,end_time,
                       exit_code)
 
+    def qdel(self,argv):
+        """
+        Implement qdel-like functionality
+        """
+        logging.debug("qdel: invoked")
+        # Update the db
+        self._update_jobs()
+        # Process supplied arguments
+        p = argparse.ArgumentParser()
+        p.add_argument("job_id",action="store",nargs="+")
+        args = p.parse_args(argv)
+        # Loop over job ids
+        for job_id in args.job_id:
+            job_id = int(job_id)
+            # Mark the job for deletion
+            self._mark_for_deletion(job_id)
+            print "Job %s has been marked for deletion" % job_id
+
 #######################################################################
-# Classes
+# Functions
 #######################################################################
 
-def setup_mock_GE(bindir=None):
+def _make_mock_GE_exe(path,f,database_dir=None,debug=False):
     """
-    Creates mock 'qsub', 'qstat' and 'qacct' exes
+    """
+    with open(path,'w') as fp:
+        fp.write("""#!/usr/bin/env python
+import sys
+from bcftbx.mockGE import MockGE
+sys.exit(MockGE(database_dir=%s,debug=%s).%s(sys.argv[1:]))
+""" % (database_dir,debug,f))
+    os.chmod(path,0775)
+
+def setup_mock_GE(bindir=None,database_dir=None,debug=False):
+    """
+    Creates mock 'qsub', 'qstat', 'qacct' and 'qdel' exes
     """
     # Bin directory
     if bindir is None:
         bindir = os.getcwd()
-    # qsub
-    qsub = os.path.join(bindir,"qsub")
-    with open(qsub,'w') as fp:
-        fp.write("""#!/usr/bin/env python
-import sys
-from bcftbx.mockGE import MockGE
-sys.exit(MockGE().qsub(sys.argv[1:]))
-""")
-    os.chmod(qsub,0775)
-    # qstat
-    qstat = os.path.join(bindir,"qstat")
-    with open(qstat,'w') as fp:
-        fp.write("""#!/usr/bin/env python
-import sys
-from bcftbx.mockGE import MockGE
-sys.exit(MockGE().qstat(sys.argv[1:]))
-""")
-    os.chmod(qstat,0775)
-    # qacct
-    qacct = os.path.join(bindir,"qacct")
-    with open(qacct,'w') as fp:
-        fp.write("""#!/usr/bin/env python
-import sys
-from bcftbx.mockGE import MockGE
-sys.exit(MockGE().qacct(sys.argv[1:]))
-""")
-    os.chmod(qacct,0775)
+    bindir = os.path.abspath(bindir)
+    # Utilities
+    for utility in ("qsub","qstat","qacct","qdel"):
+        path = os.path.join(bindir,utility)
+        _make_mock_GE_exe(path,
+                          utility,
+                          database_dir=database_dir,
+                          debug=debug)
