@@ -2,6 +2,7 @@
 # Tests for JobRunner.py module
 #######################################################################
 from bcftbx.JobRunner import *
+from bcftbx.mockGE import setup_mock_GE
 import bcftbx.utils
 import unittest
 import tempfile
@@ -171,16 +172,24 @@ class TestSimpleJobRunner(unittest.TestCase):
 class TestGEJobRunner(unittest.TestCase):
 
     def setUp(self):
-        # Skip the test if Grid Engine not available
-        if bcftbx.utils.find_program('qstat') is None:
-            raise unittest.SkipTest("'qstat' not found, Grid Engine not available")
+        # Set up mockGE utilities
+        self.database_dir = self.make_tmp_dir()
+        self.bin_dir = self.make_tmp_dir()
+        self.old_path = os.environ['PATH']
+        os.environ['PATH'] = self.bin_dir + os.pathsep + self.old_path
+        setup_mock_GE(bindir=self.bin_dir,
+                      database_dir=self.database_dir,
+                      debug=False)
         # Create a temporary directory to work in
         self.working_dir = self.make_tmp_dir()
         self.log_dir = None
         # Extra arguments: edit this for local setup requirements
-        self.ge_extra_args = ['-l','short']
+        self.ge_extra_args = []
 
     def tearDown(self):
+        os.environ['PATH'] = self.old_path
+        shutil.rmtree(self.database_dir)
+        shutil.rmtree(self.bin_dir)
         shutil.rmtree(self.working_dir)
         if self.log_dir is not None:
             shutil.rmtree(self.log_dir)
@@ -224,12 +233,15 @@ class TestGEJobRunner(unittest.TestCase):
         # Create a runner and execute the echo command
         runner = GEJobRunner(ge_extra_args=self.ge_extra_args)
         jobid = self.run_job(runner,'test',self.working_dir,'echo',('this is a test',))
-        self.assertEqual(runner.exit_status(jobid),None)
         self.wait_for_jobs(runner,jobid)
         # Check outputs
         self.assertEqual(runner.name(jobid),'test')
-        self.assertTrue(os.path.isfile(runner.logFile(jobid)))
-        self.assertTrue(os.path.isfile(runner.errFile(jobid)))
+        self.assertTrue(os.path.isfile(runner.logFile(jobid)),
+                        "Stdout file '%s': not a file" %
+                        runner.errFile(jobid))
+        self.assertTrue(os.path.isfile(runner.errFile(jobid)),
+                        "Stderr file '%s': not a file" %
+                        runner.errFile(jobid))
         self.assertEqual(runner.exit_status(jobid),0)
         # Check log files are in the working directory
         self.assertEqual(os.path.dirname(runner.logFile(jobid)),self.working_dir)
@@ -241,9 +253,9 @@ class TestGEJobRunner(unittest.TestCase):
         # Create a runner and execute commands with known exit codes
         runner = GEJobRunner(ge_extra_args=self.ge_extra_args)
         jobid_ok = self.run_job(runner,'test_ok',self.working_dir,
-                                       '/bin/bash',('-c','\'exit 0\'',))
+                                       '/bin/bash',('-c','exit 0',))
         jobid_error = self.run_job(runner,'test_error',self.working_dir,
-                                   '/bin/bash',('-c','\'exit 1\'',))
+                                   '/bin/bash',('-c','exit 1',))
         self.wait_for_jobs(runner,jobid_ok,jobid_error)
         # Check exit codes
         self.assertEqual(runner.exit_status(jobid_ok),0)
