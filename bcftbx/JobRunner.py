@@ -564,8 +564,12 @@ class GEJobRunner(BaseJobRunner):
         job_ids = []
         for job_data in jobs:
             # Check for state being 'r' (=running), or 'S' (=suspended),
-            # or 'qw'(=queued, waiting), or 't' (=transferring)
-            if job_data[4] in ('r','S','qw','t'):
+            # or 'qw'(=queued, waiting), 't' (=transferring)
+            # **or**
+            # Starts with 'E' (=error, e.g. 'Eqw') or 'd' (=deleted,
+            # e.g. 'dr')
+            if job_data[4] in ('r','S','qw','t') or \
+               job_data[4][0] in ('E','d'):
                 # Id is first item for each job
                 job_ids.append(job_data[0])
         return job_ids
