@@ -525,7 +525,7 @@ class GEJobRunner(BaseJobRunner):
         The name should be '<name>.e<job_id>'
         """
         name = self.__ge_name(self.__names[job_id])
-        err_file = "%s.e%s" % (self.name,job_id)
+        err_file = "%s.e%s" % (name,job_id)
         if self.__log_dirs[job_id] is not None:
             err_file = os.path.join(self.__log_dirs[job_id],err_file)
         return err_file
