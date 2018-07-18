@@ -9,7 +9,8 @@ Utility class for simulating Grid Engine (GE) functionality
 Provides a single class `MockGE`, which implements methods for
 simulating the functionality provided by the Grid Engine command
 line utilities, and a function `setup_mock_GE`, which creates
-mock versions of those utilities ('qsub', 'qstat' and 'qacct').
+mock versions of those utilities ('qsub', 'qstat', 'qacct' and
+'qdel').
 """
 
 #######################################################################
@@ -582,12 +583,13 @@ exit_status  %s""" % (queue,user,name,job_id,
 
 def _make_mock_GE_exe(path,f,database_dir=None,debug=False):
     """
+    Internal helper function to create utilities
     """
     with open(path,'w') as fp:
         fp.write("""#!/usr/bin/env python
 import sys
 from bcftbx.mockGE import MockGE
-sys.exit(MockGE(database_dir=%s,debug=%s).%s(sys.argv[1:]))
+sys.exit(MockGE(database_dir='%s',debug=%s).%s(sys.argv[1:]))
 """ % (database_dir,debug,f))
     os.chmod(path,0775)
 
