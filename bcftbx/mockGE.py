@@ -300,6 +300,17 @@ echo "$exit_code" > %s/__exit_code.%d
             """
             cu.execute(sql,(job_id,))
             self._cx.commit()
+            # Remove any files
+            for name in ("__job%d.sh" % job_id,
+                         "__exit_code.%d" % job_id):
+                try:
+                    os.remove(os.path.join(self._database_dir,
+                                           name))
+                except OSError:
+                    pass
+            # Exit code
+            exit_code_file = os.path.join(self._database_dir,
+                                          "__exit_code.%d" % job_id)
         # Deal with jobs that are waiting
         sql = """
         SELECT id FROM jobs WHERE state == 'qw'
@@ -589,8 +600,11 @@ def _make_mock_GE_exe(path,f,database_dir=None,debug=False):
         fp.write("""#!/usr/bin/env python
 import sys
 from bcftbx.mockGE import MockGE
-sys.exit(MockGE(database_dir='%s',debug=%s).%s(sys.argv[1:]))
-""" % (database_dir,debug,f))
+sys.exit(MockGE(database_dir=%s,debug=%s).%s(sys.argv[1:]))
+""" % (("'%s'" % database_dir
+        if database_dir is not None
+        else None),
+       debug,f))
     os.chmod(path,0775)
 
 def setup_mock_GE(bindir=None,database_dir=None,debug=False):
