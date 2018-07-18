@@ -455,13 +455,13 @@ class GEJobRunner(BaseJobRunner):
         if self.__ge_extra_args:
             qsub.extend(self.__ge_extra_args)
         qsub.append(cmd)
-        logging.debug("QsubScript: qsub command: %s" % qsub)
+        logging.debug("GEJobRunner: qsub command: %s" % qsub)
         # Run the qsub job in the current directory
         cwd = os.getcwd()
         # Check that this exists
-        logging.debug("QsubScript: executing in %s" % cwd)
+        logging.debug("GEJobRunner: executing in %s" % cwd)
         if not os.path.exists(cwd):
-            logging.error("QsubScript: cwd doesn't exist!")
+            logging.error("GEJobRunner: cwd doesn't exist!")
             return None
         p = subprocess.Popen(qsub,cwd=cwd,
                              stdout=subprocess.PIPE,
@@ -471,13 +471,13 @@ class GEJobRunner(BaseJobRunner):
         error = p.stderr.read().strip()
         if error:
             # Just echo error message as a warning
-            logging.warning("QsubScript: '%s'" % error)
+            logging.warning("GEJobRunner: '%s'" % error)
         # Capture the job id from the output
         job_id = None
         for line in p.stdout:
             if line.startswith('Your job'):
                 job_id = line.split()[2]
-        logging.debug("QsubScript: done - job id = %s" % job_id)
+        logging.debug("GEJobRunner: done - job id = %s" % job_id)
         # Store name and log dir against job id
         if job_id is not None:
             self.__names[job_id] = name
@@ -491,7 +491,7 @@ class GEJobRunner(BaseJobRunner):
     def terminate(self,job_id):
         """Remove a job from the GE queue using 'qdel'
         """
-        logging.debug("QdelJob: deleting job")
+        logging.debug("GEJobRunner: deleting job")
         qdel=('qdel',job_id)
         p = subprocess.Popen(qdel,stdout=subprocess.PIPE)
         p.wait()
