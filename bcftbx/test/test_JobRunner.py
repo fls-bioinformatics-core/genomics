@@ -307,7 +307,7 @@ class TestGEJobRunner(unittest.TestCase):
         runner = GEJobRunner(ge_extra_args=self.ge_extra_args)
         # Reset the log directory
         runner.set_log_dir(self.log_dir)
-        jobid = self.run_job(runner,'test',self.working_dir,'echo','this is a test')
+        jobid = self.run_job(runner,'test',self.working_dir,'echo',('this is a test',))
         self.wait_for_jobs(runner,jobid)
         # Check outputs
         self.assertEqual(runner.name(jobid),'test')
@@ -352,6 +352,42 @@ class TestGEJobRunner(unittest.TestCase):
         self.assertEqual(os.path.dirname(runner.errFile(jobid2)),self.working_dir)
         self.assertEqual(os.path.dirname(runner.logFile(jobid3)),self.log_dir)
         self.assertEqual(os.path.dirname(runner.errFile(jobid3)),self.log_dir)
+
+    def test_ge_job_runner_error_state(self):
+        """Test GEJobRunner detects job in error state
+        """
+        # Create a runner and execute a command in a non-existent
+        # working directory
+        runner = GEJobRunner(ge_extra_args=self.ge_extra_args)
+        jobid = self.run_job(runner,'test_eqw',
+                             '/non/existent/dir',
+                             'echo',('this should fail',))
+        # Wait for job to start
+        ntries = 0
+        while ntries < 100:
+            if runner.isRunning(jobid):
+                break
+            ntries += 1
+        self.assertTrue(runner.isRunning(jobid))
+        # Check error state
+        self.assertTrue(runner.errorState(jobid))
+
+    def test_ge_job_runner_queue(self):
+        """Test GEJobRunner fetches the queue of a running job
+        """
+        # Create a runner and execute the sleep command
+        runner = GEJobRunner(ge_extra_args=self.ge_extra_args)
+        jobid = self.run_job(runner,'test_queue',
+                             self.working_dir,
+                             'sleep',('10s',))
+        # Wait for job to start
+        ntries = 0
+        while ntries < 100:
+            if runner.isRunning(jobid):
+                break
+            ntries += 1
+        self.assertTrue(runner.isRunning(jobid))
+        self.assertEqual(runner.queue(jobid),"mock.q")
 
 class TestFetchRunnerFunction(unittest.TestCase):
     """Tests for the fetch_runner function
