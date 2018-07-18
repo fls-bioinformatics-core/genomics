@@ -400,12 +400,6 @@ class GEJobRunner(BaseJobRunner):
             name += '(%s)' % ' '.join(self.__ge_extra_args)
         return name
 
-    def queue(self,queue):
-        """(Re)set the name of GE queue to use
-
-        """
-        self.__queue = queue
-
     def name(self,job_id):
         """Return the name for a job
         """
