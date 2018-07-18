@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #     JobRunner.py: classes for starting and managing job runs
-#     Copyright (C) University of Manchester 2011-4 Peter Briggs
+#     Copyright (C) University of Manchester 2011-2018 Peter Briggs
 #
 ########################################################################
 #
@@ -42,8 +42,6 @@ Simple usage example:
 
 """
 
-__version__ = "1.1.2"
-
 #######################################################################
 # Import modules that this module depends on
 #######################################################################
@@ -65,7 +63,7 @@ except Exception, ex:
 # Classes
 #######################################################################
 
-class BaseJobRunner:
+class BaseJobRunner(object):
     """Base class for implementing job runners
 
     This class can be used as a template for implementing custom
@@ -620,7 +618,7 @@ class GEJobRunner(BaseJobRunner):
         except OSError:
             # os.getlogin() not guaranteed to work in all environments?
             cmd = ['qstat']
-        # Run the qstat
+        # Run qstat command
         p = subprocess.Popen(cmd,stdout=subprocess.PIPE)
         p.wait()
         # Process the output
