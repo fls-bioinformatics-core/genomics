@@ -39,15 +39,18 @@ class MockGE(object):
     directory' (defaults to '$HOME/.mockGE'); scripts and job
     exit status files are also written to this directory.
     """
-    def __init__(self,max_jobs=4,qacct_delay=15,shell='/bin/bash',
-                 database_dir=None,debug=False):
+    def __init__(self,max_jobs=4,qsub_delay=0.0,qacct_delay=15.0,
+                 shell='/bin/bash',database_dir=None,debug=False):
         """
         Create a new MockGE instance
 
         Arguments:
           max_jobs (int): maximum number of jobs to run at
             once; additional jobs will be queued
-          qacct_delay (int): number of seconds that must elapse
+          qsub_delay (float): minimum time in seconds that must
+            elapse from 'qsub' command to job registering and
+            appearing in 'qstat' output
+          qacct_delay (float): number of seconds that must elapse
             from job finishing to providing 'qacct' info
           shell (str): shell to run internal scripts using
           database_dir (str): path to directory used for
@@ -71,6 +74,7 @@ class MockGE(object):
         try:
             logging.debug("Connecting to DB")
             self._cx = sqlite3.connect(self._db_file)
+            self._cx.row_factory = sqlite3.Row
         except Exception as ex:
             print "Exception connecting to DB: %s" % ex
             raise ex
@@ -79,6 +83,7 @@ class MockGE(object):
             self._init_db()
         self._shell = shell
         self._max_jobs = max_jobs
+        self._qsub_delay = qsub_delay
         self._qacct_delay = qacct_delay
 
     def _init_db(self):
@@ -132,7 +137,7 @@ class MockGE(object):
             """
             cu = self._cx.cursor()
             cu.execute(sql,(self._user(),
-                            'qw',
+                            '',
                             time.time(),
                             name,
                             command,
@@ -157,11 +162,11 @@ class MockGE(object):
         cu = self._cx.cursor()
         cu.execute(sql,(job_id,))
         job = cu.fetchone()
-        name = job[0]
-        command = job[1]
-        working_dir = job[2]
-        output_name = job[3]
-        join_output = job[4]
+        name = job['name']
+        command = job['command']
+        working_dir = job['working_dir']
+        output_name = job['output_name']
+        join_output = job['join_output']
         # Try to run the job
         try:
             # Output file basename
@@ -226,8 +231,27 @@ echo "$exit_code" > %s/__exit_code.%d
         """
         Update all job info
         """
-        # Get jobs that have finished running
+        # Get jobs that are waiting with no state and
+        # set them to 'qw'
         cu = self._cx.cursor()
+        sql = """
+        SELECT id,qsub_time FROM jobs WHERE state==''
+        """
+        cu.execute(sql)
+        jobs = cu.fetchall()
+        for job in jobs:
+            if (time.time() - job['qsub_time']) < self._qsub_delay:
+                logging.debug("Job %d not ready to go to 'qw'",
+                              job['id'])
+                continue
+            logging.debug("Setting state to 'qw' for job %d" %
+                          job['id'])
+            sql = """
+            UPDATE jobs SET state='qw' WHERE id=?
+            """
+            cu.execute(sql,(job['id'],))
+            self._cx.commit()
+        # Get jobs that have finished running
         sql = """
         SELECT id,pid FROM jobs WHERE state=='r'
         """
@@ -235,8 +259,8 @@ echo "$exit_code" > %s/__exit_code.%d
         jobs = cu.fetchall()
         finished_jobs = []
         for job in jobs:
-            job_id = job[0]
-            pid = job[1]
+            job_id = job['id']
+            pid = job['pid']
             try:
                 # See https://stackoverflow.com/a/7647264/579925
                 logging.debug("Checking job=%d pid=%d" % (job_id,pid))
@@ -279,7 +303,7 @@ echo "$exit_code" > %s/__exit_code.%d
         """
         cu.execute(sql)
         jobs = cu.fetchall()
-        deleted_jobs = [job[0] for job in jobs]
+        deleted_jobs = [job['id'] for job in jobs]
         for job_id in deleted_jobs:
             sql = """
             SELECT pid FROM jobs WHERE id==?
@@ -290,7 +314,7 @@ echo "$exit_code" > %s/__exit_code.%d
                 continue
             # Try to stop the job
             try:
-                pid = int(job[0])
+                pid = int(job['pid'])
                 os.kill(pid,9)
             except Exception:
                 pass
@@ -317,7 +341,7 @@ echo "$exit_code" > %s/__exit_code.%d
         """
         cu.execute(sql)
         jobs = cu.fetchall()
-        waiting_jobs = [job[0] for job in jobs]
+        waiting_jobs = [job['id'] for job in jobs]
         for job_id in waiting_jobs:
             sql = """
             SELECT id,pid FROM jobs WHERE state=='r'
@@ -369,7 +393,7 @@ echo "$exit_code" > %s/__exit_code.%d
         job = cu.fetchone()
         if job is None:
             return
-        state = job[0]
+        state = job['id']
         if state not in ('qw','r','Eqw'):
             return
         new_state = 'd'
@@ -472,14 +496,14 @@ echo "$exit_code" > %s/__exit_code.%d
         print """job-ID  prior   name       user         state submit/start at     queue                          slots ja-task-ID
 -----------------------------------------------------------------------------------------------------------------"""
         for job in jobs:
-            job_id = str(job[0])
-            name = str(job[1])
-            user = str(job[2])
-            state = str(job[3])
-            start_time = job[5]
-            queue = job[6]
+            job_id = str(job["id"])
+            name = str(job["name"])
+            user = str(job["user"])
+            state = str(job["state"])
+            start_time = job["start_time"]
+            queue = job["queue"]
             if start_time is None:
-                start_time = job[4]
+                start_time = job["qsub_time"]
             start_time = datetime.datetime.fromtimestamp(start_time).strftime("%m/%d/%Y %H:%M:%S")
             line = []
             line.append("%s%s" % (job_id[:7],' '*(7-len(job_id))))
@@ -540,14 +564,14 @@ echo "$exit_code" > %s/__exit_code.%d
         if elapsed_since_job_end < self._qacct_delay:
             return
         # Print info
-        job_id = job_info[0]
-        name = job_info[1]
-        user = job_info[2]
-        exit_code = job_info[3]
-        qsub_time = datetime.datetime.fromtimestamp(job_info[4]).strftime("%c")
-        start_time = datetime.datetime.fromtimestamp(job_info[5]).strftime("%c")
-        end_time = datetime.datetime.fromtimestamp(job_info[6]).strftime("%c")
-        queue = job_info[7]
+        job_id = job_info['id']
+        name = job_info['name']
+        user = job_info['user']
+        exit_code = job_info['exit_code']
+        qsub_time = datetime.datetime.fromtimestamp(job_info['qsub_time']).strftime("%c")
+        start_time = datetime.datetime.fromtimestamp(job_info['start_time']).strftime("%c")
+        end_time = datetime.datetime.fromtimestamp(job_info['end_time']).strftime("%c")
+        queue = job_info['queue']
         print """==============================================================
 qname        %s  
 hostname     node001
@@ -592,22 +616,30 @@ exit_status  %s""" % (queue,user,name,job_id,
 # Functions
 #######################################################################
 
-def _make_mock_GE_exe(path,f,database_dir=None,debug=False):
+def _make_mock_GE_exe(path,f,database_dir=None,debug=None,
+                      qsub_delay=None,qacct_delay=None):
     """
     Internal helper function to create utilities
     """
+    args = []
+    if database_dir is not None:
+        args.append("database_dir='%s'" % database_dir)
+    if qsub_delay is not None:
+        args.append("qsub_delay=%s" % qsub_delay)
+    if qacct_delay is not None:
+        args.append("qacct_delay=%s" % qacct_delay)
+    if debug is not None:
+        args.append("debug=%s" % debug)
     with open(path,'w') as fp:
         fp.write("""#!/usr/bin/env python
 import sys
 from bcftbx.mockGE import MockGE
-sys.exit(MockGE(database_dir=%s,debug=%s).%s(sys.argv[1:]))
-""" % (("'%s'" % database_dir
-        if database_dir is not None
-        else None),
-       debug,f))
+sys.exit(MockGE(%s).%s(sys.argv[1:]))
+""" % (','.join(args),f))
     os.chmod(path,0775)
 
-def setup_mock_GE(bindir=None,database_dir=None,debug=False):
+def setup_mock_GE(bindir=None,database_dir=None,debug=None,
+                  qsub_delay=None,qacct_delay=None):
     """
     Creates mock 'qsub', 'qstat', 'qacct' and 'qdel' exes
     """
@@ -621,4 +653,6 @@ def setup_mock_GE(bindir=None,database_dir=None,debug=False):
         _make_mock_GE_exe(path,
                           utility,
                           database_dir=database_dir,
+                          qsub_delay=qsub_delay,
+                          qacct_delay=qacct_delay,
                           debug=debug)
