@@ -104,7 +104,7 @@ class BaseJobRunner(object):
         Returns:
           Returns a job id, or None if the job failed to start
         """
-        raise NotImplementedError, "Subclass must implement 'run'"
+        raise NotImplementedError("Subclass must implement 'run'")
 
     def terminate(self,job_id):
         """Terminate a job
@@ -112,22 +112,22 @@ class BaseJobRunner(object):
         Returns True if termination was successful, False
         otherwise
         """
-        raise NotImplementedError, "Subclass must implement 'terminate'"
+        raise NotImplementedError("Subclass must implement 'terminate'")
 
     def list(self):
         """Return a list of running job_ids
         """
-        raise NotImplementedError, "Subclass must implement 'list'"
+        raise NotImplementedError("Subclass must implement 'list'")
 
     def logFile(self,job_id):
         """Return name of log file relative to working directory
         """
-        raise NotImplementedError, "Subclass must implement 'logFile'"
+        raise NotImplementedError("Subclass must implement 'logFile'")
 
     def errFile(self,job_id):
         """Return name of error file relative to working directory
         """
-        raise NotImplementedError, "Subclass must implement 'errFile'"
+        raise NotImplementedError("Subclass must implement 'errFile'")
 
     def isRunning(self,job_id):
         """Check if a job is running
@@ -888,4 +888,4 @@ def fetch_runner(definition):
             return GEJobRunner(ge_extra_args=ge_extra_args)
         else:
             return GEJobRunner()
-    raise Exception,"Unrecognised runner definition: %s" % definition
+    raise Exception("Unrecognised runner definition: %s" % definition)
