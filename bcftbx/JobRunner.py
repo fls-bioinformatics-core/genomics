@@ -376,7 +376,7 @@ class GEJobRunner(BaseJobRunner):
     """
 
     def __init__(self,queue=None,log_dir=None,ge_extra_args=None,
-                 poll_interval=1.0,timeout=30.0):
+                 poll_interval=5.0,timeout=30.0):
         """Create a new GEJobRunner instance
 
         Arguments:
@@ -384,7 +384,7 @@ class GEJobRunner(BaseJobRunner):
           log_dir: Directory to write log files to (set to 'None' to use cwd)
           ge_extra_args: Arbitrary additional arguments to supply to qsub
           poll_interval: time interval to use when polling Grid Engine e.g.
-            to acquire qacct information (default 1s)
+            to acquire qacct information (default 5s)
           timeout: maximum length of time to wait before giving up when
             polling Grid Engine (default 30s)
         """
