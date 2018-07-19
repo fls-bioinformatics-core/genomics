@@ -393,7 +393,7 @@ echo "$exit_code" > %s/__exit_code.%d
         job = cu.fetchone()
         if job is None:
             return
-        state = job['id']
+        state = job['state']
         if state not in ('qw','r','Eqw'):
             return
         new_state = 'd'
