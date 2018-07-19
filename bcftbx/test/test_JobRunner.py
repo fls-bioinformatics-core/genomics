@@ -179,6 +179,8 @@ class TestGEJobRunner(unittest.TestCase):
         os.environ['PATH'] = self.bin_dir + os.pathsep + self.old_path
         setup_mock_GE(bindir=self.bin_dir,
                       database_dir=self.database_dir,
+                      qsub_delay=0.0,
+                      qacct_delay=15.0,
                       debug=False)
         # Create a temporary directory to work in
         self.working_dir = self.make_tmp_dir()
@@ -205,10 +207,11 @@ class TestGEJobRunner(unittest.TestCase):
 
     def wait_for_jobs(self,runner,*args):
         poll_interval = 0.1
+        timeout = 10.0
         ntries = 0
         running_jobs = True
         # Check running jobs
-        while ntries < 100 and running_jobs:
+        while (ntries*poll_interval < timeout) and running_jobs:
             running_jobs = False
             for jobid in args:
                 if runner.isRunning(jobid):
