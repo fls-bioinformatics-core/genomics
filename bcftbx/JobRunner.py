@@ -45,10 +45,14 @@ Simple usage example:
 #######################################################################
 # Import modules that this module depends on
 #######################################################################
+
 import os
 import logging
 import subprocess
 import time
+import tempfile
+import shutil
+import atexit
 try:
     import drmaa
 except ImportError:
@@ -365,6 +369,10 @@ class GEJobRunner(BaseJobRunner):
 
     Additionally the runner can be configured for a specific GE
     queue on initialisation.
+
+    Each GEJobRunner instance creates a temporary directory which
+    it uses for internal admin; this will be removed at program
+    exit via 'atexit'.
     """
 
     def __init__(self,queue=None,log_dir=None,ge_extra_args=None,
@@ -380,10 +388,15 @@ class GEJobRunner(BaseJobRunner):
           timeout: maximum length of time to wait before giving up when
             polling Grid Engine (default 30s)
         """
+        # Internal parameters
+        self.__admin_dir = self.__make_admin_dir()
+        self.__job_count = 0
+        self.__shell = "/bin/bash"
         self.__queue = queue
         # Directory for log files
         self.set_log_dir(log_dir)
-        # Keep track of names and log dirs for each job
+        # Keep track of data (names, log dirs etc) for each job
+        self.__job_number = {}
         self.__names = {}
         self.__log_dirs = {}
         self.__exit_status = {}
@@ -391,6 +404,8 @@ class GEJobRunner(BaseJobRunner):
         # Polling intervals and timeout periods (seconds)
         self.__ge_poll_interval = poll_interval
         self.__ge_timeout = timeout
+        # Register clean up function
+        atexit.register(self.__clean_up_admin_dir)
 
     def __repr__(self):
         name = 'GEJobRunner'
@@ -430,7 +445,12 @@ class GEJobRunner(BaseJobRunner):
         logging.debug("Working_dir: %s" % working_dir)
         logging.debug("Script     : %s" % script)
         logging.debug("Arguments  : %s" % str(args))
-        # Build command to be submitted
+        # Build script to run the command to be submitted
+        self.__job_count += 1
+        logging.debug("Internal job count: %s" % self.__job_count)
+        job_dir = os.path.join(self.__admin_dir,str(self.__job_count))
+        logging.debug("Job admin dir     : %s" % job_dir)
+        os.mkdir(job_dir)
         cmd_args = [script]
         for arg in args:
             # Quote arguments containing whitespace
@@ -438,11 +458,20 @@ class GEJobRunner(BaseJobRunner):
                 arg = "\"%s\"" % arg
             cmd_args.append(arg)
         cmd = ' '.join(cmd_args)
+        job_script = os.path.join(job_dir,"job_script.sh")
+        with open(job_script,'w') as fp:
+            fp.write("""#!%s
+%s
+exit_code=$?
+echo "$exit_code" > %s/__exit_code
+exit $exit_code
+""" % (self.__shell,cmd,job_dir))
+        os.chmod(job_script,0755)
         # Sanitize name for GE by replacing invalid characters
         # (colon, asterisk...)
         ge_name = self.__ge_name(name)
         logging.debug("GE job name: %s" % ge_name)
-        # Build qsub command to submit it
+        # Build qsub command to submit script
         qsub = ['qsub','-b','y','-V','-N',ge_name]
         if self.__queue:
             qsub.extend(('-q',self.__queue))
@@ -454,7 +483,7 @@ class GEJobRunner(BaseJobRunner):
             qsub.extend(('-wd',working_dir))
         if self.__ge_extra_args:
             qsub.extend(self.__ge_extra_args)
-        qsub.append(cmd)
+        qsub.append(job_script)
         logging.debug("GEJobRunner: qsub command: %s" % qsub)
         # Run the qsub job in the current directory
         cwd = os.getcwd()
@@ -478,8 +507,9 @@ class GEJobRunner(BaseJobRunner):
             if line.startswith('Your job'):
                 job_id = line.split()[2]
         logging.debug("GEJobRunner: done - job id = %s" % job_id)
-        # Store name and log dir against job id
+        # Store internal number, name and log dir against job id
         if job_id is not None:
+            self.__job_number[job_id] = self.__job_count
             self.__names[job_id] = name
             if self.log_dir is None:
                 self.__log_dirs[job_id] = working_dir
@@ -568,6 +598,23 @@ class GEJobRunner(BaseJobRunner):
 
     def exit_status(self,job_id):
         """Return exit status from command run by a job
+
+        Attempts to read the exit status/return code for
+        a job.
+
+        The exit status is read from the '__exit_code'
+        file associated with the job; if this file can't
+        be found after a number of attempts to locate it
+        - or if the exit status cannot be read from the
+        file - then the exit status for the job will be
+        set to '127'.
+
+        Once the exit status has been read from the file,
+        the value is cached and the files will be removed;
+        future calls to 'exit_status' will return the
+        cached value.
+
+        If the job is still running then returns 'None'.
         """
         if job_id in self.__exit_status:
             # Return cached exit status
@@ -575,35 +622,100 @@ class GEJobRunner(BaseJobRunner):
         if self.isRunning(job_id):
             # Return None if job is still running
             return None
-        # Try to get qacct info
-        # This might not be available immediately after the job
-        # completes as the accounting system will only flush the
-        # information periodically
-        # Therefore we will retry retrieval based on the polling
-        # interval and timeout period defined on initialisation
-        job_info = self.__run_qacct(job_id)
+        # Look for __exit_code file from job
+        exit_code_file = os.path.join(self.__admin_dir,
+                                      str(self.__job_number[job_id]),
+                                      "__exit_code")
         retries = 0
-        while not job_info and \
-              (retries*self.__ge_poll_interval) < self.__ge_timeout:
+        while not os.path.exists(exit_code_file):
+            # Check for time out
+            if (retries*self.__ge_poll_interval) > self.__ge_timeout:
+                logging.debug("GEJobRunner: timed out waiting for "
+                              "exit code file (%d attempts made)" %
+                              retries)
+                break
+            # Wait before trying again
             time.sleep(self.__ge_poll_interval)
-            job_info = self.__run_qacct(job_id)
             retries += 1
-        logging.debug("qacct: %s (%s retries), returned %s" %
-                      (job_id,retries,job_info))
-        # Check if we have qacct info after multiple attempts
-        if not job_info:
-            logging.warning("No qacct info for job %s after %d attempts "
-                            "(timeout %ss)" %
-                            (job_id,retries,self.__ge_timeout))
-            return None
-        # Extract, store and return exit status
+        # Extract exit code from file and clean up
         try:
-            exit_status = int(job_info['exit_status'])
-            self.__exit_status[job_id] = exit_status
-            return exit_status
+            with open(exit_code_file,'r') as fp:
+                exit_status = int(fp.read())
+        except Exception as ex:
+            logging.error("GEJobRunner: exception when reading exit_status "
+                          "for job %s: %s" % (job_id,ex))
+            # Set exit status
+            exit_status = 127
+        # Set internally
+        self.__exit_status[job_id] = exit_status
+        self.__clean_up_job(job_id)
+        return exit_status
+
+    def __make_admin_dir(self):
+        """Internal: create temporary directory for admin etc
+
+        The directory will be created in a '.gejobrunner'
+        subdirectory of the current working directory.
+        """
+        try:
+            # Return current value, if set
+            return self.__admin_dir
+        except AttributeError:
+            pass
+        # Make new dir in current dir
+        parent_dir = os.path.join(os.getcwd(),".gejobrunner")
+        try:
+            os.mkdir(parent_dir)
+        except OSError:
+            pass
+        admin_dir = tempfile.mkdtemp(dir=parent_dir)
+        return admin_dir
+
+    def __clean_up_admin_dir(self):
+        """Internal: remove the admin dir
+
+        Shouldn't be called directly; instead register with
+        'atexit' to force clean up on program exit
+        """
+        logging.debug("GEJobRunner: removing admin dir '%s'" %
+                      self.__admin_dir)
+        try:
+            shutil.rmtree(self.__admin_dir)
+        except Exception as ex:
+            logging.warning("GEJobRunner: exception removing "
+                            "admin dir '%s': %s" %
+                            (self.__admin_dir,ex))
+
+    def __clean_up_job(self,job_id):
+        """Internal: clean up internal job files
+
+        Removes the internal directory associated with a job, along
+        with any files it contains (e.g. job script, exit code etc).
+
+        This method should only be invoked for jobs that have
+        finished running. If the job is still running then returns
+        with no action.
+        """
+        # Check job is not still running
+        if self.isRunning(job_id):
+            logging.warning("GEJobRunner: ignored attempt to clean up "
+                            "job %s while still running" % job_id)
+            return
+        # Do clean up
+        logging.debug("GEJobRunner: cleaning up after job %s" % job_id)
+        try:
+            job_number = self.__job_number[job_id]
         except KeyError:
-            logging.error("No exit_status returned for job %s" % job_id)
-            return None
+            logging.error("GEJobRunner: job %d not found, can't do "
+                          "clean up" % job_id)
+            return
+        job_dir = os.path.join(self.__admin_dir,str(job_number))
+        try:
+            # Remove the directory and contents
+            shutil.rmtree(job_dir)
+        except Exception as ex:
+            logging.warning("GEJobRunner: exception cleaning up for "
+                            "job %s (ignored): %s" % (job_id,ex))
 
     def __run_qstat(self):
         """Internal: run qstat and return data as a list of lists
@@ -652,19 +764,30 @@ class GEJobRunner(BaseJobRunner):
 
         https://arc.liv.ac.uk/SGE/htmlman/htmlman5/accounting.html
 
-        Note also that there may be a lag between job completion
-        and the accounting information becoming available to qacct.
-        According to the documentation this interval is governed
+        **Use of this method is deprecated**
+
+        This method is now deprecated for a number of reasons:
+
+        * Use of 'qacct' requires that Grid Engine accounting has
+          been turned on, which is not guaranteed.
+
+        * On systems where accounting information is available,
+          there may also be a significant delay between job
+          completion and the information becoming available via
+          'qacct'.
+
+        (According to the documentation this interval is governed
         by the `accounting_flush_time` parameter in the
         `reporting_params` line of the Grid Engine configuration
         file - for example:
 
         > grep $SGE_ROOT/$SGE_CELL/common/configuration
         reporting_params             accounting=true reporting=false flush_time=00:00:15 joblog=false sharelog=00:00:00
+        )
 
-        NB it is also possible that accounting is turned off and
-        that no information is available at all.
-
+        As a result calls to 'qacct' can be time-consuming and
+        expensive to perform, and are best avoided unless absolutely
+        necessary.
         """
         cmd = ['qacct','-j',"%s" % job_id]
         # Run the qacct command
