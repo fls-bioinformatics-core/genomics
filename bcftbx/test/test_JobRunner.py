@@ -432,7 +432,7 @@ class TestGEJobRunner(unittest.TestCase):
         self.fail("Job failed to go into error state")
 
     def test_ge_job_runner_queue(self):
-        """Test GEJobRunner fetches the queue of a running job
+        """Test GEJobRunner fetches the queue of running job
         """
         # Create a runner and execute the sleep command
         runner = GEJobRunner(ge_extra_args=self.ge_extra_args)
@@ -442,13 +442,27 @@ class TestGEJobRunner(unittest.TestCase):
         # Wait for job to return queue
         ntries = 0
         while ntries < 100:
-            queue = runner.queue(jobid)
-            if queue is not None:
-                self.assertEqual(queue,"mock.q")
-                return
-            else:
-                ntries += 1
+            if runner.isRunning(jobid):
+                queue = runner.queue(jobid)
+                if queue is not None:
+                    self.assertEqual(queue,"mock.q")
+                    return
+            time.sleep(0.1)
+            ntries += 1
         self.fail("Job failed to return queue before time out")
+
+    def test_ge_job_runner_queue_after_completion(self):
+        """Test GEJobRunner fetches the queue of completed job
+        """
+        # Create a runner and execute the sleep command
+        runner = GEJobRunner(ge_extra_args=self.ge_extra_args)
+        jobid = self.run_job(runner,'test_queue',
+                             self.working_dir,
+                             'sleep',('1s',))
+        # Wait for job to finish
+        self.wait_for_jobs(runner,jobid)
+        # Check the queue
+        self.assertEqual(runner.queue(jobid),"mock.q")
 
 class TestFetchRunnerFunction(unittest.TestCase):
     """Tests for the fetch_runner function

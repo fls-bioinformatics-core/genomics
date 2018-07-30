@@ -392,7 +392,7 @@ class GEJobRunner(BaseJobRunner):
         self.__admin_dir = self.__make_admin_dir()
         self.__job_count = 0
         self.__shell = "/bin/bash"
-        self.__queue = queue
+        self.__ge_queue = queue
         # Directory for log files
         self.set_log_dir(log_dir)
         # Keep track of data (names, log dirs etc) for each job
@@ -400,6 +400,7 @@ class GEJobRunner(BaseJobRunner):
         self.__names = {}
         self.__log_dirs = {}
         self.__exit_status = {}
+        self.__queue = {}
         self.__start_time = {}
         self.__ge_extra_args = ge_extra_args
         # Cached job list
@@ -447,7 +448,7 @@ class GEJobRunner(BaseJobRunner):
         """
         logging.debug("GEJobRunner: submitting job")
         logging.debug("Name       : %s" % name)
-        logging.debug("Queue      : %s" % self.__queue)
+        logging.debug("Queue      : %s" % self.__ge_queue)
         logging.debug("Extra args : %s" % self.__ge_extra_args)
         logging.debug("Log dir    : %s" % self.log_dir)
         logging.debug("Working_dir: %s" % working_dir)
@@ -469,11 +470,12 @@ class GEJobRunner(BaseJobRunner):
         job_script = os.path.join(job_dir,"job_script.sh")
         with open(job_script,'w') as fp:
             fp.write("""#!%s
+echo "$QUEUE" > %s/__queue
 %s
 exit_code=$?
 echo "$exit_code" > %s/__exit_code
 exit $exit_code
-""" % (self.__shell,cmd,job_dir))
+""" % (self.__shell,job_dir,cmd,job_dir))
         os.chmod(job_script,0755)
         # Sanitize name for GE by replacing invalid characters
         # (colon, asterisk...)
@@ -481,8 +483,8 @@ exit $exit_code
         logging.debug("GE job name: %s" % ge_name)
         # Build qsub command to submit script
         qsub = ['qsub','-b','y','-V','-N',ge_name]
-        if self.__queue:
-            qsub.extend(('-q',self.__queue))
+        if self.__ge_queue:
+            qsub.extend(('-q',self.__ge_queue))
         if self.log_dir:
             qsub.extend(('-o',self.log_dir,'-e',self.log_dir))
         if not working_dir:
@@ -582,16 +584,29 @@ exit $exit_code
         Returns the queue as reported by qstat, or None if
         not found.
         """
-        jobs = self.__run_qstat()
-        for job_data in jobs:
-            # Id is first item, Queue is 8th item for each job
-            if job_data[0] == job_id:
-                try:
-                    return job_data[7]
-                except Exception:
-                    return None
-        # No match
-        return None
+        if job_id in self.__queue:
+            # Return cached queue
+            return self.__queue[job_id]
+        # Look for __queue file from job
+        queue_file = os.path.join(self.__admin_dir,
+                                  str(self.__job_number[job_id]),
+                                  "__queue")
+        logging.debug("GEJobRunner: queue file: %s" % queue_file)
+        if not os.path.exists(queue_file):
+            # No queue file available
+            logging.debug("GEJobRunner: queue file not found")
+            return None
+        # Extract queue name from file
+        try:
+            with open(queue_file,'r') as fp:
+                queue = fp.read().strip()
+            logging.debug("GEJobRunner: queue: %s" % queue)
+        except Exception as ex:
+            logging.error("GEJobRunner: exception when reading queue "
+                          "for job %s: %s" % (job_id,ex))
+            return None
+        self.__queue[job_id] = queue
+        return queue
 
     def list(self):
         """Get list of job ids in the queue.
@@ -701,6 +716,8 @@ exit $exit_code
                           "for job %s: %s" % (job_id,ex))
             # Set exit status
             exit_status = 127
+        # Update queue
+        self.queue(job_id)
         # Set internally
         self.__exit_status[job_id] = exit_status
         self.__clean_up_job(job_id)

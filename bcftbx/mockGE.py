@@ -195,10 +195,10 @@ class MockGE(object):
                                        "__job%d.sh" % job_id)
             with open(script_file,'w') as fp:
                 fp.write("""#!%s
-%s
+QUEUE=%s %s
 exit_code=$?
 echo "$exit_code" > %s/__exit_code.%d
-""" % (self._shell,command,self._database_dir,job_id))
+""" % (self._shell,queue,command,self._database_dir,job_id))
             os.chmod(script_file,0775)
             # Run the command
             p = subprocess.Popen(script_file,
