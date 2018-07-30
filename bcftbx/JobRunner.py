@@ -400,7 +400,15 @@ class GEJobRunner(BaseJobRunner):
         self.__names = {}
         self.__log_dirs = {}
         self.__exit_status = {}
+        self.__start_time = {}
         self.__ge_extra_args = ge_extra_args
+        # Cached job list
+        self.__cached_job_list_lifetime = 2.0
+        self.__cached_job_list_timestamp = 0.0
+        self.__cached_job_list = []
+        self.__cached_job_list_force_update = True
+        # Grace period for new jobs
+        self.__new_job_grace_period = 2.0
         # Polling intervals and timeout periods (seconds)
         self.__ge_poll_interval = poll_interval
         self.__ge_timeout = timeout
@@ -515,6 +523,9 @@ exit $exit_code
                 self.__log_dirs[job_id] = working_dir
             else:
                 self.__log_dirs[job_id] = self.log_dir
+            self.__start_time[job_id] = time.time()
+        # Force refresh of job list
+        self.__cached_job_list_force_update = True
         # Return the job id
         return job_id
 
@@ -526,8 +537,11 @@ exit $exit_code
         p = subprocess.Popen(qdel,stdout=subprocess.PIPE)
         p.wait()
         message = p.stdout.read()
-        logging.debug("qdel: %s" % message)
+        logging.debug("GEJobRunner: qdel: %s" % message)
+        if job_id in self.__start_time:
+            del(self.__start_time[job_id])
         self.__exit_status[job_id] = -1
+        self.__cached_job_list_force_update = True
         return True
 
     def logFile(self,job_id):
@@ -555,7 +569,8 @@ exit $exit_code
     def errorState(self,job_id):
         """Check if the job is in an error state
 
-        Return True if the job is deemed to be in an 'error state',
+        Return True if the job is deemed to be in an 'error
+        state' (i.e. qstat returns the state as 'E..'),
         False otherwise.
         """
         # Job is in error state if state code starts with E
@@ -581,8 +596,36 @@ exit $exit_code
     def list(self):
         """Get list of job ids in the queue.
         """
+        # Check cached job list
+        use_cache = (not self.__cached_job_list_force_update)
+        if use_cache:
+            if (time.time() - self.__cached_job_list_timestamp) < \
+               self.__cached_job_list_lifetime:
+                logging.debug("GEJobRunner: using cached job list")
+                job_ids = self.__cached_job_list
+                # Add the jobs in grace period
+                grace_period_jobs = self.__start_time.keys()
+                for job_id in grace_period_jobs:
+                    if job_id not in job_ids:
+                        job_ids.append(job_id)
+                return job_ids
+        # Sort out jobs which are still in "grace period"
+        # i.e. they have been submitted but might not show up
+        # in qstat output yet
+        now = time.time()
+        for job_id in self.__start_time.keys():
+            if ((now - self.__start_time[job_id]) >
+                self.__new_job_grace_period):
+                # Job no longer in grace period
+                logging.debug("GEJobRunner: job %s no longer in grace "
+                              "period" % job_id)
+                del(self.__start_time[job_id])
+        grace_period_jobs = self.__start_time.keys()
+        logging.debug("GEJobRunner: jobs in grace period: %s" %
+                      grace_period_jobs)
+        # Run qstat and process the output to get job ids
+        logging.debug("GEJobRunner: refreshing job list")
         jobs = self.__run_qstat()
-        # Process the output to get job ids
         job_ids = []
         for job_data in jobs:
             # Check for state being 'r' (=running), or 'S' (=suspended),
@@ -594,6 +637,18 @@ exit $exit_code
                job_data[4][0] in ('E','d'):
                 # Id is first item for each job
                 job_ids.append(job_data[0])
+        # Update cache
+        self.__cached_job_list_timestamp = time.time()
+        self.__cached_job_list = [j for j in job_ids]
+        self.__cached_job_list_force_update = False
+        # Add the jobs in grace period
+        for job_id in grace_period_jobs:
+            if job_id not in job_ids:
+                job_ids.append(job_id)
+            else:
+                # Job now appearing in qstat output
+                # so can remove from grace period
+                del(self.__start_time[job_id])
         return job_ids
 
     def exit_status(self,job_id):

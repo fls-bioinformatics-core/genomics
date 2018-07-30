@@ -137,7 +137,7 @@ class MockGE(object):
             """
             cu = self._cx.cursor()
             cu.execute(sql,(self._user(),
-                            '',
+                            't',
                             time.time(),
                             name,
                             command,
@@ -156,7 +156,7 @@ class MockGE(object):
         """
         # Get job info
         sql = """
-        SELECT name,command,working_dir,output_name,join_output
+        SELECT name,command,queue,working_dir,output_name,join_output
         FROM jobs WHERE id==?
         """
         cu = self._cx.cursor()
@@ -164,6 +164,7 @@ class MockGE(object):
         job = cu.fetchone()
         name = job['name']
         command = job['command']
+        queue = job['queue']
         working_dir = job['working_dir']
         output_name = job['output_name']
         join_output = job['join_output']
@@ -227,15 +228,15 @@ echo "$exit_code" > %s/__exit_code.%d
             cu.execute(sql,(time.time(),job_id))
             self._cx.commit()
 
-    def _update_jobs(self):
+    def update_jobs(self):
         """
         Update all job info
         """
-        # Get jobs that are waiting with no state and
+        # Get jobs that are waiting with state 't' and
         # set them to 'qw'
         cu = self._cx.cursor()
         sql = """
-        SELECT id,qsub_time FROM jobs WHERE state==''
+        SELECT id,qsub_time FROM jobs WHERE state=='t'
         """
         cu.execute(sql)
         jobs = cu.fetchall()
@@ -394,7 +395,7 @@ echo "$exit_code" > %s/__exit_code.%d
         if job is None:
             return
         state = job['state']
-        if state not in ('qw','r','Eqw'):
+        if state not in ('t','qw','r','Eqw'):
             return
         new_state = 'd'
         sql = """
@@ -466,7 +467,7 @@ echo "$exit_code" > %s/__exit_code.%d
         # Report the job id
         print "Your job %s (\"%s\") has been submitted" % (job_id,
                                                            name)
-        self._update_jobs()
+        self.update_jobs()
 
     def qstat(self,argv):
         """
@@ -479,7 +480,7 @@ echo "$exit_code" > %s/__exit_code.%d
         # ...
         #
         # Update the db
-        self._update_jobs()
+        self.update_jobs()
         # Process supplied arguments
         p = argparse.ArgumentParser()
         p.add_argument("-u",action="store")
@@ -544,7 +545,7 @@ echo "$exit_code" > %s/__exit_code.%d
         #
         logging.debug("qacct: invoked")
         # Update the db
-        self._update_jobs()
+        self.update_jobs()
         # Process supplied arguments
         p = argparse.ArgumentParser()
         p.add_argument("-j",action="store")
@@ -600,7 +601,7 @@ exit_status  %s""" % (queue,user,name,job_id,
         """
         logging.debug("qdel: invoked")
         # Update the db
-        self._update_jobs()
+        self.update_jobs()
         # Process supplied arguments
         p = argparse.ArgumentParser()
         p.add_argument("job_id",action="store",nargs="+")

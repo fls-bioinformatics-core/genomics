@@ -3,6 +3,7 @@
 #######################################################################
 from bcftbx.JobRunner import *
 from bcftbx.mockGE import setup_mock_GE
+from bcftbx.mockGE import MockGE
 import bcftbx.utils
 import unittest
 import tempfile
@@ -179,7 +180,7 @@ class TestGEJobRunner(unittest.TestCase):
         os.environ['PATH'] = self.bin_dir + os.pathsep + self.old_path
         setup_mock_GE(bindir=self.bin_dir,
                       database_dir=self.database_dir,
-                      qsub_delay=0.0,
+                      qsub_delay=0.4,
                       qacct_delay=15.0,
                       debug=False)
         # Create a temporary directory to work in
@@ -198,6 +199,15 @@ class TestGEJobRunner(unittest.TestCase):
 
     def make_tmp_dir(self):
         return tempfile.mkdtemp(dir=os.getcwd())
+
+    def update_jobs(self,timeout):
+        poll_interval = 0.1
+        ntries = 0
+        mock_ge = MockGE(database_dir=self.database_dir)
+        while (ntries*poll_interval < timeout):
+            time.sleep(poll_interval)
+            ntries += 1
+            mock_ge.update_jobs()
 
     def run_job(self,runner,*args):
         try:
@@ -229,13 +239,60 @@ class TestGEJobRunner(unittest.TestCase):
                 runner.terminate(jobid)
         self.fail("Timed out waiting for test job")
 
-    def test_ge_job_runner(self):
-        """Test GEJobRunner with basic shell command
+    def test_ge_job_runner_fast_command(self):
+        """Test GEJobRunner with fast shell command
 
         """
         # Create a runner and execute the echo command
         runner = GEJobRunner(ge_extra_args=self.ge_extra_args)
-        jobid = self.run_job(runner,'test',self.working_dir,'echo',('this is a test',))
+        jobid = self.run_job(runner,'test',self.working_dir,'echo',('this is a quick test',))
+        self.assertTrue(runner.isRunning(jobid))
+        self.wait_for_jobs(runner,jobid)
+        # Check outputs
+        self.assertEqual(runner.name(jobid),'test')
+        self.assertTrue(os.path.isfile(runner.logFile(jobid)),
+                        "Stdout file '%s': not a file" %
+                        runner.errFile(jobid))
+        self.assertTrue(os.path.isfile(runner.errFile(jobid)),
+                        "Stderr file '%s': not a file" %
+                        runner.errFile(jobid))
+        self.assertEqual(runner.exit_status(jobid),0)
+        # Check log files are in the working directory
+        self.assertEqual(os.path.dirname(runner.logFile(jobid)),self.working_dir)
+        self.assertEqual(os.path.dirname(runner.errFile(jobid)),self.working_dir)
+
+    def test_ge_job_runner_fast_command_with_initial_delay(self):
+        """Test GEJobRunner with fast shell command & initial delay
+
+        """
+        # Create a runner and execute the echo command
+        runner = GEJobRunner(ge_extra_args=self.ge_extra_args)
+        jobid = self.run_job(runner,'test',self.working_dir,'echo',('this is a quick test',))
+        # Do some updates so the job finishes before the
+        # first check
+        self.update_jobs(1.0)
+        self.assertTrue(runner.isRunning(jobid))
+        self.wait_for_jobs(runner,jobid)
+        # Check outputs
+        self.assertEqual(runner.name(jobid),'test')
+        self.assertTrue(os.path.isfile(runner.logFile(jobid)),
+                        "Stdout file '%s': not a file" %
+                        runner.errFile(jobid))
+        self.assertTrue(os.path.isfile(runner.errFile(jobid)),
+                        "Stderr file '%s': not a file" %
+                        runner.errFile(jobid))
+        self.assertEqual(runner.exit_status(jobid),0)
+        # Check log files are in the working directory
+        self.assertEqual(os.path.dirname(runner.logFile(jobid)),self.working_dir)
+        self.assertEqual(os.path.dirname(runner.errFile(jobid)),self.working_dir)
+
+    def test_ge_job_runner_slow_command(self):
+        """Test GEJobRunner with a slow shell command
+
+        """
+        # Create a runner and execute the sleep command
+        runner = GEJobRunner(ge_extra_args=self.ge_extra_args)
+        jobid = self.run_job(runner,'test',self.working_dir,'sleep',('5',))
         self.wait_for_jobs(runner,jobid)
         # Check outputs
         self.assertEqual(runner.name(jobid),'test')
@@ -365,15 +422,14 @@ class TestGEJobRunner(unittest.TestCase):
         jobid = self.run_job(runner,'test_eqw',
                              '/non/existent/dir',
                              'echo',('this should fail',))
-        # Wait for job to start
+        # Wait for job to go into error state
         ntries = 0
         while ntries < 100:
-            if runner.isRunning(jobid):
-                break
+            if runner.errorState(jobid):
+                # Success - job errored
+                return
             ntries += 1
-        self.assertTrue(runner.isRunning(jobid))
-        # Check error state
-        self.assertTrue(runner.errorState(jobid))
+        self.fail("Job failed to go into error state")
 
     def test_ge_job_runner_queue(self):
         """Test GEJobRunner fetches the queue of a running job
@@ -383,14 +439,16 @@ class TestGEJobRunner(unittest.TestCase):
         jobid = self.run_job(runner,'test_queue',
                              self.working_dir,
                              'sleep',('10s',))
-        # Wait for job to start
+        # Wait for job to return queue
         ntries = 0
         while ntries < 100:
-            if runner.isRunning(jobid):
-                break
-            ntries += 1
-        self.assertTrue(runner.isRunning(jobid))
-        self.assertEqual(runner.queue(jobid),"mock.q")
+            queue = runner.queue(jobid)
+            if queue is not None:
+                self.assertEqual(queue,"mock.q")
+                return
+            else:
+                ntries += 1
+        self.fail("Job failed to return queue before time out")
 
 class TestFetchRunnerFunction(unittest.TestCase):
     """Tests for the fetch_runner function
