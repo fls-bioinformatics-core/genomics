@@ -408,6 +408,8 @@ class GEJobRunner(BaseJobRunner):
         self.__cached_job_list_timestamp = 0.0
         self.__cached_job_list = []
         self.__cached_job_list_force_update = True
+        # Cached job states
+        self.__cached_job_states = {}
         # Grace period for new jobs
         self.__new_job_grace_period = 2.0
         # Polling intervals and timeout periods (seconds)
@@ -638,23 +640,27 @@ exit $exit_code
         grace_period_jobs = self.__start_time.keys()
         logging.debug("GEJobRunner: jobs in grace period: %s" %
                       grace_period_jobs)
-        # Run qstat and process the output to get job ids
+        # Run qstat and process the output to get job ids and state
         logging.debug("GEJobRunner: refreshing job list")
         jobs = self.__run_qstat()
         job_ids = []
+        job_states = {}
         for job_data in jobs:
+            job_id = job_data[0]
+            state = job_data[4]
             # Check for state being 'r' (=running), or 'S' (=suspended),
             # or 'qw'(=queued, waiting), 't' (=transferring)
             # **or**
             # Starts with 'E' (=error, e.g. 'Eqw') or 'd' (=deleted,
             # e.g. 'dr')
-            if job_data[4] in ('r','S','qw','t') or \
-               job_data[4][0] in ('E','d'):
+            if state in ('r','S','qw','t') or state[0] in ('E','d'):
                 # Id is first item for each job
-                job_ids.append(job_data[0])
+                job_ids.append(job_id)
+            job_states[job_id] = state
         # Update cache
         self.__cached_job_list_timestamp = time.time()
         self.__cached_job_list = [j for j in job_ids]
+        self.__cached_job_states = job_states
         self.__cached_job_list_force_update = False
         # Add the jobs in grace period
         for job_id in grace_period_jobs:
@@ -912,13 +918,14 @@ exit $exit_code
         Will be one of the GE job state codes, or an empty
         string if the job id isn't found.
         """
-        jobs = self.__run_qstat()
-        for job_data in jobs:
-            if job_data[0] == job_id:
-                # State code is index 4
-                return job_data[4]
-        # Job not found
-        return ''
+        # Check if job is running to handle updating of
+        # cache etc
+        self.isRunning(job_id)
+        try:
+            return self.__cached_job_states[job_id]
+        except IndexError:
+            pass
+        return ""
 
     def __ge_name(self,name):
         """Internal: sanitize a name for use with GE

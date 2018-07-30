@@ -428,6 +428,7 @@ class TestGEJobRunner(unittest.TestCase):
             if runner.errorState(jobid):
                 # Success - job errored
                 return
+            time.sleep(0.1)
             ntries += 1
         self.fail("Job failed to go into error state")
 
