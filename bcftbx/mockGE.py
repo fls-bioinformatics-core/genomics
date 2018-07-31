@@ -33,11 +33,23 @@ import logging
 
 class MockGE(object):
     """
-    Class implementing qsub, qstat and qacct-like functionality
+    Class implementing qsub, qstat, qacct & qdel-like functionality
 
     Job data is stored in an SQLite3 database in the 'database
     directory' (defaults to '$HOME/.mockGE'); scripts and job
     exit status files are also written to this directory.
+
+    The following methods can be invoked which provide functions
+    similar to their SGE namesakes:
+
+    - qsub: submits a job to be run
+    - qstat: outputs information on active jobs
+    - qacct: outputs accounting information for completed jobs
+    - qdel: terminates an active job
+
+    Each time any of these are invoked, the 'update_jobs' method is
+    called to check the status of any active jobs and update the
+    database accordingly; this method can also be invoked directly.
     """
     def __init__(self,max_jobs=4,qsub_delay=0.0,qacct_delay=15.0,
                  shell='/bin/bash',database_dir=None,debug=False):
