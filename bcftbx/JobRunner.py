@@ -408,8 +408,6 @@ class GEJobRunner(BaseJobRunner):
         self.__cached_job_list_timestamp = 0.0
         self.__cached_job_list = []
         self.__cached_job_list_force_update = True
-        # Cached job states
-        self.__cached_job_states = {}
         # Grace period for new jobs
         self.__new_job_grace_period = 2.0
         # Polling intervals and timeout periods (seconds)
@@ -544,7 +542,13 @@ exit $exit_code
         logging.debug("GEJobRunner: qdel: %s" % message)
         if job_id in self.__start_time:
             del(self.__start_time[job_id])
-        self.__exit_status[job_id] = -1
+        # Write an exit code file for the job
+        exit_code_file = os.path.join(self.__admin_dir,
+                                      str(self.__job_number[job_id]),
+                                      "__exit_code")
+        with open(exit_code_file,'w') as fp:
+            fp.write("-1\n")
+        # Force update of cached job list
         self.__cached_job_list_force_update = True
         return True
 
@@ -611,7 +615,8 @@ exit $exit_code
         return queue
 
     def list(self):
-        """Get list of job ids in the queue.
+        """
+        Get list of job ids which are queued or running
         """
         # Check cached job list
         use_cache = (not self.__cached_job_list_force_update)
@@ -626,9 +631,7 @@ exit $exit_code
                     if job_id not in job_ids:
                         job_ids.append(job_id)
                 return job_ids
-        # Sort out jobs which are still in "grace period"
-        # i.e. they have been submitted but might not show up
-        # in qstat output yet
+        # Update jobs in grace period
         now = time.time()
         for job_id in self.__start_time.keys():
             if ((now - self.__start_time[job_id]) >
@@ -638,96 +641,48 @@ exit $exit_code
                               "period" % job_id)
                 del(self.__start_time[job_id])
         grace_period_jobs = self.__start_time.keys()
-        logging.debug("GEJobRunner: jobs in grace period: %s" %
-                      grace_period_jobs)
-        # Run qstat and process the output to get job ids and state
-        logging.debug("GEJobRunner: refreshing job list")
-        jobs = self.__run_qstat()
+        # Build initial list from directory contents
         job_ids = []
-        job_states = {}
-        for job_data in jobs:
-            job_id = job_data[0]
-            state = job_data[4]
-            # Check for state being 'r' (=running), or 'S' (=suspended),
-            # or 'qw'(=queued, waiting), 't' (=transferring)
-            # **or**
-            # Starts with 'E' (=error, e.g. 'Eqw') or 'd' (=deleted,
-            # e.g. 'dr')
-            if state in ('r','S','qw','t') or state[0] in ('E','d'):
-                # Id is first item for each job
-                job_ids.append(job_id)
-            job_states[job_id] = state
+        for job_id in self.__job_number.keys():
+            job_number = self.__job_number[job_id]
+            job_dir = os.path.join(self.__admin_dir,str(job_number))
+            exit_code_file = os.path.join(job_dir,"__exit_code")
+            logging.debug("GEJobRunner: checking job %s (#%s)"
+                          % (job_id,job_number))
+            if os.path.exists(job_dir):
+                logging.debug("GEJobRunner: -- found %s" % job_dir)
+                # Job dir exists
+                if os.path.exists(exit_code_file):
+                    # Job has finished, handle completion
+                    self.__handle_job_completion(job_id)
+                else:
+                    # Job still running
+                    job_ids.append(job_id)
         # Update cache
         self.__cached_job_list_timestamp = time.time()
         self.__cached_job_list = [j for j in job_ids]
-        self.__cached_job_states = job_states
         self.__cached_job_list_force_update = False
-        # Add the jobs in grace period
+        # Add the jobs in the grace period
         for job_id in grace_period_jobs:
             if job_id not in job_ids:
                 job_ids.append(job_id)
             else:
-                # Job now appearing in qstat output
-                # so can remove from grace period
+                # Job now visible so no longer in grace period
                 del(self.__start_time[job_id])
+        logging.debug("GEJobRunner: 'list' returning %s" % job_ids)
         return job_ids
 
     def exit_status(self,job_id):
-        """Return exit status from command run by a job
-
-        Attempts to read the exit status/return code for
-        a job.
-
-        The exit status is read from the '__exit_code'
-        file associated with the job; if this file can't
-        be found after a number of attempts to locate it
-        - or if the exit status cannot be read from the
-        file - then the exit status for the job will be
-        set to '127'.
-
-        Once the exit status has been read from the file,
-        the value is cached and the files will be removed;
-        future calls to 'exit_status' will return the
-        cached value.
+        """
+        Return exit status from command run by a job
 
         If the job is still running then returns 'None'.
         """
-        if job_id in self.__exit_status:
-            # Return cached exit status
-            return self.__exit_status[job_id]
         if self.isRunning(job_id):
             # Return None if job is still running
             return None
-        # Look for __exit_code file from job
-        exit_code_file = os.path.join(self.__admin_dir,
-                                      str(self.__job_number[job_id]),
-                                      "__exit_code")
-        retries = 0
-        while not os.path.exists(exit_code_file):
-            # Check for time out
-            if (retries*self.__ge_poll_interval) > self.__ge_timeout:
-                logging.debug("GEJobRunner: timed out waiting for "
-                              "exit code file (%d attempts made)" %
-                              retries)
-                break
-            # Wait before trying again
-            time.sleep(self.__ge_poll_interval)
-            retries += 1
-        # Extract exit code from file and clean up
-        try:
-            with open(exit_code_file,'r') as fp:
-                exit_status = int(fp.read())
-        except Exception as ex:
-            logging.error("GEJobRunner: exception when reading exit_status "
-                          "for job %s: %s" % (job_id,ex))
-            # Set exit status
-            exit_status = 127
-        # Update queue
-        self.queue(job_id)
-        # Set internally
-        self.__exit_status[job_id] = exit_status
-        self.__clean_up_job(job_id)
-        return exit_status
+        # Return cached exit status
+        return self.__exit_status[job_id]
 
     def __make_admin_dir(self):
         """Internal: create temporary directory for admin etc
@@ -764,6 +719,49 @@ exit $exit_code
                             "admin dir '%s': %s" %
                             (self.__admin_dir,ex))
 
+    def __handle_job_completion(self,job_id):
+        """
+        Internal: deal with completion of job
+
+        Peforms the following operations:
+
+        - checks that an '__exit_code' file exists for
+          the job
+        - read and store the exit status/return code from
+          this file
+        - ensure that the queue is set for the job
+        - call the clean up function to remove all the
+          associated files
+        - remove the job from the internal job count
+
+        If the '__exit_code' file associated with the job
+        can't be found after a number of attempts to locate
+        it, or if the exit status cannot be read from the
+        file, then the exit status for the job will be
+        set to '127'.
+        """
+        logging.debug("GEJobRunner: handle job completion for %s"
+                      % job_id)
+        # Check there is an exit code file
+        exit_code_file = os.path.join(self.__admin_dir,
+                                      str(self.__job_number[job_id]),
+                                      "__exit_code")
+        assert(os.path.exists(exit_code_file))
+        try:
+            with open(exit_code_file,'r') as fp:
+                exit_status = int(fp.read())
+        except Exception as ex:
+            # Set exit status to 127
+            logging.error("GEJobRunner: exception when "
+                          "reading exit_status for job "
+                          "%s: %s" % (job_id,ex))
+            exit_status = 127
+        # Update queue information
+        self.queue(job_id)
+        # Store exit status and clean up
+        self.__exit_status[job_id] = exit_status
+        self.__clean_up_job(job_id)
+
     def __clean_up_job(self,job_id):
         """Internal: clean up internal job files
 
@@ -774,11 +772,6 @@ exit $exit_code
         finished running. If the job is still running then returns
         with no action.
         """
-        # Check job is not still running
-        if self.isRunning(job_id):
-            logging.warning("GEJobRunner: ignored attempt to clean up "
-                            "job %s while still running" % job_id)
-            return
         # Do clean up
         logging.debug("GEJobRunner: cleaning up after job %s" % job_id)
         try:
@@ -794,6 +787,8 @@ exit $exit_code
         except Exception as ex:
             logging.warning("GEJobRunner: exception cleaning up for "
                             "job %s (ignored): %s" % (job_id,ex))
+        # Remove the internally stored job number
+        del(self.__job_number[job_id])
 
     def __run_qstat(self):
         """Internal: run qstat and return data as a list of lists
@@ -913,18 +908,26 @@ exit $exit_code
         return qacct_dict
 
     def __job_state_code(self,job_id):
-        """Internal: get the state code for the specified job id
+        """
+        Internal: get the state code for a job id
 
         Will be one of the GE job state codes, or an empty
         string if the job id isn't found.
         """
-        # Check if job is running to handle updating of
-        # cache etc
-        self.isRunning(job_id)
-        try:
-            return self.__cached_job_states[job_id]
-        except IndexError:
-            pass
+        # Run qstat and process output to get job states
+        logging.debug("GEJobRunner: acquiring state for job %s"
+                      % job_id)
+        qstat = self.__run_qstat()
+        job_ids = []
+        job_states = {}
+        for job_data in qstat:
+            id_ = job_data[0]
+            state = job_data[4]
+            logging.debug("GEJobRunner: found job %s (state '%s')"
+                          % (id_,state))
+            if id_ == job_id:
+                return state
+        # Job not found
         return ""
 
     def __ge_name(self,name):
