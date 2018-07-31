@@ -183,6 +183,7 @@ class TestGEJobRunner(unittest.TestCase):
                       qsub_delay=0.4,
                       qacct_delay=15.0,
                       debug=False)
+        self.mock_ge = MockGE(database_dir=self.database_dir)
         # Create a temporary directory to work in
         self.working_dir = self.make_tmp_dir()
         self.log_dir = None
@@ -200,14 +201,13 @@ class TestGEJobRunner(unittest.TestCase):
     def make_tmp_dir(self):
         return tempfile.mkdtemp(dir=os.getcwd())
 
-    def update_jobs(self,timeout):
+    def update_jobs(self,timeout=1.0):
         poll_interval = 0.1
         ntries = 0
-        mock_ge = MockGE(database_dir=self.database_dir)
         while (ntries*poll_interval < timeout):
             time.sleep(poll_interval)
             ntries += 1
-            mock_ge.update_jobs()
+            self.mock_ge.update_jobs()
 
     def run_job(self,runner,*args):
         try:
@@ -222,6 +222,7 @@ class TestGEJobRunner(unittest.TestCase):
         running_jobs = True
         # Check running jobs
         while (ntries*poll_interval < timeout) and running_jobs:
+            self.mock_ge.update_jobs()
             running_jobs = False
             for jobid in args:
                 if runner.isRunning(jobid):
@@ -270,7 +271,7 @@ class TestGEJobRunner(unittest.TestCase):
         jobid = self.run_job(runner,'test',self.working_dir,'echo',('this is a quick test',))
         # Do some updates so the job finishes before the
         # first check
-        self.update_jobs(1.0)
+        self.update_jobs()
         self.assertTrue(runner.isRunning(jobid))
         self.wait_for_jobs(runner,jobid)
         # Check outputs
@@ -337,6 +338,7 @@ class TestGEJobRunner(unittest.TestCase):
         self.assertTrue(runner.isRunning(jobid))
         # Terminate job
         runner.terminate(jobid)
+        self.update_jobs()
         self.assertFalse(runner.isRunning(jobid))
         self.assertNotEqual(runner.exit_status(jobid),0)
 
@@ -443,6 +445,7 @@ class TestGEJobRunner(unittest.TestCase):
         # Wait for job to return queue
         ntries = 0
         while ntries < 100:
+            self.update_jobs()
             if runner.isRunning(jobid):
                 queue = runner.queue(jobid)
                 if queue is not None:
