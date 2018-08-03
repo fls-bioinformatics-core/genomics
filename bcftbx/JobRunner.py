@@ -408,6 +408,10 @@ class GEJobRunner(BaseJobRunner):
         self.__cached_job_list_timestamp = 0.0
         self.__cached_job_list = []
         self.__cached_job_list_force_update = True
+        # Cached qstat output
+        self.__cached_qstat_output_lifetime = 2.0
+        self.__cached_qstat_output_timestamp = 0.0
+        self.__cached_qstat_output = None
         # Grace period for new jobs
         self.__new_job_grace_period = 2.0
         # Polling intervals and timeout periods (seconds)
@@ -797,7 +801,17 @@ exit $exit_code
         list where each item is the data for a job in the form of
         another list, with the items in this list being the data
         returned by qstat.
+
+        NB as 'qstat' calls can be expensive to make, a caching
+        mechanism is used which stores the output from 'qstat'
+        for a specified period.
         """
+        # Should we return the cached data?
+        if (time.time() - self.__cached_qstat_output_timestamp) < \
+           self.__cached_qstat_output_lifetime:
+            logging.debug("GEJobRunner: returning cached qstat output")
+            return self.__cached_qstat_output
+        # Run qstat and collect the output
         try:
             cmd = ['qstat','-u',os.getlogin()]
         except OSError:
@@ -807,7 +821,7 @@ exit $exit_code
         p = subprocess.Popen(cmd,stdout=subprocess.PIPE)
         p.wait()
         # Process the output
-        jobs = []
+        qstat_output = []
         # Typical output is:
         # job-ID  prior   name       user         ...<snipped>...
         # ----------------------------------------...<snipped>...
@@ -817,11 +831,14 @@ exit $exit_code
         for line in p.stdout:
             try:
                 if line.split()[0].isdigit():
-                    jobs.append(line.split())
+                    qstat_output.append(line.split())
             except IndexError:
                 # Skip this line
                 pass
-        return jobs
+        # Update the cache
+        self.__cached_qstat_output_timestamp = time.time()
+        self.__cached_qstat_output = qstat_output
+        return qstat_output
 
     def __run_qacct(self,job_id):
         """Internal: run qacct and return data as a dictionary
