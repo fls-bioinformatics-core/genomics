@@ -399,6 +399,7 @@ class GEJobRunner(BaseJobRunner):
         self.__job_number = {}
         self.__names = {}
         self.__log_dirs = {}
+        self.__error_state = {}
         self.__exit_status = {}
         self.__queue = {}
         self.__start_time = {}
@@ -585,8 +586,21 @@ exit $exit_code
         state' (i.e. qstat returns the state as 'E..'),
         False otherwise.
         """
+        # Check job is running at all
+        if job_id not in self.__job_number:
+            return False
+        # See if a value was stored for this job
+        try:
+            return self.__error_state[job_id]
+        except KeyError:
+            pass
         # Job is in error state if state code starts with E
-        return self.__job_state_code(job_id).startswith('E')
+        in_error_state = self.__job_state_code(job_id).startswith('E')
+        if in_error_state:
+            self.__error_state[job_id] = True
+            return True
+        # Not in error state
+        return False
 
     def queue(self,job_id):
         """Fetch the job queue name
@@ -793,6 +807,11 @@ exit $exit_code
                             "job %s (ignored): %s" % (job_id,ex))
         # Remove the internally stored job number
         del(self.__job_number[job_id])
+        # Clear stored error state
+        try:
+            del(self.__error_state[job_id])
+        except KeyError:
+            pass
 
     def __run_qstat(self):
         """Internal: run qstat and return data as a list of lists
