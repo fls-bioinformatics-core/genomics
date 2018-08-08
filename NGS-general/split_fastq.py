@@ -256,7 +256,7 @@ if __name__ == "__main__":
         with open(tmp_outfile,'w') as fq:
             for i,read in enumerate(extract_reads_for_lane(args.fastq,lane)):
                 nreads += 1
-                fq.write("%s\n")
+                fq.write("%s\n" % read)
         os.rename(tmp_outfile,outfile)
         print "   %d reads" % nreads
     print "Done"
