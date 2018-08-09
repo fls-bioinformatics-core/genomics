@@ -15,6 +15,7 @@ General NGS scripts that are used for both ChIP-seq and RNA-seq.
 * :ref:`sam2soap`: convert from SAM file to SOAP format
 * :ref:`separate_paired_fastq`: separate F3 and F5 reads from fastq
 * :ref:`split_fasta`: extract individual chromosome sequences from fasta file
+* :ref:`split_fastq` : split fastq file by lane
 * :ref:`trim_fastq`: trim down sequences in fastq file from 5' end
 * :ref:`uncompress_fastqgz`: create ungzipped version of a compressed FASTQ
   file
@@ -250,6 +251,29 @@ files each containing sequences for a single chromosome.
 For each chromosome CHROM found in the input Fasta file (delimited
 by a line ``>CHROM``), outputs a file called ``CHROM.fa`` in the
 current directory containing just the sequence for that chromosome.
+
+.. _split_fastq:
+
+split_fastq
+***********
+
+Splits a Fastq file by lane.
+
+Usage::
+
+    split_fastq.py [-h] [-l LANES] FASTQ
+
+Split input Fastq file into multiple output Fastqs where each output only
+contains reads from a single lane. 
+
+Options:
+
+.. cmdoption:: -l LANES, --lanes LANES
+
+    lanes to extract: can be a single integer, a comma-
+    separated list (e.g. 1,3), a range (e.g. 5-7) or a
+    combination (e.g. 1,3,5-7). Default is to extract all
+    lanes in the Fastq
 
 .. _trim_fastq:
 
