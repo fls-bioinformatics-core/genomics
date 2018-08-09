@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-#     split_fastqs.py: split fastqs by specified criteria
+#     split_fastq.py: split fastq by lane
 #     Copyright (C) University of Manchester 2018 Peter Briggs
 #
 
@@ -227,7 +227,10 @@ if __name__ == "__main__":
         description="Split input Fastq file into multiple output Fastqs "
         "where each output only contains reads from a single lane.")
     p.add_argument("-l","--lanes",metavar="LANES",
-                   help="lanes to extract")
+                   help="lanes to extract: can be a single integer, "
+                   "a comma-separated list (e.g. 1,3), a range (e.g. "
+                   "5-7) or a combination (e.g. 1,3,5-7). Default is "
+                   "to extract all lanes in the Fastq")
     p.add_argument("fastq",metavar="FASTQ",
                    help="Fastq to split")
     args = p.parse_args()
