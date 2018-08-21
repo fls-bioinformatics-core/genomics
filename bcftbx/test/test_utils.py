@@ -6,6 +6,7 @@ import os
 import tempfile
 import shutil
 import gzip
+import pickle
 import bcftbx.test.mock_data as mock_data
 from bcftbx.utils import *
 
@@ -52,6 +53,17 @@ class TestAttributeDictionary(unittest.TestCase):
         for key in d:
             self.assertTrue(key in ('salutation','valediction'),
                             "%s not in list" % key)
+
+    def test_can_pickle_attributedictionary(self):
+        """AttributeDictionary can be pickled
+        """
+        d = AttributeDictionary(hello="world")
+        self.assertEqual(d['hello'],"world")
+        pickled = pickle.dumps(d)
+        unpickled = pickle.loads(pickled)
+        self.assertTrue(isinstance(unpickled,AttributeDictionary))
+        self.assertEqual(unpickled['hello'],"world")
+        self.assertEqual(unpickled.hello,"world")
 
 class TestOrderedDictionary(unittest.TestCase):
     """Unit tests for the OrderedDictionary class

@@ -1,15 +1,13 @@
 #!/usr/bin/env python
 #
 #     utils.py: utility classes and functions shared between BCF codes
-#     Copyright (C) University of Manchester 2013-17 Peter Briggs
+#     Copyright (C) University of Manchester 2013-2018 Peter Briggs
 #
 ########################################################################
 #
 # utils.py
 #
 #########################################################################
-
-__version__ = "1.6.0"
 
 """utils
 
@@ -104,7 +102,7 @@ CHUNKSIZE = 102400
 # General utility classes
 #######################################################################
 
-class AttributeDictionary:
+class AttributeDictionary(dict):
     """Dictionary-like object with items accessible as attributes
 
     AttributeDict provides a dictionary-like object where the value
@@ -133,25 +131,18 @@ class AttributeDictionary:
 
     """
     def __init__(self,**args):
-        self.__dict = dict(args)
+        dict.__init__(self,**args)
 
     def __getattr__(self,attr):
         try:
-            return self.__dict[attr]
+            return dict.__getattr__(self,attr)
+        except AttributeError:
+            pass
+        try:
+            return self[attr]
         except KeyError:
-            raise AttributeError, "No attribute '%s'" % attr
-
-    def __getitem__(self,key):
-        return self.__dict[key]
-
-    def __setitem__(self,key,value):
-        self.__dict[key] = value
-
-    def __iter__(self):
-        return iter(self.__dict)
-
-    def __len__(self):
-        return len(self.__dict)
+            raise AttributeError("'AttributeDictionary' has no "
+                                 "attribute '%s'" % attr)
 
 class OrderedDictionary:
     """Augumented dictionary which keeps keys in order
