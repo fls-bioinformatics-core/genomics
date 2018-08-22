@@ -1,3 +1,29 @@
+2018-08-22  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* genomics-bcftbx version 1.5.0
+	- bcftbx/JobRunner: substantial overhaul of
+	  `GEJobRunner` to reduce footprint when
+	  running on compute cluster e.g. removed calls
+	  to `qacct` and reduced calls to `qstat`.
+	  - https://github.com/fls-bioinformatics-core/genomics/pull/73
+	  - https://github.com/fls-bioinformatics-core/genomics/pull/76
+	- NGS-general/split_fastq.py: new utility that
+	  splits a Fastq file or R1/R2 pair based on the
+	  lanes present in the file(s); can be used to
+	  reverse the merging of Fastq files when
+	  `bcl2fastq` is run with `--no-lane-splitting`
+	  - https://github.com/fls-bioinformatics-core/genomics/pull/77
+	- QC-pipeline/fastq_strand.py:
+	  - version 0.0.3
+	  - removes existing output files on startup
+	  - only write final outputs on success
+	  - always remove temporary working directories
+	    on completion (even if program failed)
+	  - https://github.com/fls-bioinformatics-core/genomics/pull/72
+	- bcftbx/utils: reimplement `AttributeDictionary`
+	  class so it can be pickled
+	  - https://github.com/fls-bioinformatics-core/genomics/pull/78
+
 2018-07-03  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* genomics-bcftbx version 1.4.0
