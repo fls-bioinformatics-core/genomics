@@ -3449,6 +3449,9 @@ class TestSplitRunNameFull(unittest.TestCase):
             ('120518','ILLUMINA-73D9FA','00002','','FC'))
         self.assertEqual(split_run_name_full('151216_NB500968_0008_AH5CFGAFXX'),
                          ('151216','NB500968','0008','A','H5CFGAFXX'))
+        self.assertEqual(
+            split_run_name_full('20180829_FS10000171_3_BNT40323-1530'),
+                         ('20180829','FS10000171','3','B','NT40323-1530'))
 
     def test_split_run_name_full_with_leading_path(self):
         """Check split_run_name_full with leading path
