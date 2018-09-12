@@ -14,8 +14,6 @@ conventions.
 
 """
 
-__version__ = "1.2.3"
-
 #######################################################################
 # Import modules that this module depends on
 #######################################################################
@@ -67,7 +65,7 @@ class IlluminaRun:
         Arguments:
           illumina_run_dir: path to the top-level directory holding
             the 'raw' sequencing data
-          platform: (optional) string specificying the sequencer
+          platform: (optional) string specifying the sequencer
             platform. The platform should be detected automatically
             so only specify this if the sequencer is not in the
             list in platforms.py.
