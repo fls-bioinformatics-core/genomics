@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #     platforms.py: utilities and data to identify sequencer platforms
-#     Copyright (C) University of Manchester 2013-2016 Peter Briggs
+#     Copyright (C) University of Manchester 2013-2018 Peter Briggs
 #
 ########################################################################
 #
@@ -26,6 +26,7 @@ PLATFORMS['hiseq'] = "Illumina HISeq"
 PLATFORMS['miseq'] = "Illumina MISeq"
 PLATFORMS['miniseq'] = "MiniSeq"
 PLATFORMS['nextseq'] = "Illumina NextSeq"
+PLATFORMS['iseq'] = "Illumina iSeq"
 PLATFORMS['other'] = "Unknown/external"
 
 # Dictionary matching sequencing platforms to regexp patterns
