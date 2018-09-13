@@ -1,3 +1,13 @@
+2018-09-13  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* genomics-bcftbx version 1.5.1
+	- bcftbx/IlluminaData:
+	  - add `iSeq` to the list of known platforms
+	  - enable handling of run names with four-digit
+	    year in the datestamp
+	    https://github.com/fls-bioinformatics-core/genomics/pull/79
+	  - drop module-level version number
+
 2018-08-22  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* genomics-bcftbx version 1.5.0
