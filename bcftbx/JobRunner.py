@@ -405,6 +405,8 @@ class GEJobRunner(BaseJobRunner):
         self.__queue = {}
         self.__start_time = {}
         self.__ge_extra_args = ge_extra_args
+        # Lock on job submission
+        self.__submit_lock = False
         # Cached job list
         self.__cached_job_list_lifetime = 2.0
         self.__cached_job_list_timestamp = 0.0
@@ -460,10 +462,22 @@ class GEJobRunner(BaseJobRunner):
         logging.debug("Working_dir: %s" % working_dir)
         logging.debug("Script     : %s" % script)
         logging.debug("Arguments  : %s" % str(args))
-        # Build script to run the command to be submitted
+        # Wait for lock on job submission
+        start_time = time.time()
+        while self.__submit_lock:
+            time.sleep(1.0)
+            if (time.time() - start_time) > self.__ge_timeout:
+                raise Exception("GEJobRunner: timed out waiting "
+                                "for job submission lock")
+        # Grab the lock and get internal job number
+        self.__submit_lock = True
         self.__job_count += 1
-        logging.debug("Internal job count: %s" % self.__job_count)
-        job_dir = os.path.join(self.__admin_dir,str(self.__job_count))
+        job_number = self.__job_count
+        logging.debug("Internal job count: %s" % job_number)
+        # Release the lock
+        self.__submit_lock = False
+        # Build script to run the command to be submitted
+        job_dir = os.path.join(self.__admin_dir,str(job_number))
         logging.debug("Job admin dir     : %s" % job_dir)
         os.mkdir(job_dir)
         cmd_args = [script]
@@ -525,7 +539,7 @@ exit $exit_code
         logging.debug("GEJobRunner: done - job id = %s" % job_id)
         # Store internal number, name and log dir against job id
         if job_id is not None:
-            self.__job_number[job_id] = self.__job_count
+            self.__job_number[job_id] = job_number
             self.__names[job_id] = name
             if self.log_dir is None:
                 self.__log_dirs[job_id] = working_dir
