@@ -401,6 +401,7 @@ class GEJobRunner(BaseJobRunner):
         self.__log_dirs = {}
         self.__error_state = {}
         self.__exit_status = {}
+        self.__finalizing = {}
         self.__queue = {}
         self.__start_time = {}
         self.__ge_extra_args = ge_extra_args
@@ -662,7 +663,12 @@ exit $exit_code
         # Build initial list from directory contents
         job_ids = []
         for job_id in self.__job_number.keys():
-            job_number = self.__job_number[job_id]
+            try:
+                job_number = self.__job_number[job_id]
+            except KeyError:
+                # Job has been removed since the list was
+                # fetched? Ignore
+                continue
             job_dir = os.path.join(self.__admin_dir,str(job_number))
             exit_code_file = os.path.join(job_dir,"__exit_code")
             logging.debug("GEJobRunner: checking job %s (#%s)"
@@ -699,6 +705,15 @@ exit $exit_code
         if self.isRunning(job_id):
             # Return None if job is still running
             return None
+        # Check if job is being finalized
+        start_time = time.time()
+        while job_id in self.__finalizing:
+            # Wait until exit_status is ready
+            time.sleep(1.0)
+            if (time.time() - start_time) > self.__ge_timeout:
+                logging.debug("GEJobRunner: timed out waiting "
+                              "for job %s to finalize" % job_id)
+                return None
         # Return cached exit status
         return self.__exit_status[job_id]
 
@@ -760,6 +775,16 @@ exit $exit_code
         """
         logging.debug("GEJobRunner: handle job completion for %s"
                       % job_id)
+        # Check job finalization hasn't already been started
+        try:
+            if self.__finalizing[job_id]:
+                logging.debug("GEJobRunner: skipping job "
+                              "finalization for %s (already "
+                              "started elsewhere)" % job_id)
+                return
+        except KeyError:
+            logging.debug("GEJobRunner: finalizing job %s" % job_id)
+        self.__finalizing[job_id] = True
         # Check there is an exit code file
         exit_code_file = os.path.join(self.__admin_dir,
                                       str(self.__job_number[job_id]),
@@ -779,6 +804,8 @@ exit $exit_code
         # Store exit status and clean up
         self.__exit_status[job_id] = exit_status
         self.__clean_up_job(job_id)
+        # Release finalization lock
+        del(self.__finalizing[job_id])
 
     def __clean_up_job(self,job_id):
         """Internal: clean up internal job files
