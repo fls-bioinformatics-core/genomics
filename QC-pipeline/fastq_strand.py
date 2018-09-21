@@ -529,6 +529,11 @@ def fastq_strand(argv,working_dir=None):
     with tempfile.TemporaryFile() as fp:
         # Iterate over genome indices
         for star_genomedir in star_genomedirs:
+            # Basename for output for this genome
+            try:
+                name = genome_names[star_genomedir]
+            except KeyError:
+                name = star_genomedir
             # Build a command line to run STAR
             star_cmd = [star_exe]
             star_cmd.extend([
@@ -551,6 +556,17 @@ def fastq_strand(argv,working_dir=None):
             except subprocess.CalledProcessError as ex:
                 raise Exception("STAR returned non-zero exit code: %s" %
                                 ex.returncode)
+            # Save the outputs
+            if args.keep_star_output:
+                # Make a subdirectory for this genome index
+                genome_dir = os.path.join(star_output_dir,
+                                          name.replace(os.sep,"_"))
+                print "Copying STAR outputs to %s" % genome_dir
+                os.mkdir(genome_dir)
+                for f in os.listdir(working_dir):
+                    if f.startswith(prefix):
+                        shutil.copy(os.path.join(working_dir,f),
+                                    os.path.join(genome_dir,f))
             # Process the STAR output
             star_tab_file = os.path.join(working_dir,
                                          "%sReadsPerGene.out.tab" % prefix)
@@ -579,27 +595,12 @@ def fastq_strand(argv,working_dir=None):
             print "- 1st forward: %.2f%%" % forward_1st
             print "- 2nd reverse: %.2f%%" % reverse_2nd
             # Append to output file
-            try:
-                name = genome_names[star_genomedir]
-            except KeyError:
-                name = star_genomedir
             data = [name,
                     "%.2f" % forward_1st,
                     "%.2f" % reverse_2nd]
             if args.counts:
                 data.extend([sum_col2,sum_col3,sum_col4])
             fp.write("%s\n" % "\t".join([str(d) for d in data]))
-            # Save the outputs
-            if args.keep_star_output:
-                # Make a subdirectory for this genome index
-                genome_dir = os.path.join(star_output_dir,
-                                          name.replace(os.sep,"_"))
-                print "Copying STAR outputs to %s" % genome_dir
-                os.mkdir(genome_dir)
-                for f in os.listdir(working_dir):
-                    if f.startswith(prefix):
-                        shutil.copy(os.path.join(working_dir,f),
-                                    os.path.join(genome_dir,f))
         # Finished iterating over genomes
         # Rewind temporary output file
         fp.seek(0)
