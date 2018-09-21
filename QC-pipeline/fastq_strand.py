@@ -29,7 +29,34 @@ from bcftbx.qc.report import strip_ngs_extensions
 
 import unittest
 
-def mockSTAR(argv):
+fq_r1_data = """@K00311:43:HL3LWBBXX:8:1101:21440:1121 1:N:0:CNATGT
+GCCNGACAGCAGAAATGGAATGCGGACCCCTTCNACCACCANAATATTCTTNATNTTGGGTNTTGCNAANGTCTTC
++
+AAF#FJJJJJJJJJJJJJJJJJJJJJJJJJJJJ#JJJJJJJ#JJJJJJJJJ#JJ#JJJJJJ#JJJJ#JJ#JJJJJJ
+@K00311:43:HL3LWBBXX:8:1101:21460:1121 1:N:0:CNATGT
+GGGNGTCATTGATCATTTCTTCAGTCATTTCCANTTTCATGNTTTCCTTCTNGANATTCTGNATTGNTTNTAGTGT
++
+AAF#FJJJJJJJJJJJJJJJJJJJJJJJJJJJJ#JJJJJJJ#JJJJJJJJJ#JJ#JJJJJJ#JJJJ#JJ#JJJJJJ
+@K00311:43:HL3LWBBXX:8:1101:21805:1121 1:N:0:CNATGT
+CCCNACCCTTGCCTACCCACCATACCAAGTGCTNGGATTACNGGCATGTATNGCNGCGTCCNGCTTNAANTTAA
++
+AAF#FJJJJJJJJJJJJJJJJJJJJJJJJJJJJ#JJJJJJJ#JJJJJJJJJ#JJ#JJJAJJ#JJJJ#JJ#JJJJ
+"""
+fq_r2_data = """@K00311:43:HL3LWBBXX:8:1101:21440:1121 2:N:0:CNATGT
+CAANANGGNNTCNCNGNTNTNCTNTNAGANCNNTGANCNGTTCTTCCCANCTGCACTCTGCCCCAGCTGTCCAGNC
++
+AAF#F#JJ##JJ#J#J#J#J#JJ#J#JJJ#J##JJJ#J#JJJJJJJJJJ#JJJJJJJJJJJJJJJJJJJJJJJJ#J
+@K00311:43:HL3LWBBXX:8:1101:21460:1121 2:N:0:CNATGT
+ATANGNAANNGTNCNGNGNTNTANCNAAGNANNTTGNCNACCTACGGAAACAGAAGACAAGAACGTTCGCTGTA
++
+AAF#F#JJ##JJ#J#J#J#J#JJ#J#JJJ#J##JJJ#J#JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ
+@K00311:43:HL3LWBBXX:8:1101:21805:1121 2:N:0:CNATGT
+GAANANGCNNACNGNGNTNANTGNTNATGNANNTAGNGNTTCTCTCTGAGGTGACAGAAATACTTTAAATTTAANC
++
+AAF#F#JJ##JJ#J#J#J#J#JJ#J#JJJ#F##JJJ#J#JJJJJJFAJJJJFJJJJJJJJJJJJJJJJJFFFJJ#J
+"""
+
+def mockSTAR(argv,unmapped_output=False):
     # Implements a "fake" STAR executable which produces
     # a single output (ReadsPerGene.out.tab file)
     p = argparse.ArgumentParser()
@@ -44,7 +71,8 @@ def mockSTAR(argv):
     p.add_argument('--runThreadN',action="store")
     args = p.parse_args(argv)
     with open("%sReadsPerGene.out.tab" % args.prefix,'w') as fp:
-        fp.write("""N_unmapped	2026581	2026581	2026581
+        if not unmapped_output:
+            fp.write("""N_unmapped	2026581	2026581	2026581
 N_multimapping	4020538	4020538	4020538
 N_noFeature	8533504	24725707	8782932
 N_ambiguous	618069	13658	192220
@@ -69,6 +97,22 @@ ENSMUSG00000064368.1	44003	42532	13212
 ENSMUSG00000064369.1	6	275	6
 ENSMUSG00000064370.1	122199	199	123042
 """)
+        else:
+            fp.write("""N_unmapped	1	1	1
+N_multimapping	0	0	0
+N_noFeature	0	0	0
+N_ambiguous	0	0	0
+ENSG00000223972.5	0	0	0
+ENSG00000227232.5	0	0	0
+ENSG00000278267.1	0	0	0
+ENSG00000243485.3	0	0	0
+ENSG00000274890.1	0	0	0
+ENSG00000237613.2	0	0	0
+ENSG00000268020.3	0	0	0
+ENSG00000240361.1	0	0	0
+ENSG00000186092.4	0	0	0
+ENSG00000238009.6	0	0	0
+""")
 
 class TestStrandTsar(unittest.TestCase):
     def setUp(self):
@@ -83,13 +127,7 @@ class TestStrandTsar(unittest.TestCase):
         star_bin = os.path.join(self.wd,"mock_star")
         os.mkdir(star_bin)
         mock_star = os.path.join(star_bin,"STAR")
-        with open(mock_star,'w') as fp:
-            fp.write("""#!/bin/bash
-export PYTHONPATH=%s:$PYTHONPATH
-python -c "import sys ; from fastq_strand import mockSTAR ; mockSTAR(sys.argv[1:])" $@
-exit $?
-""" % os.path.dirname(__file__))
-        os.chmod(mock_star,0775)
+        self._make_mock_star(mock_star)
         # Prepend mock STAR location to the path
         os.environ['PATH'] = "%s:%s" % (star_bin,os.environ['PATH'])
         # Make some mock Fastqs
@@ -98,33 +136,9 @@ exit $?
             fq = os.path.join(self.wd,"mock_%s.fq" %r)
             with open(fq,'w') as fp:
                 if r == "R1":
-                    fp.write("""@K00311:43:HL3LWBBXX:8:1101:21440:1121 1:N:0:CNATGT
-GCCNGACAGCAGAAATGGAATGCGGACCCCTTCNACCACCANAATATTCTTNATNTTGGGTNTTGCNAANGTCTTC
-+
-AAF#FJJJJJJJJJJJJJJJJJJJJJJJJJJJJ#JJJJJJJ#JJJJJJJJJ#JJ#JJJJJJ#JJJJ#JJ#JJJJJJ
-@K00311:43:HL3LWBBXX:8:1101:21460:1121 1:N:0:CNATGT
-GGGNGTCATTGATCATTTCTTCAGTCATTTCCANTTTCATGNTTTCCTTCTNGANATTCTGNATTGNTTNTAGTGT
-+
-AAF#FJJJJJJJJJJJJJJJJJJJJJJJJJJJJ#JJJJJJJ#JJJJJJJJJ#JJ#JJJJJJ#JJJJ#JJ#JJJJJJ
-@K00311:43:HL3LWBBXX:8:1101:21805:1121 1:N:0:CNATGT
-CCCNACCCTTGCCTACCCACCATACCAAGTGCTNGGATTACNGGCATGTATNGCNGCGTCCNGCTTNAANTTAA
-+
-AAF#FJJJJJJJJJJJJJJJJJJJJJJJJJJJJ#JJJJJJJ#JJJJJJJJJ#JJ#JJJAJJ#JJJJ#JJ#JJJJ
-""")
+                    fp.write(fq_r1_data)
                 else:
-                    fp.write("""@K00311:43:HL3LWBBXX:8:1101:21440:1121 2:N:0:CNATGT
-CAANANGGNNTCNCNGNTNTNCTNTNAGANCNNTGANCNGTTCTTCCCANCTGCACTCTGCCCCAGCTGTCCAGNC
-+
-AAF#F#JJ##JJ#J#J#J#J#JJ#J#JJJ#J##JJJ#J#JJJJJJJJJJ#JJJJJJJJJJJJJJJJJJJJJJJJ#J
-@K00311:43:HL3LWBBXX:8:1101:21460:1121 2:N:0:CNATGT
-ATANGNAANNGTNCNGNGNTNTANCNAAGNANNTTGNCNACCTACGGAAACAGAAGACAAGAACGTTCGCTGTA
-+
-AAF#F#JJ##JJ#J#J#J#J#JJ#J#JJJ#J##JJJ#J#JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ
-@K00311:43:HL3LWBBXX:8:1101:21805:1121 2:N:0:CNATGT
-GAANANGCNNACNGNGNTNANTGNTNATGNANNTAGNGNTTCTCTCTGAGGTGACAGAAATACTTTAAATTTAANC
-+
-AAF#F#JJ##JJ#J#J#J#J#JJ#J#JJJ#F##JJJ#J#JJJJJJFAJJJJFJJJJJJJJJJJJJJJJJFFFJJ#J
-""")
+                    fp.write(fq_r1_data)
             self.fqs.append(fq)
         # Make some mock STAR indices
         for i in ("Genome1","Genome2"):
@@ -145,6 +159,22 @@ AAF#F#JJ##JJ#J#J#J#J#JJ#J#JJJ#F##JJJ#J#JJJJJJFAJJJJFJJJJJJJJJJJJJJJJJFFFJJ#J
         os.environ['PATH'] = self.path
         # Remove the working dir
         shutil.rmtree(self.wd)
+    def _make_mock_star(self,path,unmapped_output=False):
+        # Make a mock STAR executable
+        with open(path,'w') as fp:
+            fp.write("""#!/bin/bash
+export PYTHONPATH=%s:$PYTHONPATH
+python -c "import sys ; from fastq_strand import mockSTAR ; mockSTAR(sys.argv[1:],unmapped_output=%s)" $@
+exit $?
+""" % (os.path.dirname(__file__),unmapped_output))
+        os.chmod(path,0775)
+    def _make_failing_mock_star(self,path):
+        # Make a failing mock STAR executable
+        with open(path,'w') as fp:
+            fp.write("""#!/bin/bash
+exit 1
+""")
+        os.chmod(path,0775)
     def test_fastq_strand_one_genome_index_SE(self):
         """
         fastq_strand: test with single genome index (SE)
@@ -296,11 +326,7 @@ Genome1	13.13	93.21
         """
         # Make a failing mock STAR executable
         mock_star = os.path.join(self.wd,"mock_star","STAR")
-        with open(mock_star,'w') as fp:
-            fp.write("""#!/bin/bash
-exit 1
-""")
-        os.chmod(mock_star,0775)
+        self._make_failing_mock_star(mock_star)
         outfile = os.path.join(self.wd,"mock_R1_fastq_strand.txt")
         with open(outfile,'w') as fp:
             fp.write("Pre-existing file should be removed")
@@ -314,11 +340,7 @@ exit 1
         """
         # Make a failing mock STAR executable
         mock_star = os.path.join(self.wd,"mock_star","STAR")
-        with open(mock_star,'w') as fp:
-            fp.write("""#!/bin/bash
-exit 0
-""")
-        os.chmod(mock_star,0775)
+        self._make_failing_mock_star(mock_star)
         outfile = os.path.join(self.wd,"mock_R1_fastq_strand.txt")
         with open(outfile,'w') as fp:
             fp.write("Pre-existing file should be removed")
@@ -341,11 +363,7 @@ exit 0
         """
         # Make a failing mock STAR executable
         mock_star = os.path.join(self.wd,"mock_star","STAR")
-        with open(mock_star,'w') as fp:
-            fp.write("""#!/bin/bash
-exit 0
-""")
-        os.chmod(mock_star,0775)
+        self._make_failing_mock_star(mock_star)
         outfile = os.path.join(self.wd,"mock_R1_fastq_strand.txt")
         with open(outfile,'w') as fp:
             fp.write("Pre-existing file should be overwritten")
@@ -353,6 +371,24 @@ exit 0
                           fastq_strand,
                           ["-g","Genome1",self.fqs[0],self.fqs[1]])
         self.assertFalse(os.path.exists(outfile))
+    def test_fastq_strand_single_unmapped_read_PE(self):
+        """
+        fastq_strand: test single unmapped read from STAR (PE)
+        """
+        # Make a mock STAR executable which produces unmapped
+        # output
+        mock_star = os.path.join(self.wd,"mock_star","STAR")
+        self._make_mock_star(mock_star,unmapped_output=True)
+        fastq_strand(["-g","Genome1",
+                      self.fqs[0],
+                      self.fqs[1]])
+        outfile = os.path.join(self.wd,"mock_R1_fastq_strand.txt")
+        self.assertTrue(os.path.exists(outfile))
+        self.assertEqual(open(outfile,'r').read(),
+                         """#fastq_strand version: %s	#Aligner: STAR	#Reads in subset: 3
+#Genome	1st forward	2nd reverse
+Genome1	0.00	0.00
+""" % __version__)
 
 #######################################################################
 # Main script
@@ -529,6 +565,11 @@ def fastq_strand(argv,working_dir=None):
     with tempfile.TemporaryFile() as fp:
         # Iterate over genome indices
         for star_genomedir in star_genomedirs:
+            # Basename for output for this genome
+            try:
+                name = genome_names[star_genomedir]
+            except KeyError:
+                name = star_genomedir
             # Build a command line to run STAR
             star_cmd = [star_exe]
             star_cmd.extend([
@@ -551,6 +592,17 @@ def fastq_strand(argv,working_dir=None):
             except subprocess.CalledProcessError as ex:
                 raise Exception("STAR returned non-zero exit code: %s" %
                                 ex.returncode)
+            # Save the outputs
+            if args.keep_star_output:
+                # Make a subdirectory for this genome index
+                genome_dir = os.path.join(star_output_dir,
+                                          name.replace(os.sep,"_"))
+                print "Copying STAR outputs to %s" % genome_dir
+                os.mkdir(genome_dir)
+                for f in os.listdir(working_dir):
+                    if f.startswith(prefix):
+                        shutil.copy(os.path.join(working_dir,f),
+                                    os.path.join(genome_dir,f))
             # Process the STAR output
             star_tab_file = os.path.join(working_dir,
                                          "%sReadsPerGene.out.tab" % prefix)
@@ -573,33 +625,23 @@ def fastq_strand(argv,working_dir=None):
             print "- col2: %d" % sum_col2
             print "- col3: %d" % sum_col3
             print "- col4: %d" % sum_col4
-            forward_1st = float(sum_col3)/float(sum_col2)*100.0
-            reverse_2nd = float(sum_col4)/float(sum_col2)*100.0
+            if sum_col2 > 0.0:
+                forward_1st = float(sum_col3)/float(sum_col2)*100.0
+                reverse_2nd = float(sum_col4)/float(sum_col2)*100.0
+            else:
+                logging.warning("Sum of mapped reads is zero!")
+                forward_1st = 0.0
+                reverse_2nd = 0.0
             print "Strand percentages:"
             print "- 1st forward: %.2f%%" % forward_1st
             print "- 2nd reverse: %.2f%%" % reverse_2nd
             # Append to output file
-            try:
-                name = genome_names[star_genomedir]
-            except KeyError:
-                name = star_genomedir
             data = [name,
                     "%.2f" % forward_1st,
                     "%.2f" % reverse_2nd]
             if args.counts:
                 data.extend([sum_col2,sum_col3,sum_col4])
             fp.write("%s\n" % "\t".join([str(d) for d in data]))
-            # Save the outputs
-            if args.keep_star_output:
-                # Make a subdirectory for this genome index
-                genome_dir = os.path.join(star_output_dir,
-                                          name.replace(os.sep,"_"))
-                print "Copying STAR outputs to %s" % genome_dir
-                os.mkdir(genome_dir)
-                for f in os.listdir(working_dir):
-                    if f.startswith(prefix):
-                        shutil.copy(os.path.join(working_dir,f),
-                                    os.path.join(genome_dir,f))
         # Finished iterating over genomes
         # Rewind temporary output file
         fp.seek(0)
