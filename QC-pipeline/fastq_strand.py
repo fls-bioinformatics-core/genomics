@@ -29,6 +29,33 @@ from bcftbx.qc.report import strip_ngs_extensions
 
 import unittest
 
+fq_r1_data = """@K00311:43:HL3LWBBXX:8:1101:21440:1121 1:N:0:CNATGT
+GCCNGACAGCAGAAATGGAATGCGGACCCCTTCNACCACCANAATATTCTTNATNTTGGGTNTTGCNAANGTCTTC
++
+AAF#FJJJJJJJJJJJJJJJJJJJJJJJJJJJJ#JJJJJJJ#JJJJJJJJJ#JJ#JJJJJJ#JJJJ#JJ#JJJJJJ
+@K00311:43:HL3LWBBXX:8:1101:21460:1121 1:N:0:CNATGT
+GGGNGTCATTGATCATTTCTTCAGTCATTTCCANTTTCATGNTTTCCTTCTNGANATTCTGNATTGNTTNTAGTGT
++
+AAF#FJJJJJJJJJJJJJJJJJJJJJJJJJJJJ#JJJJJJJ#JJJJJJJJJ#JJ#JJJJJJ#JJJJ#JJ#JJJJJJ
+@K00311:43:HL3LWBBXX:8:1101:21805:1121 1:N:0:CNATGT
+CCCNACCCTTGCCTACCCACCATACCAAGTGCTNGGATTACNGGCATGTATNGCNGCGTCCNGCTTNAANTTAA
++
+AAF#FJJJJJJJJJJJJJJJJJJJJJJJJJJJJ#JJJJJJJ#JJJJJJJJJ#JJ#JJJAJJ#JJJJ#JJ#JJJJ
+"""
+fq_r2_data = """@K00311:43:HL3LWBBXX:8:1101:21440:1121 2:N:0:CNATGT
+CAANANGGNNTCNCNGNTNTNCTNTNAGANCNNTGANCNGTTCTTCCCANCTGCACTCTGCCCCAGCTGTCCAGNC
++
+AAF#F#JJ##JJ#J#J#J#J#JJ#J#JJJ#J##JJJ#J#JJJJJJJJJJ#JJJJJJJJJJJJJJJJJJJJJJJJ#J
+@K00311:43:HL3LWBBXX:8:1101:21460:1121 2:N:0:CNATGT
+ATANGNAANNGTNCNGNGNTNTANCNAAGNANNTTGNCNACCTACGGAAACAGAAGACAAGAACGTTCGCTGTA
++
+AAF#F#JJ##JJ#J#J#J#J#JJ#J#JJJ#J##JJJ#J#JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ
+@K00311:43:HL3LWBBXX:8:1101:21805:1121 2:N:0:CNATGT
+GAANANGCNNACNGNGNTNANTGNTNATGNANNTAGNGNTTCTCTCTGAGGTGACAGAAATACTTTAAATTTAANC
++
+AAF#F#JJ##JJ#J#J#J#J#JJ#J#JJJ#F##JJJ#J#JJJJJJFAJJJJFJJJJJJJJJJJJJJJJJFFFJJ#J
+"""
+
 def mockSTAR(argv):
     # Implements a "fake" STAR executable which produces
     # a single output (ReadsPerGene.out.tab file)
@@ -83,13 +110,7 @@ class TestStrandTsar(unittest.TestCase):
         star_bin = os.path.join(self.wd,"mock_star")
         os.mkdir(star_bin)
         mock_star = os.path.join(star_bin,"STAR")
-        with open(mock_star,'w') as fp:
-            fp.write("""#!/bin/bash
-export PYTHONPATH=%s:$PYTHONPATH
-python -c "import sys ; from fastq_strand import mockSTAR ; mockSTAR(sys.argv[1:])" $@
-exit $?
-""" % os.path.dirname(__file__))
-        os.chmod(mock_star,0775)
+        self._make_mock_star(mock_star)
         # Prepend mock STAR location to the path
         os.environ['PATH'] = "%s:%s" % (star_bin,os.environ['PATH'])
         # Make some mock Fastqs
@@ -98,33 +119,9 @@ exit $?
             fq = os.path.join(self.wd,"mock_%s.fq" %r)
             with open(fq,'w') as fp:
                 if r == "R1":
-                    fp.write("""@K00311:43:HL3LWBBXX:8:1101:21440:1121 1:N:0:CNATGT
-GCCNGACAGCAGAAATGGAATGCGGACCCCTTCNACCACCANAATATTCTTNATNTTGGGTNTTGCNAANGTCTTC
-+
-AAF#FJJJJJJJJJJJJJJJJJJJJJJJJJJJJ#JJJJJJJ#JJJJJJJJJ#JJ#JJJJJJ#JJJJ#JJ#JJJJJJ
-@K00311:43:HL3LWBBXX:8:1101:21460:1121 1:N:0:CNATGT
-GGGNGTCATTGATCATTTCTTCAGTCATTTCCANTTTCATGNTTTCCTTCTNGANATTCTGNATTGNTTNTAGTGT
-+
-AAF#FJJJJJJJJJJJJJJJJJJJJJJJJJJJJ#JJJJJJJ#JJJJJJJJJ#JJ#JJJJJJ#JJJJ#JJ#JJJJJJ
-@K00311:43:HL3LWBBXX:8:1101:21805:1121 1:N:0:CNATGT
-CCCNACCCTTGCCTACCCACCATACCAAGTGCTNGGATTACNGGCATGTATNGCNGCGTCCNGCTTNAANTTAA
-+
-AAF#FJJJJJJJJJJJJJJJJJJJJJJJJJJJJ#JJJJJJJ#JJJJJJJJJ#JJ#JJJAJJ#JJJJ#JJ#JJJJ
-""")
+                    fp.write(fq_r1_data)
                 else:
-                    fp.write("""@K00311:43:HL3LWBBXX:8:1101:21440:1121 2:N:0:CNATGT
-CAANANGGNNTCNCNGNTNTNCTNTNAGANCNNTGANCNGTTCTTCCCANCTGCACTCTGCCCCAGCTGTCCAGNC
-+
-AAF#F#JJ##JJ#J#J#J#J#JJ#J#JJJ#J##JJJ#J#JJJJJJJJJJ#JJJJJJJJJJJJJJJJJJJJJJJJ#J
-@K00311:43:HL3LWBBXX:8:1101:21460:1121 2:N:0:CNATGT
-ATANGNAANNGTNCNGNGNTNTANCNAAGNANNTTGNCNACCTACGGAAACAGAAGACAAGAACGTTCGCTGTA
-+
-AAF#F#JJ##JJ#J#J#J#J#JJ#J#JJJ#J##JJJ#J#JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ
-@K00311:43:HL3LWBBXX:8:1101:21805:1121 2:N:0:CNATGT
-GAANANGCNNACNGNGNTNANTGNTNATGNANNTAGNGNTTCTCTCTGAGGTGACAGAAATACTTTAAATTTAANC
-+
-AAF#F#JJ##JJ#J#J#J#J#JJ#J#JJJ#F##JJJ#J#JJJJJJFAJJJJFJJJJJJJJJJJJJJJJJFFFJJ#J
-""")
+                    fp.write(fq_r1_data)
             self.fqs.append(fq)
         # Make some mock STAR indices
         for i in ("Genome1","Genome2"):
@@ -145,6 +142,22 @@ AAF#F#JJ##JJ#J#J#J#J#JJ#J#JJJ#F##JJJ#J#JJJJJJFAJJJJFJJJJJJJJJJJJJJJJJFFFJJ#J
         os.environ['PATH'] = self.path
         # Remove the working dir
         shutil.rmtree(self.wd)
+    def _make_mock_star(self,path):
+        # Make a mock STAR executable
+        with open(path,'w') as fp:
+            fp.write("""#!/bin/bash
+export PYTHONPATH=%s:$PYTHONPATH
+python -c "import sys ; from fastq_strand import mockSTAR ; mockSTAR(sys.argv[1:])" $@
+exit $?
+""" % os.path.dirname(__file__))
+        os.chmod(path,0775)
+    def _make_failing_mock_star(self,path):
+        # Make a failing mock STAR executable
+        with open(path,'w') as fp:
+            fp.write("""#!/bin/bash
+exit 1
+""")
+        os.chmod(path,0775)
     def test_fastq_strand_one_genome_index_SE(self):
         """
         fastq_strand: test with single genome index (SE)
@@ -296,11 +309,7 @@ Genome1	13.13	93.21
         """
         # Make a failing mock STAR executable
         mock_star = os.path.join(self.wd,"mock_star","STAR")
-        with open(mock_star,'w') as fp:
-            fp.write("""#!/bin/bash
-exit 1
-""")
-        os.chmod(mock_star,0775)
+        self._make_failing_mock_star(mock_star)
         outfile = os.path.join(self.wd,"mock_R1_fastq_strand.txt")
         with open(outfile,'w') as fp:
             fp.write("Pre-existing file should be removed")
@@ -314,11 +323,7 @@ exit 1
         """
         # Make a failing mock STAR executable
         mock_star = os.path.join(self.wd,"mock_star","STAR")
-        with open(mock_star,'w') as fp:
-            fp.write("""#!/bin/bash
-exit 0
-""")
-        os.chmod(mock_star,0775)
+        self._make_failing_mock_star(mock_star)
         outfile = os.path.join(self.wd,"mock_R1_fastq_strand.txt")
         with open(outfile,'w') as fp:
             fp.write("Pre-existing file should be removed")
@@ -341,11 +346,7 @@ exit 0
         """
         # Make a failing mock STAR executable
         mock_star = os.path.join(self.wd,"mock_star","STAR")
-        with open(mock_star,'w') as fp:
-            fp.write("""#!/bin/bash
-exit 0
-""")
-        os.chmod(mock_star,0775)
+        self._make_failing_mock_star(mock_star)
         outfile = os.path.join(self.wd,"mock_R1_fastq_strand.txt")
         with open(outfile,'w') as fp:
             fp.write("Pre-existing file should be overwritten")
