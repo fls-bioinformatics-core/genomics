@@ -56,7 +56,7 @@ GAANANGCNNACNGNGNTNANTGNTNATGNANNTAGNGNTTCTCTCTGAGGTGACAGAAATACTTTAAATTTAANC
 AAF#F#JJ##JJ#J#J#J#J#JJ#J#JJJ#F##JJJ#J#JJJJJJFAJJJJFJJJJJJJJJJJJJJJJJFFFJJ#J
 """
 
-def mockSTAR(argv):
+def mockSTAR(argv,unmapped_output=False):
     # Implements a "fake" STAR executable which produces
     # a single output (ReadsPerGene.out.tab file)
     p = argparse.ArgumentParser()
@@ -71,7 +71,8 @@ def mockSTAR(argv):
     p.add_argument('--runThreadN',action="store")
     args = p.parse_args(argv)
     with open("%sReadsPerGene.out.tab" % args.prefix,'w') as fp:
-        fp.write("""N_unmapped	2026581	2026581	2026581
+        if not unmapped_output:
+            fp.write("""N_unmapped	2026581	2026581	2026581
 N_multimapping	4020538	4020538	4020538
 N_noFeature	8533504	24725707	8782932
 N_ambiguous	618069	13658	192220
@@ -95,6 +96,22 @@ ENSMUSG00000064367.1	148640	7892	152477
 ENSMUSG00000064368.1	44003	42532	13212
 ENSMUSG00000064369.1	6	275	6
 ENSMUSG00000064370.1	122199	199	123042
+""")
+        else:
+            fp.write("""N_unmapped	1	1	1
+N_multimapping	0	0	0
+N_noFeature	0	0	0
+N_ambiguous	0	0	0
+ENSG00000223972.5	0	0	0
+ENSG00000227232.5	0	0	0
+ENSG00000278267.1	0	0	0
+ENSG00000243485.3	0	0	0
+ENSG00000274890.1	0	0	0
+ENSG00000237613.2	0	0	0
+ENSG00000268020.3	0	0	0
+ENSG00000240361.1	0	0	0
+ENSG00000186092.4	0	0	0
+ENSG00000238009.6	0	0	0
 """)
 
 class TestStrandTsar(unittest.TestCase):
@@ -142,14 +159,14 @@ class TestStrandTsar(unittest.TestCase):
         os.environ['PATH'] = self.path
         # Remove the working dir
         shutil.rmtree(self.wd)
-    def _make_mock_star(self,path):
+    def _make_mock_star(self,path,unmapped_output=False):
         # Make a mock STAR executable
         with open(path,'w') as fp:
             fp.write("""#!/bin/bash
 export PYTHONPATH=%s:$PYTHONPATH
-python -c "import sys ; from fastq_strand import mockSTAR ; mockSTAR(sys.argv[1:])" $@
+python -c "import sys ; from fastq_strand import mockSTAR ; mockSTAR(sys.argv[1:],unmapped_output=%s)" $@
 exit $?
-""" % os.path.dirname(__file__))
+""" % (os.path.dirname(__file__),unmapped_output))
         os.chmod(path,0775)
     def _make_failing_mock_star(self,path):
         # Make a failing mock STAR executable
@@ -354,6 +371,24 @@ Genome1	13.13	93.21
                           fastq_strand,
                           ["-g","Genome1",self.fqs[0],self.fqs[1]])
         self.assertFalse(os.path.exists(outfile))
+    def test_fastq_strand_single_unmapped_read_PE(self):
+        """
+        fastq_strand: test single unmapped read from STAR (PE)
+        """
+        # Make a mock STAR executable which produces unmapped
+        # output
+        mock_star = os.path.join(self.wd,"mock_star","STAR")
+        self._make_mock_star(mock_star,unmapped_output=True)
+        fastq_strand(["-g","Genome1",
+                      self.fqs[0],
+                      self.fqs[1]])
+        outfile = os.path.join(self.wd,"mock_R1_fastq_strand.txt")
+        self.assertTrue(os.path.exists(outfile))
+        self.assertEqual(open(outfile,'r').read(),
+                         """#fastq_strand version: %s	#Aligner: STAR	#Reads in subset: 3
+#Genome	1st forward	2nd reverse
+Genome1	0.00	0.00
+""" % __version__)
 
 #######################################################################
 # Main script
