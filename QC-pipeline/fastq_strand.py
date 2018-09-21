@@ -625,8 +625,13 @@ def fastq_strand(argv,working_dir=None):
             print "- col2: %d" % sum_col2
             print "- col3: %d" % sum_col3
             print "- col4: %d" % sum_col4
-            forward_1st = float(sum_col3)/float(sum_col2)*100.0
-            reverse_2nd = float(sum_col4)/float(sum_col2)*100.0
+            if sum_col2 > 0.0:
+                forward_1st = float(sum_col3)/float(sum_col2)*100.0
+                reverse_2nd = float(sum_col4)/float(sum_col2)*100.0
+            else:
+                logging.warning("Sum of mapped reads is zero!")
+                forward_1st = 0.0
+                reverse_2nd = 0.0
             print "Strand percentages:"
             print "- 1st forward: %.2f%%" % forward_1st
             print "- 2nd reverse: %.2f%%" % reverse_2nd
