@@ -315,8 +315,10 @@ fi
 # Update permissions and group (if specified)
 set_permissions_and_group "$SET_PERMISSIONS" "$SET_GROUP" $qc_dir
 set_permissions_and_group "$SET_PERMISSIONS" "$SET_GROUP" "$program_info"
-set_permissions_and_group "$SET_PERMISSIONS" "$SET_GROUP" "$qc_dir/$(get_fastq_basename $FASTQ)_*_screen.*"
 set_permissions_and_group -R "$SET_PERMISSIONS" "$SET_GROUP" "$qc_dir/${fastqc_base}*"
+if [ $do_fastq_screen == "yes" ] ; then
+    set_permissions_and_group "$SET_PERMISSIONS" "$SET_GROUP" "$qc_dir/$(get_fastq_basename $FASTQ)_*_screen.*"
+fi
 #
 echo ILLUMINA QC pipeline completed: `date`
 exit
