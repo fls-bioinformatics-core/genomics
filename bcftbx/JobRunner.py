@@ -402,6 +402,7 @@ class GEJobRunner(BaseJobRunner):
         self.__error_state = {}
         self.__exit_status = {}
         self.__finalizing = {}
+        self.__updating_grace_period = {}
         self.__queue = {}
         self.__start_time = {}
         self.__ge_extra_args = ge_extra_args
@@ -665,14 +666,8 @@ exit $exit_code
                         job_ids.append(job_id)
                 return job_ids
         # Update jobs in grace period
-        now = time.time()
         for job_id in self.__start_time.keys():
-            if ((now - self.__start_time[job_id]) >
-                self.__new_job_grace_period):
-                # Job no longer in grace period
-                logging.debug("GEJobRunner: job %s no longer in grace "
-                              "period" % job_id)
-                del(self.__start_time[job_id])
+            self.__update_job_grace_period(job_id)
         grace_period_jobs = self.__start_time.keys()
         # Build initial list from directory contents
         job_ids = []
@@ -706,7 +701,7 @@ exit $exit_code
                 job_ids.append(job_id)
             else:
                 # Job now visible so no longer in grace period
-                del(self.__start_time[job_id])
+                self.__update_job_grace_period(job_id)
         logging.debug("GEJobRunner: 'list' returning %s" % job_ids)
         return job_ids
 
@@ -765,6 +760,39 @@ exit $exit_code
             logging.warning("GEJobRunner: exception removing "
                             "admin dir '%s': %s" %
                             (self.__admin_dir,ex))
+
+    def __update_job_grace_period(self,job_id):
+        """
+        Internal: handling update of job in grace period
+
+        Checks if a job is still within the grace period
+        (i.e. has an entry in the `__start_time`
+        dictionary which is newer than the grace period).
+
+        If the job is no longer in the grace period then
+        removes its entry in the `__start_time`
+        dictionary.
+        """
+        logging.debug("GEJobRunner: update grace period for "
+                      "for job %s" % job_id)
+        try:
+            if self.__updating_grace_period[job_id]:
+                logging.warning("GEJobRunner: skipping update of "
+                                "grace period for %s (already "
+                                "started elsewhere)" % job_id)
+                return
+        except KeyError:
+            logging.debug("GEJobRunner: updating grace period of "
+                          "job %s" % job_id)
+        self.__updating_grace_period[job_id] = True
+        if ((time.time() - self.__start_time[job_id]) >
+            self.__new_job_grace_period):
+            # Job no longer in grace period
+            logging.debug("GEJobRunner: job %s no longer in grace "
+                          "period" % job_id)
+            del(self.__start_time[job_id])
+        # Release update lock
+        del(self.__updating_grace_period[job_id])
 
     def __handle_job_completion(self,job_id):
         """
