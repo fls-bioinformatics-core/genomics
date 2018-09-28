@@ -602,7 +602,6 @@ def mkdir(dirn,mode=None,recursive=False):
         parent = os.path.dirname(dirn)
         if not os.path.exists(parent):
             mkdir(parent,recursive=True)
-    logging.debug("Making dir:%s" % dirn)
     os.mkdir(dirn)
     if mode is not None: chmod(dirn,mode)
 
@@ -624,7 +623,6 @@ def mklink(target,link_name,relative=False):
       link_name: name of the link
       relative: if True then make a relative link (if possible);
         otherwise link to the target as given (default)"""
-    logging.debug("Linking to %s from %s" % (target,link_name))
     target_path = target
     if relative:
         # Try to construct relative link to target
@@ -653,20 +651,19 @@ def chmod(target,mode):
       mode: a valid mode specifier e.g. 0775 or 0664
 
     """
-    logging.debug("Changing mode of %s to %s" % (target,mode))
     try:
         if os.path.islink(target):
             # Try to use lchmod to operate on the link
             try:
                 os.lchmod(target,mode)
-            except AttributeError,ex:
+            except AttributeError as ex:
                 # lchmod is not available on all systems
                 # If not then just ignore
                 logging.debug("os.lchmod not available? Exception: %s" % ex)
         else:
             # Use os.chmod for everything else
             os.chmod(target,mode)
-    except OSError, ex:
+    except OSError as ex:
         logging.warning("Failed to change permissions on %s to %s: %s" % (target,mode,ex))
 
 def touch(filename):
@@ -853,7 +850,7 @@ def get_gid_from_group(group):
     """
     try:
         return grp.getgrnam(group).gr_gid
-    except KeyError,ex:
+    except KeyError as ex:
         return None
 
 def get_hostname():
