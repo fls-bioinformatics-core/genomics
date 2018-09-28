@@ -401,9 +401,13 @@ class GEJobRunner(BaseJobRunner):
         self.__log_dirs = {}
         self.__error_state = {}
         self.__exit_status = {}
+        self.__finalizing = {}
+        self.__updating_grace_period = {}
         self.__queue = {}
         self.__start_time = {}
         self.__ge_extra_args = ge_extra_args
+        # Lock on job submission
+        self.__submit_lock = False
         # Cached job list
         self.__cached_job_list_lifetime = 2.0
         self.__cached_job_list_timestamp = 0.0
@@ -459,10 +463,22 @@ class GEJobRunner(BaseJobRunner):
         logging.debug("Working_dir: %s" % working_dir)
         logging.debug("Script     : %s" % script)
         logging.debug("Arguments  : %s" % str(args))
-        # Build script to run the command to be submitted
+        # Wait for lock on job submission
+        start_time = time.time()
+        while self.__submit_lock:
+            time.sleep(1.0)
+            if (time.time() - start_time) > self.__ge_timeout:
+                raise Exception("GEJobRunner: timed out waiting "
+                                "for job submission lock")
+        # Grab the lock and get internal job number
+        self.__submit_lock = True
         self.__job_count += 1
-        logging.debug("Internal job count: %s" % self.__job_count)
-        job_dir = os.path.join(self.__admin_dir,str(self.__job_count))
+        job_number = self.__job_count
+        logging.debug("Internal job count: %s" % job_number)
+        # Release the lock
+        self.__submit_lock = False
+        # Build script to run the command to be submitted
+        job_dir = os.path.join(self.__admin_dir,str(job_number))
         logging.debug("Job admin dir     : %s" % job_dir)
         os.mkdir(job_dir)
         cmd_args = [script]
@@ -524,7 +540,7 @@ exit $exit_code
         logging.debug("GEJobRunner: done - job id = %s" % job_id)
         # Store internal number, name and log dir against job id
         if job_id is not None:
-            self.__job_number[job_id] = self.__job_count
+            self.__job_number[job_id] = job_number
             self.__names[job_id] = name
             if self.log_dir is None:
                 self.__log_dirs[job_id] = working_dir
@@ -650,19 +666,18 @@ exit $exit_code
                         job_ids.append(job_id)
                 return job_ids
         # Update jobs in grace period
-        now = time.time()
         for job_id in self.__start_time.keys():
-            if ((now - self.__start_time[job_id]) >
-                self.__new_job_grace_period):
-                # Job no longer in grace period
-                logging.debug("GEJobRunner: job %s no longer in grace "
-                              "period" % job_id)
-                del(self.__start_time[job_id])
+            self.__update_job_grace_period(job_id)
         grace_period_jobs = self.__start_time.keys()
         # Build initial list from directory contents
         job_ids = []
         for job_id in self.__job_number.keys():
-            job_number = self.__job_number[job_id]
+            try:
+                job_number = self.__job_number[job_id]
+            except KeyError:
+                # Job has been removed since the list was
+                # fetched? Ignore
+                continue
             job_dir = os.path.join(self.__admin_dir,str(job_number))
             exit_code_file = os.path.join(job_dir,"__exit_code")
             logging.debug("GEJobRunner: checking job %s (#%s)"
@@ -686,7 +701,7 @@ exit $exit_code
                 job_ids.append(job_id)
             else:
                 # Job now visible so no longer in grace period
-                del(self.__start_time[job_id])
+                self.__update_job_grace_period(job_id)
         logging.debug("GEJobRunner: 'list' returning %s" % job_ids)
         return job_ids
 
@@ -699,6 +714,15 @@ exit $exit_code
         if self.isRunning(job_id):
             # Return None if job is still running
             return None
+        # Check if job is being finalized
+        start_time = time.time()
+        while job_id in self.__finalizing:
+            # Wait until exit_status is ready
+            time.sleep(1.0)
+            if (time.time() - start_time) > self.__ge_timeout:
+                logging.debug("GEJobRunner: timed out waiting "
+                              "for job %s to finalize" % job_id)
+                return None
         # Return cached exit status
         return self.__exit_status[job_id]
 
@@ -737,6 +761,39 @@ exit $exit_code
                             "admin dir '%s': %s" %
                             (self.__admin_dir,ex))
 
+    def __update_job_grace_period(self,job_id):
+        """
+        Internal: handling update of job in grace period
+
+        Checks if a job is still within the grace period
+        (i.e. has an entry in the `__start_time`
+        dictionary which is newer than the grace period).
+
+        If the job is no longer in the grace period then
+        removes its entry in the `__start_time`
+        dictionary.
+        """
+        logging.debug("GEJobRunner: update grace period for "
+                      "for job %s" % job_id)
+        try:
+            if self.__updating_grace_period[job_id]:
+                logging.warning("GEJobRunner: skipping update of "
+                                "grace period for %s (already "
+                                "started elsewhere)" % job_id)
+                return
+        except KeyError:
+            logging.debug("GEJobRunner: updating grace period of "
+                          "job %s" % job_id)
+        self.__updating_grace_period[job_id] = True
+        if ((time.time() - self.__start_time[job_id]) >
+            self.__new_job_grace_period):
+            # Job no longer in grace period
+            logging.debug("GEJobRunner: job %s no longer in grace "
+                          "period" % job_id)
+            del(self.__start_time[job_id])
+        # Release update lock
+        del(self.__updating_grace_period[job_id])
+
     def __handle_job_completion(self,job_id):
         """
         Internal: deal with completion of job
@@ -760,6 +817,16 @@ exit $exit_code
         """
         logging.debug("GEJobRunner: handle job completion for %s"
                       % job_id)
+        # Check job finalization hasn't already been started
+        try:
+            if self.__finalizing[job_id]:
+                logging.debug("GEJobRunner: skipping job "
+                              "finalization for %s (already "
+                              "started elsewhere)" % job_id)
+                return
+        except KeyError:
+            logging.debug("GEJobRunner: finalizing job %s" % job_id)
+        self.__finalizing[job_id] = True
         # Check there is an exit code file
         exit_code_file = os.path.join(self.__admin_dir,
                                       str(self.__job_number[job_id]),
@@ -779,6 +846,8 @@ exit $exit_code
         # Store exit status and clean up
         self.__exit_status[job_id] = exit_status
         self.__clean_up_job(job_id)
+        # Release finalization lock
+        del(self.__finalizing[job_id])
 
     def __clean_up_job(self,job_id):
         """Internal: clean up internal job files
