@@ -1,3 +1,18 @@
+2018-09-28  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* genomics-bcftbx version 1.5.2
+	- QC-pipeline/fastq_strand.py:
+	  - version 0.0.4: fixes cases when `STAR` fails
+	    to map any reads
+	    https://github.com/fls-bioinformatics-core/genomics/pull/81
+	- QC-pipeline/illumina_qc.sh:
+	  - version 1.3.3: fixes bug setting permissions
+	    when using `--no-screens` option
+	    https://github.com/fls-bioinformatics-core/genomics/pull/82
+	- bcftbx/JobRunner: updates to `GEJobRunner` to
+	  improve thread safety
+	  https://github.com/fls-bioinformatics-core/genomics/pull/80
+
 2018-09-13  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* genomics-bcftbx version 1.5.1
