@@ -406,6 +406,8 @@ class GEJobRunner(BaseJobRunner):
         self.__queue = {}
         self.__start_time = {}
         self.__ge_extra_args = ge_extra_args
+        # Job id lock
+        self.__lock = {}
         # Lock on job submission
         self.__submit_lock = False
         # Cached job list
@@ -818,6 +820,22 @@ exit $exit_code
         logging.debug("GEJobRunner: handle job completion for %s"
                       % job_id)
         # Check job finalization hasn't already been started
+        lock_name = "%s#%s" % (job_id,time.time())
+        print "Making lock: %s" % lock_name
+        self.__lock[lock_name] = True
+        for name in self.__lock:
+            print "-- checking lock: %s" % name
+            if name == lock_name:
+                continue
+            j,t = name.split('#')
+            if (int(j) == int(job_id)) and \
+               (float(t) < float(lock_name.split('#')[1])):
+                # Another process already has the lock
+                # on this job
+                print "   already has lock"
+                del(self.__lock[lock_name])
+                return
+        print "Got lock: %s" % lock_name
         try:
             if self.__finalizing[job_id]:
                 logging.debug("GEJobRunner: skipping job "
@@ -848,6 +866,8 @@ exit $exit_code
         self.__clean_up_job(job_id)
         # Release finalization lock
         del(self.__finalizing[job_id])
+        # Release job lock
+        del(self.__lock[lock_name])
 
     def __clean_up_job(self,job_id):
         """Internal: clean up internal job files
