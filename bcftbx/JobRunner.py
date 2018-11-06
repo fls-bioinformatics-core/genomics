@@ -820,26 +820,29 @@ exit $exit_code
         logging.debug("GEJobRunner: handle job completion for %s"
                       % job_id)
         # Check job finalization hasn't already been started
-        print "GEJobRunner: attempting to get lock for %s" % job_id
+        logging.debug("GEJobRunner: attempting to get lock for %s"
+                      % job_id)
         lock = "%s@%s" % (job_id,time.time())
-        print "GEJobRunner: try to make new lock: %s" % lock
+        logging.debug("GEJobRunner: try to make new lock: %s"
+                      % lock)
         self.__job_lock[lock] = True
         for name in self.__job_lock:
             if name == lock:
                 continue
-            print "GEJobRunner: -- checking lock: %s" % name
+            logging.debug("GEJobRunner: -- checking existing lock: "
+                          "%s" % name)
             j,t = name.split('@')
             if (int(j) == int(job_id)) and \
                (float(t) < float(lock.split('@')[1])):
                 # Another process already has the lock on
                 # finishing this job, so let that do it
-                print "GEJobRunner: already locked, giving up"
+                logging.debug("GEJobRunner: already locked, giving up")
                 del(self.__job_lock[lock])
                 logging.debug("GEJobRunner: skipping job "
                               "finalization for %s (already "
                               "started elsewhere)" % job_id)
                 return
-        print "GEJobRunner: acquired lock: %s" % lock
+        logging.debug("GEJobRunner: acquired lock: %s" % lock)
         self.__finalizing[job_id] = True
         # Check there is an exit code file
         exit_code_file = os.path.join(self.__admin_dir,
