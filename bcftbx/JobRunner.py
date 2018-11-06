@@ -407,7 +407,7 @@ class GEJobRunner(BaseJobRunner):
         self.__start_time = {}
         self.__ge_extra_args = ge_extra_args
         # Job id lock
-        self.__lock = {}
+        self.__job_lock = {}
         # Lock on job submission
         self.__submit_lock = False
         # Cached job list
@@ -820,30 +820,26 @@ exit $exit_code
         logging.debug("GEJobRunner: handle job completion for %s"
                       % job_id)
         # Check job finalization hasn't already been started
-        lock_name = "%s#%s" % (job_id,time.time())
-        print "Making lock: %s" % lock_name
-        self.__lock[lock_name] = True
-        for name in self.__lock:
-            print "-- checking lock: %s" % name
-            if name == lock_name:
+        print "GEJobRunner: attempting to get lock for %s" % job_id
+        lock = "%s@%s" % (job_id,time.time())
+        print "GEJobRunner: try to make new lock: %s" % lock
+        self.__job_lock[lock] = True
+        for name in self.__job_lock:
+            if name == lock:
                 continue
-            j,t = name.split('#')
+            print "GEJobRunner: -- checking lock: %s" % name
+            j,t = name.split('@')
             if (int(j) == int(job_id)) and \
-               (float(t) < float(lock_name.split('#')[1])):
-                # Another process already has the lock
-                # on this job
-                print "   already has lock"
-                del(self.__lock[lock_name])
-                return
-        print "Got lock: %s" % lock_name
-        try:
-            if self.__finalizing[job_id]:
+               (float(t) < float(lock.split('@')[1])):
+                # Another process already has the lock on
+                # finishing this job, so let that do it
+                print "GEJobRunner: already locked, giving up"
+                del(self.__job_lock[lock])
                 logging.debug("GEJobRunner: skipping job "
                               "finalization for %s (already "
                               "started elsewhere)" % job_id)
                 return
-        except KeyError:
-            logging.debug("GEJobRunner: finalizing job %s" % job_id)
+        print "GEJobRunner: acquired lock: %s" % lock
         self.__finalizing[job_id] = True
         # Check there is an exit code file
         exit_code_file = os.path.join(self.__admin_dir,
@@ -867,7 +863,7 @@ exit $exit_code
         # Release finalization lock
         del(self.__finalizing[job_id])
         # Release job lock
-        del(self.__lock[lock_name])
+        del(self.__job_lock[lock])
 
     def __clean_up_job(self,job_id):
         """Internal: clean up internal job files
