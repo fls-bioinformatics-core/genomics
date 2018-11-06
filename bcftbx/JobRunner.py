@@ -756,6 +756,16 @@ exit $exit_code
         """
         logging.debug("GEJobRunner: removing admin dir '%s'" %
                       self.__admin_dir)
+        # Check if jobs are still being finalized
+        start_time = time.time()
+        while self.__finalizing:
+            # Wait until everything has finalized
+            time.sleep(1.0)
+            if (time.time() - start_time) > self.__ge_timeout:
+                logging.warning("GEJobRunner: timed out waiting "
+                                "for jobs to finalize")
+                break
+        # Try to remove the admin dir and contents
         try:
             shutil.rmtree(self.__admin_dir)
         except Exception as ex:
