@@ -570,8 +570,9 @@ exit $exit_code
         exit_code_file = os.path.join(self.__admin_dir,
                                       str(self.__job_number[job_id]),
                                       "__exit_code")
-        with open(exit_code_file,'w') as fp:
+        with open("%s.tmp" % exit_code_file,'w') as fp:
             fp.write("-1\n")
+        os.rename("%s.tmp" % exit_code_file,exit_code_file)
         # Force update of cached job list
         self.__cached_job_list_force_update = True
         return True
