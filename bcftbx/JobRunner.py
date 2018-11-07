@@ -53,6 +53,7 @@ import time
 import tempfile
 import shutil
 import atexit
+import uuid
 try:
     import drmaa
 except ImportError:
@@ -834,7 +835,9 @@ exit $exit_code
         # Check job finalization hasn't already been started
         logging.debug("GEJobRunner: attempting to get lock for %s"
                       % job_id)
-        lock = "%s@%s" % (job_id,time.time())
+        lock = "%s@%s@%s" % (job_id,
+                             time.time(),
+                             uuid.uuid4())
         logging.debug("GEJobRunner: try to make new lock: %s"
                       % lock)
         self.__job_lock[lock] = True
@@ -843,17 +846,25 @@ exit $exit_code
                 continue
             logging.debug("GEJobRunner: -- checking existing lock: "
                           "%s" % name)
-            j,t = name.split('@')
-            if (int(j) == int(job_id)) and \
-               (float(t) < float(lock.split('@')[1])):
-                # Another process already has the lock on
-                # finishing this job, so let that do it
-                logging.debug("GEJobRunner: already locked, giving up")
-                del(self.__job_lock[lock])
-                logging.debug("GEJobRunner: skipping job "
-                              "finalization for %s (already "
-                              "started elsewhere)" % job_id)
-                return
+            j,t,uid = name.split('@')
+            if int(j) == int(job_id):
+                if float(t) < float(lock.split('@')[1]):
+                    # Another process already has the lock on
+                    # finishing this job, so let that do it
+                    logging.debug("GEJobRunner: already locked, giving up")
+                    del(self.__job_lock[lock])
+                    logging.debug("GEJobRunner: skipping job "
+                                  "finalization for %s (already "
+                                  "started elsewhere)" % job_id)
+                    return
+                elif float(t) == float(lock.split('@')[1]):
+                    # Deadlock: two locks with same priority
+                    # Drop this one
+                    logging.warning("GEJobRunner: two locks with same "
+                                    "priority for job %s" % job_id)
+                    if name in self.__job_lock:
+                        del(self.__job_lock[lock])
+                        return
         logging.debug("GEJobRunner: acquired lock: %s" % lock)
         self.__finalizing[job_id] = True
         # Check there is an exit code file
