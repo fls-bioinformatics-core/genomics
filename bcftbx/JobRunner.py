@@ -664,18 +664,18 @@ exit $exit_code
                 logging.debug("GEJobRunner: using cached job list")
                 job_ids = self.__cached_job_list
                 # Add the jobs in grace period
-                grace_period_jobs = self.__start_time.keys()
+                grace_period_jobs = list(self.__start_time.keys())
                 for job_id in grace_period_jobs:
                     if job_id not in job_ids:
                         job_ids.append(job_id)
                 return job_ids
         # Update jobs in grace period
-        for job_id in self.__start_time.keys():
+        for job_id in list(self.__start_time.keys()):
             self.__update_job_grace_period(job_id)
-        grace_period_jobs = self.__start_time.keys()
+        grace_period_jobs = list(self.__start_time.keys())
         # Build initial list from directory contents
         job_ids = []
-        for job_id in self.__job_number.keys():
+        for job_id in list(self.__job_number.keys()):
             try:
                 job_number = self.__job_number[job_id]
             except KeyError:
@@ -838,7 +838,7 @@ exit $exit_code
         logging.debug("GEJobRunner: try to make new lock: %s"
                       % lock)
         self.__job_lock[lock] = True
-        for name in self.__job_lock:
+        for name in list(self.__job_lock.keys()):
             if name == lock:
                 continue
             logging.debug("GEJobRunner: -- checking existing lock: "
