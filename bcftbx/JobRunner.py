@@ -492,13 +492,14 @@ class GEJobRunner(BaseJobRunner):
         cmd = ' '.join(cmd_args)
         job_script = os.path.join(job_dir,"job_script.sh")
         with open(job_script,'w') as fp:
-            fp.write("""#!%s
-echo "$QUEUE" > %s/__queue
-%s
+            fp.write("""#!{shell}
+echo "$QUEUE" > {job_dir}/__queue
+{cmd}
 exit_code=$?
-echo "$exit_code" > %s/__exit_code
+echo "$exit_code" > {job_dir}/__exit_code.tmp
+mv {job_dir}/__exit_code.tmp {job_dir}/__exit_code
 exit $exit_code
-""" % (self.__shell,job_dir,cmd,job_dir))
+""".format(shell=self.__shell,job_dir=job_dir,cmd=cmd))
         os.chmod(job_script,0755)
         # Sanitize name for GE by replacing invalid characters
         # (colon, asterisk...)
