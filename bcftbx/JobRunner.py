@@ -54,6 +54,7 @@ import tempfile
 import shutil
 import atexit
 import uuid
+import random
 try:
     import drmaa
 except ImportError:
@@ -725,8 +726,8 @@ exit $exit_code
             # Wait until exit_status is ready
             time.sleep(1.0)
             if (time.time() - start_time) > self.__ge_timeout:
-                logging.debug("GEJobRunner: timed out waiting "
-                              "for job %s to finalize" % job_id)
+                logging.warning("GEJobRunner: timed out waiting "
+                                "for job %s to finalize" % job_id)
                 return None
         # Return cached exit status
         return self.__exit_status[job_id]
@@ -832,40 +833,51 @@ exit $exit_code
         """
         logging.debug("GEJobRunner: handle job completion for %s"
                       % job_id)
-        # Check job finalization hasn't already been started
-        logging.debug("GEJobRunner: attempting to get lock for %s"
-                      % job_id)
-        lock = "%s@%s@%s" % (job_id,
-                             time.time(),
-                             uuid.uuid4())
-        logging.debug("GEJobRunner: try to make new lock: %s"
-                      % lock)
-        self.__job_lock[lock] = True
-        for name in list(self.__job_lock.keys()):
-            if name == lock:
-                continue
-            logging.debug("GEJobRunner: -- checking existing lock: "
-                          "%s" % name)
-            j,t,uid = name.split('@')
-            if int(j) == int(job_id):
-                if float(t) < float(lock.split('@')[1]):
-                    # Another process already has the lock on
-                    # finishing this job, so let that do it
-                    logging.debug("GEJobRunner: already locked, giving up")
-                    del(self.__job_lock[lock])
-                    logging.debug("GEJobRunner: skipping job "
-                                  "finalization for %s (already "
-                                  "started elsewhere)" % job_id)
-                    return
-                elif float(t) == float(lock.split('@')[1]):
-                    # Deadlock: two locks with same priority
-                    # Drop this one
-                    logging.warning("GEJobRunner: two locks with same "
-                                    "priority for job %s" % job_id)
-                    if name in self.__job_lock:
+        has_lock = False
+        uuid_ = uuid.uuid4()
+        while not has_lock:
+            logging.debug("GEJobRunner: attempting to get lock for %s"
+                          % job_id)
+            lock = "%s@%s@%s" % (job_id,
+                                 time.time(),
+                                 uuid_)
+            timestamp = float(lock.split('@')[1])
+            logging.debug("GEJobRunner: try to make new lock: %s"
+                          % lock)
+            self.__job_lock[lock] = True
+            has_lock = True
+            for name in list(self.__job_lock.keys()):
+                if name == lock:
+                    continue
+                logging.debug("GEJobRunner: -- checking existing lock: "
+                              "%s" % name)
+                j,t,uid = name.split('@')
+                if int(j) == int(job_id):
+                    if float(t) < timestamp:
+                        # Another process already has the lock on
+                        # finishing this job, so let that do it
+                        logging.debug("GEJobRunner: already locked, giving up")
                         del(self.__job_lock[lock])
+                        logging.debug("GEJobRunner: skipping job "
+                                      "finalization for %s (already "
+                                      "started elsewhere)" % job_id)
                         return
+                    elif float(t) == timestamp:
+                        # Deadlock: two locks with same priority
+                        logging.warning("GEJobRunner: two locks with same "
+                                        "priority for job %s" % job_id)
+                        # Back out and retry after random delay
+                        if name in self.__job_lock:
+                            del(self.__job_lock[lock])
+                            time.sleep(random.random())
+                            has_lock = False
         logging.debug("GEJobRunner: acquired lock: %s" % lock)
+        if job_id not in self.__job_number:
+            # Job has gone away
+            logging.warning("GEJobRunner: job %s has gone away" %
+                            job_id)
+            del(self.__job_lock[lock])
+            return
         self.__finalizing[job_id] = True
         # Check there is an exit code file
         exit_code_file = os.path.join(self.__admin_dir,
@@ -916,13 +928,13 @@ exit $exit_code
         except Exception as ex:
             logging.warning("GEJobRunner: exception cleaning up for "
                             "job %s (ignored): %s" % (job_id,ex))
-        # Remove the internally stored job number
-        del(self.__job_number[job_id])
         # Clear stored error state
         try:
             del(self.__error_state[job_id])
         except KeyError:
             pass
+        # Remove the internally stored job number
+        del(self.__job_number[job_id])
 
     def __run_qstat(self):
         """Internal: run qstat and return data as a list of lists
