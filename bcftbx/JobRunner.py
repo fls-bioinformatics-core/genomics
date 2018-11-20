@@ -53,6 +53,8 @@ import time
 import tempfile
 import shutil
 import atexit
+import uuid
+import random
 try:
     import drmaa
 except ImportError:
@@ -406,6 +408,8 @@ class GEJobRunner(BaseJobRunner):
         self.__queue = {}
         self.__start_time = {}
         self.__ge_extra_args = ge_extra_args
+        # Job id lock
+        self.__job_lock = {}
         # Lock on job submission
         self.__submit_lock = False
         # Cached job list
@@ -490,13 +494,14 @@ class GEJobRunner(BaseJobRunner):
         cmd = ' '.join(cmd_args)
         job_script = os.path.join(job_dir,"job_script.sh")
         with open(job_script,'w') as fp:
-            fp.write("""#!%s
-echo "$QUEUE" > %s/__queue
-%s
+            fp.write("""#!{shell}
+echo "$QUEUE" > {job_dir}/__queue
+{cmd}
 exit_code=$?
-echo "$exit_code" > %s/__exit_code
+echo "$exit_code" > {job_dir}/__exit_code.tmp
+mv {job_dir}/__exit_code.tmp {job_dir}/__exit_code
 exit $exit_code
-""" % (self.__shell,job_dir,cmd,job_dir))
+""".format(shell=self.__shell,job_dir=job_dir,cmd=cmd))
         os.chmod(job_script,0755)
         # Sanitize name for GE by replacing invalid characters
         # (colon, asterisk...)
@@ -567,8 +572,9 @@ exit $exit_code
         exit_code_file = os.path.join(self.__admin_dir,
                                       str(self.__job_number[job_id]),
                                       "__exit_code")
-        with open(exit_code_file,'w') as fp:
+        with open("%s.tmp" % exit_code_file,'w') as fp:
             fp.write("-1\n")
+        os.rename("%s.tmp" % exit_code_file,exit_code_file)
         # Force update of cached job list
         self.__cached_job_list_force_update = True
         return True
@@ -660,18 +666,18 @@ exit $exit_code
                 logging.debug("GEJobRunner: using cached job list")
                 job_ids = self.__cached_job_list
                 # Add the jobs in grace period
-                grace_period_jobs = self.__start_time.keys()
+                grace_period_jobs = list(self.__start_time.keys())
                 for job_id in grace_period_jobs:
                     if job_id not in job_ids:
                         job_ids.append(job_id)
                 return job_ids
         # Update jobs in grace period
-        for job_id in self.__start_time.keys():
+        for job_id in list(self.__start_time.keys()):
             self.__update_job_grace_period(job_id)
-        grace_period_jobs = self.__start_time.keys()
+        grace_period_jobs = list(self.__start_time.keys())
         # Build initial list from directory contents
         job_ids = []
-        for job_id in self.__job_number.keys():
+        for job_id in list(self.__job_number.keys()):
             try:
                 job_number = self.__job_number[job_id]
             except KeyError:
@@ -720,8 +726,8 @@ exit $exit_code
             # Wait until exit_status is ready
             time.sleep(1.0)
             if (time.time() - start_time) > self.__ge_timeout:
-                logging.debug("GEJobRunner: timed out waiting "
-                              "for job %s to finalize" % job_id)
+                logging.warning("GEJobRunner: timed out waiting "
+                                "for job %s to finalize" % job_id)
                 return None
         # Return cached exit status
         return self.__exit_status[job_id]
@@ -754,6 +760,16 @@ exit $exit_code
         """
         logging.debug("GEJobRunner: removing admin dir '%s'" %
                       self.__admin_dir)
+        # Check if jobs are still being finalized
+        start_time = time.time()
+        while self.__finalizing:
+            # Wait until everything has finalized
+            time.sleep(1.0)
+            if (time.time() - start_time) > self.__ge_timeout:
+                logging.warning("GEJobRunner: timed out waiting "
+                                "for jobs to finalize")
+                break
+        # Try to remove the admin dir and contents
         try:
             shutil.rmtree(self.__admin_dir)
         except Exception as ex:
@@ -817,15 +833,51 @@ exit $exit_code
         """
         logging.debug("GEJobRunner: handle job completion for %s"
                       % job_id)
-        # Check job finalization hasn't already been started
-        try:
-            if self.__finalizing[job_id]:
-                logging.debug("GEJobRunner: skipping job "
-                              "finalization for %s (already "
-                              "started elsewhere)" % job_id)
-                return
-        except KeyError:
-            logging.debug("GEJobRunner: finalizing job %s" % job_id)
+        has_lock = False
+        uuid_ = uuid.uuid4()
+        while not has_lock:
+            logging.debug("GEJobRunner: attempting to get lock for %s"
+                          % job_id)
+            lock = "%s@%s@%s" % (job_id,
+                                 time.time(),
+                                 uuid_)
+            timestamp = float(lock.split('@')[1])
+            logging.debug("GEJobRunner: try to make new lock: %s"
+                          % lock)
+            self.__job_lock[lock] = True
+            has_lock = True
+            for name in list(self.__job_lock.keys()):
+                if name == lock:
+                    continue
+                logging.debug("GEJobRunner: -- checking existing lock: "
+                              "%s" % name)
+                j,t,uid = name.split('@')
+                if int(j) == int(job_id):
+                    if float(t) < timestamp:
+                        # Another process already has the lock on
+                        # finishing this job, so let that do it
+                        logging.debug("GEJobRunner: already locked, giving up")
+                        del(self.__job_lock[lock])
+                        logging.debug("GEJobRunner: skipping job "
+                                      "finalization for %s (already "
+                                      "started elsewhere)" % job_id)
+                        return
+                    elif float(t) == timestamp:
+                        # Deadlock: two locks with same priority
+                        logging.warning("GEJobRunner: two locks with same "
+                                        "priority for job %s" % job_id)
+                        # Back out and retry after random delay
+                        if name in self.__job_lock:
+                            del(self.__job_lock[lock])
+                            time.sleep(random.random())
+                            has_lock = False
+        logging.debug("GEJobRunner: acquired lock: %s" % lock)
+        if job_id not in self.__job_number:
+            # Job has gone away
+            logging.warning("GEJobRunner: job %s has gone away" %
+                            job_id)
+            del(self.__job_lock[lock])
+            return
         self.__finalizing[job_id] = True
         # Check there is an exit code file
         exit_code_file = os.path.join(self.__admin_dir,
@@ -848,6 +900,8 @@ exit $exit_code
         self.__clean_up_job(job_id)
         # Release finalization lock
         del(self.__finalizing[job_id])
+        # Release job lock
+        del(self.__job_lock[lock])
 
     def __clean_up_job(self,job_id):
         """Internal: clean up internal job files
@@ -874,13 +928,13 @@ exit $exit_code
         except Exception as ex:
             logging.warning("GEJobRunner: exception cleaning up for "
                             "job %s (ignored): %s" % (job_id,ex))
-        # Remove the internally stored job number
-        del(self.__job_number[job_id])
         # Clear stored error state
         try:
             del(self.__error_state[job_id])
         except KeyError:
             pass
+        # Remove the internally stored job number
+        del(self.__job_number[job_id])
 
     def __run_qstat(self):
         """Internal: run qstat and return data as a list of lists
