@@ -1,3 +1,10 @@
+2019-01-31  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* genomics-bcftbx version 1.5.3
+	- bcftbx/JobRunner: fixes to GEJobRunner to deal with race
+	  conditions on job finalization
+	  https://github.com/fls-bioinformatics-core/genomics/pull/85
+
 2018-09-28  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* genomics-bcftbx version 1.5.2
