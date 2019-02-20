@@ -1104,9 +1104,9 @@ B,TruSeqAmpliconManifest-2.txt
 ReverseComplement,0
 
 [Data]
-Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_ID,index2,Sample_Project,Description
-1,PJB1-1579,PJB1-1579,,,N701,CGATGTAT ,N501,TCTTTCCC,PeterBriggs,
-1,PJB2-1580,PJB2-1580,,,N702,TGACCAAT ,N502,TCTTTCCC,PeterBriggs,
+Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_ID,index2,Sample_Project,Description,Manifest
+1,PJB1-1579,PJB1-1579,,,N701,CGATGTAT ,N501,TCTTTCCC,PeterBriggs,,A
+1,PJB2-1580,PJB2-1580,,,N702,TGACCAAT ,N502,TCTTTCCC,PeterBriggs,,B
 """
 
     def test_load_hiseq_sample_sheet(self):
@@ -1719,7 +1719,8 @@ Adapter,CTGTCTCTTATACACATCT
                                             'Sample_Plate','Sample_Well',
                                             'I7_Index_ID','index',
                                             'I5_Index_ID','index2',
-                                            'Sample_Project','Description'])
+                                            'Sample_Project','Description',
+                                            'Manifest'])
         self.assertEqual(len(iem.data),2)
         self.assertEqual(iem.data[0]['Lane'],1)
         self.assertEqual(iem.data[0]['Sample_ID'],'PJB1-1579')
@@ -1732,6 +1733,7 @@ Adapter,CTGTCTCTTATACACATCT
         self.assertEqual(iem.data[0]['index2'],'TCTTTCCC')
         self.assertEqual(iem.data[0]['Sample_Project'],'PeterBriggs')
         self.assertEqual(iem.data[0]['Description'],'')
+        self.assertEqual(iem.data[0]['Manifest'],'A')
 
 class TestIEMSampleSheet(unittest.TestCase):
     def setUp(self):
