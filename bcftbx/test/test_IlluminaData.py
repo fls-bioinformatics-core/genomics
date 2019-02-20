@@ -1081,6 +1081,33 @@ Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_ID,ind
 AO1,AO1,,,N701,TAAGGCGA,S517,GCGTAAGA,Anne Other,
 AO2,AO2,,,N701,TAAGGCGA,S502,CTCTCTAT,Anne Other,
 """
+        self.hiseq_sample_sheet_with_manifests = """[Header]
+IEMFileVersion,4
+Investigator Name,Peter B
+Experiment Name,myexp
+Date,1/19/2019
+Workflow,GenerateFASTQ
+Application,FASTQ Only
+Assay,Nextera XT v2 Set A
+Description,NGS_test
+Chemistry,Amplicon
+
+[Manifests]
+A,TruSeqAmpliconManifest-1.txt
+B,TruSeqAmpliconManifest-2.txt
+
+[Reads]
+151
+151
+
+[Settings]
+ReverseComplement,0
+
+[Data]
+Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_ID,index2,Sample_Project,Description
+1,PJB1-1579,PJB1-1579,,,N701,CGATGTAT ,N501,TCTTTCCC,PeterBriggs,
+1,PJB2-1580,PJB2-1580,,,N702,TGACCAAT ,N502,TCTTTCCC,PeterBriggs,
+"""
 
     def test_load_hiseq_sample_sheet(self):
         """SampleSheet: load a HiSEQ IEM-format sample sheet
@@ -1650,6 +1677,61 @@ Adapter,CTGTCTCTTATACACATCT
                          "\"Nextera XT Index Kit (96 Indexes, 384 Samples)\"")
         self.assertEqual(iem.header['Description'],"")
         self.assertEqual(iem.header['Chemistry'],"Amplicon")
+
+    def test_load_hiseq_sample_sheet_with_manifests(self):
+        """SampleSheet: load a HiSEQ IEM-format sample sheet with 'Manifests' section
+
+        """
+        iem = SampleSheet(fp=cStringIO.StringIO(
+            self.hiseq_sample_sheet_with_manifests))
+        # Check format
+        self.assertEqual(iem.format,'IEM')
+        # Check header
+        self.assertEqual(iem.header_items,['IEMFileVersion',
+                                           'Investigator Name',
+                                           'Experiment Name',
+                                           'Date',
+                                           'Workflow',
+                                           'Application',
+                                           'Assay',
+                                           'Description',
+                                           'Chemistry'])
+        self.assertEqual(iem.header['IEMFileVersion'],'4')
+        self.assertEqual(iem.header['Investigator Name'],'Peter B')
+        self.assertEqual(iem.header['Experiment Name'],'myexp')
+        self.assertEqual(iem.header['Date'],'1/19/2019')
+        self.assertEqual(iem.header['Workflow'],'GenerateFASTQ')
+        self.assertEqual(iem.header['Application'],'FASTQ Only')
+        self.assertEqual(iem.header['Assay'],'Nextera XT v2 Set A')
+        self.assertEqual(iem.header['Description'],'NGS_test')
+        self.assertEqual(iem.header['Chemistry'],'Amplicon')
+        # Check manifests
+        self.assertEqual(iem.manifests_items,['A','B'])
+        self.assertEqual(iem.manifests['A'],'TruSeqAmpliconManifest-1.txt')
+        self.assertEqual(iem.manifests['B'],'TruSeqAmpliconManifest-2.txt')
+        # Check reads
+        self.assertEqual(iem.reads,['151','151'])
+        # Check settings
+        self.assertEqual(iem.settings_items,['ReverseComplement',])
+        self.assertEqual(iem.settings['ReverseComplement'],'0')
+        # Check data
+        self.assertEqual(iem.data.header(),['Lane','Sample_ID','Sample_Name',
+                                            'Sample_Plate','Sample_Well',
+                                            'I7_Index_ID','index',
+                                            'I5_Index_ID','index2',
+                                            'Sample_Project','Description'])
+        self.assertEqual(len(iem.data),2)
+        self.assertEqual(iem.data[0]['Lane'],1)
+        self.assertEqual(iem.data[0]['Sample_ID'],'PJB1-1579')
+        self.assertEqual(iem.data[0]['Sample_Name'],'PJB1-1579')
+        self.assertEqual(iem.data[0]['Sample_Plate'],'')
+        self.assertEqual(iem.data[0]['Sample_Well'],'')
+        self.assertEqual(iem.data[0]['I7_Index_ID'],'N701')
+        self.assertEqual(iem.data[0]['index'],'CGATGTAT')
+        self.assertEqual(iem.data[0]['I5_Index_ID'],'N501')
+        self.assertEqual(iem.data[0]['index2'],'TCTTTCCC')
+        self.assertEqual(iem.data[0]['Sample_Project'],'PeterBriggs')
+        self.assertEqual(iem.data[0]['Description'],'')
 
 class TestIEMSampleSheet(unittest.TestCase):
     def setUp(self):

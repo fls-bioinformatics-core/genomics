@@ -1,5 +1,5 @@
 #     IlluminaData.py: module for handling data about Illumina sequencer runs
-#     Copyright (C) University of Manchester 2012-2018 Peter Briggs
+#     Copyright (C) University of Manchester 2012-2019 Peter Briggs
 #
 ########################################################################
 #
@@ -758,6 +758,9 @@ class SampleSheet:
     The 'Settings' section consists of comma-separated key-value
     pairs e.g. 'Adapter,CTGTCTCTTATACACATCT'.
 
+    The 'Manifests' section consists of comma-separated key-filename
+    pairs e.g. 'A,TruSeqAmpliconManifest-1.txt'.
+
     The 'Data' section contains the data about the lanes, samples
     and barcode indexes. It consists of lines of comma-separated
     values, with the first line being a 'header', and the remainder
@@ -812,6 +815,13 @@ class SampleSheet:
     ['ReverseComplement',...]
     >>> iem.settings['ReverseComplement']
     '0'
+
+    To access 'manifests' items:
+
+    >>> iem.manifests_items
+    ['A',...]
+    >>> iem.manifests['A']
+    'TruSeqAmpliconManifest-1.txt'
 
     To access 'data' (the actual sample sheet information):
 
@@ -910,6 +920,7 @@ class SampleSheet:
         self._header = utils.OrderedDictionary()
         self._reads = list()
         self._settings = utils.OrderedDictionary()
+        self._manifests = utils.OrderedDictionary()
         # Store raw data
         self._data = None
         # Read in file contents
@@ -1014,6 +1025,9 @@ class SampleSheet:
             elif section == 'Settings':
                 # Settings lines are comma-separated PARAM,VALUE lines
                 self._set_section_param_value(line,self._settings)
+            elif section == 'Manifests':
+                # Manifests lines are comma-separated PARAM,VALUE lines
+                self._set_section_param_value(line,self._manifests)
             elif section is None:
                 raise IlluminaDataError("Not a valid sample sheet?")
             else:
@@ -1222,6 +1236,34 @@ class SampleSheet:
 
         """
         return self._settings
+
+    @property
+    def manifests_items(self):
+        """
+        Return list of keys listed in the '[Manifests]' section
+
+        If the sample sheet didn't contain a '[Manifests]' section
+        then returns an empty list.
+
+        Returns:
+          List of item names.
+
+        """
+        return self._manifests.keys()
+
+    @property
+    def manifests(self):
+        """
+        Return ordered dictionary for the '[Manifests]' section
+
+        If the sample sheet didn't contain a '[Manifests]' section
+        then returns an empty OrderedDictionary.
+
+        Returns:
+          OrderedDictionary where keys are data items.
+
+        """
+        return self._manifests
 
     @property
     def data(self):
