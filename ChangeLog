@@ -1,3 +1,10 @@
+2019-02-21  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* genomics-bcftbx version 1.5.4
+	- bcftbx/IlluminaData: fix to SampleSheet class to handle
+	  samplesheet files which contain `[Manifests]` section
+	  https://github.com/fls-bioinformatics-core/genomics/pull/87
+
 2019-01-31  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* genomics-bcftbx version 1.5.3
