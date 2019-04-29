@@ -71,7 +71,7 @@ Headers can also be read from the first line of an input file:
 
 A list of the column names can be fetched using the 'header' method:
 
->>> print data.headers()
+>>> print data.header()
 
 Use the 'str' built-in to get the line as a tab-delimited string:
 
