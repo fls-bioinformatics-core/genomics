@@ -468,6 +468,22 @@ class TestGEJobRunner(unittest.TestCase):
         # Check the queue
         self.assertEqual(runner.queue(jobid),"mock.q")
 
+class TestResourceLock(unittest.TestCase):
+    """
+    Tests for the ResourceLock class
+    """
+    def test_resource_lock(self):
+        """
+        ResourceLock: check acquiring and releasing a lock
+        """
+        resource_lock = ResourceLock()
+        self.assertFalse(resource_lock.is_locked("test"))
+        lock = resource_lock.acquire("test")
+        self.assertEqual(lock.split('@')[0],"test")
+        self.assertTrue(resource_lock.is_locked("test"))
+        resource_lock.release(lock)
+        self.assertFalse(resource_lock.is_locked("test"))
+
 class TestFetchRunnerFunction(unittest.TestCase):
     """Tests for the fetch_runner function
     """

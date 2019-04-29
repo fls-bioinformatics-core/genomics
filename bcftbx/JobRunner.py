@@ -409,7 +409,7 @@ class GEJobRunner(BaseJobRunner):
         self.__start_time = {}
         self.__ge_extra_args = ge_extra_args
         # Job id lock
-        self.__job_lock = {}
+        self.__job_lock = ResourceLock()
         # Lock on job submission
         self.__submit_lock = False
         # Cached job list
@@ -833,50 +833,15 @@ exit $exit_code
         """
         logging.debug("GEJobRunner: handle job completion for %s"
                       % job_id)
-        has_lock = False
-        uuid_ = uuid.uuid4()
-        while not has_lock:
-            logging.debug("GEJobRunner: attempting to get lock for %s"
-                          % job_id)
-            lock = "%s@%s@%s" % (job_id,
-                                 time.time(),
-                                 uuid_)
-            timestamp = float(lock.split('@')[1])
-            logging.debug("GEJobRunner: try to make new lock: %s"
-                          % lock)
-            self.__job_lock[lock] = True
-            has_lock = True
-            for name in list(self.__job_lock.keys()):
-                if name == lock:
-                    continue
-                logging.debug("GEJobRunner: -- checking existing lock: "
-                              "%s" % name)
-                j,t,uid = name.split('@')
-                if int(j) == int(job_id):
-                    if float(t) < timestamp:
-                        # Another process already has the lock on
-                        # finishing this job, so let that do it
-                        logging.debug("GEJobRunner: already locked, giving up")
-                        del(self.__job_lock[lock])
-                        logging.debug("GEJobRunner: skipping job "
-                                      "finalization for %s (already "
-                                      "started elsewhere)" % job_id)
-                        return
-                    elif float(t) == timestamp:
-                        # Deadlock: two locks with same priority
-                        logging.warning("GEJobRunner: two locks with same "
-                                        "priority for job %s" % job_id)
-                        # Back out and retry after random delay
-                        if name in self.__job_lock:
-                            del(self.__job_lock[lock])
-                            time.sleep(random.random())
-                            has_lock = False
+        lock = None
+        while lock is None:
+            lock = self.__job_lock.acquire(job_id)
         logging.debug("GEJobRunner: acquired lock: %s" % lock)
         if job_id not in self.__job_number:
             # Job has gone away
             logging.warning("GEJobRunner: job %s has gone away" %
                             job_id)
-            del(self.__job_lock[lock])
+            self.__job_lock.release(lock)
             return
         self.__finalizing[job_id] = True
         # Check there is an exit code file
@@ -901,7 +866,7 @@ exit $exit_code
         # Release finalization lock
         del(self.__finalizing[job_id])
         # Release job lock
-        del(self.__job_lock[lock])
+        self.__job_lock.release(lock)
 
     def __clean_up_job(self,job_id):
         """Internal: clean up internal job files
@@ -1100,6 +1065,146 @@ exit $exit_code
             # prepend an underscore
             ge_name = "_%s" % ge_name
         return ge_name
+
+class ResourceLock(object):
+    """
+    Class for managing in-process locks on 'resources'
+
+    A 'resource' is identified by an arbitrary string.
+
+    Example usage: create a new ResourceLock instance
+    and check if a resource is locked:
+
+    >>> r = ResourceLock()
+    >>> r.is_locked("resource1")
+    False
+
+    Try to acquire the lock on the resource:
+
+    >>> lock = r.acquire("resource1")
+    >>> r.is_locked("resource1")
+    True
+
+    Release the lock on the resource:
+
+    >>> r.release(lock)
+    >>> r.is_locked("resource1")
+    False
+    """
+    def __init__(self):
+        """
+        Create a new ResourceLock instance
+        """
+        self._locks = dict()
+
+    def _get_lock_name(self,resource_name):
+        """
+        Internal: return a unique lock name
+
+        Returns a unique timestamped lock name
+        for the named resource.
+
+        Arguments:
+          resource_name (str): name of the resource
+            to create a lock name for
+
+        Returns:
+          String: lock name for the resource.
+        """
+        return "%s@%s@%s" % (resource_name,
+                             time.time(),
+                             uuid.uuid4())
+
+    def _split_lock_name(self,lock):
+        """
+        Internal: split a lock name into components
+
+        Arguments:
+          lock (str): lock name to split
+
+        Returns:
+          Tuple: tuple consisting of (resource_name,
+            timestamp, unique ID). The timestamp is
+            returned as a float.
+        """
+        resource_name,timestamp,uuid_ = lock.split('@')
+        timestamp = float(timestamp)
+        return (resource_name,timestamp,uuid_)
+
+    def acquire(self,resource_name):
+        """
+        Attempt to acquire the lock on a resource
+
+        Arguments:
+          resource_name (str): name of the resource
+            to acquire the lock name for
+
+        Returns:
+          String: lock name.
+        """
+        logging.debug("ResourceLock: attempting to get lock for "
+                      "resource '%s'" % resource_name)
+        # Register a putative lock
+        lock = self._get_lock_name(resource_name)
+        self._locks[lock] = True
+        logging.debug("ResourceLock: made new lock '%s'" % lock)
+        # Wait
+        time.sleep(0.001)
+        # Check all locks for this resource and see if any
+        # pre-date the new lock
+        resource_name,timestamp,uuid_ = self._split_lock_name(lock)
+        for l in list(self._locks.keys()):
+            if l == lock:
+                continue
+            n,ts,uid = self._split_lock_name(lock)
+            if n == resource_name:
+                if ts < timestamp:
+                    # Resource is already locked
+                    logging.debug("ResourceLock: resource '%s' already "
+                                  "locked" % resource_name)
+                    # Remove attempted lock
+                    self.release(lock)
+                    return None
+                elif ts == timestamp:
+                    # Deadlock: two locks with same priority
+                    logging.warning("ResourceLock: two locks with same "
+                                    "priority for resource '%s'" %
+                                    resource_name)
+                    # Back out and retry after a random delay
+                    self.release(lock)
+                    time.sleep(random.random())
+                    return self.acquire(resource_name)
+        # This lock has priority
+        logging.debug("ResourceLock: acquired lock: '%s'" % lock)
+        return lock
+
+    def release(self,lock):
+        """
+        Release a lock on a resource
+
+        Arguments:
+          lock (str): lock to release.
+        """
+        logging.debug("ResourceLock: releasing '%s'" % lock)
+        del self._locks[lock]
+
+    def is_locked(self,resource_name):
+        """
+        Check if a resource is locked
+
+        Arguments:
+          resource_name (str): name of the resource
+            to check the lock for
+
+        Returns:
+          Boolean: True if resource is locked, False
+            if not.
+        """
+        for lock in [l for l in self._locks.keys()]:
+            n,ts,uid = self._split_lock_name(lock)
+            if n == resource_name:
+                return True
+        return False
 
 class DRMAAJobRunner(BaseJobRunner):
     """Class implementing job runner using DRMAA
