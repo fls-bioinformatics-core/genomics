@@ -411,8 +411,8 @@ class GEJobRunner(BaseJobRunner):
         self.__job_lock = ResourceLock()
         # Job grace period lock
         self.__updating_grace_period = ResourceLock()
-        # Lock on job submission
-        self.__submit_lock = False
+        # Job submission lock
+        self.__submit_lock = ResourceLock()
         # Cached job list
         self.__cached_job_list_lifetime = 2.0
         self.__cached_job_list_timestamp = 0.0
@@ -470,18 +470,16 @@ class GEJobRunner(BaseJobRunner):
         logging.debug("Arguments  : %s" % str(args))
         # Wait for lock on job submission
         start_time = time.time()
-        while self.__submit_lock:
-            time.sleep(1.0)
-            if (time.time() - start_time) > self.__ge_timeout:
-                raise Exception("GEJobRunner: timed out waiting "
-                                "for job submission lock")
-        # Grab the lock and get internal job number
-        self.__submit_lock = True
+        submit_lock = None
+        while submit_lock is None:
+            submit_lock = self.__submit_lock.acquire("job_submission",
+                                                     timeout=self.__ge_timeout)
+        # Get internal job number
         self.__job_count += 1
         job_number = self.__job_count
         logging.debug("Internal job count: %s" % job_number)
         # Release the lock
-        self.__submit_lock = False
+        self.__submit_lock.release(submit_lock)
         # Build script to run the command to be submitted
         job_dir = os.path.join(self.__admin_dir,str(job_number))
         logging.debug("Job admin dir     : %s" % job_dir)
