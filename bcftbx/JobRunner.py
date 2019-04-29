@@ -404,12 +404,13 @@ class GEJobRunner(BaseJobRunner):
         self.__error_state = {}
         self.__exit_status = {}
         self.__finalizing = {}
-        self.__updating_grace_period = {}
         self.__queue = {}
         self.__start_time = {}
         self.__ge_extra_args = ge_extra_args
         # Job id lock
         self.__job_lock = ResourceLock()
+        # Job grace period lock
+        self.__updating_grace_period = ResourceLock()
         # Lock on job submission
         self.__submit_lock = False
         # Cached job list
@@ -791,24 +792,28 @@ exit $exit_code
         """
         logging.debug("GEJobRunner: update grace period for "
                       "for job %s" % job_id)
+        lock = None
+        while lock is None:
+            lock = self.__updating_grace_period.acquire(job_id)
+        logging.debug("GEJobRunner: acquired lock for grace period "
+                      "update: %s" % lock)
         try:
-            if self.__updating_grace_period[job_id]:
-                logging.warning("GEJobRunner: skipping update of "
-                                "grace period for %s (already "
-                                "started elsewhere)" % job_id)
-                return
+            start_time = self.__start_time[job_id]
         except KeyError:
-            logging.debug("GEJobRunner: updating grace period of "
-                          "job %s" % job_id)
-        self.__updating_grace_period[job_id] = True
-        if ((time.time() - self.__start_time[job_id]) >
-            self.__new_job_grace_period):
+            logging.warning("GEJobRunner: update grace period: job %s "
+                            "has gone away" % job_id)
+            self.__updating_grace_period.release(lock)
+        if ((time.time() - start_time) > self.__new_job_grace_period):
             # Job no longer in grace period
             logging.debug("GEJobRunner: job %s no longer in grace "
                           "period" % job_id)
-            del(self.__start_time[job_id])
+            try:
+                del(self.__start_time[job_id])
+            except KeyError:
+                logging.warning("GEJobRunner: update grace period: "
+                                "job %s has gone away" % job_id)
         # Release update lock
-        del(self.__updating_grace_period[job_id])
+        self.__updating_grace_period.release(lock)
 
     def __handle_job_completion(self,job_id):
         """
