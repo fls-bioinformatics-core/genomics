@@ -484,6 +484,21 @@ class TestResourceLock(unittest.TestCase):
         resource_lock.release(lock)
         self.assertFalse(resource_lock.is_locked("test"))
 
+    def test_resource_lock_timeout(self):
+        """
+        ResourceLock: check lock acquisition timeout
+        """
+        resource_lock = ResourceLock()
+        # Get a lock
+        lock = resource_lock.acquire("test")
+        self.assertTrue(resource_lock.is_locked("test"))
+        # Try to acquire a second lock without releasing
+        # the first, specifying a timeout
+        self.assertRaises(Exception,
+                          resource_lock.acquire,
+                          "test",
+                          timeout=1.0)
+
 class TestFetchRunnerFunction(unittest.TestCase):
     """Tests for the fetch_runner function
     """

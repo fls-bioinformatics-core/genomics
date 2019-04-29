@@ -1136,19 +1136,23 @@ class ResourceLock(object):
         timestamp = float(timestamp)
         return (resource_name,timestamp,uuid_)
 
-    def acquire(self,resource_name):
+    def acquire(self,resource_name,timeout=None):
         """
         Attempt to acquire the lock on a resource
 
         Arguments:
           resource_name (str): name of the resource
             to acquire the lock name for
+          timeout (float): optional, specifies a
+            timeout period after which failure to
+            acquire the lock raises an exception.
 
         Returns:
           String: lock name.
         """
         logging.debug("ResourceLock: attempting to get lock for "
                       "resource '%s'" % resource_name)
+        start_time = time.time()
         has_lock = False
         while not has_lock:
             # Assume we have the lock, until proven otherwise
@@ -1181,10 +1185,17 @@ class ResourceLock(object):
                                         resource_name)
                         # We don't have the lock after all
                         has_lock = False
-                        # Back out and retry after a random delay
+                        # Release the putative lock
                         self.release(lock)
+                        # Retry after a random delay
                         time.sleep(random.random())
                         break
+            # Check for timeout
+            if not has_lock and timeout is not None:
+                if (time.time() - start_time) > timeout:
+                    raise Exception("ResourceLock: timed out trying to "
+                                    "acquire lock for resource '%s'" %
+                                    resource_name)
         # This lock has priority
         logging.debug("ResourceLock: acquired lock: '%s'" % lock)
         return lock
