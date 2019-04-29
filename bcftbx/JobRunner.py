@@ -1144,36 +1144,42 @@ class ResourceLock(object):
         """
         logging.debug("ResourceLock: attempting to get lock for "
                       "resource '%s'" % resource_name)
-        # Register a putative lock
-        lock = self._get_lock_name(resource_name)
-        self._locks[lock] = True
-        logging.debug("ResourceLock: made new lock '%s'" % lock)
-        # Wait
-        time.sleep(0.001)
-        # Check all locks for this resource and see if any
-        # pre-date the new lock
-        resource_name,timestamp,uuid_ = self._split_lock_name(lock)
-        for l in list(self._locks.keys()):
-            if l == lock:
-                continue
-            n,ts,uid = self._split_lock_name(lock)
-            if n == resource_name:
-                if ts < timestamp:
-                    # Resource is already locked
-                    logging.debug("ResourceLock: resource '%s' already "
-                                  "locked" % resource_name)
-                    # Remove attempted lock
-                    self.release(lock)
-                    return None
-                elif ts == timestamp:
-                    # Deadlock: two locks with same priority
-                    logging.warning("ResourceLock: two locks with same "
-                                    "priority for resource '%s'" %
-                                    resource_name)
-                    # Back out and retry after a random delay
-                    self.release(lock)
-                    time.sleep(random.random())
-                    return self.acquire(resource_name)
+        has_lock = False
+        while not has_lock:
+            # Assume we have the lock, until proven otherwise
+            has_lock = True
+            # Register a putative lock
+            lock = self._get_lock_name(resource_name)
+            self._locks[lock] = True
+            logging.debug("ResourceLock: made new lock '%s'" % lock)
+            # Wait
+            time.sleep(0.001)
+            # Check all locks for this resource and see if any
+            # pre-date the new lock
+            resource_name,timestamp,uuid_ = self._split_lock_name(lock)
+            for l in list(self._locks.keys()):
+                if l == lock:
+                    continue
+                n,ts,uid = self._split_lock_name(lock)
+                if n == resource_name:
+                    if ts < timestamp:
+                        # Resource is already locked
+                        logging.debug("ResourceLock: resource '%s' already "
+                                      "locked" % resource_name)
+                        # Remove attempted lock
+                        self.release(lock)
+                        return None
+                    elif ts == timestamp:
+                        # Deadlock: two locks with same priority
+                        logging.warning("ResourceLock: two locks with same "
+                                        "priority for resource '%s'" %
+                                        resource_name)
+                        # We don't have the lock after all
+                        has_lock = False
+                        # Back out and retry after a random delay
+                        self.release(lock)
+                        time.sleep(random.random())
+                        break
         # This lock has priority
         logging.debug("ResourceLock: acquired lock: '%s'" % lock)
         return lock
