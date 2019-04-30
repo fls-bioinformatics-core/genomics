@@ -801,6 +801,7 @@ exit $exit_code
             logging.warning("GEJobRunner: update grace period: job %s "
                             "has gone away (ignored)" % job_id)
             self.__updating_grace_period.release(lock)
+            return
         if ((time.time() - start_time) > self.__new_job_grace_period):
             # Job no longer in grace period
             logging.debug("GEJobRunner: job %s no longer in grace "
