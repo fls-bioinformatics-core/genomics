@@ -1,5 +1,5 @@
 #     FASTQFile.py: read and manipulate FASTQ files and data
-#     Copyright (C) University of Manchester 2012-13 Peter Briggs
+#     Copyright (C) University of Manchester 2012-19 Peter Briggs
 #
 ########################################################################
 #
@@ -26,7 +26,7 @@ Information on the FASTQ file format: http://en.wikipedia.org/wiki/FASTQ_format
 
 """
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 
 CHUNKSIZE = 102400
 
@@ -144,7 +144,7 @@ class FastqIterator(Iterator):
         self._ip = ip
         return FastqRead(*read)
 
-class FastqRead:
+class FastqRead(object):
     """Class to store a FASTQ record with information about a read
 
     Provides the following properties for accessing the read data:
@@ -262,7 +262,7 @@ class FastqRead:
     def __eq__(self,other):
         return (str(self) == str(other))
 
-class SequenceIdentifier:
+class SequenceIdentifier(object):
     """Class to store/manipulate sequence identifier information from a FASTQ record
 
     Provides access to the data items in the sequence identifier line of a FASTQ
@@ -386,7 +386,7 @@ class SequenceIdentifier:
             # Return what was put in
             return self.__seqid
 
-class FastqAttributes:
+class FastqAttributes(object):
     """Class to provide access to gross attributes of a FASTQ file
 
     Given a FASTQ file (can be uncompressed or gzipped), enables

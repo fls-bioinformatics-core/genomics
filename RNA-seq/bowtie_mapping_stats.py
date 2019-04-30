@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #     bowtie_mapping_stats.py: write Bowtie mapping stats to a spreadsheet
-#     Copyright (C) University of Manchester 2011-2014 Peter Briggs
+#     Copyright (C) University of Manchester 2011-2019 Peter Briggs
 #
 ########################################################################
 #
@@ -75,7 +75,7 @@ Python modules xlwt, xlrd and xlutils.
 # Module metadata
 #######################################################################
 
-__version__ = "1.1.5"
+__version__ = "1.1.6"
 
 #######################################################################
 # Import
@@ -113,7 +113,7 @@ except ImportError,ex:
 # Classes
 #######################################################################
 
-class BowtieMappingStats:
+class BowtieMappingStats(object):
     """Collect and output mapping statistics for multiple samples
 
     Read and store mapping stats from one or more samples from one
@@ -337,7 +337,7 @@ class BowtieMappingStats:
             open(tab_file,'w').write(txt)
         return txt
 
-class BowtieSample:
+class BowtieSample(object):
     """Store mapping statistics for a sample
 
     Simple holder for mapping statistics extracted from a bowtie

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #     cmpdirs.py: compare contents of two directories
-#     Copyright (C) University of Manchester 2014 Peter Briggs
+#     Copyright (C) University of Manchester 2014-2019 Peter Briggs
 #
 ########################################################################
 #
@@ -19,7 +19,7 @@ Compare the contents of two directories.
 # Module metadata
 #######################################################################
 
-__version__ = '0.0.3'
+__version__ = '0.0.4'
 
 #######################################################################
 # Import modules that this module depends on
@@ -43,7 +43,7 @@ import bcftbx.Md5sum as Md5sum
 # Classes
 #######################################################################
 
-class CmpResult:
+class CmpResult(object):
     """Class to hold results of a file comparison
     """
     # Human-readable text corresponding to comparison outcomes

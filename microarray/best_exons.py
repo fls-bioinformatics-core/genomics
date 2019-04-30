@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 #
 #     best_exons.py: pick 'best' exons for gene symbols and average data
-#     Copyright (C) University of Manchester 2013 Peter Briggs
+#     Copyright (C) University of Manchester 2013-2019 Peter Briggs
 #
 ########################################################################
 
-__version__ = "1.2.1"
+__version__ = "1.2.2"
 
 """
 best_exons.py
@@ -131,7 +131,7 @@ class TabFileIterator(Iterator):
                 self.__fp.close()
             raise StopIteration
 
-class ExonList:
+class ExonList(object):
     """List of exons associated with a gene symbol
 
     Attributes:
@@ -292,7 +292,7 @@ class ExonList:
         # Makes object iterable
         return self.exons[i]
 
-class Exon:
+class Exon(object):
     """Store data for a single exon
 
     Attributes:

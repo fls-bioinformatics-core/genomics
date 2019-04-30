@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #     mock_data.py: utility classes and functions for generating test data
-#     Copyright (C) University of Manchester 2014 Peter Briggs
+#     Copyright (C) University of Manchester 2014-2019 Peter Briggs
 #
 ########################################################################
 #
@@ -38,10 +38,10 @@ import copy
 import bcftbx.Md5sum
 
 #######################################################################
-# Modules constants
+# Module constants
 #######################################################################
 
-class TestUtils:
+class TestUtils(object):
     """Utilities to help with setting up/running tests etc
 
     """
@@ -102,7 +102,7 @@ class TestUtils:
         shutil.rmtree(dirname)
 
 # Base class for making test data directories
-class BaseExampleDir:
+class BaseExampleDir(object):
     """Base class for making test data directories
 
     Create, populate and destroy directory with test data.

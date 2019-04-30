@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #     Pipeline.py: classes for running scripts iteratively
-#     Copyright (C) University of Manchester 2011 Peter Briggs
+#     Copyright (C) University of Manchester 2011-2019 Peter Briggs
 #
 ########################################################################
 #
@@ -47,7 +47,7 @@ system. So typical usage might look like:
 # Module metadata
 #######################################################################
 
-__version__ = "0.1.3"
+__version__ = "0.1.4"
 
 #######################################################################
 # Import modules that this module depends on
@@ -65,7 +65,7 @@ import logging
 #######################################################################
 
 # Job: container for a script run
-class Job:
+class Job(object):
     """Wrapper class for setting up, submitting and monitoring running scripts
 
     Set up a job by creating a Job instance specifying the name, working directory,
@@ -263,7 +263,7 @@ class Job:
         return self.__runner
 
 # PipelineRunner: class to set up and run multiple jobs
-class PipelineRunner:
+class PipelineRunner(object):
     """Class to run and manage multiple concurrent jobs.
 
     PipelineRunner enables multiple jobs to be queued via the 'queueJob' method. The

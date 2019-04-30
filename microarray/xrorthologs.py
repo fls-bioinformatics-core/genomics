@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #     xrorthologs.py: cross-reference data for two species given probeset lookup
-#     Copyright (C) University of Manchester 2012 Peter Briggs, Leo Zeef
+#     Copyright (C) University of Manchester 2012-2019 Peter Briggs, Leo Zeef
 #
 #     This code is free software; you can redistribute it and/or modify it
 #     under the terms of the Artistic License 2.0 (see the file LICENSE
@@ -51,7 +51,7 @@ import optparse
 # Class definitions
 #######################################################################
 
-class ProbeSetLookup:
+class ProbeSetLookup(object):
 
     def __init__(self,lookup_data_file=None,lookup_data_fp=None,
                  cols=(0,3), major_delimiter='\t',minor_delimiter=',',
@@ -140,7 +140,7 @@ class ProbeSetLookup:
             # Not found, return empty list
             return []
 
-class IndexedFile:
+class IndexedFile(object):
     """Read a file into memory and index for fast retrieval of lines
     """
     def __init__(self,filen=None,fp=None,first_line_is_header=False):

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #     manage_seqs.py: Utility for handling sets of named sequences
-#     Copyright (C) University of Manchester 2014 Peter Briggs
+#     Copyright (C) University of Manchester 2014-2019 Peter Briggs
 #
 ########################################################################
 #
@@ -25,7 +25,7 @@ manage_seqs.py [-o OUTFILE|-a OUTFILE] [-d DESCRIPTION] INFILE [INFILE...]
 # Module metadata
 #######################################################################
 
-__version__ = "0.0.2"
+__version__ = "0.0.3"
 
 #######################################################################
 # Import modules that this module depends on
@@ -40,7 +40,7 @@ import optparse
 # Classes
 #######################################################################
 
-class SeqDb:
+class SeqDb(object):
     """Class for storing set of sequences with associated names
 
     SeqDb stores arbitrary sequence strings associated with

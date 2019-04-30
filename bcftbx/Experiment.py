@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #     Experiment.py: classes for defining SOLiD sequencing experiments
-#     Copyright (C) University of Manchester 2011-2013 Peter Briggs
+#     Copyright (C) University of Manchester 2011-2019 Peter Briggs
 #
 ########################################################################
 #
@@ -30,7 +30,7 @@ import utils
 # Class definitions
 #######################################################################
 
-class Experiment:
+class Experiment(object):
     """Class defining an experiment from a SOLiD run.
 
     An 'experiment' is a collection of related data.
@@ -89,7 +89,7 @@ class Experiment:
         expt_copy.library = self.library
         return expt_copy
 
-class ExperimentList:
+class ExperimentList(object):
     """Container for a collection of Experiments
 
     Experiments are created and added to the ExperimentList by calling
@@ -299,7 +299,7 @@ class ExperimentList:
     def __len__(self):
         return len(self.experiments)
 
-class LinkNames:
+class LinkNames(object):
     """Class to construct names for links to primary data files
 
     The LinkNames class encodes a set of naming schemes that are used to

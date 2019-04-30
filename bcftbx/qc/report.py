@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #     qc/report.py: utilities for generating reports for NGS qc runs
-#     Copyright (C) University of Manchester 2012-2016 Peter Briggs
+#     Copyright (C) University of Manchester 2012-2019 Peter Briggs
 #
 ########################################################################
 #
@@ -37,7 +37,7 @@ FASTQ_SCREEN_NAMES=('model_organisms','other_organisms','rRNA')
 # Base class definitions
 #######################################################################
 
-class QCReporter:
+class QCReporter(object):
     """Base class for reporting QC runs
 
     This is a general class for reporting runs of the FLS NGS QC
@@ -304,7 +304,7 @@ class QCReporter:
             status = (sample.verify() and status)
         return status
 
-class QCSample:
+class QCSample(object):
     """Base class for reporting QC for a single sample
 
     This is a general class for reporting the QC outputs associated

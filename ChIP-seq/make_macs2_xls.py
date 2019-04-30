@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #     make_macs2_xls.py: Convert MACS output file to XLS(X) spreadsheet
-#     Copyright (C) University of Manchester 2013-2016 Peter Briggs, Ian Donaldson
+#     Copyright (C) University of Manchester 2013-2019 Peter Briggs, Ian Donaldson
 #
 ########################################################################
 #
@@ -48,13 +48,13 @@ import profile
 # Module metadata
 #######################################################################
 
-__version__ = '0.5.0'
+__version__ = '0.5.1'
 
 #######################################################################
 # Class definitions
 #######################################################################
 
-class MacsXLS:
+class MacsXLS(object):
     """Class for reading and manipulating XLS output from MACS
 
     Reads the XLS output file from the MACS peak caller and

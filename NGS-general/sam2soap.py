@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #     sam2soap.py: convert from SAM to SOAP format
-#     Copyright (C) University of Manchester 2012 Peter Briggs, Casey Bergman
+#     Copyright (C) University of Manchester 2012-2019 Peter Briggs, Casey Bergman
 #
 #######################################################################
 #
@@ -30,7 +30,7 @@ import optparse
 # Class definitions
 #######################################################################
 
-class SAMBitwiseFlag:
+class SAMBitwiseFlag(object):
     """Class to decode bitwise flag from SAM file.
 
     Deconvolutes the decimal value of the bitwise flag from a
@@ -82,7 +82,7 @@ class SAMBitwiseFlag:
         except IndexError:
             return False
 
-class SAMLine:
+class SAMLine(object):
     """Class to represent SAM alignment data line
 
     Decodes a SAM alignment data line and sets the class properties
@@ -155,7 +155,7 @@ class SAMLine:
             # Derived class properties
             self.bitwiseFlag = SAMBitwiseFlag(self.flag)
 
-class SOAPLine:
+class SOAPLine(object):
     """Class to represent SOAP file line
 
     The class has the following properties which can be set by

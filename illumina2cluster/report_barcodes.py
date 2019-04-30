@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #     report_barcodes.py: analyse barcode sequences from fastq files
-#     Copyright (C) University of Manchester 2014 Peter Briggs
+#     Copyright (C) University of Manchester 2014-2019 Peter Briggs
 #
 ########################################################################
 #
@@ -20,7 +20,7 @@ Fastq file from an Illumina sequencer.
 # Import modules that this module depends on
 #######################################################################
 
-__version__ = "0.0.2"
+__version__ = "0.0.3"
 
 import sys
 import optparse
@@ -30,7 +30,7 @@ import bcftbx.FASTQFile as FASTQFile
 # Class definitions
 #######################################################################
 
-class Barcodes:
+class Barcodes(object):
     """Class for counting index sequences in Fastq files
 
     """
