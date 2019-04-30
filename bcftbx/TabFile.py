@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #     TabFile.py: classes for reading and manipulating tab-delimited data
-#     Copyright (C) University of Manchester 2011-2012 Peter Briggs
+#     Copyright (C) University of Manchester 2011-2019 Peter Briggs
 #
 ########################################################################
 #
@@ -189,11 +189,11 @@ TabFile object, for example for a comma-delimited file:
 
 """
 
-__version__ = "0.2.8"
+__version__ = "0.2.9"
 
 import logging
 
-class TabDataLine:
+class TabDataLine(object):
     """Class to store a line of data from a tab-delimited file
 
     Values can be accessed by integer index or by column names (if
@@ -442,7 +442,7 @@ class TabDataLine:
     def __repr__(self):
         return self.__delimiter.join([str(x) for x in self.data])
 
-class TabFile:
+class TabFile(object):
     """Class to get data from a tab-delimited file
 
     Loads data from the specified file into a data structure than can

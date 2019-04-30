@@ -1,5 +1,5 @@
 #     mock.py: module providing mock Illumina data for testing
-#     Copyright (C) University of Manchester 2012-2016 Peter Briggs
+#     Copyright (C) University of Manchester 2012-2019 Peter Briggs
 #
 ########################################################################
 
@@ -396,7 +396,7 @@ class MockSampleSheet(SampleSheet):
             output = '\n'.join(padded_output)
         return output
 
-class MockIlluminaRun:
+class MockIlluminaRun(object):
     """
     Utility class for creating mock Illumina sequencer output dirctories
 
@@ -662,7 +662,7 @@ class MockIlluminaRun:
             shutil.rmtree(self.dirn)
             self._created = False
 
-class MockIlluminaData:
+class MockIlluminaData(object):
     """Utility class for creating mock Illumina analysis data directories
 
     The MockIlluminaData class allows artificial Illumina analysis data

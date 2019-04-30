@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #     Md5sum.py: classes and functions for md5 checksum operations
-#     Copyright (C) University of Manchester 2012-2014 Peter Briggs
+#     Copyright (C) University of Manchester 2012-2019 Peter Briggs
 #
 ########################################################################
 #
@@ -43,7 +43,7 @@ a wrapper class 'Md5Reporter' which
 # Module metadata
 #######################################################################
 
-__version__ = "1.1.0"
+__version__ = "1.1.1"
 
 #######################################################################
 # Import modules that this module depends on
@@ -69,7 +69,7 @@ BLOCKSIZE = 1024*1024
 # Classes
 #######################################################################
 
-class Md5Checker:
+class Md5Checker(object):
     """Provides static methods for performing checks using MD5 sums
 
     The Md5Checker class is a collection of static methods that can
@@ -323,7 +323,7 @@ class Md5Checker:
                 status = self.MD5_ERROR
             yield (f,status)
 
-class Md5CheckReporter:
+class Md5CheckReporter(object):
     """Provides a generic reporting class for Md5Checker methods
 
     Typical usage modes are either:

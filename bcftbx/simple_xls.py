@@ -1,5 +1,5 @@
 #     simple_xls.py: write simple Excel spreadsheets
-#     Copyright (C) University of Manchester 2013-4 Peter Briggs
+#     Copyright (C) University of Manchester 2013-2019 Peter Briggs
 #
 ########################################################################
 #
@@ -109,7 +109,7 @@ Alternatively the contents of a sheet (or a subset) can be rendered as text:
 
 """
 
-__version__ = "0.0.8"
+__version__ = "0.0.9"
 
 #######################################################################
 # Import modules that this module depends on
@@ -130,12 +130,12 @@ from utils import OrderedDictionary
 BAD_REF="## !REF ##"
 
 # Number formats
-class NumberFormats:
+class NumberFormats(object):
     THOUSAND_SEPARATOR=0
     PERCENTAGE=1
 
 # Spreadsheet limits
-class XLSLimits:
+class XLSLimits(object):
     """
     Limits for XLS files
     """
@@ -144,7 +144,7 @@ class XLSLimits:
     MAX_NUMBER_ROWS_PER_WORKSHEET = 65536 # Max number of rows per worksheet
     MAX_NUMBER_COLS_PER_WORKSHEET = 256 # Max nuber of columns per worksheet
 
-class XLSXLimits:
+class XLSXLimits(object):
     """
     Limits for XLSX files
     """
@@ -162,7 +162,7 @@ class Limits(XLSLimits):
 # Class definitions
 #######################################################################
 
-class XLSWorkBook:
+class XLSWorkBook(object):
     """Class for creating an Excel (xls) spreadsheet
 
     An XLSWorkBook instance provides an interface to creating an
@@ -316,7 +316,7 @@ class XLSWorkBook:
                 ws.freeze_panes(worksheet.freeze_panes)
         xlsx.close()
 
-class XLSWorkSheet:
+class XLSWorkSheet(object):
     """Class for creating sheets within an XLS workbook.
 
     XLSWorkSheet objects represent a sheet within an Excel
@@ -1120,7 +1120,7 @@ class XLSWorkSheet:
             text.append('\t'.join(line))
         return '\n'.join(text)
 
-class XLSStyle:
+class XLSStyle(object):
     """Class representing a set of styling and formatting data
 
     An XLSStyle object represents a collection of data used for
@@ -1318,7 +1318,7 @@ class ColumnRange(Iterator):
             raise StopIteration
         return column_integer_to_index(self.column)
 
-class CellIndex:
+class CellIndex(object):
     """Convenience class for handling XLS-style cell indices
 
     The CellIndex class provides a way of handling XLS-style
@@ -1369,7 +1369,7 @@ class CellIndex:
         return "%s%s" % ('' if self.column is None else self.column,
                          '' if self.row is None else self.row)
 
-class XLSColumn:
+class XLSColumn(object):
     """Class representing a column in a XLSWorkSheet
 
     An XLSColumn object provides access to data in a column

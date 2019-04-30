@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #     htmlpagewriter: programmatic generation of HTML files
-#     Copyright (C) University of Manchester 2012-2014 Peter Briggs
+#     Copyright (C) University of Manchester 2012-2019 Peter Briggs
 #
 ########################################################################
 #
@@ -9,7 +9,7 @@
 #
 #########################################################################
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 
 """htmlpagewriter
 
@@ -34,7 +34,7 @@ import TabFile
 # Classes
 #######################################################################
 
-class HTMLPageWriter:
+class HTMLPageWriter(object):
     """Generic HTML generation class
 
     HTMLPageWriter provides basic operations for writing HTML
@@ -149,7 +149,7 @@ class HTMLPageWriter:
             fp.close()
 
 # Utility class to encode PNGs for embedding in HTML
-class PNGBase64Encoder:
+class PNGBase64Encoder(object):
     """Utility class to encode PNG file into a base64 string
 
     Base64 encoded PNGs can be embedded in HTML <img> tags.

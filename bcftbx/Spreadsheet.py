@@ -1,5 +1,5 @@
 #     Spreadsheet.py: write simple Excel spreadsheets
-#     Copyright (C) University of Manchester 2011-3 Peter Briggs
+#     Copyright (C) University of Manchester 2011-2019 Peter Briggs
 #
 ########################################################################
 #
@@ -70,7 +70,7 @@ https://github.com/dln/pycassa/blob/90736f8146c1cac8287f66e8c8b64cb80e011513/pyc
 
 """
 
-__version__ = "0.1.8"
+__version__ = "0.1.9"
 
 #######################################################################
 # Import modules that this module depends on
@@ -103,7 +103,7 @@ MAX_NUMBER_ROWS_PER_WORKSHEET = 65536
 # Class definitions
 #######################################################################
 
-class Workbook:
+class Workbook(object):
     """Class for writing data to an XLS spreadsheet.
 
     A Workbook represents an XLS spreadsheet, which conists of sheets
@@ -187,7 +187,7 @@ class Workbook:
             logging.debug("Overwriting existing file: '%s'" % xls_name)
         self.workbook.save(xls_name)
 
-class Worksheet:
+class Worksheet(object):
     """Class for writing to a sheet in an XLS spreadsheet.
 
     A Worksheet object represents a sheet in an XLS spreadsheet.
@@ -630,7 +630,7 @@ class Worksheet:
         # Finished
         return
 
-class Styles:
+class Styles(object):
     """Class for creating and caching EasyXfStyle objects.
 
     XLS files have a limit of 4,000 styles, so cache and reuse EasyXfStyle
@@ -706,7 +706,7 @@ class Styles:
         self.styles[style_key] = xf_style
         return xf_style
 
-class Spreadsheet:
+class Spreadsheet(object):
     """Class for creating and writing a spreadsheet.
 
     This creates a very simple single-sheet workbook.

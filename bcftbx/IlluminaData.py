@@ -44,7 +44,7 @@ KNOWN_PLATFORMS = ('illumina-ga2x',
 # Class definitions
 #######################################################################
 
-class IlluminaRun:
+class IlluminaRun(object):
     """Class for examining 'raw' Illumina data directory.
 
     Provides the following properties:
@@ -180,7 +180,7 @@ class IlluminaRun:
             return None
         return ncycles
 
-class IlluminaRunInfo:
+class IlluminaRunInfo(object):
     """Class for examining Illumina RunInfo.xml file
 
     Extracts basic information from a RunInfo.xml file:
@@ -244,7 +244,7 @@ class IlluminaRunInfo:
                                 % read['is_indexed_read'])
         return ','.join(bases_mask)
 
-class IlluminaData:
+class IlluminaData(object):
     """Class for examining Illumina data post bcl-to-fastq conversion
 
     Provides the following attributes:
@@ -428,7 +428,7 @@ class IlluminaData:
             if project.name == name: return project
         raise IlluminaDataError, "No matching project for '%s'" % name
 
-class IlluminaProject:
+class IlluminaProject(object):
     """Class for storing information on a 'project' within an Illumina run
 
     A project is a subset of fastq files from a run of an Illumina
@@ -615,7 +615,7 @@ class IlluminaProject:
         """
         return utils.pretty_print_names(self.samples)
 
-class IlluminaSample:
+class IlluminaSample(object):
     """Class for storing information on a 'sample' within an Illumina project
 
     A sample is a fastq file generated within an Illumina sequencer run.
@@ -734,7 +734,7 @@ class IlluminaSample:
         i.e. the sample name."""
         return str(self.name)
 
-class SampleSheet:
+class SampleSheet(object):
     """
     Class for handling Illumina sample sheets
 
@@ -2313,7 +2313,7 @@ class SampleSheetSample(object):
         if force_sample_dir is not None:
             self._force_sample_dir = force_sample_dir
 
-class IlluminaFastq:
+class IlluminaFastq(object):
     """Class for extracting information about Fastq files
 
     Given the name of a Fastq file from CASAVA/Illumina platform, extract

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #     utils.py: utility classes and functions shared between BCF codes
-#     Copyright (C) University of Manchester 2013-2018 Peter Briggs
+#     Copyright (C) University of Manchester 2013-2019 Peter Briggs
 #
 ########################################################################
 #
@@ -144,7 +144,7 @@ class AttributeDictionary(dict):
             raise AttributeError("'AttributeDictionary' has no "
                                  "attribute '%s'" % attr)
 
-class OrderedDictionary:
+class OrderedDictionary(object):
     """Augumented dictionary which keeps keys in order
 
     OrderedDictionary provides an augmented Python dictionary
@@ -270,7 +270,7 @@ def getlines(filen):
 # File system wrappers and utilities
 #######################################################################
 
-class PathInfo:
+class PathInfo(object):
     """Collect and report information on a file
 
     The PathInfo class provides an interface to getting general
@@ -968,7 +968,7 @@ def strip_ext(name,ext=None):
 # Symbolic link handling
 #######################################################################
 
-class Symlink:
+class Symlink(object):
     """Class for interrogating and modifying symbolic links
 
     The Symlink class provides an interface for getting information

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #     demultiplex_undetermined_fastq.py: demultiplex undetermined Illumina reads
-#     Copyright (C) University of Manchester 2013 Peter Briggs
+#     Copyright (C) University of Manchester 2013-2019 Peter Briggs
 #
 ########################################################################
 #
@@ -25,7 +25,7 @@ sequencing run.
 # Import modules that this module depends on
 #######################################################################
 
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 
 import os
 import sys
@@ -43,7 +43,7 @@ import bcftbx.FASTQFile as FASTQFile
 # Class definitions
 #######################################################################
 
-class BarcodeMatcher:
+class BarcodeMatcher(object):
     """BarcodeMatcher
 
     Class for testing whether a sequence matches a barcode.

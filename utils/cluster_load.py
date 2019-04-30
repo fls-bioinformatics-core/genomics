@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #     cluster_load.py: wrap qstat for reporting current Grid Engine usage
-#     Copyright (C) University of Manchester 2013 Peter Briggs
+#     Copyright (C) University of Manchester 2013-2019 Peter Briggs
 #
 ########################################################################
 #
@@ -57,7 +57,7 @@ import logging
 # Classes
 #######################################################################
 
-class Qstat():
+class Qstat(object):
     """Class for acquiring and filtering qstat data
 
     'qstat' is a command line utility that reports per-job Grid Engine
@@ -165,7 +165,7 @@ class Qstat():
         # Implement len built-in
         return len(self.jobs)
     
-class QstatJob:
+class QstatJob(object):
     """Class representing a job reported by Qstat.
 
     QstatJob has the following properties:

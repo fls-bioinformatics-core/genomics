@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #     split_fasta.py: extract individual chromosome sequences from fasta file
-#     Copyright (C) University of Manchester 2013 Peter Briggs
+#     Copyright (C) University of Manchester 2013-2019 Peter Briggs
 #
 ########################################################################
 #
@@ -22,7 +22,7 @@ data chromosome-by-chromosome from a Fasta file.
 # Module metadata
 #######################################################################
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 
 #######################################################################
 # Import modules
@@ -129,7 +129,7 @@ import unittest
 import cStringIO
 
 # Test data
-class TestData:
+class TestData(object):
     """Set up example data to use in unit test classes
 
     """
