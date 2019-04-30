@@ -799,7 +799,7 @@ exit $exit_code
             start_time = self.__start_time[job_id]
         except KeyError:
             logging.warning("GEJobRunner: update grace period: job %s "
-                            "has gone away" % job_id)
+                            "has gone away (ignored)" % job_id)
             self.__updating_grace_period.release(lock)
         if ((time.time() - start_time) > self.__new_job_grace_period):
             # Job no longer in grace period
@@ -809,7 +809,8 @@ exit $exit_code
                 del(self.__start_time[job_id])
             except KeyError:
                 logging.warning("GEJobRunner: update grace period: "
-                                "job %s has gone away" % job_id)
+                                "job %s has gone away (ignored)" %
+                                job_id)
         # Release update lock
         self.__updating_grace_period.release(lock)
 
@@ -842,8 +843,8 @@ exit $exit_code
         logging.debug("GEJobRunner: acquired lock: %s" % lock)
         if job_id not in self.__job_number:
             # Job has gone away
-            logging.warning("GEJobRunner: job %s has gone away" %
-                            job_id)
+            logging.debug("GEJobRunner: job %s has gone away" %
+                          job_id)
             self.__job_lock.release(lock)
             return
         self.__finalizing[job_id] = True
@@ -1178,9 +1179,9 @@ class ResourceLock(object):
                         return None
                     elif ts == timestamp:
                         # Deadlock: two locks with same priority
-                        logging.warning("ResourceLock: two locks with same "
-                                        "priority for resource '%s'" %
-                                        resource_name)
+                        logging.debug("ResourceLock: two locks with same "
+                                      "priority for resource '%s'" %
+                                      resource_name)
                         # We don't have the lock after all
                         has_lock = False
                         # Release the putative lock
