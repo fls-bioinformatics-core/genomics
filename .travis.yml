@@ -23,3 +23,4 @@ script:
   - "cd microarray/examples/"
   - ./test_best_exons.sh
   - ./test_xrorthologs.sh
+  - ./test_annotate_probesets.sh
