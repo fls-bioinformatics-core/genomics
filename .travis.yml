@@ -19,6 +19,7 @@ script:
   - "nosetests --exe -v QC-pipeline/fastq_strand.py"
 # Run the split_fastq tests
   - "nosetests --exe -v NGS-general/split_fastq.py"
-# Run the best_exons example
+# Run the examples for microarrays
   - "cd microarray/examples/"
   - ./test_best_exons.sh
+  - ./test_xrorthologs.sh
