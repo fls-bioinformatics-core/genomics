@@ -20,10 +20,10 @@ Fastq file from an Illumina sequencer.
 # Import modules that this module depends on
 #######################################################################
 
-__version__ = "0.0.3"
+__version__ = "0.1.0"
 
 import sys
-import optparse
+import argparse
 import bcftbx.FASTQFile as FASTQFile
 
 #######################################################################
@@ -240,19 +240,21 @@ class TestSequencesMatchFunction(unittest.TestCase):
 #######################################################################
 
 if __name__ == "__main__":
-    p = optparse.OptionParser(usage="%prog FASTQ [FASTQ...]",
-                              version="%prog "+__version__,
-                              description="Examine barcode sequences from one or more "
-                              "Fastq files and report the most prevalent. Sequences will "
-                              "be pooled from all specified Fastqs before being analysed.")
-    p.add_option('--cutoff',action='store',dest='cutoff',default=1000000,type='int',
-                 help="Minimum number of times a barcode sequence must appear to be "
-                 "reported (default is 1000000)")
-    options,args = p.parse_args()
-    if len(args) == 0:
-        p.error("Must supply at least one Fastq file")
+    p = argparse.ArgumentParser(
+        description="Examine barcode sequences from one or more "
+        "Fastq files and report the most prevalent. Sequences will "
+        "be pooled from all specified Fastqs before being analysed.")
+    p.add_argument("--version",action='version',version=__version__)
+    p.add_argument('--cutoff',action='store',dest='cutoff',
+                   default=1000000,type=int,
+                   help="Minimum number of times a barcode sequence "
+                   "must appear to be reported (default is 1000000)")
+    p.add_argument('fastqs',metavar="FASTQ",nargs='+',
+                   help="Fastq to examine barcodes from (reads from "
+                   "multiple Fastqs will be pooled)")
+    args = p.parse_args()
     try:
-        main(args,options.cutoff)
+        main(args.fastqs,args.cutoff)
     except KeyboardInterrupt:
         print "Terminating following Ctrl-C"
         pass

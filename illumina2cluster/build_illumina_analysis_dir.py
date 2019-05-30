@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 #
 #     build_illumina_analysis_dir.py: build analysis dir with links to fastq files
-#     Copyright (C) University of Manchester 2012-2013 Peter Briggs
+#     Copyright (C) University of Manchester 2012-2013,2019 Peter Briggs
 #
 
-__version__ = "1.0.2"
+__version__ = "1.1.0"
 
 """build_illumina_analysis_dir.py
 
@@ -28,7 +28,7 @@ Use --expt=... option to set application types for each project.
 
 import os
 import sys
-import optparse
+import argparse
 import logging
 import gzip
 
@@ -144,44 +144,52 @@ def create_analysis_dir(project,
 
 if __name__ == "__main__":
     # Create command line parser
-    p = optparse.OptionParser(usage="%prog OPTIONS illumina_data_dir",
-                              version="%prog "+__version__,
-                              description="Create per-project analysis directories for "
-                              "Illumina run. 'illumina_data_dir' is the top-level directory "
-                              "containing the 'Unaligned' directory with the fastq.gz files "
-                              "generated from the bcl files. For each 'Project_...' directory "
-                              "%prog makes a new subdirectory and populates with links to "
-                              "the fastq.gz files for each sample under that project.")
-    p.add_option("--dry-run",action="store_true",dest="dry_run",
-                 help="report operations that would be performed if creating the "
-                 "analysis directories but don't actually do them")
-    p.add_option("--unaligned",action="store",dest="unaligned_dir",default="Unaligned",
-                 help="specify an alternative name for the 'Unaligned' directory "
-                 "conatining the fastq.gz files")
-    p.add_option("--expt",action="append",dest="expt_type",default=[],
-                 help="specify experiment type (e.g. ChIP-seq) to append to the project name "
-                 "when creating analysis directories. The syntax for EXPT_TYPE is "
-                 "'<project>:<type>' e.g. --expt=NY:ChIP-seq will create directory "
-                 "'NY_ChIP-seq'. Use multiple --expt=... to set the types for different "
-                 "projects")
-    p.add_option("--keep-names",action="store_true",dest="keep_names",default=False,
-                 help="preserve the full names of the source fastq files when creating links")
-    p.add_option("--merge-replicates",action="store_true",dest="merge_replicates",default=False,
-                 help="create merged fastq files for each set of replicates detected")
+    p = argparse.ArgumentParser(
+        description="Create per-project analysis directories for "
+        "Illumina run. 'illumina_data_dir' is the top-level directory "
+        "containing the 'Unaligned' directory with the fastq.gz files "
+        "generated from the bcl files. For each 'Project_...' directory "
+        "%prog makes a new subdirectory and populates with links to "
+        "the fastq.gz files for each sample under that project.")
+    p.add_argument("--version",action='version',version=__version__)
+    p.add_argument("--dry-run",action="store_true",dest="dry_run",
+                   help="report operations that would be performed if "
+                   "creating the analysis directories but don't actually "
+                   "do them")
+    p.add_argument("--unaligned",action="store",dest="unaligned_dir",
+                   default="Unaligned",
+                   help="specify an alternative name for the 'Unaligned' "
+                   "directory conatining the fastq.gz files")
+    p.add_argument("--expt",action="append",dest="expt_type",default=[],
+                   help="specify experiment type (e.g. ChIP-seq) to append "
+                   "to the project name when creating analysis directories. "
+                   "The syntax for EXPT_TYPE is '<project>:<type>' e.g. "
+                   "--expt=NY:ChIP-seq will create directory 'NY_ChIP-seq'. "
+                   "Use multiple --expt=... to set the types for different "
+                   "projects")
+    p.add_argument("--keep-names",action="store_true",dest="keep_names",
+                   default=False,
+                   help="preserve the full names of the source fastq files "
+                   "when creating links")
+    p.add_argument("--merge-replicates",action="store_true",
+                   dest="merge_replicates",default=False,
+                   help="create merged fastq files for each set of "
+                   "replicates detected")
+    p.add_argument('illumina_data_dir',
+                   help="top-level directory containing the 'Unaligned' "
+                   "directory with the fastq.gz files")
     # Parse command line
-    options,args = p.parse_args()
+    args = p.parse_args()
 
     # Get data directory name
-    if len(args) != 1:
-        p.error("expected one argument (location of Illumina analysis dir)")
-    illumina_analysis_dir = os.path.abspath(args[0])
+    illumina_analysis_dir = os.path.abspath(args.illumina_data_dir)
 
     # Populate Illumina data object
     illumina_data = IlluminaData.IlluminaData(illumina_analysis_dir,
-                                              unaligned_dir=options.unaligned_dir)
+                                              unaligned_dir=args.unaligned_dir)
 
     # Assign experiment types
-    for expt in options.expt_type:
+    for expt in args.expt_type:
         name,type_ = expt.split(':')
         illumina_data.get_project(name).expt_type = type_
 
@@ -189,8 +197,8 @@ if __name__ == "__main__":
     for project in illumina_data.projects:
         create_analysis_dir(project,
                             top_dir=illumina_analysis_dir,
-                            merge_replicates=options.merge_replicates,
-                            keep_names=options.keep_names,
-                            dry_run=options.dry_run)
+                            merge_replicates=args.merge_replicates,
+                            keep_names=args.keep_names,
+                            dry_run=args.dry_run)
 
 
