@@ -75,7 +75,7 @@ Python modules xlwt, xlrd and xlutils.
 # Module metadata
 #######################################################################
 
-__version__ = "1.1.6"
+__version__ = "1.2.0"
 
 #######################################################################
 # Import
@@ -83,7 +83,7 @@ __version__ = "1.1.6"
 
 import sys
 import os
-import optparse
+import argparse
 import glob
 
 # Set default logging level and output
@@ -676,29 +676,35 @@ uniquely mapped	22792207
 
 if __name__ == "__main__":
 
-    p = optparse.OptionParser(usage="%prog [options] <bowtie_log_file> [ <bowtie_log_file> ... ]",
-                              version="%prog "+__version__,
-                              description=
-                              "Extract mapping statistics for each sample referenced in "
-                              "the input bowtie log files and summarise the data in an XLS "
-                              "spreadsheet. Handles output from both Bowtie and Bowtie2.")
+    p = argparse.ArgumentParser(
+        description=
+        "Extract mapping statistics for each sample referenced in "
+        "the input bowtie log files and summarise the data in an XLS "
+        "spreadsheet. Handles output from both Bowtie and Bowtie2.")
 
-    p.add_option('-o',action="store",dest="stats_xls",metavar="xls_file",default=None,
-                 help="specify name of the output XLS file (otherwise defaults to "
-                 "'mapping_summary.xls').")
-    p.add_option('-t',action="store_true",dest="tab_file",metavar="tab_file",default=False,
-                 help="write data to tab-delimited file in addition to the XLS file. The tab "
-                 "file will have the same name as the XLS file, with the extension replaced "
-                 "by .txt")
+    p.add_argument("--version",action='version',version=__version__),
+    p.add_argument('-o',action="store",dest="stats_xls",metavar="xls_file",
+                   default=None,
+                   help="specify name of the output XLS file (otherwise "
+                   "defaults to 'mapping_summary.xls').")
+    p.add_argument('-t',action="store_true",dest="tab_file",
+                   default=False,
+                   help="write data to tab-delimited file in addition to "
+                   "the XLS file. The tab file will have the same name as "
+                   "the XLS file, with the extension replaced "
+                   "by .txt")
+    p.add_argument('bowtie_logs',metavar="BOWTIE_LOG_FILE",action='store',
+                   nargs='+',
+                   help="logfile output from Bowtie or Bowtie2")
 
     # Process the command line
-    options,arguments = p.parse_args()
+    arguments = p.parse_args()
 
     # Input files
     # Check for wildcards in file names, to emulate linux shell globbing
     # on platforms such as Windows which don't have this built in
     bowtie_log_files = []
-    for arg in arguments:
+    for arg in arguments.bowtie_logs:
         for filen in glob.iglob(arg):
             if not os.path.exists(filen):
                 p.error("Input file '%s' not found" % filen)
@@ -707,14 +713,14 @@ if __name__ == "__main__":
         p.error("at least one input bowtie log file required")
 
     # Report version
-    p.print_version()
+    print("%s %s" % (os.path.basename(sys.argv[0]),__version__))
 
     # Initialisations
-    if options.stats_xls is not None:
-        xls_out = options.stats_xls
+    if arguments.stats_xls is not None:
+        xls_out = arguments.stats_xls
     else:
         xls_out = "mapping_summary.xls"
-    if options.tab_file:
+    if arguments.tab_file:
         tab_file = os.path.splitext(xls_out)[0] + ".txt"
     else:
         tab_file = None
