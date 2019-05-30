@@ -682,7 +682,7 @@ if __name__ == "__main__":
         "the input bowtie log files and summarise the data in an XLS "
         "spreadsheet. Handles output from both Bowtie and Bowtie2.")
 
-    p.add_argument("--version",action='version',version=__version__),
+    p.add_argument("--version",action='version',version=__version__)
     p.add_argument('-o',action="store",dest="stats_xls",metavar="xls_file",
                    default=None,
                    help="specify name of the output XLS file (otherwise "
