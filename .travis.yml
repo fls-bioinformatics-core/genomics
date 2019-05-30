@@ -16,8 +16,10 @@ script:
 # Run the RNA-seq utility tests
   - "nosetests --exe -v RNA-seq/bowtie_mapping_stats.py"
   - ./RNA-seq/examples/test_bowtie_mapping_stats.sh
-# Run the make_macs2_xls tests
+# Run the ChIP-seq tests
   - "nosetests --exe -v ChIP-seq/make_macs2_xls.py"
+  - ./ChIP-seq/examples/test_make_macs_xls.sh
+  - ./ChIP-seq/examples/test_make_macs2_xls.sh
 # Run the fastq_strand tests
   - "nosetests --exe -v QC-pipeline/fastq_strand.py"
 # Run the split_fastq tests
