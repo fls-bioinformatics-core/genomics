@@ -19,7 +19,7 @@ Compare the contents of two directories.
 # Module metadata
 #######################################################################
 
-__version__ = '0.0.4'
+__version__ = '0.1.0'
 
 #######################################################################
 # Import modules that this module depends on
@@ -27,7 +27,7 @@ __version__ = '0.0.4'
 
 import sys
 import os
-import optparse
+import argparse
 import logging
 import itertools
 from multiprocessing import Pool
@@ -194,19 +194,20 @@ def cmp_dirs(dir1,dir2,n=1):
 #######################################################################
 
 if __name__ == '__main__':
-    p = optparse.OptionParser(usage="%prog [OPTIONS] DIR1 DIR2",
-                              version="%prog "+__version__,
-                              description="Compare contents of DIR1 against "
-                              "corresponding files and directories in DIR2. "
-                              "Files are compared using MD5 sums, symlinks "
-                              "using their targets.")
-    p.add_option('-n',action='store',dest='n_processors',
-                 default=1,type='int',
-                 help="specify number of cores to use")
-    options,args = p.parse_args()
-    if len(args) != 2:
-        p.error("supply two directories to compare")
-    counts = cmp_dirs(args[0],args[1],n=options.n_processors)
+    p = argparse.ArgumentParser(
+        description="Compare contents of DIR1 against "
+        "corresponding files and directories in DIR2. "
+        "Files are compared using MD5 sums, symlinks "
+        "using their targets.")
+    p.add_argument("--version",action='version',version=__version__)
+    p.add_argument('-n',action='store',dest='n_processors',
+                   default=1,type=int,
+                   help="specify number of cores to use")
+    p.add_argument('dir1',metavar="DIR1",help="source directory")
+    p.add_argument('dir2',metavar="DIR2",help="target directory to compare "
+                   "against DIR1")
+    args = p.parse_args()
+    counts = cmp_dirs(args.dir1,args.dir2,n=args.n_processors)
     if counts:
         total = sum([counts[x] for x in counts])
     else:
