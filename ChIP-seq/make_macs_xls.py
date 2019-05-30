@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #     make_macs_xls.py: Convert MACS output file to XLS spreadsheet
-#     Copyright (C) University of Manchester 2011-2 Peter Briggs
+#     Copyright (C) University of Manchester 2011-2012,2019 Peter Briggs
 #
 ########################################################################
 #
@@ -27,7 +27,7 @@ The program was developed to work with MACS 1.4."""
 
 import os
 import sys
-import optparse
+import argparse
 import logging
 # Configure logging output
 logging.basicConfig(format="[%(levelname)s] %(message)s")
@@ -43,7 +43,7 @@ import bcftbx.Spreadsheet as Spreadsheet
 # Module metadata
 #######################################################################
 
-__version__ = '0.1.0'
+__version__ = '0.2.0'
 
 #######################################################################
 # Class definitions
@@ -63,23 +63,27 @@ __version__ = '0.1.0'
 
 if __name__ == "__main__":
     # Process command line
-    p = optparse.OptionParser(usage="%prog <MACS_OUTPUT> [ <XLS_OUT> ]",
-                              version=__version__,
-                              description=
-                              "Create an XLS spreadsheet from the output of the MACS peak "
-                              "caller. <MACS_OUTPUT> is the output '.xls' file from MACS; "
-                              "if supplied then <XLS_OUT> is the name to use for the output "
-                              "file, otherwise it will be called 'XLS_<MACS_OUTPUT>.xls'.")
-    options,args = p.parse_args()
+    p = argparse.ArgumentParser(
+        description=
+        "Create an XLS spreadsheet from the output of the MACS peak "
+        "caller. <MACS_OUTPUT> is the output '.xls' file from MACS; "
+        "if supplied then <XLS_OUT> is the name to use for the output "
+        "file, otherwise it will be called 'XLS_<MACS_OUTPUT>.xls'.")
+    p.add_argument("--version",action='version',version=__version__)
+    p.add_argument('macs_in',metavar="MACS_OUTPUT",action='store',
+                   help="output .xls file from MACS")
+    p.add_argument('xls_out',metavar="XLS_OUT",action='store',nargs='?',
+                   help="output MS XLS file (defaults to "
+                   "'XLS_<MACS_OUTPUT>.xls').")
+    args = p.parse_args()
+
     # Get input file name
-    if len(args) < 1 or len(args) > 2:
-        p.error("Wrong number of arguments")
-    macs_in = args[0]
+    macs_in = args.macs_in
 
     # Build output file name: if not explicitly supplied on the command
     # line then use "XLS_<input_name>.xls"
-    if len(args) == 2:
-        xls_out = args[1]
+    if args.xls_out:
+        xls_out = args.xls_out
     else:
         # MACS output file might already have an .xls extension
         # but we'll add an explicit .xls extension
