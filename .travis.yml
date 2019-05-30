@@ -13,6 +13,9 @@ install:
 script:
 # Run the unit tests for bcftbx
   - "python setup.py test"
+# Run the RNA-seq utility tests
+  - "nosetests --exe -v RNA-seq/bowtie_mapping_stats.py"
+  - ./RNA-seq/examples/test_bowtie_mapping_stats.sh
 # Run the make_macs2_xls tests
   - "nosetests --exe -v ChIP-seq/make_macs2_xls.py"
 # Run the fastq_strand tests

@@ -1,0 +1,18 @@
+Multiseed full-index search: 01:45:33
+85570063 reads; of these:
+  85570063 (100.00%) were paired; of these:
+    56052776 (65.51%) aligned concordantly 0 times
+    22792207 (26.64%) aligned concordantly exactly 1 time
+    6725080 (7.86%) aligned concordantly >1 times
+    ----
+    56052776 pairs aligned concordantly 0 times; of these:
+      6635276 (11.84%) aligned discordantly 1 time
+    ----
+    49417500 pairs aligned 0 times concordantly or discordantly; of these:
+      98835000 mates make up the pairs; of these:
+        93969575 (95.08%) aligned 0 times
+        1622693 (1.64%) aligned exactly 1 time
+        3242732 (3.28%) aligned >1 times
+45.09% overall alignment rate
+Time searching: 01:46:03
+Overall time: 01:46:03

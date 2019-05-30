@@ -1,0 +1,23 @@
+JP03
+Time loading reference: 00:00:00
+Time loading forward index: 00:00:00Time loading mirror index: 00:00:00
+Seeded quality full-index search: 00:10:41
+# reads processed: 40319096
+# reads with at least one reported alignment: 3094671 (7.68%)
+# reads that failed to align: 33236646 (82.43%)
+# reads with alignments suppressed due to -m: 3987779 (9.89%)
+Reported 3094671 alignments to 1 output stream(s)
+Time searching: 00:10:42
+Overall time: 00:10:42
+JP04
+Time loading reference: 00:00:00
+Time loading forward index: 00:00:00
+Time loading mirror index: 00:00:00
+Seeded quality full-index search: 00:33:25
+# reads processed: 129900841
+# reads with at least one reported alignment: 10086835 (7.77%)
+# reads that failed to align: 106040617 (81.63%)
+# reads with alignments suppressed due to -m: 13773389 (10.60%)
+Reported 10086835 alignments to 1 output stream(s)
+Time searching: 00:33:26
+Overall time: 00:33:26
