@@ -22,7 +22,7 @@ script:
   - "nosetests --exe -v NGS-general/manage_seqs.py"
   - "nosetests --exe -v NGS-general/split_fastq.py"
   - "./NGS-general/sam2soap.py --test"
-  - "./NGS-general/split_fasta --test"
+  - "./NGS-general/split_fasta.py --test"
 # Run the fastq_strand tests
   - "nosetests --exe -v QC-pipeline/fastq_strand.py"
 # Run the examples for microarrays
