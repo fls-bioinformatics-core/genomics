@@ -114,7 +114,7 @@ if __name__ == "__main__":
             print "\tPossible Illumina 1.5+/Phred+64"
             encodings.append('Phred+64')
             galaxy_types.append('fastqillumina')
-        if min_qual >= ord('!') and max_qual <= ord('I'):
+        if min_qual >= ord('!') and max_qual <= ord('J'):
             print "\tPossible Illumina 1.8+/Phred+33"
             encodings.append('Phred+33')
             galaxy_types.append('fastqsanger')
