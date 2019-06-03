@@ -24,7 +24,7 @@ SOAP format specification: http://soap.genomics.org.cn/soap1/#Formatofoutput
 
 import os,sys
 import logging
-import optparse
+import argparse
 
 #######################################################################
 # Class definitions
@@ -493,34 +493,33 @@ def run_tests():
 
 if __name__ == "__main__":
     # Process command line
-    p = optparse.OptionParser(usage="%prog OPTIONS [ SAMFILE ]",
-                              description="Convert SAM file to SOAP format - reads from stdin "
-                              "(or SAMFILE, if specified), and writes output to stdout unless "
-                              "-o option is specified.")
-    p.add_option('-o',action="store",dest="soapfile",default=None,
-                 help="Output SOAP file name")
-    p.add_option('--debug',action="store_true",dest="debug",default=False,
-                 help="Turn on debugging output")
-    p.add_option('--test',action="store_true",dest="run_tests",default=False,
-                 help="Run unit tests")
-    opts,args = p.parse_args()
-    # Check arguments
-    if len(args) > 1:
-        p.error("Too many arguments")
+    p = argparse.ArgumentParser(
+        description="Convert SAM file to SOAP format - reads from stdin "
+        "(or SAMFILE, if specified), and writes output to stdout unless "
+        "-o option is specified.")
+    p.add_argument('-o',action="store",dest="soapfile",default=None,
+                   help="Output SOAP file name")
+    p.add_argument('--debug',action="store_true",dest="debug",default=False,
+                   help="Turn on debugging output")
+    p.add_argument('--test',action="store_true",dest="run_tests",default=False,
+                   help="Run unit tests")
+    p.add_argument('samfile',metavar="SAMFILE",nargs='?',
+                   help="SAM file to convert (or stdin if not specified)")
+    args = p.parse_args()
     # Debugging output
-    if opts.debug: logging.getLogger().setLevel(logging.DEBUG)
+    if args.debug: logging.getLogger().setLevel(logging.DEBUG)
     # Unit tests
-    if opts.run_tests: run_tests()
+    if args.run_tests: run_tests()
     # Determine source of SAM data
-    if args:
+    if args.samfile:
         # Read from file
-        samfile = open(args[0],'r')
+        samfile = open(args.samfile,'r')
     else:
         # Read from stdin
         samfile = sys.stdin
     # Determine output target
     if opts.soapfile:
-        soapfile = open(opts.soapfile,'w')
+        soapfile = open(args.soapfile,'w')
     else:
         soapfile = sys.stdout
     # Process the SAM data
@@ -532,5 +531,5 @@ if __name__ == "__main__":
         # Process alignment lines and convert to SOAP
         soapfile.write("%s\n" % sam_to_soap(SAMLine(line)))
     # Finished
-    if args: samfile.close()
-    if opts.soapfile: soapfile.close()
+    if args.samfile: samfile.close()
+    if args.soapfile: soapfile.close()
