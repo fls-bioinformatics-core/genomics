@@ -25,7 +25,7 @@ manage_seqs.py [-o OUTFILE|-a OUTFILE] [-d DESCRIPTION] INFILE [INFILE...]
 # Module metadata
 #######################################################################
 
-__version__ = "0.0.3"
+__version__ = "0.1.0"
 
 #######################################################################
 # Import modules that this module depends on
@@ -34,7 +34,7 @@ __version__ = "0.0.3"
 import os
 import copy
 import sys
-import optparse
+import argparse
 
 #######################################################################
 # Classes
@@ -544,26 +544,27 @@ class TestSplitLineFunction(unittest.TestCase):
 if __name__ == '__main__':
 
     # Command line processing
-    p = optparse.OptionParser(usage="%prog OPTIONS INFILE [INFILE...]",
-                              version="%prog "+__version__,
-                              description="Read sequences and names from one or more "
-                              "INFILEs (which can be a mixture of FastQC 'contaminants' "
-                              "format and or Fasta format), check for redundancy "
-                              "(i.e. sequences with multiple associated names) and "
-                              "contradictions (i.e. names with multiple associated "
-                              "sequences).")
-    p.add_option('-o',action='store',dest='out_file',default=None,
-                 help="write all sequences to OUT_FILE in FastQC 'contaminants' "
-                 "format")
-    p.add_option('-a',action='store',dest='append_file',default=None,
-                 help="append sequences to existing APPEND_FILE (not compatible with -o)")
-    p.add_option('-d',action='store',dest='description',default=None,
-                 help="supply arbitrary text to write to the header of the output "
-                 "file")
-    options,args = p.parse_args()
-    if not len(args):
-        p.error("Need at least one input file")
-    if options.out_file and options.append_file:
+    p = argparse.ArgumentParser(
+        description="Read sequences and names from one or more "
+        "INFILEs (which can be a mixture of FastQC 'contaminants' "
+        "format and or Fasta format), check for redundancy "
+        "(i.e. sequences with multiple associated names) and "
+        "contradictions (i.e. names with multiple associated "
+        "sequences).")
+    p.add_argument("--version",action='version',version=__version__)
+    p.add_argument('-o',action='store',dest='out_file',default=None,
+                   help="write all sequences to OUT_FILE in FastQC "
+                   "'contaminants' format")
+    p.add_argument('-a',action='store',dest='append_file',default=None,
+                   help="append sequences to existing APPEND_FILE (not "
+                   "compatible with -o)")
+    p.add_argument('-d',action='store',dest='description',default=None,
+                   help="supply arbitrary text to write to the header "
+                   "of the output file")
+    p.add_argument('infile',metavar="INFILE",nargs='+',
+                   help="input sequences")
+    args = p.parse_args()
+    if args.out_file and args.append_file:
         p.error("Cannot specify -o and -a options together")
 
     # Read in data
@@ -603,9 +604,9 @@ if __name__ == '__main__':
 
     # Output
     outfile = None
-    if options.out_file is not None:
-        print "Writing to %s" % options.append_file
-        s.save(options.out_file,header=options.description,append=False)
-    elif options.append_file is not None:
-        print "Appending to %s" % options.append_file
-        s.save(options.append_file,header=options.description,append=True)
+    if args.out_file is not None:
+        print "Writing to %s" % args.out_file
+        s.save(args.out_file,header=args.description,append=False)
+    elif args.append_file is not None:
+        print "Appending to %s" % args.append_file
+        s.save(args.append_file,header=args.description,append=True)
