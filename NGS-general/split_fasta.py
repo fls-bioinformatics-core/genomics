@@ -22,7 +22,7 @@ data chromosome-by-chromosome from a Fasta file.
 # Module metadata
 #######################################################################
 
-__version__ = "0.2.1"
+__version__ = "0.3.0"
 
 #######################################################################
 # Import modules
@@ -31,7 +31,7 @@ __version__ = "0.2.1"
 from collections import Iterator
 import sys
 import os
-import optparse
+import argparse
 import logging
 
 #######################################################################
@@ -183,27 +183,30 @@ def run_tests():
 
 if __name__ == "__main__":
     # Process the command line
-    p = optparse.OptionParser(usage="%prog OPTIONS fasta_file",
-                              version="%prog "+__version__,
-                              description="Split input FASTA file with multiple sequences "
-                              "into multiple files each containing sequences for a single "
-                              "chromosome.")
-    p.add_option("--tests",action="store_true",dest="run_tests",default=False,
-                 help="Run unit tests")
-    options,arguments = p.parse_args()
+    p = argparse.ArgumentParser(
+        description="Split input FASTA file with multiple sequences "
+        "into multiple files each containing sequences for a single "
+        "chromosome.")
+    p.add_argument("--version",action='version',version=__version__)
+    p.add_argument("--test",action="store_true",dest="run_tests",
+                   default=False,
+                   help="Run unit tests")
+    p.add_argument('fasta_file',nargs='?',
+                   help="input FASTA file to split")
+    arguments = p.parse_args()
     # Run unit tests option
-    if options.run_tests:
+    if arguments.run_tests:
         print "Running unit tests"
         run_tests()
         print "Tests finished"
         sys.exit()
-    # Expects single Fasta file as input
-    if len(arguments) != 1:
-        p.error("Expects exactly one fasta file as input")
+    else:
+        if not arguments.fasta_file:
+            p.error("Need to supply FASTA file as input")
     # Keep a record of file names from chromosome names
     file_names = []
     # Loop over chromosomes and output each one to a separate file
-    for chrom in FastaChromIterator(arguments[0]):
+    for chrom in FastaChromIterator(arguments.fasta_file):
         name = chrom[0]
         seq = chrom[1]
         # Make a file name from chromosome description
