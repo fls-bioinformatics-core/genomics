@@ -470,13 +470,13 @@ class TestSoapTypeFromSam(unittest.TestCase):
                 "TATAGTTATATAAAAGACCTGAGTAGTACGTTTTATATAATCTGATTTTATGGCTATACTTTTTTTGACATGTAGC",
                 "#####################AAAA7AAAA2AA7AAAAAAA1,:0/57:8855)))),''(03388*',''))))#)",
                 "76M","MD:Z:75T0"),
-                         "1\tT->75C-23\t76M\t75T")
+                         "1\tT->75C2\t76M\t75T")
 
 class TestSamToSoap(unittest.TestCase):
     def test_sam_to_soap(self):
         sam = SAMLine("SRR189243_1-SRR189243.3751	81	gi|42410857|gb|AE017196.1|	60083	30	76M	*	0	0	TATAGTTATATAAAAGACCTGAGTAGTACGTTTTATATAATCTGATTTTATGGCTATACTTTTTTTGACATGTAGC	#####################AAAA7AAAA2AA7AAAAAAA1,:0/57:8855)))),''(03388*',''))))#	NM:i:1	MD:Z:75T0")
         self.assertEqual(str(sam_to_soap(sam)),
-                         "SRR189243_1-SRR189243.3751	TATAGTTATATAAAAGACCTGAGTAGTACGTTTTATATAATCTGATTTTATGGCTATACTTTTTTTGACATGTAGC	#####################AAAA7AAAA2AA7AAAAAAA1,:0/57:8855)))),''(03388*',''))))#	1	a	76	-	gi|42410857|gb|AE017196.1|	60083	1	T->75C-23	76M	75T")
+                         "SRR189243_1-SRR189243.3751	TATAGTTATATAAAAGACCTGAGTAGTACGTTTTATATAATCTGATTTTATGGCTATACTTTTTTTGACATGTAGC	#####################AAAA7AAAA2AA7AAAAAAA1,:0/57:8855)))),''(03388*',''))))#	1	a	76	-	gi|42410857|gb|AE017196.1|	60083	1	T->75C2	76M	75T")
 
 def run_tests():
     print "Running unit tests"
