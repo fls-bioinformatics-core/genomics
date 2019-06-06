@@ -10,6 +10,6 @@ md5checker.py -d $(dirname $0)/data/file1.txt $(dirname $0)/data/file2.txt
 md5checker.py -d $(dirname $0)/data/dir1 $(dirname $0)/data/dir2
 md5checker.py -o output/checksums.dir1 $(dirname $0)/data/dir1
 md5checker.py -o output/checksums.file1 $(dirname $0)/data/file1.txt
-md5checker.py -c $(dirname $0)/data/checksums.txt
+pushd $(dirname $0); md5checker.py -c $(dirname $0)/data/checksum.txt; popd
 ##
 #
