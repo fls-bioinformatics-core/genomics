@@ -64,12 +64,12 @@ __version__ = '0.2.0'
 if __name__ == "__main__":
     # Process command line
     p = argparse.ArgumentParser(
+        version="%(prog)s "+__version__,
         description=
         "Create an XLS spreadsheet from the output of the MACS peak "
         "caller. <MACS_OUTPUT> is the output '.xls' file from MACS; "
         "if supplied then <XLS_OUT> is the name to use for the output "
         "file, otherwise it will be called 'XLS_<MACS_OUTPUT>.xls'.")
-    p.add_argument("--version",action='version',version=__version__)
     p.add_argument('macs_in',metavar="MACS_OUTPUT",action='store',
                    help="output .xls file from MACS")
     p.add_argument('xls_out',metavar="XLS_OUT",action='store',nargs='?',

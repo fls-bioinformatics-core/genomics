@@ -195,11 +195,11 @@ def cmp_dirs(dir1,dir2,n=1):
 
 if __name__ == '__main__':
     p = argparse.ArgumentParser(
+        version="%(prog)s "+__version__,
         description="Compare contents of DIR1 against "
         "corresponding files and directories in DIR2. "
         "Files are compared using MD5 sums, symlinks "
         "using their targets.")
-    p.add_argument("--version",action='version',version=__version__)
     p.add_argument('-n',action='store',dest='n_processors',
                    default=1,type=int,
                    help="specify number of cores to use")

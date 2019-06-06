@@ -677,12 +677,12 @@ uniquely mapped	22792207
 if __name__ == "__main__":
 
     p = argparse.ArgumentParser(
+        version="%(prog)s "+__version__,
         description=
         "Extract mapping statistics for each sample referenced in "
         "the input bowtie log files and summarise the data in an XLS "
         "spreadsheet. Handles output from both Bowtie and Bowtie2.")
 
-    p.add_argument("--version",action='version',version=__version__)
     p.add_argument('-o',action="store",dest="stats_xls",metavar="xls_file",
                    default=None,
                    help="specify name of the output XLS file (otherwise "

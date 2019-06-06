@@ -44,9 +44,9 @@ if __name__ == "__main__":
     
     # Create command line parser
     p = argparse.ArgumentParser(
+        version="%(prog)s "+__version__,
         description="Check that read headers for R1 and R2 fastq files "
         "are in agreement, and that the files form an R1/2 pair.")
-    p.add_argument("--version",action='version',version=__version__)
     p.add_argument('fastq_file_r1',metavar="R1.fastq",
                    help="Fastq file with R1 reads")
     p.add_argument('fastq_file_r2',metavar="R2.fastq",

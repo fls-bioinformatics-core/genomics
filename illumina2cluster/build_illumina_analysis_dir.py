@@ -145,13 +145,13 @@ def create_analysis_dir(project,
 if __name__ == "__main__":
     # Create command line parser
     p = argparse.ArgumentParser(
+        version="%(prog)s "+__version__,
         description="Create per-project analysis directories for "
         "Illumina run. 'illumina_data_dir' is the top-level directory "
         "containing the 'Unaligned' directory with the fastq.gz files "
         "generated from the bcl files. For each 'Project_...' directory "
         "%prog makes a new subdirectory and populates with links to "
         "the fastq.gz files for each sample under that project.")
-    p.add_argument("--version",action='version',version=__version__)
     p.add_argument("--dry-run",action="store_true",dest="dry_run",
                    help="report operations that would be performed if "
                    "creating the analysis directories but don't actually "

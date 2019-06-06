@@ -42,9 +42,9 @@ if __name__ == "__main__":
 
     # Process command line using optparse
     p = argparse.ArgumentParser(
+        version="%(prog)s "+__version__,
         description="'Sniff' FASTQ file to determine likely quality "
         "encoding.")
-    p.add_argument("--version",action='version',version=__version__)
     p.add_argument('--subset',action="store",dest="n_subset",default=None,
                    help="try to determine encoding from a subset of "
                    "consisting of the first N_SUBSET reads. (Quicker than "

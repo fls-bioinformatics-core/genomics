@@ -498,10 +498,10 @@ if __name__ == "__main__":
 
     # Process command line
     p = argparse.ArgumentParser(
+        version="%(prog)s "+__version__,
         description="Read exon and gene symbol data from EXONS_IN "
         "and picks the top three exons for each gene symbol, then "
         "outputs averages of the associated values to BEST_EXONS.")
-    p.add_argument("--version",action='version',version=__version__)
     p.add_argument("--rank-by",action="store",dest="criterion",
                    default='log2_fold_change',
                    choices=('log2_fold_change','p_value',),

@@ -102,8 +102,8 @@ if __name__ == "__main__":
 
     # Process command line using optparse
     p = argparse.ArgumentParser(
+        version="%(prog)s "+__version__,
         description="Perform various operations on FASTQ file.")
-    p.add_argument("--version",action='version',version=__version__)
     p.add_argument('--stats',action='store_true',dest='do_stats',
                    default=False,
                    help="Generate basic stats for input FASTQ")

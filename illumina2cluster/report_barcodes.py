@@ -241,10 +241,10 @@ class TestSequencesMatchFunction(unittest.TestCase):
 
 if __name__ == "__main__":
     p = argparse.ArgumentParser(
+        version="$(prog)s "+__version__,
         description="Examine barcode sequences from one or more "
         "Fastq files and report the most prevalent. Sequences will "
         "be pooled from all specified Fastqs before being analysed.")
-    p.add_argument("--version",action='version',version=__version__)
     p.add_argument('--cutoff',action='store',dest='cutoff',
                    default=1000000,type=int,
                    help="Minimum number of times a barcode sequence "
