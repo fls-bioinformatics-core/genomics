@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #     fastq_edit.py: edit FASTQ files and data
-#     Copyright (C) University of Manchester 2012 Peter Briggs
+#     Copyright (C) University of Manchester 2012,2019 Peter Briggs
 #
 ########################################################################
 #
@@ -9,7 +9,7 @@
 #
 ########################################################################
 
-__version__ = "0.0.2"
+__version__ = "0.1.0"
 
 """fastq_edit.py
 
@@ -33,7 +33,7 @@ Options:
 #######################################################################
 
 import sys,os
-import optparse
+import argparse
 
 # Set up for bcftbx modules
 SHARE_DIR = os.path.abspath(
@@ -101,28 +101,28 @@ def stats(fastq_file):
 if __name__ == "__main__":
 
     # Process command line using optparse
-    p = optparse.OptionParser(usage="%prog [options] <fastq_file>",
-                              version="%prog "+__version__,
-                              description=
-                              "Perform various operations on FASTQ file.")
-    p.add_option('--stats',action='store_true',dest='do_stats',default=False,
-                 help="Generate basic stats for input FASTQ")
-    p.add_option('--instrument-name',action='store',dest='instrument_name',default=None,
-                 help="Update the 'instrument name' in the sequence identifier part of each read "
-                 "record and write updated FASTQ file to stdout")
+    p = argparse.ArgumentParser(
+        version="%(prog)s "+__version__,
+        description="Perform various operations on FASTQ file.")
+    p.add_argument('--stats',action='store_true',dest='do_stats',
+                   default=False,
+                   help="Generate basic stats for input FASTQ")
+    p.add_argument('--instrument-name',action='store',dest='instrument_name',
+                   default=None,
+                   help="Update the 'instrument name' in the sequence "
+                   "identifier part of each read record and write updated "
+                   "FASTQ file to stdout")
+    p.add_argument('fastq_file',help="FASTQ file to operate on")
 
     # Process the command line
-    options,arguments = p.parse_args()
-    new_instrument_name = options.instrument_name
-    do_stats = options.do_stats
+    arguments = p.parse_args()
+    new_instrument_name = arguments.instrument_name
+    do_stats = arguments.do_stats
 
     # Deal with arguments
-    if len(arguments) != 1:
-        p.error("input FASTQ file required")
-    else:
-        fastq = arguments[0]
-        if not os.path.exists(fastq):
-            p.error("Input file '%s' not found" % fasta)
+    fastq = arguments.fastq_file
+    if not os.path.exists(fastq):
+        p.error("Input file '%s' not found" % fastq)
 
     # Run the edit instrument name program
     if new_instrument_name is not None:

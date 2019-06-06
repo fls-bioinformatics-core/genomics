@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #     analyse_illumina_run.py: analyse and report on Illumina sequencer runs
-#     Copyright (C) University of Manchester 2013 Peter Briggs
+#     Copyright (C) University of Manchester 2013,2019 Peter Briggs
 #
 """analyse_illumina_run.py
 
@@ -9,7 +9,7 @@ Provides functionality for analysing data from an Illumina sequencer run.
 
 """
 
-__version__ = "0.1.12"
+__version__ = "0.2.0"
 
 #######################################################################
 # Import modules
@@ -17,7 +17,7 @@ __version__ = "0.1.12"
 
 import os
 import sys
-import optparse
+import argparse
 import shutil
 import logging
 logging.basicConfig(format="%(levelname)s %(message)s")
@@ -37,55 +37,67 @@ import bcftbx.utils as bcf_utils
 
 if __name__ == "__main__":
     # Create command line parser
-    p = optparse.OptionParser(usage="%prog OPTIONS illumina_data_dir",
-                              version="%prog "+__version__,
-                              description="Utility for performing various checks and "
-                              "operations on Illumina data. 'illumina_data_dir' is the "
-                              "top-level directory containing the 'Unaligned' directory "
-                              "with the fastq.gz files.")
-    p.add_option("--report",action="store_true",dest="report",
-                 help="report sample names and number of samples for each project")
-    p.add_option("--summary",action="store_true",dest="summary",
-                 help="short report of samples (suitable for logging file)")
-    p.add_option("-l","--list",action="store_true",dest="list",
-                 help="list projects, samples and fastq files directories")
-    p.add_option("--unaligned",action="store",dest="unaligned_dir",default="Unaligned",
-                 help="specify an alternative name for the 'Unaligned' directory "
-                 "containing the fastq.gz files")
-    p.add_option("--copy",action="store",dest="copy_pattern",default=None,
-                 help="copy fastq.gz files matching COPY_PATTERN to current directory")
-    p.add_option("--merge-fastqs",action="store_true",dest="merge_fastqs",
-                 help="Merge multiple fastqs for samples")
-    p.add_option("--verify",action="store",dest="sample_sheet",default=None,
-                 help="check CASAVA outputs against those expected for SAMPLE_SHEET")
-    p.add_option("--stats",action="store_true",dest="stats",
-                 help="Report statistics (read counts etc) for fastq files")
+    p = argparse.ArgumentParser(
+        version="%(prog)s "+__version__,
+        description="Utility for performing various checks and "
+        "operations on Illumina data. 'illumina_data_dir' is the "
+        "top-level directory containing the 'Unaligned' directory "
+        "with the fastq.gz files.")
+    p.add_argument("--report",action="store_true",dest="report",
+                   help="report sample names and number of samples for "
+                   "each project")
+    p.add_argument("--summary",action="store_true",dest="summary",
+                   help="short report of samples (suitable for logging "
+                   "file)")
+    p.add_argument("-l","--list",action="store_true",dest="list",
+                   help="list projects, samples and fastq files "
+                   "directories")
+    p.add_argument("--unaligned",action="store",dest="unaligned_dir",
+                   default="Unaligned",
+                   help="specify an alternative name for the 'Unaligned' "
+                   "directory containing the fastq.gz files")
+    p.add_argument("--copy",action="store",dest="copy_pattern",
+                   default=None,
+                   help="copy fastq.gz files matching COPY_PATTERN to "
+                   "current directory")
+    p.add_argument("--merge-fastqs",action="store_true",
+                   dest="merge_fastqs",
+                   help="Merge multiple fastqs for samples")
+    p.add_argument("--verify",action="store",dest="sample_sheet",
+                   default=None,
+                   help="check CASAVA outputs against those expected "
+                   "for SAMPLE_SHEET")
+    p.add_argument("--stats",action="store_true",dest="stats",
+                   help="Report statistics (read counts etc) for fastq "
+                   "files")
+    p.add_argument('illumina_data_dir',
+                   help="top-level directory containing the 'Unaligned' "
+                   "directory with the fastq.gz files")
     # Parse command line
-    options,args = p.parse_args()
+    args = p.parse_args()
 
     # Get data directory name
-    if len(args) != 1:
-        p.error("expected one argument (location of Illumina analysis dir)")
-    illumina_analysis_dir = os.path.abspath(args[0])
+    illumina_analysis_dir = os.path.abspath(args.illumina_data_dir)
 
     # Populate Illumina data object
     try:
         illumina_data = IlluminaData.IlluminaData(illumina_analysis_dir,
-                                                  unaligned_dir=options.unaligned_dir)
+                                                  unaligned_dir=args.unaligned_dir)
     except IlluminaData.IlluminaDataError, ex:
         logging.error("Failed to collect data: %s",ex)
         sys.exit(1)
 
     # Check there's at least one thing to do
-    if not (options.report or
-            options.summary or
-            options.list or
-            options.sample_sheet or
-            options.merge_fastqs):
-        options.report = True
+    report = args.report
+    if not (args.report or
+            args.summary or
+            args.list or
+            args.sample_sheet or
+            args.merge_fastqs):
+        report = True
 
     # List option
-    if options.list:
+    if args.list:
         for project in illumina_data.projects:
             n_samples = len(project.samples)
             print "Project: %s (%d sample%s)" % (project.name,
@@ -112,11 +124,11 @@ if __name__ == "__main__":
                     print "\t\t%s" % fastq
 
     # Report the names of the samples in each project
-    if options.report:
+    if report:
         for project in illumina_data.projects:
             print "%s" % IlluminaData.describe_project(project)
             # Report statistics for fastq files
-            if options.stats:
+            if args.stats:
                 # Print number of reads for each file, and file size
                 for sample in project.samples:
                     for fastq in sample.fastq:
@@ -129,11 +141,11 @@ if __name__ == "__main__":
             print ""
 
     # Summary: short report suitable for logging file
-    if options.summary:
+    if args.summary:
         print "%s" % IlluminaData.summarise_projects(illumina_data)
 
     # Print number of undetermined reads
-    if options.stats and illumina_data.undetermined is not None:
+    if args.stats and illumina_data.undetermined is not None:
         print "Undetermined indices"
         for lane in illumina_data.undetermined.samples:
             for fastq in lane.fastq:
@@ -145,14 +157,14 @@ if __name__ == "__main__":
                                   nreads)
 
     # Copy fastq.gz files to the current directory
-    if options.copy_pattern is not None:
+    if args.copy_pattern is not None:
         # Extract project and sample names/patterns
         try:
-            project_pattern,sample_pattern = options.copy_pattern.split("/")
-            print "Copy: look for samples matching pattern %s" % options.copy_pattern
+            project_pattern,sample_pattern = args.copy_pattern.split("/")
+            print "Copy: look for samples matching pattern %s" % args.copy_pattern
             print "Data files will be copied to %s" % os.getcwd()
         except ValueError:
-            logging.error("ERROR invalid pattern '%s'" % options.copy_pattern)
+            logging.error("ERROR invalid pattern '%s'" % args.copy_pattern)
             sys.exit(1)
         # Loop through projects and samples looking for matches
         for project in illumina_data.projects:
@@ -170,19 +182,20 @@ if __name__ == "__main__":
                                 shutil.copy(fastq_file,dst)
 
     # Verify against sample sheet
-    if options.sample_sheet is not None:
-        if IlluminaData.verify_run_against_sample_sheet(illumina_data,options.sample_sheet):
+    if args.sample_sheet is not None:
+        if IlluminaData.verify_run_against_sample_sheet(illumina_data,
+                                                        args.sample_sheet):
             print "Verification against sample sheet '%s': OK" % \
-                options.sample_sheet
+                args.sample_sheet
             status = 0
         else:
             logging.error("Verification against sample sheet '%s': FAILED" %
-                          options.sample_sheet)
+                          args.sample_sheet)
             status = 1
         sys.exit(status)
 
     # Merge multiple fastqs in each sample
-    if options.merge_fastqs:
+    if args.merge_fastqs:
         for project in illumina_data.projects:
             for sample in project.samples:
                 for read in (1,2):

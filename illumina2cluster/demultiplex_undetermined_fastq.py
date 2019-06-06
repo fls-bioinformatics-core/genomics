@@ -25,11 +25,11 @@ sequencing run.
 # Import modules that this module depends on
 #######################################################################
 
-__version__ = "0.0.2"
+__version__ = "0.1.0"
 
 import os
 import sys
-import optparse
+import argparse
 
 # Put .. onto Python search path for modules
 SHARE_DIR = os.path.abspath(
@@ -179,31 +179,36 @@ def demultiplex_fastq(fastq_file,barcodes,nmismatches):
 if __name__ == "__main__":
 
     # Create command line parser
-    p = optparse.OptionParser(usage="%prog OPTIONS DIR",
-                              version="%prog "+__version__,
-                              description="Reassign reads with undetermined index sequences. "
-                              "(i.e. barcodes). DIR is the name (including any leading path) "
-                              "of the 'Undetermined_indices' directory produced by CASAVA, "
-                              "which contains the FASTQ files with the undetermined reads from "
-                              "each lane.")
-    p.add_option("--barcode",action="append",dest="barcode_info",default=[],
-                 help="specify barcode sequence and corresponding sample name as BARCODE_INFO. "
-                 "The syntax is '<name>:<barcode>:<lane>' e.g. --barcode=PB1:ATTAGA:3")
-    p.add_option("--samplesheet",action="store",dest="sample_sheet",default=None,
-                 help="specify SampleSheet.csv file to read barcodes, sample names and lane "
-                 "assignments from (as an alternative to --barcode).")
+    p = argparse.ArgumentParser(
+        version="%(prog)s "+__version__,
+        description="Reassign reads with undetermined index sequences. "
+        "(i.e. barcodes). DIR is the name (including any leading path) "
+        "of the 'Undetermined_indices' directory produced by CASAVA, "
+        "which contains the FASTQ files with the undetermined reads from "
+        "each lane.")
+    p.add_argument("--barcode",action="append",dest="barcode_info",
+                   default=[],
+                   help="specify barcode sequence and corresponding sample "
+                   "name as BARCODE_INFO. The syntax is "
+                   "'<name>:<barcode>:<lane>' e.g. --barcode=PB1:ATTAGA:3")
+    p.add_argument("--samplesheet",action="store",dest="sample_sheet",
+                   default=None,
+                   help="specify SampleSheet.csv file to read barcodes, "
+                   "sample names and lane assignments from (as an alternative "
+                   "to --barcode).")
+    p.add_argument('undetermined_dir',metavar="DIR",
+                   help="path to the 'Undetermined_indices' directory "
+                   "produced by CASAVA")
 
     # Parse command line
-    options,args = p.parse_args()
+    args = p.parse_args()
 
     # Get data directory name
-    if len(args) != 1:
-        p.error("expected one argument (location of undetermined index reads)")
-    undetermined_dir = os.path.abspath(args[0])
+    undetermined_dir = os.path.abspath(args.undetermined_dir)
 
     # Set up barcode data
     barcodes = []
-    for barcode_info in options.barcode_info:
+    for barcode_info in args.barcode_info:
         name,barcode,lane = barcode_info.split(':')
         print "Assigning barcode '%s' in lane %s to %s" % (barcode,lane,name)
         barcodes.append({ 'name': name,
@@ -212,9 +217,9 @@ if __name__ == "__main__":
                           'lane': int(lane)})
 
     # Read from sample sheet (if supplied)
-    if options.sample_sheet is not None:
-        print "Reading data from sample sheet %s" % options.sample_sheet
-        sample_sheet = IlluminaData.CasavaSampleSheet(options.sample_sheet)
+    if args.sample_sheet is not None:
+        print "Reading data from sample sheet %s" % args.sample_sheet
+        sample_sheet = IlluminaData.CasavaSampleSheet(args.sample_sheet)
         for line in sample_sheet:
             name = line['SampleID']
             barcode = line['Index'].rstrip('N').rstrip('-').rstrip('N')

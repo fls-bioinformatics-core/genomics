@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #     annotate_probesets.py: add descriptions to probe set names
-#     Copyright (C) University of Manchester 2012 Peter Briggs, Leo Zeef
+#     Copyright (C) University of Manchester 2012,2019 Peter Briggs, Leo Zeef
 #
 #######################################################################
 #
@@ -13,13 +13,13 @@
 # Module metadata
 #######################################################################
 
-__version__ = "0.0.1"
+__version__ = "0.1.0"
 
 #######################################################################
 # Import modules that this module depends on
 #######################################################################
 
-import optparse
+import argparse
 import os
 import logging
 
@@ -109,24 +109,24 @@ def main():
     """Main program
     """
     # Process command line
-    p = optparse.OptionParser(usage="%prog OPTIONS probe_set_file",
-                              version="%prog "+__version__,
-                              description="Annotate probeset list based on name: reads in "
-                              "first column of tab-delimited input file 'probe_set_file' as a "
-                              "list of probeset names and outputs these names to another "
-                              "tab-delimited file with a description for each. "
-                              "Output file name can be specified with the -o option, otherwise "
-                              "it will be the input file name with '_annotated' appended.")
-    p.add_option('-o',action='store',dest='out_file',default=None,
-                 help="specify output file name")
-    options,arguments = p.parse_args()
-    if len(arguments) != 1:
-        p.error("Input probeset file expected")
+    p = argparse.ArgumentParser(
+        version="%(prog)s "+__version__,
+        description="Annotate probeset list based on name: reads in "
+        "first column of tab-delimited input file 'probe_set_file' as a "
+        "list of probeset names and outputs these names to another "
+        "tab-delimited file with a description for each. "
+        "Output file name can be specified with the -o option, otherwise "
+        "it will be the input file name with '_annotated' appended.")
+    p.add_argument('-o',action='store',dest='out_file',default=None,
+                   help="specify output file name")
+    p.add_argument('in_file',metavar='IN_FILE',action='store',
+                   help="input probeset file")
+    arguments = p.parse_args()
 
     # Input and output file
-    in_file = arguments[0]
-    if options.out_file is not None:
-        out_file = options.out_file
+    in_file = arguments.in_file
+    if arguments.out_file is not None:
+        out_file = arguments.out_file
     else:
         out_file = os.path.splitext(os.path.basename(in_file))[0]+"_annotated" + \
             os.path.splitext(in_file)[1]

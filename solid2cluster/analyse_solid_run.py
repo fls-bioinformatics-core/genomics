@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #     analyse_solid_run.py: analyse and report on SOLiD sequencer runs
-#     Copyright (C) University of Manchester 2011-12 Peter Briggs
+#     Copyright (C) University of Manchester 2011-12,2019 Peter Briggs
 #
 ########################################################################
 #
@@ -24,7 +24,7 @@ import os
 import string
 import shutil
 import gzip
-import optparse
+import argparse
 import logging
 logging.basicConfig(format="%(levelname)s %(message)s")
 
@@ -525,93 +525,97 @@ def strip_prefix(path,prefix):
 if __name__ == "__main__":
 
     # Set up command line parser
-    p = optparse.OptionParser(usage="%prog OPTIONS solid_run_dir [ solid_run_dir ... ]",
-                              description="Utility for performing various checks and "
-                              "operations on SOLiD run directories. If a single "
-                              "solid_run_dir is specified then %prog automatically finds "
-                              "and operates on all associated directories from the same "
-                              "instrument and with the same timestamp.")
+    p = argparse.ArgumentParser(
+        description="Utility for performing various "
+        "checks and operations on SOLiD run "
+        "directories. If a single solid_run_dir is "
+        "specified then %(prog)s automatically finds "
+        "and operates on all associated directories "
+        "from the same instrument and with the same "
+        "timestamp.")
 
-    p.add_option("--only",action="store_true",dest="only",
-                 help="only operate on the specified solid_run_dir, don't "
-                 "locate associated run directories")
-    p.add_option("--report",action="store_true",dest="report",
-                 help="print a report of the SOLiD run")
-    p.add_option("--report-paths",action="store_true",dest="report_paths",default=False,
-                 help="in report mode, also print full paths to primary data files")
-    p.add_option("--xls",action="store_true",dest="xls",
-                 help="write report to Excel spreadsheet")
-    p.add_option("--verify",action="store_true",dest="verify",
-                 help="do verification checks on SOLiD run directories")
-    p.add_option("--layout",action="store_true",dest="layout",
-                 help="generate script for laying out analysis directories")
-    p.add_option("--rsync",action="store_true",dest="rsync",
-                 help="generate script for rsyncing data")
-    p.add_option("--copy",action="append",dest="copy_pattern",default=[],
-                 help="copy primary data files to pwd from specific library "
-                 "where names match COPY_PATTERN, which should be of the "
-                 "form '<sample>/<library>'")
-    p.add_option("--gzip",action="append",dest="gzip_pattern",default=[],
-                 help="make gzipped copies of primary data files in pwd from specific "
-                 "libraries where names match GZIP_PATTERN, which should be of the "
-                 "form '<sample>/<library>'")
-    p.add_option("--md5",action="append",dest="md5_pattern",default=[],
-                 help="calculate md5sums for primary data files from specific "
-                 "libraries where names match MD5_PATTERN, which should be of the "
-                 "form '<sample>/<library>'")
-    p.add_option("--md5sum",action="store_true",dest="md5sum",
-                 help="calculate md5sums for all primary data files (equivalent to "
-                 "--md5=*/*)")
-    p.add_option("--no-warnings",action="store_true",dest="no_warnings",
-                 help="suppress warning messages")
-    p.add_option("--debug",action="store_true",dest="debug",
-                 help="turn on debugging output (nb overrides --no-warnings)")
+    p.add_argument("--only",action="store_true",dest="only",
+                   help="only operate on the specified solid_run_dir, don't "
+                   "locate associated run directories")
+    p.add_argument("--report",action="store_true",dest="report",
+                   help="print a report of the SOLiD run")
+    p.add_argument("--report-paths",action="store_true",dest="report_paths",
+                   default=False,
+                   help="in report mode, also print full paths to primary "
+                   "data files")
+    p.add_argument("--xls",action="store_true",dest="xls",
+                   help="write report to Excel spreadsheet")
+    p.add_argument("--verify",action="store_true",dest="verify",
+                   help="do verification checks on SOLiD run directories")
+    p.add_argument("--layout",action="store_true",dest="layout",
+                   help="generate script for laying out analysis directories")
+    p.add_argument("--rsync",action="store_true",dest="rsync",
+                   help="generate script for rsyncing data")
+    p.add_argument("--copy",action="append",dest="copy_pattern",default=[],
+                   help="copy primary data files to pwd from specific library "
+                   "where names match COPY_PATTERN, which should be of the "
+                   "form '<sample>/<library>'")
+    p.add_argument("--gzip",action="append",dest="gzip_pattern",default=[],
+                   help="make gzipped copies of primary data files in pwd "
+                   "from specific libraries where names match GZIP_PATTERN, "
+                   "which should be of the form '<sample>/<library>'")
+    p.add_argument("--md5",action="append",dest="md5_pattern",default=[],
+                   help="calculate md5sums for primary data files from "
+                   "specific libraries where names match MD5_PATTERN, which "
+                   "should be of the form '<sample>/<library>'")
+    p.add_argument("--md5sum",action="store_true",dest="md5sum",
+                   help="calculate md5sums for all primary data files "
+                   "(equivalent to --md5=*/*)")
+    p.add_argument("--no-warnings",action="store_true",dest="no_warnings",
+                   help="suppress warning messages")
+    p.add_argument("--debug",action="store_true",dest="debug",
+                   help="turn on debugging output (nb overrides "
+                   "--no-warnings)")
+    p.add_argument('solid_run_dirs',metavar="solid_run_dir",nargs="+",
+                   help="SOLiD run directory to operate on")
 
     # Process the command line
-    options,args = p.parse_args()
-
-    # Check inputs
-    if not len(args):
-        p.error("Expected at least one SOLiD run directory name")
+    args = p.parse_args()
 
     # Reset logging level for --debug and --quiet
-    if options.debug:
+    if args.debug:
         logging.getLogger().setLevel(logging.DEBUG)
-    elif options.no_warnings:
+    elif argsoptions.no_warnings:
         logging.getLogger().setLevel(logging.ERROR)
 
     # Solid run directories
-    for arg in args:
+    for arg in args.solid_run_dirs:
         if not os.path.isdir(arg):
             logging.error("'%s' not found or not a directory" % arg)
             sys.exit(1)
-    if len(args) == 1:
+    if len(args.solid_run_dirs) == 1:
         # Single directory supplied
-        if options.only:
-            solid_dirs = [args[0]]
+        if args.only:
+            solid_dirs = [args.solid_run_dirs[0]]
         else:
             # Add associated directories
-            solid_dirs = SolidData.list_run_directories(args[0])
+            solid_dirs = SolidData.list_run_directories(solid_run_dirs[0])
     else:
         # Use all supplied arguments
         solid_dirs = args
 
     # Output spreadsheet name
-    if options.xls:
+    if args.xls:
         spreadsheet = os.path.splitext(os.path.basename(solid_dirs[0]))[0] + ".xls"
         print "Writing spreadsheet %s" % spreadsheet
 
     # Check there's at least one thing to do
-    if not (options.report or 
-            options.layout or 
-            options.xls or 
-            options.verify or
-            options.rsync or
-            options.md5sum or
-            options.copy_pattern or
-            options.gzip_pattern or
-            options.md5_pattern):
-        options.report = True
+    report = args.report
+    if not (args.report or 
+            args.layout or 
+            args.xls or 
+            args.verify or
+            args.rsync or
+            args.md5sum or
+            args.copy_pattern or
+            args.gzip_pattern or
+            args.md5_pattern):
+        report = True
 
     # Get the run information
     solid_runs = []
@@ -624,11 +628,11 @@ if __name__ == "__main__":
             solid_runs.append(run)
 
     # Report the runs
-    if options.report:
-        report_run(solid_runs,options.report_paths)
+    if report:
+        report_run(solid_runs,args.report_paths)
 
     # Report the runs to a spreadsheet
-    if options.xls:
+    if args.xls:
         try:
             import bcftbx.Spreadsheet as Spreadsheet
             write_spreadsheet(solid_runs,spreadsheet)
@@ -636,37 +640,37 @@ if __name__ == "__main__":
             logging.error("Unable to write spreadsheet: %s" % ex)
 
     # Suggest a layout for analysis
-    if options.layout:
+    if args.layout:
         suggest_analysis_layout(solid_runs)
 
     # Generate script rsync
-    if options.rsync:   
+    if args.rsync:   
         suggest_rsync_command(solid_runs)
 
     # Copy specific primary data files
-    if options.copy_pattern:
-        copy_data(solid_runs,options.copy_pattern)
+    if args.copy_pattern:
+        copy_data(solid_runs,args.copy_pattern)
 
     # Gzip specific primary data files
-    if options.gzip_pattern:
-        gzip_data(solid_runs,options.gzip_pattern)
+    if args.gzip_pattern:
+        gzip_data(solid_runs,args.gzip_pattern)
 
     # Md5 checksums for primary data files
 
     # Generate md5 checksums
-    if options.md5_pattern or options.md5sum:
-        if options.md5sum:
+    if args.md5_pattern or args.md5sum:
+        if args.md5sum:
             # Checksum everything
             md5_pattern = ['*/*']
         else:
             # Only specified libraries
-            md5_pattern = options.md5_pattern
+            md5_pattern = args.md5_pattern
         # Calculate checksums
         md5_checksums(solid_runs,md5_pattern)
 
     # Do verification
     # Nb this should always be the last step
     # Use the verification return code as the exit status
-    if options.verify:
+    if args.verify:
         status = verify_runs(solid_dirs)
         sys.exit(status)

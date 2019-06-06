@@ -30,7 +30,7 @@ output from MACS 2.0.10.
 
 import os
 import sys
-import optparse
+import argparse
 import logging
 # Configure logging output
 logging.basicConfig(format="%(levelname)s %(message)s")
@@ -48,7 +48,7 @@ import profile
 # Module metadata
 #######################################################################
 
-__version__ = '0.5.1'
+__version__ = '0.6.0'
 
 #######################################################################
 # Class definitions
@@ -1141,46 +1141,48 @@ def main(macs_file,xls_out,xls_format="xlsx",bed_out=None):
 
 if __name__ == "__main__":
     # Process command line
-    p = optparse.OptionParser(usage="%prog OPTIONS MACS2_XLS [ XLS_OUT ]",
-                              version=__version__,
-                              description=
-                              "Create an XLS(X) spreadsheet from the output "
-                              "of the MACS2 peak caller. MACS2_XLS is the "
-                              "output '.xls' file from MACS2; if supplied "
-                              "then XLS_OUT is the name to use for the output "
-                              "file (otherwise it will be called "
-                              "'XLS_<MACS2_XLS>.xls(x)'.")
-    p.add_option("-f","--format",
-                 action="store",dest="xls_format",default="xlsx",
-                 help="specify the output Excel spreadsheet format; must be "
-                 "one of 'xlsx' or 'xls' (default is 'xlsx')")
-    p.add_option("-b","--bed",
-                 action="store_true",dest="bed",
-                 help="write an additional TSV file with chrom, "
-                 "abs_summit+100 and abs_summit-100 data as the columns. "
-                 "(NB only possible for MACS2 run without --broad)")
-    options,args = p.parse_args()
+    p = argparse.ArgumentParser(version="%(prog)s "+__version__,
+                                description=
+                                "Create an XLS(X) spreadsheet from the output "
+                                "of the MACS2 peak caller. MACS2_XLS is the "
+                                "output '.xls' file from MACS2; if supplied "
+                                "then XLS_OUT is the name to use for the output "
+                                "file (otherwise it will be called "
+                                "'XLS_<MACS2_XLS>.xls(x)').")
+    p.add_argument("-f","--format",
+                   action="store",dest="xls_format",default="xlsx",
+                   help="specify the output Excel spreadsheet format; must be "
+                   "one of 'xlsx' or 'xls' (default is 'xlsx')")
+    p.add_argument("-b","--bed",
+                   action="store_true",dest="bed",
+                   help="write an additional TSV file with chrom, "
+                   "abs_summit+100 and abs_summit-100 data as the columns. "
+                   "(NB only possible for MACS2 run without --broad)")
+    p.add_argument('macs2_xls',metavar="MACS2_XLS",
+                   help="output '.xls' file from MACS2")
+    p.add_argument('xls_out',metavar="XLS_OUT",nargs='?',
+                   help="name to use for the output file (default is "
+                   "'XLS_<MACS2_XLS>.xls(x)')")
+    args = p.parse_args()
     # Get input file name
-    if len(args) < 1 or len(args) > 2:
-        p.error("Wrong number of arguments")
-    macs_in = args[0]
+    macs_in = args.macs2_xls
     # Get output Excel format
-    xls_format = str(options.xls_format).lower()
+    xls_format = str(args.xls_format).lower()
     if xls_format not in ('xls','xlsx'):
         p.error("Unrecognised Excel format: %s" % xls_format)
     # Report version
     print "%s %s" % (os.path.basename(sys.argv[0]),__version__)
     # Build output file name: if not explicitly supplied on the command
     # line then use "XLS_<input_name>.<xls_format>"
-    if len(args) == 2:
-        xls_out = args[1]
+    if args.xls_out:
+        xls_out = args.xls_out
     else:
         # MACS output file might already have an .xls extension
         # but we'll add an explicit .xls extension
         xls_out = "XLS_"+os.path.splitext(os.path.basename(macs_in))[0]+\
                   "."+xls_format
     # Also generate BED file?
-    if options.bed:
+    if args.bed:
         bed_out = os.path.splitext(xls_out)[0]+".bed"
     else:
         bed_out = None

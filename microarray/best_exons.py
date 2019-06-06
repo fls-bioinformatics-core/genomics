@@ -5,7 +5,7 @@
 #
 ########################################################################
 
-__version__ = "1.2.2"
+__version__ = "1.3.0"
 
 """
 best_exons.py
@@ -59,7 +59,7 @@ TSV file with one gene symbol per line plus averaged data.
 
 import sys
 import os
-import optparse
+import argparse
 import logging
 from collections import Iterator
 from operator import attrgetter
@@ -497,46 +497,50 @@ if __name__ == "__main__":
     logging.basicConfig(format='%(levelname)s: %(message)s')
 
     # Process command line
-    p = optparse.OptionParser(usage="%prog [OPTIONS] EXONS_IN BEST_EXONS",
-                              version="%prog "+__version__,
-                              description="Read exon and gene symbol data from EXONS_IN "
-                              "and picks the top three exons for each gene symbol, then "
-                              "outputs averages of the associated values to BEST_EXONS.")
-
-    p.add_option("--rank-by",action="store",dest="criterion",default='log2_fold_change',
-                 choices=('log2_fold_change','p_value',),
-                 help="select the criterion for ranking the 'best' exons; possible options "
-                 "are: 'log2_fold_change' (default), or 'p_value'.")
-    p.add_option("--probeset-col",action="store",dest="probeset_col",
-                 type='int',default=0,
-                 help="specify column with probeset names (default=0, columns start "
-                 "counting from zero)")
-    p.add_option("--gene-symbol-col",action="store",dest="gene_symbol_col",
-                 type='int',default=1,
-                 help="specify column with gene symbols (default=1, columns start counting "
-                 "from zero)")
-    p.add_option("--log2-fold-change-col",action="store",dest="log2_fold_change_col",
-                 type='int',default=12,
-                 help="specify column with log2 fold change (default=12, columns start "
-                 "counting from zero)")
-    p.add_option("--p-value-col",action="store",dest="p_value_col",
-                 type='int',default=13,
-                 help="specify column with p-value (default=13; columns start counting "
-                 "from zero)")
-    p.add_option("--debug",action="store_true",dest="debug",default=False,
-                 help="Turn on debug output")
-    options,args = p.parse_args()
+    p = argparse.ArgumentParser(
+        version="%(prog)s "+__version__,
+        description="Read exon and gene symbol data from EXONS_IN "
+        "and picks the top three exons for each gene symbol, then "
+        "outputs averages of the associated values to BEST_EXONS.")
+    p.add_argument("--rank-by",action="store",dest="criterion",
+                   default='log2_fold_change',
+                   choices=('log2_fold_change','p_value',),
+                   help="select the criterion for ranking the 'best' "
+                   "exons; possible options are: 'log2_fold_change' "
+                   "(default), or 'p_value'.")
+    p.add_argument("--probeset-col",action="store",dest="probeset_col",
+                   type=int,default=0,
+                   help="specify column with probeset names (default=0, "
+                   "columns start counting from zero)")
+    p.add_argument("--gene-symbol-col",action="store",dest="gene_symbol_col",
+                   type=int,default=1,
+                   help="specify column with gene symbols (default=1, "
+                   "columns start counting from zero)")
+    p.add_argument("--log2-fold-change-col",action="store",
+                   dest="log2_fold_change_col",type=int,default=12,
+                   help="specify column with log2 fold change (default=12, "
+                   "columns start counting from zero)")
+    p.add_argument("--p-value-col",action="store",dest="p_value_col",
+                   type=int,default=13,
+                   help="specify column with p-value (default=13; columns "
+                   "start counting from zero)")
+    p.add_argument("--debug",action="store_true",dest="debug",default=False,
+                   help="Turn on debug output")
+    p.add_argument('filein',metavar="EXONS_IN",action='store',
+                   help="input file with exon and gene symbol data")
+    p.add_argument('fileout',metavar="BEST_EXONS",action='store',
+                   help="output file averages from top three exons for each"
+                   "gene symbol")
+    args = p.parse_args()
 
     # Turn on debugging output
-    if options.debug:
+    if args.debug:
         logging.getLogger().setLevel(logging.DEBUG)
 
     # Deal with input and output files
-    if len(args) < 2:
-        p.error("Need to supply input and output file names")
-    filein = args[0]
-    fileout = args[1]
-    p.print_version()
+    filein = args.filein
+    fileout = args.fileout
+    print("%s %s" % (os.path.basename(sys.argv[0]),__version__))
     print "Reading data from %s, writing output to %s" % (filein,fileout)
 
     # Open files
@@ -546,11 +550,11 @@ if __name__ == "__main__":
     # Run the best_exons procedure
     best_exons(
         fp_in,fp_out,
-        rank_by=options.criterion,
-        probeset_col=options.probeset_col,
-        gene_symbol_col=options.gene_symbol_col,
-        log2_fold_change_col=options.log2_fold_change_col,
-        p_value_col=options.p_value_col
+        rank_by=args.criterion,
+        probeset_col=args.probeset_col,
+        gene_symbol_col=args.gene_symbol_col,
+        log2_fold_change_col=args.log2_fold_change_col,
+        p_value_col=args.p_value_col
     )
     
     # Finished, close files

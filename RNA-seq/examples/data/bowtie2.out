@@ -1,0 +1,9 @@
+Multiseed full-index search: 00:20:27
+117279034 reads; of these:
+  117279034 (100.00%) were unpaired; of these:
+    1937614 (1.65%) aligned 0 times
+    115341420 (98.35%) aligned exactly 1 time
+    0 (0.00%) aligned >1 times
+98.35% overall alignment rate
+Time searching: 00:21:01
+Overall time: 00:21:02

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #     rsync_seq_data.py: wrapper for rsync for sequencing data
-#     Copyright (C) University of Manchester 2013 Peter Briggs
+#     Copyright (C) University of Manchester 2013,2019 Peter Briggs
 #
 ########################################################################
 #
@@ -19,7 +19,7 @@ Wrapper for rsync for moving sequencing into the data storage area.
 # Modules metadata
 #######################################################################
 
-__version__ = "0.0.5"
+__version__ = "0.1.0"
 
 #######################################################################
 # Import modules that this module depends on
@@ -30,7 +30,7 @@ import sys
 import re
 import time
 import logging
-import optparse
+import argparse
 import subprocess
 
 # Put .. onto Python search path for modules
@@ -121,58 +121,64 @@ def run_rsync(source,target,dry_run=False,mirror=False,chmod=None,
 #######################################################################
 
 if __name__ == '__main__':
-    p = optparse.OptionParser(usage="%prog [OPTIONS] DIR BASE_DIR",
-                              version="%prog "+__version__,
-                              description="Wrapper to rsync sequencing data: DIR will "
-                              "be rsync'ed to a subdirectory of BASE_DIR constructed "
-                              "from the year and platform i.e. BASE_DIR/YEAR/PLATFORM/. "
-                              "YEAR will be the current year (over-ride using the "
-                              "--year option), PLATFORM will be inferred from the "
-                              "DIR name (over-ride using the --platform option). "
-                              "The output from rsync is written to a file "
-                              "rsync.DIR.log.")
-    p.add_option('--platform',action="store",dest="platform",default=None,
-                 help="explicitly specify the sequencer type")
-    p.add_option('--year',action="store",dest="year",default=None,
-                 help="explicitly specify the year (otherwise current year is assumed)")
-    p.add_option('--dry-run',action="store_true",dest="dry_run",default=False,
-                 help="run rsync with --dry-run option")
-    p.add_option('--chmod',action='store',dest="chmod",default=None,
-                 help="change file permissions using --chmod option of rsync (e.g "
-                 "'u-w,g-w,o-w')")
-    p.add_option('--exclude',action='append',dest="exclude_pattern",default=[],
-                 help="specify a pattern which will exclude any matching files or "
-                 "directories from the rsync")
-    p.add_option('--mirror',action='store_true',dest="mirror",default=False,
-                 help="mirror the source directory at the destination (update files "
-                 "that have changed and remove any that have been deleted i.e. "
-                 "rsync --delete-after)")
-    p.add_option('--no-log',action='store_true',dest="no_log",default=False,
-                 help="write rsync output directly stdout, don't create a log file")
-    options,args = p.parse_args()
-    if len(args) != 2:
-        p.error("input is a source directory and a destination")
+    p = argparse.ArgumentParser(
+        version="%(prog)s "+__version__,
+        description="Wrapper to rsync sequencing data: DIR will "
+        "be rsync'ed to a subdirectory of BASE_DIR constructed "
+        "from the year and platform i.e. BASE_DIR/YEAR/PLATFORM/. "
+        "YEAR will be the current year (over-ride using the "
+        "--year option), PLATFORM will be inferred from the "
+        "DIR name (over-ride using the --platform option). "
+        "The output from rsync is written to a file "
+        "rsync.DIR.log.")
+    p.add_argument('--platform',action="store",dest="platform",
+                   default=None,
+                   help="explicitly specify the sequencer type")
+    p.add_argument('--year',action="store",dest="year",default=None,
+                   help="explicitly specify the year (otherwise current "
+                   "year is assumed)")
+    p.add_argument('--dry-run',action="store_true",dest="dry_run",
+                   default=False,
+                   help="run rsync with --dry-run option")
+    p.add_argument('--chmod',action='store',dest="chmod",default=None,
+                   help="change file permissions using --chmod option of "
+                   "rsync (e.g 'u-w,g-w,o-w')")
+    p.add_argument('--exclude',action='append',dest="exclude_pattern",
+                   default=[],help="specify a pattern which will exclude "
+                   "any matching files or directories from the rsync")
+    p.add_argument('--mirror',action='store_true',dest="mirror",default=False,
+                   help="mirror the source directory at the destination "
+                   "(update files that have changed and remove any that have "
+                   "been deleted i.e. rsync --delete-after)")
+    p.add_argument('--no-log',action='store_true',dest="no_log",default=False,
+                   help="write rsync output directly stdout, don't create "
+                   "a log file")
+    p.add_argument('data_dir',metavar="DIR",
+                   help="path to directory with sequencing data")
+    p.add_argument('base_dir',metavar="BASE_DIR",
+                   help="top-level directory to copy sequencing data into")
+    args = p.parse_args()
     # Locate source directory (and strip any trailing slash)
-    data_dir = os.path.abspath(args[0].rstrip(os.sep))
+    data_dir = os.path.abspath(args.data_dir.rstrip(os.sep))
     if not os.path.isdir(data_dir):
         logging.error("%s: doesn't exist or is not a directory" % data_dir)
         sys.exit(1)
     # Determine platform
-    if options.platform is None:
+    if args.platform is None:
         platform = platforms.get_sequencer_platform(data_dir)
         if platform is None:
             logging.error("Can't determine platform: use --platform option?")
             sys.exit(1)
     else:
-        platform = options.platform
+        platform = args.platform
     # Work out the destination
-    if options.year is None:
+    if args.year is None:
         year = time.strftime("%Y")
     else:
-        year = options.year
-    destination = os.path.join(args[1],year,platform)
+        year = args.year
+    destination = os.path.join(args.base_dir,year,platform)
     # Log file
-    if not options.no_log:
+    if not args.no_log:
         log_file = "rsync.%s.log" % os.path.split(data_dir)[-1]
     else:
         log_file = None
@@ -183,9 +189,9 @@ if __name__ == '__main__':
     print "Log file   : %s" % log_file
     print "Mirror mode: %s" % options.mirror
     # Run rsync
-    status = run_rsync(data_dir,destination,dry_run=options.dry_run,
-                       log=log_file,chmod=options.chmod,mirror=options.mirror,
-                       excludes=options.exclude_pattern)
+    status = run_rsync(data_dir,destination,dry_run=args.dry_run,
+                       log=log_file,chmod=args.chmod,mirror=args.mirror,
+                       excludes=args.exclude_pattern)
     print "Rsync returncode: %s" % status
     if status != 0:
         logging.error("Rsync failure")

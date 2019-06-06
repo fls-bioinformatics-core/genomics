@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #     verify_paired.py: check R1 and R2 fastq files are consistent
-#     Copyright (C) University of Manchester 2013 Peter Briggs
+#     Copyright (C) University of Manchester 2013,2019 Peter Briggs
 #
 ########################################################################
 #
@@ -16,7 +16,7 @@ the files form an R1/2 pair.
 
 """
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 
 #######################################################################
 # Import modules that this module depends on
@@ -25,7 +25,7 @@ __version__ = "1.0.0"
 import os
 import sys
 import itertools
-import optparse
+import argparse
 import logging
 logging.basicConfig(format="%(levelname)s %(message)s")
 
@@ -43,19 +43,19 @@ import bcftbx.FASTQFile as FASTQFile
 if __name__ == "__main__":
     
     # Create command line parser
-    p = optparse.OptionParser(usage="%prog OPTIONS R1.fastq R2.fastq",
-                              version="%prog "+__version__,
-                              description="Check that read headers for R1 and R2 fastq files "
-                              "are in agreement, and that the files form an R1/2 pair.")
+    p = argparse.ArgumentParser(
+        version="%(prog)s "+__version__,
+        description="Check that read headers for R1 and R2 fastq files "
+        "are in agreement, and that the files form an R1/2 pair.")
+    p.add_argument('fastq_file_r1',metavar="R1.fastq",
+                   help="Fastq file with R1 reads")
+    p.add_argument('fastq_file_r2',metavar="R2.fastq",
+                   help="Fastq file with R2 reads to check against "
+                   "R1 reads")
     # Parse command line
-    options,args = p.parse_args()
-    # Get data directory name
-    if len(args) != 2:
-        p.error("expected two arguments (R1 and R2 fastq files to compare)")
-    fastq_file_r1 = args[0]
-    fastq_file_r2 = args[1]
+    args = p.parse_args()
     # Process the data
-    if FASTQFile.fastqs_are_pair(fastq_file_r1,fastq_file_r2):
+    if FASTQFile.fastqs_are_pair(args.fastq_file_r1,args.fastq_file_r2):
         sys.exit(0)
     else:
         logging.error("Not R1/R2 pair")

@@ -24,7 +24,7 @@ SOAP format specification: http://soap.genomics.org.cn/soap1/#Formatofoutput
 
 import os,sys
 import logging
-import optparse
+import argparse
 
 #######################################################################
 # Class definitions
@@ -470,13 +470,13 @@ class TestSoapTypeFromSam(unittest.TestCase):
                 "TATAGTTATATAAAAGACCTGAGTAGTACGTTTTATATAATCTGATTTTATGGCTATACTTTTTTTGACATGTAGC",
                 "#####################AAAA7AAAA2AA7AAAAAAA1,:0/57:8855)))),''(03388*',''))))#)",
                 "76M","MD:Z:75T0"),
-                         "1\tT->75C-23\t76M\t75T")
+                         "1\tT->75C2\t76M\t75T")
 
 class TestSamToSoap(unittest.TestCase):
     def test_sam_to_soap(self):
         sam = SAMLine("SRR189243_1-SRR189243.3751	81	gi|42410857|gb|AE017196.1|	60083	30	76M	*	0	0	TATAGTTATATAAAAGACCTGAGTAGTACGTTTTATATAATCTGATTTTATGGCTATACTTTTTTTGACATGTAGC	#####################AAAA7AAAA2AA7AAAAAAA1,:0/57:8855)))),''(03388*',''))))#	NM:i:1	MD:Z:75T0")
         self.assertEqual(str(sam_to_soap(sam)),
-                         "SRR189243_1-SRR189243.3751	TATAGTTATATAAAAGACCTGAGTAGTACGTTTTATATAATCTGATTTTATGGCTATACTTTTTTTGACATGTAGC	#####################AAAA7AAAA2AA7AAAAAAA1,:0/57:8855)))),''(03388*',''))))#	1	a	76	-	gi|42410857|gb|AE017196.1|	60083	1	T->75C-23	76M	75T")
+                         "SRR189243_1-SRR189243.3751	TATAGTTATATAAAAGACCTGAGTAGTACGTTTTATATAATCTGATTTTATGGCTATACTTTTTTTGACATGTAGC	#####################AAAA7AAAA2AA7AAAAAAA1,:0/57:8855)))),''(03388*',''))))#	1	a	76	-	gi|42410857|gb|AE017196.1|	60083	1	T->75C2	76M	75T")
 
 def run_tests():
     print "Running unit tests"
@@ -493,34 +493,33 @@ def run_tests():
 
 if __name__ == "__main__":
     # Process command line
-    p = optparse.OptionParser(usage="%prog OPTIONS [ SAMFILE ]",
-                              description="Convert SAM file to SOAP format - reads from stdin "
-                              "(or SAMFILE, if specified), and writes output to stdout unless "
-                              "-o option is specified.")
-    p.add_option('-o',action="store",dest="soapfile",default=None,
-                 help="Output SOAP file name")
-    p.add_option('--debug',action="store_true",dest="debug",default=False,
-                 help="Turn on debugging output")
-    p.add_option('--test',action="store_true",dest="run_tests",default=False,
-                 help="Run unit tests")
-    opts,args = p.parse_args()
-    # Check arguments
-    if len(args) > 1:
-        p.error("Too many arguments")
+    p = argparse.ArgumentParser(
+        description="Convert SAM file to SOAP format - reads from stdin "
+        "(or SAMFILE, if specified), and writes output to stdout unless "
+        "-o option is specified.")
+    p.add_argument('-o',action="store",dest="soapfile",default=None,
+                   help="Output SOAP file name")
+    p.add_argument('--debug',action="store_true",dest="debug",default=False,
+                   help="Turn on debugging output")
+    p.add_argument('--test',action="store_true",dest="run_tests",default=False,
+                   help="Run unit tests")
+    p.add_argument('samfile',metavar="SAMFILE",nargs='?',
+                   help="SAM file to convert (or stdin if not specified)")
+    args = p.parse_args()
     # Debugging output
-    if opts.debug: logging.getLogger().setLevel(logging.DEBUG)
+    if args.debug: logging.getLogger().setLevel(logging.DEBUG)
     # Unit tests
-    if opts.run_tests: run_tests()
+    if args.run_tests: run_tests()
     # Determine source of SAM data
-    if args:
+    if args.samfile:
         # Read from file
-        samfile = open(args[0],'r')
+        samfile = open(args.samfile,'r')
     else:
         # Read from stdin
         samfile = sys.stdin
     # Determine output target
     if opts.soapfile:
-        soapfile = open(opts.soapfile,'w')
+        soapfile = open(args.soapfile,'w')
     else:
         soapfile = sys.stdout
     # Process the SAM data
@@ -532,5 +531,5 @@ if __name__ == "__main__":
         # Process alignment lines and convert to SOAP
         soapfile.write("%s\n" % sam_to_soap(SAMLine(line)))
     # Finished
-    if args: samfile.close()
-    if opts.soapfile: soapfile.close()
+    if args.samfile: samfile.close()
+    if args.soapfile: soapfile.close()

@@ -1,0 +1,26 @@
+/bin/bash -l /cvos/local/apps/sge/6.2u5/templar/spool/tw002/job_scripts/651785
+
+JP01
+Time loading reference: 00:00:01
+Time loading forward index: 00:00:00
+Time loading mirror index: 00:00:02
+Seeded quality full-index search: 00:10:20
+# reads processed: 39808407
+# reads with at least one reported alignment: 2737588 (6.88%)
+# reads that failed to align: 33721722 (84.71%)
+# reads with alignments suppressed due to -m: 3349097 (8.41%)
+Reported 2737588 alignments to 1 output stream(s)
+Time searching: 00:10:27
+Overall time: 00:10:27
+JP02
+Time loading reference: 00:00:00
+Time loading forward index: 00:00:00
+Time loading mirror index: 00:00:00
+Seeded quality full-index search: 00:09:17
+# reads processed: 34455085
+# reads with at least one reported alignment: 4087382 (11.86%)
+# reads that failed to align: 25744573 (74.72%)
+# reads with alignments suppressed due to -m: 4623130 (13.42%)
+Reported 4087382 alignments to 1 output stream(s)
+Time searching: 00:09:18
+Overall time: 00:09:18

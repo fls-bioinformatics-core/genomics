@@ -45,7 +45,7 @@ appended based on matching up the probe set ids.
 import sys
 import os
 import logging
-import optparse
+import argparse
 
 #######################################################################
 # Class definitions
@@ -430,45 +430,52 @@ if __name__ == "__main__":
     logging.basicConfig(format='%(levelname)s: %(message)s')
 
     # Set up parser for command line
-    p = optparse.OptionParser(usage="%prog [options] LOOKUPFILE SPECIES1 SPECIES2",
-                              description=
-                              "Cross-reference data from two species given a lookup "
-                              "file that maps probeset IDs from one species onto those "
-                              "onto the other. LOOKUPFILE is tab-delimited file with "
-                              "one probe set for species 1 per line in first column "
-                              "and a comma-separated list of the equivalent probe sets "
-                              "for species 2 in the fourth column. Data for the two "
-                              "species are in tab-delimited files SPECIES1 and "
-                              "SPECIES2. Output is two files: SPECIES1_appended.txt "
-                              "(SPECIES1 with the cross-referenced data from SPECIES2 "
-                              "appended to each line) and SPECIES2_appended.txt "
-                              "(SPECIES2 with SPECIES1 data appended).")
+    p = argparse.ArgumentParser(
+        description=
+        "Cross-reference data from two species given a lookup "
+        "file that maps probeset IDs from one species onto those "
+        "onto the other. LOOKUPFILE is tab-delimited file with "
+        "one probe set for species 1 per line in first column "
+        "and a comma-separated list of the equivalent probe sets "
+        "for species 2 in the fourth column. Data for the two "
+        "species are in tab-delimited files SPECIES1 and "
+        "SPECIES2. Output is two files: SPECIES1_appended.txt "
+        "(SPECIES1 with the cross-referenced data from SPECIES2 "
+        "appended to each line) and SPECIES2_appended.txt "
+        "(SPECIES2 with SPECIES1 data appended).")
 
-    p.add_option("--debug",action="store_true",dest="debug",default=False,
-                 help="Turn on debugging output")
-    p.add_option('--test',action="store_true",dest="run_tests",default=False,
-                 help="Run unit tests")
+    p.add_argument("--debug",action="store_true",dest="debug",
+                   default=False,
+                   help="Turn on debugging output")
+    p.add_argument('--test',action="store_true",dest="run_tests",
+                   default=False,
+                   help="Run unit tests")
+    p.add_argument('lookup',metavar="LOOKUPFILE",
+                   help="tab-delimited file with one probe set "
+                   "for species 1 per line in first column and a "
+                   "comma-separated list of the equivalent probe "
+                   "sets for species 2 in the fourth column")
+    p.add_argument('species1',metavar="SPECIES1",
+                   help="data for species 1")
+    p.add_argument('species2',metavar="SPECIES2",
+                   help="data for species 2")
 
     # Parse command line
-    options,arguments = p.parse_args()
+    arguments = p.parse_args()
 
     # Debugging output
-    if options.debug: logging.getLogger().setLevel(logging.DEBUG)
+    if arguments.debug: logging.getLogger().setLevel(logging.DEBUG)
 
     # Unit tests
-    if options.run_tests: run_tests()
-
-    # Check we have enough arguments
-    if len(arguments) != 3:
-        p.error("Need lookup file plus one data file for each species")
+    if arguments.run_tests: run_tests()
 
     # Construct lookup object from data file
-    print "Building lookup tables from %s" % arguments[0]
-    lookup = ProbeSetLookup(arguments[0],cols=(0,3))
+    print "Building lookup tables from %s" % arguments.lookup
+    lookup = ProbeSetLookup(arguments.lookup,cols=(0,3))
 
     # Get files
-    species1_data_file = arguments[1]
-    species2_data_file = arguments[2]
+    species1_data_file = arguments.species1
+    species2_data_file = arguments.species2
 
     # Append the ortholog probe set(s) and data for 2nd species to first species
     print "### Appending species 2 data to species 1 ###"

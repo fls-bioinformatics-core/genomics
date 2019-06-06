@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #     fastq_sniffer.py: "sniff" FASTQ file to determine quality encoding
-#     Copyright (C) University of Manchester 2013 Peter Briggs
+#     Copyright (C) University of Manchester 2013,2019 Peter Briggs
 #
 ########################################################################
 #
@@ -9,7 +9,7 @@
 #
 ########################################################################
 
-__version__ = "0.0.2"
+__version__ = "0.1.0"
 
 """fastq_sniffer.py
 
@@ -25,7 +25,7 @@ Usage: fastq_sniffer.py [ --subset N ] <fastq_file>
 
 import sys
 import os
-import optparse
+import argparse
 
 # Set up for bcftbx modules
 SHARE_DIR = os.path.abspath(
@@ -41,23 +41,22 @@ import bcftbx.FASTQFile as FASTQFile
 if __name__ == "__main__":
 
     # Process command line using optparse
-    p = optparse.OptionParser(usage="%prog [options] <fastq_file>",
-                              version="%prog "+__version__,
-                              description=
-                              "'Sniff' FASTQ file to determine likely quality encoding.")
-    p.add_option('--subset',action="store",dest="n_subset",default=None,
-                 help="try to determine encoding from a subset of consisting of the first "
-                 "N_SUBSET reads. (Quicker than using all reads but may not be accurate "
-                 "if subset is not representative of the file as a whole.)")
+    p = argparse.ArgumentParser(
+        version="%(prog)s "+__version__,
+        description="'Sniff' FASTQ file to determine likely quality "
+        "encoding.")
+    p.add_argument('--subset',action="store",dest="n_subset",default=None,
+                   help="try to determine encoding from a subset of "
+                   "consisting of the first N_SUBSET reads. (Quicker than "
+                   "using all reads but may not be accurate if subset is not "
+                   "representative of the file as a whole.)")
+    p.add_argument('fastq_file',help="FASTQ file to 'sniff'")
 
     # Process the command line
-    options,arguments = p.parse_args()
-    if len(arguments) != 1:
-        p.error("input FASTQ file required")
-    else:
-        fastq_file = arguments[0]
-        if not os.path.exists(fastq_file):
-            p.error("Input file '%s' not found" % fastq_file)
+    arguments = p.parse_args()
+    fastq_file = arguments.fastq_file
+    if not os.path.exists(fastq_file):
+        p.error("Input file '%s' not found" % fastq_file)
 
     # Get broad format type
     print "Sniffing %s" % fastq_file
@@ -72,7 +71,7 @@ if __name__ == "__main__":
 
     # Determine the quality score range (and count reads)
     try:
-        n_subset = int(options.n_subset)
+        n_subset = int(arguments.n_subset)
     except TypeError:
         n_subset = None
     n_reads = 0
@@ -114,7 +113,7 @@ if __name__ == "__main__":
             print "\tPossible Illumina 1.5+/Phred+64"
             encodings.append('Phred+64')
             galaxy_types.append('fastqillumina')
-        if min_qual >= ord('!') and max_qual <= ord('I'):
+        if min_qual >= ord('!') and max_qual <= ord('J'):
             print "\tPossible Illumina 1.8+/Phred+33"
             encodings.append('Phred+33')
             galaxy_types.append('fastqsanger')
