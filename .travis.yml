@@ -26,9 +26,8 @@ script:
 # Run the fastq_strand tests
   - "nosetests --exe -v QC-pipeline/fastq_strand.py"
 # Run the examples for microarrays
-  - "cd microarray/examples/"
-  - ./test_best_exons.sh
-  - ./test_xrorthologs.sh
-  - ./test_annotate_probesets.sh
+  - ./microarray/examples/test_best_exons.sh
+  - ./microarray/examples/test_xrorthologs.sh
+  - ./microarray/examples/test_annotate_probesets.sh
 # Run the examples for utils
   - ./utils/examples/test_md5checker.sh
