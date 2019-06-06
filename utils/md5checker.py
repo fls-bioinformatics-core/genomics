@@ -93,7 +93,7 @@ def compute_md5sum_for_file(filen,output_file=None):
       Zero on success, 1 if errors were encountered
 
     """
-    retval = 1
+    retval = 0
     if output_file:
         fp = open(output_file,'w')
     else:
@@ -101,7 +101,7 @@ def compute_md5sum_for_file(filen,output_file=None):
     try:
         chksum = Md5sum.md5sum(filen)
         fp.write("%s  %s\n" % (chksum,filen))
-    except IOError, ex:
+    except IOError as ex:
         # Error accessing file, report and skip
         logging.error("%s: error while generating MD5 sum: '%s'" % (filen,ex))
         retval = 1
@@ -283,7 +283,7 @@ if __name__ == "__main__":
         # Running in "check" mode
         if len(args) != 1:
             p.error("-c: needs single argument (file containing MD5 sums)")
-        chksum_file = arguments[0]
+        chksum_file = args[0]
         if not os.path.isfile(chksum_file):
             p.error("Checksum '%s' file not found (or is not a file)" % 
                     chksum_file)
@@ -331,8 +331,7 @@ if __name__ == "__main__":
         if os.path.isdir(args[0]):
             status = compute_md5sums(args[0],output_file)
         elif os.path.isfile(args[0]):
-            status = compute_md5sum_for_file(args[0],
-                                             output_file)
+            status = compute_md5sum_for_file(args[0],output_file)
         else:
             p.error("Cannot generate checksums for '%s': not a "
                     "directory or file" % args[0])
