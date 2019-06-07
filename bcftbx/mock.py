@@ -977,7 +977,7 @@ class MockIlluminaData(object):
         sample.sort()
 
     def add_fastq_batch(self,project_name,sample_name,fastq_base,fastq_ext='fastq.gz',
-                        lanes=(1,)):
+                        lanes=(1,),reads=None):
         """Add a set of fastqs within a sample
 
         This method adds a set of fastqs within a sample with a single
@@ -1010,29 +1010,33 @@ class MockIlluminaData(object):
           fastq_ext: file extension to use (optional, defaults to 'fastq.gz')
           lanes: list, tuple or iterable with lane numbers (optional,
             defaults to (1,))
+          reads: list, tuple or iterable with reads to make (optional,
+            defaults to ('R1') for single end and ('R1','R2') for paired
+            end)
 
         """
-        if self.__paired_end:
-            reads = (1,2)
-        else:
-            reads = (1,)
+        if reads is None:
+            if self.__paired_end:
+                reads = ('R1','R2')
+            else:
+                reads = ('R1',)
         if not self.__no_lane_splitting:
             # Include explicit lane information
             for lane in lanes:
                 for read in reads:
-                    fastq = "%s_L%03d_R%d_001.%s" % (fastq_base,
-                                                     lane,read,
-                                                     fastq_ext)
+                    fastq = "%s_L%03d_%s_001.%s" % (fastq_base,
+                                                    lane,read,
+                                                    fastq_ext)
                     self.add_fastq(project_name,sample_name,fastq)
         else:
             # Replicate output from bcl2fastq --no-lane-splitting
             for read in reads:
-                fastq = "%s_R%d_001.%s" % (fastq_base,
-                                           read,
-                                           fastq_ext)
+                fastq = "%s_%s_001.%s" % (fastq_base,
+                                          read,
+                                          fastq_ext)
                 self.add_fastq(project_name,sample_name,fastq)
 
-    def add_undetermined(self,lanes=(1,)):
+    def add_undetermined(self,lanes=(1,),reads=None):
         """Add directories and files for undetermined reads
 
         This method adds a set of fastqs for any undetermined reads from
@@ -1041,6 +1045,9 @@ class MockIlluminaData(object):
         Arguments:
           lanes: list, tuple or iterable with lane numbers (optional,
             defaults to (1,))
+          reads: list, tuple or iterable with reads to make (optional,
+            defaults to ('R1') for single end and ('R1','R2') for paired
+            end)
 
         """
         if not self.__no_lane_splitting:
@@ -1054,13 +1061,13 @@ class MockIlluminaData(object):
                     fastq_base = "Undetermined_S0"
                 self.add_sample(self.__undetermined_dir,sample_name)
                 self.add_fastq_batch(self.__undetermined_dir,sample_name,
-                                     fastq_base,lanes=(lane,))
+                                     fastq_base,lanes=(lane,),reads=reads)
         else:
             sample_name = "undetermined"
             fastq_base = "Undetermined_S0"
             self.add_sample(self.__undetermined_dir,sample_name)
             self.add_fastq_batch(self.__undetermined_dir,sample_name,
-                                 fastq_base,lanes=None)
+                                 fastq_base,lanes=None,reads=reads)
 
     def create(self):
         """Build and populate the directory structure
