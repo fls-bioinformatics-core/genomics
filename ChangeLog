@@ -1,3 +1,16 @@
+2019-06-10  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* genomics-bcftbx version 1.6.0
+	- Command line utilities: updated to use `argparse` for
+	  processing command line arguments
+	  https://github.com/fls-bioinformatics-core/genomics/pull/96
+	- bcftbx: Python classes updated to ensure they all inherit
+	  from `object`
+	  https://github.com/fls-bioinformatics-core/genomics/pull/95
+	- bcftbx/mock: `MockIlluminaData` updated to handle arbitrary
+	  reads (e.g. `R1`,`R2`,`I1`) when creating Fastqs
+	  https://github.com/fls-bioinformatics-core/genomics/pull/97
+
 2019-04-30  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* genomics-bcftbx version 1.5.5
