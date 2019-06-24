@@ -394,10 +394,9 @@ def add_arg(p,*args,**kwds):
         directly to the argument-addition method
 
     """
-    if isinstance(p,argparse.ArgumentParser):
-        add_arg = p.add_argument
-    elif isinstance(p,optparse.OptionContainer):
-        add_arg = p.add_option
-    else:
-        raise Exception("Unrecognised subparser class")
-    return add_arg(*args,**kwds)
+    for add_arg in ('add_argument','add_option',):
+        try:
+            return getattr(p,add_arg)(*args,**kwds)
+        except AttributeError:
+            pass
+    raise Exception("Unrecognised subparser class")
