@@ -221,3 +221,11 @@ class TestAddOptionFunctions(unittest.TestCase):
         add_arg(p,'-n',action='store',dest='n')
         args = p.parse_args(['-n','4'])
         self.assertEqual(args.n,'4')
+    def test_add_arg_with_argumentparser(self):
+        """add_arg works with ArgumentParser argument group
+        """
+        p = ArgumentParser()
+        g = p.add_argument_group('Suboptions')
+        add_arg(g,'-n',action='store',dest='n')
+        args = p.parse_args(['-n','4'])
+        self.assertEqual(args.n,'4')

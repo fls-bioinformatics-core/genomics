@@ -384,10 +384,7 @@ def add_arg(p,*args,**kwds):
     the parser.
 
     Arguments:
-      p (Object): parser instance; can be an instance
-        of one of: optparse.OptionContainer (i.e.
-        OptionParser or OptionGroup), or
-        argparse.ArgumentParser
+      p (Object): parser instance
       args (List): list of argument values to pass
         directly to the argument-addition method
       kwds (mapping): keyword-value mapping to pass
