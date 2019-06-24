@@ -135,6 +135,9 @@ class CommandParser(object):
         """
         if cmd in self._commands:
             raise Exception("Command '%s' already defined" % cmd)
+        if 'prog' not in args:
+            args['prog'] = "%s %s" % (os.path.basename(sys.argv[0]),
+                                      cmd)
         if 'version' not in args:
             args['version'] = self._version
         p = self._subparser(**args)
