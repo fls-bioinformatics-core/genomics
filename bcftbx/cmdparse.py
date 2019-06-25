@@ -29,7 +29,7 @@ instance, to add the following 'standard' options:
 
 """
 
-__version__ = "1.0.2"
+__version__ = "2.0.0"
 
 #######################################################################
 # Imports
