@@ -35,18 +35,18 @@ sys.path.append(SHARE_DIR)
 try:
     from bcftbx.test.test_SolidData import TestUtils
 except ImportError, ex:
-    print "Error importing modules: %s" % ex
+    print("Error importing modules: %s" % ex)
 
 if __name__ == "__main__":
     paired_end = False
     if '--paired-end' in sys.argv:
         paired_end = True
     elif len(sys.argv) > 1:
-        print "Usage: %s [--paired-end]" % os.path.basename(sys.argv[0])
+        print("Usage: %s [--paired-end]" % os.path.basename(sys.argv[0]))
         sys.exit(1)
     # Make mock solid directory
     if paired_end:
         solid_dir = TestUtils().make_solid_dir_paired_end('solid0123_20111014_PE_BC')
     else:
         solid_dir = TestUtils().make_solid_dir('solid0123_20111014_FRAG_BC')
-    print "Constructed mock dir: %s" % solid_dir
+    print("Constructed mock dir: %s" % solid_dir)
