@@ -15,7 +15,7 @@ Generate HTML reports for NGS QC pipeline runs.
 
 """
 
-__version__ = "0.3.1"
+__version__ = "0.3.2"
 
 #######################################################################
 # Import modules that this module depends on
@@ -121,7 +121,7 @@ if __name__ == "__main__":
                                               regex_pattern=
                                               arguments.pattern,
                                               version=__version__)
-            except QCReporterError,ex:
+            except QCReporterError as ex:
                 logging.error("Unable to extract data from %s: %s" % (d,ex))
         # Perform required action
         if qcreporter is not None:
