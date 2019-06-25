@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 #
 #     fastq_strand.py: determine strandedness of fastq pair using STAR
-#     Copyright (C) University of Manchester 2017-2018 Peter Briggs
+#     Copyright (C) University of Manchester 2017-2019 Peter Briggs
 #
 
-__version__ = "0.0.4"
+__version__ = "0.0.5"
 
 #######################################################################
 # Imports
@@ -457,18 +457,18 @@ def fastq_strand(argv,working_dir=None):
                    "delete outputs on completion)")
     args = p.parse_args(argv)
     # Print parameters
-    print "READ1\t: %s" % args.r1
-    print "READ2\t: %s" % args.r2
+    print("READ1\t: %s" % args.r1)
+    print("READ2\t: %s" % args.r2)
     # Check that STAR is on the path
     star_exe = find_program("STAR")
     if star_exe is None:
         logging.critical("STAR not found")
         return 1
-    print "STAR\t: %s" % star_exe
+    print("STAR\t: %s" % star_exe)
     # Gather genome indices
     genome_names = {}
     if args.conf is not None:
-        print "Conf file\t: %s" % args.conf
+        print("Conf file\t: %s" % args.conf)
         star_genomedirs = []
         with open(args.conf,'r') as fp:
             for line in fp:
@@ -483,9 +483,9 @@ def fastq_strand(argv,working_dir=None):
     if not star_genomedirs:
         logging.critical("No genome indices specified")
         return 1
-    print "Genomes:"
+    print("Genomes:")
     for genome in star_genomedirs:
-        print "- %s" % genome
+        print("- %s" % genome)
     # Output directory
     if args.outdir is None:
         outdir = os.getcwd()
@@ -511,19 +511,19 @@ def fastq_strand(argv,working_dir=None):
         working_dir = os.path.abspath(working_dir)
         if not os.path.isdir(working_dir):
             raise Exception("Bad working directory: %s" % working_dir)
-    print "Working directory: %s" % working_dir
+    print("Working directory: %s" % working_dir)
     # Make subset of input read pairs
     nreads = sum(1 for i in getreads(os.path.abspath(args.r1)))
-    print "%d reads" % nreads
+    print("%d reads" % nreads)
     if args.subset == 0:
-        print "Using all read pairs in Fastq files"
+        print("Using all read pairs in Fastq files")
         subset = nreads
     elif args.subset > nreads:
-        print "Actual number of read pairs smaller than requested subset"
+        print("Actual number of read pairs smaller than requested subset")
         subset = nreads
     else:
         subset = args.subset
-        print "Using random subset of %d read pairs" % subset
+        print("Using random subset of %d read pairs" % subset)
     if subset == nreads:
         subset_indices = [i for i in xrange(nreads)]
     else:
@@ -547,7 +547,7 @@ def fastq_strand(argv,working_dir=None):
                                        "STAR.%s.outputs" %
                                        os.path.basename(
                                            strip_ngs_extensions(args.r1)))
-        print "Output from STAR will be copied to %s" % star_output_dir
+        print("Output from STAR will be copied to %s" % star_output_dir)
         # Check if directory already exists from earlier run
         if os.path.exists(star_output_dir):
             # Move out of the way
@@ -586,7 +586,7 @@ def fastq_strand(argv,working_dir=None):
                 '--outSAMstrandField','intronMotif',
                 '--outFileNamePrefix',prefix,
                 '--runThreadN',str(args.n)])
-            print "Running %s" % ' '.join(star_cmd)
+            print("Running %s" % ' '.join(star_cmd))
             try:
                 subprocess.check_output(star_cmd,cwd=working_dir)
             except subprocess.CalledProcessError as ex:
@@ -597,7 +597,7 @@ def fastq_strand(argv,working_dir=None):
                 # Make a subdirectory for this genome index
                 genome_dir = os.path.join(star_output_dir,
                                           name.replace(os.sep,"_"))
-                print "Copying STAR outputs to %s" % genome_dir
+                print("Copying STAR outputs to %s" % genome_dir)
                 os.mkdir(genome_dir)
                 for f in os.listdir(working_dir):
                     if f.startswith(prefix):
@@ -621,10 +621,10 @@ def fastq_strand(argv,working_dir=None):
                     sum_col2 += int(cols[1])
                     sum_col3 += int(cols[2])
                     sum_col4 += int(cols[3])
-            print "Sums:"
-            print "- col2: %d" % sum_col2
-            print "- col3: %d" % sum_col3
-            print "- col4: %d" % sum_col4
+            print("Sums:")
+            print("- col2: %d" % sum_col2)
+            print("- col3: %d" % sum_col3)
+            print("- col4: %d" % sum_col4)
             if sum_col2 > 0.0:
                 forward_1st = float(sum_col3)/float(sum_col2)*100.0
                 reverse_2nd = float(sum_col4)/float(sum_col2)*100.0
@@ -632,9 +632,9 @@ def fastq_strand(argv,working_dir=None):
                 logging.warning("Sum of mapped reads is zero!")
                 forward_1st = 0.0
                 reverse_2nd = 0.0
-            print "Strand percentages:"
-            print "- 1st forward: %.2f%%" % forward_1st
-            print "- 2nd reverse: %.2f%%" % reverse_2nd
+            print("Strand percentages:")
+            print("- 1st forward: %.2f%%" % forward_1st)
+            print("- 2nd reverse: %.2f%%" % reverse_2nd)
             # Append to output file
             data = [name,
                     "%.2f" % forward_1st,
@@ -665,7 +665,7 @@ def fastq_strand(argv,working_dir=None):
 
 if __name__ == "__main__":
     # Start up
-    print "Fastq_strand: version %s" % __version__
+    print("Fastq_strand: version %s" % __version__)
     # Create a temporary working directory
     working_dir = tempfile.mkdtemp(suffix=".fastq_strand",
                                    dir=os.getcwd())
@@ -676,7 +676,7 @@ if __name__ == "__main__":
         logging.critical("Exception: %s" % ex)
         retval = 1
     # Clean up the working dir
-    print "Cleaning up working directory"
+    print("Cleaning up working directory")
     shutil.rmtree(working_dir)
-    print "Fast_strand: finished"
+    print("Fast_strand: finished")
     sys.exit(retval)
