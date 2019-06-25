@@ -9,7 +9,7 @@
 #
 ########################################################################
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 """fastq_edit.py
 
@@ -60,7 +60,7 @@ def edit_instrument_name(fastq_file,new_instrument_name):
             # Modify the instrument name
             read.seqid.instrument_name = new_instrument_name
         # Echo updated read to stdout
-        print read
+        print(read)
 
 def stats(fastq_file):
     """Generate basic stats from FASTQ file
@@ -86,13 +86,13 @@ def stats(fastq_file):
             else:
                 index_sequences[index_seq] = 1
     # Finished
-    print "Total reads: %d" % n_reads
-    print "Read lengths"
+    print("Total reads: %d" % n_reads)
+    print("Read lengths")
     for len_ in read_lengths:
-        print "\t%d: %d" % (len_,read_lengths[len_])
-    print "Index sequences"
+        print("\t%d: %d" % (len_,read_lengths[len_]))
+    print("Index sequences"
     for seq in index_sequences:
-        print "\t%s: %d" % (seq,index_sequences[seq])
+        print("\t%s: %d" % (seq,index_sequences[seq]))
 
 #######################################################################
 # Main program
