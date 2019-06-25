@@ -9,7 +9,7 @@ Provides functionality for analysing data from an Illumina sequencer run.
 
 """
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 
 #######################################################################
 # Import modules
@@ -100,33 +100,33 @@ if __name__ == "__main__":
     if args.list:
         for project in illumina_data.projects:
             n_samples = len(project.samples)
-            print "Project: %s (%d sample%s)" % (project.name,
+            print("Project: %s (%d sample%s)" % (project.name,
                                                  n_samples,
-                                                 's' if n_samples != 1 else '')
+                                                 's' if n_samples != 1 else ''))
             for sample in project.samples:
                 if sample.paired_end:
                     n_fastq_pairs = len(sample.fastq_subset(read_number=1))
                     if n_fastq_pairs == 1:
-                        print "\t%s (R1/R2 pair)" % sample.name
+                        print("\t%s (R1/R2 pair)" % sample.name)
                     else:
-                        print "\t%s (%d fastq R1/R2 pairs)" % \
-                            (sample.name,n_fastq_pairs)
+                        print("\t%s (%d fastq R1/R2 pairs)" %
+                              (sample.name,n_fastq_pairs))
                 else:
                     n_fastqs = len(sample.fastq)
                     if n_fastqs == 1:
-                        print "\t%s" % sample.name
+                        print("\t%s" % sample.name)
                     else:
-                        print "\t%s (%d fastqs)" % (sample.name,n_fastqs)
+                        print("\t%s (%d fastqs)" % (sample.name,n_fastqs))
                 # Print fastq names
                 fastqs = sample.fastq_subset(read_number=1) + \
                          sample.fastq_subset(read_number=2)
                 for fastq in fastqs:
-                    print "\t\t%s" % fastq
+                    print("\t\t%s" % fastq)
 
     # Report the names of the samples in each project
     if report:
         for project in illumina_data.projects:
-            print "%s" % IlluminaData.describe_project(project)
+            print("%s" % IlluminaData.describe_project(project))
             # Report statistics for fastq files
             if args.stats:
                 # Print number of reads for each file, and file size
@@ -135,34 +135,35 @@ if __name__ == "__main__":
                         fq = os.path.join(sample.dirn,fastq)
                         nreads = FASTQFile.nreads(fq)
                         fsize = os.path.getsize(fq)
-                        print "%s\t%s\t%d" % (fastq,
+                        print("%s\t%s\t%d" % (fastq,
                                               bcf_utils.format_file_size(fsize),
-                                              nreads)
-            print ""
+                                              nreads))
+            print("")
 
     # Summary: short report suitable for logging file
     if args.summary:
-        print "%s" % IlluminaData.summarise_projects(illumina_data)
+        print("%s" % IlluminaData.summarise_projects(illumina_data))
 
     # Print number of undetermined reads
     if args.stats and illumina_data.undetermined is not None:
-        print "Undetermined indices"
+        print("Undetermined indices")
         for lane in illumina_data.undetermined.samples:
             for fastq in lane.fastq:
                 fq = os.path.join(lane.dirn,fastq)
                 nreads = FASTQFile.nreads(fq)
                 fsize = os.path.getsize(fq)
-                print "%s\t%s\t%d" % (fastq,
-                                  bcf_utils.format_file_size(fsize),
-                                  nreads)
+                print("%s\t%s\t%d" % (fastq,
+                                      bcf_utils.format_file_size(fsize),
+                                      nreads))
 
     # Copy fastq.gz files to the current directory
     if args.copy_pattern is not None:
         # Extract project and sample names/patterns
         try:
             project_pattern,sample_pattern = args.copy_pattern.split("/")
-            print "Copy: look for samples matching pattern %s" % args.copy_pattern
-            print "Data files will be copied to %s" % os.getcwd()
+            print("Copy: look for samples matching pattern %s" %
+                  args.copy_pattern)
+            print("Data files will be copied to %s" % os.getcwd())
         except ValueError:
             logging.error("ERROR invalid pattern '%s'" % args.copy_pattern)
             sys.exit(1)
@@ -174,7 +175,8 @@ if __name__ == "__main__":
                     if bcf_utils.name_matches(sample.name,sample_pattern):
                         for fastq in sample.fastq:
                             fastq_file = os.path.join(sample.dirn,fastq)
-                            print "\tCopying .../%s" % os.path.basename(fastq_file)
+                            print("\tCopying .../%s" %
+                                  os.path.basename(fastq_file))
                             dst = os.path.abspath(os.path.basename(fastq_file))
                             if os.path.exists(dst):
                                 logging.error("File %s already exists! Skipped" % dst)
@@ -185,8 +187,8 @@ if __name__ == "__main__":
     if args.sample_sheet is not None:
         if IlluminaData.verify_run_against_sample_sheet(illumina_data,
                                                         args.sample_sheet):
-            print "Verification against sample sheet '%s': OK" % \
-                args.sample_sheet
+            print("Verification against sample sheet '%s': OK" %
+                  args.sample_sheet)
             status = 0
         else:
             logging.error("Verification against sample sheet '%s': FAILED" %
