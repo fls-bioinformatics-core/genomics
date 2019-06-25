@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #     JobRunner.py: classes for starting and managing job runs
-#     Copyright (C) University of Manchester 2011-2018 Peter Briggs
+#     Copyright (C) University of Manchester 2011-2019 Peter Briggs
 #
 ########################################################################
 #
@@ -17,7 +17,6 @@ by subclasses. The subclasses implemented here are:
 
 * SimpleJobRunner: run jobs (e.g. scripts) on a local file system.
 * GEJobRunner    : run jobs using Grid Engine (GE) i.e. qsub, qdel etc
-* DRMAAJobRunner : run jobs using the DRMAA interface to Grid Engine
 
 A single JobRunner instance can be used to start and manage multiple processes.
 
@@ -55,15 +54,6 @@ import shutil
 import atexit
 import uuid
 import random
-try:
-    import drmaa
-except ImportError:
-    # No drmaa module
-    pass
-except Exception as ex:
-    # DRMAA_LIBRARY_PATH not defined or invalid
-    logging.warning("Exception from dramma module: %s", ex)
-    pass
 
 #######################################################################
 # Classes
@@ -1227,133 +1217,6 @@ class ResourceLock(object):
             if n == resource_name:
                 return True
         return False
-
-class DRMAAJobRunner(BaseJobRunner):
-    """Class implementing job runner using DRMAA
-
-    DRMAAJobRunner submits jobs to a Grid Engine cluster using the
-    Python interface to Distributed Resource Management Application
-    API (DRMAA), as an alternative to the GEJobRunner.
-
-    The DRMAAJobRunner requires:
-    - the drmaa libraries (e.g. libdrmaa.so), pointed to by the
-      environment variable DRMAA_LIBRARY_PATH
-    - the Python drmma library, see http://code.google.com/p/drmaa-python/
-    """
-
-    def __init__(self,queue=None):
-        """Create a new DRMAAJobRunner instance
-
-        Arguments:
-          queue: Name of GE queue to use (set to 'None' to use default queue)
-        """
-        self.__queue = queue
-        self.__names = {}
-        # Initialise DRMAA session
-        self.__session = drmaa.Session()
-        self.__session.initialize()
-
-    def __repr__(self):
-        return 'DRMAAJobRunner'
-
-    def __del__(self):
-        # Clean up on object deletion
-        if self.__session: self.__session.exit()
-
-    def run(self,name,working_dir,script,args):
-        """Submit a script or command to the cluster via DRMAA
-
-        Arguments:
-          name: Name to give the job
-          working_dir: Directory to run the job in
-          script: Script file to run
-          args: List of arguments to supply to the script
-
-        Returns:
-          Job id for submitted job, or 'None' if job failed to
-          start.
-        """
-        logging.debug("DRMAAJobRunner: submitting job")
-        logging.debug("Name       : %s" % name)
-        logging.debug("Queue      : %s" % self.__queue)
-        logging.debug("Working_dir: %s" % working_dir)
-        logging.debug("Script     : %s" % script)
-        logging.debug("Arguments  : %s" % str(args))
-        # Create a job template
-        jt = self.__session.createJobTemplate()
-        # Build command within the job template
-        jt.remoteCommand = script
-        jt.args = args
-        jt.joinFiles = True
-        # Add the options to normally used for qsub
-        qsub_args = "-b y -V -N %s" % name
-        if self.__queue:
-            qsub_args += " -q %s" % self.__queue
-        if not working_dir:
-            qsub_args += " -cwd"
-        else:
-            qsub_args += " -wd %s" % working_dir
-        logging.debug("Qsub_args = %s" % qsub_args)
-        jt.nativeSpecification = qsub_args
-        # Submit the job
-        job_id = self.__session.runJob(jt)
-        # Clean up - delete the job template
-        self.__session.deleteJobTemplate(jt)
-        # Store name against job id
-        if job_id is not None:
-            self.__names[job_id] = name
-        logging.debug("Names: %s" % self.__names)
-        # Return the job id
-        return job_id
-
-    def terminate(self,job_id):
-        """Remove a job from the GE queue
-        """
-        logging.debug("DRMAA: deleting job")
-        self.__session.control(job_id,drmaa.JobControlAction.TERMINATE)
-        return True
-
-    def logFile(self,job_id):
-        """Return the log file name for a job
-
-        The name should be '<name>.o<job_id>'
-        """
-        return "%s.o%s" % (self.__names[job_id],job_id)
-
-    def errFile(self,job_id):
-        """Return the error file name for a job
-
-        The name should be '<name>.e<job_id>'
-        """
-        return "%s.e%s" % (self.__names[job_id],job_id)
-
-    def errorState(self,job_id):
-        """Check if the job is in an error state
-
-        Return True if the job is deemed to be in an 'error state',
-        False otherwise.
-        """
-        # Not implemented
-        return False
-
-    def queue(self,job_id):
-        """Fetch the job queue name
-
-        Returns the queue as reported by qstat, or None if
-        not found.
-        """
-        # Not implemented
-        return None
-
-    def list(self):
-        """Get list of job ids in the queue.
-        """
-        job_ids = []
-        for job in self.__names:
-            if self.__session.jobStatus(job) == drmaa.JobState.RUNNING or \
-                    self.__session.jobStatus(job) == drmaa.JobState.SYSTEM_SUSPENDED:
-                job_ids.append(job)
-        return job_ids
 
 #######################################################################
 # Functions
