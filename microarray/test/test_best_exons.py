@@ -257,7 +257,7 @@ A1BG-AS1	6.68543666667	6.36481	6.60468333333	6.50084333333	6.54916	6.57107333333
         best_exons(self.fp_in,fp_out,rank_by='log2_fold_change')
         output = fp_out.getvalue()
         for obs,exp in zip(output.split(),expected_output.split()):
-            ##print "%s, %s" % (obs,exp)
+            ##print("%s, %s" % (obs,exp))
             self.assertEqual(obs,exp)
 
     def test_best_exons_by_p_value(self):
@@ -270,7 +270,7 @@ A1BG-AS1	6.68543666667	6.36481	6.60468333333	6.50084333333	6.54916	6.57107333333
         best_exons(self.fp_in,fp_out,rank_by='p_value')
         output = fp_out.getvalue()
         for obs,exp in zip(output.split(),expected_output.split()):
-            ##print "%s, %s" % (obs,exp)
+            ##print("%s, %s" % (obs,exp))
             self.assertEqual(obs,exp)
 
 class TestTSVLineFunction(unittest.TestCase):
