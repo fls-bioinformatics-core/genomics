@@ -43,7 +43,7 @@ a wrapper class 'Md5Reporter' which
 # Module metadata
 #######################################################################
 
-__version__ = "1.1.1"
+__version__ = "1.1.2"
 
 #######################################################################
 # Import modules that this module depends on
@@ -180,7 +180,7 @@ class Md5Checker(object):
                 status = self.MD5_OK
             else:
                 status = self.MD5_FAILED
-        except IOError, ex:
+        except IOError as ex:
             # Error accessing one or both files
             logging.error("%s: error while generating MD5 sums: '%s'" % (f1,ex))
             status = self.MD5_ERROR
@@ -230,7 +230,7 @@ class Md5Checker(object):
             else:
                 try:
                     result = self.md5cmp_files(f1,f2)
-                except Exception,ex:
+                except Exception as ex:
                     logging.debug("Failed to compute one or both checksums:")
                     logging.debug("Reference file: %s" % f1)
                     logging.debug("Target file   : %s" % f2)
@@ -262,7 +262,7 @@ class Md5Checker(object):
             try:
                 md5 = md5sum(f)
                 yield (os.path.relpath(f,d),md5)
-            except IOError,ex:
+            except IOError as ex:
                 logging.error("md5sum: %s: %s" % (f,ex))
 
     @classmethod
@@ -307,7 +307,7 @@ class Md5Checker(object):
         for line in fp:
             items = line.strip().split()
             if len(items) < 2:
-                raise IndexError,"Bad MD5 sum line: %s" % line.rstrip('\n')
+                raise IndexError("Bad MD5 sum line: %s" % line.rstrip('\n'))
             chksum = items[0]
             f = line[len(chksum):].strip()
             try:
@@ -317,7 +317,7 @@ class Md5Checker(object):
                     status = self.MD5_OK
                 else:
                     status = self.MD5_FAILED
-            except IOError, ex:
+            except IOError as ex:
                 # Error accessing file
                 logging.error("%s: error while generating MD5 sum: '%s'" % (f,ex))
                 status = self.MD5_ERROR
@@ -434,7 +434,7 @@ class Md5CheckReporter(object):
                 self._md5_error.append(f)
             else:
                 # Unrecognised code
-                raise Exception, "Unrecognised status: '%s'" % status
+                raise Exception("Unrecognised status: '%s'" % status)
             self._fp.write("%s: %s\n" % (f,status_msg))
 
     def summary(self):
