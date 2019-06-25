@@ -48,7 +48,7 @@ class SampleSheets(object):
     There is no need to instantiate this class, to access
     a specific sample sheet use e.g.:
 
-    >>> print SampleSheets.miseq
+    >>> print(SampleSheets.miseq)
 
     """
     miseq = """[Header],,,,,,,,,
@@ -108,7 +108,7 @@ class RunInfoXml(object):
     There is no need to instantiate this class, to access
     a specific RunInfo.xml use e.g.:
 
-    >>> print RunInfoXml.hiseq('151125_AB12345_001_CD256X')
+    >>> print(RunInfoXml.hiseq('151125_AB12345_001_CD256X'))
 
     Arbitrary RunInfo.xml content can be created
     directly using the 'create' method.
