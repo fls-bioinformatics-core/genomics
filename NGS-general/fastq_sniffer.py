@@ -9,7 +9,7 @@
 #
 ########################################################################
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 """fastq_sniffer.py
 
@@ -59,14 +59,14 @@ if __name__ == "__main__":
         p.error("Input file '%s' not found" % fastq_file)
 
     # Get broad format type
-    print "Sniffing %s" % fastq_file
-    print "\nData from first read:"
+    print("Sniffing %s" % fastq_file)
+    print("\nData from first read:")
     for read in FASTQFile.FastqIterator(fastq_file):
         fastq_format = read.seqid.format
         if fastq_format is None and read.is_colorspace:
             fastq_format = 'colorspace'
-        print "\tHeader format:\t%s" % str(fastq_format)
-        print "\tSeq length:\t%d" % read.seqlen
+        print("\tHeader format:\t%s" % str(fastq_format))
+        print("\tSeq length:\t%d" % read.seqlen)
         break
 
     # Determine the quality score range (and count reads)
@@ -87,52 +87,52 @@ if __name__ == "__main__":
             break
 
     # Number of reads
-    print "\nProcessed %d reads" % n_reads
+    print("\nProcessed %d reads" % n_reads)
     # Print min,max quality values
     min_qual = min_max_qual[0]
     max_qual = min_max_qual[1]
-    print "Min,max quality scores:\t%d,%d\t(%s,%s)" % \
-        (min_qual,max_qual,chr(min_qual),chr(max_qual))
+    print("Min,max quality scores:\t%d,%d\t(%s,%s)" %
+          (min_qual,max_qual,chr(min_qual),chr(max_qual)))
     # Match to possible formats and quality encodings
-    print "\nIdentifying possible formats/quality encodings..."
+    print("\nIdentifying possible formats/quality encodings...")
     encodings = []
     galaxy_types = []
     if min_qual >= ord('!') and max_qual <= ord('I'):
-        print "\tPossible Sanger/Phred+33"
+        print("\tPossible Sanger/Phred+33")
         encodings.append('Phred+33')
     if fastq_format != 'colorspace':
         if min_qual >= ord(';') and max_qual <= ord('h'):
-            print "\tPossible Solexa/Solexa+64"
+            print("\tPossible Solexa/Solexa+64")
             encodings.append('Solexa+64')
             galaxy_types.append('fastqsolexa')
         if min_qual >= ord('@') and max_qual <= ord('h'):
-            print "\tPossible Illumina 1.3+/Phred+64"
+            print("\tPossible Illumina 1.3+/Phred+64")
             encodings.append('Phred+64')
             galaxy_types.append('fastqillumina')
         if min_qual >= ord('C') and max_qual <= ord('h'):
-            print "\tPossible Illumina 1.5+/Phred+64"
+            print("\tPossible Illumina 1.5+/Phred+64")
             encodings.append('Phred+64')
             galaxy_types.append('fastqillumina')
         if min_qual >= ord('!') and max_qual <= ord('J'):
-            print "\tPossible Illumina 1.8+/Phred+33"
+            print("\tPossible Illumina 1.8+/Phred+33")
             encodings.append('Phred+33')
             galaxy_types.append('fastqsanger')
     else:
         galaxy_types.append('fastqcssanger')
-    print "\nLikely encodings:"
+    print("\nLikely encodings:")
     if encodings:
         # Make sure list only has unique values
         encodings = list(set(encodings))
         for encoding in encodings:
-            print "\t%s" % encoding
+            print("\t%s" % encoding)
     else:
-        print "\tNone identified"
-    print "\nLikely galaxy types:"
+        print("\tNone identified")
+    print("\nLikely galaxy types:")
     if galaxy_types:
         # Make sure list only has unique values
         galaxy_types = list(set(galaxy_types))
         for galaxy_type in galaxy_types:
-            print "\t%s" % galaxy_type
+            print("\t%s" % galaxy_type)
     else:
-        print "\tNone identified"
+        print("\tNone identified")
     
