@@ -75,7 +75,7 @@ Python modules xlwt, xlrd and xlutils.
 # Module metadata
 #######################################################################
 
-__version__ = "1.2.0"
+__version__ = "1.2.1"
 
 #######################################################################
 # Import
@@ -300,7 +300,7 @@ class BowtieMappingStats(object):
         mapping.set_style(XLSStyle(centre=True),'C1')
         # Finished
         if xls_out is not None:
-            print "Writing statistics to XLS file %s" % xls_out
+            print("Writing statistics to XLS file %s" % xls_out)
             wb.save_as_xls(xls_out)
         return wb
 
@@ -333,7 +333,7 @@ class BowtieMappingStats(object):
                                                       start='A3',
                                                       end=end_cell)
         if tab_file is not None:
-            print "Writing statistics to tab-delimited file %s" % tab_file
+            print("Writing statistics to tab-delimited file %s" % tab_file)
             open(tab_file,'w').write(txt)
         return txt
 
@@ -713,7 +713,7 @@ if __name__ == "__main__":
         p.error("at least one input bowtie log file required")
 
     # Report version
-    print("%s %s" % (os.path.basename(sys.argv[0]),__version__))
+    print("%s %s" % (os.path.basename(sys.argv[0]),__version__)))
 
     # Initialisations
     if arguments.stats_xls is not None:
@@ -728,12 +728,12 @@ if __name__ == "__main__":
     # Acquire data
     stats = BowtieMappingStats()
     for bowtie_log in bowtie_log_files:
-        print "Processing data from %s" % bowtie_log
+        print("Processing data from %s" % bowtie_log)
         n_samples = stats.add_samples(bowtie_log)
         if n_samples > 0:
-            print "\tFound %d samples (total %d)" % (n_samples,stats.n_samples)
-            print "\tBowtie version %s" % (stats.samples[-1].bowtie_version)
-            print "\t%s" % ('Paired end' if stats.samples[-1].paired_end else 'Single end')
+            print("\tFound %d samples (total %d)" % (n_samples,stats.n_samples))
+            print("\tBowtie version %s" % (stats.samples[-1].bowtie_version))
+            print("\t%s" % ('Paired end' if stats.samples[-1].paired_end else 'Single end'))
         else:
             logging.warning("No samples found in %s" % bowtie_log)
 
