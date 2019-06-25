@@ -48,7 +48,7 @@ import profile
 # Module metadata
 #######################################################################
 
-__version__ = '0.6.0'
+__version__ = '0.6.1'
 
 #######################################################################
 # Class definitions
@@ -153,7 +153,8 @@ class MacsXLS(object):
             fp.close()
         # Check that we actually got a version line
         if self.macs_version is None:
-            raise Exception,"Failed to extract MACS version, not a MACS output file?"
+            raise Exception("Failed to extract MACS version, not a MACS "
+                            "output file?")
         # Populate the 'order' column
         self.update_order()
 
@@ -295,7 +296,7 @@ def xls_for_macs2(macs_xls,row_limit=None,cell_char_limit=None):
 
     # Check MACS version - can't handle MACS 1.*
     if macs_xls.macs_version.startswith("1."):
-        raise Exception,"Only handles output from MACS 2.0*"
+        raise Exception("Only handles output from MACS 2.0*")
 
     # Sort into order by fold_enrichment column
     macs_xls.sort_on('fold_enrichment',reverse=True)
@@ -1120,7 +1121,7 @@ def main(macs_file,xls_out,xls_format="xlsx",bed_out=None):
         xls = xls_for_macs2(macs_xls,
                             row_limit=xls_max_rows,
                             cell_char_limit=xls_cell_width)
-    except Exception,ex:
+    except Exception as ex:
         logging.error("failed to convert to XLS: %s" % ex)
         sys.exit(1)
     if xls_format == "xlsx":

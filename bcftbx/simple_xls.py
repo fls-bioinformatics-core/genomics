@@ -109,7 +109,7 @@ Alternatively the contents of a sheet (or a subset) can be rendered as text:
 
 """
 
-__version__ = "0.0.10"
+__version__ = "0.0.11"
 
 #######################################################################
 # Import modules that this module depends on
@@ -214,7 +214,8 @@ class XLSWorkBook(object):
 
         """
         if name in self.worksheet:
-            raise KeyError,"Worksheet called '%s' already exists" % name
+            raise KeyError("Worksheet called '%s' already exists" %
+                           name)
         if title is None:
             title = name
         self.worksheet[name] = XLSWorkSheet(title)
@@ -401,7 +402,7 @@ class XLSWorkSheet(object):
         """
         idx = CellIndex(idx)
         if not idx.is_full:
-            raise KeyError,"Invalid index: '%s'" % idx
+            raise KeyError("Invalid index: '%s'" % idx)
         self.data[idx.idx] = value
         if idx.column not in self.columns:
             self.columns.append(idx.column)
@@ -419,7 +420,7 @@ class XLSWorkSheet(object):
         else:
             try:
                 return self.data[idx]
-            except Exception,ex:
+            except Exception as ex:
                 return None
 
     def __delitem__(self,idx):
@@ -522,7 +523,7 @@ class XLSWorkSheet(object):
         for col in self.columns:
             if self[cell(col,row)] == s:
                 return col
-        raise LookupError,"No match for '%s' in row %d" % (s,row)
+        raise LookupError("No match for '%s' in row %d" % (s,row))
 
     def insert_column(self,position,data=None,text=None,fill=None,from_row=None,style=None):
         """Create a new column at the specified column position
@@ -713,7 +714,8 @@ class XLSWorkSheet(object):
         for row in range(1,self.last_row+1):
             if self[cell(column,row)] == s:
                 return row
-        raise LookupError,"No match for '%s' in column '%s'" % (s,column)
+        raise LookupError("No match for '%s' in column '%s'" %
+                          (s,column))
 
     def insert_row(self,position,data=None,text=None,fill=None,from_column=None,style=None):
         """Create a new row at the specified row position
@@ -1050,7 +1052,7 @@ class XLSWorkSheet(object):
             if style is not None:
                 try:
                     return format_value(item,style.number_format)
-                except Exception, ex:
+                except Exception as ex:
                     logging.debug("Exception: %s" % ex)
                     raise ex
         else:
@@ -1408,7 +1410,7 @@ class XLSColumn(object):
         """
         try:
             return self.parent[self.full_index(idx)]
-        except Exception,ex:
+        except Exception as ex:
             return None
 
     def full_index(self,row):
@@ -1561,7 +1563,7 @@ def eval_formula(item,worksheet):
     if re.compile(r"^[0-9+\-\/\*]+").match(formula):
         try:
             item = eval(formula)
-        except Exception,ex:
+        except Exception as ex:
             logging.debug("Error processing %s: %s" % (item,ex))
             return BAD_REF
     else:
@@ -1578,7 +1580,7 @@ def convert_to_number(s):
         return int(s)
     elif is_float(s):
         return float(s)
-    raise ValueError,"%s not a number?" % s
+    raise ValueError("%s not a number?" % s)
 
 def is_float(s):
     """Test if a number is a float

@@ -426,7 +426,7 @@ class IlluminaData(object):
         """
         for project in self.projects:
             if project.name == name: return project
-        raise IlluminaDataError, "No matching project for '%s'" % name
+        raise IlluminaDataError("No matching project for '%s'" % name)
 
 class IlluminaProject(object):
     """Class for storing information on a 'project' within an Illumina run
@@ -584,8 +584,8 @@ class IlluminaProject(object):
                                                    prefix=''))
         # Raise an exception if no samples found
         if not self.samples:
-            raise IlluminaDataError, "No samples found for project %s" % \
-                self.name
+            raise IlluminaDataError("No samples found for project %s" %
+                                    self.name)
         # Sort samples on name
         self.samples.sort(lambda a,b: cmp(a.name,b.name))
         # Determine whether project is paired end
@@ -716,8 +716,8 @@ class IlluminaSample(object):
         for fastq in self.fastq:
             fq = IlluminaFastq(fastq)
             if fq.read_number is None:
-                raise IlluminaDataError, \
-                    "Unable to determine read number for %s" % fastq
+                raise IlluminaDataError("Unable to determine read number "
+                                        "for %s" % fastq)
             if fq.read_number == read_number:
                 if full_path:
                     fastqs.append(os.path.join(self.dirn,fastq))
@@ -2853,7 +2853,7 @@ def get_unique_fastq_names(fastqs):
         if len(unique_names) == len(fastqs):
             return name_mapping
     # Failed to make a unique set of names
-    raise Exception,"Failed to make a set of unique fastq names"
+    raise Exception("Failed to make a set of unique fastq names")
 
 def fix_bases_mask(bases_mask,barcode_sequence):
     """Adjust input bases mask to match actual barcode sequence lengths

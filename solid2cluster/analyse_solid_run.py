@@ -489,24 +489,24 @@ def print_md5sums(library):
     try:
         print("%s  %s" % (Md5sum.md5sum(library.csfasta),
                           strip_prefix(library.csfasta,os.getcwd())))
-    except Exception,ex:
+    except Exception as ex:
         logging.error("FAILED for F3 csfasta: %s" % ex)
     try:
         print("%s  %s" % (Md5sum.md5sum(library.qual),
                           strip_prefix(library.qual,os.getcwd())))
-    except Exception,ex:
+    except Exception as ex:
         logging.error("FAILED for F3 qual: %s" % ex)
     # F5 primary data
     if library.parent_sample.parent_run.is_paired_end:
         try:
             print("%s  %s" % (Md5sum.md5sum(library.csfasta_f5),
                               strip_prefix(library.csfasta_f5,os.getcwd())))
-        except Exception,ex:
+        except Exception as ex:
             logging.error("FAILED for F5 csfasta: %s" % ex)
         try:
             print("%s  %s" % (Md5sum.md5sum(library.qual_f5),
                               strip_prefix(library.qual_f5,os.getcwd())))
-        except Exception,ex:
+        except Exception as ex:
             logging.error("FAILED for F5 qual: %s" % ex)
 
 def strip_prefix(path,prefix):
@@ -638,7 +638,7 @@ if __name__ == "__main__":
         try:
             import bcftbx.Spreadsheet as Spreadsheet
             write_spreadsheet(solid_runs,spreadsheet)
-        except ImportError, ex:
+        except ImportError as ex:
             logging.error("Unable to write spreadsheet: %s" % ex)
 
     # Suggest a layout for analysis

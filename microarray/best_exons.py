@@ -5,7 +5,7 @@
 #
 ########################################################################
 
-__version__ = "1.3.1"
+__version__ = "1.3.2"
 
 """
 best_exons.py
@@ -166,7 +166,7 @@ class ExonList(object):
 
         """
         if exon.gene_symbol != self.gene_symbol:
-            raise Exception,"Exon gene symbol doesn't match list symbol"
+            raise Exception("Exon gene symbol doesn't match list symbol")
         self.exons.append(exon)
 
     def sort(self,attr):
@@ -190,7 +190,7 @@ class ExonList(object):
             reverse = False
         else:
             # Unknown attribue
-            raise AttributeError, "Unknown attribute '%s'" % attr
+            raise AttributeError("Unknown attribute '%s'" % attr)
         self.exons.sort(key=attrgetter(attr),reverse=reverse)
 
     def best_exon(self,attr):
@@ -215,7 +215,7 @@ class ExonList(object):
         elif attr == 'p_value':
             f = lambda x,y: x if abs(value(x)) < abs(value(y)) else y
         else:
-            raise AttributeError, "Unrecognised attribute '%s'" % attr
+            raise AttributeError("Unrecognised attribute '%s'" % attr)
         return reduce(f,self.exons)
 
     def best_exons(self,attr,n=3):

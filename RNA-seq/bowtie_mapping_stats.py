@@ -75,7 +75,7 @@ Python modules xlwt, xlrd and xlutils.
 # Module metadata
 #######################################################################
 
-__version__ = "1.2.1"
+__version__ = "1.2.2"
 
 #######################################################################
 # Import
@@ -100,7 +100,7 @@ sys.path.append(SHARE_DIR)
 try:
     from bcftbx.simple_xls import XLSWorkBook,XLSStyle
     from bcftbx.simple_xls import cell,column_integer_to_index,NumberFormats
-except ImportError,ex:
+except ImportError as ex:
     logging.error("Failed to import local modules: %s" % ex)
     logging.error("Set your PYTHONPATH to include the directory with the required modules, "
                   "or get the latest versions from github via:")

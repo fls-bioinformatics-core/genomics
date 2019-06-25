@@ -34,7 +34,7 @@ SHARE_DIR = os.path.abspath(
 sys.path.append(SHARE_DIR)
 try:
     from bcftbx.test.test_SolidData import TestUtils
-except ImportError, ex:
+except ImportError as ex:
     print("Error importing modules: %s" % ex)
 
 if __name__ == "__main__":

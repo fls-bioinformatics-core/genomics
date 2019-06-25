@@ -189,7 +189,7 @@ TabFile object, for example for a comma-delimited file:
 
 """
 
-__version__ = "0.2.10"
+__version__ = "0.2.11"
 
 import logging
 
@@ -272,7 +272,7 @@ class TabDataLine(object):
                 # Can't convert to an integer
                 invalid_lineno = True
             if invalid_lineno:
-                raise ValueError,"invalid line number '%s'" % lineno
+                raise ValueError("invalid line number '%s'" % lineno)
         self.__lineno = lineno
 
     def __getitem__(self,key):
@@ -295,12 +295,12 @@ class TabDataLine(object):
                 i = int(key)
             except ValueError:
                 # Not an integer
-                raise KeyError, "column '%s' not found" % key
+                raise KeyError("column '%s' not found" % key)
             try:
                 return self.data[i]
             except IndexError:
                 # Integer but out of range
-                raise IndexError, "integer index out of range for '%s'" % key
+                raise IndexError("integer index out of range for '%s'" % key)
 
     def __setitem__(self,key,value):
         """Implement TabDataLine[key] = value
@@ -324,12 +324,12 @@ class TabDataLine(object):
                 i = int(key)
             except ValueError:
                 # Not an integer
-                raise KeyError, "column '%s' not found" % key
+                raise KeyError("column '%s' not found" % key)
             try:
                 self.data[i] = converted_value
             except IndexError:
                 # Integer but out of range
-                raise IndexError, "integer index out of range for '%s'" % key
+                raise IndexError("integer index out of range for '%s'" % key)
 
     def __len__(self):
         return len(self.data)
@@ -560,7 +560,7 @@ class TabFile(object):
                     logging.error("Line %d has wrong number of data items" % line_no)
                     logging.error("Line: %s" % data_line)
                     logging.error("Expected %d, got %d" % (self.__ncols,len(data_line)))
-                    raise IndexError, "wrong number of data items in line %d" % line_no
+                    raise IndexError("wrong number of data items in line %d" % line_no)
             else:
                 # Set number of columns
                 self.__ncols = len(data_line)
@@ -621,7 +621,7 @@ class TabFile(object):
         for idx in range(len(self.__data)):
             if self.__data[idx].lineno() == n:
                 return idx
-        raise IndexError,"No line number %d" % n
+        raise IndexError("No line number %d" % n)
 
     def append(self,data=None,tabdata=None,tabdataline=None):
         """Create and append a new data line

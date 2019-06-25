@@ -550,7 +550,7 @@ class MockIlluminaRun(object):
         """
         # Create top level directory
         if os.path.exists(self.dirn):
-            raise OSError,"%s already exists" % self.dirn
+            raise OSError("%s already exists" % self.dirn)
         else:
             bcftbx.utils.mkdir(self.dirn)
             self._created = True
@@ -1089,7 +1089,7 @@ class MockIlluminaData(object):
         """
         # Create top level directory
         if os.path.exists(self.dirn):
-            raise OSError,"%s already exists" % self.dirn
+            raise OSError("%s already exists" % self.dirn)
         else:
             bcftbx.utils.mkdir(self.dirn)
             self.__created = True

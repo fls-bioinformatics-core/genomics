@@ -238,7 +238,7 @@ class ExperimentList(object):
                                           relative=use_relative_links,dry_run=dry_run)
                         self.__linkToFile(library.qual,os.path.join(expt_dir,ln_qual),
                                           relative=use_relative_links,dry_run=dry_run)
-                    except Exception, ex:
+                    except Exception as ex:
                         logging.error("Failed to link to some or all F3 primary data")
                         logging.error("Exception: %s" % ex)
                     # Get names for links to F5 reads (if paired-end run)
@@ -252,7 +252,7 @@ class ExperimentList(object):
                                               relative=use_relative_links,dry_run=dry_run)
                             self.__linkToFile(library.qual_f5,os.path.join(expt_dir,ln_qual),
                                               relative=use_relative_links,dry_run=dry_run)
-                        except Exception, ex:
+                        except Exception as ex:
                             logging.error("Failed to link to some or all F5 primary data")
                             logging.error("Exception: %s" % ex)
             # Make an empty ScriptCode directory

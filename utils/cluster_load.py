@@ -223,7 +223,7 @@ def qstat(user=None):
         # Run the qstat
         try:
             p = subprocess.Popen(cmd,stdout=subprocess.PIPE)
-        except Exception,ex:
+        except Exception as ex:
             logging.error("Exception when running qstat: %s" % ex)
             return []
         # Use communicate rather than wait as we don't know how

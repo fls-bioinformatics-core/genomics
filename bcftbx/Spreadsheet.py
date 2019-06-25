@@ -70,7 +70,7 @@ https://github.com/dln/pycassa/blob/90736f8146c1cac8287f66e8c8b64cb80e011513/pyc
 
 """
 
-__version__ = "0.1.10"
+__version__ = "0.1.11"
 
 #######################################################################
 # Import modules that this module depends on
@@ -167,7 +167,7 @@ class Workbook(object):
         for s in self.sheets:
             logging.debug("Searching: sheet '%s'" % s.title)
             if title == s.title: return s
-        raise KeyError, "No sheet called '%s' found" % title
+        raise KeyError("No sheet called '%s' found" % title)
 
     def save(self,xls_name):
         """Finish adding data and write the spreadsheet to disk.
@@ -484,7 +484,7 @@ class Worksheet(object):
             return self.column_id_from_index(i)
         except IndexError:
             # Column name not found
-            raise IndexError, "Column '%s' not found" % name
+            raise IndexError("Column '%s' not found" % name)
 
     def freezePanes(self,row=None,column=None):
         """Split panes and mark as frozen
@@ -510,9 +510,9 @@ class Worksheet(object):
                 name += string.uppercase[i%26]
                 i = i/26-1
             return name[::-1]
-        except IndexError, ex:
+        except IndexError as ex:
             print("Exception getting column name for index %d: %s" % (i,ex))
-            raise
+            raise ex
 
     def save(self):
         """Write the new data to the spreadsheet.
@@ -574,7 +574,7 @@ class Worksheet(object):
                     # Create the item
                     try:
                         item = xlwt.Formula(formula)
-                    except Exception, ex:
+                    except Exception as ex:
                         logging.warning("Error writing formula '%s' to cell %s%s: %s",
                                         formula,
                                         self.column_id_from_index(cindex),
@@ -616,7 +616,7 @@ class Worksheet(object):
                     self.worksheet.col(cindex).width = \
                         256*(self.max_col_width[cindex] + 5)
                     cindex += 1
-                except ValueError, ex:
+                except ValueError as ex:
                     logging.error("couldn't write item to sheet '%s' (row %d col %d)" %
                                   (self.title,self.current_row+1,cindex+1))
         # Freeze panes

@@ -200,7 +200,7 @@ class OrderedDictionary(object):
             self.__keys.insert(i,key)
             self.__dict[key] = value
         else:
-            raise KeyError, "Key '%s' already exists" % key
+            raise KeyError("Key '%s' already exists" % key)
 
 #######################################################################
 # File reading utilities
@@ -368,7 +368,8 @@ class PathInfo(object):
             if os.access(path,os.R_OK):
                 return path
             path = os.path.dirname(path)
-        raise OSError,"Unable to find readable parent for %s" % self.__path
+        raise OSError("Unable to find readable parent for %s" %
+                      self.__path)
 
     @property
     def resolve_link_via_parent(self):
@@ -1267,7 +1268,8 @@ def concatenate_fastq_files(merged_fastq,fastq_files,bufsize=10240,
     if verbose: print("Creating merged fastq file '%s'" % merged_fastq)
     # Check that initial file doesn't exist
     if os.path.exists(merged_fastq) and not overwrite:
-        raise OSError, "Target file '%s' already exists, stopping" % merged_fastq
+        raise OSError("Target file '%s' already exists, stopping" %
+                      merged_fastq)
     # Create temporary name
     merged_fastq_part = merged_fastq+'.part'
     # Open for writing
@@ -1298,7 +1300,7 @@ def concatenate_fastq_files(merged_fastq,fastq_files,bufsize=10240,
         if verbose: print("Adding records from %s" % fastq)
         # Check it exists
         if not os.path.exists(fastq):
-            raise OSError, "'%s' not found, stopping" % fastq
+            raise OSError("'%s' not found, stopping" % fastq)
         # Open file for reading
         if not is_gzipped_file(fastq):
             fq = open(fastq,'rb')

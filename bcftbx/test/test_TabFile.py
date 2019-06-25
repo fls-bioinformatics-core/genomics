@@ -789,7 +789,7 @@ class TestTabDataLine(unittest.TestCase):
             # This should work
             for item in line:
                 pass
-        except Exception,ex:
+        except Exception as ex:
             # It hasn't worked
             self.fail("Iteration test exception: '%s'" % ex)
 

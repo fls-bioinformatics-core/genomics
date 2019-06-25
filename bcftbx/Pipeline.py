@@ -47,7 +47,7 @@ system. So typical usage might look like:
 # Module metadata
 #######################################################################
 
-__version__ = "0.1.5"
+__version__ = "0.1.6"
 
 #######################################################################
 # Import modules that this module depends on
@@ -514,7 +514,7 @@ class PipelineRunner(object):
             print("Terminating job %s" % job.job_id)
             try:
                 job.terminate()
-            except Exception, ex:
+            except Exception as ex:
                 logging.error("Failed to terminate job %s: %s" % (job.job_id,ex))
 
 class SolidPipelineRunner(PipelineRunner):
