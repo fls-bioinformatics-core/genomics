@@ -68,7 +68,7 @@ class QCReporter(object):
         else:
             self.__version = version
         if not os.path.isdir(self.__qc_dir):
-            raise QCReporterError, "QC dir %s not found" % self.qc_dir
+            raise QCReporterError("QC dir %s not found" % self.qc_dir)
         # Run and experiment names
         # Assume that the experiment name is the current dir and the
         # run name is the parent directory
@@ -173,7 +173,8 @@ class QCReporter(object):
             finder = Pipeline.GetFastqGzFiles
         else:
             # Unrecognised data format
-            raise QCReporterError, "Unrecognised data type '%s'" % self.data_format
+            raise QCReporterError("Unrecognised data type '%s'" %
+                                  self.data_format)
         # Look in 'fastq' subdirectory of the analysis directory first,
         # then if nothing is found look in the top level
         for dirn in (os.path.join(self.dirn,'fastqs'),self.dirn):
@@ -254,7 +255,7 @@ class QCReporter(object):
 
         This method must be implemented by the subclass.
         """
-        raise NotImplementedError,"Subclass must implement 'report' method"
+        raise NotImplementedError("Subclass must implement 'report' method")
 
     def zip(self):
         """Make a zip file containing the report and the images
@@ -289,7 +290,7 @@ class QCReporter(object):
                     elif os.path.isdir(f):
                         # Recursively add directory and all its contents
                         add_dir_to_zip(f,zip_top_dir=zip_top_dir)
-        except Exception, ex:
+        except Exception as ex:
             print("Exception creating zip archive: %s" % ex)
         os.chdir(cwd)
         return '%s.zip' % self.report_name
@@ -580,7 +581,7 @@ class QCSample(object):
 
         This method must be implemented by the subclass.
         """
-        raise NotImplementedError,"Subclass must implement 'report' method"
+        raise NotImplementedError("Subclass must implement 'report' method")
 
     def zip_includes(self):
         """Return list of files and directories to archive
@@ -594,7 +595,7 @@ class QCSample(object):
         True if the QC appears to have run successfully for the sample, False
         if not.
         """
-        raise NotImplementedError,"Subclass must implement 'verify' method"
+        raise NotImplementedError("Subclass must implement 'verify' method")
     
 def add_dir_to_zip(z,dirn,zip_top_dir=None):
     """Recursively add a directory and its contents to a zip archive
@@ -761,7 +762,7 @@ class IlluminaQCReporter(QCReporter):
                 if sample.fastqc:
                     # Add all files in fastqc dir
                     add_dir_to_zip(z,os.path.join(qc_dir,sample.fastqc),zip_top_dir=zip_top_dir)
-        except Exception, ex:
+        except Exception as ex:
             print("Exception creating zip archive: %s" % ex)
         os.chdir(cwd)
         return '%s.zip' % self.report_name
