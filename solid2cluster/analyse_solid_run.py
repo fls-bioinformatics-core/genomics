@@ -71,18 +71,18 @@ def report_run(solid_runs,report_paths=False):
         slide_layout = run.slideLayout()
         title = "Flow Cell %s (%s)" % (str(run.run_info.flow_cell),
                                        str(slide_layout))
-        print "%s\n%s\n%s" % ('#'*len(title),title,'#'*len(title))
-        print "I.D.   : %s" % (run.run_info.name)
-        print "Date   : %s" % (run.run_info.date)
-        print "Samples: %d" % len(run.samples)
+        print("%s\n%s\n%s" % ('#'*len(title),title,'#'*len(title)))
+        print("I.D.   : %s" % (run.run_info.name))
+        print("Date   : %s" % (run.run_info.date))
+        print("Samples: %d" % len(run.samples))
         if run.is_paired_end:
-            print "\nPaired-end run"
+            print("\nPaired-end run")
         #
         # Report projects for each sample
         for sample in run.samples:
             title = "\nSample %s" % sample
             title = title + '\n' + "="*len(title)
-            print title
+            print(title)
             for project in sample.projects:
                 # Libraries in project
                 libraries = project.prettyPrintLibraries()
@@ -90,12 +90,13 @@ def report_run(solid_runs,report_paths=False):
                                                            libraries,
                                                            len(project.libraries))
                 title = '\n' + title + '\n' + "-"*len(title)
-                print title
-                print "Pattern: %s/%s" % (sample,project.getLibraryNamePattern())
+                print(title)
+                print("Pattern: %s/%s" % (sample,
+                                          project.getLibraryNamePattern()))
                 # Timestamps for primary data
-                print "Timestamps:"
+                print("Timestamps:")
                 for timestamp in project.getTimeStamps():
-                    print "\t%s" % timestamp
+                    print("\t%s" % timestamp)
                 # Report location of primary data
                 for library in project.libraries:
                     if report_paths:
@@ -104,9 +105,10 @@ def report_run(solid_runs,report_paths=False):
                             files.extend((library.csfasta_f5,library.qual_f5))
                         for f in files:
                             if f is not None:
-                                print "%s" % f
+                                print("%s" % f)
                             else:
-                                print "Missing primary data for %s" % library.name
+                                print("Missing primary data for %s" %
+                                      library.name)
 
 def write_spreadsheet(solid_runs,spreadsheet):
     """Generate or append run data to an XLS-format spreadsheet
@@ -254,7 +256,7 @@ def suggest_analysis_layout(solid_runs):
     Arguments:
       solid_runs: a list of SolidRun objects.
     """
-    print "#!/bin/sh\n#\n# Script commands to build analysis directory structure"
+    print("#!/bin/sh\n#\n# Script commands to build analysis directory structure")
     for run in solid_runs:
         build_analysis_dir_cmd = 'build_analysis_dir.py'
         top_dir = os.path.abspath(os.path.join(os.getcwd(),os.path.basename(run.run_dir)))
@@ -274,7 +276,7 @@ def suggest_analysis_layout(solid_runs):
                                  "--naming-scheme=partial"))
                 cmd_line.append(expt.describe())
                 cmd_line.append(run.run_dir)
-                print "#\n%s" % (' \\\n').join(cmd_line)
+                print("#\n%s" % (' \\\n').join(cmd_line))
 
 def suggest_rsync_command(solid_runs):
     """Generate a bash script to rsync data to another location
@@ -284,15 +286,15 @@ def suggest_rsync_command(solid_runs):
 
     The script should be edited before being executed by the user.
     """
-    print "#!/bin/sh\n#"
-    print "# Script command to rsync a subset of data to another location"
-    print "# Edit the script to remove the exclusions on the data sets to be copied"
+    print("#!/bin/sh\n#")
+    print("# Script command to rsync a subset of data to another location")
+    print("# Edit the script to remove the exclusions on the data sets to be copied")
     for run in solid_runs:
-        print "rsync --dry-run -av -e ssh \\"
+        print("rsync --dry-run -av -e ssh \\")
         for sample in run.samples:
             for library in sample.libraries:
-                print "--exclude=" + str(library) + " \\"
-        print "%s user@remote.system:/destination/parent/dir" % run.run_dir
+                print("--exclude=" + str(library) + " \\")
+        print("%s user@remote.system:/destination/parent/dir" % run.run_dir)
 
 def verify_runs(solid_dirs):
     """Do basic verification checks on SOLiD run directories
@@ -310,7 +312,7 @@ def verify_runs(solid_dirs):
     Returns:
       0 if the run is verified, 1 if there is a problem.
     """
-    print "Performing verification"
+    print("Performing verification")
     status = 0
     for solid_dir in solid_dirs:
         # Initialise
@@ -318,18 +320,18 @@ def verify_runs(solid_dirs):
         run = SolidData.SolidRun(solid_dir)
         if not run.verify():
             run_status = 1
-        print "%s:" % run.run_name,
+        print("%s:" % run.run_name,)
         if run_status == 0:
-            print " [PASSED]"
+            print(" [PASSED]")
         else:
-            print " [FAILED]"
+            print(" [FAILED]")
             status = 1
     # Completed
-    print "Overall status:",
+    print("Overall status:",
     if status == 0:
-        print " [PASSED]"
+        print(" [PASSED]")
     else:
-        print " [FAILED]"
+        print(" [FAILED]")
     return status
 
 def copy_data(solid_runs,library_defns):
@@ -360,11 +362,11 @@ def copy_data(solid_runs,library_defns):
     for library_defn in library_defns:
         sample = library_defn.split('/')[0]
         library = library_defn.split('/')[1]
-        print "Copy: look for samples matching pattern %s" % library_defn
-        print "Data files will be copied to %s" % os.getcwd()
+        print("Copy: look for samples matching pattern %s" % library_defn)
+        print("Data files will be copied to %s" % os.getcwd())
         for run in solid_runs:
             for lib in run.fetchLibraries(sample,library):
-                print "-> matched %s/%s" % (lib.parent_sample.name,lib.name)
+                print("-> matched %s/%s" % (lib.parent_sample.name,lib.name))
                 primary_data_files =[]
                 primary_data_files.append(lib.csfasta)
                 primary_data_files.append(lib.qual)
@@ -372,7 +374,7 @@ def copy_data(solid_runs,library_defns):
                     primary_data_files.append(lib.csfasta_f5)
                     primary_data_files.append(lib.qual_f5)
                 for filn in primary_data_files:
-                    print "\tCopying .../%s" % os.path.basename(filn)
+                    print("\tCopying .../%s" % os.path.basename(filn))
                     dst = os.path.abspath(os.path.basename(filn))
                     if os.path.exists(dst):
                         logging.error("File %s already exists! Skipped" % dst)
@@ -407,11 +409,11 @@ def gzip_data(solid_runs,library_defns):
     for library_defn in library_defns:
         sample = library_defn.split('/')[0]
         library = library_defn.split('/')[1]
-        print "Gzip: look for samples matching pattern %s" % library_defn
-        print "Gzipped copies will be created in %s" % os.getcwd()
+        print("Gzip: look for samples matching pattern %s" % library_defn)
+        print("Gzipped copies will be created in %s" % os.getcwd())
         for run in solid_runs:
             for lib in run.fetchLibraries(sample,library):
-                print "-> matched %s/%s" % (lib.parent_sample.name,lib.name)
+                print("-> matched %s/%s" % (lib.parent_sample.name,lib.name))
                 primary_data_files =[]
                 primary_data_files.append(lib.csfasta)
                 primary_data_files.append(lib.qual)
@@ -420,7 +422,7 @@ def gzip_data(solid_runs,library_defns):
                     primary_data_files.append(lib.csfasta_f5)
                     primary_data_files.append(lib.qual_f5)
                 for filn in primary_data_files:
-                    print "\tGzipping .../%s" % os.path.basename(filn)
+                    print("\tGzipping .../%s" % os.path.basename(filn))
                     # Check for final gz file
                     gzip_filn = os.path.abspath(os.path.basename(filn)+'.gz')
                     if os.path.exists(gzip_filn):
@@ -485,25 +487,25 @@ def print_md5sums(library):
     """
     # F3 primary data
     try:
-        print "%s  %s" % (Md5sum.md5sum(library.csfasta),
-                          strip_prefix(library.csfasta,os.getcwd()))
+        print("%s  %s" % (Md5sum.md5sum(library.csfasta),
+                          strip_prefix(library.csfasta,os.getcwd())))
     except Exception,ex:
         logging.error("FAILED for F3 csfasta: %s" % ex)
     try:
-        print "%s  %s" % (Md5sum.md5sum(library.qual),
-                          strip_prefix(library.qual,os.getcwd()))
+        print("%s  %s" % (Md5sum.md5sum(library.qual),
+                          strip_prefix(library.qual,os.getcwd())))
     except Exception,ex:
         logging.error("FAILED for F3 qual: %s" % ex)
     # F5 primary data
     if library.parent_sample.parent_run.is_paired_end:
         try:
-            print "%s  %s" % (Md5sum.md5sum(library.csfasta_f5),
-                              strip_prefix(library.csfasta_f5,os.getcwd()))
+            print("%s  %s" % (Md5sum.md5sum(library.csfasta_f5),
+                              strip_prefix(library.csfasta_f5,os.getcwd())))
         except Exception,ex:
             logging.error("FAILED for F5 csfasta: %s" % ex)
         try:
-            print "%s  %s" % (Md5sum.md5sum(library.qual_f5),
-                              strip_prefix(library.qual_f5,os.getcwd()))
+            print("%s  %s" % (Md5sum.md5sum(library.qual_f5),
+                              strip_prefix(library.qual_f5,os.getcwd())))
         except Exception,ex:
             logging.error("FAILED for F5 qual: %s" % ex)
 
@@ -602,7 +604,7 @@ if __name__ == "__main__":
     # Output spreadsheet name
     if args.xls:
         spreadsheet = os.path.splitext(os.path.basename(solid_dirs[0]))[0] + ".xls"
-        print "Writing spreadsheet %s" % spreadsheet
+        print("Writing spreadsheet %s" % spreadsheet)
 
     # Check there's at least one thing to do
     report = args.report
