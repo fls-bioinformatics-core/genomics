@@ -64,7 +64,7 @@ def report_run(solid_runs,report_paths=False):
     for run in solid_runs:
         # Cosmetic: add separation between runs
         if not first_run:
-            print
+            print("")
         else:
             first_run = False
         # Report overall slide layout
