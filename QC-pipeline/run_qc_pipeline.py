@@ -83,10 +83,11 @@ def SendReport(email_addr,group,job_list):
                                                        job.working_dir,
                                                        (job.end_time - job.start_time),
                                                        job.status())
-        print "Sending email notification to %s re group '%s'" % (email_addr,group)
+        print("Sending email notification to %s re group '%s'" %
+              (email_addr,group))
         SendEmail(subject,email_addr,report)
     else:
-        print "Unable to send email notification: no address set"
+        print("Unable to send email notification: no address set")
 
 # SendEmail: send an email message via mutt
 def SendEmail(subject,recipient,message):
@@ -205,7 +206,7 @@ if __name__ == "__main__":
     # "Script" can consist of script name alone, or a script plus options
     script_args = arguments.script.split()
     # Script name
-    print "Script: '%s'" % arguments.script
+    print("Script: '%s'" % arguments.script)
     if os.path.isabs(script_args[0]):
         # Absolute path
         if os.path.isfile(script_args[0]):
@@ -225,14 +226,14 @@ if __name__ == "__main__":
         logging.error("Script file not found: %s" % script)
         sys.exit(1)
     script_args = script_args[1:]
-    print "Full path for script: %s" % script
+    print("Full path for script: %s" % script)
     if script_args:
-        print "Additional script arguments:"
+        print("Additional script arguments:")
         for arg in script_args:
-            print "\t%s" % arg
+            print("\t%s" % arg)
     # Data directories
     for arg in arguments.dirs:
-        print "Directory: %s" % arg
+        print("Directory: %s" % arg)
         dirn = os.path.abspath(arg)
         if not os.path.isdir(dirn):
             logging.error("Not a directory: %s" % dirn)
@@ -279,7 +280,7 @@ if __name__ == "__main__":
                                        SendReport(email,group,jobs))
     for data_dir in data_dirs:
         # Get for this directory
-        print "Collecting data from %s" % data_dir
+        print("Collecting data from %s" % data_dir)
         if arguments.input_type == "solid":
             pipeline_func = Pipeline.GetSolidDataFiles
         elif arguments.input_type == "solid_paired_end":
@@ -297,7 +298,7 @@ if __name__ == "__main__":
             if arguments.max_total_jobs > 0 and \
                pipeline.nWaiting() == arguments.max_total_jobs:
                 print("Maximum number of jobs queued (%d)" %
-                      arguments.max_total_jobs)
+                      arguments.max_total_jobs))
                 break
             label = os.path.splitext(os.path.basename(data[0]))[0]
             group = os.path.basename(data_dir)
@@ -314,7 +315,7 @@ if __name__ == "__main__":
 
     # Finished
     if email_addr is not None:
-        print("Sending email notification to %s" % arguments.email_addr)
+        print("Sending email notification to %s" % arguments.email_addr))
         subject = "Pipeline completed: %s" % os.path.basename(script)
         SendEmail(subject,arguments.email_addr,pipeline.report())
-    print "Finished"
+    print("Finished")
