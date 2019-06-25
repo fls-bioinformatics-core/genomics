@@ -4,7 +4,7 @@
 #     Copyright (C) University of Manchester 2012-2013,2019 Peter Briggs
 #
 
-__version__ = "1.1.0"
+__version__ = "1.1.1"
 
 """build_illumina_analysis_dir.py
 
@@ -77,20 +77,20 @@ def create_analysis_dir(project,
     
     """
     project_dir = os.path.join(top_dir,project.full_name)
-    print "Creating analysis directory for project '%s'..." % project.full_name
+    print("Creating analysis directory for project '%s'..." % project.full_name)
     # Check for & create directory
     if os.path.exists(project_dir):
-        print "-> %s already exists" % project_dir
+        print("-> %s already exists" % project_dir)
     else:
-        print "Making analysis directory for %s" % project.name
+        print("Making analysis directory for %s" % project.name)
         if not dry_run:
             bcf_utils.mkdir(project_dir,mode=0775)
     # Make an empty ScriptCode directory
     scriptcode_dir = os.path.join(project_dir,"ScriptCode")
     if os.path.exists(scriptcode_dir):
-        print "'ScriptCode' directory %s already exists" % scriptcode_dir
+        print("'ScriptCode' directory %s already exists" % scriptcode_dir)
     else:
-        print "Making 'ScriptCode' directory for %s" % project.name
+        print("Making 'ScriptCode' directory for %s" % project.name)
         if not dry_run:
             bcf_utils.mkdir(scriptcode_dir,mode=0775)
     # Check for & create links to fastq files
@@ -107,7 +107,7 @@ def create_analysis_dir(project,
                     logging.error("Failed to link to %s: %s already exists" %
                                   (fastq_file,os.path.basename(fastq_ln)))
                 else:
-                    print "Linking to %s" % fastq
+                    print("Linking to %s" % fastq)
                     if not dry_run:
                         bcf_utils.mklink(fastq_file,fastq_ln,relative=True)
     else:
@@ -126,11 +126,11 @@ def create_analysis_dir(project,
                 # Sort into order
                 replicates[name].sort()
             # Report detected replicates
-            print "Sample %s" % sample.name
+            print("Sample %s" % sample.name)
             for name in replicates:
-                print "\tReplicate '%s'" % name
+                print("\tReplicate '%s'" % name)
                 for fastq in replicates[name]:
-                    print "\t\t%s" % fastq
+                    print("\t\t%s" % fastq)
             # Do the merge
             for name in replicates:
                 merged_fastq = os.path.join(project_dir,name+'.fastq')
