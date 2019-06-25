@@ -26,7 +26,7 @@ Information on the FASTQ file format: http://en.wikipedia.org/wiki/FASTQ_format
 
 """
 
-__version__ = "1.0.1"
+__version__ = "1.0.2"
 
 CHUNKSIZE = 102400
 
@@ -65,14 +65,14 @@ class FastqIterator(Iterator):
     Example looping over all reads:
 
     >>> for read in FastqIterator(fastq_file):
-    >>>    print read
+    >>>    print(read)
 
     Input FASTQ can be in gzipped format; FASTQ data can also be supplied
     as a file-like object opened for reading, for example:
 
     >>> fp = open(fastq_file,'rU')
     >>> for read in FastqIterator(fp=fp):
-    >>>    print read
+    >>>    print(read)
     >>> fp.close()
 
     """
@@ -512,10 +512,10 @@ def fastqs_are_pair(fastq1=None,fastq2=None,verbose=True,fp1=None,fp2=None):
         i += 1
         if verbose:
             if i%100000 == 0:
-                print "Examining pair #%d" % i
+                print("Examining pair #%d" % i)
         if not r1.seqid.is_pair_of(r2.seqid):
             if verbose:
-                print "Unpaired headers for read position #%d:" % i
-                print "%s\n%s" % (r1.seqid,r2.seqid)
+                print("Unpaired headers for read position #%d:" % i)
+                print("%s\n%s" % (r1.seqid,r2.seqid))
             return False
     return True

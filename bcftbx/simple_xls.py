@@ -109,7 +109,7 @@ Alternatively the contents of a sheet (or a subset) can be rendered as text:
 
 """
 
-__version__ = "0.0.9"
+__version__ = "0.0.10"
 
 #######################################################################
 # Import modules that this module depends on
@@ -372,13 +372,13 @@ class XLSWorkSheet(object):
     The value of an individual cell can be 'rendered' for
     output using the 'render_cell' method:
 
-    >>> print ws.render_cell('F46')
+    >>> print(ws.render_cell('F46'))
 
     All or part of the sheet can be rendered as a tab- and
     newline-delimited string by using the 'render_as_text'
     method:
 
-    >>> print ws.render_as_text()
+    >>> print(ws.render_as_text())
 
     """
     def __init__(self,title):
@@ -1271,7 +1271,7 @@ class ColumnRange(Iterator):
     indices, e.g.
 
     >>> for c in ColumnRange('A','Z'):
-    ...   print c
+    ...   print(c)
 
     """
     def __init__(self,i,j=None,include_end=True,reverse=False):
@@ -1630,30 +1630,32 @@ if __name__ == "__main__":
     wb.add_work_sheet('test')
     wb.add_work_sheet('test2')
     wb.add_work_sheet('data',"Data")
-    print "%s" % wb.worksheet['test'].title
-    print "%s" % wb.worksheet['test2'].title
-    print "%s" % wb.worksheet['data'].title
+    print("%s" % wb.worksheet['test'].title)
+    print("%s" % wb.worksheet['test2'].title)
+    print("%s" % wb.worksheet['data'].title)
 
     data = wb.worksheet['data']
     data['A1'] = "Column 1"
-    print "%s" % data['A1']
-    print "%s" % data['A2']
-    print "%s" % data['A']['1']
+    print("%s" % data['A1'])
+    print("%s" % data['A2'])
+    print("%s" % data['A']['1'])
     data['A']['1'] = "Updated value"
-    print "%s" % data['A1']
+    print("%s" % data['A1'])
 
     data['B']['12'] = "Another value"
     data['Z']['5'] = "And another"
     data['AZ']['3'] = "Yet another"
     data['AB']['3'] = "And another again"
     
-    print "%s,%s" % (data.columns,data.rows)
+    print("%s,%s" % (data.columns,data.rows))
 
-    print data.render_as_text(include_columns_and_rows=True,
+    print(data.render_as_text(include_columns_and_rows=True,
                               eval_formulae=True,
-                              include_styles=True)
+                              include_styles=True))
 
-    print data.render_as_text(start='B1',end='C6',include_columns_and_rows=True)
+    print(data.render_as_text(start='B1',
+                              end='C6',
+                              include_columns_and_rows=True))
 
     # Examples rendering into XLS and XLSX output
     wb = XLSWorkBook("Test")

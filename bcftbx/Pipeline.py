@@ -47,7 +47,7 @@ system. So typical usage might look like:
 # Module metadata
 #######################################################################
 
-__version__ = "0.1.4"
+__version__ = "0.1.5"
 
 #######################################################################
 # Import modules that this module depends on
@@ -391,8 +391,8 @@ class PipelineRunner(object):
         logging.debug("PipelineRunner: started")
         logging.debug("Blocking mode : %s" % blocking)
         # Report set up
-        print "Initially %d jobs waiting, %d running, %d finished" % \
-            (self.nWaiting(),self.nRunning(),self.nCompleted())
+        print("Initially %d jobs waiting, %d running, %d finished" %
+              (self.nWaiting(),self.nRunning(),self.nCompleted()))
         # Initial update sets the jobs running
         self.update()
         if blocking:
@@ -400,7 +400,7 @@ class PipelineRunner(object):
                 # Pipeline is still executing so wait
                 time.sleep(self.poll_interval)
             # Pipeline has finished
-            print "Pipeline completed"
+            print("Pipeline completed")
 
     def update(self):
         """Update the pipeline
@@ -417,11 +417,11 @@ class PipelineRunner(object):
                 self.running.remove(job)
                 self.completed.append(job)
                 updated_status = True
-                print "Job has completed: %s: %s %s (%s)" % (
+                print("Job has completed: %s: %s %s (%s)" % (
                     job.job_id,
                     job.name,
                     os.path.basename(job.working_dir),
-                    time.asctime(time.localtime(job.end_time)))
+                    time.asctime(time.localtime(job.end_time))))
                 # Invoke callback on job completion
                 if self.handle_job_completion:
                     self.handle_job_completion(job)
@@ -433,7 +433,7 @@ class PipelineRunner(object):
                             jobs_in_group.append(check_job)
                     if self.njobs_in_group[job.group_label] == len(jobs_in_group):
                         # All jobs in group have completed
-                        print "Group '%s' has completed" % job.group_label
+                        print("Group '%s' has completed" % job.group_label)
                         # Invoke callback on group completion
                         if self.handle_group_completion:
                             self.handle_group_completion(job.group_label,jobs_in_group)
@@ -449,17 +449,17 @@ class PipelineRunner(object):
             next_job.start()
             self.running.append(next_job)
             updated_status = True
-            print "Job has started: %s: %s %s (%s)" % (
+            print("Job has started: %s: %s %s (%s)" % (
                 next_job.job_id,
                 next_job.name,
                 os.path.basename(next_job.working_dir),
-                time.asctime(time.localtime(next_job.start_time)))
+                time.asctime(time.localtime(next_job.start_time))))
             if self.jobs.empty():
                 logging.debug("PipelineRunner: all jobs now submitted")
         # Report
         if updated_status:
-            print "Currently %d jobs waiting, %d running, %d finished" % \
-                (self.nWaiting(),self.nRunning(),self.nCompleted())
+            print("Currently %d jobs waiting, %d running, %d finished" %
+                  (self.nWaiting(),self.nRunning(),self.nCompleted()))
 
     def report(self):
         """Return a report of the pipeline status
@@ -511,7 +511,7 @@ class PipelineRunner(object):
         # Terminate the running jobs
         for job in self.running:
             logging.debug("Terminating job %s" % job.job_id)
-            print "Terminating job %s" % job.job_id
+            print("Terminating job %s" % job.job_id)
             try:
                 job.terminate()
             except Exception, ex:

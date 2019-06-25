@@ -191,15 +191,15 @@ class ExperimentList(object):
         # Deal with top_dir
         if top_dir:
             if os.path.exists(top_dir):
-                print "Directory %s already exists" % top_dir
+                print("Directory %s already exists" % top_dir)
             else:
                 if not dry_run:
                     # Create top directory
-                    print "Creating %s" % top_dir
+                    print("Creating %s" % top_dir)
                     utils.mkdir(top_dir,mode=0775)
                 else:
                     # Report what would have been done
-                    print "mkdir %s" % top_dir
+                    print("mkdir %s" % top_dir)
         # Type of link
         if link_type == 'absolute':
             use_relative_links = False
@@ -207,9 +207,12 @@ class ExperimentList(object):
             use_relative_links = True
         # For each experiment, make and populate directory
         for expt in self.experiments:
-            print "Experiment: %s %s %s/%s" % (expt.name,expt.type,expt.sample,expt.library)
+            print("Experiment: %s %s %s/%s" % (expt.name,
+                                               expt.type,
+                                               expt.sample,
+                                               expt.library))
             expt_dir = expt.dirname(top_dir)
-            print "\tDir: %s" % expt_dir
+            print("\tDir: %s" % expt_dir)
             # Make directory
             if os.path.exists(expt_dir):
                 logging.warning("Directory %s already exists" % expt_dir)
@@ -219,7 +222,7 @@ class ExperimentList(object):
                     utils.mkdir(expt_dir,mode=0775)
                 else:
                     # Report what would have been done
-                    print "mkdir %s" % expt_dir
+                    print("mkdir %s" % expt_dir)
             # Locate the primary data
             for run in self.solid_runs:
                 paired_end = SolidData.is_paired_end(run)
@@ -227,8 +230,8 @@ class ExperimentList(object):
                 for library in libraries:
                     # Get names for links to primary data - F3
                     ln_csfasta,ln_qual = LinkNames(naming_scheme).names(library)
-                    print "\t\t%s" % ln_csfasta
-                    print "\t\t%s" % ln_qual
+                    print("\t\t%s" % ln_csfasta)
+                    print("\t\t%s" % ln_qual)
                     # Make links to primary data
                     try:
                         self.__linkToFile(library.csfasta,os.path.join(expt_dir,ln_csfasta),
@@ -241,8 +244,8 @@ class ExperimentList(object):
                     # Get names for links to F5 reads (if paired-end run)
                     if paired_end:
                         ln_csfasta,ln_qual = LinkNames(naming_scheme).names(library,F5=True)
-                        print "\t\t%s" % ln_csfasta
-                        print "\t\t%s" % ln_qual
+                        print("\t\t%s" % ln_csfasta)
+                        print("\t\t%s" % ln_qual)
                         # Make links to F5 read data
                         try:
                             self.__linkToFile(library.csfasta_f5,os.path.join(expt_dir,ln_csfasta),
@@ -262,7 +265,7 @@ class ExperimentList(object):
                     utils.mkdir(scriptcode_dir,mode=0775)
                 else:
                     # Report what would have been done
-                    print "mkdir %s" % scriptcode_dir
+                    print("mkdir %s" % scriptcode_dir)
     
     def __linkToFile(self,source,target,relative=True,dry_run=False):
         """Create symbolic link to a file
@@ -291,7 +294,7 @@ class ExperimentList(object):
             utils.mklink(source,target,relative=relative)
         else:
             # Report what would have been done
-            print "ln -s %s %s" % (source,target)
+            print("ln -s %s %s" % (source,target))
 
     def __getitem__(self,key):
         return self.experiments[key]

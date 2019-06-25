@@ -31,7 +31,7 @@ options:
 
 """
 
-__version__ = "1.0.1"
+__version__ = "1.0.2"
 
 #######################################################################
 # Imports
@@ -215,15 +215,15 @@ class CommandParser(object):
 
         """
         if cmd in ('-h','--help','help'):
-            print "Usage: %s COMMAND [options] [args...]" % self._name
+            print("Usage: %s COMMAND [options] [args...]" % self._name)
             if self._description is not None:
-                print "\n%s" % self._description
-            print "%s" % self.print_available_commands()
+                print("\n%s" % self._description)
+            print("%s" % self.print_available_commands())
             sys.exit(0)
         if cmd in ('--version',):
             if self._version is not None:
                 version_str = self._version
-                print "%s" % version_str.replace('%prog',self._name)
+                print("%s" % version_str.replace('%prog',self._name))
             sys.exit(0)
 
     def list_commands(self):

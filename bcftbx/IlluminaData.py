@@ -1805,7 +1805,7 @@ class SampleSheetPredictor(object):
 
     >>> for predicted_sample in predicted_project.samples:
     ...    for fq in predicted_sample.fastqs:
-    ...       print "Predicted Fastq: %s" % fq
+    ...       print("Predicted Fastq: %s" % fq)
 
     To predict Fastqs for paired-end data:
 
@@ -1813,7 +1813,7 @@ class SampleSheetPredictor(object):
     >>> for p in predictor.projects:
     ...    for s in p.samples:
     ...       for fq in s.fastqs:
-    ...          print fq
+    ...          print(fq)
 
     (See also the `SampleSheetProject` and `SampleSheetSample`)
 

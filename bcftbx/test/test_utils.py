@@ -392,7 +392,8 @@ class TestPathInfo(unittest.TestCase):
             if user != path.uid:
                 new_uid = user
                 break
-        print "Resetting owner to %s (%s)" % (new_uid,get_user_from_uid(new_uid))
+        print("Resetting owner to %s (%s)" % (new_uid,
+                                              get_user_from_uid(new_uid)))
         self.assertNotEqual(new_uid,path.uid)
         # Reset the user
         path.chown(user=new_uid)

@@ -88,7 +88,7 @@ class MockGE(object):
             self._cx = sqlite3.connect(self._db_file)
             self._cx.row_factory = sqlite3.Row
         except Exception as ex:
-            print "Exception connecting to DB: %s" % ex
+            print("Exception connecting to DB: %s" % ex)
             raise ex
         if init_db:
             logging.debug("Setting up DB")
@@ -125,7 +125,7 @@ class MockGE(object):
             cu.execute(sql)
             self._cx.commit()
         except sqlite3.Error as ex:
-            print "Failed to set up database: %s" % ex
+            print("Failed to set up database: %s" % ex)
             raise ex
 
     def _init_job(self,name,command,working_dir,queue,output_name,join_output):
@@ -477,8 +477,8 @@ echo "$exit_code" > %s/__exit_code.%d
                                 output_name,join_output)
         logging.debug("Created job %s" % job_id)
         # Report the job id
-        print "Your job %s (\"%s\") has been submitted" % (job_id,
-                                                           name)
+        print("Your job %s (\"%s\") has been submitted" % (job_id,
+                                                           name))
         self.update_jobs()
 
     def qstat(self,argv):
@@ -506,8 +506,8 @@ echo "$exit_code" > %s/__exit_code.%d
         if not jobs:
             return
         # Print job info
-        print """job-ID  prior   name       user         state submit/start at     queue                          slots ja-task-ID
------------------------------------------------------------------------------------------------------------------"""
+        print("""job-ID  prior   name       user         state submit/start at     queue                          slots ja-task-ID
+-----------------------------------------------------------------------------------------------------------------""")
         for job in jobs:
             job_id = str(job["id"])
             name = str(job["name"])
@@ -527,7 +527,7 @@ echo "$exit_code" > %s/__exit_code.%d
             line.append("%s" % start_time)
             line.append("%s%s" % (queue[:30],' '*(30-len(queue))))
             line.append("1")
-            print ' '.join(line)
+            print(' '.join(line))
 
     def qacct(self,argv):
         """
@@ -585,7 +585,7 @@ echo "$exit_code" > %s/__exit_code.%d
         start_time = datetime.datetime.fromtimestamp(job_info['start_time']).strftime("%c")
         end_time = datetime.datetime.fromtimestamp(job_info['end_time']).strftime("%c")
         queue = job_info['queue']
-        print """==============================================================
+        print("""==============================================================
 qname        %s  
 hostname     node001
 group        mygroup               
@@ -605,7 +605,7 @@ slots        1
 failed       0    
 exit_status  %s""" % (queue,user,name,job_id,
                       qsub_time,start_time,end_time,
-                      exit_code)
+                      exit_code))
 
     def qdel(self,argv):
         """
@@ -623,7 +623,7 @@ exit_status  %s""" % (queue,user,name,job_id,
             job_id = int(job_id)
             # Mark the job for deletion
             self._mark_for_deletion(job_id)
-            print "Job %s has been marked for deletion" % job_id
+            print("Job %s has been marked for deletion" % job_id)
 
 #######################################################################
 # Functions

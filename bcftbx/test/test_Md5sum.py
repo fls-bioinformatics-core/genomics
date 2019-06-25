@@ -176,9 +176,9 @@ class TestMd5CheckerWalk(unittest.TestCase):
         # Walk the example directory and check all yielded files
         # are in the list of created files
         file_list = self.example_dir.filelist(include_links=True)
-        print str(file_list)
+        print(str(file_list))
         for f in Md5Checker.walk(self.dirn):
-            print "Check for %s" % f
+            print("Check for %s" % f)
             self.assertTrue(f in file_list,"%s not in files or links?" % f)
             file_list.remove(f)
         # Check that no files were missed
@@ -296,7 +296,7 @@ class TestMd5CheckerMd5cmpDirs(unittest.TestCase):
         self.dir2.add_dir("portuguese")
         for f,status in Md5Checker.md5cmp_dirs(self.dir1.dirn,
                                                self.dir2.dirn):
-            print "%s: %d" % (f,status)
+            print("%s: %d" % (f,status))
             if os.path.basename(f) == "portuguese":
                 self.assertEqual(Md5Checker.MD5_ERROR,status)
             else:

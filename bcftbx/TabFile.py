@@ -189,7 +189,7 @@ TabFile object, for example for a comma-delimited file:
 
 """
 
-__version__ = "0.2.9"
+__version__ = "0.2.10"
 
 import logging
 
@@ -224,7 +224,7 @@ class TabDataLine(object):
 
     Check if a line is empty:
 
-        if not line: print "Blank line"
+        if not line: print("Blank line")
     
     """
     def __init__(self,line=None,column_names=None,delimiter='\t',lineno=None,
@@ -453,16 +453,16 @@ class TabFile(object):
 
     Example usage:
 
-        data = TabFile(myfile)     # load initial data
+        data = TabFile(myfile)      # load initial data
 
-        print '%s' % len(data)     # report number of lines of data
+        print('%s' % len(data))     # report number of lines of data
 
-        print '%s' % data.header() # report header (i.e. column names)
+        print('%s' % data.header()) # report header (i.e. column names)
 
         for line in data:
-            ...                    # loop over lines of data
+            ...                     # loop over lines of data
 
-        myline = data[0]           # fetch first line of data
+        myline = data[0]            # fetch first line of data
     """
     def __init__(self,filen=None,fp=None,column_names=None,skip_first_line=False,
                  first_line_is_header=False,tab_data_line=TabDataLine,

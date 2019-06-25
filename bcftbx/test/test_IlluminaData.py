@@ -3069,12 +3069,12 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,Sample_Pro
         for f in os.listdir(os.path.join(self.mock_illumina_data.dirn,
                                          self.mock_illumina_data.unaligned_dir,
                                          "AB")):
-            print f
+            print(f)
             if f.startswith("AB1"):
                 fq = os.path.join(self.mock_illumina_data.dirn,
                                   self.mock_illumina_data.unaligned_dir,
                                   "AB",f)
-                print "Removing %s" % fq
+                print("Removing %s" % fq)
                 os.remove(fq)
         illumina_data = IlluminaData(self.mock_illumina_data.dirn)
         self.assertEqual(list_missing_fastqs(illumina_data,self.sample_sheet),
@@ -3164,12 +3164,12 @@ CDE4,CDE4,,,N3,AGTCAA,CDE,""")
         for f in os.listdir(os.path.join(self.mock_illumina_data.dirn,
                                          self.mock_illumina_data.unaligned_dir,
                                          "AB")):
-            print f
+            print(f)
             if f.startswith("AB1"):
                 fq = os.path.join(self.mock_illumina_data.dirn,
                                   self.mock_illumina_data.unaligned_dir,
                                   "AB",f)
-                print "Removing %s" % fq
+                print("Removing %s" % fq)
                 os.remove(fq)
         illumina_data = IlluminaData(self.mock_illumina_data.dirn)
         self.assertEqual(list_missing_fastqs(illumina_data,self.sample_sheet),
