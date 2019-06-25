@@ -109,7 +109,7 @@ def SendEmail(subject,recipient,message):
         p.stdin.close()
         p.wait()
         return True
-    except Exception, ex:
+    except Exception as ex:
         logging.error("SendMail failed to send email via mutt")
         logging.error("Exception: %s" % ex)
         return False
