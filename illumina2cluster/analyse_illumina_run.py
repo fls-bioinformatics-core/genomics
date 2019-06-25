@@ -9,7 +9,7 @@ Provides functionality for analysing data from an Illumina sequencer run.
 
 """
 
-__version__ = "0.2.1"
+__version__ = "0.2.2"
 
 #######################################################################
 # Import modules
@@ -83,7 +83,7 @@ if __name__ == "__main__":
     try:
         illumina_data = IlluminaData.IlluminaData(illumina_analysis_dir,
                                                   unaligned_dir=args.unaligned_dir)
-    except IlluminaData.IlluminaDataError, ex:
+    except IlluminaData.IlluminaDataError as ex:
         logging.error("Failed to collect data: %s",ex)
         sys.exit(1)
 
