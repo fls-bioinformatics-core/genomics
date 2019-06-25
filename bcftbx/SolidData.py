@@ -991,7 +991,7 @@ class SolidRunDefinition(object):
         self.data = []
         try:
             self.populate()
-        except IOError, ex:
+        except IOError as ex:
             logging.error("Failed to populate SolidRunDefinition: '%s'" % ex)
 
     def __nonzero__(self):
@@ -1077,7 +1077,7 @@ class SolidBarcodeStatistics(object):
         self.data = []
         try:
             self.populate()
-        except IOError, ex:
+        except IOError as ex:
             logging.error("Failed to populate SolidBarcodeStatistics: '%s'" % ex)
 
     def __nonzero__(self):
