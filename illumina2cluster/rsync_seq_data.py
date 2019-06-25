@@ -19,7 +19,7 @@ Wrapper for rsync for moving sequencing into the data storage area.
 # Modules metadata
 #######################################################################
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 
 #######################################################################
 # Import modules that this module depends on
@@ -109,7 +109,7 @@ def run_rsync(source,target,dry_run=False,mirror=False,chmod=None,
     try:
         p = subprocess.Popen(rsync_cmd,stdout=fpout,stderr=fperr)
         returncode = p.wait()
-    except KeyboardInterrupt,ex:
+    except KeyboardInterrupt as ex:
         # Handle keyboard interrupt while rsync is running
         print("KeyboardInterrupt: stopping rsync process")
         p.kill()
