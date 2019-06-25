@@ -19,7 +19,7 @@ Wrapper for rsync for moving sequencing into the data storage area.
 # Modules metadata
 #######################################################################
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 #######################################################################
 # Import modules that this module depends on
@@ -91,11 +91,11 @@ def run_rsync(source,target,dry_run=False,mirror=False,chmod=None,
         for exclude in excludes:
             rsync_cmd.append('--exclude=%s' % exclude)
     rsync_cmd.extend([source,target])
-    print "Rsync command: %s" % ' '.join(rsync_cmd)
+    print("Rsync command: %s" % ' '.join(rsync_cmd))
     if log is None:
         fpout = sys.stdout
     else:
-        print "Writing stdout to %s" % log
+        print("Writing stdout to %s" % log)
         fpout = open(log,'w')
     if err is None:
         if log is not None:
@@ -104,14 +104,14 @@ def run_rsync(source,target,dry_run=False,mirror=False,chmod=None,
             fperr = sys.stderr
     else:
         fperr = open(err,'w')
-        print "Writing stderr to %s" % err
+        print("Writing stderr to %s" % err)
     # Execute rsync command and wait for finish
     try:
         p = subprocess.Popen(rsync_cmd,stdout=fpout,stderr=fperr)
         returncode = p.wait()
     except KeyboardInterrupt,ex:
         # Handle keyboard interrupt while rsync is running
-        print "KeyboardInterrupt: stopping rsync process"
+        print("KeyboardInterrupt: stopping rsync process")
         p.kill()
         returncode = -1
     return returncode
@@ -183,16 +183,16 @@ if __name__ == '__main__':
     else:
         log_file = None
     # Report settings
-    print "Data dir   : %s" % data_dir
-    print "Platform   : %s" % platform
-    print "Destination: %s" % destination
-    print "Log file   : %s" % log_file
-    print "Mirror mode: %s" % options.mirror
+    print("Data dir   : %s" % data_dir)
+    print("Platform   : %s" % platform)
+    print("Destination: %s" % destination)
+    print("Log file   : %s" % log_file)
+    print("Mirror mode: %s" % options.mirror)
     # Run rsync
     status = run_rsync(data_dir,destination,dry_run=args.dry_run,
                        log=log_file,chmod=args.chmod,mirror=args.mirror,
                        excludes=args.exclude_pattern)
-    print "Rsync returncode: %s" % status
+    print("Rsync returncode: %s" % status)
     if status != 0:
         logging.error("Rsync failure")
     sys.exit(status)
