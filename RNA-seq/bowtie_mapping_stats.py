@@ -713,7 +713,7 @@ if __name__ == "__main__":
         p.error("at least one input bowtie log file required")
 
     # Report version
-    print("%s %s" % (os.path.basename(sys.argv[0]),__version__)))
+    print("%s %s" % (os.path.basename(sys.argv[0]),__version__))
 
     # Initialisations
     if arguments.stats_xls is not None:
