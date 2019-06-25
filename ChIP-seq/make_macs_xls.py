@@ -88,8 +88,8 @@ if __name__ == "__main__":
         # MACS output file might already have an .xls extension
         # but we'll add an explicit .xls extension
         xls_out = "XLS_"+os.path.splitext(os.path.basename(macs_in))[0]+".xls"
-    print "Input file: %s" % macs_in
-    print "Output XLS: %s" % xls_out
+    print("Input file: %s" % macs_in)
+    print("Output XLS: %s" % xls_out)
 
     # Extract the header from the MACS and feed actual data to
     # TabFile object
@@ -120,7 +120,7 @@ if __name__ == "__main__":
         logging.error("couldn't detect MACS version")
         sys.exit(1)
     else:
-        print "Input file is from MACS %s" % macs_version
+        print("Input file is from MACS %s" % macs_version)
 
     # Don't try to convert output from MACS2
     if macs_version.startswith("2."):
