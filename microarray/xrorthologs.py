@@ -174,7 +174,7 @@ class IndexedFile(object):
                 pass
             # Store line against key
             if self.__content.has_key(key):
-                print "*** Multiple lines with same index ***"
+                print("*** Multiple lines with same index ***")
                 sys.exit(1)
             self.__keys.append(key)
             self.__content[key] = line.rstrip('\n')
@@ -223,9 +223,9 @@ def combine_data(data_file_1,data_file_2,lookup,outfile):
         appended with data from data_file_2
     """
     # Read in tabbed data
-    print "Reading in data from %s" % data_file_1
+    print("Reading in data from %s" % data_file_1)
     data1 = IndexedFile(data_file_1,first_line_is_header=True)
-    print "Reading in data from %s" % data_file_2
+    print("Reading in data from %s" % data_file_2)
     data2 = IndexedFile(data_file_2,first_line_is_header=True)
 
     # Open output file
@@ -236,7 +236,7 @@ def combine_data(data_file_1,data_file_2,lookup,outfile):
 
     # Finished
     fp.close()
-    print "Output written to '%s'" % outfile
+    print("Output written to '%s'" % outfile)
 
 def combine_data_main(data1,data2,lookup,foutput):
     """Append data from one file to another using a lookup
@@ -412,12 +412,12 @@ class TestCombineData(unittest.TestCase):
         self.assertEqual(output_fp.getvalue(),self.expected_output)
 
 def run_tests():
-    print "Running unit tests"
+    print("Running unit tests")
     suite = unittest.TestSuite(unittest.TestLoader().\
                                    discover(os.path.dirname(sys.argv[0]), \
                                                 pattern=os.path.basename(sys.argv[0])))
     unittest.TextTestRunner(verbosity=2).run(suite)
-    print "Tests finished"
+    print("Tests finished")
     sys.exit()
 
 #######################################################################
@@ -470,7 +470,7 @@ if __name__ == "__main__":
     if arguments.run_tests: run_tests()
 
     # Construct lookup object from data file
-    print "Building lookup tables from %s" % arguments.lookup
+    print("Building lookup tables from %s" % arguments.lookup)
     lookup = ProbeSetLookup(arguments.lookup,cols=(0,3))
 
     # Get files
@@ -478,15 +478,15 @@ if __name__ == "__main__":
     species2_data_file = arguments.species2
 
     # Append the ortholog probe set(s) and data for 2nd species to first species
-    print "### Appending species 2 data to species 1 ###"
+    print("### Appending species 2 data to species 1 ###")
     outfile = os.path.splitext(os.path.basename(species1_data_file))[0]+'_appended.txt'
     combine_data(species1_data_file,species2_data_file,lookup.lookup,outfile)
 
     # Append the ortholog probe set(s) and data for 1st species to second species
-    print "### Appending species 1 data to species 2 ###"
+    print("### Appending species 1 data to species 2 ###")
     outfile = os.path.splitext(os.path.basename(species2_data_file))[0]+'_appended.txt'
     combine_data(species2_data_file,species1_data_file,lookup.reverse_lookup,outfile)
 
     # Finished
-    print "Done"
+    print("Done")
     sys.exit()
