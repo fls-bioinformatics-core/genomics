@@ -144,10 +144,10 @@ def main(args=None):
         logging.critical("%s: file not found" % fasta)
         sys.exit(1)
     # Extract each chromosome to its own temporary file
-    print "Extracting chromosomes..."
+    print("Extracting chromosomes...")
     chroms = list()
     wd = tempfile.mkdtemp()
-    print "Using working dir %s" % wd
+    print("Using working dir %s" % wd)
     with open(fasta,'rU') as fp:
         chromfile = None
         for line in fp:
@@ -157,7 +157,7 @@ def main(args=None):
                     chromfile.close()
                 # Extract chromosome name
                 chrom = line.strip()[1:]
-                print "\t%s" % chrom
+                print("\t%s" % chrom)
                 if chrom in chroms:
                     logging.critical("%s: chromosome appears more "
                                      "than once" % chrom)
@@ -169,10 +169,10 @@ def main(args=None):
             chromfile.write(line)
     if chromfile is not None:
         chromfile.close()
-    print "Found %d chromosomes" % len(chroms)
+    print("Found %d chromosomes" % len(chroms))
     chroms = sorted(chroms,cmp=cmp_chrom_names)
     # Assemble new fasta file in karyotypic order
-    print "Reordering chromosomes..."
+    print("Reordering chromosomes...")
     fasta_reordered = "%s.%s%s" % (
         os.path.splitext(os.path.basename(fasta))[0],
         "karyotypic",
@@ -180,11 +180,11 @@ def main(args=None):
     with open(fasta_reordered,'w') as fp:
         for chrom in chroms:
             chromfile = os.path.join(wd,"%s.fa" % chrom)
-            print "\t%s (%s)" % (chrom,chromfile)
+            print("\t%s (%s)" % (chrom,chromfile))
             with open(chromfile,'r') as fpp:
                 fp.write(fpp.read())
-    print "Wrote reordered FASTA file to %s" % fasta_reordered
-    print "Finished"
+    print("Wrote reordered FASTA file to %s" % fasta_reordered)
+    print("Finished")
 
 if __name__ == "__main__":
     main()
