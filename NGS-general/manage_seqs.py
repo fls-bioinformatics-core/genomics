@@ -25,7 +25,7 @@ manage_seqs.py [-o OUTFILE|-a OUTFILE] [-d DESCRIPTION] INFILE [INFILE...]
 # Module metadata
 #######################################################################
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 
 #######################################################################
 # Import modules that this module depends on
@@ -164,7 +164,7 @@ class SeqDb(object):
             try:
                 name,seq = split_line(line)
                 self.add(name,seq)
-            except ValueError,ex:
+            except ValueError as ex:
                 print("Error for line: '%s'" % line.rstrip('\n'))
                 print("%s" % ex)
         fp.close()
