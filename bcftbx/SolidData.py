@@ -314,7 +314,7 @@ class SolidRun(object):
                             library.csfasta_f5 = primary_data.csfasta
                             library.qual_f5    = primary_data.qual
                             f5_timestamp       = primary_data.timestamp
-        except Exception,ex:
+        except Exception as ex:
             logging.error("Exception adding sample: %s" % ex)
             raise ex
 
@@ -753,7 +753,7 @@ class SolidProject(object):
           library: SolidLibrary object to add to the project
         """
         if not isinstance(library,SolidLibrary):
-            raise TypeError, "addLibrary requires SolidLibrary instance"
+            raise TypeError("addLibrary requires SolidLibrary instance")
         self.libraries.append(library)
 
     def getSample(self):
