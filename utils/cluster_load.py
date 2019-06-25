@@ -239,7 +239,7 @@ def qstat(user=None):
         # ...
         # i.e. 2 header lines then one line per job
         for line in stdout.split('\n'):
-            #print line
+            #print(line)
             try:
                 if line.split()[0].isdigit():
                     jobid = line.split()[0]
@@ -264,24 +264,24 @@ if __name__ == "__main__":
     # Get list of all jobs
     qstatus = Qstat('*')
     # Summarise
-    print "%d jobs running (r)" % len(qstatus.filter('state','r*'))
-    print "%d jobs queued (q)" % len(qstatus.filter('state','*q*'))
-    print "%d jobs suspended (S)" % len(qstatus.filter('state','S*'))
-    print "%d jobs pending deletion (d)" % len(qstatus.filter('state','d*'))
-    print ""
+    print("%d jobs running (r)" % len(qstatus.filter('state','r*')))
+    print("%d jobs queued (q)" % len(qstatus.filter('state','*q*')))
+    print("%d jobs suspended (S)" % len(qstatus.filter('state','S*')))
+    print("%d jobs pending deletion (d)" % len(qstatus.filter('state','d*')))
+    print("")
     # Total number assigned to each queue across all instances
-    print "Jobs by queue:"
+    print("Jobs by queue:")
     for q in qstatus.queues:
         qstatus_queue = qstatus.filter('queue_name',q)
-        print "%12s\t%d (%d/%d)" % (q,
-                                 len(qstatus_queue.filter('state','r*')),
-                                 len(qstatus_queue.filter('state','S*')),
-                                 len(qstatus_queue.filter('state','d*')))
+        print("%12s\t%d (%d/%d)" % (q,
+                                    len(qstatus_queue.filter('state','r*')),
+                                    len(qstatus_queue.filter('state','S*')),
+                                    len(qstatus_queue.filter('state','d*'))))
 
-    print ""
+    print("")
     # Jobs for each user (total, running, queued and suspended)
-    print "Jobs by user:"
-    print "%12s\tTotal\tr\tq\tS\td" % ''
+    print("Jobs by user:")
+    print("%12s\tTotal\tr\tq\tS\td" % '')
     for u in qstatus.users:
         qstatus_user = qstatus.filter('user',u)
         n_total = len(qstatus_user)
@@ -289,18 +289,18 @@ if __name__ == "__main__":
         n_q = len(qstatus_user.filter('state','*q*'))
         n_S = len(qstatus_user.filter('state','S'))
         n_d = len(qstatus_user.filter('state','d*'))
-        print "%12s\t%d\t%d\t%d\t%s\t%s" % (u,n_total,n_r,n_q,n_S,n_d)
-    print ""
+        print("%12s\t%d\t%d\t%d\t%s\t%s" % (u,n_total,n_r,n_q,n_S,n_d))
+    print("")
     # Jobs for each node by queue instance
-    print "Jobs by node:"
+    print("Jobs by node:")
     out_line = ["%12s" % '',"Total"]
     for queue in qstatus.queues:
         out_line.append("%8s" % queue)
-    print str('\t'.join(out_line))
+    print(str('\t'.join(out_line)))
     out_line = [" "*12 , " "*len("Total")]
     for queue in qstatus.queues:
         out_line.append("%8s" % 'r (S/d)')
-    print str('\t'.join(out_line))
+    print(str('\t'.join(out_line)))
     for n in qstatus.nodes:
         # Breakdown into queues on this node
         out_line = ["%12s" % n, "%d" % len(qstatus.filter('queue_host',n))]
@@ -311,7 +311,7 @@ if __name__ == "__main__":
             n_S = len(qstatus_queue.filter('state','S*'))
             n_d = len(qstatus_queue.filter('state','d*'))
             out_line.append("%8s" % ("%d (%d/%d)" % (n_r,n_S,n_d)))
-        print str('\t'.join(out_line))
+        print(str('\t'.join(out_line)))
     out_line = ["%12s" % '',""]
     for q in qstatus.queues:
         qstatus_queue = qstatus.filter('queue_name',q)
@@ -319,4 +319,4 @@ if __name__ == "__main__":
                                  (len(qstatus_queue.filter('state','r*')),
                                   len(qstatus_queue.filter('state','S*')),
                                   len(qstatus_queue.filter('state','d*')))))
-    print str('\t'.join(out_line))
+    print(tr('\t'.join(out_line)))
