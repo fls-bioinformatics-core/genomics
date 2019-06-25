@@ -16,7 +16,7 @@ import bcftbx.FASTQFile as FASTQFile
 if __name__ == "__main__":
     # Collect input fastq file name
     if len(sys.argv) < 2:
-        print "Usage: %s fastq" % os.path.basename(sys.argv[0])
+        print("Usage: %s fastq" % os.path.basename(sys.argv[0]))
         sys.exit()
     fastq = sys.argv[1]
     # Output file names
@@ -35,7 +35,7 @@ if __name__ == "__main__":
         else:
             headers.add(seqid)
         n += 1
-        if not (n % 1000000): print "%s" % n
+        if not (n % 1000000): print("%s" % n)
     # Loop again outputing only paired reads
     fp = open(fastq_out,'w')
     fp_singles = open(singles_header,'w')
@@ -51,7 +51,7 @@ if __name__ == "__main__":
             # Singleton read
             fp_singles.write(seqid+"\n")
         n += 1
-        if not (n % 1000000): print "%s" % n
+        if not (n % 1000000): print("%s" % n)
     # Close files
     fp.close()
     fp_singles.close()

@@ -29,7 +29,7 @@ class TestYieldFilepairs(unittest.TestCase):
         # Remove any (non-link) directories from the expected list
         expected = filter(lambda x: os.path.islink(x) or not os.path.isdir(x),
                           expected)
-        print "Expected = %s" % expected
+        print("Expected = %s" % expected)
         # Get all file pairs from the example dir and a
         # dummy target directory name
         for pair in yield_filepairs(self.d.dirn,'/dummy/dir'):

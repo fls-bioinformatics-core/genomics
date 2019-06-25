@@ -290,7 +290,7 @@ class QCReporter(object):
                         # Recursively add directory and all its contents
                         add_dir_to_zip(f,zip_top_dir=zip_top_dir)
         except Exception, ex:
-            print "Exception creating zip archive: %s" % ex
+            print("Exception creating zip archive: %s" % ex)
         os.chdir(cwd)
         return '%s.zip' % self.report_name
 
@@ -339,7 +339,7 @@ class QCSample(object):
         glob_pattern = os.path.join(self.qc_dir,"%s*" % self.name)
         qc_files = [os.path.basename(f) for f in glob.glob(glob_pattern)]
         qc_files.sort()
-        #print "QC files: %s" % qc_files
+        #print("QC files: %s" % qc_files)
         # Associate QC outputs with sample names
         for f in qc_files:
             logging.debug("Testing file: %s" % f)
@@ -762,7 +762,7 @@ class IlluminaQCReporter(QCReporter):
                     # Add all files in fastqc dir
                     add_dir_to_zip(z,os.path.join(qc_dir,sample.fastqc),zip_top_dir=zip_top_dir)
         except Exception, ex:
-            print "Exception creating zip archive: %s" % ex
+            print("Exception creating zip archive: %s" % ex)
         os.chdir(cwd)
         return '%s.zip' % self.report_name
 
@@ -915,7 +915,7 @@ class SolidQCReporter(QCReporter):
                 # Strip trailing "_F3" from names
                 sample = sample.replace('_F3','')
             self.addSample(SolidQCSample(sample,self.qc_dir,self.__paired_end))
-            print "Processing outputs for sample '%s'" % sample
+            print("Processing outputs for sample '%s'" % sample)
         # Filtering stats
         if stats_file and os.path.exists(stats_file):
             self.__stats = TabFile.TabFile(stats_file,first_line_is_header=True)
@@ -969,7 +969,7 @@ class SolidQCReporter(QCReporter):
                     stats[i] = 'n/a'
                 # Try to get read count from csfasta file
                 csfasta = "%s.csfasta" % sample.name
-                print "Attempting to getting read count from %s" % csfasta
+                print("Attempting to getting read count from %s" % csfasta)
                 nreads = count_reads(csfasta)
                 if nreads is not None:
                     stats['Reads'] = nreads
@@ -1006,9 +1006,9 @@ class SolidQCReporter(QCReporter):
         """
         # Run verification from base class
         if self.__paired_end:
-            print "Verifying output of paired-end QC run"
+            print("Verifying output of paired-end QC run")
         else:
-            print "Verifying output of fragment QC run"
+            print("Verifying output of fragment QC run")
         status = QCReporter.verify(self)
         # Additional SOLiD-specific verifications
         # Stats

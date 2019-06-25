@@ -86,7 +86,7 @@ class MacsXLS(object):
     use the 'data' property, e.g.
 
     >>> for line in macs.data:
-    ...    print "Chr %s Start %s End" % (line['chr'],line['start'],line['end'])
+    ...    print("Chr %s Start %s End" % (line['chr'],line['start'],line['end']))
 
     To sort the data on a particular column use the 'sort_on'
     method, e.g.
@@ -352,7 +352,7 @@ def xls_for_macs2(macs_xls,row_limit=None,cell_char_limit=None):
             name = "data%d" % sheet_number
             title = "%s(%d)" % (macs_xls.name[:sheet_title_limit-4],
                                 sheet_number)
-            print "Making additional data sheet '%s'" % title
+            print("Making additional data sheet '%s'" % title)
             data = xls.add_work_sheet(name,title)
         # If this is an empty sheet add the column titles and
         # store in the list of data sheets
@@ -1096,20 +1096,20 @@ def main(macs_file,xls_out,xls_format="xlsx",bed_out=None):
         raise Exception("Unrecognised XLS format: %s" % xls_format)
 
     # Load the data from the file
-    print "Reading data...",
+    print("Reading data...",)
     macs_xls = MacsXLS(macs_file)
-    print "done"
+    print("done")
     if macs_xls.macs_version is None:
         logging.error("couldn't detect MACS version")
         sys.exit(1)
-    print "Input file is from MACS %s" % macs_xls.macs_version
-    print "Found %d records" % len(macs_xls.data)
+    print("Input file is from MACS %s" % macs_xls.macs_version)
+    print("Found %d records" % len(macs_xls.data))
     if macs_xls.macs_version.startswith('2.'):
         if macs_xls.with_broad_option:
-            print "MACS was run with --broad option"
+            print("MACS was run with --broad option")
 
     # Create XLS file
-    print "Generating XLS file"
+    print("Generating XLS file")
     if xls_format == "xlsx":
         xls_max_rows = simple_xls.XLSXLimits.MAX_NUMBER_ROWS_PER_WORKSHEET
         xls_cell_width = simple_xls.XLSXLimits.MAX_LEN_WORKSHEET_CELL_VALUE
@@ -1130,14 +1130,14 @@ def main(macs_file,xls_out,xls_format="xlsx",bed_out=None):
 
     # Create BED file
     if bed_out is not None:
-        print "Generate BED file"
+        print("Generate BED file")
         try:
             bed = bed_for_macs2(macs_xls)
         except Exception as ex:
             logging.error("failed to generate BED data: %s" % ex)
             sys.exit(1)
         bed.write(bed_out,include_header=True)
-        print "Finished"
+        print("Finished")
 
 if __name__ == "__main__":
     # Process command line
@@ -1171,7 +1171,7 @@ if __name__ == "__main__":
     if xls_format not in ('xls','xlsx'):
         p.error("Unrecognised Excel format: %s" % xls_format)
     # Report version
-    print "%s %s" % (os.path.basename(sys.argv[0]),__version__)
+    print("%s %s" % (os.path.basename(sys.argv[0]),__version__))
     # Build output file name: if not explicitly supplied on the command
     # line then use "XLS_<input_name>.<xls_format>"
     if args.xls_out:
@@ -1186,10 +1186,10 @@ if __name__ == "__main__":
         bed_out = os.path.splitext(xls_out)[0]+".bed"
     else:
         bed_out = None
-    print "Input file: %s" % macs_in
-    print "Output XLS: %s" % xls_out
+    print("Input file: %s" % macs_in)
+    print("Output XLS: %s" % xls_out)
     if bed_out:
-        print "Output BED: %s" % bed_out
+        print("Output BED: %s" % bed_out)
     ##profile.run("main(macs_in,xls_out)")
     main(macs_in,xls_out,xls_format=xls_format,bed_out=bed_out)
 

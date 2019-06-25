@@ -22,7 +22,7 @@ data chromosome-by-chromosome from a Fasta file.
 # Module metadata
 #######################################################################
 
-__version__ = "0.3.0"
+__version__ = "0.3.1"
 
 #######################################################################
 # Import modules
@@ -51,7 +51,7 @@ class FastaChromIterator(Iterator):
 
     Example looping over all chromosomes and echoing to stdout:
     >>> for chrom in FastaChromIterator(fasta_file):
-    >>>    print ">%s\n%s" % (chrom[0],chrom[1])
+    >>>    print(">%s\n%s" % (chrom[0],chrom[1]))
 
     """
 
@@ -196,9 +196,9 @@ if __name__ == "__main__":
     arguments = p.parse_args()
     # Run unit tests option
     if arguments.run_tests:
-        print "Running unit tests"
+        print("Running unit tests")
         run_tests()
-        print "Tests finished"
+        print("Tests finished")
         sys.exit()
     else:
         if not arguments.fasta_file:
@@ -222,7 +222,7 @@ if __name__ == "__main__":
         file_names.append(fname)
         fasta = "%s.fa" % fname
         # Report what's happening
-        print "Outputting '%s' to %s" % (name,fasta)
+        print("Outputting '%s' to %s" % (name,fasta))
         if os.path.isfile(fasta):
             sys.stderr.write("WARNING '%s' already exists, overwriting\n" % fasta)
         with open(fasta,'w') as fp:

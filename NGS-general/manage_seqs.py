@@ -25,7 +25,7 @@ manage_seqs.py [-o OUTFILE|-a OUTFILE] [-d DESCRIPTION] INFILE [INFILE...]
 # Module metadata
 #######################################################################
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 #######################################################################
 # Import modules that this module depends on
@@ -92,7 +92,7 @@ class SeqDb(object):
         if name not in self._sequences[seq]:
             self._sequences[seq].append(name)
         else:
-            print "%s:%s already exists, ignored" % (name,seq)
+            print("%s:%s already exists, ignored" % (name,seq))
 
     def sequences(self,name=None):
         """Return a list of sequences
@@ -165,8 +165,8 @@ class SeqDb(object):
                 name,seq = split_line(line)
                 self.add(name,seq)
             except ValueError,ex:
-                print "Error for line: '%s'" % line.rstrip('\n')
-                print "%s" % ex
+                print("Error for line: '%s'" % line.rstrip('\n'))
+                print("%s" % ex)
         fp.close()
 
     def load_from_fasta(self,fasta,prepend=False):
@@ -570,43 +570,43 @@ if __name__ == '__main__':
     # Read in data
     s = SeqDb()
     for fn in args:
-        print "Loading %s" % fn
+        print("Loading %s" % fn)
         if fn.endswith('.fasta') or fn.endswith('.fa'):
             s.load_from_fasta(fn,prepend=True)
         else:
             s.load(fn)
-        print "Done - now have %d sequences stored" % len(s)
+        print("Done - now have %d sequences stored" % len(s))
 
     # Do checks
-    print "Checking for redundancy"
+    print("Checking for redundancy")
     redundant = s.redundant_entries()
     if len(redundant) > 0:
-        print "Found %s sequence(s) with redundancy" % len(redundant)
+        print("Found %s sequence(s) with redundancy" % len(redundant))
         for seq in redundant:
-            print "Multiple names for %s:" % seq
+            print("Multiple names for %s:" % seq)
             for name in s.names(seq):
-                print "\t'%s'" % name
+                print("\t'%s'" % name)
     else:
-        print "Ok - no redundancy found"
+        print("Ok - no redundancy found")
 
-    print "Checking for contradictions"
+    print("Checking for contradictions")
     contradict = s.contradictory_entries()
     if len(contradict) > 0:
-        print "Found %s contradiction(s)" % len(contradict)
+        print("Found %s contradiction(s)" % len(contradict))
         for name in contradict:
-            print "Multiple seqs for %s:" % name
+            print("Multiple seqs for %s:" % name)
             for seq in s.sequences(name):
-                print "\t'%s'" % seq
+                print("\t'%s'" % seq)
         sys.stderr.write("ERROR contradictory entries found, stopping")
         sys.exit(1)
     else:
-        print "Ok - no contradictions found"
+        print("Ok - no contradictions found")
 
     # Output
     outfile = None
     if args.out_file is not None:
-        print "Writing to %s" % args.out_file
+        print("Writing to %s" % args.out_file)
         s.save(args.out_file,header=args.description,append=False)
     elif args.append_file is not None:
-        print "Appending to %s" % args.append_file
+        print("Appending to %s" % args.append_file)
         s.save(args.append_file,header=args.description,append=True)

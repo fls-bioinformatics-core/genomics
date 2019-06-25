@@ -5,7 +5,7 @@
 #
 ########################################################################
 
-__version__ = "1.3.0"
+__version__ = "1.3.1"
 
 """
 best_exons.py
@@ -97,7 +97,7 @@ class TabFileIterator(Iterator):
         Example usage:
 
         >>> for line in TabFileIterator(filen='data.tsv'):
-        ...   print line
+        ...   print(line)
 
         Arguments:
           filen: name of the file to iterate through
@@ -376,15 +376,15 @@ def best_exons(fp_in,fp_out,rank_by='log2_fold_change',
     gene_symbols = bcf_utils.OrderedDictionary()
     
     # Report lookup for specific columns
-    print "Column assignments (numbered from zero):"
-    print "* Probe set       : column %2d (%s column)" % (probeset_col,
-                                                          ordinal(probeset_col+1))
-    print "* Gene symbol     : column %2d (%s column)" % (gene_symbol_col,
-                                                          ordinal(gene_symbol_col+1))
-    print "* Log2 fold change: column %2d (%s column)" % (log2_fold_change_col,
-                                                          ordinal(log2_fold_change_col+1))
-    print "* P-value         : column %2d (%s column)" % (p_value_col,
-                                                          ordinal(p_value_col+1))
+    print("Column assignments (numbered from zero):")
+    print("* Probe set       : column %2d (%s column)" % (probeset_col,
+                                                          ordinal(probeset_col+1)))
+    print("* Gene symbol     : column %2d (%s column)" % (gene_symbol_col,
+                                                          ordinal(gene_symbol_col+1)))
+    print("* Log2 fold change: column %2d (%s column)" % (log2_fold_change_col,
+                                                          ordinal(log2_fold_change_col+1)))
+    print("* P-value         : column %2d (%s column)" % (p_value_col,
+                                                          ordinal(p_value_col+1)))
 
     # Test if first line of file is a header line
     first_line_is_header = False
@@ -403,7 +403,7 @@ def best_exons(fp_in,fp_out,rank_by='log2_fold_change',
 
     # Read data from file
     for line in TabFileIterator(fp=fp_in):
-        ##print "%s" % line
+        ##print("%s" % line)
         if first_line_is_header:
             # Skip first line
             first_line_is_header = False
@@ -541,7 +541,7 @@ if __name__ == "__main__":
     filein = args.filein
     fileout = args.fileout
     print("%s %s" % (os.path.basename(sys.argv[0]),__version__))
-    print "Reading data from %s, writing output to %s" % (filein,fileout)
+    print("Reading data from %s, writing output to %s" % (filein,fileout))
 
     # Open files
     fp_in = open(filein,'rU')

@@ -18,7 +18,7 @@ Utility for checking and updating symbolic links.
 # Module metadata
 #######################################################################
 
-__version__ = "1.2.0"
+__version__ = "1.2.1"
 
 #######################################################################
 # Import modules that this module depends on
@@ -87,11 +87,11 @@ if __name__ == "__main__":
         if args.regex_pattern is not None:
             # Check if target matches pattern
             if regex.search(link.target):
-                print "Matched pattern:\t%s -> %s" % (link,link.target)
+                print("Matched pattern:\t%s -> %s" % (link,link.target))
                 if args.new_path is not None:
                     # Update target
                     new_target = regex.sub(args.new_path,link.target)
                     link.update_target(new_target)
-                    print "Updated:\t%s -> %s" % (link,link.target)
+                    print("Updated:\t%s -> %s" % (link,link.target))
 
                 

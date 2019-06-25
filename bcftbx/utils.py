@@ -127,7 +127,7 @@ class AttributeDictionary(dict):
     example:
 
     >>> for attr in d:
-    >>>    print "%s = %s" % (attr,d[attr])
+    >>>    print("%s = %s" % (attr,d[attr]))
 
     """
     def __init__(self,**args):
@@ -1264,7 +1264,7 @@ def concatenate_fastq_files(merged_fastq,fastq_files,bufsize=10240,
         otherwise operate quietly
 
     """
-    if verbose: print "Creating merged fastq file '%s'" % merged_fastq
+    if verbose: print("Creating merged fastq file '%s'" % merged_fastq)
     # Check that initial file doesn't exist
     if os.path.exists(merged_fastq) and not overwrite:
         raise OSError, "Target file '%s' already exists, stopping" % merged_fastq
@@ -1274,7 +1274,7 @@ def concatenate_fastq_files(merged_fastq,fastq_files,bufsize=10240,
     if is_gzipped_file(merged_fastq):
         if is_gzipped_file(fastq_files[0]):
             # Copy first file in list directly and open for append
-            if verbose: print "Copying %s" % fastq_files[0]
+            if verbose: print("Copying %s" % fastq_files[0])
             shutil.copy(fastq_files[0],merged_fastq_part)
             first_file = 1
             fq_merged = gzip.GzipFile(merged_fastq_part,'ab')
@@ -1284,7 +1284,7 @@ def concatenate_fastq_files(merged_fastq,fastq_files,bufsize=10240,
             fq_merged = gzip.GzipFile(merged_fastq_part,'wb')
     else:
         if not is_gzipped_file(fastq_files[0]):
-            if verbose: print "Copying %s" % fastq_files[0]
+            if verbose: print("Copying %s" % fastq_files[0])
             # Copy first file in list directly and open for append
             shutil.copy(fastq_files[0],merged_fastq_part)
             first_file = 1
@@ -1295,7 +1295,7 @@ def concatenate_fastq_files(merged_fastq,fastq_files,bufsize=10240,
             fq_merged = open(merged_fastq_part,'wb')
     # For each fastq, read data and append to output - simples!
     for fastq in fastq_files[first_file:]:
-        if verbose: print "Adding records from %s" % fastq
+        if verbose: print("Adding records from %s" % fastq)
         # Check it exists
         if not os.path.exists(fastq):
             raise OSError, "'%s' not found, stopping" % fastq

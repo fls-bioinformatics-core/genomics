@@ -15,7 +15,7 @@ Generate HTML reports for NGS QC pipeline runs.
 
 """
 
-__version__ = "0.3.0"
+__version__ = "0.3.1"
 
 #######################################################################
 # Import modules that this module depends on
@@ -88,7 +88,7 @@ if __name__ == "__main__":
             platform = arguments.platform
         else:
             platform = None
-            print "Acquiring QC outputs for samples in %s" % d
+            print("Acquiring QC outputs for samples in %s" % d)
             try:
                 os.path.abspath(d).index('solid')
                 platform = 'solid'
@@ -133,14 +133,14 @@ if __name__ == "__main__":
                         logging.error("QC failed for one or more samples in %s" % d)
                         sys.exit(1)
                     else:
-                        print "QC verified for all samples in %s" % d
+                        print("QC verified for all samples in %s" % d)
                 else:
                     logging.error("QC failed: no samples identified in %s" % d)
                     sys.exit(1)
             else:
                 if qcreporter.samples:
                     # Generate report
-                    print "Generating report for %s" % d
+                    print("Generating report for %s" % d)
                     qcreporter.zip()
                 else:
                     logging.error("No samples identified in %s" % d)

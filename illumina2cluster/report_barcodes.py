@@ -20,7 +20,7 @@ Fastq file from an Illumina sequencer.
 # Import modules that this module depends on
 #######################################################################
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 import sys
 import argparse
@@ -146,20 +146,20 @@ def main(fastqs,cutoff):
     """
     barcodes = Barcodes()
     for fastq_file in fastqs:
-        print "Reading in data from %s" % fastq_file
+        print("Reading in data from %s" % fastq_file)
         barcodes.load(fastq=fastq_file)
-    print "Total # barcode sequences: %d" % len(barcodes.sequences())
-    print "Determining top barcode sequences"
+    print("Total # barcode sequences: %d" % len(barcodes.sequences()))
+    print("Determining top barcode sequences")
     ordered_seqs = sorted(barcodes.sequences(),
                           cmp=lambda x,y: cmp(barcodes.count_for(y),
                                               barcodes.count_for(x)))
-    print "Rank = position after sorting from most to least common"
-    print "Index sequence = the barcode sequence"
-    print "Count = number of reads with this exact index sequence"
-    print "1 mismatch = number of reads which match this index when allowing 1 mismatch"
-    print "2 mismatches = number of reads which match this index allowing 2 mismatches"
-    print "Matching indices = list of higher ranked sequences matching this one (if any)"
-    print "Rank\tIndex sequence\tCount\t1 mismatch\t2 mismatches\tMatching indices"
+    print("Rank = position after sorting from most to least common")
+    print("Index sequence = the barcode sequence")
+    print("Count = number of reads with this exact index sequence")
+    print("1 mismatch = number of reads which match this index when allowing 1 mismatch")
+    print("2 mismatches = number of reads which match this index allowing 2 mismatches")
+    print("Matching indices = list of higher ranked sequences matching this one (if any)")
+    print("Rank\tIndex sequence\tCount\t1 mismatch\t2 mismatches\tMatching indices")
     for i,seq in enumerate(ordered_seqs):
         n_exact = barcodes.count_for(seq)
         n_1mismatch = barcodes.count_for(*barcodes.group(seq,1))
@@ -168,11 +168,12 @@ def main(fastqs,cutoff):
         for i1,seq1 in enumerate(ordered_seqs[:i]):
             if sequences_match(seq,seq1,2):
                 match_seqs.append("%d:'%s'" % (i1+1,seq1))
-        print "%d\t%s\t%d\t%d\t%d\t[%s]" % (i+1,seq,
-                                          n_exact,n_1mismatch,n_2mismatch,
-                                          ','.join(match_seqs))
+        print("%d\t%s\t%d\t%d\t%d\t[%s]" % (i+1,seq,
+                                            n_exact,n_1mismatch,n_2mismatch,
+                                            ','.join(match_seqs)))
         if n_exact < cutoff:
-            print "...remainder occur less than %d times (set by --cutoff)" % cutoff
+            print("...remainder occur less than %d times (set by --cutoff)" %
+                  cutoff)
             break
 
 #######################################################################
@@ -256,5 +257,5 @@ if __name__ == "__main__":
     try:
         main(args.fastqs,args.cutoff)
     except KeyboardInterrupt:
-        print "Terminating following Ctrl-C"
+        print("Terminating following Ctrl-C")
         pass

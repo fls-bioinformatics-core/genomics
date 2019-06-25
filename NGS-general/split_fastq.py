@@ -182,7 +182,7 @@ def extract_reads_for_lane(fastq,lane):
     Example usage:
 
     >>> for r in extract_reads_for_lane('illumina_R1.fq',2):
-    >>> ... print r
+    >>> ... print(r)
 
     Arguments:
       fastq (str): path to Fastq (can be gzipped)
@@ -235,10 +235,10 @@ if __name__ == "__main__":
                    help="Fastq to split")
     args = p.parse_args()
     # Extract lanes from Fastq
-    print "Determining lanes present in %s" % args.fastq
+    print("Determining lanes present in %s" % args.fastq)
     nreads,fastq_lanes = get_fastq_lanes(args.fastq)
-    print "-- %d reads" % nreads
-    print "-- Lanes: %s" % ','.join([str(x) for x in fastq_lanes])
+    print("-- %d reads" % nreads)
+    print("-- Lanes: %s" % ','.join([str(x) for x in fastq_lanes]))
     # Lanes
     if args.lanes:
         lanes = parse_lanes(args.lanes)
@@ -248,18 +248,18 @@ if __name__ == "__main__":
                                 "in %s" % (lane,args.fastq))
     else:
         lanes = fastq_lanes
-    print "Extracting lanes: %s" % ','.join([str(x) for x in lanes])
+    print("Extracting lanes: %s" % ','.join([str(x) for x in lanes]))
     # Split the fastq
     for lane in lanes:
-        print "-- Lane %s" % lane
+        print("-- Lane %s" % lane)
         nreads = 0
         outfile = output_fastq_name(args.fastq,lane)
         tmp_outfile = "%s.part" % outfile
-        print "   %s" % outfile
+        print("   %s" % outfile)
         with open(tmp_outfile,'w') as fq:
             for i,read in enumerate(extract_reads_for_lane(args.fastq,lane)):
                 nreads += 1
                 fq.write("%s\n" % read)
         os.rename(tmp_outfile,outfile)
-        print "   %d reads" % nreads
-    print "Done"
+        print("   %d reads" % nreads)
+    print("Done")

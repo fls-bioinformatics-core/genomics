@@ -70,7 +70,7 @@ https://github.com/dln/pycassa/blob/90736f8146c1cac8287f66e8c8b64cb80e011513/pyc
 
 """
 
-__version__ = "0.1.9"
+__version__ = "0.1.10"
 
 #######################################################################
 # Import modules that this module depends on
@@ -511,7 +511,7 @@ class Worksheet(object):
                 i = i/26-1
             return name[::-1]
         except IndexError, ex:
-            print "Exception getting column name for index %d: %s" % (i,ex)
+            print("Exception getting column name for index %d: %s" % (i,ex))
             raise
 
     def save(self):

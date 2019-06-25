@@ -22,7 +22,7 @@ to perform the underlying operations.
 # Module metadata
 #######################################################################
 
-__version__ = "0.4.0"
+__version__ = "0.4.1"
 
 #######################################################################
 # Import modules that this module depends on
@@ -190,11 +190,11 @@ def diff_files(filen1,filen2,verbose=False):
     reporter.add_result(filen1,Md5sum.Md5Checker.md5cmp_files(filen1,filen2))
     if verbose:
         if reporter.n_ok:
-            print "OK: MD5 sums match"
+            print("OK: MD5 sums match")
         elif reporter.n_failed:
-            print "FAILED: MD5 sums don't match"
+            print("FAILED: MD5 sums don't match")
         else:
-            print "ERROR: unable to compute one or both MD5 sums"
+            print("ERROR: unable to compute one or both MD5 sums")
     return reporter.status
 
 def report(msg,verbose=False):
@@ -204,7 +204,8 @@ def report(msg,verbose=False):
     operation: rhe supplied text in 'msg' is only written if the verbose
     argument is set to True.
     """
-    if verbose: print "%s" % (msg)
+    if verbose:
+        print("%s" % msg)
 
 #######################################################################
 # Main program

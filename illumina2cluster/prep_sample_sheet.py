@@ -15,7 +15,7 @@ Prepare sample sheet file for Illumina sequencers.
 
 """
 
-__version__ = "0.4.0"
+__version__ = "0.4.1"
 
 #######################################################################
 # Imports
@@ -186,20 +186,20 @@ if __name__ == "__main__":
     if data.format is None:
         logging.error("Unable to determine samplesheet format")
         sys.exit(1)
-    print "Sample sheet format: %s" % data.format
+    print("Sample sheet format: %s" % data.format)
     # Remove lanes
     if args.lanes is not None:
         if not data.has_lanes:
             logging.error("sample sheet doesn't define any lanes")
             sys.exit(1)
         lanes = parse_lanes(args.lanes)
-        print "Keeping lanes %s, removing the rest" % \
-            ','.join([str(x) for x in lanes])
+        print("Keeping lanes %s, removing the rest" %
+              ','.join([str(x) for x in lanes]))
         i = 0
         while i < len(data):
             line = data[i]
             if line['Lane'] in lanes:
-                print "Keeping %s" % line
+                print("Keeping %s" % line)
                 i += 1
             else:
                 del(data[i])
@@ -214,7 +214,8 @@ if __name__ == "__main__":
             sys.exit(1)
         for line in data:
             if line['Lane'] in lanes:
-                print "Setting SampleID for lane %d: '%s'" % (line['Lane'],name)
+                print("Setting SampleID for lane %d: '%s'" % (line['Lane'],
+                                                              name))
                 line[data.sample_id_column] = name
     # Update the SampleProject field
     for sample_project in args.sample_project:
@@ -229,10 +230,10 @@ if __name__ == "__main__":
                 sys.exit(1)
             for line in data:
                 if line['Lane'] in lanes:
-                    print "Setting SampleProject for lane %d: '%s' " \
-                        " (%s)"% (line['Lane'],
-                                  name,
-                                  line[data.sample_id_column])
+                    print("Setting SampleProject for lane %d: '%s' "
+                          " (%s)"% (line['Lane'],
+                                    name,
+                                    line[data.sample_id_column]))
                     line[data.sample_project_column] = name
     # Truncate barcodes
     if args.barcode_len is not None:
@@ -243,12 +244,12 @@ if __name__ == "__main__":
         barcode_len = args.barcode_len
         for line in data:
             barcode = truncate_barcode(line['Index'],args.barcode_len)
-            print "Lane %d '%s/%s': barcode '%s' -> '%s'" \
-                % (line['Lane'],
+            print("Lane %d '%s/%s': barcode '%s' -> '%s'" %
+                  (line['Lane'],
                    line['SampleProject'],
                    line['SampleID'],
                    line['Index'],
-                   barcode)
+                   barcode))
             line['Index'] = barcode
     # Set adapter sequences
     if args.adapter is not None:
@@ -341,7 +342,7 @@ if __name__ == "__main__":
                 pydoc.pager(prediction)
         else:
             # Stdout not a terminal
-            print prediction
+            print(prediction)
 
     # Write out new sample sheet
     if args.samplesheet_out:
@@ -355,8 +356,8 @@ if __name__ == "__main__":
             if fmt not in ('CASAVA','IEM'):
                 logging.error("unknown output format '%s'" % fmt)
                 sys.exit(1)
-            print "Writing to %s in %s format" % (args.samplesheet_out,
-                                                  fmt)
+            print("Writing to %s in %s format" % (args.samplesheet_out,
+                                                  fmt))
             data.write(args.samplesheet_out,fmt=fmt)
     # Finish
     sys.exit(check_status)

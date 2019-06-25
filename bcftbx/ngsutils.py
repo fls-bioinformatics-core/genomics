@@ -56,7 +56,7 @@ def getreads(filen):
     Example usage:
 
     >>> for r in getreads('illumina_R1.fq'):
-    >>> ... print r
+    >>> ... print(r)
 
     Arguments:
       filen (str): path of the file to fetch reads from
@@ -110,7 +110,7 @@ def getreads_subset(filen,indices):
     Example usage (returns 1st, 3rd and 5th reads only):
 
     >>> for r in getreads_subset('illumina_R1.fq',(0,2,4)):
-    >>> ... print r
+    >>> ... print(r)
 
     Arguments:
       filen (str): path of the file to fetch reads from
@@ -128,8 +128,8 @@ def getreads_subset(filen,indices):
     next_idx = indices_[i]
     for idx,read in enumerate(getreads(filen)):
         if idx == next_idx:
-            #print "Extracting read %s" % idx
-            #print read
+            #print("Extracting read %s" % idx)
+            #print(read)
             yield read
             try:
                 i += 1
@@ -158,7 +158,7 @@ def getreads_regex(filen,pattern):
     Example usage:
 
     >>> for r in getreads_regexp('illumina_R1.fq',"2102:3130"):
-    >>> ... print r
+    >>> ... print(r)
 
     Arguments:
       filen (str): path of the file to fetch reads from

@@ -19,7 +19,7 @@ Compare the contents of two directories.
 # Module metadata
 #######################################################################
 
-__version__ = '0.1.0'
+__version__ = '0.1.1'
 
 #######################################################################
 # Import modules that this module depends on
@@ -135,16 +135,16 @@ def cmp_filepair(file_pair):
         if not os.path.lexists(f2):
             result = Md5sum.Md5Checker.MISSING_TARGET
         elif os.path.islink(f1):
-            print "%s: is link" % f1
+            print("%s: is link" % f1)
             # Compare links
             if os.path.islink(f2):
-                print "%s: is link" % f2
+                print("%s: is link" % f2)
                 if os.readlink(f1) == os.readlink(f2):
                     result = Md5sum.Md5Checker.LINKS_SAME
                 else:
                     result = Md5sum.Md5Checker.LINKS_DIFFER
             else:
-                print "%s: is not link" % f2
+                print("%s: is not link" % f2)
                 result = Md5sum.Md5Checker.TYPES_DIFFER
         elif os.path.isdir(f1):
             # Compare directories
@@ -179,7 +179,7 @@ def cmp_dirs(dir1,dir2,n=1):
         pool = Pool(n)
         mapper = pool.imap
     for result in mapper(cmp_filepair,yield_filepairs(dir1,dir2)):
-        print "%s: %s" % (result.relpath(dir1),result.status_message)
+        print("%s: %s" % (result.relpath(dir1),result.status_message))
         try:
             counts[result.status] += 1
         except KeyError:
@@ -218,6 +218,6 @@ if __name__ == '__main__':
             verified += counts[status]
         except KeyError:
             pass
-    print "Verified %d out of total %d examined" % (verified,total)
+    print("Verified %d out of total %d examined" % (verified,total))
     sys.exit(0 if total == verified else 1)
 
