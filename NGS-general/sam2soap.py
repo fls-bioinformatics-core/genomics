@@ -479,12 +479,12 @@ class TestSamToSoap(unittest.TestCase):
                          "SRR189243_1-SRR189243.3751	TATAGTTATATAAAAGACCTGAGTAGTACGTTTTATATAATCTGATTTTATGGCTATACTTTTTTTGACATGTAGC	#####################AAAA7AAAA2AA7AAAAAAA1,:0/57:8855)))),''(03388*',''))))#	1	a	76	-	gi|42410857|gb|AE017196.1|	60083	1	T->75C2	76M	75T")
 
 def run_tests():
-    print "Running unit tests"
+    print("Running unit tests")
     suite = unittest.TestSuite(unittest.TestLoader().\
                                    discover(os.path.dirname(sys.argv[0]), \
                                                 pattern=os.path.basename(sys.argv[0])))
     unittest.TextTestRunner(verbosity=2).run(suite)
-    print "Tests finished"
+    print("Tests finished")
     sys.exit()
 
 #######################################################################
