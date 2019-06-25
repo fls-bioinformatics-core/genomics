@@ -26,7 +26,7 @@ Information on the FASTQ file format: http://en.wikipedia.org/wiki/FASTQ_format
 
 """
 
-__version__ = "1.0.2"
+__version__ = "1.0.3"
 
 CHUNKSIZE = 102400
 
@@ -487,7 +487,7 @@ def nreads(fastq=None,fp=None):
     if fastq is not None:
         fp.close()
     if (nlines%4) != 0:
-        raise Exception,"Bad read count (not fastq file, or corrupted?)"
+        raise Exception("Bad read count (not fastq file, or corrupted?)")
     return nlines/4
 
 def fastqs_are_pair(fastq1=None,fastq2=None,verbose=True,fp1=None,fp2=None):
