@@ -25,7 +25,7 @@ sequencing run.
 # Import modules that this module depends on
 #######################################################################
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 import os
 import sys
@@ -120,7 +120,7 @@ def demultiplex_fastq(fastq_file,barcodes,nmismatches):
       No return value
     """
     # Start
-    print "Processing %s" % fastq_file
+    print("Processing %s" % fastq_file)
     info = IlluminaData.IlluminaFastq(fastq_file)
     # Set up output files
     output_files = {}
@@ -135,9 +135,9 @@ def demultiplex_fastq(fastq_file,barcodes,nmismatches):
                                                            info.lane_number,
                                                            info.read_number,
                                                            info.set_number)
-        print "\t%s\t%s" % (barcode['index'],output_file_name)
+        print("\t%s\t%s" % (barcode['index'],output_file_name))
         if os.path.exists(output_file_name):
-            print "\t%s: already exists,exiting" % output_file_name
+            print("\t%s: already exists,exiting" % output_file_name)
             sys.exit(1)
         output_files[barcode['index']] = open(output_file_name,'w')
     # Check if there's anything to do
@@ -148,7 +148,7 @@ def demultiplex_fastq(fastq_file,barcodes,nmismatches):
                                                             info.read_number,
                                                             info.set_number)
     if os.path.exists(unbinned_file_name):
-        print "\t%s: already exists,exiting" % unbinned_file_name
+        print("\t%s: already exists,exiting" % unbinned_file_name)
         sys.exit(1)
     output_files['unbinned'] = open(unbinned_file_name,'w')
     # Process reads
@@ -159,7 +159,7 @@ def demultiplex_fastq(fastq_file,barcodes,nmismatches):
         this_barcode = read.seqid.index_sequence
         for barcode in local_barcodes:
             if barcode['matcher'].match(this_barcode,nmismatches):
-                ##print "Matched %s against %s" % (this_barcode,barcodes[barcode]['name'])
+                ##print("Matched %s against %s" % (this_barcode,barcodes[barcode]['name']))
                 output_files[barcode['index']].write(str(read)+'\n')
                 matched_read = True
                 break
@@ -170,7 +170,7 @@ def demultiplex_fastq(fastq_file,barcodes,nmismatches):
     # Close files
     for barcode in local_barcodes:
         output_files[barcode['index']].close()
-    print "\tMatched %d reads for %s" % (nreads,os.path.basename(fastq_file))
+    print("\tMatched %d reads for %s" % (nreads,os.path.basename(fastq_file)))
 
 #######################################################################
 # Main program
@@ -210,7 +210,7 @@ if __name__ == "__main__":
     barcodes = []
     for barcode_info in args.barcode_info:
         name,barcode,lane = barcode_info.split(':')
-        print "Assigning barcode '%s' in lane %s to %s" % (barcode,lane,name)
+        print("Assigning barcode '%s' in lane %s to %s" % (barcode,lane,name))
         barcodes.append({ 'name': name,
                           'index': barcode,
                           'matcher': BarcodeMatcher(barcode),
@@ -218,13 +218,13 @@ if __name__ == "__main__":
 
     # Read from sample sheet (if supplied)
     if args.sample_sheet is not None:
-        print "Reading data from sample sheet %s" % args.sample_sheet
+        print("Reading data from sample sheet %s" % args.sample_sheet)
         sample_sheet = IlluminaData.CasavaSampleSheet(args.sample_sheet)
         for line in sample_sheet:
             name = line['SampleID']
             barcode = line['Index'].rstrip('N').rstrip('-').rstrip('N')
             lane = line['Lane']
-            print "Assigning barcode '%s' in lane %s to %s" % (barcode,lane,name)
+            print("Assigning barcode '%s' in lane %s to %s" % (barcode,lane,name))
             barcodes.append({ 'name': name,
                               'index': barcode,
                               'matcher': BarcodeMatcher(barcode),
@@ -240,5 +240,5 @@ if __name__ == "__main__":
         for fq in s.fastq:
             fastq = os.path.join(s.dirn,fq)
             demultiplex_fastq(fastq,barcodes,1)
-    print "Finished"
+    print("Finished")
 
