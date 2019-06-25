@@ -50,7 +50,7 @@ class TestMd5sums(unittest.TestCase):
         reference_checksums.sort()
         checksums = checksums.split('\n')
         checksums.sort()
-        print str(checksums)
+        print(str(checksums))
         for l1,l2 in zip(reference_checksums,checksums):
             self.assertEqual(l1,l2)
 
