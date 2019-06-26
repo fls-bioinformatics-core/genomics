@@ -103,7 +103,7 @@ if __name__ == "__main__":
                    help="specify the format of the output sample sheet "
                    "written by the -o option; can be either 'CASAVA' or "
                    "'IEM' (defaults to the format of the original file)")
-    p.add_argument('-v','--view',action="store_true",dest="view",
+    p.add_argument('-V','--view',action="store_true",dest="view",
                    help="view predicted outputs from sample sheet")
     p.add_argument('--fix-spaces',action="store_true",dest="fix_spaces",
                    help="replace spaces in sample ID and project fields "
