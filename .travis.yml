@@ -11,6 +11,8 @@ install:
 script:
 # Run the unit tests for bcftbx
   - "python setup.py test"
+# Run the illumina2cluster tests
+  - ./illumina2cluster/prep_sample_sheet.py -h
 # Run the RNA-seq utility tests
   - "nosetests --exe -v RNA-seq/bowtie_mapping_stats.py"
   - ./RNA-seq/examples/test_bowtie_mapping_stats.sh
