@@ -171,8 +171,8 @@ if __name__ == "__main__":
     group.add_argument('--runner',action='store',dest='runner',
                        default=runner_type,
                        help="specify how jobs are executed: ge = Grid Engine, "
-                       "drmma = Grid Engine via DRMAA interface, simple = use "
-                       "local system. Default is '%s'" % runner_type)
+                       "simple = use local system. Default is '%s'" %
+                       runner_type)
 
     # Grid engine specific options
     group = p.add_argument_group("Grid Engine-specific options")
@@ -262,8 +262,6 @@ if __name__ == "__main__":
             ge_extra_args = None
         runner = JobRunner.GEJobRunner(queue=arguments.ge_queue,
                                        ge_extra_args=ge_extra_args)
-    elif arguments.runner == 'drmaa':
-        runner = JobRunner.DRMAAJobRunner(queue=arguments.ge_queue)
     else:
         logging.error("Unknown job runner: '%s'" % arguments.runner)
         sys.exit(1)
