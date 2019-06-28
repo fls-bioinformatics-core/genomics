@@ -7,7 +7,7 @@ from bcftbx.mock import MockIlluminaData
 from bcftbx.TabFile import TabDataLine
 import bcftbx.utils
 import unittest
-import cStringIO
+import io
 import tempfile
 import shutil
 
@@ -614,9 +614,9 @@ class TestIlluminaDataForBcl2fastq2SpecialCases(BaseTestIlluminaData):
                    'PJ1_S1_L001_R2_001.fastq.gz',
                    'PJ2_S2_L001_R1_001.fastq.gz',
                    'PJ2_S2_L001_R2_001.fastq.gz',):
-            open(os.path.join(self.top_dir,
-                              'test.MockIlluminaData',
-                              'fastqs',fq),'w').write('')
+            io.open(os.path.join(self.top_dir,
+                                 'test.MockIlluminaData',
+                                 'fastqs',fq),'wt').write(u'')
         return os.path.join(self.top_dir,'test.MockIlluminaData')
 
     def makeNonIlluminaDataDirectoryWithNonCanonicalFastqs(self):
@@ -626,9 +626,9 @@ class TestIlluminaDataForBcl2fastq2SpecialCases(BaseTestIlluminaData):
         os.mkdir(os.path.join(self.top_dir,'test.MockIlluminaData','fastqs'))
         for fq in ('PB04_S4_R1_unpaired.fastq.gz',
                    'PB04_trimmoPE_bowtie2_notHg38.1.fastq.gz'):
-            open(os.path.join(self.top_dir,
-                              'test.MockIlluminaData',
-                              'fastqs',fq),'w').write('')
+            io.open(os.path.join(self.top_dir,
+                                 'test.MockIlluminaData',
+                                 'fastqs',fq),'wt').write(u'')
         return os.path.join(self.top_dir,'test.MockIlluminaData')
 
     def test_illumina_data_all_sample_ids_differ_from_sample_names(self):
@@ -715,13 +715,13 @@ class TestCasavaSampleSheet(unittest.TestCase):
         text = []
         for line in self.sample_sheet_data:
             text.append(','.join([str(x) for x in line]))
-        self.sample_sheet_text = "FCID,Lane,SampleID,SampleRef,Index,Description,Control,Recipe,Operator,SampleProject\n" + '\n'.join(text)
+        self.sample_sheet_text = u"FCID,Lane,SampleID,SampleRef,Index,Description,Control,Recipe,Operator,SampleProject\n" + '\n'.join(text)
 
     def test_read_sample_sheet(self):
         """Read valid sample sheet
 
         """
-        sample_sheet = CasavaSampleSheet(fp=cStringIO.StringIO(self.sample_sheet_text))
+        sample_sheet = CasavaSampleSheet(fp=io.StringIO(self.sample_sheet_text))
         # Check number of lines read
         self.assertEqual(len(sample_sheet),8,"Wrong number of lines")
         # Check data items
@@ -742,7 +742,7 @@ class TestCasavaSampleSheet(unittest.TestCase):
 
         """
         # Set up
-        sample_sheet = CasavaSampleSheet(fp=cStringIO.StringIO(self.sample_sheet_text))
+        sample_sheet = CasavaSampleSheet(fp=io.StringIO(self.sample_sheet_text))
         # Shouldn't find any duplicates when lanes are different
         self.assertEqual(len(sample_sheet.duplicated_names),0)
         # Create 3 duplicates by resetting lane numbers
@@ -759,7 +759,7 @@ class TestCasavaSampleSheet(unittest.TestCase):
 
         """
         # Set up and introduce bad names
-        sample_sheet = CasavaSampleSheet(fp=cStringIO.StringIO(self.sample_sheet_text))
+        sample_sheet = CasavaSampleSheet(fp=io.StringIO(self.sample_sheet_text))
         sample_sheet[3]['SampleID'] = '886 1'
         sample_sheet[4]['SampleProject'] = "AR?"
         # Check for illegal names
@@ -776,7 +776,7 @@ class TestCasavaSampleSheet(unittest.TestCase):
 
         """
         # Set up
-        sample_sheet = CasavaSampleSheet(fp=cStringIO.StringIO("""FCID,Lane,SampleID,SampleRef,Index,Description,Control,Recipe,Operator,SampleProject
+        sample_sheet = CasavaSampleSheet(fp=io.StringIO(u"""FCID,Lane,SampleID,SampleRef,Index,Description,Control,Recipe,Operator,SampleProject
 "D190HACXX",1,"PB","PB","CGATGT","RNA-seq","N",,,"Peter Briggs"
 """))
         self.assertEqual(sample_sheet[0]['FCID'],'D190HACXX')
@@ -795,7 +795,7 @@ class TestCasavaSampleSheet(unittest.TestCase):
 
         """
         # Set up
-        sample_sheet = CasavaSampleSheet(fp=cStringIO.StringIO("""FCID,Lane,SampleID,SampleRef,Index,Description,Control,Recipe,Operator,SampleProject
+        sample_sheet = CasavaSampleSheet(fp=io.StringIO(u"""FCID,Lane,SampleID,SampleRef,Index,Description,Control,Recipe,Operator,SampleProject
 "D190HACXX",1,"PB","PB","CGATGT","RNA-seq","N",,,"Peter Briggs"
 "#D190HACXX",2,"PB","PB","ACTGAT","RNA-seq","N",,,"Peter Briggs"
 """))
@@ -806,7 +806,7 @@ class TestCasavaSampleSheet(unittest.TestCase):
 
         """
         # Set up and introduce numeric names
-        sample_sheet = CasavaSampleSheet(fp=cStringIO.StringIO(self.sample_sheet_text))
+        sample_sheet = CasavaSampleSheet(fp=io.StringIO(self.sample_sheet_text))
         sample_sheet[3]['SampleID'] = 8861
         sample_sheet[4]['SampleProject'] = 123
         # Check for illegal names
@@ -960,7 +960,7 @@ class TestIlluminaFastq(unittest.TestCase):
 
 class TestSampleSheet(unittest.TestCase):
     def setUp(self):
-        self.hiseq_sample_sheet_content = """[Header],,,,,,,,,,
+        self.hiseq_sample_sheet_content = u"""[Header],,,,,,,,,,
 IEMFileVersion,4,,,,,,,,,
 Date,06/03/2014,,,,,,,,,
 Workflow,GenerateFASTQ,,,,,,,,,
@@ -982,7 +982,7 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
 1,PJB1-1579,PJB1-1579,,,N701,CGATGTAT ,N501,TCTTTCCC,PeterBriggs,
 1,PJB2-1580,PJB2-1580,,,N702,TGACCAAT ,N502,TCTTTCCC,PeterBriggs,
 """
-        self.miseq_sample_sheet_content = """[Header]
+        self.miseq_sample_sheet_content = u"""[Header]
 IEMFileVersion,4
 Date,4/11/2014
 Workflow,Metagenomics
@@ -1003,7 +1003,7 @@ Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_ID,ind
 A8,A8,,,N701,TAAGGCGA,S501,TAGATCGC,PJB,
 B8,B8,,,N702,CGTACTAG,S501,TAGATCGC,PJB,
 """
-        self.casava_sample_sheet_content = """FCID,Lane,SampleID,SampleRef,Index,Description,Control,Recipe,Operator,SampleProject
+        self.casava_sample_sheet_content = u"""FCID,Lane,SampleID,SampleRef,Index,Description,Control,Recipe,Operator,SampleProject
 DADA331XX,1,PhiX,PhiX control,,Control,,,Peter,Control
 DADA331XX,2,884-1,PB-884-1,AGTCAA,RNA-seq,,,Peter,AR
 DADA331XX,3,885-1,PB-885-1,AGTTCC,RNA-seq,,,Peter,AR
@@ -1013,7 +1013,7 @@ DADA331XX,6,885-1,PB-885-1,AGTTCC,RNA-seq,,,Peter,AR
 DADA331XX,7,886-1,PB-886-1,ATGTCA,RNA-seq,,,Peter,AR
 DADA331XX,8,PhiX,PhiX control,,Control,,,Peter,Control
 """
-        self.hiseq_sample_sheet_id_and_name_differ_content = """[Header],,,,,,,,,,
+        self.hiseq_sample_sheet_id_and_name_differ_content = u"""[Header],,,,,,,,,,
 IEMFileVersion,4,,,,,,,,,
 Date,06/03/2014,,,,,,,,,
 Workflow,GenerateFASTQ,,,,,,,,,
@@ -1035,7 +1035,7 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
 1,PJB1,PJB1-1579,,,N701,CGATGTAT ,N501,TCTTTCCC,PeterBriggs,
 1,PJB2,PJB2-1580,,,N702,TGACCAAT ,N502,TCTTTCCC,PeterBriggs,
 """
-        self.nextseq_no_index_columns = """
+        self.nextseq_no_index_columns = u"""
 [Header]
 IEMFileVersion,4
 Date,2/7/2017
@@ -1056,7 +1056,7 @@ Adapter,CTGTCTCTTATACACATCT
 Sample_ID,Sample_Name,Sample_Plate,Sample_Well,Sample_Project,Description
 PJB1,,,,,
 """
-        self.miseq_header_values_have_commas = """
+        self.miseq_header_values_have_commas = u"""
 [Header]
 IEMFileVersion,5
 Date,12/12/2017
@@ -1081,7 +1081,7 @@ Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_ID,ind
 AO1,AO1,,,N701,TAAGGCGA,S517,GCGTAAGA,Anne Other,
 AO2,AO2,,,N701,TAAGGCGA,S502,CTCTCTAT,Anne Other,
 """
-        self.hiseq_sample_sheet_with_manifests = """[Header]
+        self.hiseq_sample_sheet_with_manifests = u"""[Header]
 IEMFileVersion,4
 Investigator Name,Peter B
 Experiment Name,myexp
@@ -1113,7 +1113,7 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
         """SampleSheet: load a HiSEQ IEM-format sample sheet
 
         """
-        iem = SampleSheet(fp=cStringIO.StringIO(
+        iem = SampleSheet(fp=io.StringIO(
             self.hiseq_sample_sheet_content))
         # Check format
         self.assertEqual(iem.format,'IEM')
@@ -1161,9 +1161,9 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
         """SampleSheet: reconstruct a HiSEQ sample sheet
 
         """
-        iem = SampleSheet(fp=cStringIO.StringIO(
+        iem = SampleSheet(fp=io.StringIO(
             self.hiseq_sample_sheet_content))
-        expected = """[Header]
+        expected = u"""[Header]
 IEMFileVersion,4
 Date,06/03/2014
 Workflow,GenerateFASTQ
@@ -1191,7 +1191,7 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
         """SampleSheet: convert HISeq IEM4 sample sheet to CASAVA format
 
         """
-        iem = SampleSheet(fp=cStringIO.StringIO(
+        iem = SampleSheet(fp=io.StringIO(
             self.hiseq_sample_sheet_content))
         expected = """FCID,Lane,SampleID,SampleRef,Index,Description,Control,Recipe,Operator,SampleProject
 FC0001,1,PJB1-1579,,CGATGTAT-TCTTTCCC,,,,,PeterBriggs
@@ -1203,7 +1203,7 @@ FC0001,1,PJB2-1580,,TGACCAAT-TCTTTCCC,,,,,PeterBriggs
         """SampleSheet: check predicted outputs for HISeq IEM4 sample sheet
 
         """
-        iem = SampleSheet(fp=cStringIO.StringIO(
+        iem = SampleSheet(fp=io.StringIO(
             self.hiseq_sample_sheet_content))
         output = iem.predict_output()
         self.assertTrue('Project_PeterBriggs' in output)
@@ -1217,7 +1217,7 @@ FC0001,1,PJB2-1580,,TGACCAAT-TCTTTCCC,,,,,PeterBriggs
         """SampleSheet: check predicted bcl2fastq2 outputs for HISeq IEM4 sample sheet
 
         """
-        iem = SampleSheet(fp=cStringIO.StringIO(
+        iem = SampleSheet(fp=io.StringIO(
             self.hiseq_sample_sheet_content))
         output = iem.predict_output(fmt='bcl2fastq2')
         self.assertTrue('PeterBriggs' in output)
@@ -1227,7 +1227,7 @@ FC0001,1,PJB2-1580,,TGACCAAT-TCTTTCCC,,,,,PeterBriggs
         """SampleSheet: load a MiSEQ sample sheet
 
         """
-        iem = SampleSheet(fp=cStringIO.StringIO(
+        iem = SampleSheet(fp=io.StringIO(
             self.miseq_sample_sheet_content))
         # Check format
         self.assertEqual(iem.format,'IEM')
@@ -1272,7 +1272,7 @@ FC0001,1,PJB2-1580,,TGACCAAT-TCTTTCCC,,,,,PeterBriggs
         """SampleSheet: reconstruct a MiSEQ sample sheet
 
         """
-        iem = SampleSheet(fp=cStringIO.StringIO(
+        iem = SampleSheet(fp=io.StringIO(
             self.miseq_sample_sheet_content))
         expected = self.miseq_sample_sheet_content
         for l1,l2 in zip(iem.show().split(),expected.split()):
@@ -1281,9 +1281,9 @@ FC0001,1,PJB2-1580,,TGACCAAT-TCTTTCCC,,,,,PeterBriggs
         """SampleSheet: convert MISeq IEM4 sample sheet to CASAVA format
 
         """
-        iem = SampleSheet(fp=cStringIO.StringIO(
+        iem = SampleSheet(fp=io.StringIO(
             self.miseq_sample_sheet_content))
-        expected = """FCID,Lane,SampleID,SampleRef,Index,Description,Control,Recipe,Operator,SampleProject
+        expected = u"""FCID,Lane,SampleID,SampleRef,Index,Description,Control,Recipe,Operator,SampleProject
 FC0001,1,A8,,TAAGGCGA-TAGATCGC,,,,,PJB
 FC0001,1,B8,,CGTACTAG-TAGATCGC,,,,,PJB
 """
@@ -1293,7 +1293,7 @@ FC0001,1,B8,,CGTACTAG-TAGATCGC,,,,,PJB
         """SampleSheet: check predicted outputs for MISeq IEM4 sample sheet
 
         """
-        iem = SampleSheet(fp=cStringIO.StringIO(
+        iem = SampleSheet(fp=io.StringIO(
             self.miseq_sample_sheet_content))
         output = iem.predict_output()
         self.assertTrue('Project_PJB' in output)
@@ -1308,7 +1308,7 @@ FC0001,1,B8,,CGTACTAG-TAGATCGC,,,,,PJB
         sample sheet
 
         """
-        iem = SampleSheet(fp=cStringIO.StringIO(
+        iem = SampleSheet(fp=io.StringIO(
             self.miseq_sample_sheet_content))
         output = iem.predict_output(fmt='bcl2fastq2')
         self.assertTrue('PJB' in output)
@@ -1318,7 +1318,7 @@ FC0001,1,B8,,CGTACTAG-TAGATCGC,,,,,PJB
         """SampleSheet: load a CASAVA-style sample sheet
 
         """
-        casava = SampleSheet(fp=cStringIO.StringIO(
+        casava = SampleSheet(fp=io.StringIO(
             self.casava_sample_sheet_content))
         # Check format
         self.assertEqual(casava.format,'CASAVA')
@@ -1359,7 +1359,7 @@ FC0001,1,B8,,CGTACTAG-TAGATCGC,,,,,PJB
         """SampleSheet: reconstruct a CASAVA sample sheet
 
         """
-        casava = SampleSheet(fp=cStringIO.StringIO(
+        casava = SampleSheet(fp=io.StringIO(
             self.casava_sample_sheet_content))
         expected = self.casava_sample_sheet_content
         for l1,l2 in zip(casava.show().split(),expected.split()):
@@ -1368,7 +1368,7 @@ FC0001,1,B8,,CGTACTAG-TAGATCGC,,,,,PJB
         """SampleSheet: check predicted outputs for CASAVA sample sheet
 
         """
-        casava = SampleSheet(fp=cStringIO.StringIO(
+        casava = SampleSheet(fp=io.StringIO(
             self.casava_sample_sheet_content))
         output = casava.predict_output()
         self.assertTrue('Project_Control' in output)
@@ -1393,7 +1393,7 @@ FC0001,1,B8,,CGTACTAG-TAGATCGC,,,,,PJB
         """SampleSheet: check predicted bcl2fastq2 outputs for HISeq IEM4 sample sheet when id and names differ
 
         """
-        iem = SampleSheet(fp=cStringIO.StringIO(
+        iem = SampleSheet(fp=io.StringIO(
             self.hiseq_sample_sheet_id_and_name_differ_content))
         output = iem.predict_output(fmt='bcl2fastq2')
         self.assertTrue('PeterBriggs' in output)
@@ -1405,21 +1405,21 @@ FC0001,1,B8,,CGTACTAG-TAGATCGC,,,,,PJB
         """
         empty = SampleSheet()
         self.assertEqual(len(empty),0)
-        hiseq = SampleSheet(fp=cStringIO.StringIO(
+        hiseq = SampleSheet(fp=io.StringIO(
             self.hiseq_sample_sheet_content))
         self.assertEqual(len(hiseq),2)
-        casava = SampleSheet(fp=cStringIO.StringIO(
+        casava = SampleSheet(fp=io.StringIO(
             self.casava_sample_sheet_content))
         self.assertEqual(len(casava),8)
     def test_iter(self):
         """SampleSheet: test __iter__ built-in
 
         """
-        hiseq = SampleSheet(fp=cStringIO.StringIO(
+        hiseq = SampleSheet(fp=io.StringIO(
             self.hiseq_sample_sheet_content))
         for line0,line1 in zip(hiseq,hiseq.data):
             self.assertEqual(line0,line1)
-        casava = SampleSheet(fp=cStringIO.StringIO(
+        casava = SampleSheet(fp=io.StringIO(
             self.casava_sample_sheet_content))
         for line0,line1 in zip(casava,casava.data):
             self.assertEqual(line0,line1)
@@ -1427,11 +1427,11 @@ FC0001,1,B8,,CGTACTAG-TAGATCGC,,,,,PJB
         """SampleSheet: test __getitem__ built-in
 
         """
-        hiseq = SampleSheet(fp=cStringIO.StringIO(
+        hiseq = SampleSheet(fp=io.StringIO(
             self.hiseq_sample_sheet_content))
         self.assertEqual(hiseq[0],hiseq.data[0])
         self.assertEqual(hiseq[1],hiseq.data[1])
-        casava = SampleSheet(fp=cStringIO.StringIO(
+        casava = SampleSheet(fp=io.StringIO(
             self.casava_sample_sheet_content))
         self.assertEqual(casava[0],casava.data[0])
         self.assertEqual(casava[2],casava.data[2])
@@ -1440,11 +1440,11 @@ FC0001,1,B8,,CGTACTAG-TAGATCGC,,,,,PJB
         """SampleSheet: test __setitem__ built-in
 
         """
-        hiseq = SampleSheet(fp=cStringIO.StringIO(
+        hiseq = SampleSheet(fp=io.StringIO(
             self.hiseq_sample_sheet_content))
         hiseq[0]['Sample_ID'] = 'NewSample1'
         self.assertEqual(hiseq[0]['Sample_ID'],'NewSample1')
-        casava = SampleSheet(fp=cStringIO.StringIO(
+        casava = SampleSheet(fp=io.StringIO(
             self.casava_sample_sheet_content))
         casava[0]['SampleID'] = 'NewSample2'
         self.assertEqual(casava[0]['SampleID'],'NewSample2')
@@ -1452,7 +1452,7 @@ FC0001,1,B8,,CGTACTAG-TAGATCGC,,,,,PJB
         """SampleSheet: test append method
 
         """
-        hiseq = SampleSheet(fp=cStringIO.StringIO(
+        hiseq = SampleSheet(fp=io.StringIO(
             self.hiseq_sample_sheet_content))
         self.assertEqual(len(hiseq),2)
         new_line = hiseq.append()
@@ -1461,25 +1461,25 @@ FC0001,1,B8,,CGTACTAG-TAGATCGC,,,,,PJB
         """SampleSheet: write out IEM formatted sample sheet
 
         """
-        miseq = SampleSheet(fp=cStringIO.StringIO(
+        miseq = SampleSheet(fp=io.StringIO(
             self.miseq_sample_sheet_content))
-        fp=cStringIO.StringIO()
+        fp=io.StringIO()
         miseq.write(fp=fp)
         self.assertEqual(fp.getvalue(),self.miseq_sample_sheet_content)
     def test_write_casava(self):
         """SampleSheet: write out CASAVA formatted sample sheet
 
         """
-        casava = SampleSheet(fp=cStringIO.StringIO(
+        casava = SampleSheet(fp=io.StringIO(
             self.casava_sample_sheet_content))
-        fp=cStringIO.StringIO()
+        fp=io.StringIO()
         casava.write(fp=fp)
         self.assertEqual(fp.getvalue(),self.casava_sample_sheet_content)
     def test_bad_input_unrecognised_section(self):
         """SampleSheet: raises exception for input with unrecognised section
 
         """
-        fp = cStringIO.StringIO("""[Header]
+        fp = io.StringIO(u"""[Header]
 IEMFileVersion,4
 Date,06/03/2014
 
@@ -1491,7 +1491,7 @@ This,isTheEnd
         """SampleSheet: raises exception for non-IEM formatted input
 
         """
-        fp = cStringIO.StringIO("""Something random
+        fp = io.StringIO(u"""Something random
 IEMFileVersion,4
 Date,06/03/2014
 
@@ -1505,7 +1505,7 @@ This,isTheEnd
 
         """
         # Set up
-        iem = SampleSheet(fp=cStringIO.StringIO(
+        iem = SampleSheet(fp=io.StringIO(
             self.hiseq_sample_sheet_content))
         # Shouldn't find any duplicates when lanes are different
         self.assertEqual(len(iem.duplicated_names),0)
@@ -1525,7 +1525,7 @@ This,isTheEnd
 
         """
         # Set up
-        iem = SampleSheet(fp=cStringIO.StringIO(
+        iem = SampleSheet(fp=io.StringIO(
             self.miseq_sample_sheet_content))
         # Shouldn't find any duplicates when lanes are different
         self.assertEqual(len(iem.duplicated_names),0)
@@ -1545,7 +1545,7 @@ This,isTheEnd
 
         """
         # Set up
-        iem = SampleSheet(fp=cStringIO.StringIO(
+        iem = SampleSheet(fp=io.StringIO(
             self.nextseq_no_index_columns))
         # Shouldn't find any duplicates
         self.assertEqual(len(iem.duplicated_names),0)
@@ -1558,7 +1558,7 @@ This,isTheEnd
 
         """
         # Set up and introduce bad names
-        iem = SampleSheet(fp=cStringIO.StringIO(
+        iem = SampleSheet(fp=io.StringIO(
             self.hiseq_sample_sheet_content))
         iem.data[0]['Sample_ID'] = 'PJB1 1579'
         iem.data[0]['Sample_Name'] = 'PJB1 1579'
@@ -1578,7 +1578,7 @@ This,isTheEnd
 
         """
         # Set up and introduce bad names
-        iem = SampleSheet(fp=cStringIO.StringIO(
+        iem = SampleSheet(fp=io.StringIO(
             self.hiseq_sample_sheet_content))
         iem.data[0]['Sample_ID'] = ''
         iem.data[1]['Sample_Project'] = ''
@@ -1590,7 +1590,7 @@ This,isTheEnd
 
         """
         # Set up
-        casava = SampleSheet(fp=cStringIO.StringIO(
+        casava = SampleSheet(fp=io.StringIO(
             self.casava_sample_sheet_content))
         # Shouldn't find any duplicates when lanes are different
         self.assertEqual(len(casava.duplicated_names),0)
@@ -1608,7 +1608,7 @@ This,isTheEnd
 
         """
         # Set up and introduce bad names
-        casava = SampleSheet(fp=cStringIO.StringIO(
+        casava = SampleSheet(fp=io.StringIO(
             self.casava_sample_sheet_content))
         casava.data[3]['SampleID'] = '886 1'
         casava.data[4]['SampleProject'] = "AR?"
@@ -1626,7 +1626,7 @@ This,isTheEnd
 
         """
         # Set up and introduce bad names
-        casava = SampleSheet(fp=cStringIO.StringIO(
+        casava = SampleSheet(fp=io.StringIO(
             self.casava_sample_sheet_content))
         casava.data[3]['SampleID'] = ''
         casava.data[4]['SampleProject'] = ""
@@ -1636,7 +1636,7 @@ This,isTheEnd
         """SampleSheet: handle IEM sample sheet with missing 'Data' section
 
         """
-        contents = """[Header]
+        contents = u"""[Header]
 IEMFileVersion,4
 Date,06/03/2014
 Workflow,GenerateFASTQ
@@ -1653,7 +1653,7 @@ Chemistry,Amplicon
 ReverseComplement,0
 Adapter,CTGTCTCTTATACACATCT
 """
-        iem = SampleSheet(fp=cStringIO.StringIO(contents))
+        iem = SampleSheet(fp=io.StringIO(contents))
         for l1,l2 in zip(iem.show().split(),contents.split()):
             self.assertEqual(l1,l2)
         self.assertEqual(iem.column_names,[])
@@ -1666,7 +1666,7 @@ Adapter,CTGTCTCTTATACACATCT
         """SampleSheet: handle IEM sample sheet with double quotes and comma in 'Header' section
 
         """
-        iem = SampleSheet(fp=cStringIO.StringIO(self.miseq_header_values_have_commas))
+        iem = SampleSheet(fp=io.StringIO(self.miseq_header_values_have_commas))
         self.assertEqual(iem.header['IEMFileVersion'],"5")
         self.assertEqual(iem.header['Date'],"12/12/2017")
         self.assertEqual(iem.header['Workflow'],"GenerateFASTQ")
@@ -1682,7 +1682,7 @@ Adapter,CTGTCTCTTATACACATCT
         """SampleSheet: load a HiSEQ IEM-format sample sheet with 'Manifests' section
 
         """
-        iem = SampleSheet(fp=cStringIO.StringIO(
+        iem = SampleSheet(fp=io.StringIO(
             self.hiseq_sample_sheet_with_manifests))
         # Check format
         self.assertEqual(iem.format,'IEM')
@@ -1737,7 +1737,7 @@ Adapter,CTGTCTCTTATACACATCT
 
 class TestIEMSampleSheet(unittest.TestCase):
     def setUp(self):
-        self.hiseq_sample_sheet_content = """[Header],,,,,,,,,,
+        self.hiseq_sample_sheet_content = u"""[Header],,,,,,,,,,
 IEMFileVersion,4,,,,,,,,,
 Date,06/03/2014,,,,,,,,,
 Workflow,GenerateFASTQ,,,,,,,,,
@@ -1759,7 +1759,7 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
 1,PJB1-1579,PJB1-1579,,,N701,CGATGTAT ,N501,TCTTTCCC,PeterBriggs,
 1,PJB2-1580,PJB2-1580,,,N702,TGACCAAT ,N502,TCTTTCCC,PeterBriggs,
 """
-        self.miseq_sample_sheet_content = """[Header]
+        self.miseq_sample_sheet_content = u"""[Header]
 IEMFileVersion,4
 Date,4/11/2014
 Workflow,Metagenomics
@@ -1785,7 +1785,7 @@ B8,B8,,,N702,CGTACTAG,S501,TAGATCGC,PJB,
         """IEMSampleSheet: load a HiSEQ sample sheet
 
         """
-        iem = IEMSampleSheet(fp=cStringIO.StringIO(self.hiseq_sample_sheet_content))
+        iem = IEMSampleSheet(fp=io.StringIO(self.hiseq_sample_sheet_content))
         # Check header
         self.assertEqual(iem.header_items,['IEMFileVersion',
                                            'Date',
@@ -1830,8 +1830,8 @@ B8,B8,,,N702,CGTACTAG,S501,TAGATCGC,PJB,
         """IEMSampleSheet: reconstruct a HiSEQ sample sheet
 
         """
-        iem = IEMSampleSheet(fp=cStringIO.StringIO(self.hiseq_sample_sheet_content))
-        expected = """[Header]
+        iem = IEMSampleSheet(fp=io.StringIO(self.hiseq_sample_sheet_content))
+        expected = u"""[Header]
 IEMFileVersion,4
 Date,06/03/2014
 Workflow,GenerateFASTQ
@@ -1859,7 +1859,7 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
         """IEMSampleSheet: convert HiSEQ sample sheet to CASAVA format
 
         """
-        iem = IEMSampleSheet(fp=cStringIO.StringIO(self.hiseq_sample_sheet_content))
+        iem = IEMSampleSheet(fp=io.StringIO(self.hiseq_sample_sheet_content))
         casava = iem.casava_sample_sheet()
         self.assertEqual(casava.header(),['FCID','Lane','SampleID','SampleRef',
                                           'Index','Description','Control',
@@ -1879,7 +1879,7 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
         """IEMSampleSheet: load a MiSEQ sample sheet
 
         """
-        iem = IEMSampleSheet(fp=cStringIO.StringIO(self.miseq_sample_sheet_content))
+        iem = IEMSampleSheet(fp=io.StringIO(self.miseq_sample_sheet_content))
         # Check header
         self.assertEqual(iem.header_items,['IEMFileVersion',
                                            'Date',
@@ -1921,7 +1921,7 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
         """IEMSampleSheet: reconstruct a MiSEQ sample sheet
 
         """
-        iem = IEMSampleSheet(fp=cStringIO.StringIO(self.miseq_sample_sheet_content))
+        iem = IEMSampleSheet(fp=io.StringIO(self.miseq_sample_sheet_content))
         expected = self.miseq_sample_sheet_content
         for l1,l2 in zip(iem.show().split(),expected.split()):
             self.assertEqual(l1,l2)
@@ -1929,7 +1929,7 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
         """IEMSampleSheet: convert MiSEQ sample sheet to CASAVA format
 
         """
-        iem = IEMSampleSheet(fp=cStringIO.StringIO(self.miseq_sample_sheet_content))
+        iem = IEMSampleSheet(fp=io.StringIO(self.miseq_sample_sheet_content))
         casava = iem.casava_sample_sheet()
         self.assertEqual(casava.header(),['FCID','Lane','SampleID','SampleRef',
                                           'Index','Description','Control',
@@ -1949,7 +1949,7 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
         """IEMSampleSheet: raises exception for input with unrecognised section
 
         """
-        fp = cStringIO.StringIO("""[Header]
+        fp = io.StringIO(u"""[Header]
 IEMFileVersion,4
 Date,06/03/2014
 
@@ -1961,7 +1961,7 @@ This,isTheEnd
         """IEMSampleSheet: raises exception for non-IEM formatted input
 
         """
-        fp = cStringIO.StringIO("""Something random
+        fp = io.StringIO(u"""Something random
 IEMFileVersion,4
 Date,06/03/2014
 
@@ -1972,7 +1972,7 @@ This,isTheEnd
 
 class TestSampleSheetPredictor(unittest.TestCase):
     def setUp(self):
-        self.hiseq_sample_sheet_content = """[Header]
+        self.hiseq_sample_sheet_content = u"""[Header]
 IEMFileVersion,4
 Date,06/03/2014
 Workflow,GenerateFASTQ
@@ -1996,7 +1996,7 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
 2,PJB1-1579,PJB1-1579,,,N701,CGATGTAT,N501,TCTTTCCC,PeterBriggs,
 2,PJB2-1580,PJB2-1580,,,N702,TGACCAAT,N502,TCTTTCCC,PeterBriggs,
 """
-        self.miseq_sample_sheet_content = """[Header]
+        self.miseq_sample_sheet_content = u"""[Header]
 IEMFileVersion,4
 Date,4/11/2014
 Workflow,Metagenomics
@@ -2017,7 +2017,7 @@ Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_ID,ind
 A8,A8,,,N701,TAAGGCGA,S501,TAGATCGC,PJB,
 B8,B8,,,N702,CGTACTAG,S501,TAGATCGC,PJB,
 """
-        self.casava_sample_sheet_content = """FCID,Lane,SampleID,SampleRef,Index,Description,Control,Recipe,Operator,SampleProject
+        self.casava_sample_sheet_content = u"""FCID,Lane,SampleID,SampleRef,Index,Description,Control,Recipe,Operator,SampleProject
 DADA331XX,1,PhiX,PhiX control,CTGCCT,Control,,,Peter,Control
 DADA331XX,2,884-1,PB-884-1,AGTCAA,RNA-seq,,,Peter,AR
 DADA331XX,3,885-1,PB-885-1,AGTTCC,RNA-seq,,,Peter,AR
@@ -2027,7 +2027,7 @@ DADA331XX,6,885-1,PB-885-1,AGTTCC,RNA-seq,,,Peter,AR
 DADA331XX,7,886-1,PB-886-1,ATGTCA,RNA-seq,,,Peter,AR
 DADA331XX,8,PhiX,PhiX control,CTGCCT,Control,,,Peter,Control
 """
-        self.hiseq_sample_sheet_id_and_name_differ_content = """[Header]
+        self.hiseq_sample_sheet_id_and_name_differ_content = u"""[Header]
 IEMFileVersion,4
 Date,06/03/2014
 Workflow,GenerateFASTQ
@@ -2051,7 +2051,7 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
 2,PJB1,PJB1-1579,,,N701,CGATGTAT,N501,TCTTTCCC,PeterBriggs,
 2,PJB2,PJB2-1580,,,N702,TGACCAAT,N502,TCTTTCCC,PeterBriggs,
 """
-        self.hiseq_sample_sheet_name_no_id_content = """[Header]
+        self.hiseq_sample_sheet_name_no_id_content = u"""[Header]
 IEMFileVersion,4
 Date,06/03/2014
 Workflow,GenerateFASTQ
@@ -2075,7 +2075,7 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
 2,,PJB1-1579,,,N701,CGATGTAT,N501,TCTTTCCC,PeterBriggs,
 2,,PJB2-1580,,,N702,TGACCAAT,N502,TCTTTCCC,PeterBriggs,
 """
-        self.hiseq_sample_sheet_no_barcodes = """[Header]
+        self.hiseq_sample_sheet_no_barcodes = u"""[Header]
 IEMFileVersion,4
 Date,06/03/2014
 Workflow,GenerateFASTQ
@@ -2097,7 +2097,7 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
 1,PJB1,PJB1,,,,,,,PeterBriggs,
 2,PJB2,PJB2,,,,,,,PeterBriggs,
 """
-        self.hiseq_sample_sheet_lanes_out_of_order = """[Header]
+        self.hiseq_sample_sheet_lanes_out_of_order = u"""[Header]
 IEMFileVersion,4
 Date,06/03/2014
 Workflow,GenerateFASTQ
@@ -2121,7 +2121,7 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
 1,CD3,CD3,,,N701,GTATCGAT,N501,TCTTTCCC,CarlDavis,
 1,CD4,CD4,,,N702,CAATTGAC,N502,TCTTTCCC,CarlDavis,
 """
-        self.hiseq_sample_sheet_no_barcodes = """[Header]
+        self.hiseq_sample_sheet_no_barcodes = u"""[Header]
 IEMFileVersion,4
 Date,06/03/2014
 Workflow,GenerateFASTQ
@@ -2143,7 +2143,7 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
 1,PJB1,PJB1,,,,,,,PeterBriggs,
 2,PJB2,PJB2,,,,,,,PeterBriggs,
 """
-        self.miseq_sample_sheet_no_projects = """[Header]
+        self.miseq_sample_sheet_no_projects = u"""[Header]
 IEMFileVersion,4
 Date,11/23/2015
 Workflow,GenerateFASTQ
@@ -2170,7 +2170,7 @@ Sample2,Sample2,,,D702,CGTGTAGG,D501,ATGTAACT,,
     def test_samplesheet_predictor_iem_with_lanes(self):
         """SampleSheetPredictor: handle IEM4 sample sheet with lanes
         """
-        iem = SampleSheet(fp=cStringIO.StringIO(
+        iem = SampleSheet(fp=io.StringIO(
             self.hiseq_sample_sheet_content))
         predictor = SampleSheetPredictor(sample_sheet=iem)
         # Get projects
@@ -2274,7 +2274,7 @@ Sample2,Sample2,,,D702,CGTGTAGG,D501,ATGTAACT,,
     def test_samplesheet_predictor_iem_no_lanes(self):
         """SampleSheetPredictor: handle IEM4 sample sheet with no lanes
         """
-        iem = SampleSheet(fp=cStringIO.StringIO(
+        iem = SampleSheet(fp=io.StringIO(
             self.miseq_sample_sheet_content))
         predictor = SampleSheetPredictor(sample_sheet=iem)
         # Get projects
@@ -2404,7 +2404,7 @@ Sample2,Sample2,,,D702,CGTGTAGG,D501,ATGTAACT,,
     def test_samplesheet_predictor_casava(self):
         """SampleSheetPredictor: handle CASAVA-style sample sheet
         """
-        casava = SampleSheet(fp=cStringIO.StringIO(
+        casava = SampleSheet(fp=io.StringIO(
             self.casava_sample_sheet_content))
         predictor = SampleSheetPredictor(sample_sheet=casava)
         self.assertEqual(predictor.nprojects,2)
@@ -2479,7 +2479,7 @@ Sample2,Sample2,,,D702,CGTGTAGG,D501,ATGTAACT,,
     def test_samplesheet_predictor_iem_id_and_names_differ(self):
         """SampleSheetPredictor: handle IEM4 sample sheet where sample ID differs from name
         """
-        iem = SampleSheet(fp=cStringIO.StringIO(
+        iem = SampleSheet(fp=io.StringIO(
             self.hiseq_sample_sheet_id_and_name_differ_content))
         predictor = SampleSheetPredictor(sample_sheet=iem)
         # Get projects
@@ -2523,7 +2523,7 @@ Sample2,Sample2,,,D702,CGTGTAGG,D501,ATGTAACT,,
     def test_samplesheet_predictor_iem_force_sample_dir(self):
         """SampleSheetPredictor: force insertion of sample dir for IEM4 sample sheet where ID and name are same
         """
-        iem = SampleSheet(fp=cStringIO.StringIO(
+        iem = SampleSheet(fp=io.StringIO(
             self.hiseq_sample_sheet_content))
         predictor = SampleSheetPredictor(sample_sheet=iem)
         # Get projects
@@ -2568,7 +2568,7 @@ Sample2,Sample2,,,D702,CGTGTAGG,D501,ATGTAACT,,
     def test_samplesheet_predictor_iem_name_no_id(self):
         """SampleSheetPredictor: handle IEM4 sample sheet where sample name is supplied instead of ID
         """
-        iem = SampleSheet(fp=cStringIO.StringIO(
+        iem = SampleSheet(fp=io.StringIO(
             self.hiseq_sample_sheet_name_no_id_content))
         predictor = SampleSheetPredictor(sample_sheet=iem)
         # Get projects
@@ -2612,7 +2612,7 @@ Sample2,Sample2,,,D702,CGTGTAGG,D501,ATGTAACT,,
     def test_samplesheet_predictor_iem_no_barcodes(self):
         """SampleSheetPredictor: handle IEM4 sample sheet with no barcodes
         """
-        iem = SampleSheet(fp=cStringIO.StringIO(
+        iem = SampleSheet(fp=io.StringIO(
             self.hiseq_sample_sheet_no_barcodes))
         predictor = SampleSheetPredictor(sample_sheet=iem)
         # Get projects
@@ -2650,7 +2650,7 @@ Sample2,Sample2,,,D702,CGTGTAGG,D501,ATGTAACT,,
     def test_samplesheet_predictor_iem_lanes_out_of_order(self):
         """SampleSheetPredictor: handle IEM4 sample sheet with lane order reversed
         """
-        iem = SampleSheet(fp=cStringIO.StringIO(
+        iem = SampleSheet(fp=io.StringIO(
             self.hiseq_sample_sheet_lanes_out_of_order))
         predictor = SampleSheetPredictor(sample_sheet=iem)
         # Check projects
@@ -2706,7 +2706,7 @@ Sample2,Sample2,,,D702,CGTGTAGG,D501,ATGTAACT,,
     def test_samplesheet_predictor_iem_no_projects(self):
         """SampleSheetPredictor: handle IEM4 sample sheet with no projects
         """
-        iem = SampleSheet(fp=cStringIO.StringIO(
+        iem = SampleSheet(fp=io.StringIO(
             self.miseq_sample_sheet_no_projects))
         predictor = SampleSheetPredictor(sample_sheet=iem)
         # Get projects
@@ -2746,7 +2746,7 @@ Sample2,Sample2,,,D702,CGTGTAGG,D501,ATGTAACT,,
 class TestMiseqToCasavaConversion(unittest.TestCase):
 
     def setUp(self):
-        self.miseq_header = """[Header]
+        self.miseq_header = u"""[Header]
 IEMFileVersion,4
 Investigator Name,
 Project Name,
@@ -2785,7 +2785,7 @@ ID2,,PB,A02,N702,CGTACTAG,N502,CTCTCTAT,,,"""
         self.miseq_dual_indexed_sample_projects = ['PB','ID']
         self.miseq_dual_indexed_index_ids = ['TAAGGCGA-TAGATCGC','CGTACTAG-CTCTCTAT']
         # Example of no-index data
-        self.miseq_data_no_index = self.miseq_header + """
+        self.miseq_data_no_index = self.miseq_header + u"""
 Sample_ID,Sample_Name,Sample_Plate,Sample_Well,Sample_Project,Description
 PB2,PB2,,,PB,"""
         self.miseq_no_index_sample_ids = ['PB2']
@@ -2798,7 +2798,7 @@ PB2,PB2,,,PB,"""
         """
         # Make sample sheet from MiSEQ data
         sample_sheet = convert_miseq_samplesheet_to_casava(
-            fp=cStringIO.StringIO(self.miseq_data))
+            fp=io.StringIO(self.miseq_data))
         # Check contents
         self.assertEqual(len(sample_sheet),6)
         for i in range(0,6):
@@ -2813,7 +2813,7 @@ PB2,PB2,,,PB,"""
         """
         # Make sample sheet from MiSEQ data
         sample_sheet = convert_miseq_samplesheet_to_casava(
-            fp=cStringIO.StringIO(self.miseq_data_dual_indexed))
+            fp=io.StringIO(self.miseq_data_dual_indexed))
         # Check contents
         self.assertEqual(len(sample_sheet),2)
         for i in range(0,2):
@@ -2830,7 +2830,7 @@ PB2,PB2,,,PB,"""
         """
         # Make sample sheet from MiSEQ data
         sample_sheet = convert_miseq_samplesheet_to_casava(
-            fp=cStringIO.StringIO(self.miseq_data_no_index))
+            fp=io.StringIO(self.miseq_data_no_index))
         self.assertEqual(len(sample_sheet),1)
         for i in range(0,1):
             self.assertEqual(sample_sheet[i]['Lane'],1)
@@ -2843,7 +2843,7 @@ PB2,PB2,,,PB,"""
 class TestHiseqToCasavaConversion(unittest.TestCase):
 
     def setUp(self):
-        self.hiseq_header = """[Header],,,,,,,,
+        self.hiseq_header = u"""[Header],,,,,,,,
 IEMFileVersion,4,,,,,,,
 Experiment Name,HiSeq2,,,,,,,
 Date,08/01/2013,,,,,,,
@@ -2864,7 +2864,7 @@ AdapterRead2,AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT,,,,,,,
 ,,,,,,,,
 [Data],,,,,,,,"""
         # Example of single index data
-        self.hiseq_data = self.hiseq_header + """
+        self.hiseq_data = self.hiseq_header + u"""
 Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,Sample_Project,Description
 1,PJB3,PJB3,,,A006,GCCAAT,,
 1,PJB4,PJB4,,,A007,CAGATC,,
@@ -2892,7 +2892,7 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,Sample_Pro
         
         """
         # Make sample sheet from HiSEQ data
-        sample_sheet = get_casava_sample_sheet(fp=cStringIO.StringIO(self.hiseq_data))
+        sample_sheet = get_casava_sample_sheet(fp=io.StringIO(self.hiseq_data))
         # Check contents
         self.assertEqual(len(sample_sheet),12)
         for i in range(0,12):
@@ -2905,11 +2905,11 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,Sample_Pro
         """Handle trailing space when converting Experimental Manager sample sheet
 
         """
-        self.hiseq_data = self.hiseq_header + """
+        self.hiseq_data = self.hiseq_header + u"""
 Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_ID,index2,Sample_Project,Description
 1,PJB1,PJB1,,,N703,CTTGTAAT ,N502,TCTTTCCC,PeterBriggs,"""
         # Make sample sheet from HiSEQ data
-        sample_sheet = get_casava_sample_sheet(fp=cStringIO.StringIO(self.hiseq_data))
+        sample_sheet = get_casava_sample_sheet(fp=io.StringIO(self.hiseq_data))
         # Check contents
         self.assertEqual(len(sample_sheet),1)
         line = sample_sheet[0]

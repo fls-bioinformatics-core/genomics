@@ -25,7 +25,8 @@ import shutil
 import platforms
 import utils
 import TabFile
-import cStringIO
+import io
+from builtins import str
 
 #######################################################################
 # Module constants
@@ -926,7 +927,7 @@ class SampleSheet(object):
         # Read in file contents
         if fp is None:
             if self.sample_sheet is not None:
-                with open(self.sample_sheet,'rU') as fp:
+                with io.open(self.sample_sheet,'rt') as fp:
                     self._read_sample_sheet(fp)
         elif fp is not None:
             self._read_sample_sheet(fp)
@@ -1513,7 +1514,7 @@ class SampleSheet(object):
             if filen is None:
                 fp = sys.stdout
             else:
-                fp = open(filen,'w')
+                fp = io.open(filen,'wt')
         fp.write("%s\n" % self.show(fmt=fmt))
         if filen is not None:
             fp.close()
@@ -2684,16 +2685,16 @@ def get_casava_sample_sheet(samplesheet=None,fp=None,FCID_default='FC1'):
         sample_sheet_fp = fp
     else:
         # Open file
-        sample_sheet_fp = open(samplesheet,'rU')
+        sample_sheet_fp = io.open(samplesheet,'rt')
     # Load file contents into memory
     sample_sheet_content = ''.join(sample_sheet_fp.readlines())
     # Try to load the sample sheet data assuming Experimental Manager format
     try:
-        iem = IEMSampleSheet(fp=cStringIO.StringIO(sample_sheet_content))
+        iem = IEMSampleSheet(fp=io.StringIO(sample_sheet_content))
         return iem.casava_sample_sheet()
     except IlluminaDataError:
         # Not experimental manager format - try CASAVA format
-        return CasavaSampleSheet(fp=cStringIO.StringIO(sample_sheet_content))
+        return CasavaSampleSheet(fp=io.StringIO(sample_sheet_content))
 
 def convert_miseq_samplesheet_to_casava(samplesheet=None,fp=None):
     """Convert a Miseq sample sheet file to CASAVA format
