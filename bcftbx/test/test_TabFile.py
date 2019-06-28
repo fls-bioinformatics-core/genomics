@@ -3,21 +3,22 @@
 #########################################################################
 from bcftbx.TabFile import *
 import unittest
-import cStringIO
+import io
+from builtins import str
 
 class TestTabFile(unittest.TestCase):
 
     def setUp(self):
         # Header
-        self.header = "#chr\tstart\tend\tdata\n"
+        self.header = u"#chr\tstart\tend\tdata\n"
         # Tab-delimited data
         self.data = \
-"""chr1\t1\t234\t4.6
+u"""chr1\t1\t234\t4.6
 chr1\t567\t890\t5.7
 chr2\t1234\t5678\t6.8
 """
         # Make file-like object to read data in
-        self.fp = cStringIO.StringIO(self.header+self.data)
+        self.fp = io.StringIO(self.header+self.data)
 
     def tearDown(self):
         # Close the open file-like input
@@ -29,7 +30,7 @@ chr2\t1234\t5678\t6.8
         tabfile = TabFile('test',self.fp)
         self.assertEqual(len(tabfile),3,"Input has 3 lines of data")
         self.assertEqual(tabfile.header(),[],"Header should be empty")
-        self.assertEqual(str(tabfile[0]),"chr1\t1\t234\t4.6","Incorrect string representation")
+        self.assertEqual(str(tabfile[0]),u"chr1\t1\t234\t4.6","Incorrect string representation")
         self.assertEqual(tabfile[2][0],'chr2',"Incorrect data")
         self.assertEqual(tabfile.nColumns(),4)
         self.assertEqual(tabfile.filename(),'test')
@@ -38,7 +39,7 @@ chr2\t1234\t5678\t6.8
         """Write data to file-like object
         """
         tabfile = TabFile('test',self.fp)
-        fp = cStringIO.StringIO()
+        fp = io.StringIO()
         tabfile.write(fp=fp)
         self.assertEqual(fp.getvalue(),self.data)
         fp.close()
@@ -199,8 +200,8 @@ class TestWhiteSpaceHandlingTabFile(unittest.TestCase):
 
     def setUp(self):
         # Make file-like object to read data in
-        self.fp = cStringIO.StringIO(
-"""chr1\t1\t234\t4.6\tA comment
+        self.fp = io.StringIO(
+u"""chr1\t1\t234\t4.6\tA comment
 chr1\t567\t890\t5.7\tComment with a trailing space 
 chr2\t1234\t5678\t6.8\t.
 """)
@@ -221,8 +222,8 @@ class TestUncommentedHeaderTabFile(unittest.TestCase):
 
     def setUp(self):
         # Make file-like object to read data in
-        self.fp = cStringIO.StringIO(
-"""chr\tstart\tend\tdata
+        self.fp = io.StringIO(
+u"""chr\tstart\tend\tdata
 chr1\t1\t234\t4.6
 chr1\t567\t890\t5.7
 chr2\t1234\t5678\t6.8
@@ -285,16 +286,16 @@ class TestTabFileDelimiters(unittest.TestCase):
 
     def setUp(self):
         # Header
-        self.header = "#chr\tstart\tend\tdata\n"
+        self.header = u"#chr\tstart\tend\tdata\n"
         # Tab-delimited data
         self.data = \
-"""chr1\t1\t234\t4.6
+u"""chr1\t1\t234\t4.6
 chr1\t567\t890\t5.7
 chr2\t1234\t5678\t6.8
 """
         # Make file-like object to read data in
-        self.fp = cStringIO.StringIO(self.header.replace('\t',',')+
-                                     self.data.replace('\t',','))
+        self.fp = io.StringIO(self.header.replace('\t',',')+
+                              self.data.replace('\t',','))
 
     def tearDown(self):
         # Close the open file-like input
@@ -315,7 +316,7 @@ chr2\t1234\t5678\t6.8
         """Write data to file-like object
         """
         tabfile = TabFile('test',self.fp)
-        fp = cStringIO.StringIO()
+        fp = io.StringIO()
         tabfile.write(fp=fp)
         self.assertEqual(fp.getvalue(),self.data.replace('\t',','))
         fp.close()
@@ -334,7 +335,7 @@ chr2\t1234\t5678\t6.8
         """Write data to file-like object including a header line
         """
         tabfile = TabFile('test',self.fp,first_line_is_header=True,delimiter=',')
-        fp = cStringIO.StringIO()
+        fp = io.StringIO()
         tabfile.write(fp=fp,include_header=True)
         self.assertEqual(fp.getvalue(),self.header.replace('\t',',')+self.data.replace('\t',','))
         fp.close()
@@ -360,12 +361,12 @@ chr2\t1234\t5678\t6.8
         """
         tabfile = TabFile('test',self.fp,delimiter=',')
         # Modified delimiter (tab)
-        fp = cStringIO.StringIO()
+        fp = io.StringIO()
         tabfile.write(fp=fp,delimiter='\t')
         self.assertEqual(fp.getvalue(),self.data)
         fp.close()
         # Default (should revert to comma)
-        fp = cStringIO.StringIO()
+        fp = io.StringIO()
         tabfile.write(fp=fp)
         self.assertEqual(fp.getvalue(),self.data.replace('\t',','))
         fp.close()
@@ -376,8 +377,8 @@ class TestTabFileValueConversions(unittest.TestCase):
 
     def setUp(self):
         # Make file-like object to read data in
-        self.fp = cStringIO.StringIO(
-"""chr\tstart\tend\tdata
+        self.fp = io.StringIO(
+u"""chr\tstart\tend\tdata
 chr1\t1\t4.6
 chr1\t567\t5.7
 chr2\t1234\t6.8
@@ -403,7 +404,7 @@ chr2\t1234\t6.8
                           convert=False)
         for line in tabfile:
             for value in line:
-                self.assertTrue(isinstance(value,str))
+                self.assertEqual(value,str(value))
 
     def test_convert_values_to_type_append_tabdata(self):
         """Convert input values to appropriate types (e.g. integer) when appending tabdata
@@ -411,7 +412,7 @@ chr2\t1234\t6.8
         tabfile = TabFile('test',self.fp,first_line_is_header=True)
         tabfile.append(tabdata="chr3\t5678\t7.9")
         for line in tabfile:
-            self.assertTrue(isinstance(line[0],str))
+            self.assertEqual(line[0],str(line[0]))
             self.assertTrue(isinstance(line[1],(int,long)))
             self.assertTrue(isinstance(line[2],float))
 
@@ -420,10 +421,10 @@ chr2\t1234\t6.8
         """
         tabfile = TabFile('test',self.fp,first_line_is_header=True,
                           convert=False)
-        tabfile.append(tabdata="chr3\t5678\t7.9")
+        tabfile.append(tabdata=u"chr3\t5678\t7.9")
         for line in tabfile:
             for value in line:
-                self.assertTrue(isinstance(value,str))
+                self.assertEqual(value,str(value))
 
     def test_convert_values_to_type_append_list(self):
         """Convert input values to appropriate types (e.g. integer) when appending a list
@@ -432,7 +433,7 @@ chr2\t1234\t6.8
         tabfile.append(data=["chr3","5678","7.9"])
         tabfile.append(data=["chr3",5678,7.9])
         for line in tabfile:
-            self.assertTrue(isinstance(line[0],str))
+            self.assertEqual(line[0],str(line[0]))
             self.assertTrue(isinstance(line[1],(int,long)))
             self.assertTrue(isinstance(line[2],float))
 
@@ -445,7 +446,7 @@ chr2\t1234\t6.8
         tabfile.append(data=["chr3",5678,7.9])
         for line in tabfile:
             for value in line:
-                self.assertTrue(isinstance(value,str))
+                self.assertEqual(value,str(value))
 
 class TestBadTabFile(unittest.TestCase):
     """Test with 'bad' input files
@@ -453,8 +454,8 @@ class TestBadTabFile(unittest.TestCase):
 
     def setUp(self):
         # Make file-like object with "bad" data 
-        self.fp = cStringIO.StringIO(
-"""#chr\tstart\tend\tdata
+        self.fp = io.StringIO(
+u"""#chr\tstart\tend\tdata
 chr1\t1\t234
 chr1\t567\t890\t5.7\t4.6
 chr2\t1234\t5678\t6.8
@@ -479,8 +480,8 @@ class TestReorderTabFile(unittest.TestCase):
     """
     def setUp(self):
         # Make file-like object to read data in
-        self.fp = cStringIO.StringIO(
-"""#chr\tstart\tend\tdata
+        self.fp = io.StringIO(
+u"""#chr\tstart\tend\tdata
 chr1\t1\t234\t4.6
 chr1\t567\t890\t5.7
 chr2\t1234\t5678\t6.8
@@ -526,8 +527,8 @@ class TestTransposeTabFile(unittest.TestCase):
     """
     def setUp(self):
         # Make file-like object to read data in
-        self.fp = cStringIO.StringIO(
-"""#chr\tstart\tend\tdata
+        self.fp = io.StringIO(
+u"""#chr\tstart\tend\tdata
 chr1\t1\t234\t4.6
 chr1\t567\t890\t5.7
 chr2\t1234\t5678\t6.8
@@ -551,8 +552,8 @@ class TestWholeColumnOperations(unittest.TestCase):
 
     def setUp(self):
         # Make file-like object to read data in
-        self.fp = cStringIO.StringIO(
-"""#chr\tstart\tend\tdata
+        self.fp = io.StringIO(
+u"""#chr\tstart\tend\tdata
 chr1\t1\t234\t4.6
 chr1\t567\t890\t5.7
 chr2\t1234\t5678\t6.8
@@ -640,8 +641,8 @@ class TestSortTabFile(unittest.TestCase):
 
     def setUp(self):
         # Make file-like object to read data in
-        self.fp = cStringIO.StringIO(
-"""#chr\tstart\tend\tdata
+        self.fp = io.StringIO(
+u"""#chr\tstart\tend\tdata
 chr1\t567\t890\t5.7
 chr1\t1\t234\t6.8
 chr2\t1234\t5678\t3.4
