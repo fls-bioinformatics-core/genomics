@@ -14,14 +14,12 @@ command.
 
 The CommandParser can support arbitrary 'subparser backends' which are
 created to parse the ARGS list for each defined COMMAND. The default
-subparser is the 'optparse.OptionParser' class, but this can be swapped
-for arbitrary subparser (for example, the 'argparse.ArgumentParser'
-class) when the CommandParser is created.
+subparser is the 'argparse.ArgumentParser' class, but this can be swapped
+for arbitrary subparser when the CommandParser is created.
 
 In addition to the core CommandParser class, there are a number of
-supporting functions that can be used with any optparse- or
-argparse-based parser instance, to add the following 'standard'
-options:
+supporting functions that can be used with any argparse-based parser
+instance, to add the following 'standard' options:
 
 * --nprocessors
 * --runner
@@ -31,7 +29,7 @@ options:
 
 """
 
-__version__ = "1.0.2"
+__version__ = "2.0.0"
 
 #######################################################################
 # Imports
@@ -39,7 +37,6 @@ __version__ = "1.0.2"
 
 import os
 import sys
-import optparse
 import argparse
 from utils import OrderedDictionary
 
@@ -60,7 +57,7 @@ class CommandParser(object):
 
     Usage:
 
-    Create a simple CommandParser which uses optparse.OptionParser as
+    Create a simple CommandParser which uses argparse.ArgumentParser as
     the default subparser backend using:
 
     >>> p = CommandParser()
@@ -94,7 +91,7 @@ class CommandParser(object):
     """
     def __init__(self,description=None,version=None,subparser=None):
         """Create a command line parser
-        with 'subparser' as the backend (default=OptionParser)
+        with 'subparser' as the backend (default=ArgumentParser)
         This parser can process command lines of the form
 
         PROG CMD OPTIONS ARGS
@@ -109,7 +106,7 @@ class CommandParser(object):
         self._commands = OrderedDictionary()
         self._help = dict()
         if not subparser:
-            subparser = optparse.OptionParser
+            subparser = argparse.ArgumentParser
         self._subparser = subparser
 
     def add_command(self,cmd,help=None,**args):
@@ -135,6 +132,9 @@ class CommandParser(object):
         """
         if cmd in self._commands:
             raise Exception("Command '%s' already defined" % cmd)
+        if 'prog' not in args:
+            args['prog'] = "%s %s" % (os.path.basename(sys.argv[0]),
+                                      cmd)
         if 'version' not in args:
             args['version'] = self._version
         p = self._subparser(**args)
@@ -384,20 +384,16 @@ def add_arg(p,*args,**kwds):
     the parser.
 
     Arguments:
-      p (Object): parser instance; can be an instance
-        of one of: optparse.OptionContainer (i.e.
-        OptionParser or OptionGroup), or
-        argparse.ArgumentParser
+      p (Object): parser instance
       args (List): list of argument values to pass
         directly to the argument-addition method
       kwds (mapping): keyword-value mapping to pass
         directly to the argument-addition method
 
     """
-    if isinstance(p,argparse.ArgumentParser):
-        add_arg = p.add_argument
-    elif isinstance(p,optparse.OptionContainer):
-        add_arg = p.add_option
-    else:
-        raise Exception("Unrecognised subparser class")
-    return add_arg(*args,**kwds)
+    for add_arg in ('add_argument','add_option',):
+        try:
+            return getattr(p,add_arg)(*args,**kwds)
+        except AttributeError:
+            pass
+    raise Exception("Unrecognised subparser class")

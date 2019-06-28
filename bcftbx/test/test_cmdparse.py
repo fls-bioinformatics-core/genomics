@@ -3,10 +3,20 @@
 #######################################################################
 
 import unittest
-from optparse import OptionParser
-from optparse import OptionGroup
 from argparse import ArgumentParser
-from bcftbx.cmdparse import *
+try:
+    from optparse import OptionParser
+    from optparse import OptionGroup
+    OPTPARSE_AVAILABLE = True
+except ImportError:
+    OPTPARSE_AVAILABLE = False
+from bcftbx.cmdparse import CommandParser
+from bcftbx.cmdparse import add_nprocessors_option
+from bcftbx.cmdparse import add_runner_option
+from bcftbx.cmdparse import add_no_save_option
+from bcftbx.cmdparse import add_dry_run_option
+from bcftbx.cmdparse import add_debug_option
+from bcftbx.cmdparse import add_arg
 
 class TestCommandParserOptionParser(unittest.TestCase):
     """Tests for CommandParser using default OptionParser backend
@@ -14,14 +24,20 @@ class TestCommandParserOptionParser(unittest.TestCase):
     def test_add_command(self):
         """CommandParser.add_command works for a single command using optparse
         """
-        p = CommandParser()
+        # Skip the test if optparse not available
+        if not OPTPARSE_AVAILABLE:
+            raise unittest.SkipTest("'optparse' not available")
+        p = CommandParser(subparser=OptionParser)
         cmd = p.add_command('slow')
         self.assertTrue(isinstance(cmd,OptionParser))
         self.assertEqual(p.list_commands(),['slow'])
     def test_add_multiple_commands(self):
         """CommandParser.add_command works for multiple commands using optparse
         """
-        p = CommandParser()
+        # Skip the test if optparse not available
+        if not OPTPARSE_AVAILABLE:
+            raise unittest.SkipTest("'optparse' not available")
+        p = CommandParser(subparser=OptionParser)
         slow_cmd = p.add_command('slow')
         fast_cmd = p.add_command('fast')
         medium_cmd = p.add_command('medium')
@@ -32,7 +48,10 @@ class TestCommandParserOptionParser(unittest.TestCase):
     def test_parser_for(self):
         """CommandParser.parser_for returns the correct OptionParser
         """
-        p = CommandParser()
+        # Skip the test if optparse not available
+        if not OPTPARSE_AVAILABLE:
+            raise unittest.SkipTest("'optparse' not available")
+        p = CommandParser(subparser=OptionParser)
         slow_cmd = p.add_command('slow')
         fast_cmd = p.add_command('fast')
         medium_cmd = p.add_command('medium')
@@ -42,7 +61,10 @@ class TestCommandParserOptionParser(unittest.TestCase):
     def test_parse_args(self):
         """CommandParser.parse_args works for simple cases using optparse
         """
-        p = CommandParser()
+        # Skip the test if optparse not available
+        if not OPTPARSE_AVAILABLE:
+            raise unittest.SkipTest("'optparse' not available")
+        p = CommandParser(subparser=OptionParser)
         slow_cmd = p.add_command('slow')
         fast_cmd = p.add_command('fast')
         slow_cmd.add_option('-a',action='store',dest='a_value')
@@ -132,6 +154,9 @@ class TestAddOptionFunctions(unittest.TestCase):
     def test_add_nprocessors_option(self):
         """add_nprocessors_option enables '--nprocessors'
         """
+        # Skip the test if optparse not available
+        if not OPTPARSE_AVAILABLE:
+            raise unittest.SkipTest("'optparse' not available")
         p = OptionParser()
         add_nprocessors_option(p,1)
         options,args = p.parse_args(['--nprocessors','4'])
@@ -146,6 +171,9 @@ class TestAddOptionFunctions(unittest.TestCase):
     def test_add_runner_option(self):
         """add_runner_option enables '--runner'
         """
+        # Skip the test if optparse not available
+        if not OPTPARSE_AVAILABLE:
+            raise unittest.SkipTest("'optparse' not available")
         p = OptionParser()
         add_runner_option(p)
         options,args = p.parse_args(['--runner','SimpleJobRunner'])
@@ -160,6 +188,9 @@ class TestAddOptionFunctions(unittest.TestCase):
     def test_add_no_save_option(self):
         """add_no_save_option enables '--no-save'
         """
+        # Skip the test if optparse not available
+        if not OPTPARSE_AVAILABLE:
+            raise unittest.SkipTest("'optparse' not available")
         p = OptionParser()
         add_no_save_option(p)
         options,args = p.parse_args(['--no-save'])
@@ -174,6 +205,9 @@ class TestAddOptionFunctions(unittest.TestCase):
     def test_add_dry_run_option(self):
         """add_dry_run_option enables '--dry-run'
         """
+        # Skip the test if optparse not available
+        if not OPTPARSE_AVAILABLE:
+            raise unittest.SkipTest("'optparse' not available")
         p = OptionParser()
         add_dry_run_option(p)
         options,args = p.parse_args(['--dry-run'])
@@ -188,6 +222,9 @@ class TestAddOptionFunctions(unittest.TestCase):
     def test_add_debug_option(self):
         """add_debug_option enables '--debug'
         """
+        # Skip the test if optparse not available
+        if not OPTPARSE_AVAILABLE:
+            raise unittest.SkipTest("'optparse' not available")
         p = OptionParser()
         add_debug_option(p)
         options,args = p.parse_args(['--debug'])
@@ -202,6 +239,9 @@ class TestAddOptionFunctions(unittest.TestCase):
     def test_add_arg_with_optionparser(self):
         """add_arg works with OptionParser
         """
+        # Skip the test if optparse not available
+        if not OPTPARSE_AVAILABLE:
+            raise unittest.SkipTest("'optparse' not available")
         p = OptionParser()
         add_arg(p,'-n',action='store',dest='n')
         options,args = p.parse_args(['-n','4'])
@@ -209,6 +249,9 @@ class TestAddOptionFunctions(unittest.TestCase):
     def test_add_arg_with_optiongroup(self):
         """add_arg works with OptionGroup
         """
+        # Skip the test if optparse not available
+        if not OPTPARSE_AVAILABLE:
+            raise unittest.SkipTest("'optparse' not available")
         p = OptionParser()
         g = OptionGroup(p,'Suboptions')
         add_arg(g,'-n',action='store',dest='n')
@@ -219,5 +262,13 @@ class TestAddOptionFunctions(unittest.TestCase):
         """
         p = ArgumentParser()
         add_arg(p,'-n',action='store',dest='n')
+        args = p.parse_args(['-n','4'])
+        self.assertEqual(args.n,'4')
+    def test_add_arg_with_argumentparser(self):
+        """add_arg works with ArgumentParser argument group
+        """
+        p = ArgumentParser()
+        g = p.add_argument_group('Suboptions')
+        add_arg(g,'-n',action='store',dest='n')
         args = p.parse_args(['-n','4'])
         self.assertEqual(args.n,'4')
