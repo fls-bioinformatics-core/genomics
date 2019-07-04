@@ -1,3 +1,21 @@
+2019-07-04  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* genomics-bcftbx version 1.7.0
+	- bcftbx/cmdparse: updated to use `argparse` as the default
+	  subparser
+	  https://github.com/fls-bioinformatics-core/genomics/pull/99
+	- bcftbx: switch to using Python3-compatible `print` function
+	  instead of `print` statement
+	  https://github.com/fls-bioinformatics-core/genomics/pull/100
+	- bcftbx: fix Python syntax for raising and capturing
+	  exceptions
+	  https://github.com/fls-bioinformatics-core/genomics/pull/101
+	- bcftbx/JobRunner: remove the `DRMAAJobRunner` class
+	  https://github.com/fls-bioinformatics-core/genomics/pull/102
+	- illumina2cluster/prep_sample_sheet.py: fix to bug with
+	  conflicting `-v` options introduced in previous version
+	  https://github.com/fls-bioinformatics-core/genomics/pull/105
+
 2019-06-10  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* genomics-bcftbx version 1.6.0
