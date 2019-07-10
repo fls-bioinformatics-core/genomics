@@ -4,6 +4,7 @@
 
 import unittest
 import os
+import io
 import tempfile
 import shutil
 from bcftbx.test.mock_data import TestUtils,ExampleDirScooby
@@ -45,18 +46,17 @@ class TestMd5sums(unittest.TestCase):
         """compute_md5sums make md5sum file for test directory
         """
         compute_md5sums('.',output_file=self.checksum_file,relative=True)
-        checksums = open(self.checksum_file,'r').read()
+        checksums = io.open(self.checksum_file,'rt').read()
         reference_checksums = self.reference_checksums.split('\n')
         reference_checksums.sort()
         checksums = checksums.split('\n')
         checksums.sort()
-        print(str(checksums))
         for l1,l2 in zip(reference_checksums,checksums):
             self.assertEqual(l1,l2)
 
     def test_verify_md5sums(self):
         # Verify md5sums for test directory
-        fp = open(self.checksum_file,'w')
+        fp = io.open(self.checksum_file,'wt')
         fp.write(self.reference_checksums)
         fp.close()
         self.assertEqual(verify_md5sums(self.checksum_file),0)
@@ -64,7 +64,7 @@ class TestMd5sums(unittest.TestCase):
     def test_compute_md5sum_for_file(self):
         # Compute md5sum for a single file
         compute_md5sum_for_file('test.txt',output_file=self.checksum_file)
-        checksum = open(self.checksum_file,'r').read()
+        checksum = io.open(self.checksum_file,'rt').read()
         self.assertEqual("0b26e313ed4a7ca6904b0e9369e5b957  test.txt\n",checksum)
 
     def test_broken_links(self):
