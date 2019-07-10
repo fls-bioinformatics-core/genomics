@@ -25,9 +25,11 @@ sequencing run.
 # Import modules that this module depends on
 #######################################################################
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 
+from builtins import str
 import os
+import io
 import sys
 import argparse
 
@@ -139,7 +141,7 @@ def demultiplex_fastq(fastq_file,barcodes,nmismatches):
         if os.path.exists(output_file_name):
             print("\t%s: already exists,exiting" % output_file_name)
             sys.exit(1)
-        output_files[barcode['index']] = open(output_file_name,'w')
+        output_files[barcode['index']] = io.open(output_file_name,'wt')
     # Check if there's anything to do
     if len(local_barcodes) == 0:
         return
@@ -150,7 +152,7 @@ def demultiplex_fastq(fastq_file,barcodes,nmismatches):
     if os.path.exists(unbinned_file_name):
         print("\t%s: already exists,exiting" % unbinned_file_name)
         sys.exit(1)
-    output_files['unbinned'] = open(unbinned_file_name,'w')
+    output_files['unbinned'] = io.open(unbinned_file_name,'wt')
     # Process reads
     nreads = 0
     for read in FASTQFile.FastqIterator(fastq_file):
