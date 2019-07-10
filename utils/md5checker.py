@@ -72,7 +72,7 @@ def compute_md5sums(dirn,output_file=None,relative=False):
     for filen,chksum in Md5sum.Md5Checker.compute_md5sums(dirn):
         if not relative:
             filen = os.path.join(dirn,filen)
-        fp.write("%s  %s\n" % (chksum,filen))
+        fp.write(u"%s  %s\n" % (chksum,filen))
     if output_file:
         fp.close()
     return retval
@@ -101,7 +101,7 @@ def compute_md5sum_for_file(filen,output_file=None):
         fp = sys.stdout
     try:
         chksum = Md5sum.md5sum(filen)
-        fp.write("%s  %s\n" % (chksum,filen))
+        fp.write(u"%s  %s\n" % (chksum,filen))
     except IOError as ex:
         # Error accessing file, report and skip
         logging.error("%s: error while generating MD5 sum: '%s'" % (filen,ex))
