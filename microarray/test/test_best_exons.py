@@ -2,8 +2,9 @@
 # Tests for best_exons.py
 #########################################################################
 
+from builtins import str
 import unittest
-import cStringIO
+import io
 from best_exons import Exon
 from best_exons import ExonList
 from best_exons import best_exons
@@ -231,8 +232,8 @@ class TestBestExonsFunction(unittest.TestCase):
     """Tests for the best_exons function
     """
     def setUp(self):
-        self.fp_in = cStringIO.StringIO(
-"""Probeset ID	Gene Symbol	1_1	1_2	2_1	2_2	3_1	3_2	Mean(Cntl)	Mean(siETV4)	Ratio(siETV4 vs. Cntl)	Fold-Change(siETV4 vs. Cntl)	log2FoldChange	p-value	q-value
+        self.fp_in = io.StringIO(
+u"""Probeset ID	Gene Symbol	1_1	1_2	2_1	2_2	3_1	3_2	Mean(Cntl)	Mean(siETV4)	Ratio(siETV4 vs. Cntl)	Fold-Change(siETV4 vs. Cntl)	log2FoldChange	p-value	q-value
 PSR19025918.hg.1	A1BG	8.66755	8.57167	8.67935	8.73928	8.8101	8.67708	8.719	8.66267	0.961711	-1.03981	-0.056323333	0.5347865	0.725553
 PSR19025921.hg.1	A1BG	7.41787	7.17961	7.40133	7.6528	7.28002	7.49215	7.36641	7.44152	1.05344	1.05344	0.075113333	0.5820691	0.7383465
 PSR19025922.hg.1	A1BG	7.50871	7.57826	7.30645	7.61757	7.62477	7.35605	7.47998	7.51729	1.02621	1.02621	0.037316667	0.7582407	0.779675
@@ -253,7 +254,7 @@ PSR19013236.hg.1	A1BG-AS1	6.42098	5.92741	6.46143	6.36713	6.25817	6.65999	6.3801
 A1BG	6.53146666667	6.58490666667	6.46829	6.62764	6.43243	6.47405666667	6.47739666667	6.56220333333	1.06071	1.06071	0.0848055556667	0.579117833333	0.736739066667
 A1BG-AS1	6.68543666667	6.36481	6.60468333333	6.50084333333	6.54916	6.57107333333	6.61309333333	6.47891333333	0.912662666667	-1.09929666667	-0.134184444667	0.36233172	0.592774133333	*
 """
-        fp_out = cStringIO.StringIO()
+        fp_out = io.StringIO()
         best_exons(self.fp_in,fp_out,rank_by='log2_fold_change')
         output = fp_out.getvalue()
         for obs,exp in zip(output.split(),expected_output.split()):
@@ -266,7 +267,7 @@ A1BG-AS1	6.68543666667	6.36481	6.60468333333	6.50084333333	6.54916	6.57107333333
 A1BG	6.93789333333	7.01143	6.88032666667	6.86134333333	6.9543	6.82708666667	6.92417333333	6.89995333333	0.985846333333	-0.350463333333	-0.02422	0.4211846	0.6866338
 A1BG-AS1	6.68543666667	6.36481	6.60468333333	6.50084333333	6.54916	6.57107333333	6.61309333333	6.47891333333	0.912662666667	-1.09929666667	-0.134184444667	0.36233172	0.592774133333	*
 """
-        fp_out = cStringIO.StringIO()
+        fp_out = io.StringIO()
         best_exons(self.fp_in,fp_out,rank_by='p_value')
         output = fp_out.getvalue()
         for obs,exp in zip(output.split(),expected_output.split()):
