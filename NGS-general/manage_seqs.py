@@ -32,6 +32,7 @@ __version__ = "0.1.2"
 #######################################################################
 
 import os
+import io
 import copy
 import sys
 import argparse
@@ -156,7 +157,7 @@ class SeqDb(object):
           filen: name of file to load data from
 
         """
-        fp = open(filen,'rU')
+        fp = io.open(filen,'rt')
         for line in fp:
             line = line.strip('\n')
             if line.startswith('#') or line.strip() == '':
@@ -178,7 +179,7 @@ class SeqDb(object):
             with the FASTA file name.
 
         """
-        fp = open(fasta,'rU')
+        fp = io.open(fasta,'rt')
         name = None
         seq = []
         for line in fp:
@@ -208,15 +209,15 @@ class SeqDb(object):
 
         """
         if append:
-            mode = 'a'
+            mode = 'at'
         else:
-            mode = 'w'
-        fp = open(filen,mode)
+            mode = 'wt'
+        fp = io.open(filen,mode)
         if header is not None:
             for line in split_text(header,68,slack=True):
                 fp.write("# %s\n" % line)
         for name,seq in self:
-            fp.write("%s\t%s\n" % (name,seq))
+            fp.write(u"%s\t%s\n" % (name,seq))
         fp.close()
 
     def redundant_entries(self):
@@ -420,7 +421,7 @@ class TestSeqDb(unittest.TestCase):
         """
         # Create temporary file
         fd,self.tmp_file = tempfile.mkstemp()
-        fp = os.fdopen(fd,'w')
+        fp = os.fdopen(fd,'wt')
         fp.write("Sequence #1\tATAGAC\nSequence #2\t\tATAGGC\n")
         fp.close()
         # Run test
@@ -440,7 +441,7 @@ class TestSeqDb(unittest.TestCase):
         """
         # Create temporary file
         fd,self.tmp_file = tempfile.mkstemp()
-        fp = os.fdopen(fd,'w')
+        fp = os.fdopen(fd,'wt')
         fp.write(">Sequence #1\nATAGAC\n>Sequence #2\nATA\nGGC\n")
         fp.close()
         # Run test
@@ -465,7 +466,7 @@ class TestSeqDb(unittest.TestCase):
         s.add('Sequence #1','ATAGAC')
         s.add('Sequence #2','ATAGGC')
         s.save(self.tmp_file)
-        content = open(self.tmp_file,'r').read()
+        content = io.open(self.tmp_file,'rt').read()
         self.assertEqual(content,"Sequence #1\tATAGAC\nSequence #2\tATAGGC\n")
     def test_seqdb_save_append(self):
         """Append sequences from SeqDb to an existing file
@@ -480,7 +481,7 @@ class TestSeqDb(unittest.TestCase):
         s.add('Sequence #1','ATAGAC')
         s.add('Sequence #2','ATAGGC')
         s.save(self.tmp_file,append=True)
-        content = open(self.tmp_file,'r').read()
+        content = io.open(self.tmp_file,'rt').read()
         self.assertEqual(content,"# Initial sequence\nSequence #3\tATAGCC\nSequence #1\tATAGAC\nSequence #2\tATAGGC\n")
 
 class TestSplitLineFunction(unittest.TestCase):
