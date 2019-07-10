@@ -26,15 +26,17 @@ Information on the FASTQ file format: http://en.wikipedia.org/wiki/FASTQ_format
 
 """
 
-__version__ = "1.0.3"
+__version__ = "1.0.4"
 
 CHUNKSIZE = 102400
 
 #######################################################################
 # Import modules that this module depends on
 #######################################################################
+from builtins import str
 from collections import Iterator
 import os
+import io
 import re
 import logging
 import gzip
@@ -70,7 +72,7 @@ class FastqIterator(Iterator):
     Input FASTQ can be in gzipped format; FASTQ data can also be supplied
     as a file-like object opened for reading, for example:
 
-    >>> fp = open(fastq_file,'rU')
+    >>> fp = io.open(fastq_file,'rt')
     >>> for read in FastqIterator(fp=fp):
     >>>    print(read)
     >>> fp.close()
@@ -449,7 +451,7 @@ def get_fastq_file_handle(fastq):
     if os.path.splitext(fastq)[1] == '.gz':
         return gzip.open(fastq,'rb')
     else:
-        return open(fastq,'rb')
+        return io.open(fastq,'rb')
 
 def nreads(fastq=None,fp=None):
     """Return number of reads in a FASTQ file
