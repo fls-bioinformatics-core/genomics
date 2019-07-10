@@ -4,14 +4,16 @@
 #     Copyright (C) University of Manchester 2017-2019 Peter Briggs
 #
 
-__version__ = "0.0.5"
+__version__ = "0.0.6"
 
 #######################################################################
 # Imports
 #######################################################################
 
+from builtins import str
 import sys
 import os
+import io
 import argparse
 import tempfile
 import random
@@ -29,7 +31,7 @@ from bcftbx.qc.report import strip_ngs_extensions
 
 import unittest
 
-fq_r1_data = """@K00311:43:HL3LWBBXX:8:1101:21440:1121 1:N:0:CNATGT
+fq_r1_data = u"""@K00311:43:HL3LWBBXX:8:1101:21440:1121 1:N:0:CNATGT
 GCCNGACAGCAGAAATGGAATGCGGACCCCTTCNACCACCANAATATTCTTNATNTTGGGTNTTGCNAANGTCTTC
 +
 AAF#FJJJJJJJJJJJJJJJJJJJJJJJJJJJJ#JJJJJJJ#JJJJJJJJJ#JJ#JJJJJJ#JJJJ#JJ#JJJJJJ
@@ -42,7 +44,7 @@ CCCNACCCTTGCCTACCCACCATACCAAGTGCTNGGATTACNGGCATGTATNGCNGCGTCCNGCTTNAANTTAA
 +
 AAF#FJJJJJJJJJJJJJJJJJJJJJJJJJJJJ#JJJJJJJ#JJJJJJJJJ#JJ#JJJAJJ#JJJJ#JJ#JJJJ
 """
-fq_r2_data = """@K00311:43:HL3LWBBXX:8:1101:21440:1121 2:N:0:CNATGT
+fq_r2_data = u"""@K00311:43:HL3LWBBXX:8:1101:21440:1121 2:N:0:CNATGT
 CAANANGGNNTCNCNGNTNTNCTNTNAGANCNNTGANCNGTTCTTCCCANCTGCACTCTGCCCCAGCTGTCCAGNC
 +
 AAF#F#JJ##JJ#J#J#J#J#JJ#J#JJJ#J##JJJ#J#JJJJJJJJJJ#JJJJJJJJJJJJJJJJJJJJJJJJ#J
@@ -70,9 +72,9 @@ def mockSTAR(argv,unmapped_output=False):
     p.add_argument('--outFileNamePrefix',action="store",dest='prefix')
     p.add_argument('--runThreadN',action="store")
     args = p.parse_args(argv)
-    with open("%sReadsPerGene.out.tab" % args.prefix,'w') as fp:
+    with io.open("%sReadsPerGene.out.tab" % args.prefix,'wt') as fp:
         if not unmapped_output:
-            fp.write("""N_unmapped	2026581	2026581	2026581
+            fp.write(u"""N_unmapped	2026581	2026581	2026581
 N_multimapping	4020538	4020538	4020538
 N_noFeature	8533504	24725707	8782932
 N_ambiguous	618069	13658	192220
@@ -98,7 +100,7 @@ ENSMUSG00000064369.1	6	275	6
 ENSMUSG00000064370.1	122199	199	123042
 """)
         else:
-            fp.write("""N_unmapped	1	1	1
+            fp.write(u"""N_unmapped	1	1	1
 N_multimapping	0	0	0
 N_noFeature	0	0	0
 N_ambiguous	0	0	0
@@ -134,7 +136,7 @@ class TestStrandTsar(unittest.TestCase):
         self.fqs = []
         for r in ("R1","R2"):
             fq = os.path.join(self.wd,"mock_%s.fq" %r)
-            with open(fq,'w') as fp:
+            with io.open(fq,'wt') as fp:
                 if r == "R1":
                     fp.write(fq_r1_data)
                 else:
@@ -145,13 +147,13 @@ class TestStrandTsar(unittest.TestCase):
             os.mkdir(os.path.join(self.wd,i))
         # Make a conf file
         self.conf_file = os.path.join(self.wd,"genomes.conf")
-        with open(self.conf_file,'w') as fp:
+        with io.open(self.conf_file,'wt') as fp:
             for i in ("Genome1","Genome2"):
-                fp.write("%s\t%s\n" % (i,os.path.join(self.wd,i)))
+                fp.write(u"%s\t%s\n" % (i,os.path.join(self.wd,i)))
         # Make a "bad" Fastq
         self.bad_fastq = os.path.join(self.wd,"bad_R1.fq")
-        with open(self.bad_fastq,'w') as fp:
-            fp.write("NOT A FASTQ FILE")
+        with io.open(self.bad_fastq,'wt') as fp:
+            fp.write(u"NOT A FASTQ FILE")
     def tearDown(self):
         # Move back to the original directory
         os.chdir(self.pwd)
@@ -161,8 +163,8 @@ class TestStrandTsar(unittest.TestCase):
         shutil.rmtree(self.wd)
     def _make_mock_star(self,path,unmapped_output=False):
         # Make a mock STAR executable
-        with open(path,'w') as fp:
-            fp.write("""#!/bin/bash
+        with io.open(path,'wt') as fp:
+            fp.write(u"""#!/bin/bash
 export PYTHONPATH=%s:$PYTHONPATH
 python -c "import sys ; from fastq_strand import mockSTAR ; mockSTAR(sys.argv[1:],unmapped_output=%s)" $@
 exit $?
@@ -170,8 +172,8 @@ exit $?
         os.chmod(path,0775)
     def _make_failing_mock_star(self,path):
         # Make a failing mock STAR executable
-        with open(path,'w') as fp:
-            fp.write("""#!/bin/bash
+        with io.open(path,'wt') as fp:
+            fp.write(u"""#!/bin/bash
 exit 1
 """)
         os.chmod(path,0775)
@@ -182,7 +184,7 @@ exit 1
         fastq_strand(["-g","Genome1",self.fqs[0]])
         outfile = os.path.join(self.wd,"mock_R1_fastq_strand.txt")
         self.assertTrue(os.path.exists(outfile))
-        self.assertEqual(open(outfile,'r').read(),
+        self.assertEqual(io.open(outfile,'rt').read(),
                          """#fastq_strand version: %s	#Aligner: STAR	#Reads in subset: 3
 #Genome	1st forward	2nd reverse
 Genome1	13.13	93.21
@@ -196,7 +198,7 @@ Genome1	13.13	93.21
                       self.fqs[0]])
         outfile = os.path.join(self.wd,"mock_R1_fastq_strand.txt")
         self.assertTrue(os.path.exists(outfile))
-        self.assertEqual(open(outfile,'r').read(),
+        self.assertEqual(io.open(outfile,'rt').read(),
                          """#fastq_strand version: %s	#Aligner: STAR	#Reads in subset: 3
 #Genome	1st forward	2nd reverse
 Genome1	13.13	93.21
@@ -211,7 +213,7 @@ Genome2	13.13	93.21
                       self.fqs[1]])
         outfile = os.path.join(self.wd,"mock_R1_fastq_strand.txt")
         self.assertTrue(os.path.exists(outfile))
-        self.assertEqual(open(outfile,'r').read(),
+        self.assertEqual(io.open(outfile,'rt').read(),
                          """#fastq_strand version: %s	#Aligner: STAR	#Reads in subset: 3
 #Genome	1st forward	2nd reverse
 Genome1	13.13	93.21
@@ -226,7 +228,7 @@ Genome1	13.13	93.21
                       self.fqs[1]])
         outfile = os.path.join(self.wd,"mock_R1_fastq_strand.txt")
         self.assertTrue(os.path.exists(outfile))
-        self.assertEqual(open(outfile,'r').read(),
+        self.assertEqual(io.open(outfile,'rt').read(),
                          """#fastq_strand version: %s	#Aligner: STAR	#Reads in subset: 3
 #Genome	1st forward	2nd reverse
 Genome1	13.13	93.21
@@ -241,7 +243,7 @@ Genome2	13.13	93.21
                       self.fqs[1]])
         outfile = os.path.join(self.wd,"mock_R1_fastq_strand.txt")
         self.assertTrue(os.path.exists(outfile))
-        self.assertEqual(open(outfile,'r').read(),
+        self.assertEqual(io.open(outfile,'rt').read(),
                          """#fastq_strand version: %s	#Aligner: STAR	#Reads in subset: 3
 #Genome	1st forward	2nd reverse
 Genome1	13.13	93.21
@@ -257,7 +259,7 @@ Genome2	13.13	93.21
                       self.fqs[1]])
         outfile = os.path.join(self.wd,"mock_R1_fastq_strand.txt")
         self.assertTrue(os.path.exists(outfile))
-        self.assertEqual(open(outfile,'r').read(),
+        self.assertEqual(io.open(outfile,'rt').read(),
                          """#fastq_strand version: %s	#Aligner: STAR	#Reads in subset: 3
 #Genome	1st forward	2nd reverse
 Genome1	13.13	93.21
@@ -272,7 +274,7 @@ Genome1	13.13	93.21
                       self.fqs[1]])
         outfile = os.path.join(self.wd,"mock_R1_fastq_strand.txt")
         self.assertTrue(os.path.exists(outfile))
-        self.assertEqual(open(outfile,'r').read(),
+        self.assertEqual(io.open(outfile,'rt').read(),
                          """#fastq_strand version: %s	#Aligner: STAR	#Reads in subset: 3
 #Genome	1st forward	2nd reverse	Unstranded	1st read strand aligned	2nd read strand aligned
 Genome1	13.13	93.21	391087	51339	364535
@@ -287,7 +289,7 @@ Genome1	13.13	93.21	391087	51339	364535
                       self.fqs[1]])
         outfile = os.path.join(self.wd,"mock_R1_fastq_strand.txt")
         self.assertTrue(os.path.exists(outfile))
-        self.assertEqual(open(outfile,'r').read(),
+        self.assertEqual(io.open(outfile,'rt').read(),
                          """#fastq_strand version: %s	#Aligner: STAR	#Reads in subset: 3
 #Genome	1st forward	2nd reverse
 Genome1	13.13	93.21
@@ -309,13 +311,13 @@ Genome1	13.13	93.21
         fastq_strand: test overwrite existing output file
         """
         outfile = os.path.join(self.wd,"mock_R1_fastq_strand.txt")
-        with open(outfile,'w') as fp:
-            fp.write("Pre-existing file should be overwritten")
+        with io.open(outfile,'wt') as fp:
+            fp.write(u"Pre-existing file should be overwritten")
         fastq_strand(["-g","Genome1",
                       self.fqs[0],
                       self.fqs[1]])
         self.assertTrue(os.path.exists(outfile))
-        self.assertEqual(open(outfile,'r').read(),
+        self.assertEqual(io.open(outfile,'rt').read(),
                          """#fastq_strand version: %s	#Aligner: STAR	#Reads in subset: 3
 #Genome	1st forward	2nd reverse
 Genome1	13.13	93.21
@@ -328,8 +330,8 @@ Genome1	13.13	93.21
         mock_star = os.path.join(self.wd,"mock_star","STAR")
         self._make_failing_mock_star(mock_star)
         outfile = os.path.join(self.wd,"mock_R1_fastq_strand.txt")
-        with open(outfile,'w') as fp:
-            fp.write("Pre-existing file should be removed")
+        with io.open(outfile,'wt') as fp:
+            fp.write(u"Pre-existing file should be removed")
         self.assertRaises(Exception,
                           fastq_strand,
                           ["-g","Genome1",self.fqs[0],self.fqs[1]])
@@ -342,8 +344,8 @@ Genome1	13.13	93.21
         mock_star = os.path.join(self.wd,"mock_star","STAR")
         self._make_failing_mock_star(mock_star)
         outfile = os.path.join(self.wd,"mock_R1_fastq_strand.txt")
-        with open(outfile,'w') as fp:
-            fp.write("Pre-existing file should be removed")
+        with io.open(outfile,'wt') as fp:
+            fp.write(u"Pre-existing file should be removed")
         self.assertRaises(Exception,
                           fastq_strand,
                           ["-g","Genome1",self.fqs[0],self.fqs[1]])
@@ -365,8 +367,8 @@ Genome1	13.13	93.21
         mock_star = os.path.join(self.wd,"mock_star","STAR")
         self._make_failing_mock_star(mock_star)
         outfile = os.path.join(self.wd,"mock_R1_fastq_strand.txt")
-        with open(outfile,'w') as fp:
-            fp.write("Pre-existing file should be overwritten")
+        with io.open(outfile,'wt') as fp:
+            fp.write(u"Pre-existing file should be overwritten")
         self.assertRaises(Exception,
                           fastq_strand,
                           ["-g","Genome1",self.fqs[0],self.fqs[1]])
@@ -384,7 +386,7 @@ Genome1	13.13	93.21
                       self.fqs[1]])
         outfile = os.path.join(self.wd,"mock_R1_fastq_strand.txt")
         self.assertTrue(os.path.exists(outfile))
-        self.assertEqual(open(outfile,'r').read(),
+        self.assertEqual(io.open(outfile,'rt').read(),
                          """#fastq_strand version: %s	#Aligner: STAR	#Reads in subset: 3
 #Genome	1st forward	2nd reverse
 Genome1	0.00	0.00
@@ -470,7 +472,7 @@ def fastq_strand(argv,working_dir=None):
     if args.conf is not None:
         print("Conf file\t: %s" % args.conf)
         star_genomedirs = []
-        with open(args.conf,'r') as fp:
+        with io.open(args.conf,'rt') as fp:
             for line in fp:
                 if line.startswith('#'):
                     continue
@@ -536,10 +538,10 @@ def fastq_strand(argv,working_dir=None):
         if fq_subset.endswith(".gz"):
             fq_subset = '.'.join(fq_subset.split('.')[:-1])
         fq_subset = "%s.subset.fq" % '.'.join(fq_subset.split('.')[:-1])
-        with open(fq_subset,'w') as fp:
+        with io.open(fq_subset,'wt') as fp:
             for read in getreads_subset(os.path.abspath(fq),
                                         subset_indices):
-                fp.write('\n'.join(read) + '\n')
+                fp.write(u'\n'.join(read) + '\n')
         fastqs.append(fq_subset)
     # Make directory to keep output from STAR
     if args.keep_star_output:
@@ -562,7 +564,7 @@ def fastq_strand(argv,working_dir=None):
         # Make the directory
         os.mkdir(star_output_dir)
     # Write output to a temporary file
-    with tempfile.TemporaryFile() as fp:
+    with tempfile.TemporaryFile(mode='w+t') as fp:
         # Iterate over genome indices
         for star_genomedir in star_genomedirs:
             # Basename for output for this genome
@@ -611,7 +613,7 @@ def fastq_strand(argv,working_dir=None):
             sum_col2 = 0
             sum_col3 = 0
             sum_col4 = 0
-            with open(star_tab_file) as out:
+            with io.open(star_tab_file,'rt') as out:
                 for i,line in enumerate(out):
                     if i < 4:
                         # Skip first four lines
@@ -641,13 +643,13 @@ def fastq_strand(argv,working_dir=None):
                     "%.2f" % reverse_2nd]
             if args.counts:
                 data.extend([sum_col2,sum_col3,sum_col4])
-            fp.write("%s\n" % "\t".join([str(d) for d in data]))
+            fp.write(u"%s\n" % "\t".join([str(d) for d in data]))
         # Finished iterating over genomes
         # Rewind temporary output file
         fp.seek(0)
-        with open(outfile,'w') as out:
+        with io.open(outfile,'wt') as out:
             # Header
-            out.write("#fastq_strand version: %s\t"
+            out.write(u"#fastq_strand version: %s\t"
                       "#Aligner: %s\t"
                       "#Reads in subset: %s\n" % (__version__,
                                                   "STAR",
@@ -657,10 +659,10 @@ def fastq_strand(argv,working_dir=None):
                 columns.extend(["Unstranded",
                                 "1st read strand aligned",
                                 "2nd read strand aligned"])
-            out.write("#%s\n" % "\t".join(columns))
+            out.write(u"#%s\n" % "\t".join(columns))
             # Copy content from temp to final file
             for line in fp:
-                out.write(line)
+                out.write(str(line))
     return 0
 
 if __name__ == "__main__":
