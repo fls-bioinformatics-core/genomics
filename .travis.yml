@@ -13,6 +13,7 @@ script:
   - "python setup.py test"
 # Run the illumina2cluster tests
   - ./illumina2cluster/prep_sample_sheet.py -h
+  - "nosetests --exe -v illumina2cluster/report_barcodes.py"
 # Run the RNA-seq utility tests
   - "nosetests --exe -v RNA-seq/bowtie_mapping_stats.py"
   - ./RNA-seq/examples/test_bowtie_mapping_stats.sh
@@ -31,5 +32,6 @@ script:
   - ./microarray/examples/test_best_exons.sh
   - ./microarray/examples/test_xrorthologs.sh
   - ./microarray/examples/test_annotate_probesets.sh
+  - "nosetests --exe -v microarray/xrorthologs.py"
 # Run the examples for utils
   - ./utils/examples/test_md5checker.sh
