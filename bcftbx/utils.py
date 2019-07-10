@@ -79,6 +79,7 @@ Command line parsing utilities:
 #######################################################################
 
 import os
+import io
 import logging
 import string
 import gzip
@@ -216,7 +217,7 @@ def getlines(filen):
     performing the line splitting in memory. It attempts
     to replicate the idiom:
 
-    >>> for line in open(filen):
+    >>> for line in io.open(filen):
     >>> ...
 
     using:
@@ -238,7 +239,7 @@ def getlines(filen):
     if filen.split('.')[-1] == 'gz':
         fp = gzip.open(filen,'rb')
     else:
-        fp = open(filen,'rb')
+        fp = io.open(filen,'rb')
     # Read in data in chunks
     buf = ''
     lines = []
@@ -675,7 +676,7 @@ def touch(filename):
 
     """
     if not os.path.exists(filename):
-        open(filename,'wb+').close()
+        io.open(filename,'wb+').close()
     os.utime(filename,None)
 
 def format_file_size(fsize,units=None):
@@ -1290,11 +1291,11 @@ def concatenate_fastq_files(merged_fastq,fastq_files,bufsize=10240,
             # Copy first file in list directly and open for append
             shutil.copy(fastq_files[0],merged_fastq_part)
             first_file = 1
-            fq_merged = open(merged_fastq_part,'ab')
+            fq_merged = io.open(merged_fastq_part,'ab')
         else:
             # Assume regular file
             first_file = 1
-            fq_merged = open(merged_fastq_part,'wb')
+            fq_merged = io.open(merged_fastq_part,'wb')
     # For each fastq, read data and append to output - simples!
     for fastq in fastq_files[first_file:]:
         if verbose: print("Adding records from %s" % fastq)
@@ -1303,7 +1304,7 @@ def concatenate_fastq_files(merged_fastq,fastq_files,bufsize=10240,
             raise OSError("'%s' not found, stopping" % fastq)
         # Open file for reading
         if not is_gzipped_file(fastq):
-            fq = open(fastq,'rb')
+            fq = io.open(fastq,'rb')
         else:
             fq = gzip.GzipFile(fastq,'rb')
         # Read and append data

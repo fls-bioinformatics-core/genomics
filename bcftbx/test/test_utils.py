@@ -3,6 +3,7 @@
 #######################################################################
 import unittest
 import os
+import io
 import tempfile
 import shutil
 import gzip
@@ -125,7 +126,7 @@ class TestGetlinesFunction(unittest.TestCase):
     """
     def setUp(self):
         self.wd = tempfile.mkdtemp()
-        self.example_text = """@K00311:43:HL3LWBBXX:8:1101:21440:1121 1:N:0:CNATGT
+        self.example_text = u"""@K00311:43:HL3LWBBXX:8:1101:21440:1121 1:N:0:CNATGT
 GCCNGACAGCAGAAAT
 +
 AAF#FJJJJJJJJJJJ
@@ -145,7 +146,7 @@ AAF#FJJJJJJJJJJJ
         """
         # Make an example file
         example_file = os.path.join(self.wd,"example.txt")
-        with open(example_file,'w') as fp:
+        with io.open(example_file,'w') as fp:
             fp.write(self.example_text)
         # Read lines
         lines = getlines(example_file)
@@ -542,7 +543,7 @@ class TestListDirsFunction(unittest.TestCase):
 
     def touch_file(self,name):
         # Add an empty file
-        open(os.path.join(self.parent_dir,name),'w').close()
+        io.open(os.path.join(self.parent_dir,name),'wt').close()
 
     def test_empty_dir(self):
         """list_dirs returns empty list when listing empty directory
@@ -704,7 +705,7 @@ class TestChmodFunction(unittest.TestCase):
         """Check chmod works on a file
         """
         test_file = os.path.join(self.test_dir,'test.txt')
-        open(test_file,'w').write("Some random text")
+        io.open(test_file,'wt').write(u"Some random text")
         chmod(test_file,0644)
         self.assertEqual(stat.S_IMODE(os.lstat(test_file).st_mode),0644)
         chmod(test_file,0755)
@@ -724,7 +725,7 @@ class TestChmodFunction(unittest.TestCase):
         """Check chmod doesn't follow symbolic links
         """
         test_file = os.path.join(self.test_dir,'test.txt')
-        open(test_file,'w').write("Some random text")
+        io.open(test_file,'w').write(u"Some random text")
         test_link = os.path.join(self.test_dir,'test.lnk')
         os.symlink(test_file,test_link)
         chmod(test_file,0644)
@@ -999,7 +1000,7 @@ class TestConcatenateFastqFiles(unittest.TestCase):
     """
     def setUp(self):
         # Create a set of test files
-        self.fastq_data1 = """"@73D9FA:3:FC:1:1:7507:1000 1:N:0:
+        self.fastq_data1 = u""""@73D9FA:3:FC:1:1:7507:1000 1:N:0:
 NACAACCTGATTAGCGGCGTTGACAGATGTATCCAT
 +
 #))))55445@@@@@C@@@@@@@@@:::::<<:::<
@@ -1012,7 +1013,7 @@ NGACCGATTAGAGGCGTTTTATGATAATCCCAATGC
 +
 #(,((,)*))/.0--2255282299@@@@@@@@@@@
 """
-        self.fastq_data2 = """@73D9FA:3:FC:1:1:7488:1000 1:N:0:
+        self.fastq_data2 = u"""@73D9FA:3:FC:1:1:7488:1000 1:N:0:
 NTGATTGTCCAGTTGCATTTTAGTAAGCTCTTTTTG
 +
 #,,,,33223CC@@@@@@@C@@@@@@@@C@CC@222
@@ -1030,7 +1031,7 @@ NATAAATCACCTCACTTAAGTGGCTGGAGACAAATA
     def make_fastq_file(self,fastq,data):
         # Create a fastq file for the testing
         if os.path.splitext(fastq)[1] != '.gz':
-            open(fastq,'wt').write(data)
+            io.open(fastq,'wt').write(data)
         else:
             gzip.GzipFile(fastq,'wt').write(data)
 
@@ -1044,7 +1045,7 @@ NATAAATCACCTCACTTAAGTGGCTGGAGACAAATA
                                 [self.fastq1,self.fastq2],
                                 overwrite=True,
                                 verbose=False)
-        merged_fastq_data = open(self.merged_fastq,'r').read()
+        merged_fastq_data = io.open(self.merged_fastq,'rt').read()
         self.assertEqual(merged_fastq_data,self.fastq_data1+self.fastq_data2)
 
     def test_concatenate_fastq_files_gzipped(self):
