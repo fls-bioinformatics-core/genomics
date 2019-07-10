@@ -3,6 +3,7 @@
 #######################################################################
 import unittest
 import os
+import io
 import tempfile
 import shutil
 import gzip
@@ -13,7 +14,7 @@ class TestGetreadsFunction(unittest.TestCase):
     """
     def setUp(self):
         self.wd = tempfile.mkdtemp()
-        self.example_fastq_data = """@K00311:43:HL3LWBBXX:8:1101:21440:1121 1:N:0:CNATGT
+        self.example_fastq_data = u"""@K00311:43:HL3LWBBXX:8:1101:21440:1121 1:N:0:CNATGT
 GCCNGACAGCAGAAAT
 +
 AAF#FJJJJJJJJJJJ
@@ -26,7 +27,7 @@ CCCNACCCTTGCCTAC
 +
 AAF#FJJJJJJJJJJJ
 """
-        self.example_csfasta_data = """# Cwd: /home/pipeline
+        self.example_csfasta_data = u"""# Cwd: /home/pipeline
 # Title: solid0127_20121204_FRAG_BC_Run_56_pool_LC_CK
 >1_51_38_F3
 T3..3.213.12211.01..000..111.0210202221221121011..0
@@ -35,7 +36,7 @@ T0..3.222.21233.00..022..110.0210022323223202211..2
 >1_52_339_F3
 T1.311202211102.331233332113.23332233002223222312.2
 """
-        self.example_qual_data = """# Cwd: /home/pipeline
+        self.example_qual_data = u"""# Cwd: /home/pipeline
 # Title: solid0127_20121204_FRAG_BC_Run_56_pool_LC_CK
 >1_51_38_F3
 16 -1 -1 5 -1 24 15 12 -1 21 12 16 22 19 -1 26 13 -1 -1 4 21 4 -1 -1 4 7 9 -1 4 5 4 4 4 4 4 13 4 4 4 5 4 4 10 4 4 4 4 -1 -1 4 
@@ -51,7 +52,7 @@ T1.311202211102.331233332113.23332233002223222312.2
         """
         # Make an example file
         example_fastq = os.path.join(self.wd,"example.fastq")
-        with open(example_fastq,'w') as fp:
+        with io.open(example_fastq,'wt') as fp:
             fp.write(self.example_fastq_data)
         # Read lines
         fastq_reads = getreads(example_fastq)
@@ -83,7 +84,7 @@ T1.311202211102.331233332113.23332233002223222312.2
         """
         # Make an example file
         example_csfasta = os.path.join(self.wd,"example.csfasta")
-        with open(example_csfasta,'w') as fp:
+        with io.open(example_csfasta,'wt') as fp:
             fp.write(self.example_csfasta_data)
         # Read lines
         csfasta_reads = getreads(example_csfasta)
@@ -99,7 +100,7 @@ T1.311202211102.331233332113.23332233002223222312.2
         """
         # Make an example file
         example_qual = os.path.join(self.wd,"example.qual")
-        with open(example_qual,'w') as fp:
+        with io.open(example_qual,'wt') as fp:
             fp.write(self.example_qual_data)
         # Read lines
         qual_reads = getreads(example_qual)
@@ -116,7 +117,7 @@ class TestGetreadsSubsetFunction(unittest.TestCase):
     """
     def setUp(self):
         self.wd = tempfile.mkdtemp()
-        self.example_fastq_data = """@K00311:43:HL3LWBBXX:8:1101:21440:1121 1:N:0:CNATGT
+        self.example_fastq_data = u"""@K00311:43:HL3LWBBXX:8:1101:21440:1121 1:N:0:CNATGT
 GCCNGACAGCAGAAAT
 +
 AAF#FJJJJJJJJJJJ
@@ -136,7 +137,7 @@ AAF#FJJJJJJJJJJJ
         """
         # Make an example file
         example_fastq = os.path.join(self.wd,"example.fastq")
-        with open(example_fastq,'w') as fp:
+        with io.open(example_fastq,'wt') as fp:
             fp.write(self.example_fastq_data)
         # Get subset
         fastq_reads = getreads_subset(example_fastq,
@@ -150,7 +151,7 @@ AAF#FJJJJJJJJJJJ
         """
         # Make an example file
         example_fastq = os.path.join(self.wd,"example.fastq")
-        with open(example_fastq,'w') as fp:
+        with io.open(example_fastq,'wt') as fp:
             fp.write(self.example_fastq_data)
         # Attempt to get subset with indices outside the range
         # of reads
@@ -176,7 +177,7 @@ class TestGetreadsRegexpFunction(unittest.TestCase):
     """
     def setUp(self):
         self.wd = tempfile.mkdtemp()
-        self.example_fastq_data = """@K00311:43:HL3LWBBXX:8:1101:21440:1121 1:N:0:CNATGT
+        self.example_fastq_data = u"""@K00311:43:HL3LWBBXX:8:1101:21440:1121 1:N:0:CNATGT
 GCCNGACAGCAGAAAT
 +
 AAF#FJJJJJJJJJJJ
@@ -196,7 +197,7 @@ AAF#FJJJJJJJJJJJ
         """
         # Make an example file
         example_fastq = os.path.join(self.wd,"example.fastq")
-        with open(example_fastq,'w') as fp:
+        with io.open(example_fastq,'wt') as fp:
             fp.write(self.example_fastq_data)
         # Get subset
         fastq_reads = getreads_regex(example_fastq,
