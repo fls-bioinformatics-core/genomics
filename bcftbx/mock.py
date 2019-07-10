@@ -27,9 +27,10 @@ There are also static classes with example data:
 # Import modules that this module depends on
 #######################################################################
 
+from builtins import str
 import os
+import io
 import shutil
-import cStringIO
 import gzip
 import bcftbx.utils
 from bcftbx.IlluminaData import IlluminaFastq
@@ -51,7 +52,7 @@ class SampleSheets(object):
     >>> print(SampleSheets.miseq)
 
     """
-    miseq = """[Header],,,,,,,,,
+    miseq = u"""[Header],,,,,,,,,
 IEMFileVersion,4,,,,,,,,
 Date,11/23/2015,,,,,,,,
 Workflow,GenerateFASTQ,,,,,,,,
@@ -73,7 +74,7 @@ AdapterRead2,AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT,,,,,,,,
 Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_ID,index2,Sample_Project,Description
 Sample1,Sample1,,,D701,CGTGTAGG,D501,GACCTGTA,,
 Sample2,Sample2,,,D702,CGTGTAGG,D501,ATGTAACT,,"""
-    hiseq = """[Header],,,,,,,,,,
+    hiseq = u"""[Header],,,,,,,,,,
 IEMFileVersion,4,,,,,,,,,
 Date,11/11/2015,,,,,,,,,
 Workflow,GenerateFASTQ,,,,,,,,,
@@ -147,7 +148,7 @@ class RunInfoXml(object):
         if tilecount is None:
             tilecount = 16
         # Construct the XML
-        xml = """<?xml version="1.0"?>
+        xml = u"""<?xml version="1.0"?>
 <RunInfo xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Version="2">
   <Run Id="%s" Number="%s">
     <Flowcell>%s</Flowcell>
@@ -168,7 +169,7 @@ class RunInfoXml(object):
                 xml += "      <Lane>%s</Lane>\n" % (i+1)
             xml += "    </AlignToPhiX>\n"
         # Footer
-        xml += """  </Run>
+        xml += u"""  </Run>
 </RunInfo>"""
         return xml
     @staticmethod
@@ -208,7 +209,7 @@ class MockSampleSheet(SampleSheet):
     ...               index="CGTGTAGG",
     ...               I5_Index_ID="D502",
     ...               index2="ATGTAACT")
-    >>> open("SampleSheet.csv","w").write(s.show())
+    >>> io.open("SampleSheet.csv","wt").write(s.show())
 
     Example making a CASAVA-style sample sheet:
 
@@ -220,7 +221,7 @@ class MockSampleSheet(SampleSheet):
     ...               Index="AGTCAA",
     ...               Description="RNA-seq",
     ...               SampleProject="AR")
-    >>> open("SampleSheet.csv","w").write(s.show())
+    >>> io.open("SampleSheet.csv","wt").write(s.show())
 
     """
     def __init__(self,fmt='IEM',has_lanes=False,dual_index=True,
@@ -250,7 +251,7 @@ class MockSampleSheet(SampleSheet):
         self.quote_values = quote_values
         self.pad = pad
         # Instantiate the base object
-        SampleSheet.__init__(self,fp=cStringIO.StringIO(self._template()))
+        SampleSheet.__init__(self,fp=io.StringIO(self._template()))
         # Initialise additional sections for IEM
         if self._format == 'IEM':
             self.set_header(IEMFileVersion=4,
@@ -571,43 +572,43 @@ class MockIlluminaRun(object):
             # .locs files
             bcftbx.utils.mkdir(self._path('Data','Intensities','L%03d' % i))
             for j in xrange(1101,1101+ntiles):
-                open(self._path('Data','Intensities','L%03d' % i,
-                                's_%d_%d.locs' % (i,j)),'wb+').close()
+                io.open(self._path('Data','Intensities','L%03d' % i,
+                                   's_%d_%d.locs' % (i,j)),'wb+').close()
             # BaseCalls directory
             bcftbx.utils.mkdir(self._path('Data','Intensities','BaseCalls',
                                           'L%03d' % i))
             for j in xrange(1101,1101+ntiles):
                 if self._include_control:
                     # Add .control files
-                    open(self._path('Data',
-                                    'Intensities',
-                                    'BaseCalls',
-                                    'L%03d' % i,
-                                    's_%d_%d.control' % (i,j)),'wb+').close()
+                    io.open(self._path('Data',
+                                       'Intensities',
+                                       'BaseCalls',
+                                       'L%03d' % i,
+                                       's_%d_%d.control' % (i,j)),'wb+').close()
                 if self._include_filter:
                     # Add .filter files
-                    open(self._path('Data',
-                                    'Intensities',
-                                    'BaseCalls',
-                                    'L%03d' % i,
-                                    's_%d_%d.filter' % (i,j)),'wb+').close()
+                    io.open(self._path('Data',
+                                       'Intensities',
+                                       'BaseCalls',
+                                       'L%03d' % i,
+                                       's_%d_%d.filter' % (i,j)),'wb+').close()
                 if not self._include_cycles:
                     # No cycle subdirectores (e.g. 'C121.1')
                     # so put bcl files directory in lane directory
                     # This is the case for NextSeq
                     for j in xrange(1,ntiles+1):
-                        open(self._path('Data',
-                                        'Intensities',
-                                        'BaseCalls',
-                                        'L%03d' % i,
-                                        '%04d%s' % (j,bcl_ext)),'wb+').close()
+                        io.open(self._path('Data',
+                                           'Intensities',
+                                           'BaseCalls',
+                                           'L%03d' % i,
+                                           '%04d%s' % (j,bcl_ext)),'wb+').close()
                     if self._include_bci:
                         # Add .bci files (e.g. NextSeq)
-                        open(self._path('Data',
-                                        'Intensities',
-                                        'BaseCalls',
-                                        'L%03d' % i,
-                                        '%04d%s.bci' % (j,bcl_ext)),'wb+').close()
+                        io.open(self._path('Data',
+                                           'Intensities',
+                                           'BaseCalls',
+                                           'L%03d' % i,
+                                           '%04d%s.bci' % (j,bcl_ext)),'wb+').close()
             # Cycles subdirectories
             if self._include_cycles:
                 for k in xrange(1,ncycles+1):
@@ -618,37 +619,37 @@ class MockIlluminaRun(object):
                                                   'C%d.1' % k))
                     for j in xrange(1101,1101+ntiles):
                         # .bcl files
-                        open(self._path('Data',
-                                        'Intensities',
-                                        'BaseCalls',
-                                        'L%03d' % i,
-                                        'C%d.1' % k,
-                                        's_%d_%d%s' % (i,j,bcl_ext)),
-                             'wb+').close()
+                        io.open(self._path('Data',
+                                           'Intensities',
+                                           'BaseCalls',
+                                           'L%03d' % i,
+                                           'C%d.1' % k,
+                                           's_%d_%d%s' % (i,j,bcl_ext)),
+                                'wb+').close()
                         # .stats files
-                        open(self._path('Data',
-                                        'Intensities',
-                                        'BaseCalls',
-                                        'L%03d' % i,
-                                        'C%d.1' % k,
-                                        's_%d_%d.stats' % (i,j)),'wb+').close()
+                        io.open(self._path('Data',
+                                           'Intensities',
+                                           'BaseCalls',
+                                           'L%03d' % i,
+                                           'C%d.1' % k,
+                                           's_%d_%d.stats' % (i,j)),'wb+').close()
         # RunInfo.xml
         run_info_xml = RunInfoXml.create(self.name,
                                          bases_mask,
                                          nlanes)
-        with open(self._path('RunInfo.xml'),'w') as fp:
+        with io.open(self._path('RunInfo.xml'),'wt') as fp:
             fp.write(run_info_xml)
         # SampleSheet.csv
         if self._include_sample_sheet and \
            self._sample_sheet_content is not None:
-            with open(self._path('Data','Intensities','BaseCalls',
-                                 'SampleSheet.csv'),'w') as fp:
+            with io.open(self._path('Data','Intensities','BaseCalls',
+                                    'SampleSheet.csv'),'wt') as fp:
                 fp.write(self._sample_sheet_content)
         # (Empty) config.xml files
         if self._include_config:
-            open(self._path('Data','Intensities','config.xml'),'wb+').close()
-            open(self._path('Data','Intensities','BaseCalls','config.xml'),
-                 'wb+').close()
+            io.open(self._path('Data','Intensities','config.xml'),'wb+').close()
+            io.open(self._path('Data','Intensities','BaseCalls','config.xml'),
+                    'wb+').close()
 
     def remove(self):
         """
@@ -1169,7 +1170,7 @@ class MockIlluminaData(object):
                 fp.write("")
         else:
             # Make regular empty file
-            with open(f,'wb') as fp:
+            with io.open(f,'wb') as fp:
                 fp.write("")
 
     def remove(self):
