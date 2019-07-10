@@ -25,7 +25,9 @@ The program was developed to work with MACS 1.4."""
 # Import modules that this module depends on
 #######################################################################
 
+from builtins import str
 import os
+import io
 import sys
 import argparse
 import logging
@@ -43,7 +45,7 @@ import bcftbx.Spreadsheet as Spreadsheet
 # Module metadata
 #######################################################################
 
-__version__ = '0.2.0'
+__version__ = '0.2.1'
 
 #######################################################################
 # Class definitions
@@ -96,7 +98,7 @@ if __name__ == "__main__":
     header = []
     data = TabFile(column_names=['chr','start','end','length','summit','tags',
                                  '-10*log10(pvalue)','fold_enrichment','FDR(%)'])
-    fp = open(macs_in,'r')
+    fp = io.open(macs_in,'rt')
     for line in fp:
         if line.startswith('#') or line.strip() == '':
             # Header line
