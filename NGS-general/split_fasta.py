@@ -22,7 +22,7 @@ data chromosome-by-chromosome from a Fasta file.
 # Module metadata
 #######################################################################
 
-__version__ = "0.3.1"
+__version__ = "0.3.2"
 
 #######################################################################
 # Import modules
@@ -31,6 +31,7 @@ __version__ = "0.3.1"
 from collections import Iterator
 import sys
 import os
+import io
 import argparse
 import logging
 
@@ -69,7 +70,7 @@ class FastaChromIterator(Iterator):
         if fp is None:
             # Open input fasta file
             self._fasta = fasta
-            self._fp = open(self._fasta,'rU')
+            self._fp = io.open(self._fasta,'rt')
         else:
             # File object already supplied
             self._fasta = None
@@ -126,7 +127,6 @@ class FastaChromIterator(Iterator):
 #######################################################################
 
 import unittest
-import cStringIO
 
 # Test data
 class TestData(object):
@@ -148,7 +148,7 @@ CCACACCACACCCACACCACACCCACACACCCACACCCACACACCACACCCACACACACC
         # Build example fasta from chromosomes
         self.fasta = []
         for chrom in self.chrom:
-            self.fasta.append(">%s\n%s" % (chrom[0],chrom[1]))
+            self.fasta.append(u">%s\n%s" % (chrom[0],chrom[1]))
         self.fasta = ''.join(self.fasta)
 
 class TestFastaChromIterator(unittest.TestCase):
@@ -163,7 +163,7 @@ class TestFastaChromIterator(unittest.TestCase):
         """Test that example Fasta file deconvolutes into individual chromosomes
 
         """
-        fp = cStringIO.StringIO(self.test_data.fasta)
+        fp = io.StringIO(self.test_data.fasta)
         i = 0
         for chrom in FastaChromIterator(fp=fp):
             self.assertEqual(chrom,self.test_data.chrom[i])
@@ -225,6 +225,6 @@ if __name__ == "__main__":
         print("Outputting '%s' to %s" % (name,fasta))
         if os.path.isfile(fasta):
             sys.stderr.write("WARNING '%s' already exists, overwriting\n" % fasta)
-        with open(fasta,'w') as fp:
+        with io.open(fasta,'wt') as fp:
             fp.write(">%s\n%s" % (name,seq))
 
