@@ -54,7 +54,10 @@ object holds data for a paired-end run.)
 # Import modules that this module depends on
 #######################################################################
 
-import sys,os
+from builtins import str
+import sys
+import os
+import io
 import string
 import logging
 import utils
@@ -1034,7 +1037,7 @@ class SolidRunDefinition(object):
         reading_header = False
         reading_samples = False
         # Open the file
-        f = open(self.file,'r')
+        f = io.open(self.file,'rt')
         for line in f:
             # Look for the header line (first line of the file) describing run attributes
             # This looks like:
@@ -1088,7 +1091,7 @@ class SolidBarcodeStatistics(object):
         """Populate the SolidBarcodeStatistics object.
         """
         got_header = False
-        f = open(self.file,'r')
+        f = io.open(self.file,'rt')
         for line in f:
             if got_header:
                 data = line.strip().split('\t')
