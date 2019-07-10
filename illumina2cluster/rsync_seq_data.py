@@ -19,7 +19,7 @@ Wrapper for rsync for moving sequencing into the data storage area.
 # Modules metadata
 #######################################################################
 
-__version__ = "0.1.2"
+__version__ = "0.1.3"
 
 #######################################################################
 # Import modules that this module depends on
@@ -27,6 +27,7 @@ __version__ = "0.1.2"
 
 import os
 import sys
+import io
 import re
 import time
 import logging
@@ -96,14 +97,14 @@ def run_rsync(source,target,dry_run=False,mirror=False,chmod=None,
         fpout = sys.stdout
     else:
         print("Writing stdout to %s" % log)
-        fpout = open(log,'w')
+        fpout = io.open(log,'wt')
     if err is None:
         if log is not None:
             fperr = subprocess.STDOUT
         else:
             fperr = sys.stderr
     else:
-        fperr = open(err,'w')
+        fperr = io.open(err,'wt')
         print("Writing stderr to %s" % err)
     # Execute rsync command and wait for finish
     try:
