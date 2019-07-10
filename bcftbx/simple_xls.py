@@ -109,12 +109,13 @@ Alternatively the contents of a sheet (or a subset) can be rendered as text:
 
 """
 
-__version__ = "0.0.11"
+__version__ = "0.0.12"
 
 #######################################################################
 # Import modules that this module depends on
 #######################################################################
- 
+
+from builtins import str
 import re
 from collections import Iterator
 import logging
@@ -1111,14 +1112,14 @@ class XLSWorkSheet(object):
         for row in xrange(start.row,end.row+1):
             line = []
             if include_columns_and_rows:
-                line.append('%s' % row)
+                line.append(u'%s' % row)
             for col in ColumnRange(start.column,end.column):
                 value = self.render_cell(cell(col,row),
                                          eval_formulae=eval_formulae,
                                          apply_format=apply_format)
                 if include_styles:
                     value = self.get_style(cell(col,row)).style(value)
-                line.append("%s" % value)
+                line.append(u"%s" % value)
             text.append('\t'.join(line))
         return '\n'.join(text)
 
