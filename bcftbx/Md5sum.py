@@ -43,7 +43,7 @@ a wrapper class 'Md5Reporter' which
 # Module metadata
 #######################################################################
 
-__version__ = "1.1.2"
+__version__ = "1.1.3"
 
 #######################################################################
 # Import modules that this module depends on
@@ -51,6 +51,7 @@ __version__ = "1.1.2"
 
 import sys
 import os
+import io
 import logging
 try:
     # Preferentially use hashlib module
@@ -303,7 +304,7 @@ class Md5Checker(object):
         if fp is not None:
             filen=None
         else:
-            fp = open(filen,'rU')
+            fp = io.open(filen,'rt')
         for line in fp:
             items = line.strip().split()
             if len(items) < 2:
@@ -421,7 +422,7 @@ class Md5CheckReporter(object):
         if status == Md5Checker.MD5_OK:
             status_msg = "OK"
             if self._verbose:
-                self._fp.write("%s: %s\n" % (f,status_msg))
+                self._fp.write(u"%s: %s\n" % (f,status_msg))
         else:
             if status == Md5Checker.MD5_FAILED:
                 status_msg = "FAILED"
@@ -435,7 +436,7 @@ class Md5CheckReporter(object):
             else:
                 # Unrecognised code
                 raise Exception("Unrecognised status: '%s'" % status)
-            self._fp.write("%s: %s\n" % (f,status_msg))
+            self._fp.write(u"%s: %s\n" % (f,status_msg))
 
     def summary(self):
         """Write a summary of the results
@@ -444,12 +445,13 @@ class Md5CheckReporter(object):
         or failed MD5 checks and so on, to the specified output stream.
 
         """
-        self._fp.write("Summary:\n")
-        self._fp.write("\t%d files checked\n" % self.n_files)
-        self._fp.write("\t%d okay\n" % self.n_ok)
-        self._fp.write("\t%d failed\n" % self.n_failed)
-        self._fp.write("\t%d not found\n" % self.n_missing)
-        self._fp.write("\t%d 'bad' files (MD5 computation errors)\n" % self.n_errors)
+        self._fp.write(u"Summary:\n")
+        self._fp.write(u"\t%d files checked\n" % self.n_files)
+        self._fp.write(u"\t%d okay\n" % self.n_ok)
+        self._fp.write(u"\t%d failed\n" % self.n_failed)
+        self._fp.write(u"\t%d not found\n" % self.n_missing)
+        self._fp.write(u"\t%d 'bad' files (MD5 computation errors)\n"
+                       % self.n_errors)
 
     @property
     def status(self):
@@ -501,7 +503,7 @@ def md5sum(f):
         chksum = md5.new()
     # Generate checksum
     try:
-        f = open(f,"rb")
+        f = io.open(f,"rb")
     except TypeError:
         pass
     for block in iter(lambda: f.read(BLOCKSIZE), ''):
