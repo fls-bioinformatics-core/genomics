@@ -1,10 +1,13 @@
 ########################################################################
 # Tests for TabFile.py module
 #########################################################################
+from builtins import str
+import io
 from bcftbx.TabFile import *
 import unittest
-import io
-from builtins import str
+import tempfile
+import os
+import shutil
 
 class TestTabFile(unittest.TestCase):
 
@@ -20,9 +23,15 @@ chr2\t1234\t5678\t6.8
         # Make file-like object to read data in
         self.fp = io.StringIO(self.header+self.data)
 
+        # Make temporary directory
+        self.working_dir = tempfile.mkdtemp(suffix='TestTabFile')
+
     def tearDown(self):
         # Close the open file-like input
         self.fp.close()
+        # Remove the temporary directory
+        if os.path.exists(self.working_dir):
+            shutil.rmtree(self.working_dir)
 
     def test_load_data(self):
         """Create and load new TabFile instance
@@ -38,11 +47,37 @@ chr2\t1234\t5678\t6.8
     def test_write_data(self):
         """Write data to file-like object
         """
-        tabfile = TabFile('test',self.fp)
+        tabfile = TabFile(fp=self.fp)
         fp = io.StringIO()
         tabfile.write(fp=fp)
         self.assertEqual(fp.getvalue(),self.data)
         fp.close()
+
+    def test_write_data_include_header(self):
+        """Write data to file-like object including header
+        """
+        tabfile = TabFile(fp=self.fp,first_line_is_header=True)
+        fp = io.StringIO()
+        tabfile.write(fp=fp,include_header=True)
+        self.assertEqual(fp.getvalue(),self.header+self.data)
+        fp.close()
+
+    def test_write_data_to_file(self):
+        """Write data to file
+        """
+        tabfile = TabFile(fp=self.fp)
+        out_file = os.path.join(self.working_dir,"test.tsv")
+        tabfile.write(filen=out_file)
+        self.assertEqual(io.open(out_file,'rt').read(),self.data)
+
+    def test_write_data_to_file_include_header(self):
+        """Write data to file including header
+        """
+        tabfile = TabFile(fp=self.fp,first_line_is_header=True)
+        out_file = os.path.join(self.working_dir,"test.tsv")
+        tabfile.write(filen=out_file,include_header=True)
+        self.assertEqual(io.open(out_file,'rt').read(),
+                         self.header+self.data)
 
     def test_load_data_with_header(self):
         """Create and load Tabfile using first line as header
