@@ -9,7 +9,7 @@
 #
 #########################################################################
 
-__version__ = "1.0.1"
+__version__ = "1.0.2"
 
 """htmlpagewriter
 
@@ -22,7 +22,9 @@ interface for generating HTML files.
 # Import modules that this module depends on
 #######################################################################
 
+from builtins import str
 import os
+import io
 import logging
 import xml.dom.minidom
 import shutil
@@ -123,28 +125,28 @@ class HTMLPageWriter(object):
 
         """
         if fp is None and filen is not None:
-            fp = open(filen,'w')
-        fp.write("<html>\n")
+            fp = io.open(filen,'wt')
+        fp.write(u"<html>\n")
         # Header
-        fp.write("<head>\n")
-        fp.write("<title>%s</title>\n" % self.__page_title)
+        fp.write(u"<head>\n")
+        fp.write(u"<title>%s</title>\n" % self.__page_title)
         # CSS rules
         if self.__css_rules:
-            fp.write("<style type=\"text/css\">\n")
-            fp.write('\n'.join(self.__css_rules))
-            fp.write("</style>\n")
+            fp.write(u"<style type=\"text/css\">\n")
+            fp.write(u'\n'.join(self.__css_rules))
+            fp.write(u"</style>\n")
         # JavaScript
         if self.__javascript:
-            fp.write("<script language='javascript' type='text/javascript'><!--\n")
-            fp.write('\n'.join(self.__javascript))
-            fp.write("\n--></script>\n")
-        fp.write("</head>\n")
+            fp.write(u"<script language='javascript' type='text/javascript'><!--\n")
+            fp.write(u'\n'.join(self.__javascript))
+            fp.write(u"\n--></script>\n")
+        fp.write(u"</head>\n")
         # Body and content
-        fp.write("<body>\n")
-        fp.write('\n'.join(self.__content))
-        fp.write("</body>\n")
+        fp.write(u"<body>\n")
+        fp.write(u'\n'.join(self.__content))
+        fp.write(u"</body>\n")
         # Finish
-        fp.write("</html>\n")
+        fp.write(u"</html>\n")
         if filen is not None:
             fp.close()
 
@@ -162,4 +164,4 @@ class PNGBase64Encoder(object):
     def encodePNG(self,pngfile):
         """Return base64 string encoding a PNG file.
         """
-        return base64.b64encode(open(pngfile,'rb').read())
+        return base64.b64encode(io.open(pngfile,'rb').read())
