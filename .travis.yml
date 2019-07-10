@@ -23,6 +23,7 @@ script:
   - ./ChIP-seq/examples/test_make_macs2_xls.sh
 # Run the NGS-general tests
   - "nosetests --exe -v NGS-general/manage_seqs.py"
+  - "nosetests --exe -v NGS-general/reorder_fasta.py"
   - "nosetests --exe -v NGS-general/split_fastq.py"
   - "./NGS-general/sam2soap.py --test"
   - "./NGS-general/split_fasta.py --test"
@@ -32,6 +33,7 @@ script:
   - ./microarray/examples/test_best_exons.sh
   - ./microarray/examples/test_xrorthologs.sh
   - ./microarray/examples/test_annotate_probesets.sh
+  - "nosetests --exe -v microarray/annotate_probesets.py"
   - "nosetests --exe -v microarray/xrorthologs.py"
 # Run the examples for utils
   - ./utils/examples/test_md5checker.sh
