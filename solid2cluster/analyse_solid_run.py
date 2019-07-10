@@ -21,6 +21,7 @@ about the run, and suggest a layout scheme for the analysis directories.
 
 import sys
 import os
+import io
 import string
 import shutil
 import gzip
@@ -431,7 +432,7 @@ def gzip_data(solid_runs,library_defns):
                         # Name for intermediate file
                         gzip_filn_part = gzip_filn+'.part'
                         # Buffered write to gzip file from original file
-                        fp = open(filn,'rb')
+                        fp = io.open(filn,'rb')
                         fgz = gzip.GzipFile(gzip_filn_part,'wb')
                         while True:
                             data = fp.read(10240)
