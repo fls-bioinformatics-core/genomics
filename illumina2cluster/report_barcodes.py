@@ -20,7 +20,7 @@ Fastq file from an Illumina sequencer.
 # Import modules that this module depends on
 #######################################################################
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 
 import sys
 import argparse
@@ -181,12 +181,12 @@ def main(fastqs,cutoff):
 #######################################################################
 
 import unittest
-import cStringIO
+import io
 
 class TestBarcodes(unittest.TestCase):
     def test_barcodes(self):
-        fastq_data = cStringIO.StringIO(
-"""@HWI-700511R:233:C446JACXX:6:1101:1241:2242 1:N:0:CCGTCCAT
+        fastq_data = io.StringIO(
+u"""@HWI-700511R:233:C446JACXX:6:1101:1241:2242 1:N:0:CCGTCCAT
 GAAACGCGGCACAGA
 +
 <BBFFBFFBBFFF7B
