@@ -191,9 +191,9 @@ TabFile object, for example for a comma-delimited file:
 
 __version__ = "0.2.12"
 
-import logging
-import io
 from builtins import str
+import io
+import logging
 
 class TabDataLine(object):
     """Class to store a line of data from a tab-delimited file
@@ -835,7 +835,7 @@ class TabFile(object):
             else:
                 leading_hash = ''
             if delimiter is None:
-                delim = self.__delimiter
+                delim = str(self.__delimiter)
             else:
                 delim = str(delimiter)
             fp.write("%s%s\n" % (leading_hash,delim.join(self.header())))
