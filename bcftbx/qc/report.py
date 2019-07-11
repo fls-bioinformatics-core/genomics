@@ -19,6 +19,7 @@ Utilities for generating reports for NGS QC pipeline runs.
 #######################################################################
 
 import os
+import io
 import glob
 import zipfile
 import time
@@ -402,7 +403,7 @@ class QCSample(object):
     def addProgramInfo(self,programs):
         """Collect program information from 'programs' file
         """
-        fp = open(programs,'rU')
+        fp = io.open(programs,'rt')
         for line in fp:
             if not line.startswith('#'):
                 # Programs file is tab-delimited: name/version/path
@@ -546,7 +547,7 @@ class QCSample(object):
                 html.add("<table class='fastqc_summary summary'>")
                 html.add("<tr><th>FastQC test</th><th>Outcome</th></tr>")
                 test_id = 0
-                for line in open(fastqc_summary,'rU'):
+                for line in io.open(fastqc_summary,'rt'):
                     fields = line.split('\t')
                     test_name = fields[1]
                     test_link = fastqc_report + "#M%d" % test_id
@@ -662,7 +663,7 @@ class IlluminaQCReporter(QCReporter):
                 #Total Sequences	25706792
                 fastqc_data_file = os.path.join(self.qc_dir,sample.fastqc,"fastqc_data.txt")
                 reads = '?'
-                for line in open(fastqc_data_file,'rU'):
+                for line in io.open(fastqc_data_file,'rt'):
                     if line.startswith('Total Sequences'):
                         reads = line.split('\t')[1]
                         break
@@ -675,7 +676,7 @@ class IlluminaQCReporter(QCReporter):
                 summary_file = os.path.join(self.qc_dir,sample.fastqc,"summary.txt")
                 fastqc_failures = 0
                 fastqc_warnings = 0
-                for line in open(summary_file,'rU'):
+                for line in io.open(summary_file,'rt'):
                     status = line.split('\t')[0]
                     if status == 'WARN':
                         fastqc_warnings += 1
@@ -1302,7 +1303,7 @@ def count_reads(csfasta_file):
     """
     if os.path.exists(csfasta_file):
         nlines = 0
-        with open(csfasta_file) as fp:
+        with io.open(csfasta_file,'rt') as fp:
             for line in fp:
                 if not line.startswith('#'): nlines += 1
         return nlines/2

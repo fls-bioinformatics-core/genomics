@@ -1,14 +1,15 @@
 #######################################################################
 # Tests for Md5sum.py module
 #######################################################################
+from builtins import str
 from bcftbx.Md5sum import *
 from bcftbx.test.mock_data import ExampleDirSpiders,ExampleDirLanguages
 import unittest
 import os
 import tempfile
-import cStringIO
+import io
 
-test_text = """Md5sum is a Python module with functions for generating
+TEST_TEXT = u"""Md5sum is a Python module with functions for generating
 MD5 checksums for files."""
 
 class TestHexify(unittest.TestCase):
@@ -25,8 +26,8 @@ class TestMd5sum(unittest.TestCase):
         # mkstemp returns a tuple
         tmpfile = tempfile.mkstemp()
         self.filen = tmpfile[1]
-        fp = open(self.filen,'w')
-        fp.write(test_text)
+        fp = io.open(self.filen,'wt')
+        fp.write(TEST_TEXT)
         fp.close()
 
     def tearDown(self):
@@ -41,7 +42,7 @@ class TestMd5sum(unittest.TestCase):
     def test_md5sum_for_stream(self):
         """md5sum function generates correct MD5 hash for stream
         """
-        fp = open(self.filen,'rb')
+        fp = io.open(self.filen,'rb')
         self.assertEqual(md5sum(fp),
                          '08a6facee51e5435b9ef3744bd4dd5dc')
 
@@ -364,9 +365,9 @@ class TestMd5CheckerVerifyMd5sms(unittest.TestCase):
         # Create MD5sum 'file'
         md5sums = []
         for f in self.example_dir.filelist(full_path=True):
-            md5sums.append("%s  %s" % (md5sum(f),f))
+            md5sums.append(u"%s  %s" % (md5sum(f),f))
         md5sums = '\n'.join(md5sums)
-        fp = cStringIO.StringIO(md5sums)
+        fp = io.StringIO(md5sums)
         # Run verification
         files = self.example_dir.filelist(full_path=True)
         self.assertNotEqual(len(files),0)
@@ -459,7 +460,7 @@ class TestMd5CheckReporter(unittest.TestCase):
         """Md5CheckReporter output to file is correct
 
         """
-        fp = cStringIO.StringIO()
+        fp = io.StringIO()
         reporter = Md5CheckReporter(
             (('hello.txt',Md5Checker.MD5_OK),
              ('goodbye.txt',Md5Checker.MD5_OK),
@@ -478,7 +479,7 @@ bad.txt: ERROR
         """Md5CheckReporter verbose output to file is correct
 
         """
-        fp = cStringIO.StringIO()
+        fp = io.StringIO()
         reporter = Md5CheckReporter(
             (('hello.txt',Md5Checker.MD5_OK),
              ('goodbye.txt',Md5Checker.MD5_OK),
@@ -499,7 +500,7 @@ bad.txt: ERROR
         """Md5CheckReporter summary output is correct
 
         """
-        fp = cStringIO.StringIO()
+        fp = io.StringIO()
         reporter = Md5CheckReporter(
             (('hello.txt',Md5Checker.MD5_OK),
              ('goodbye.txt',Md5Checker.MD5_OK),

@@ -22,7 +22,10 @@ SOAP format specification: http://soap.genomics.org.cn/soap1/#Formatofoutput
 # Import modules that this module depends on
 #######################################################################
 
-import os,sys
+from builtins import str
+import sys
+import os
+import io
 import logging
 import argparse
 
@@ -513,13 +516,13 @@ if __name__ == "__main__":
     # Determine source of SAM data
     if args.samfile:
         # Read from file
-        samfile = open(args.samfile,'r')
+        samfile = io.open(args.samfile,'rt')
     else:
         # Read from stdin
         samfile = sys.stdin
     # Determine output target
     if opts.soapfile:
-        soapfile = open(args.soapfile,'w')
+        soapfile = io.open(args.soapfile,'wt')
     else:
         soapfile = sys.stdout
     # Process the SAM data

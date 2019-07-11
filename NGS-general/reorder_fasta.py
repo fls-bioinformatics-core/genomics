@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #     reorder_fasta.py: reorder chromosomes in a FASTA file
-#     Copyright (C) University of Manchester 2018 Peter Briggs
+#     Copyright (C) University of Manchester 2018-2019 Peter Briggs
 
 """
 reorder_fasta.py
@@ -26,6 +26,7 @@ The output FASTA file will be called 'INFILE.karyotypic.fa'.
 
 import sys
 import os
+import io
 import argparse
 import itertools
 import tempfile
@@ -148,7 +149,7 @@ def main(args=None):
     chroms = list()
     wd = tempfile.mkdtemp()
     print("Using working dir %s" % wd)
-    with open(fasta,'rU') as fp:
+    with io.open(fasta,'rt') as fp:
         chromfile = None
         for line in fp:
             if line.startswith(">"):
@@ -164,7 +165,7 @@ def main(args=None):
                     sys.exit(1)
                 chroms.append(chrom)
                 # Open a new file
-                chromfile = open(os.path.join(wd,"%s.fa" % chrom),'w')
+                chromfile = io.open(os.path.join(wd,"%s.fa" % chrom),'wt')
             # Write chromosome data to temporary file
             chromfile.write(line)
     if chromfile is not None:
@@ -177,11 +178,11 @@ def main(args=None):
         os.path.splitext(os.path.basename(fasta))[0],
         "karyotypic",
         os.path.splitext(os.path.basename(fasta))[1])
-    with open(fasta_reordered,'w') as fp:
+    with io.open(fasta_reordered,'wt') as fp:
         for chrom in chroms:
             chromfile = os.path.join(wd,"%s.fa" % chrom)
             print("\t%s (%s)" % (chrom,chromfile))
-            with open(chromfile,'r') as fpp:
+            with io.open(chromfile,'rt') as fpp:
                 fp.write(fpp.read())
     print("Wrote reordered FASTA file to %s" % fasta_reordered)
     print("Finished")

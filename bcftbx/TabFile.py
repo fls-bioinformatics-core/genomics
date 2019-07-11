@@ -189,8 +189,10 @@ TabFile object, for example for a comma-delimited file:
 
 """
 
-__version__ = "0.2.11"
+__version__ = "0.2.12"
 
+from builtins import str
+import io
 import logging
 
 class TabDataLine(object):
@@ -509,7 +511,7 @@ class TabFile(object):
         # Read in data
         if fp is None and filen is not None:
             # Open named file
-            fp = open(self.__filen,'rU')
+            fp = io.open(self.__filen,'rt')
             close_fp = True
         else:
             close_fp = False
@@ -823,7 +825,7 @@ class TabFile(object):
         """
         if fp is None and filen is not None:
             # Open named file for writing
-            fp = open(filen,'w')
+            fp = io.open(filen,'wt')
             close_fp = True
         else:
             close_fp = False
@@ -833,7 +835,7 @@ class TabFile(object):
             else:
                 leading_hash = ''
             if delimiter is None:
-                delim = self.__delimiter
+                delim = str(self.__delimiter)
             else:
                 delim = str(delimiter)
             fp.write("%s%s\n" % (leading_hash,delim.join(self.header())))

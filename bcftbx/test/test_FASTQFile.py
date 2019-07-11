@@ -1,11 +1,12 @@
 #######################################################################
 # Tests for FASTQFile.py module
 #######################################################################
+from builtins import str
 from bcftbx.FASTQFile import *
 import unittest
-import cStringIO
+import io
 
-fastq_data = """@73D9FA:3:FC:1:1:7507:1000 1:N:0:
+fastq_data = u"""@73D9FA:3:FC:1:1:7507:1000 1:N:0:
 NACAACCTGATTAGCGGCGTTGACAGATGTATCCAT
 +
 #))))55445@@@@@C@@@@@@@@@:::::<<:::<
@@ -27,7 +28,7 @@ NATAAATCACCTCACTTAAGTGGCTGGAGACAAATA
 #--,,55777@@@@@@@CC@@C@@@@@@@@:::::<
 """
 
-fastq_data2 = """@73D9FA:3:FC:1:1:7507:1000 2:N:0:
+fastq_data2 = u"""@73D9FA:3:FC:1:1:7507:1000 2:N:0:
 NACAACCTGATTAGCGGCGTTGACAGATGTATCCAT
 +
 #))))55445@@@@@C@@@@@@@@@:::::<<:::<
@@ -49,7 +50,7 @@ NATAAATCACCTCACTTAAGTGGCTGGAGACAAATA
 #--,,55777@@@@@@@CC@@C@@@@@@@@:::::<
 """
 
-fastq_empty_sequence = """@73D9FA:3:FC:1:1:7507:1000 1:N:0:
+fastq_empty_sequence = u"""@73D9FA:3:FC:1:1:7507:1000 1:N:0:
 NACAACCTGATTAGCGGCGTTGACAGATGTATCCAT
 +
 #))))55445@@@@@C@@@@@@@@@:::::<<:::<
@@ -78,10 +79,10 @@ class TestFastqIterator(unittest.TestCase):
     def test_fastq_iterator(self):
         """Check iteration over small FASTQ file
         """
-        fp = cStringIO.StringIO(fastq_data)
+        fp = io.StringIO(fastq_data)
         fastq = FastqIterator(fp=fp)
         nreads = 0
-        fastq_source = cStringIO.StringIO(fastq_data)
+        fastq_source = io.StringIO(fastq_data)
         for read in fastq:
             nreads += 1
             self.assertTrue(isinstance(read.seqid,SequenceIdentifier))
@@ -94,10 +95,10 @@ class TestFastqIterator(unittest.TestCase):
     def test_fastq_iterator_empty_sequence(self):
         """Check iteration over small FASTQ file with 'empty' sequence
         """
-        fp = cStringIO.StringIO(fastq_empty_sequence)
+        fp = io.StringIO(fastq_empty_sequence)
         fastq = FastqIterator(fp=fp)
         nreads = 0
-        fastq_source = cStringIO.StringIO(fastq_empty_sequence)
+        fastq_source = io.StringIO(fastq_empty_sequence)
         for read in fastq:
             nreads += 1
             self.assertTrue(isinstance(read.seqid,SequenceIdentifier))
@@ -114,10 +115,10 @@ class TestFastqIterator(unittest.TestCase):
         terminating the 'empty' sequence falls at the start
         of the read buffer.
         """
-        fp = cStringIO.StringIO(fastq_empty_sequence)
+        fp = io.StringIO(fastq_empty_sequence)
         fastq = FastqIterator(fp=fp,bufsize=2)
         nreads = 0
-        fastq_source = cStringIO.StringIO(fastq_empty_sequence)
+        fastq_source = io.StringIO(fastq_empty_sequence)
         for read in fastq:
             nreads += 1
             self.assertTrue(isinstance(read.seqid,SequenceIdentifier))
@@ -335,7 +336,7 @@ class TestFastqAttributes(unittest.TestCase):
     def test_fastq_attributes_nreads(self):
         """Check number of reads
         """
-        fp = cStringIO.StringIO(fastq_data)
+        fp = io.StringIO(fastq_data)
         attrs = FastqAttributes(fp=fp)
         self.assertEqual(attrs.nreads,5)
 
@@ -346,7 +347,7 @@ class TestNReads(unittest.TestCase):
     def test_nreads(self):
         """Check that nreads returns correct read count
         """
-        fp = cStringIO.StringIO(fastq_data)
+        fp = io.StringIO(fastq_data)
         self.assertEqual(nreads(fp=fp),5)
 
 class TestFastqsArePair(unittest.TestCase):
@@ -356,8 +357,8 @@ class TestFastqsArePair(unittest.TestCase):
     def test_fastqs_are_pair(self):
         """Check that fastq pair is recognised as such
         """
-        fp1 = cStringIO.StringIO(fastq_data)
-        fp2 = cStringIO.StringIO(fastq_data2)
+        fp1 = io.StringIO(fastq_data)
+        fp2 = io.StringIO(fastq_data2)
         self.assertTrue(fastqs_are_pair(fp1=fp1,fp2=fp2,verbose=False))
 
 #######################################################################

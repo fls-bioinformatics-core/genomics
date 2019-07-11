@@ -26,8 +26,10 @@ Recognises FASTQ, CSFASTA and QUAL files.
 # Imports
 #######################################################################
 
+from builtins import str
 import sys
 import os
+import io
 import gzip
 import argparse
 import random
@@ -40,7 +42,7 @@ from bcftbx.ngsutils import getreads_regex
 # Module metadata
 #######################################################################
 
-__version__ = "0.3.1"
+__version__ = "0.3.2"
 
 __description__ = """Extract subsets of reads from each of the
 supplied files according to specified criteria (e.g. random,
@@ -86,7 +88,7 @@ def main(args=None):
                 outfile = os.path.basename(os.path.splitext(f)[0])
             outfile += '.subset_regex.fq'
             print("Extracting to %s" % outfile)
-            with open(outfile,'w') as fp:
+            with io.open(outfile,'wt') as fp:
                 for read in getreads_regex(f,args.pattern):
                     fp.write('\n'.join(read) + '\n')
     else:
@@ -122,7 +124,7 @@ def main(args=None):
                 outfile = os.path.basename(os.path.splitext(f)[0])
             outfile += '.subset_%s.fq' % nsubset
             print("Extracting to %s" % outfile)
-            with open(outfile,'w') as fp:
+            with io.open(outfile,'wt') as fp:
                 for read in getreads_subset(f,subset_indices):
                     fp.write('\n'.join(read) + '\n')
 

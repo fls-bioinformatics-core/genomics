@@ -45,7 +45,9 @@ Simple usage example:
 # Import modules that this module depends on
 #######################################################################
 
+from builtins import str
 import os
+import io
 import logging
 import subprocess
 import time
@@ -239,9 +241,9 @@ class SimpleJobRunner(BaseJobRunner):
             return None
         # Set up log files
         lognames = self.__assign_log_files(name,working_dir)
-        log = open(lognames[0],'w')
+        log = io.open(lognames[0],'wt')
         if not self.__join_logs:
-            err = open(lognames[1],'w')
+            err = io.open(lognames[1],'wt')
         else:
             err = subprocess.STDOUT
         # Start the subprocess
@@ -482,8 +484,8 @@ class GEJobRunner(BaseJobRunner):
             cmd_args.append(arg)
         cmd = ' '.join(cmd_args)
         job_script = os.path.join(job_dir,"job_script.sh")
-        with open(job_script,'w') as fp:
-            fp.write("""#!{shell}
+        with io.open(job_script,'wt') as fp:
+            fp.write(u"""#!{shell}
 echo "$QUEUE" > {job_dir}/__queue
 {cmd}
 exit_code=$?
@@ -561,8 +563,8 @@ exit $exit_code
         exit_code_file = os.path.join(self.__admin_dir,
                                       str(self.__job_number[job_id]),
                                       "__exit_code")
-        with open("%s.tmp" % exit_code_file,'w') as fp:
-            fp.write("-1\n")
+        with io.open("%s.tmp" % exit_code_file,'wt') as fp:
+            fp.write(u"-1\n")
         os.rename("%s.tmp" % exit_code_file,exit_code_file)
         # Force update of cached job list
         self.__cached_job_list_force_update = True
@@ -633,7 +635,7 @@ exit $exit_code
             return None
         # Extract queue name from file
         try:
-            with open(queue_file,'r') as fp:
+            with io.open(queue_file,'rt') as fp:
                 queue = fp.read().strip()
             logging.debug("GEJobRunner: queue: %s" % queue)
         except Exception as ex:
@@ -845,7 +847,7 @@ exit $exit_code
                                       "__exit_code")
         assert(os.path.exists(exit_code_file))
         try:
-            with open(exit_code_file,'r') as fp:
+            with io.open(exit_code_file,'rt') as fp:
                 exit_status = int(fp.read())
         except Exception as ex:
             # Set exit status to 127

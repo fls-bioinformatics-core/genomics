@@ -13,7 +13,7 @@
 # Module metadata
 #######################################################################
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 #######################################################################
 # Import modules that this module depends on
@@ -21,6 +21,7 @@ __version__ = "0.1.0"
 
 import argparse
 import os
+import io
 import logging
 
 #######################################################################
@@ -133,9 +134,9 @@ def main():
 
     # Process the file a line at a time
     read_first_line = False
-    fp = open(in_file,'rU')
-    fo = open(out_file,'w')
-    fo.write("Probe Set ID\tProbe Set Info\n")
+    fp = io.open(in_file,'rt')
+    fo = io.open(out_file,'wt')
+    fo.write(u"Probe Set ID\tProbe Set Info\n")
     for line in fp:
         # Extract probeset name
         probeset = line.strip('\n').split('\t')[0]
@@ -148,11 +149,6 @@ def main():
         fo.write(new_line+'\n')
     fp.close()
     fo.close()
-
-def test():
-    """Run unit tests
-    """
-    unittest.main()
 
 #######################################################################
 # Tests

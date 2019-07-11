@@ -1,16 +1,18 @@
 #!/usr/bin/env python
 #
 #     split_fastq.py: split fastq by lane
-#     Copyright (C) University of Manchester 2018 Peter Briggs
+#     Copyright (C) University of Manchester 2018-2019 Peter Briggs
 #
 
 #######################################################################
 # Imports
 #######################################################################
 
+from builtins import str
 import argparse
 import re
 import os
+import io
 from bcftbx.IlluminaData import IlluminaFastq
 from bcftbx.IlluminaData import IlluminaDataError
 from bcftbx.utils import parse_lanes
@@ -28,7 +30,7 @@ import gzip
 class TestGetFastqLanes(unittest.TestCase):
     def setUp(self):
         self.wd = tempfile.mkdtemp()
-        self.fastq_data = """@K00311:43:HL3LWBBXX:2:1101:21440:1121 1:N:0:CNATGT
+        self.fastq_data = u"""@K00311:43:HL3LWBBXX:2:1101:21440:1121 1:N:0:CNATGT
 GCCNGACAGCAGAAAT
 +
 AAF#FJJJJJJJJJJJ
@@ -56,7 +58,7 @@ AAF#FJJJJJJJJJJJ
     def test_get_fastq_lanes(self):
         # Make test Fastq
         fastq_in = os.path.join(self.wd,"Test_S1_R1_001.fastq")
-        with open(fastq_in,'w') as fp:
+        with io.open(fastq_in,'wt') as fp:
             fp.write(self.fastq_data)
         # Extract lanes
         nreads,lanes = get_fastq_lanes(fastq_in)
@@ -77,7 +79,7 @@ AAF#FJJJJJJJJJJJ
 class TestExtractReadsForLane(unittest.TestCase):
     def setUp(self):
         self.wd = tempfile.mkdtemp()
-        self.fastq_data_l2 = """@K00311:43:HL3LWBBXX:2:1101:21440:1121 1:N:0:CNATGT
+        self.fastq_data_l2 = u"""@K00311:43:HL3LWBBXX:2:1101:21440:1121 1:N:0:CNATGT
 GCCNGACAGCAGAAAT
 +
 AAF#FJJJJJJJJJJJ
@@ -90,7 +92,7 @@ CCCNACCCTTGCCTAC
 +
 AAF#FJJJJJJJJJJJ
 """
-        self.fastq_data_l8 = """@K00311:43:HL3LWBBXX:8:1101:21440:1121 1:N:0:CNATGT
+        self.fastq_data_l8 = u"""@K00311:43:HL3LWBBXX:8:1101:21440:1121 1:N:0:CNATGT
 GCCNGACAGCAGAAAT
 +
 AAF#FJJJJJJJJJJJ
@@ -106,7 +108,7 @@ AAF#FJJJJJJJJJJJ
     def test_extract_reads_for_lane(self):
         # Make test Fastq
         fastq_in = os.path.join(self.wd,"Test_S1_R1_001.fastq")
-        with open(fastq_in,'w') as fp:
+        with io.open(fastq_in,'wt') as fp:
             fp.write(self.fastq_data_l2)
             fp.write(self.fastq_data_l8)
         # Extract reads for lane 2
@@ -256,7 +258,7 @@ if __name__ == "__main__":
         outfile = output_fastq_name(args.fastq,lane)
         tmp_outfile = "%s.part" % outfile
         print("   %s" % outfile)
-        with open(tmp_outfile,'w') as fq:
+        with io.open(tmp_outfile,'wt') as fq:
             for i,read in enumerate(extract_reads_for_lane(args.fastq,lane)):
                 nreads += 1
                 fq.write("%s\n" % read)

@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 #
 # Remove "singleton" reads from fastq file
+from builtins import str
 import sys
 import os
+import io
 import logging
 
 # Put .. onto Python search path for modules
@@ -37,9 +39,9 @@ if __name__ == "__main__":
         n += 1
         if not (n % 1000000): print("%s" % n)
     # Loop again outputing only paired reads
-    fp = open(fastq_out,'w')
-    fp_singles = open(singles_header,'w')
-    fp_pairs = open(pairs_header,'w')
+    fp = io.open(fastq_out,'wt')
+    fp_singles = io.open(singles_header,'wt')
+    fp_pairs = io.open(pairs_header,'wt')
     n = 1
     for read in FASTQFile.FastqIterator(fastq):
         seqid = str(read.seqid)

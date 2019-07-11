@@ -57,8 +57,10 @@ TSV file with one gene symbol per line plus averaged data.
 # Imports
 #########################################################################
 
+from builtins import str
 import sys
 import os
+import io
 import argparse
 import logging
 from collections import Iterator
@@ -110,7 +112,7 @@ class TabFileIterator(Iterator):
         self.__column_names = column_names
         self.__lineno = 0
         if fp is None:
-            self.__fp = open(filen,'rU')
+            self.__fp = io.open(filen,'rt')
         else:
             self.__fp = fp
 
@@ -544,8 +546,8 @@ if __name__ == "__main__":
     print("Reading data from %s, writing output to %s" % (filein,fileout))
 
     # Open files
-    fp_in = open(filein,'rU')
-    fp_out = open(fileout,'w')
+    fp_in = io.open(filein,'rt')
+    fp_out = io.open(fileout,'wt')
     
     # Run the best_exons procedure
     best_exons(

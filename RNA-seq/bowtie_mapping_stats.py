@@ -81,8 +81,10 @@ __version__ = "1.2.2"
 # Import
 #######################################################################
 
+from builtins import str
 import sys
 import os
+import io
 import argparse
 import glob
 
@@ -177,7 +179,7 @@ class BowtieMappingStats(object):
         n_samples = self.n_samples
         self.files.append(filen)
         if fp is None:
-            fp = open(filen,'rU')
+            fp = io.open(filen,'rt')
         for line in fp:
             if line.startswith("# reads processed: "):
                 # Bowtie 1.* outputs
@@ -334,7 +336,7 @@ class BowtieMappingStats(object):
                                                       end=end_cell)
         if tab_file is not None:
             print("Writing statistics to tab-delimited file %s" % tab_file)
-            open(tab_file,'w').write(txt)
+            io.open(tab_file,'wt').write(txt)
         return txt
 
 class BowtieSample(object):
@@ -382,13 +384,12 @@ class BowtieSample(object):
 #######################################################################
 
 import unittest
-import cStringIO
 
 class TestBowtieMappingStats(unittest.TestCase):
     def test_bowtie1_single_sample(self):
         """Process output from bowtie for single sample
         """
-        fp = cStringIO.StringIO("""Time loading reference: 00:00:01
+        fp = io.StringIO(u"""Time loading reference: 00:00:01
 Time loading forward index: 00:00:00
 Time loading mirror index: 00:00:02
 Seeded quality full-index search: 00:10:20
@@ -426,7 +427,7 @@ uniquely mapped	2737588
     def test_bowtie1_many_samples(self):
         """Process output from bowtie for multiple samples
         """
-        fp = cStringIO.StringIO("""/bin/bash -l /cvos/local/apps/sge/6.2u5/templar/spool/tw002/job_scripts/651785
+        fp = io.StringIO(u"""/bin/bash -l /cvos/local/apps/sge/6.2u5/templar/spool/tw002/job_scripts/651785
 
 JP01
 Time loading reference: 00:00:01
@@ -507,7 +508,7 @@ uniquely mapped	2737588	4087382	3094671	10086835
     def test_bowtie1_samples_multiple_files(self):
         """Process output from bowtie for multiple samples from multiple files
         """
-        fp1 = cStringIO.StringIO("""/bin/bash -l /cvos/local/apps/sge/6.2u5/templar/spool/tw002/job_scripts/651785
+        fp1 = io.StringIO(u"""/bin/bash -l /cvos/local/apps/sge/6.2u5/templar/spool/tw002/job_scripts/651785
 
 JP01
 Time loading reference: 00:00:01
@@ -534,7 +535,7 @@ Reported 4087382 alignments to 1 output stream(s)
 Time searching: 00:09:18
 Overall time: 00:09:18
 """)
-        fp2 = cStringIO.StringIO("""JP03
+        fp2 = io.StringIO(u"""JP03
 Time loading reference: 00:00:00
 Time loading forward index: 00:00:00Time loading mirror index: 00:00:00
 Seeded quality full-index search: 00:10:41
@@ -592,7 +593,7 @@ uniquely mapped	2737588	4087382	3094671	10086835
     def test_bowtie2_sample_single_sample(self):
         """Process output from bowtie2 for single sample
         """
-        fp = cStringIO.StringIO("""Multiseed full-index search: 00:20:27
+        fp = io.StringIO(u"""Multiseed full-index search: 00:20:27
 117279034 reads; of these:
   117279034 (100.00%) were unpaired; of these:
     1937614 (1.65%) aligned 0 times
@@ -628,7 +629,7 @@ uniquely mapped	115341420
     def test_bowtie2_sample_single_PE_sample(self):
         """Process output from bowtie2 for single paired-end sample
         """
-        fp = cStringIO.StringIO("""Multiseed full-index search: 01:45:33
+        fp = io.StringIO(u"""Multiseed full-index search: 01:45:33
 85570063 reads; of these:
   85570063 (100.00%) were paired; of these:
     56052776 (65.51%) aligned concordantly 0 times

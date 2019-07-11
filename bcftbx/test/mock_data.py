@@ -5,11 +5,11 @@
 #
 ########################################################################
 #
-# mock_utils.py
+# mock_data.py
 #
 #########################################################################
 
-"""mock_utils
+"""mock_data
 
 Utility classes and functions for generating test data and directory
 structures, intended to be used in unit tests.
@@ -31,7 +31,9 @@ structures, intended to be used in unit tests.
 # Import modules that this module depends on
 #######################################################################
 
+from builtins import str
 import os
+import io
 import tempfile
 import shutil
 import copy
@@ -56,8 +58,8 @@ class TestUtils(object):
             filename = tmpfile[1]
         elif basedir is not None:
             filename = os.path.join(basedir,filename)
-        fp = open(filename,'w')
-        fp.write(text)
+        fp = io.open(filename,'wt')
+        fp.write(str(text))
         fp.close()
         return filename
 

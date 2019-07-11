@@ -17,7 +17,9 @@ mock versions of those utilities ('qsub', 'qstat', 'qacct' and
 # Imports
 #######################################################################
 
+from builtins import str
 import os
+import io
 import sys
 import sqlite3
 import argparse
@@ -194,19 +196,19 @@ class MockGE(object):
             logging.debug("Output basename: %s" % out)
             # Set up stdout and stderr targets
             stdout_file = "%s.o%s" % (out,job_id)
-            stdout = open(stdout_file,'w')
+            stdout = io.open(stdout_file,'wt')
             logging.debug("Stdout: %s" % stdout_file)
             if join_output == 'y':
                 stderr = subprocess.STDOUT
             else:
                 stderr_file = "%s.e%s" % (out,job_id)
-                stderr = open(stderr_file,'w')
+                stderr = io.open(stderr_file,'wt')
                 logging.debug("Stderr: %s" % stderr_file)
             # Build a script to run the command
             script_file = os.path.join(self._database_dir,
                                        "__job%d.sh" % job_id)
-            with open(script_file,'w') as fp:
-                fp.write("""#!%s
+            with io.open(script_file,'w') as fp:
+                fp.write(u"""#!%s
 QUEUE=%s %s
 exit_code=$?
 echo "$exit_code" > %s/__exit_code.%d
@@ -293,7 +295,7 @@ echo "$exit_code" > %s/__exit_code.%d
                                           "__exit_code.%d" % job_id)
             if os.path.exists(exit_code_file):
                 end_time = os.path.getctime(exit_code_file)
-                with open(exit_code_file,'r') as fp:
+                with io.open(exit_code_file,'rt') as fp:
                     exit_code = int(fp.read())
                 os.remove(exit_code_file)
             else:
@@ -643,8 +645,8 @@ def _make_mock_GE_exe(path,f,database_dir=None,debug=None,
         args.append("qacct_delay=%s" % qacct_delay)
     if debug is not None:
         args.append("debug=%s" % debug)
-    with open(path,'w') as fp:
-        fp.write("""#!/usr/bin/env python
+    with io.open(path,'w') as fp:
+        fp.write(u"""#!/usr/bin/env python
 import sys
 from bcftbx.mockGE import MockGE
 sys.exit(MockGE(%s).%s(sys.argv[1:]))

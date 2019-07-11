@@ -22,7 +22,7 @@ to perform the underlying operations.
 # Module metadata
 #######################################################################
 
-__version__ = "0.4.1"
+__version__ = "0.4.2"
 
 #######################################################################
 # Import modules that this module depends on
@@ -30,6 +30,7 @@ __version__ = "0.4.1"
 
 import sys
 import os
+import io
 import argparse
 import logging
 # Put .. onto Python search path for modules
@@ -65,13 +66,13 @@ def compute_md5sums(dirn,output_file=None,relative=False):
     """
     retval = 0
     if output_file:
-        fp = open(output_file,'w')
+        fp = io.open(output_file,'wt')
     else:
         fp = sys.stdout
     for filen,chksum in Md5sum.Md5Checker.compute_md5sums(dirn):
         if not relative:
             filen = os.path.join(dirn,filen)
-        fp.write("%s  %s\n" % (chksum,filen))
+        fp.write(u"%s  %s\n" % (chksum,filen))
     if output_file:
         fp.close()
     return retval
@@ -95,12 +96,12 @@ def compute_md5sum_for_file(filen,output_file=None):
     """
     retval = 0
     if output_file:
-        fp = open(output_file,'w')
+        fp = io.open(output_file,'wt')
     else:
         fp = sys.stdout
     try:
         chksum = Md5sum.md5sum(filen)
-        fp.write("%s  %s\n" % (chksum,filen))
+        fp.write(u"%s  %s\n" % (chksum,filen))
     except IOError as ex:
         # Error accessing file, report and skip
         logging.error("%s: error while generating MD5 sum: '%s'" % (filen,ex))

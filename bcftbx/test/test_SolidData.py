@@ -3,6 +3,7 @@
 #######################################################################
 from bcftbx.SolidData import *
 import unittest
+import io
 import tempfile
 import shutil
 
@@ -37,7 +38,7 @@ class TestUtils(object):
         # Default run name
         run_name = "solid0123_20130426_FRAG_BC_2"
         run_definition_text = \
-"""version	userId	runType	isMultiplexing	runName	runDesc	mask	protocol
+u"""version	userId	runType	isMultiplexing	runName	runDesc	mask	protocol
 v0.0	user	FRAGMENT	TRUE	%s		1_spot_mask_sf	SOLiD4 Multiplex
 primerSet	baseLength
 BC	5
@@ -63,7 +64,7 @@ AB_CD_EF_pool		1	default primary	AB_A1M2_input	SingleTag	hg18	BC Kit Module 1-16
         elif filename.endswith("_run_definition.txt"):
             # Reset the run name by stripping '_run_definition.txt'
             run_name = os.path.basename(filename[:(len(filename)-len("_run_definition.txt"))])
-        fp = open(filename,'w')
+        fp = io.open(filename,'wt')
         fp.write(run_definition_text % run_name)
         fp.close()
         return filename
@@ -77,7 +78,7 @@ AB_CD_EF_pool		1	default primary	AB_A1M2_input	SingleTag	hg18	BC Kit Module 1-16
         Returns the name for the barcode statistics file.
         """
         barcode_statistics_text = \
-"""#? missing-barcode-reads=0
+u"""#? missing-barcode-reads=0
 #? missing-F3-reads=0
 ##Library	Barcode	0 Mismatches	1 Mismatch	Total
 AB_A1M1	3	32034098	3010512	35044610
@@ -116,7 +117,7 @@ All Beads	Totals	409927600	39452331	457541973
             # mkstemp returns a tuple
             tmpfile = tempfile.mkstemp()
             filename = tmpfile[1]
-        fp = open(filename,'w')
+        fp = io.open(filename,'wt')
         fp.write(barcode_statistics_text)
         fp.close()
         return filename
@@ -207,7 +208,7 @@ All Beads	Totals	409927600	39452331	457541973
         # Default run name
         run_name = "solid123_20130426_PE_BC"
         run_definition_text = \
-"""version	userId	runType	isMultiplexing	runName	runDesc	mask	protocol
+u"""version	userId	runType	isMultiplexing	runName	runDesc	mask	protocol
 v1.3	lab_user	PAIRED-END	TRUE	%s		1_spot_mask_sf	SOLiD4 Multiplex
 primerSet	baseLength
 BC	10
@@ -233,7 +234,7 @@ AB_CD_pool		1	default primary	CD_SP6261	SingleTag	none	BC Kit Module 1-96	"2"
         elif filename.endswith("_run_definition.txt"):
             # Reset the run name by stripping '_run_definition.txt'
             run_name = os.path.basename(filename[:(len(filename)-len("_run_definition.txt"))])
-        fp = open(filename,'w')
+        fp = io.open(filename,'wt')
         fp.write(run_definition_text % run_name)
         fp.close()
         return filename
@@ -247,7 +248,7 @@ AB_CD_pool		1	default primary	CD_SP6261	SingleTag	none	BC Kit Module 1-96	"2"
         Returns the name for the barcode statistics file.
         """
         barcode_statistics_text = \
-"""#? missing-barcode-reads=0
+u"""#? missing-barcode-reads=0
 #? missing-F3-reads=0
 ##Library	Barcode	0 Mismatches	1 Mismatch	Total
 AB_SEQ26	19	32034098	3010512	35044610
@@ -284,7 +285,7 @@ All Beads	Totals	409927600	39452331	457541973
             # mkstemp returns a tuple
             tmpfile = tempfile.mkstemp()
             filename = tmpfile[1]
-        fp = open(filename,'w')
+        fp = io.open(filename,'wt')
         fp.write(barcode_statistics_text)
         fp.close()
         return filename
@@ -396,20 +397,20 @@ All Beads	Totals	409927600	39452331	457541973
         """Make a new (empty) file
         """
         if not os.path.exists(filename):
-            open(filename, 'w').close()
+            io.open(filename, 'wt').close()
 
     def make_csfasta(self,filename):
         """Make a mock csfasta file
         """
-        fp = open(filename,'w')
-        fp.write(">1_14_622_F3\nT221.0033033232320030021103233332300123110201010031\n>1_14_1098_F3\nT033.3010033212202122212231302012120001123133212220\n")
+        fp = io.open(filename,'wt')
+        fp.write(u">1_14_622_F3\nT221.0033033232320030021103233332300123110201010031\n>1_14_1098_F3\nT033.3010033212202122212231302012120001123133212220\n")
         fp.close()
 
     def make_qual(self,filename):
         """Make a mock qual file
         """
-        fp = open(filename,'w')
-        fp.write(">1_14_622_F3\n33 33 32 -1 29 32 32 11 33 29 26 26 28 32 4 18 24 4 33 23 28 28 28 28 29 15 30 12 30 4 24 32 17 27 8 18 30 7 19 9 18 21 4 32 4 19 5 10 24 4 \n>1_14_1098_F3\n33 33 33 -1 33 33 33 30 33 31 28 31 30 31 29 32 33 31 33 33 27 32 24 33 31 32 31 30 32 24 32 24 31 33 31 33 24 33 10 22 30 25 4 17 22 27 22 28 31 19 \n")
+        fp = io.open(filename,'wt')
+        fp.write(u">1_14_622_F3\n33 33 32 -1 29 32 32 11 33 29 26 26 28 32 4 18 24 4 33 23 28 28 28 28 29 15 30 12 30 4 24 32 17 27 8 18 30 7 19 9 18 21 4 32 4 19 5 10 24 4 \n>1_14_1098_F3\n33 33 33 -1 33 33 33 30 33 31 28 31 30 31 29 32 33 31 33 33 27 32 24 33 31 32 31 30 32 24 32 24 31 33 31 33 24 33 10 22 30 25 4 17 22 27 22 28 31 19 \n")
         fp.close()
 
 class TestSolidRunInfo(unittest.TestCase):

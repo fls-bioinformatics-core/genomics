@@ -1,16 +1,17 @@
 #######################################################################
 # Tests for htmlpagewriter.py module
 #######################################################################
-from bcftbx.htmlpagewriter import HTMLPageWriter,PNGBase64Encoder
+from bcftbx.htmlpagewriter import HTMLPageWriter
+from bcftbx.htmlpagewriter import PNGBase64Encoder
 import unittest
-import cStringIO
+import io
 
 class TestHTMLPageWriter(unittest.TestCase):
     """
     """
     def test_empty_content(self):
         html = HTMLPageWriter()
-        fp = cStringIO.StringIO()
+        fp = io.StringIO()
         html.write(fp=fp)
         self.assertEqual(fp.getvalue(),
                          """<html>
@@ -25,7 +26,7 @@ class TestHTMLPageWriter(unittest.TestCase):
     def test_simple_content(self):
         html = HTMLPageWriter("Test")
         html.add("This is a test")
-        fp = cStringIO.StringIO()
+        fp = io.StringIO()
         html.write(fp=fp)
         self.assertEqual(fp.getvalue(),
                          """<html>
@@ -41,7 +42,7 @@ This is a test</body>
         html = HTMLPageWriter("Test")
         html.add("<p>This is a test</p>")
         html.add("<p>We can see how well it works...</p>")
-        fp = cStringIO.StringIO()
+        fp = io.StringIO()
         html.write(fp=fp)
         self.assertEqual(fp.getvalue(),
                          """<html>
@@ -59,7 +60,7 @@ This is a test</body>
         html.addCSSRule("body { color: blue; }")
         html.add("<p>This is a test</p>")
         html.add("<p>We can see how well it works...</p>")
-        fp = cStringIO.StringIO()
+        fp = io.StringIO()
         html.write(fp=fp)
         self.assertEqual(fp.getvalue(),
                          """<html>
@@ -79,7 +80,7 @@ body { color: blue; }</style>
         html.addJavaScript("// Comment")
         html.add("<p>This is a test</p>")
         html.add("<p>We can see how well it works...</p>")
-        fp = cStringIO.StringIO()
+        fp = io.StringIO()
         html.write(fp=fp)
         self.assertEqual(fp.getvalue(),
                          """<html>
