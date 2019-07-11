@@ -644,7 +644,7 @@ class MockIlluminaRun(object):
            self._sample_sheet_content is not None:
             with io.open(self._path('Data','Intensities','BaseCalls',
                                     'SampleSheet.csv'),'wt') as fp:
-                fp.write(self._sample_sheet_content)
+                fp.write(str(self._sample_sheet_content))
         # (Empty) config.xml files
         if self._include_config:
             io.open(self._path('Data','Intensities','config.xml'),'wb+').close()
