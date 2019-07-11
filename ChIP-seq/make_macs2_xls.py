@@ -28,12 +28,13 @@ output from MACS 2.0.10.
 # Import modules that this module depends on
 #######################################################################
 
+from __future__ import print_function
+from builtins import str
 import os
 import io
 import sys
 import argparse
 import logging
-from builtins import str
 # Configure logging output
 logging.basicConfig(format="%(levelname)s %(message)s")
 # Put .. onto Python search path for modules
@@ -1098,7 +1099,7 @@ def main(macs_file,xls_out,xls_format="xlsx",bed_out=None):
         raise Exception("Unrecognised XLS format: %s" % xls_format)
 
     # Load the data from the file
-    print("Reading data...",)
+    print("Reading data...",end=' ')
     macs_xls = MacsXLS(macs_file)
     print("done")
     if macs_xls.macs_version is None:
