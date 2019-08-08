@@ -32,11 +32,11 @@ import os
 import io
 import shutil
 import gzip
-import bcftbx.utils
-from bcftbx.IlluminaData import IlluminaFastq
-from bcftbx.IlluminaData import SampleSheet
-from bcftbx.TabFile import TabFile
-from bcftbx.utils import OrderedDictionary
+from .IlluminaData import IlluminaFastq
+from .IlluminaData import SampleSheet
+from .TabFile import TabFile
+from .utils import OrderedDictionary
+from .utils import mkdir
 
 #######################################################################
 # Module data
@@ -553,7 +553,7 @@ class MockIlluminaRun(object):
         if os.path.exists(self.dirn):
             raise OSError("%s already exists" % self.dirn)
         else:
-            bcftbx.utils.mkdir(self.dirn)
+            mkdir(self.dirn)
             self._created = True
         # Get local copies of paramaters
         bases_mask = self._bases_mask
@@ -564,19 +564,19 @@ class MockIlluminaRun(object):
         for rd in bases_mask.split(','):
             ncycles += int(rd[1:])
         # Basic directory structure
-        bcftbx.utils.mkdir(self._path('Data'))
-        bcftbx.utils.mkdir(self._path('Data','Intensities'))
-        bcftbx.utils.mkdir(self._path('Data','Intensities','BaseCalls'))
+        mkdir(self._path('Data'))
+        mkdir(self._path('Data','Intensities'))
+        mkdir(self._path('Data','Intensities','BaseCalls'))
         # Lanes
         for i in xrange(1,nlanes+1):
             # .locs files
-            bcftbx.utils.mkdir(self._path('Data','Intensities','L%03d' % i))
+            mkdir(self._path('Data','Intensities','L%03d' % i))
             for j in xrange(1101,1101+ntiles):
                 io.open(self._path('Data','Intensities','L%03d' % i,
                                    's_%d_%d.locs' % (i,j)),'wb+').close()
             # BaseCalls directory
-            bcftbx.utils.mkdir(self._path('Data','Intensities','BaseCalls',
-                                          'L%03d' % i))
+            mkdir(self._path('Data','Intensities','BaseCalls',
+                             'L%03d' % i))
             for j in xrange(1101,1101+ntiles):
                 if self._include_control:
                     # Add .control files
@@ -612,11 +612,11 @@ class MockIlluminaRun(object):
             # Cycles subdirectories
             if self._include_cycles:
                 for k in xrange(1,ncycles+1):
-                    bcftbx.utils.mkdir(self._path('Data',
-                                                  'Intensities',
-                                                  'BaseCalls',
-                                                  'L%03d' % i,
-                                                  'C%d.1' % k))
+                    mkdir(self._path('Data',
+                                     'Intensities',
+                                     'BaseCalls',
+                                     'L%03d' % i,
+                                     'C%d.1' % k))
                     for j in xrange(1101,1101+ntiles):
                         # .bcl files
                         io.open(self._path('Data',
@@ -1092,10 +1092,10 @@ class MockIlluminaData(object):
         if os.path.exists(self.dirn):
             raise OSError("%s already exists" % self.dirn)
         else:
-            bcftbx.utils.mkdir(self.dirn)
+            mkdir(self.dirn)
             self.__created = True
         # "Unaligned" directory
-        bcftbx.utils.mkdir(self.unaligned_dir)
+        mkdir(self.unaligned_dir)
         if self.package == 'casava':
             self._populate_casava()
         elif self.package == 'bcl2fastq2':
@@ -1113,11 +1113,11 @@ class MockIlluminaData(object):
             else:
                 project_dirn = os.path.join(self.unaligned_dir,
                                             "Project_%s" % project_name)
-            bcftbx.utils.mkdir(project_dirn)
+            mkdir(project_dirn)
             for sample_name in self.__projects[project_name]:
                 sample_dirn = os.path.join(project_dirn,
                                            "Sample_%s" % sample_name)
-                bcftbx.utils.mkdir(sample_dirn)
+                mkdir(sample_dirn)
                 for fastq in self.__projects[project_name][sample_name]:
                     fq = os.path.join(sample_dirn,fastq)
                     self._touch(fq)
@@ -1132,7 +1132,7 @@ class MockIlluminaData(object):
                 project_dirn = self.unaligned_dir
             else:
                 project_dirn = os.path.join(self.unaligned_dir,project_name)
-            bcftbx.utils.mkdir(project_dirn)
+            mkdir(project_dirn)
             for sample_name in self.__projects[project_name]:
                 fastqs = []
                 for fastq in self.__projects[project_name][sample_name]:
@@ -1142,14 +1142,14 @@ class MockIlluminaData(object):
                        fq_sample_name != 'Undetermined':
                         # Create an intermediate directory
                         sample_dirn = os.path.join(project_dirn,sample_name)
-                        bcftbx.utils.mkdir(sample_dirn)
+                        mkdir(sample_dirn)
                     else:
                         sample_dirn = project_dirn
                     # Check for leading directory on fastq name
                     if os.path.dirname(fastq):
                         leading_dir = os.path.join(sample_dirn,
                                                    os.path.dirname(fastq))
-                        bcftbx.utils.mkdir(leading_dir)
+                        mkdir(leading_dir)
                     # "Touch" the file (i.e. creates an empty file)
                     fq = os.path.join(sample_dirn,fastq)
                     self._touch(fq)
@@ -1159,7 +1159,7 @@ class MockIlluminaData(object):
             # Add 'Reports' and 'Stats' directories
             for name in ('Reports','Stats',):
                 dirn = os.path.join(self.unaligned_dir,name)
-                bcftbx.utils.mkdir(dirn)
+                mkdir(dirn)
 
     def _touch(self,f):
         """Internal: create empty file
