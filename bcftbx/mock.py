@@ -32,11 +32,11 @@ import os
 import io
 import shutil
 import gzip
-import bcftbx.utils
-from bcftbx.IlluminaData import IlluminaFastq
-from bcftbx.IlluminaData import SampleSheet
-from bcftbx.TabFile import TabFile
-from bcftbx.utils import OrderedDictionary
+from . import utils
+from .IlluminaData import IlluminaFastq
+from .IlluminaData import SampleSheet
+from .TabFile import TabFile
+from .utils import OrderedDictionary
 
 #######################################################################
 # Module data

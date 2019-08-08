@@ -24,8 +24,12 @@ import glob
 import zipfile
 import time
 import logging
-from bcftbx import TabFile,Pipeline,utils,htmlpagewriter,get_version
-from bcftbx import FASTQFile
+from .. import TabFile
+from .. import Pipeline
+from .. import utils
+from .. import htmlpagewriter
+from .. import FASTQFile
+from .. import get_version
 
 #######################################################################
 # Module level constants
