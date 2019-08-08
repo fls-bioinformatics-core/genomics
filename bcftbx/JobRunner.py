@@ -308,7 +308,12 @@ class SimpleJobRunner(BaseJobRunner):
         """
         job_ids = []
         for job_id in [jid for jid in self.__job_popen]:
-            p = self.__job_popen[job_id]
+            try:
+                p = self.__job_popen[job_id]
+            except KeyError:
+                # Job has been removed since the list
+                # was fetched? Ignore
+                continue
             status = p.poll()
             if status is None:
                 job_ids.append(job_id)
