@@ -699,7 +699,7 @@ class Styles(object):
                 easyxf_style += '; '
         try:
             xf_style = easyxf(easyxf_style,num_format_str=num_format_str)
-        except xlwt.Style.EasyXFCallerError, ex:
+        except xlwt.Style.EasyXFCallerError as ex:
             logging.warning("Unable to get style: '%s'" % ex)
             xf_style = easyxf()
         # Store and return
