@@ -119,9 +119,9 @@ from builtins import str
 import re
 from collections import Iterator
 import logging
-import Spreadsheet
 import xlsxwriter
-from utils import OrderedDictionary
+from . import Spreadsheet
+from .utils import OrderedDictionary
 
 #######################################################################
 # Constants
