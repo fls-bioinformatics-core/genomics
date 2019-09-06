@@ -169,14 +169,14 @@ export PYTHONPATH=%s:$PYTHONPATH
 python -c "import sys ; from fastq_strand import mockSTAR ; mockSTAR(sys.argv[1:],unmapped_output=%s)" $@
 exit $?
 """ % (os.path.dirname(__file__),unmapped_output))
-        os.chmod(path,0775)
+        os.chmod(path,0o775)
     def _make_failing_mock_star(self,path):
         # Make a failing mock STAR executable
         with io.open(path,'wt') as fp:
             fp.write(u"""#!/bin/bash
 exit 1
 """)
-        os.chmod(path,0775)
+        os.chmod(path,0o775)
     def test_fastq_strand_one_genome_index_SE(self):
         """
         fastq_strand: test with single genome index (SE)
