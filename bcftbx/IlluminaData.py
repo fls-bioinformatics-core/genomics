@@ -22,10 +22,10 @@ import os
 import logging
 import xml.dom.minidom
 import shutil
-import platforms
-import utils
-import TabFile
 import io
+from . import platforms
+from . import utils
+from . import TabFile
 from builtins import str
 
 #######################################################################

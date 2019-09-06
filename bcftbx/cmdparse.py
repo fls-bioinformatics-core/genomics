@@ -38,7 +38,7 @@ __version__ = "2.0.0"
 import os
 import sys
 import argparse
-from utils import OrderedDictionary
+from .utils import OrderedDictionary
 
 #######################################################################
 # Classes
