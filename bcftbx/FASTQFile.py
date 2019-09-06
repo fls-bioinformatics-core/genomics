@@ -40,7 +40,7 @@ import io
 import re
 import logging
 import gzip
-import itertools
+from future.moves import itertools
 
 #######################################################################
 # Precompiled regular expressions
@@ -512,11 +512,12 @@ def fastqs_are_pair(fastq1=None,fastq2=None,verbose=True,fp1=None,fp2=None):
       than the other).
 
     """
-    # Use itertools.izip_longest, which will return None if either of
+    # Use izip_longest, which will return None if either of
     # the fastqs is exhausted before the other
     i = 0
-    for r1,r2 in itertools.izip_longest(FastqIterator(fastq_file=fastq1,fp=fp1),
-                                        FastqIterator(fastq_file=fastq2,fp=fp2)):
+    for r1,r2 in itertools.zip_longest(
+            FastqIterator(fastq_file=fastq1,fp=fp1),
+            FastqIterator(fastq_file=fastq2,fp=fp2)):
         i += 1
         if verbose:
             if i%100000 == 0:
