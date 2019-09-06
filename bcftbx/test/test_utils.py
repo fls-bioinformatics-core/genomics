@@ -178,22 +178,22 @@ class TestPathInfo(unittest.TestCase):
         self.example_dir.add_file("group_unreadable.txt")
         self.example_dir.add_file("group_unwritable.txt")
         self.example_dir.add_file("program.exe")
-        os.chmod(self.example_dir.path("spider.txt"),0664)
-        os.chmod(self.example_dir.path("web"),0775)
-        os.chmod(self.example_dir.path("unreadable.txt"),0044)
-        os.chmod(self.example_dir.path("group_unreadable.txt"),0624)
-        os.chmod(self.example_dir.path("group_unwritable.txt"),0644)
-        os.chmod(self.example_dir.path("program.exe"),0755)
+        os.chmod(self.example_dir.path("spider.txt"),0o664)
+        os.chmod(self.example_dir.path("web"),0o775)
+        os.chmod(self.example_dir.path("unreadable.txt"),0o044)
+        os.chmod(self.example_dir.path("group_unreadable.txt"),0o624)
+        os.chmod(self.example_dir.path("group_unwritable.txt"),0o644)
+        os.chmod(self.example_dir.path("program.exe"),0o755)
         self.example_dir.add_link("program","program.exe")
 
     def tearDown(self):
         """Remove directory with test data
 
         """
-        os.chmod(self.example_dir.path("unreadable.txt"),0644)
-        os.chmod(self.example_dir.path("group_unreadable.txt"),0644)
-        os.chmod(self.example_dir.path("group_unwritable.txt"),0644)
-        os.chmod(self.example_dir.path("program.exe"),0644)
+        os.chmod(self.example_dir.path("unreadable.txt"),0o644)
+        os.chmod(self.example_dir.path("group_unreadable.txt"),0o644)
+        os.chmod(self.example_dir.path("group_unwritable.txt"),0o644)
+        os.chmod(self.example_dir.path("program.exe"),0o644)
         self.example_dir.delete_directory()
 
     def test_path(self):
@@ -378,7 +378,7 @@ class TestPathInfo(unittest.TestCase):
         """
         path = PathInfo(self.example_dir.path("spider.txt"))
         # Ensure file can be removed by anyone i.e. write permission for all
-        os.chmod(self.example_dir.path("spider.txt"),0666)
+        os.chmod(self.example_dir.path("spider.txt"),0o666)
         # Will always fail for non-root user?
         current_user = pwd.getpwuid(os.getuid()).pw_name
         if current_user != "root":
@@ -654,9 +654,9 @@ class TestMkdirFunction(unittest.TestCase):
         """
         new_dir = os.path.join(self.test_dir,"new_dir")
         self.assertFalse(os.path.exists(new_dir))
-        mkdir(new_dir,mode=0644)
+        mkdir(new_dir,mode=0o644)
         self.assertTrue(os.path.exists(new_dir))
-        self.assertEqual(stat.S_IMODE(os.lstat(new_dir).st_mode),0644)
+        self.assertEqual(stat.S_IMODE(os.lstat(new_dir).st_mode),0o644)
 
     def test_mkdir_dir_already_exists(self):
         """mkdir: try to make a subdirectory that already exists
@@ -706,20 +706,20 @@ class TestChmodFunction(unittest.TestCase):
         """
         test_file = os.path.join(self.test_dir,'test.txt')
         io.open(test_file,'wt').write(u"Some random text")
-        chmod(test_file,0644)
-        self.assertEqual(stat.S_IMODE(os.lstat(test_file).st_mode),0644)
-        chmod(test_file,0755)
-        self.assertEqual(stat.S_IMODE(os.lstat(test_file).st_mode),0755)
+        chmod(test_file,0o644)
+        self.assertEqual(stat.S_IMODE(os.lstat(test_file).st_mode),0o644)
+        chmod(test_file,0o755)
+        self.assertEqual(stat.S_IMODE(os.lstat(test_file).st_mode),0o755)
 
     def test_chmod_for_directory(self):
         """Check chmod works on a directory
         """
         test_dir = os.path.join(self.test_dir,'test')
         os.mkdir(test_dir)
-        chmod(test_dir,0755)
-        self.assertEqual(stat.S_IMODE(os.lstat(test_dir).st_mode),0755)
-        chmod(test_dir,0777)
-        self.assertEqual(stat.S_IMODE(os.lstat(test_dir).st_mode),0777)
+        chmod(test_dir,0o755)
+        self.assertEqual(stat.S_IMODE(os.lstat(test_dir).st_mode),0o755)
+        chmod(test_dir,0o777)
+        self.assertEqual(stat.S_IMODE(os.lstat(test_dir).st_mode),0o777)
 
     def test_chmod_doesnt_follow_link(self):
         """Check chmod doesn't follow symbolic links
@@ -728,11 +728,11 @@ class TestChmodFunction(unittest.TestCase):
         io.open(test_file,'w').write(u"Some random text")
         test_link = os.path.join(self.test_dir,'test.lnk')
         os.symlink(test_file,test_link)
-        chmod(test_file,0644)
-        self.assertEqual(stat.S_IMODE(os.lstat(test_file).st_mode),0644)
-        chmod(test_link,0755)
+        chmod(test_file,0o644)
+        self.assertEqual(stat.S_IMODE(os.lstat(test_file).st_mode),0o644)
+        chmod(test_link,0o755)
         # Target should be unaffected
-        self.assertEqual(stat.S_IMODE(os.lstat(test_file).st_mode),0644)
+        self.assertEqual(stat.S_IMODE(os.lstat(test_file).st_mode),0o644)
 
 class TestTouchFunction(unittest.TestCase):
     """Unit tests for the 'touch' function

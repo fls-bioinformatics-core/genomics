@@ -213,7 +213,7 @@ QUEUE=%s %s
 exit_code=$?
 echo "$exit_code" > %s/__exit_code.%d
 """ % (self._shell,queue,command,self._database_dir,job_id))
-            os.chmod(script_file,0775)
+            os.chmod(script_file,0o775)
             # Run the command
             p = subprocess.Popen(script_file,
                                  cwd=working_dir,
@@ -651,7 +651,7 @@ import sys
 from bcftbx.mockGE import MockGE
 sys.exit(MockGE(%s).%s(sys.argv[1:]))
 """ % (','.join(args),f))
-    os.chmod(path,0775)
+    os.chmod(path,0o775)
 
 def setup_mock_GE(bindir=None,database_dir=None,debug=None,
                   qsub_delay=None,qacct_delay=None):
