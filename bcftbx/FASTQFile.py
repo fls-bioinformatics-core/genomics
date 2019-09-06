@@ -103,7 +103,7 @@ class FastqIterator(Iterator):
         self._lines = []
         self._ip = 0
 
-    def next(self):
+    def __next__(self):
         """Return next record from FASTQ file as a FastqRead object
         """
         # Convenience variables
@@ -145,6 +145,12 @@ class FastqIterator(Iterator):
         self._buf = buf
         self._ip = ip
         return FastqRead(*read)
+
+    def next(self):
+        """
+        Implemented for Python2 compatibility
+        """
+        return self.__next__()
 
 class FastqRead(object):
     """Class to store a FASTQ record with information about a read
