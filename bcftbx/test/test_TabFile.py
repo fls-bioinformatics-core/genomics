@@ -9,6 +9,10 @@ import tempfile
 import os
 import shutil
 
+# Import long int for Python3 backwards
+# compatibility with Python2
+from past.builtins import long
+
 class TestTabFile(unittest.TestCase):
 
     def setUp(self):
@@ -622,10 +626,15 @@ chr2\t1234\t5678\t6.8
         self.assertEqual(tabfile.nColumns(),4)
         self.assertEqual(tabfile.header(),['chr','start','end','data'])
         # Divide data column by 10
-        tabfile.transformColumn('data',lambda x: x/10)
+        tabfile.transformColumn('data',lambda x: x/10.0)
         results = [0.46,0.57,0.68]
         for i in range(len(tabfile)):
-            self.assertEqual(tabfile[i]['data'],results[i])
+            # When checking the transformed column, coerce
+            # the values to two decimal places to avoid tests
+            # failing because of rounding errors (e.g.
+            # 0.45999999999999996 != 0.46)
+            self.assertEqual(float("%.2f" % tabfile[i]['data']),
+                             results[i])
 
     def test_compute_midpoint(self):
         """Compute the midpoint of the start and end columns
