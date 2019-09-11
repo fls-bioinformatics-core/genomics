@@ -465,12 +465,6 @@ class Md5CheckReporter(object):
 # Functions
 #######################################################################
 
-def hexify(s):
-    """Return the hex representation of a string
-
-    """
-    return ("%02x"*len(s)) % tuple(map(ord, s))
-
 def md5sum(f):
     """Return md5sum digest for a file or stream
     

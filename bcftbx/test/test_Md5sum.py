@@ -12,14 +12,6 @@ import io
 TEST_TEXT = u"""Md5sum is a Python module with functions for generating
 MD5 checksums for files."""
 
-class TestHexify(unittest.TestCase):
-
-    def test_hexify(self):
-        """hexify function generates correct hex representations
-        """
-        self.assertEqual(hexify("hello!"),'68656c6c6f21')
-        self.assertEqual(hexify("goodbye"),'676f6f64627965')
-
 class TestMd5sum(unittest.TestCase):
 
     def setUp(self):
