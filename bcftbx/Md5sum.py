@@ -40,12 +40,6 @@ a wrapper class 'Md5Reporter' which
 """
 
 #######################################################################
-# Module metadata
-#######################################################################
-
-__version__ = "1.1.3"
-
-#######################################################################
 # Import modules that this module depends on
 #######################################################################
 
@@ -53,12 +47,7 @@ import sys
 import os
 import io
 import logging
-try:
-    # Preferentially use hashlib module
-    import hashlib
-except ImportError:
-    # hashlib not available, use deprecated md5 module
-    import md5
+import hashlib
 
 #######################################################################
 # Modules constants
@@ -470,12 +459,6 @@ class Md5CheckReporter(object):
 # Functions
 #######################################################################
 
-def hexify(s):
-    """Return the hex representation of a string
-
-    """
-    return ("%02x"*len(s)) % tuple(map(ord, s))
-
 def md5sum(f):
     """Return md5sum digest for a file or stream
     
@@ -496,16 +479,14 @@ def md5sum(f):
       Md5sum digest for the named file.
 
     """
-    # Initialise checksum using whatever is available
+    chksum = hashlib.md5()
     try:
-        chksum = hashlib.md5()
-    except NameError:
-        chksum = md5.new()
-    # Generate checksum
-    try:
-        f = io.open(f,"rb")
+        fp = io.open(f,"rb",buffering=BLOCKSIZE)
     except TypeError:
-        pass
-    for block in iter(lambda: f.read(BLOCKSIZE), ''):
-        chksum.update(block)
-    return hexify(chksum.digest())
+        fp = f
+    for block in iter(fp.read,''):
+        if block:
+            chksum.update(block)
+        else:
+            break
+    return chksum.hexdigest()
