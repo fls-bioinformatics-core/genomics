@@ -58,7 +58,7 @@ def JobCleanup(job):
     # Set the permissions on the output log file to rw-rw-r--
     if job.log:
         if os.path.exists(os.path.join(job.working_dir,job.log)):
-            os.chmod(os.path.join(job.working_dir,job.log),0664)
+            os.chmod(os.path.join(job.working_dir,job.log),0o664)
 
 def SendReport(email_addr,group,job_list):
     """Send an email notification/report when a job group has completed
