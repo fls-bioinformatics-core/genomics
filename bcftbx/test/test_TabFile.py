@@ -487,6 +487,28 @@ chr2\t1234\t6.8
             for value in line:
                 self.assertEqual(value,str(value))
 
+    def test_convert_values_to_type_handle_underscores_in_numbers(self):
+        """Handle conversion of numeric values with underscores
+        """
+        fp = io.StringIO(
+            u"""chr\tstart\tend
+chr1\t1_012\t4_292.6
+""")
+        tabfile = TabFile('test',fp,first_line_is_header=True,
+                          convert=True,
+                          allow_underscores_in_numeric_literals=True)
+        self.assertEqual(tabfile[0]['start'],1012)
+        self.assertEqual(tabfile[0]['end'],4292.6)
+        fp = io.StringIO(
+            u"""chr\tstart\tend
+chr1\t1_012\t4_292.6
+""")
+        tabfile = TabFile('test',fp,first_line_is_header=True,
+                          convert=True,
+                          allow_underscores_in_numeric_literals=False)
+        self.assertEqual(tabfile[0]['start'],"1_012")
+        self.assertEqual(tabfile[0]['end'],"4_292.6")
+
 class TestBadTabFile(unittest.TestCase):
     """Test with 'bad' input files
     """
