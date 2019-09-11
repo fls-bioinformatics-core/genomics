@@ -1334,8 +1334,8 @@ class SampleSheet(object):
                 samples[name] = [line]
             else:
                 samples[name].append(line)
-        duplicates = filter(lambda s: len(s) > 1,
-                            [samples[name] for name in samples])
+        duplicates = list(filter(lambda s: len(s) > 1,
+                                 [samples[name] for name in samples]))
         return duplicates
 
     @property
