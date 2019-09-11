@@ -37,6 +37,7 @@ from .IlluminaData import SampleSheet
 from .TabFile import TabFile
 from .utils import OrderedDictionary
 from .utils import mkdir
+from builtins import range
 
 #######################################################################
 # Module data
@@ -165,7 +166,7 @@ class RunInfoXml(object):
         # AlignToPhiX
         if align_to_phix:
             xml += "    <AlignToPhiX>\n"
-            for i in xrange(nlanes):
+            for i in range(nlanes):
                 xml += "      <Lane>%s</Lane>\n" % (i+1)
             xml += "    </AlignToPhiX>\n"
         # Footer
@@ -519,7 +520,7 @@ class MockIlluminaRun(object):
         """
         List of lane numbers
         """
-        return [l for l in xrange(1,self._nlanes+1)]
+        return [l for l in range(1,self._nlanes+1)]
 
     @property
     def dirn(self):
@@ -568,16 +569,16 @@ class MockIlluminaRun(object):
         mkdir(self._path('Data','Intensities'))
         mkdir(self._path('Data','Intensities','BaseCalls'))
         # Lanes
-        for i in xrange(1,nlanes+1):
+        for i in range(1,nlanes+1):
             # .locs files
             mkdir(self._path('Data','Intensities','L%03d' % i))
-            for j in xrange(1101,1101+ntiles):
+            for j in range(1101,1101+ntiles):
                 io.open(self._path('Data','Intensities','L%03d' % i,
                                    's_%d_%d.locs' % (i,j)),'wb+').close()
             # BaseCalls directory
             mkdir(self._path('Data','Intensities','BaseCalls',
                              'L%03d' % i))
-            for j in xrange(1101,1101+ntiles):
+            for j in range(1101,1101+ntiles):
                 if self._include_control:
                     # Add .control files
                     io.open(self._path('Data',
@@ -596,7 +597,7 @@ class MockIlluminaRun(object):
                     # No cycle subdirectores (e.g. 'C121.1')
                     # so put bcl files directory in lane directory
                     # This is the case for NextSeq
-                    for j in xrange(1,ntiles+1):
+                    for j in range(1,ntiles+1):
                         io.open(self._path('Data',
                                            'Intensities',
                                            'BaseCalls',
@@ -611,13 +612,13 @@ class MockIlluminaRun(object):
                                            '%04d%s.bci' % (j,bcl_ext)),'wb+').close()
             # Cycles subdirectories
             if self._include_cycles:
-                for k in xrange(1,ncycles+1):
+                for k in range(1,ncycles+1):
                     mkdir(self._path('Data',
                                      'Intensities',
                                      'BaseCalls',
                                      'L%03d' % i,
                                      'C%d.1' % k))
-                    for j in xrange(1101,1101+ntiles):
+                    for j in range(1101,1101+ntiles):
                         # .bcl files
                         io.open(self._path('Data',
                                            'Intensities',
