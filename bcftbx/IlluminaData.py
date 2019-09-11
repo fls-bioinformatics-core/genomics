@@ -149,8 +149,7 @@ class IlluminaRun(object):
         for d in os.listdir(self.basecalls_dir):
             if d.startswith('L'):
                 lanes.append(int(d[1:]))
-        lanes.sort()
-        return lanes
+        return sorted(lanes)
 
     @property
     def cycles(self):
@@ -304,10 +303,12 @@ class IlluminaData(object):
                 raise IlluminaDataError("Exception attempting to read "
                                         "bcl2fastq2-style data (ignored): "
                                         "%s" % ex)
+            self._populate_bcl2fastq2_style()
         if not self.projects and self.format != 'bcl2fastq2':
             raise IlluminaDataError("No projects found")
         # Sort projects on name
-        self.projects.sort(lambda a,b: cmp(a.name,b.name))
+        self.projects = sorted(self.projects,
+                               key=lambda p: p.name)
         # Determine whether data is paired end
         for p in self.projects:
             self.paired_end = (self.paired_end or p.paired_end)
@@ -326,7 +327,7 @@ class IlluminaData(object):
                     lane = IlluminaFastq(fq).lane_number
                     if lane not in self.lanes:
                         self.lanes.append(lane)
-        self.lanes.sort()
+        self.lanes = sorted(self.lanes)
 
     def _populate_casava_style(self):
         """
@@ -589,7 +590,7 @@ class IlluminaProject(object):
             raise IlluminaDataError("No samples found for project %s" %
                                     self.name)
         # Sort samples on name
-        self.samples.sort(lambda a,b: cmp(a.name,b.name))
+        self.samples = sorted(self.samples,key=lambda s: s.name)
         # Determine whether project is paired end
         for s in self.samples:
             self.paired_end = (self.paired_end and s.paired_end)
@@ -693,7 +694,7 @@ class IlluminaSample(object):
         """
         self.fastq.append(fastq)
         # Sort fastq's into order
-        self.fastq.sort()
+        self.fastq = sorted(self.fastq)
         # Check paired-end status
         if not self.paired_end:
             fq = IlluminaFastq(fastq)
@@ -726,8 +727,7 @@ class IlluminaSample(object):
                 else:
                     fastqs.append(fastq)
         # Sort into dictionary order and return
-        fastqs.sort()
-        return fastqs
+        return sorted(fastqs)
 
     def __repr__(self):
         """Implement __repr__ built-in
