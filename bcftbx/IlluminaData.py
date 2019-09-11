@@ -32,7 +32,7 @@ from builtins import str
 # Module constants
 #######################################################################
 
-SAMPLESHEET_ILLEGAL_CHARS = "?()[]/\=+<>:;\"',*^|&. \t"
+SAMPLESHEET_ILLEGAL_CHARS = u"?()[]/\\=+<>:;\"',*^|&. \t"
 KNOWN_PLATFORMS = ('illumina-ga2x',
                    'hiseq',
                    'hiseq4000',
