@@ -53,12 +53,7 @@ import sys
 import os
 import io
 import logging
-try:
-    # Preferentially use hashlib module
-    import hashlib
-except ImportError:
-    # hashlib not available, use deprecated md5 module
-    import md5
+import hashlib
 
 #######################################################################
 # Modules constants
@@ -496,16 +491,14 @@ def md5sum(f):
       Md5sum digest for the named file.
 
     """
-    # Initialise checksum using whatever is available
+    chksum = hashlib.md5()
     try:
-        chksum = hashlib.md5()
-    except NameError:
-        chksum = md5.new()
-    # Generate checksum
-    try:
-        f = io.open(f,"rb")
+        fp = io.open(f,"rb",buffering=BLOCKSIZE)
     except TypeError:
-        pass
-    for block in iter(lambda: f.read(BLOCKSIZE), ''):
-        chksum.update(block)
-    return hexify(chksum.digest())
+        fp = f
+    for block in iter(fp.read,''):
+        if block:
+            chksum.update(block)
+        else:
+            break
+    return chksum.hexdigest()
