@@ -230,7 +230,7 @@ class TabDataLine(object):
     
     """
     def __init__(self,line=None,column_names=None,delimiter='\t',lineno=None,
-                 convert=True):
+                 convert=True,allow_underscores_in_numeric_literals=False):
         """Create a new TabFileLine object
 
         Arguments:
@@ -242,10 +242,17 @@ class TabDataLine(object):
           convert: if True then convert values to the appropriate
             types; if False then all values will be converted to
             strings.
+          allow_underscores_in_numeric_literals: (optional) if True
+            then treat numerical values with underscores as
+            numbers according to PEP 15; if False (the default)
+            then treat them as strings
         """
         # Conversion function
         if convert:
-            self.__convert = self.convert_to_type
+            if allow_underscores_in_numeric_literals:
+                self.__convert = self.convert_to_type_pep515
+            else:
+                self.__convert = self.convert_to_type
         else:
             self.__convert = self.convert_to_str
         # Data
@@ -355,6 +362,14 @@ class TabDataLine(object):
         object.
         """
         converted = value
+        # Value containing underscores always
+        # preserved
+        try:
+            str(converted).index('_')
+            return converted
+        except ValueError:
+            pass
+        # Test for numerical values
         try:
             # Try integer
             converted = int(str(converted))
@@ -362,6 +377,32 @@ class TabDataLine(object):
             # Not an integer, try float
             try:
                 converted = float(str(converted))
+            except ValueError:
+                # Not a float, leave as input
+                pass
+        # Return value
+        return converted
+
+    def convert_to_type_pep515(self,value):
+        """Internal: convert a value to the correct type
+
+        Used to coerce input values into integers or floats
+        if appropriate before storage in the TabDataLine
+        object.
+
+        The conversion honors PEP 515 so numerical values
+        can also contain underscore characters.
+        """
+        converted = value
+        # Remove underscores
+        no_underscores = str(converted).replace('_','')
+        try:
+            # Try integer
+            converted = int(str(no_underscores))
+        except ValueError:
+            # Not an integer, try float
+            try:
+                converted = float(str(no_underscores))
             except ValueError:
                 # Not a float, leave as input
                 pass
@@ -468,7 +509,8 @@ class TabFile(object):
     """
     def __init__(self,filen=None,fp=None,column_names=None,skip_first_line=False,
                  first_line_is_header=False,tab_data_line=TabDataLine,
-                 delimiter='\t',convert=True):
+                 delimiter='\t',convert=True,
+                 allow_underscores_in_numeric_literals=False):
         """Create a new TabFile object
 
         If either of 'filen' or 'fp' arguments are given then the
@@ -495,6 +537,10 @@ class TabFile(object):
           convert: (optional) if True then convert input values to
               the appropriate types (e.g. integer, float etc); if
               False then convert everything to strings
+          allow_underscores_in_numeric_literals: (optional) if True
+              then treat numerical values with underscores as
+              numbers according to PEP 515; if False (the default)
+              then treat them as strings
         """
         # Initialise
         self.__filen = filen
@@ -503,6 +549,8 @@ class TabFile(object):
         self.__delimiter = delimiter
         self.__data = []
         self.__convert = convert
+        self.__allow_underscores_in_numbers = \
+                    allow_underscores_in_numeric_literals
         # Class to use for data lines
         self.__tabdataline = tab_data_line
         # Set up column names
@@ -555,7 +603,9 @@ class TabFile(object):
             # Store data
             data_line = self.__tabdataline(line,column_names=self.header(),lineno=line_no,
                                            delimiter=self.__delimiter,
-                                           convert=self.__convert)
+                                           convert=self.__convert,
+                                           allow_underscores_in_numeric_literals=
+                                           self.__allow_underscores_in_numbers)
             if self.__ncols > 0:
                 if len(data_line) != self.__ncols:
                     # Inconsistent lines are an error
