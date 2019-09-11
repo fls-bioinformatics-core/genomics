@@ -26,6 +26,7 @@ import io
 from . import platforms
 from . import utils
 from . import TabFile
+from functools import reduce
 from builtins import str
 
 #######################################################################
