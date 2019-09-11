@@ -1168,11 +1168,11 @@ class MockIlluminaData(object):
         if f.endswith(".gz"):
             # Make empty gzipped file
             with gzip.open(f,'wb') as fp:
-                fp.write("")
+                fp.write(b"")
         else:
             # Make regular empty file
             with io.open(f,'wb') as fp:
-                fp.write("")
+                fp.write(b"")
 
     def remove(self):
         """Delete the directory structure and contents
