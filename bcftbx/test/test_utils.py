@@ -8,7 +8,8 @@ import tempfile
 import shutil
 import gzip
 import pickle
-import bcftbx.test.mock_data as mock_data
+from . import mock_data
+from .mock_data import ExampleDirSpiders
 from bcftbx.utils import *
 
 class TestAttributeDictionary(unittest.TestCase):
@@ -797,7 +798,6 @@ class TestFormatFileSize(unittest.TestCase):
         self.assertEqual("0.0T",format_file_size(195035136,units='T'))
         self.assertEqual("0.2T",format_file_size(171798691900,units='T'))
 
-from mock_data import ExampleDirSpiders
 class ExampleDirLinks(ExampleDirSpiders):
     """Extended example dir for testing symbolic link handling
 
