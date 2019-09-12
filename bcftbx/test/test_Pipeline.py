@@ -14,6 +14,7 @@ from bcftbx.Pipeline import GetSolidDataFiles
 from bcftbx.Pipeline import GetSolidPairedEndFiles
 from bcftbx.Pipeline import GetFastqFiles
 from bcftbx.Pipeline import GetFastqGzFiles
+from bcftbx.Pipeline import PipelineRunner
 
 class TestJobWithSimpleJobRunner(unittest.TestCase):
     """Unit tests for the the Job class using SimpleJobRunner
@@ -498,7 +499,20 @@ class TestGetFastqGzFiles(unittest.TestCase):
         self.assertEqual(len(expected),len(fastqgzs))
         for fq1,fq2 in zip(expected,fastqgzs):
             self.assertEqual(fq1,fq2)
-        
+
+class TestPipelineRunner(unittest.TestCase):
+
+    def setUp(self):
+        # Set up working dir
+        self.working_dir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        shutil.rmtree(self.working_dir)
+
+    def test_pipelinerunner(self):
+        pr = PipelineRunner(SimpleJobRunner(),poll_interval=1)
+        pr.queueJob(self.working_dir,'ls','-l')
+        pr.run(blocking=True)
 
 #######################################################################
 # Main program
