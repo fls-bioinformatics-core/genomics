@@ -363,9 +363,9 @@ class IlluminaData(object):
 
         """
         # Look for undetermined fastqs
-        undetermined_fqs = filter(lambda f: f.startswith('Undetermined_S0_')
-                                  and f.endswith('.fastq.gz'),
-                                  os.listdir(self.unaligned_dir))
+        undetermined_fqs = [f for f in os.listdir(self.unaligned_dir)
+                            if (f.startswith('Undetermined_S0_') and
+                                f.endswith('.fastq.gz'))]
         if not undetermined_fqs:
             logging.debug("%s: no bcl2fastq2 undetermined fastqs found" %
                           self.unaligned_dir)
@@ -379,22 +379,21 @@ class IlluminaData(object):
             if not os.path.isdir(dirn):
                 continue
             # Get a list of fastq files
-            fqs = filter(lambda f: f.endswith('.fastq.gz') and
-                         IlluminaFastq(f).sample_number is not None,
-                         os.listdir(dirn))
+            fqs = [f for f in os.listdir(dirn)
+                   if (f.endswith('.fastq.gz') and
+                       IlluminaFastq(f).sample_number is not None)]
             if fqs:
                 # Looks like a project
                 project_dirs.append(dirn)
             else:
                 # Look in subdirs
-                subdirs = filter(lambda d:
-                                 os.path.isdir(os.path.join(dirn,d)),
-                                 os.listdir(dirn))
+                subdirs = [d for d in os.listdir(dirn)
+                           if os.path.isdir(os.path.join(dirn,d))]
                 if subdirs:
                     for sd in subdirs:
-                        fqs = filter(lambda f: f.endswith('.fastq.gz') and
-                                     IlluminaFastq(f).sample_number is not None,
-                                     os.listdir(os.path.join(dirn,sd)))
+                        fqs = [f for f in os.listdir(os.path.join(dirn,sd))
+                               if (f.endswith('.fastq.gz') and
+                                   IlluminaFastq(f).sample_number is not None)] 
                         if fqs:
                             # Looks like a project
                             project_dirs.append(dirn)
@@ -494,9 +493,9 @@ class IlluminaProject(object):
         else:
             # Examine fastq files in top-level dir to see if naming scheme
             # follows bcl2fastq v2 convention
-            fastqs = filter(lambda f: f.endswith('.fastq.gz') and
-                            IlluminaFastq(f).sample_number is not None,
-                            os.listdir(self.dirn))
+            fastqs = [f for f in os.listdir(self.dirn)
+                      if (f.endswith('.fastq.gz') and
+                          IlluminaFastq(f).sample_number is not None)]
             if fastqs:
                 # Check if this is the top level bcl2fastq v2 output
                 # i.e. does it contain undetermined reads
@@ -508,16 +507,16 @@ class IlluminaProject(object):
             if not self.undetermined:
                 # Even if we already have fastqs, we need to check
                 # subdirs for more bcl2fastq v2 style fastqs
-                subdirs = filter(lambda d:
-                                 os.path.isdir(os.path.join(self.dirn,d)),
-                                 os.listdir(self.dirn))
+                subdirs = [d for d in os.listdir(self.dirn)
+                           if os.path.isdir(os.path.join(self.dirn,d))]
                 for subdir in subdirs:
                     items = [os.path.join(subdir,x)
                              for x in
                              os.listdir(os.path.join(self.dirn,subdir))]
-                    fastqs.extend(filter(lambda f: f.endswith('.fastq.gz') and
-                                         IlluminaFastq(f).sample_number is not None,
-                                         items))
+                    fastqs.extend([f for f in items
+                                   if (f.endswith('.fastq.gz') and
+                                       IlluminaFastq(f).sample_number
+                                       is not None)])
             if not fastqs:
                 raise IlluminaDataError("Not a project directory: %s " %
                                         self.dirn)
@@ -552,15 +551,13 @@ class IlluminaProject(object):
                 sample_dirn = self.dirn
                 if not self.undetermined:
                     # Assume no subdir
-                    fqs = filter(lambda f: IlluminaFastq(f).sample_name
-                                 == sample_name,
-                                 fastqs)
+                    fqs = [f for f in fastqs
+                           if IlluminaFastq(f).sample_name == sample_name]
                     if not fqs:
                         # Look for fastqs within a subdir
                         sample_dirn = os.path.join(self.dirn,sample_name)
-                        fqs = filter(lambda f:
-                                     f.startswith('%s/' % sample_name),
-                                     fastqs)
+                        fqs = [f for f in fastqs
+                               if f.startswith('%s/' % sample_name)]
                     else:
                         # Do fastqs have a leading subdir?
                         leading_dir = list(set([os.path.dirname(fq)
@@ -573,10 +570,9 @@ class IlluminaProject(object):
                 else:
                     # Handle 'undetermined' data
                     try:
-                        fqs = filter(lambda f:
-                                     "lane%d" % IlluminaFastq(f).lane_number
-                                     == sample_name,
-                                     fastqs)
+                        fqs = [f for f in fastqs
+                               if "lane%d" % IlluminaFastq(f).lane_number
+                               == sample_name]
                     except TypeError:
                         # No lane, take all fastqs
                         fqs = [fq for fq in fastqs]
@@ -652,8 +648,8 @@ class IlluminaSample(object):
         self.paired_end = False
         # Deal with fastq files
         if fastqs is None:
-            fastqs = filter(lambda f: f.endswith(".fastq.gz"),
-                            os.listdir(self.dirn))
+            fastqs = [f for f in os.listdir(self.dirn)
+                      if f.endswith(".fastq.gz")]
         else:
             fastqs = [os.path.basename(f) for f in fastqs]
         self.sample_prefix = prefix
@@ -1333,8 +1329,8 @@ class SampleSheet(object):
                 samples[name] = [line]
             else:
                 samples[name].append(line)
-        duplicates = list(filter(lambda s: len(s) > 1,
-                                 [samples[name] for name in samples]))
+        duplicates = [s for s in [samples[name] for name in samples]
+                      if len(s) > 1]
         return duplicates
 
     @property
