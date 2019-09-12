@@ -1384,7 +1384,7 @@ def split_into_lines(text,char_limit,delimiters=' \t\n',
             for delim in delimiters:
                 try:
                     j = text[:char_limit].rindex(delim)
-                    i = max(i,j)
+                    i = max([x for x in [i,j] if x is not None])
                 except ValueError:
                     pass
         if i is None:
