@@ -57,7 +57,12 @@ import sys
 import os
 import re
 import time
-import Queue
+try:
+    # Python 3
+    import queue
+except ImportError:
+    # Python 2
+    import Queue
 import logging
 
 #######################################################################
