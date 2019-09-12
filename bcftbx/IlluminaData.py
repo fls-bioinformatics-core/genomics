@@ -26,13 +26,14 @@ import io
 from . import platforms
 from . import utils
 from . import TabFile
+from functools import reduce
 from builtins import str
 
 #######################################################################
 # Module constants
 #######################################################################
 
-SAMPLESHEET_ILLEGAL_CHARS = "?()[]/\=+<>:;\"',*^|&. \t"
+SAMPLESHEET_ILLEGAL_CHARS = u"?()[]/\\=+<>:;\"',*^|&. \t"
 KNOWN_PLATFORMS = ('illumina-ga2x',
                    'hiseq',
                    'hiseq4000',
@@ -148,8 +149,7 @@ class IlluminaRun(object):
         for d in os.listdir(self.basecalls_dir):
             if d.startswith('L'):
                 lanes.append(int(d[1:]))
-        lanes.sort()
-        return lanes
+        return sorted(lanes)
 
     @property
     def cycles(self):
@@ -306,7 +306,8 @@ class IlluminaData(object):
         if not self.projects and self.format != 'bcl2fastq2':
             raise IlluminaDataError("No projects found")
         # Sort projects on name
-        self.projects.sort(lambda a,b: cmp(a.name,b.name))
+        self.projects = sorted(self.projects,
+                               key=lambda p: p.name)
         # Determine whether data is paired end
         for p in self.projects:
             self.paired_end = (self.paired_end or p.paired_end)
@@ -325,7 +326,7 @@ class IlluminaData(object):
                     lane = IlluminaFastq(fq).lane_number
                     if lane not in self.lanes:
                         self.lanes.append(lane)
-        self.lanes.sort()
+        self.lanes = sorted(self.lanes)
 
     def _populate_casava_style(self):
         """
@@ -362,9 +363,9 @@ class IlluminaData(object):
 
         """
         # Look for undetermined fastqs
-        undetermined_fqs = filter(lambda f: f.startswith('Undetermined_S0_')
-                                  and f.endswith('.fastq.gz'),
-                                  os.listdir(self.unaligned_dir))
+        undetermined_fqs = [f for f in os.listdir(self.unaligned_dir)
+                            if (f.startswith('Undetermined_S0_') and
+                                f.endswith('.fastq.gz'))]
         if not undetermined_fqs:
             logging.debug("%s: no bcl2fastq2 undetermined fastqs found" %
                           self.unaligned_dir)
@@ -378,22 +379,21 @@ class IlluminaData(object):
             if not os.path.isdir(dirn):
                 continue
             # Get a list of fastq files
-            fqs = filter(lambda f: f.endswith('.fastq.gz') and
-                         IlluminaFastq(f).sample_number is not None,
-                         os.listdir(dirn))
+            fqs = [f for f in os.listdir(dirn)
+                   if (f.endswith('.fastq.gz') and
+                       IlluminaFastq(f).sample_number is not None)]
             if fqs:
                 # Looks like a project
                 project_dirs.append(dirn)
             else:
                 # Look in subdirs
-                subdirs = filter(lambda d:
-                                 os.path.isdir(os.path.join(dirn,d)),
-                                 os.listdir(dirn))
+                subdirs = [d for d in os.listdir(dirn)
+                           if os.path.isdir(os.path.join(dirn,d))]
                 if subdirs:
                     for sd in subdirs:
-                        fqs = filter(lambda f: f.endswith('.fastq.gz') and
-                                     IlluminaFastq(f).sample_number is not None,
-                                     os.listdir(os.path.join(dirn,sd)))
+                        fqs = [f for f in os.listdir(os.path.join(dirn,sd))
+                               if (f.endswith('.fastq.gz') and
+                                   IlluminaFastq(f).sample_number is not None)] 
                         if fqs:
                             # Looks like a project
                             project_dirs.append(dirn)
@@ -493,9 +493,9 @@ class IlluminaProject(object):
         else:
             # Examine fastq files in top-level dir to see if naming scheme
             # follows bcl2fastq v2 convention
-            fastqs = filter(lambda f: f.endswith('.fastq.gz') and
-                            IlluminaFastq(f).sample_number is not None,
-                            os.listdir(self.dirn))
+            fastqs = [f for f in os.listdir(self.dirn)
+                      if (f.endswith('.fastq.gz') and
+                          IlluminaFastq(f).sample_number is not None)]
             if fastqs:
                 # Check if this is the top level bcl2fastq v2 output
                 # i.e. does it contain undetermined reads
@@ -507,16 +507,16 @@ class IlluminaProject(object):
             if not self.undetermined:
                 # Even if we already have fastqs, we need to check
                 # subdirs for more bcl2fastq v2 style fastqs
-                subdirs = filter(lambda d:
-                                 os.path.isdir(os.path.join(self.dirn,d)),
-                                 os.listdir(self.dirn))
+                subdirs = [d for d in os.listdir(self.dirn)
+                           if os.path.isdir(os.path.join(self.dirn,d))]
                 for subdir in subdirs:
                     items = [os.path.join(subdir,x)
                              for x in
                              os.listdir(os.path.join(self.dirn,subdir))]
-                    fastqs.extend(filter(lambda f: f.endswith('.fastq.gz') and
-                                         IlluminaFastq(f).sample_number is not None,
-                                         items))
+                    fastqs.extend([f for f in items
+                                   if (f.endswith('.fastq.gz') and
+                                       IlluminaFastq(f).sample_number
+                                       is not None)])
             if not fastqs:
                 raise IlluminaDataError("Not a project directory: %s " %
                                         self.dirn)
@@ -551,15 +551,13 @@ class IlluminaProject(object):
                 sample_dirn = self.dirn
                 if not self.undetermined:
                     # Assume no subdir
-                    fqs = filter(lambda f: IlluminaFastq(f).sample_name
-                                 == sample_name,
-                                 fastqs)
+                    fqs = [f for f in fastqs
+                           if IlluminaFastq(f).sample_name == sample_name]
                     if not fqs:
                         # Look for fastqs within a subdir
                         sample_dirn = os.path.join(self.dirn,sample_name)
-                        fqs = filter(lambda f:
-                                     f.startswith('%s/' % sample_name),
-                                     fastqs)
+                        fqs = [f for f in fastqs
+                               if f.startswith('%s/' % sample_name)]
                     else:
                         # Do fastqs have a leading subdir?
                         leading_dir = list(set([os.path.dirname(fq)
@@ -572,10 +570,9 @@ class IlluminaProject(object):
                 else:
                     # Handle 'undetermined' data
                     try:
-                        fqs = filter(lambda f:
-                                     "lane%d" % IlluminaFastq(f).lane_number
-                                     == sample_name,
-                                     fastqs)
+                        fqs = [f for f in fastqs
+                               if "lane%d" % IlluminaFastq(f).lane_number
+                               == sample_name]
                     except TypeError:
                         # No lane, take all fastqs
                         fqs = [fq for fq in fastqs]
@@ -588,7 +585,7 @@ class IlluminaProject(object):
             raise IlluminaDataError("No samples found for project %s" %
                                     self.name)
         # Sort samples on name
-        self.samples.sort(lambda a,b: cmp(a.name,b.name))
+        self.samples = sorted(self.samples,key=lambda s: s.name)
         # Determine whether project is paired end
         for s in self.samples:
             self.paired_end = (self.paired_end and s.paired_end)
@@ -651,8 +648,8 @@ class IlluminaSample(object):
         self.paired_end = False
         # Deal with fastq files
         if fastqs is None:
-            fastqs = filter(lambda f: f.endswith(".fastq.gz"),
-                            os.listdir(self.dirn))
+            fastqs = [f for f in os.listdir(self.dirn)
+                      if f.endswith(".fastq.gz")]
         else:
             fastqs = [os.path.basename(f) for f in fastqs]
         self.sample_prefix = prefix
@@ -692,7 +689,7 @@ class IlluminaSample(object):
         """
         self.fastq.append(fastq)
         # Sort fastq's into order
-        self.fastq.sort()
+        self.fastq = sorted(self.fastq)
         # Check paired-end status
         if not self.paired_end:
             fq = IlluminaFastq(fastq)
@@ -725,8 +722,7 @@ class IlluminaSample(object):
                 else:
                     fastqs.append(fastq)
         # Sort into dictionary order and return
-        fastqs.sort()
-        return fastqs
+        return sorted(fastqs)
 
     def __repr__(self):
         """Implement __repr__ built-in
@@ -1333,8 +1329,8 @@ class SampleSheet(object):
                 samples[name] = [line]
             else:
                 samples[name].append(line)
-        duplicates = filter(lambda s: len(s) > 1,
-                            [samples[name] for name in samples])
+        duplicates = [s for s in [samples[name] for name in samples]
+                      if len(s) > 1]
         return duplicates
 
     @property
@@ -2025,7 +2021,8 @@ class SampleSheetProject(object):
 
         """
         return sorted([s.sample_id for s in self.samples],
-                      cmp=lambda x,y: cmp_sample_names(x,y))
+                      key=lambda x: (utils.extract_prefix(x),
+                                     utils.extract_index(x)))
 
     @property
     def dir_name(self):
@@ -2953,26 +2950,3 @@ def normalise_barcode(seq):
 
     """
     return str(seq).upper().replace('-','').replace('+','')
-
-def cmp_sample_names(s1,s2):
-    """
-    Compare two sample names and return integer depending on the outcome
-
-    The sample names are compared first by prefix and then by index.
-
-    Arguments:
-      s1 (str): first sample name
-      s2 (str): second sample name
-
-    Returns:
-      Integer: the return value is negative if s1 < s2, zero if
-      s1 == s2 and strictly positive if s1 > s2.
-
-    """
-    prefix1 = utils.extract_prefix(s1)
-    prefix2 = utils.extract_prefix(s2)
-    if prefix1 != prefix2:
-        return cmp(prefix1,prefix2)
-    indx1 = utils.extract_index(s1)
-    indx2 = utils.extract_index(s2)
-    return cmp(indx1,indx2)
