@@ -91,6 +91,7 @@ import grp
 import datetime
 import re
 import socket
+from builtins import range
 
 #######################################################################
 # Module constants
@@ -1468,7 +1469,7 @@ def parse_lanes(lane_expr):
             i = field.index('-')
             l1 = int(field[:i])
             l2 = int(field[i+1:])
-            for i in xrange(l1,l2+1): lanes.append(i)
+            for i in range(l1,l2+1): lanes.append(i)
         except ValueError:
             # Not a range
             lanes.append(int(field))
