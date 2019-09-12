@@ -303,7 +303,6 @@ class IlluminaData(object):
                 raise IlluminaDataError("Exception attempting to read "
                                         "bcl2fastq2-style data (ignored): "
                                         "%s" % ex)
-            self._populate_bcl2fastq2_style()
         if not self.projects and self.format != 'bcl2fastq2':
             raise IlluminaDataError("No projects found")
         # Sort projects on name
