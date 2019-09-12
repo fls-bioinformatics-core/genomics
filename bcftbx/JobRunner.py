@@ -526,7 +526,8 @@ exit $exit_code
             return None
         p = subprocess.Popen(qsub,cwd=cwd,
                              stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE)
+                             stderr=subprocess.PIPE,
+                             universal_newlines=True)
         p.wait()
         # Check stderr
         error = p.stderr.read().strip()
@@ -927,7 +928,9 @@ exit $exit_code
             # os.getlogin() not guaranteed to work in all environments?
             cmd = ['qstat']
         # Run qstat command
-        p = subprocess.Popen(cmd,stdout=subprocess.PIPE)
+        p = subprocess.Popen(cmd,
+                             stdout=subprocess.PIPE,
+                             universal_newlines=True)
         p.wait()
         # Process the output
         qstat_output = []
@@ -992,7 +995,8 @@ exit $exit_code
         # Run the qacct command
         p = subprocess.Popen(cmd,
                              stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE)
+                             stderr=subprocess.PIPE,
+                             universal_newlines=True)
         p.wait()
         # Check stderr in case output is not available
         # e.g. "error: job id 18384 not found"
