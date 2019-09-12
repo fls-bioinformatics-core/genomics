@@ -62,7 +62,7 @@ try:
     import queue
 except ImportError:
     # Python 2
-    import Queue
+    import Queue as queue
 import logging
 
 #######################################################################
@@ -311,7 +311,7 @@ class PipelineRunner(object):
         self.groups = []
         self.njobs_in_group = {}
         # Queue of jobs to run
-        self.jobs = Queue.Queue()
+        self.jobs = queue.Queue()
         # Subset that are currently running
         self.running = []
         # Subset that have completed
