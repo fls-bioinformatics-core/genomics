@@ -5,7 +5,7 @@
 #
 ########################################################################
 
-__version__ = "1.3.2"
+__version__ = "1.3.3"
 
 """
 best_exons.py
@@ -117,6 +117,12 @@ class TabFileIterator(Iterator):
             self.__fp = fp
 
     def next(self):
+        """Return next record from TSV file as a TabDataLine object (Python 2)
+
+        """
+        return self.__next__()
+
+    def __next__(self):
         """Return next record from TSV file as a TabDataLine object
 
         """
@@ -218,7 +224,10 @@ class ExonList(object):
             f = lambda x,y: x if abs(value(x)) < abs(value(y)) else y
         else:
             raise AttributeError("Unrecognised attribute '%s'" % attr)
-        return reduce(f,self.exons)
+        best = self.exons[0]
+        for exon in self.exons[1:]:
+            best = f(exon,best)
+        return best
 
     def best_exons(self,attr,n=3):
         """Fetch the 'best' exons based on the specified attribute
@@ -500,10 +509,11 @@ if __name__ == "__main__":
 
     # Process command line
     p = argparse.ArgumentParser(
-        version="%(prog)s "+__version__,
         description="Read exon and gene symbol data from EXONS_IN "
         "and picks the top three exons for each gene symbol, then "
         "outputs averages of the associated values to BEST_EXONS.")
+    p.add_argument('--version',action='version',
+                   version="%(prog)s "+__version__)
     p.add_argument("--rank-by",action="store",dest="criterion",
                    default='log2_fold_change',
                    choices=('log2_fold_change','p_value',),
