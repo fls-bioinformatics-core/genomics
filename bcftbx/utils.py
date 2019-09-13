@@ -91,6 +91,7 @@ import grp
 import datetime
 import re
 import socket
+from builtins import range
 
 #######################################################################
 # Module constants
@@ -212,7 +213,7 @@ def getlines(filen):
     Fetch lines from a file and return them one by one
 
     This generator function tries to implement an efficient
-    method of reading lines sequentially from a file, by
+    method of reading lines sequentially from a text file, by
     minimising the number of reads from the file and
     performing the line splitting in memory. It attempts
     to replicate the idiom:
@@ -237,9 +238,9 @@ def getlines(filen):
         newline character removed.
     """
     if filen.split('.')[-1] == 'gz':
-        fp = gzip.open(filen,'rb')
+        fp = gzip.open(filen,'rt')
     else:
-        fp = io.open(filen,'rb')
+        fp = io.open(filen,'rt')
     # Read in data in chunks
     buf = ''
     lines = []
@@ -1383,7 +1384,7 @@ def split_into_lines(text,char_limit,delimiters=' \t\n',
             for delim in delimiters:
                 try:
                     j = text[:char_limit].rindex(delim)
-                    i = max(i,j)
+                    i = max([x for x in [i,j] if x is not None])
                 except ValueError:
                     pass
         if i is None:
@@ -1468,7 +1469,7 @@ def parse_lanes(lane_expr):
             i = field.index('-')
             l1 = int(field[:i])
             l2 = int(field[i+1:])
-            for i in xrange(l1,l2+1): lanes.append(i)
+            for i in range(l1,l2+1): lanes.append(i)
         except ValueError:
             # Not a range
             lanes.append(int(field))

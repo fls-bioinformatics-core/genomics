@@ -8,7 +8,8 @@ import tempfile
 import shutil
 import gzip
 import pickle
-import bcftbx.test.mock_data as mock_data
+from . import mock_data
+from .mock_data import ExampleDirSpiders
 from bcftbx.utils import *
 
 class TestAttributeDictionary(unittest.TestCase):
@@ -146,7 +147,7 @@ AAF#FJJJJJJJJJJJ
         """
         # Make an example file
         example_file = os.path.join(self.wd,"example.txt")
-        with io.open(example_file,'w') as fp:
+        with io.open(example_file,'wt') as fp:
             fp.write(self.example_text)
         # Read lines
         lines = getlines(example_file)
@@ -157,7 +158,7 @@ AAF#FJJJJJJJJJJJ
         """
         # Make an example gzipped file
         example_file = os.path.join(self.wd,"example.txt.gz")
-        with gzip.open(example_file,'w') as fp:
+        with gzip.open(example_file,'wt') as fp:
             fp.write(self.example_text)
         # Read lines
         lines = getlines(example_file)
@@ -797,7 +798,6 @@ class TestFormatFileSize(unittest.TestCase):
         self.assertEqual("0.0T",format_file_size(195035136,units='T'))
         self.assertEqual("0.2T",format_file_size(171798691900,units='T'))
 
-from mock_data import ExampleDirSpiders
 class ExampleDirLinks(ExampleDirSpiders):
     """Extended example dir for testing symbolic link handling
 
@@ -1031,9 +1031,11 @@ NATAAATCACCTCACTTAAGTGGCTGGAGACAAATA
     def make_fastq_file(self,fastq,data):
         # Create a fastq file for the testing
         if os.path.splitext(fastq)[1] != '.gz':
-            io.open(fastq,'wt').write(data)
+            with io.open(fastq,'wt') as fp:
+                fp.write(data)
         else:
-            gzip.GzipFile(fastq,'wt').write(data)
+            with gzip.open(fastq,'wt') as fp:
+                fp.write(data)
 
     def test_concatenate_fastq_files(self):
         self.fastq1 = "concat.unittest.1.fastq"
@@ -1058,7 +1060,7 @@ NATAAATCACCTCACTTAAGTGGCTGGAGACAAATA
                                 [self.fastq1,self.fastq2],
                                 overwrite=True,
                                 verbose=False)
-        merged_fastq_data = gzip.GzipFile(self.merged_fastq,'r').read()
+        merged_fastq_data = gzip.open(self.merged_fastq,'rt').read()
         self.assertEqual(merged_fastq_data,self.fastq_data1+self.fastq_data2)
 
 class TestFindProgram(unittest.TestCase):
