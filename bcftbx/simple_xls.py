@@ -1171,6 +1171,9 @@ class XLSStyle(object):
         self.shrink_to_fit = shrink_to_fit
 
     def __nonzero__(self):
+        return self.__bool__()
+
+    def __bool__(self):
         return \
             (self.bold) or \
             (self.color is not None) or \
