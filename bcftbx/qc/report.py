@@ -1263,31 +1263,6 @@ def is_boxplot(name,f):
     # Failed all tests, not a boxplot
     return False
 
-def cmp_boxplots(b1,b2):
-    """Compare the names of two boxplots for sorting purposes
-    """
-    b1_is_filtered = (os.path.basename(b1).rfind('T_F3') > -1)
-    b2_is_filtered = (os.path.basename(b2).rfind('T_F3') > -1)
-    if b1_is_filtered and not b2_is_filtered:
-        return 1
-    elif not b1_is_filtered and b2_is_filtered:
-        return -1
-    else:
-        return cmp(b1,b2)
-
-def cmp_samples(s1,s2):
-    """Compare the names of two samples for sorting purposes
-    """
-    # Split names into leading part plus trailing number
-    l1,t1 = split_sample_name(s1)
-    l2,t2 = split_sample_name(s2)
-    if l1 != l2:
-        # Return string comparison
-        return cmp(s1,s2)
-    else:
-        # Compare trailing numbers
-        return cmp(t1,t2)
-
 def split_sample_name(name):
     """Split name into leading part plus trailing number
 
