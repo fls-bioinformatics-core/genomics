@@ -546,13 +546,14 @@ if __name__ == '__main__':
 
     # Command line processing
     p = argparse.ArgumentParser(
-        version="%(prog)s "+__version__,
         description="Read sequences and names from one or more "
         "INFILEs (which can be a mixture of FastQC 'contaminants' "
         "format and or Fasta format), check for redundancy "
         "(i.e. sequences with multiple associated names) and "
         "contradictions (i.e. names with multiple associated "
         "sequences).")
+    p.add_argument('--version',action='version',
+                   version="%(prog)s "+__version__)
     p.add_argument('-o',action='store',dest='out_file',default=None,
                    help="write all sequences to OUT_FILE in FastQC "
                    "'contaminants' format")
