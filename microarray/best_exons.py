@@ -117,6 +117,12 @@ class TabFileIterator(Iterator):
             self.__fp = fp
 
     def next(self):
+        """Return next record from TSV file as a TabDataLine object (Python 2)
+
+        """
+        return self.__next__()
+
+    def __next__(self):
         """Return next record from TSV file as a TabDataLine object
 
         """
