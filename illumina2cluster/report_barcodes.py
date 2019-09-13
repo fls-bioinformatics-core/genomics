@@ -66,8 +66,7 @@ class Barcodes(object):
         into alphabetical order.
 
         """
-        unique = self._counts.keys()
-        unique.sort()
+        unique = sorted(list(self._counts.keys()))
         return unique
 
     def count_for(self,*seqs):
