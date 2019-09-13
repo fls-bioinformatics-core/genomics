@@ -68,7 +68,7 @@ AAF#FJJJJJJJJJJJ
     def test_get_fastq_lanes_from_gzipped_input(self):
         # Make test gzipped Fastq
         fastq_in = os.path.join(self.wd,"Test_S1_R1_001.fastq.gz")
-        with gzip.open(fastq_in,'w') as fp:
+        with gzip.open(fastq_in,'wt') as fp:
             fp.write(self.fastq_data)
         # Extract lanes
         nreads,lanes = get_fastq_lanes(fastq_in)
@@ -126,7 +126,7 @@ AAF#FJJJJJJJJJJJ
     def test_get_fastq_lanes_from_gzipped_input(self):
         # Make test gzipped Fastq
         fastq_in = os.path.join(self.wd,"Test_S1_R1_001.fastq.gz")
-        with gzip.open(fastq_in,'w') as fp:
+        with gzip.open(fastq_in,'wt') as fp:
             fp.write(self.fastq_data_l2)
             fp.write(self.fastq_data_l8)
         # Extract reads for lane 2
