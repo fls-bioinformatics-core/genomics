@@ -8,6 +8,7 @@ import tempfile
 import shutil
 import gzip
 from bcftbx.ngsutils import *
+from builtins import range
 
 class TestGetreadsFunction(unittest.TestCase):
     """Tests for the 'getreads' function
@@ -58,9 +59,9 @@ T1.311202211102.331233332113.23332233002223222312.2
         fastq_reads = getreads(example_fastq)
         reference_reads = [self.example_fastq_data.split('\n')[i:i+4]
                            for i
-                           in xrange(0,
-                                     len(self.example_fastq_data.split('\n')),
-                                     4)]
+                           in range(0,
+                                    len(self.example_fastq_data.split('\n')),
+                                    4)]
         for r1,r2 in zip(reference_reads,fastq_reads):
             self.assertEqual(r1,r2)
     def test_getreads_gzipped_fastq(self):
@@ -68,15 +69,15 @@ T1.311202211102.331233332113.23332233002223222312.2
         """
         # Make an example file
         example_fastq = os.path.join(self.wd,"example.fastq.gz")
-        with gzip.open(example_fastq,'w') as fp:
+        with gzip.open(example_fastq,'wt') as fp:
             fp.write(self.example_fastq_data)
         # Read lines
         fastq_reads = getreads(example_fastq)
         reference_reads = [self.example_fastq_data.split('\n')[i:i+4]
                            for i
-                           in xrange(0,
-                                     len(self.example_fastq_data.split('\n')),
-                                     4)]
+                           in range(0,
+                                    len(self.example_fastq_data.split('\n')),
+                                    4)]
         for r1,r2 in zip(reference_reads,fastq_reads):
             self.assertEqual(r1,r2)
     def test_getreads_csfasta(self):
@@ -90,9 +91,9 @@ T1.311202211102.331233332113.23332233002223222312.2
         csfasta_reads = getreads(example_csfasta)
         reference_reads = [self.example_csfasta_data.split('\n')[i:i+2]
                            for i
-                           in xrange(2,
-                                     len(self.example_fastq_data.split('\n')),
-                                     2)]
+                           in range(2,
+                                    len(self.example_fastq_data.split('\n')),
+                                    2)]
         for r1,r2 in zip(reference_reads,csfasta_reads):
             self.assertEqual(r1,r2)
     def test_getreads_qual(self):
@@ -106,9 +107,9 @@ T1.311202211102.331233332113.23332233002223222312.2
         qual_reads = getreads(example_qual)
         reference_reads = [self.example_qual_data.split('\n')[i:i+2]
                            for i
-                           in xrange(2,
-                                     len(self.example_qual_data.split('\n')),
-                                     2)]
+                           in range(2,
+                                    len(self.example_qual_data.split('\n')),
+                                    2)]
         for r1,r2 in zip(reference_reads,qual_reads):
             self.assertEqual(r1,r2)
 
