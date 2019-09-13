@@ -24,6 +24,7 @@ from bcftbx.utils import find_program
 from bcftbx.ngsutils import getreads
 from bcftbx.ngsutils import getreads_subset
 from bcftbx.qc.report import strip_ngs_extensions
+from builtins import range
 
 #######################################################################
 # Tests
@@ -527,9 +528,9 @@ def fastq_strand(argv,working_dir=None):
         subset = args.subset
         print("Using random subset of %d read pairs" % subset)
     if subset == nreads:
-        subset_indices = [i for i in xrange(nreads)]
+        subset_indices = [i for i in range(nreads)]
     else:
-        subset_indices = random.sample(xrange(nreads),subset)
+        subset_indices = random.sample(range(nreads),subset)
     fqs_in = filter(lambda fq: fq is not None,(args.r1,args.r2))
     fastqs = []
     for fq in fqs_in:
