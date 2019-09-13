@@ -157,7 +157,8 @@ class QCReporter(object):
         # Add sample to list
         self.__samples.append(sample)
         # Sort sample list on name
-        self.__samples.sort(lambda s1,s2: cmp_samples(s1.name,s2.name))
+        self.__samples = sorted(self.__samples,
+                                key=lambda s: split_sample_name(s))
 
     def getPrimaryDataFiles(self):
         """Return list of primary data file sets
@@ -344,7 +345,7 @@ class QCSample(object):
         qc_files = os.listdir(self.qc_dir)
         glob_pattern = os.path.join(self.qc_dir,"%s*" % self.name)
         qc_files = [os.path.basename(f) for f in glob.glob(glob_pattern)]
-        qc_files.sort()
+        qc_files = sorted(qc_files)
         #print("QC files: %s" % qc_files)
         # Associate QC outputs with sample names
         for f in qc_files:
@@ -383,7 +384,7 @@ class QCSample(object):
         """
         # Add to the list and resort
         self.__screens.append(screen)
-        self.__screens.sort()
+        self.__screens = sorted(self.__screens)
         # Relative path to qc dir
         qc_dir = os.path.basename(self.qc_dir)
         # Add to the list of files to archive
@@ -398,7 +399,9 @@ class QCSample(object):
         """
         # Add to the list and resort
         self.__boxplots.append(boxplot)
-        self.__boxplots.sort(cmp_boxplots)
+        self.__boxplots = sorted(self.__boxplots,
+                                 key=lambda b:
+                                 (os.path.basename(b).rfind('T_F3'),b))
         # Relative path to qc dir
         qc_dir = os.path.basename(self.qc_dir)
         # Add to the list of files to archive
@@ -1259,31 +1262,6 @@ def is_boxplot(name,f):
             return True
     # Failed all tests, not a boxplot
     return False
-
-def cmp_boxplots(b1,b2):
-    """Compare the names of two boxplots for sorting purposes
-    """
-    b1_is_filtered = (os.path.basename(b1).rfind('T_F3') > -1)
-    b2_is_filtered = (os.path.basename(b2).rfind('T_F3') > -1)
-    if b1_is_filtered and not b2_is_filtered:
-        return 1
-    elif not b1_is_filtered and b2_is_filtered:
-        return -1
-    else:
-        return cmp(b1,b2)
-
-def cmp_samples(s1,s2):
-    """Compare the names of two samples for sorting purposes
-    """
-    # Split names into leading part plus trailing number
-    l1,t1 = split_sample_name(s1)
-    l2,t2 = split_sample_name(s2)
-    if l1 != l2:
-        # Return string comparison
-        return cmp(s1,s2)
-    else:
-        # Compare trailing numbers
-        return cmp(t1,t2)
 
 def split_sample_name(name):
     """Split name into leading part plus trailing number
