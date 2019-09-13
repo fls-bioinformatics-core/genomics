@@ -1499,7 +1499,7 @@ def column_integer_to_index(idx):
     col = ''
     while idx >= 0:
         col += chr((idx%26)+65)
-        idx = idx/26-1
+        idx = idx//26-1
     return col[::-1]
 
 def eval_formula(item,worksheet):
@@ -1626,7 +1626,7 @@ def format_value(value,number_format=None):
         value = []
         while i >= 1000:
             value.append("%03d" % (i%1000))
-            i = i/1000
+            i = i//1000
         value.append(str(i))
         value = value[::-1]
         return ','.join(value)
