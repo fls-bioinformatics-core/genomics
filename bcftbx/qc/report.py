@@ -157,7 +157,8 @@ class QCReporter(object):
         # Add sample to list
         self.__samples.append(sample)
         # Sort sample list on name
-        self.__samples.sort(lambda s1,s2: cmp_samples(s1.name,s2.name))
+        self.__samples = sorted(self.__samples,
+                                key=lambda s: split_sample_name(s))
 
     def getPrimaryDataFiles(self):
         """Return list of primary data file sets
@@ -344,7 +345,7 @@ class QCSample(object):
         qc_files = os.listdir(self.qc_dir)
         glob_pattern = os.path.join(self.qc_dir,"%s*" % self.name)
         qc_files = [os.path.basename(f) for f in glob.glob(glob_pattern)]
-        qc_files.sort()
+        qc_files = sorted(qc_files)
         #print("QC files: %s" % qc_files)
         # Associate QC outputs with sample names
         for f in qc_files:
@@ -383,7 +384,7 @@ class QCSample(object):
         """
         # Add to the list and resort
         self.__screens.append(screen)
-        self.__screens.sort()
+        self.__screens = sorted(self.__screens)
         # Relative path to qc dir
         qc_dir = os.path.basename(self.qc_dir)
         # Add to the list of files to archive
@@ -398,7 +399,9 @@ class QCSample(object):
         """
         # Add to the list and resort
         self.__boxplots.append(boxplot)
-        self.__boxplots.sort(cmp_boxplots)
+        self.__boxplots = sorted(self.__boxplots,
+                                 key=lambda b:
+                                 (os.path.basename(b).rfind('T_F3'),b))
         # Relative path to qc dir
         qc_dir = os.path.basename(self.qc_dir)
         # Add to the list of files to archive
