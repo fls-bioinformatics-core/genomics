@@ -13,7 +13,7 @@
 # Module metadata
 #######################################################################
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 
 #######################################################################
 # Import modules that this module depends on
@@ -111,13 +111,14 @@ def main():
     """
     # Process command line
     p = argparse.ArgumentParser(
-        version="%(prog)s "+__version__,
         description="Annotate probeset list based on name: reads in "
         "first column of tab-delimited input file 'probe_set_file' as a "
         "list of probeset names and outputs these names to another "
         "tab-delimited file with a description for each. "
         "Output file name can be specified with the -o option, otherwise "
         "it will be the input file name with '_annotated' appended.")
+    p.add_argument('--version',action='version',
+                   version="%(prog)s "+__version__)
     p.add_argument('-o',action='store',dest='out_file',default=None,
                    help="specify output file name")
     p.add_argument('in_file',metavar='IN_FILE',action='store',
