@@ -25,7 +25,7 @@ manage_seqs.py [-o OUTFILE|-a OUTFILE] [-d DESCRIPTION] INFILE [INFILE...]
 # Module metadata
 #######################################################################
 
-__version__ = "0.1.2"
+__version__ = "0.1.3"
 
 #######################################################################
 # Import modules that this module depends on
