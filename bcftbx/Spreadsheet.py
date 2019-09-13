@@ -78,8 +78,13 @@ __version__ = "0.1.11"
 
 import os
 import re
-import string
 import logging
+try:
+    # Python 3
+    from string import ascii_uppercase
+except ImportError:
+    # Fallback for Python 2
+    from string import uppercase as ascii_uppercase
 
 import xlwt, xlrd
 import xlutils, xlutils.copy
@@ -507,8 +512,8 @@ class Worksheet(object):
         name = ''
         try:
             while i >= 0:
-                name += string.uppercase[i%26]
-                i = i/26-1
+                name += ascii_uppercase[i%26]
+                i = i//26-1
             return name[::-1]
         except IndexError as ex:
             print("Exception getting column name for index %d: %s" % (i,ex))
