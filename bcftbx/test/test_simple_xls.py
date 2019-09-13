@@ -3,9 +3,14 @@
 #######################################################################
 from bcftbx.simple_xls import *
 import unittest
-import itertools
 import os
 import tempfile
+try:
+    # Python 2
+    from itertools import izip as zip
+except ImportError:
+    pass
+from builtins import range
 
 class TestXLSWorkBook(unittest.TestCase):
     """
@@ -204,13 +209,13 @@ class TestXLSWorkSheet(unittest.TestCase):
         ws.write_column('B',data=col_data)
         self.assertEqual(ws.last_column,'B')
         self.assertEqual(ws.last_row,3)
-        for i in xrange(3):
+        for i in range(3):
             self.assertEqual(ws[exp_cell[i]],col_data[i])
         exp_cell = ['C3','C4','C5']
         ws.write_column('C',data=col_data,from_row=3)
         self.assertEqual(ws.last_column,'C')
         self.assertEqual(ws.last_row,5)
-        for i in xrange(3):
+        for i in range(3):
             self.assertEqual(ws[exp_cell[i]],col_data[i])
     def test_write_column_with_text(self):
         ws = self.ws
@@ -219,14 +224,14 @@ class TestXLSWorkSheet(unittest.TestCase):
         ws.write_column('A',text="hello\ngoodbye\nwhatev")
         self.assertEqual(ws.last_column,'A')
         self.assertEqual(ws.last_row,3)
-        for i in xrange(3):
+        for i in range(3):
             self.assertEqual(ws[exp_cell[i]],col_data[i])
         exp_cell = ['M7','M8','M9']
         ws.write_column('M',text="hello\ngoodbye\nwhatev",
                         from_row=7)
         self.assertEqual(ws.last_column,'M')
         self.assertEqual(ws.last_row,9)
-        for i in xrange(3):
+        for i in range(3):
             self.assertEqual(ws[exp_cell[i]],col_data[i])
     def test_write_column_with_fill(self):
         ws = self.ws
@@ -248,11 +253,11 @@ class TestXLSWorkSheet(unittest.TestCase):
         col_data = ['hello','goodbye','whatev']
         exp_cell = ['B1','B2','B3']
         ws.insert_column_data('B',col_data)
-        for i in xrange(3):
+        for i in range(3):
             self.assertEqual(ws[exp_cell[i]],col_data[i])
         exp_cell = ['C3','C4','C5']
         ws.insert_column_data('C',col_data,start=3)
-        for i in xrange(3):
+        for i in range(3):
             self.assertEqual(ws[exp_cell[i]],col_data[i])
     def test_insert_row(self):
         ws = self.ws
@@ -302,13 +307,13 @@ class TestXLSWorkSheet(unittest.TestCase):
         ws.write_row(4,data=row_data)
         self.assertEqual(ws.last_column,'D')
         self.assertEqual(ws.last_row,4)
-        for i in xrange(4):
+        for i in range(4):
             self.assertEqual(ws[exp_cell[i]],row_data[i])
         exp_cell = ['E5','F5','G5','H5']
         ws.write_row(5,data=row_data,from_column='E')
         self.assertEqual(ws.last_column,'H')
         self.assertEqual(ws.last_row,5)
-        for i in xrange(4):
+        for i in range(4):
             self.assertEqual(ws[exp_cell[i]],row_data[i])
     def test_write_row_with_text(self):
         ws = self.ws
@@ -318,24 +323,24 @@ class TestXLSWorkSheet(unittest.TestCase):
         ws.write_row(4,text=row_text)
         self.assertEqual(ws.last_column,'D')
         self.assertEqual(ws.last_row,4)
-        for i in xrange(4):
+        for i in range(4):
             self.assertEqual(ws[exp_cell[i]],row_data[i])
         exp_cell = ['E5','F5','G5','H5']
         ws.write_row(5,text=row_text,from_column='E')
         self.assertEqual(ws.last_column,'H')
         self.assertEqual(ws.last_row,5)
-        for i in xrange(4):
+        for i in range(4):
             self.assertEqual(ws[exp_cell[i]],row_data[i])
     def test_insert_row_data(self):
         ws = self.ws
         row_data = ['Dozy','Beaky','Mick','Titch']
         exp_cell = ['A4','B4','C4','D4']
         ws.insert_row_data(4,row_data)
-        for i in xrange(4):
+        for i in range(4):
             self.assertEqual(ws[exp_cell[i]],row_data[i])
         exp_cell = ['E5','F5','G5','H5']
         ws.insert_row_data(5,row_data,start='E')
-        for i in xrange(4):
+        for i in range(4):
             self.assertEqual(ws[exp_cell[i]],row_data[i])
     def test_insert_block_data(self):
         ws = self.ws
@@ -475,22 +480,20 @@ class TestColumnRange(unittest.TestCase):
     """
     """
     def test_column_range(self):
-        for expected,actual in itertools.izip(['A','B','C'],
-                                              ColumnRange('A','C')):
+        for expected,actual in zip(['A','B','C'],
+                                   ColumnRange('A','C')):
             self.assertEqual(expected,actual)
     def test_column_range_implicit_start(self):
-        for expected,actual in itertools.izip(['A','B','C'],
-                                              ColumnRange('C')):
+        for expected,actual in zip(['A','B','C'],
+                                   ColumnRange('C')):
             self.assertEqual(expected,actual)
     def test_column_range_dont_include_end(self):
-        for expected,actual in itertools.izip(['A','B','C'],
-                                              ColumnRange('A','D',
-                                                          include_end=False)):
+        for expected,actual in zip(['A','B','C'],
+                                   ColumnRange('A','D',include_end=False)):
             self.assertEqual(expected,actual)
     def test_column_range_reverse(self):
-        for expected,actual in itertools.izip(['C','B','A'],
-                                              ColumnRange('A','C',
-                                                          reverse=True)):
+        for expected,actual in zip(['C','B','A'],
+                                   ColumnRange('A','C',reverse=True)):
             self.assertEqual(expected,actual)
 
 class TestXLSStyle(unittest.TestCase):
