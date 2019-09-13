@@ -51,7 +51,7 @@ import profile
 # Module metadata
 #######################################################################
 
-__version__ = '0.6.2'
+__version__ = '0.6.3'
 
 #######################################################################
 # Class definitions
@@ -1144,14 +1144,15 @@ def main(macs_file,xls_out,xls_format="xlsx",bed_out=None):
 
 if __name__ == "__main__":
     # Process command line
-    p = argparse.ArgumentParser(version="%(prog)s "+__version__,
-                                description=
+    p = argparse.ArgumentParser(description=
                                 "Create an XLS(X) spreadsheet from the output "
                                 "of the MACS2 peak caller. MACS2_XLS is the "
                                 "output '.xls' file from MACS2; if supplied "
                                 "then XLS_OUT is the name to use for the output "
                                 "file (otherwise it will be called "
                                 "'XLS_<MACS2_XLS>.xls(x)').")
+    p.add_argument('--version',action='version',
+                   version="%(prog)s "+__version__)
     p.add_argument("-f","--format",
                    action="store",dest="xls_format",default="xlsx",
                    help="specify the output Excel spreadsheet format; must be "
