@@ -22,7 +22,7 @@ data chromosome-by-chromosome from a Fasta file.
 # Module metadata
 #######################################################################
 
-__version__ = "0.3.2"
+__version__ = "0.3.3"
 
 #######################################################################
 # Import modules
@@ -79,6 +79,12 @@ class FastaChromIterator(Iterator):
         self.__line = None
 
     def next(self):
+        """Return next chromosome from Fasta file as a (name,sequence) tuple (Python 2)
+
+        """
+        return self.__next__()
+
+    def __next__(self):
         """Return next chromosome from Fasta file as a (name,sequence) tuple
        
         """
@@ -184,10 +190,11 @@ def run_tests():
 if __name__ == "__main__":
     # Process the command line
     p = argparse.ArgumentParser(
-        version="%(prog)s "+__version__,
         description="Split input FASTA file with multiple sequences "
         "into multiple files each containing sequences for a single "
         "chromosome.")
+    p.add_argument('--version',action='version',
+                   version="%(prog)s "+__version__)
     p.add_argument("--test",action="store_true",dest="run_tests",
                    default=False,
                    help="Run unit tests")

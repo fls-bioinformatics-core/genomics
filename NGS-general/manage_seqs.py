@@ -25,7 +25,7 @@ manage_seqs.py [-o OUTFILE|-a OUTFILE] [-d DESCRIPTION] INFILE [INFILE...]
 # Module metadata
 #######################################################################
 
-__version__ = "0.1.2"
+__version__ = "0.1.3"
 
 #######################################################################
 # Import modules that this module depends on
@@ -108,7 +108,7 @@ class SeqDb(object):
         
         """
         if name is None:
-            seqs = copy.copy(self._sequences.keys())
+            seqs = copy.copy(list(self._sequences.keys()))
         else:
             seqs = []
             for seq in self._sequences:
@@ -546,13 +546,14 @@ if __name__ == '__main__':
 
     # Command line processing
     p = argparse.ArgumentParser(
-        version="%(prog)s "+__version__,
         description="Read sequences and names from one or more "
         "INFILEs (which can be a mixture of FastQC 'contaminants' "
         "format and or Fasta format), check for redundancy "
         "(i.e. sequences with multiple associated names) and "
         "contradictions (i.e. names with multiple associated "
         "sequences).")
+    p.add_argument('--version',action='version',
+                   version="%(prog)s "+__version__)
     p.add_argument('-o',action='store',dest='out_file',default=None,
                    help="write all sequences to OUT_FILE in FastQC "
                    "'contaminants' format")

@@ -28,6 +28,7 @@ import os
 import io
 import logging
 import argparse
+from builtins import range
 
 #######################################################################
 # Class definitions
@@ -262,7 +263,7 @@ def recover_reference_sequence(aligned_seq,cigar_string,md_tag):
         if code == 'M':
             # (Mis)match
             # Keep aligned sequence for now
-            for i in xrange(count):
+            for i in range(count):
                 refseq.append(aligned_seq[index])
                 index += 1
         elif code == 'I':
@@ -272,7 +273,7 @@ def recover_reference_sequence(aligned_seq,cigar_string,md_tag):
         elif code == 'D':
             # Deletion
             # Add placeholders for unknown bases
-            for i in xrange(count):
+            for i in range(count):
                 refseq.append('x')
         else:
             logging.error('Unknown operation: %s' % op)
