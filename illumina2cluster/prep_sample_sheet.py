@@ -15,7 +15,7 @@ Prepare sample sheet file for Illumina sequencers.
 
 """
 
-__version__ = "0.4.1"
+__version__ = "0.4.2"
 
 #######################################################################
 # Imports
@@ -91,11 +91,12 @@ if __name__ == "__main__":
 
     # Set up parser
     p = argparse.ArgumentParser(
-        version="%(prog)s "+__version__,
         description="Utility to prepare SampleSheet files from "
         "Illumina sequencers. Can be used to view, validate and "
         "update or fix information such as sample IDs and project "
         "names before running BCL to FASTQ conversion.")
+    p.add_argument('--version',action='version',
+                   version="%(prog)s "+__version__)
     p.add_argument('-o',action="store",dest="samplesheet_out",
                    default=None,
                    help="output new sample sheet to SAMPLESHEET_OUT")
