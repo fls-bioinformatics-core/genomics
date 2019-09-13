@@ -213,7 +213,7 @@ def getlines(filen):
     Fetch lines from a file and return them one by one
 
     This generator function tries to implement an efficient
-    method of reading lines sequentially from a file, by
+    method of reading lines sequentially from a text file, by
     minimising the number of reads from the file and
     performing the line splitting in memory. It attempts
     to replicate the idiom:
@@ -238,9 +238,9 @@ def getlines(filen):
         newline character removed.
     """
     if filen.split('.')[-1] == 'gz':
-        fp = gzip.open(filen,'rb')
+        fp = gzip.open(filen,'rt')
     else:
-        fp = io.open(filen,'rb')
+        fp = io.open(filen,'rt')
     # Read in data in chunks
     buf = ''
     lines = []
