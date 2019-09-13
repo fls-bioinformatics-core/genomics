@@ -17,21 +17,26 @@ class TestIlluminaRun(unittest.TestCase):
 
     """
     def setUp(self):
+        # Create a temporary working directory
+        self.top_dir = tempfile.mkdtemp()
         # Create a mock Illumina run directory
         self.mock_illumina_run = None
 
     def tearDown(self):
         # Remove the test directory
-        if self.mock_illumina_run is not None:
-            self.mock_illumina_run.remove()
+        try:
+            os.rmdir(self.top_dir)
+        except Exception:
+            pass
 
     def test_illuminarun_miseq(self):
         # Make a mock run directory for MISeq format
         self.mock_illumina_run = MockIlluminaRun(
-            '151125_M00879_0001_000000000-ABCDE1','miseq')
+            '151125_M00879_0001_000000000-ABCDE1','miseq',
+            top_dir=self.top_dir)
         self.mock_illumina_run.create()
         # Load into an IlluminaRun object
-        run = IlluminaRun(self.mock_illumina_run.name)
+        run = IlluminaRun(self.mock_illumina_run.dirn)
         # Check the properties
         self.assertEqual(run.run_dir,self.mock_illumina_run.dirn)
         self.assertEqual(run.platform,"miseq")
@@ -52,10 +57,11 @@ class TestIlluminaRun(unittest.TestCase):
     def test_illuminarun_hiseq(self):
         # Make a mock run directory for HISeq format
         self.mock_illumina_run = MockIlluminaRun(
-            '151125_SN700511R_0002_000000000-ABCDE1XX','hiseq')
+            '151125_SN700511R_0002_000000000-ABCDE1XX','hiseq',
+            top_dir=self.top_dir)
         self.mock_illumina_run.create()
         # Load into an IlluminaRun object
-        run = IlluminaRun(self.mock_illumina_run.name)
+        run = IlluminaRun(self.mock_illumina_run.dirn)
         # Check the properties
         self.assertEqual(run.run_dir,self.mock_illumina_run.dirn)
         self.assertEqual(run.platform,"hiseq")
@@ -76,10 +82,11 @@ class TestIlluminaRun(unittest.TestCase):
     def test_illuminarun_nextseq(self):
         # Make a mock run directory for HISeq format
         self.mock_illumina_run = MockIlluminaRun(
-            '151125_NB500968_0003_000000000-ABCDE1XX','nextseq')
+            '151125_NB500968_0003_000000000-ABCDE1XX','nextseq',
+            top_dir=self.top_dir)
         self.mock_illumina_run.create()
         # Load into an IlluminaRun object
-        run = IlluminaRun(self.mock_illumina_run.name)
+        run = IlluminaRun(self.mock_illumina_run.dirn)
         # Check the properties
         self.assertEqual(run.run_dir,self.mock_illumina_run.dirn)
         self.assertEqual(run.platform,"nextseq")
@@ -97,19 +104,21 @@ class TestIlluminaRun(unittest.TestCase):
     def test_illuminarun_unknown_platform(self):
         # Make a mock run directory for MISeq data with unknown instrument
         self.mock_illumina_run = MockIlluminaRun(
-            '180329_UNKNOWN0001_0001_000000000-ABCDE1','miseq')
+            '180329_UNKNOWN0001_0001_000000000-ABCDE1','miseq',
+            top_dir=self.top_dir)
         self.mock_illumina_run.create()
         self.assertRaises(IlluminaDataPlatformError,
                           IlluminaRun,
-                          self.mock_illumina_run.name)
+                          self.mock_illumina_run.dirn)
 
     def test_illuminarun_specify_platform(self):
         # Make a mock run directory for MISeq data with unknown instrument
         self.mock_illumina_run = MockIlluminaRun(
-            '180329_UNKNOWN0001_0001_000000000-ABCDE1','miseq')
+            '180329_UNKNOWN0001_0001_000000000-ABCDE1','miseq',
+            top_dir=self.top_dir)
         self.mock_illumina_run.create()
         # Load into an IlluminaRun object
-        run = IlluminaRun(self.mock_illumina_run.name,platform="miseq")
+        run = IlluminaRun(self.mock_illumina_run.dirn,platform="miseq")
         # Check the properties
         self.assertEqual(run.run_dir,self.mock_illumina_run.dirn)
         self.assertEqual(run.platform,"miseq")
