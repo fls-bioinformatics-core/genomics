@@ -137,7 +137,16 @@ class CommandParser(object):
                                       cmd)
         if 'version' not in args:
             args['version'] = self._version
-        p = self._subparser(**args)
+        try:
+            # Try to create parse including version
+            p = self._subparser(**args)
+        except TypeError:
+            # Try again without the version argument
+            version = args['version']
+            del(args['version'])
+            p = self._subparser(**args)
+            # Add the --version argument manually
+            add_arg(p,'--version',action='version',version=version)
         self._commands[cmd] = p
         self._help[cmd] = help
         return p
