@@ -87,6 +87,15 @@ class TestCommandParserOptionParser(unittest.TestCase):
             self.fail("Accessing 'a_value' for 'fast' command didn't raise AttributeError")
         except AttributeError:
             pass
+    def test_handles_version(self):
+        """CommandParser handles version using optparse
+        """
+        # Skip the test if optparse not available
+        if not OPTPARSE_AVAILABLE:
+            raise unittest.SkipTest("'optparse' not available")
+        p = CommandParser(subparser=OptionParser,version="0.1")
+        slow_cmd = p.add_command('slow')
+        fast_cmd = p.add_command('fast')
 
 class TestCommandParserWithArgumentParser(unittest.TestCase):
     """Tests for CommandParser using explicit ArgumentParser backend
@@ -147,6 +156,12 @@ class TestCommandParserWithArgumentParser(unittest.TestCase):
             self.fail("Accessing 'a_value' for 'fast' command didn't raise AttributeError")
         except AttributeError:
             pass
+    def test_handles_version(self):
+        """CommandParser handles version using argparse
+        """
+        p = CommandParser(subparser=ArgumentParser,version="0.1")
+        slow_cmd = p.add_command('slow')
+        fast_cmd = p.add_command('fast')
 
 class TestAddOptionFunctions(unittest.TestCase):
     """Tests for the various 'add_..._option' functions
