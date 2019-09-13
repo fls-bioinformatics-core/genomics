@@ -407,7 +407,7 @@ class XLSWorkSheet(object):
         self.data[idx.idx] = value
         if idx.column not in self.columns:
             self.columns.append(idx.column)
-        self.columns.sort(cmp=cmp_column_indices)
+        self.columns = sorted(self.columns,key=lambda x: x[::-1])
         if idx.row not in self.rows:
             self.rows.append(idx.row)
         self.rows.sort()
@@ -660,7 +660,7 @@ class XLSWorkSheet(object):
                 self.set_style(style,cell(col,row))
             row += 1
         # Sort the column and row indices
-        self.columns.sort(cmp=cmp_column_indices)
+        self.columns = sorted(self.columns,key=lambda x: x[::-1])
         self.rows.sort()
 
     def insert_column_data(self,col,data,start=None,style=None):
@@ -846,7 +846,7 @@ class XLSWorkSheet(object):
                 self.set_style(style,cell(col,row))
             col = incr_col(col)
         # Sort the column and row indices
-        self.columns.sort(cmp=cmp_column_indices)
+        self.columns = sorted(self.columns,key=lambda x: x[::-1])
         self.rows.sort()
 
     def insert_row_data(self,row,data,start=None,style=None):
