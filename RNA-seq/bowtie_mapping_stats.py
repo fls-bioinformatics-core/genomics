@@ -75,7 +75,7 @@ Python modules xlwt, xlrd and xlutils.
 # Module metadata
 #######################################################################
 
-__version__ = "1.2.2"
+__version__ = "1.2.3"
 
 #######################################################################
 # Import
@@ -87,6 +87,7 @@ import os
 import io
 import argparse
 import glob
+from builtins import range
 
 # Set default logging level and output
 import logging
@@ -485,7 +486,7 @@ Overall time: 00:33:26
         expected_total_reads = [39808407,34455085,40319096,129900841]
         expected_didnt_align = [33721722,25744573,33236646,106040617]
         expected_uniquely_mapped = [2737588,4087382,3094671,10086835]
-        for i in xrange(4):
+        for i in range(4):
             sample = stats.samples[i]
             self.assertEqual(sample.name,expected_names[i])
             self.assertEqual(sample.total_reads,expected_total_reads[i])
@@ -570,7 +571,7 @@ Overall time: 00:33:26
         expected_total_reads = [39808407,34455085,40319096,129900841]
         expected_didnt_align = [33721722,25744573,33236646,106040617]
         expected_uniquely_mapped = [2737588,4087382,3094671,10086835]
-        for i in xrange(4):
+        for i in range(4):
             sample = stats.samples[i]
             self.assertEqual(sample.name,expected_names[i])
             self.assertEqual(sample.total_reads,expected_total_reads[i])
@@ -678,12 +679,13 @@ uniquely mapped	22792207
 if __name__ == "__main__":
 
     p = argparse.ArgumentParser(
-        version="%(prog)s "+__version__,
         description=
         "Extract mapping statistics for each sample referenced in "
         "the input bowtie log files and summarise the data in an XLS "
         "spreadsheet. Handles output from both Bowtie and Bowtie2.")
 
+    p.add_argument('--version',action='version',
+                   version="%(prog)s "+__version__)
     p.add_argument('-o',action="store",dest="stats_xls",metavar="xls_file",
                    default=None,
                    help="specify name of the output XLS file (otherwise "
