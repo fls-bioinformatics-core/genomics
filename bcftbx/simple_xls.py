@@ -122,6 +122,7 @@ import logging
 import xlsxwriter
 from . import Spreadsheet
 from .utils import OrderedDictionary
+from builtins import range
 
 #######################################################################
 # Constants
@@ -261,7 +262,7 @@ class XLSWorkBook(object):
             for col in ColumnRange(start.column,end.column):
                 # Maximum column width
                 max_width = default_min_col_width
-                for row in xrange(start.row,end.row+1):
+                for row in range(start.row,end.row+1):
                     # Get the value
                     value = worksheet.render_cell(cell(col,row),
                                                   eval_formulae=False,
@@ -955,7 +956,7 @@ class XLSWorkSheet(object):
             j = self.last_row
         else:
             j = int(end)
-        for row in xrange(i,j+1):
+        for row in range(i,j+1):
             self[cell(column,row)] = item
             if style is not None:
                 self.set_style(style,cell(column,row))
@@ -986,7 +987,7 @@ class XLSWorkSheet(object):
         start_cell = CellIndex(start)
         end_cell = CellIndex(end)
         for col in ColumnRange(start_cell.column,end_cell.column):
-            for row in xrange(start_cell.row,end_cell.row+1):
+            for row in range(start_cell.row,end_cell.row+1):
                 self.styles[cell(col,row)] = cell_style
 
     def get_style(self,idx):
@@ -1109,7 +1110,7 @@ class XLSWorkSheet(object):
             for col in ColumnRange(start.column,end.column):
                 line.append(col)
             text.append('\t'.join(line))
-        for row in xrange(start.row,end.row+1):
+        for row in range(start.row,end.row+1):
             line = []
             if include_columns_and_rows:
                 line.append(u'%s' % row)
@@ -1689,7 +1690,7 @@ if __name__ == "__main__":
                   style=XLSStyle(color='white',
                                  bgcolor='green',
                                  bold=True))
-    for i in xrange(100):
+    for i in range(100):
         ws.append_row(data=(i,i*2,'=A?+B?'))
     ws.freeze_panes = 'A2'
     # Save out to XLS(X) files
