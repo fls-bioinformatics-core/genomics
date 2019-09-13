@@ -175,7 +175,7 @@ class IndexedFile(object):
                 # Can't be indexed
                 pass
             # Store line against key
-            if self.__content.has_key(key):
+            if key in self.__content:
                 print("*** Multiple lines with same index ***")
                 sys.exit(1)
             self.__keys.append(key)
