@@ -108,7 +108,7 @@ class SeqDb(object):
         
         """
         if name is None:
-            seqs = copy.copy(self._sequences.keys())
+            seqs = copy.copy(list(self._sequences.keys()))
         else:
             seqs = []
             for seq in self._sequences:
