@@ -22,7 +22,7 @@ data chromosome-by-chromosome from a Fasta file.
 # Module metadata
 #######################################################################
 
-__version__ = "0.3.2"
+__version__ = "0.3.3"
 
 #######################################################################
 # Import modules
