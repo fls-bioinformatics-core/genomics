@@ -224,7 +224,10 @@ class ExonList(object):
             f = lambda x,y: x if abs(value(x)) < abs(value(y)) else y
         else:
             raise AttributeError("Unrecognised attribute '%s'" % attr)
-        return reduce(f,self.exons)
+        best = self.exons[0]
+        for exon in self.exons[1:]:
+            best = f(exon,best)
+        return best
 
     def best_exons(self,attr,n=3):
         """Fetch the 'best' exons based on the specified attribute
