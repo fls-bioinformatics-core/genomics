@@ -659,7 +659,8 @@ class SolidLibrary(object):
         # Append to the list of primary data files
         self.primary_data.append(primary_data)
         # Sort into timestamp order (newest to older)
-        self.primary_data.sort(lambda a,b: cmp(b.timestamp,a.timestamp))
+        self.primary_data = sorted(self.primary_data,
+                                   key=lambda x: x.timestamp)
         # Return the SolidPrimaryData object
         return primary_data
 
