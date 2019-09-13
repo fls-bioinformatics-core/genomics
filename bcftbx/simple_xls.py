@@ -122,6 +122,7 @@ import logging
 import xlsxwriter
 from . import Spreadsheet
 from .utils import OrderedDictionary
+from builtins import range
 
 #######################################################################
 # Constants
@@ -261,7 +262,7 @@ class XLSWorkBook(object):
             for col in ColumnRange(start.column,end.column):
                 # Maximum column width
                 max_width = default_min_col_width
-                for row in xrange(start.row,end.row+1):
+                for row in range(start.row,end.row+1):
                     # Get the value
                     value = worksheet.render_cell(cell(col,row),
                                                   eval_formulae=False,
@@ -407,7 +408,7 @@ class XLSWorkSheet(object):
         self.data[idx.idx] = value
         if idx.column not in self.columns:
             self.columns.append(idx.column)
-        self.columns.sort(cmp=cmp_column_indices)
+        self.columns = sorted(self.columns,key=lambda x: x[::-1])
         if idx.row not in self.rows:
             self.rows.append(idx.row)
         self.rows.sort()
@@ -660,7 +661,7 @@ class XLSWorkSheet(object):
                 self.set_style(style,cell(col,row))
             row += 1
         # Sort the column and row indices
-        self.columns.sort(cmp=cmp_column_indices)
+        self.columns = sorted(self.columns,key=lambda x: x[::-1])
         self.rows.sort()
 
     def insert_column_data(self,col,data,start=None,style=None):
@@ -846,7 +847,7 @@ class XLSWorkSheet(object):
                 self.set_style(style,cell(col,row))
             col = incr_col(col)
         # Sort the column and row indices
-        self.columns.sort(cmp=cmp_column_indices)
+        self.columns = sorted(self.columns,key=lambda x: x[::-1])
         self.rows.sort()
 
     def insert_row_data(self,row,data,start=None,style=None):
@@ -955,7 +956,7 @@ class XLSWorkSheet(object):
             j = self.last_row
         else:
             j = int(end)
-        for row in xrange(i,j+1):
+        for row in range(i,j+1):
             self[cell(column,row)] = item
             if style is not None:
                 self.set_style(style,cell(column,row))
@@ -986,7 +987,7 @@ class XLSWorkSheet(object):
         start_cell = CellIndex(start)
         end_cell = CellIndex(end)
         for col in ColumnRange(start_cell.column,end_cell.column):
-            for row in xrange(start_cell.row,end_cell.row+1):
+            for row in range(start_cell.row,end_cell.row+1):
                 self.styles[cell(col,row)] = cell_style
 
     def get_style(self,idx):
@@ -1109,7 +1110,7 @@ class XLSWorkSheet(object):
             for col in ColumnRange(start.column,end.column):
                 line.append(col)
             text.append('\t'.join(line))
-        for row in xrange(start.row,end.row+1):
+        for row in range(start.row,end.row+1):
             line = []
             if include_columns_and_rows:
                 line.append(u'%s' % row)
@@ -1170,6 +1171,9 @@ class XLSStyle(object):
         self.shrink_to_fit = shrink_to_fit
 
     def __nonzero__(self):
+        return self.__bool__()
+
+    def __bool__(self):
         return \
             (self.bold) or \
             (self.color is not None) or \
@@ -1313,7 +1317,13 @@ class ColumnRange(Iterator):
             self.end += self.incr
 
     def next(self):
-        """Implements Iterator subclass 'next' method
+        """Implements Iterator subclass 'next' method (Python 2 only)
+
+        """
+        return self.__next__()
+
+    def __next__(self):
+        """Implements Iterator subclass '__next__' method
 
         """
         self.column = self.column + self.incr
@@ -1438,7 +1448,7 @@ def cmp_column_indices(x,y):
 
     """
     # Do string comparision on reverse of column indices
-    return cmp(x[::-1],y[::-1])
+    return (x[::-1] > y[::-1]) - (x[::-1] < y[::-1])
 
 def cell(col,row):
     """Return XLS cell index for column and row
@@ -1489,7 +1499,7 @@ def column_integer_to_index(idx):
     col = ''
     while idx >= 0:
         col += chr((idx%26)+65)
-        idx = idx/26-1
+        idx = idx//26-1
     return col[::-1]
 
 def eval_formula(item,worksheet):
@@ -1616,7 +1626,7 @@ def format_value(value,number_format=None):
         value = []
         while i >= 1000:
             value.append("%03d" % (i%1000))
-            i = i/1000
+            i = i//1000
         value.append(str(i))
         value = value[::-1]
         return ','.join(value)
@@ -1689,7 +1699,7 @@ if __name__ == "__main__":
                   style=XLSStyle(color='white',
                                  bgcolor='green',
                                  bold=True))
-    for i in xrange(100):
+    for i in range(100):
         ws.append_row(data=(i,i*2,'=A?+B?'))
     ws.freeze_panes = 'A2'
     # Save out to XLS(X) files
