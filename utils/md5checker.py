@@ -22,7 +22,7 @@ to perform the underlying operations.
 # Module metadata
 #######################################################################
 
-__version__ = "0.4.2"
+__version__ = "0.4.3"
 
 #######################################################################
 # Import modules that this module depends on
@@ -221,11 +221,12 @@ if __name__ == "__main__":
   %(prog)s -c CHKSUM_FILE"""
     p = argparse.ArgumentParser(
         usage=usage,
-        version="%(prog)s "+__version__,
         description=
         "Compute and verify MD5 checksums for files and directories.")
 
     # Define options
+    p.add_argument('--version',action='version',
+                   version="%(prog)s "+__version__)
     p.add_argument('-d','--diff',action="store_true",dest="diff",
                    default=False,
                    help="for two directories: check that contents of "
