@@ -4,7 +4,7 @@
 #     Copyright (C) University of Manchester 2017-2019 Peter Briggs
 #
 
-__version__ = "0.0.6"
+__version__ = "0.0.7"
 
 #######################################################################
 # Imports
@@ -408,8 +408,8 @@ def fastq_strand(argv,working_dir=None):
     p = argparse.ArgumentParser(
         description="Generate strandedness statistics "
         "for FASTQ or FASTQpair, by running STAR using "
-        "one or more genome indexes",
-        version=__version__)
+        "one or more genome indexes")
+    p.add_argument('--version',action='version',version=__version__)
     p.add_argument("r1",metavar="READ1",
                    default=None,
                    help="R1 Fastq file")
