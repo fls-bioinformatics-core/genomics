@@ -1438,7 +1438,7 @@ def cmp_column_indices(x,y):
 
     """
     # Do string comparision on reverse of column indices
-    return cmp(x[::-1],y[::-1])
+    return (x[::-1] > y[::-1]) - (x[::-1] < y[::-1])
 
 def cell(col,row):
     """Return XLS cell index for column and row
