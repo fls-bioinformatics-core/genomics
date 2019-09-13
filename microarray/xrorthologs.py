@@ -47,6 +47,7 @@ import os
 import io
 import logging
 import argparse
+from builtins import range
 
 #######################################################################
 # Class definitions
@@ -264,7 +265,7 @@ def combine_data_main(data1,data2,lookup,foutput):
     
     # Write header line
     line = [data1.header()]
-    for i in xrange(1,max_orthologs+1):
+    for i in range(1,max_orthologs+1):
         logging.debug("Adding header set #%d" % i)
         for item in data2.header().split('\t'): line.append("%s_%s" % (item,i))
     foutput.write("%s\n" % '\t'.join(line))
