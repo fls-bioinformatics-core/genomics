@@ -31,6 +31,7 @@ import argparse
 import itertools
 import tempfile
 import logging
+from future.moves.itertools import zip_longest
 
 #######################################################################
 # Module metadata
@@ -88,11 +89,14 @@ def cmp_chrom_names(x,y):
       Integer: negative if x < y, zero if x == y, positive if
         x > y.
     """
-    for i,j in itertools.izip_longest(split_chrom_name(x),
-                                      split_chrom_name(y)):
-        c = cmp(i,j)
-        if c != 0:
-            return c
+    for i,j in zip_longest(split_chrom_name(x),
+                           split_chrom_name(y)):
+        if i != j:
+            if i is None:
+                return -1
+            elif j is None:
+                return 1
+            return ((i > j) - (i < j))
     return 0
 
 #######################################################################
