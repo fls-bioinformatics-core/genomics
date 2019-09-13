@@ -1317,7 +1317,13 @@ class ColumnRange(Iterator):
             self.end += self.incr
 
     def next(self):
-        """Implements Iterator subclass 'next' method
+        """Implements Iterator subclass 'next' method (Python 2 only)
+
+        """
+        return self.__next__()
+
+    def __next__(self):
+        """Implements Iterator subclass '__next__' method
 
         """
         self.column = self.column + self.incr
