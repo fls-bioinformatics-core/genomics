@@ -184,10 +184,11 @@ def run_tests():
 if __name__ == "__main__":
     # Process the command line
     p = argparse.ArgumentParser(
-        version="%(prog)s "+__version__,
         description="Split input FASTA file with multiple sequences "
         "into multiple files each containing sequences for a single "
         "chromosome.")
+    p.add_argument('--version',action='version',
+                   version="%(prog)s "+__version__)
     p.add_argument("--test",action="store_true",dest="run_tests",
                    default=False,
                    help="Run unit tests")
