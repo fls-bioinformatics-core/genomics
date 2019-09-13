@@ -79,6 +79,12 @@ class FastaChromIterator(Iterator):
         self.__line = None
 
     def next(self):
+        """Return next chromosome from Fasta file as a (name,sequence) tuple (Python 2)
+
+        """
+        return self.__next__()
+
+    def __next__(self):
         """Return next chromosome from Fasta file as a (name,sequence) tuple
        
         """
