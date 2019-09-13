@@ -60,7 +60,7 @@ import os
 import io
 import string
 import logging
-import utils
+from . import utils
 
 #######################################################################
 # Class definitions
@@ -436,7 +436,13 @@ class SolidRun(object):
         return slide_layout(len(self.samples))
 
     def __nonzero__(self):
-        """Implement nonzero built-in
+        """Implement __nonzero__ built-in
+
+        """
+        return self.__bool__()
+
+    def __bool__(self):
+        """Implement __bool__ built-in
 
         SolidRun object is False if the source directory doesn't
         exist, or if basic data couldn't be loaded."""
@@ -659,7 +665,8 @@ class SolidLibrary(object):
         # Append to the list of primary data files
         self.primary_data.append(primary_data)
         # Sort into timestamp order (newest to older)
-        self.primary_data.sort(lambda a,b: cmp(b.timestamp,a.timestamp))
+        self.primary_data = sorted(self.primary_data,
+                                   key=lambda x: x.timestamp)
         # Return the SolidPrimaryData object
         return primary_data
 
@@ -999,7 +1006,11 @@ class SolidRunDefinition(object):
 
     def __nonzero__(self):
         """Implement the built-in __nonzero__ method"""
-        return len(self.data) != 0
+        return self.__bool__()
+
+    def __bool__(self):
+        """Implement the built-in __bool__ method"""
+        return (len(self.data) != 0)
 
     def fields(self):
         """Return list of fields"""
@@ -1084,8 +1095,13 @@ class SolidBarcodeStatistics(object):
             logging.error("Failed to populate SolidBarcodeStatistics: '%s'" % ex)
 
     def __nonzero__(self):
-        """Implement the __nonzero__ built-in"""
-        return len(self.data) != 0
+        """Implement __nonzero__ built-in
+        """
+        return self.__bool__()
+
+    def __bool__(self):
+        """Implement the __bool__ built-in"""
+        return (len(self.data) != 0)
 
     def populate(self):
         """Populate the SolidBarcodeStatistics object.
