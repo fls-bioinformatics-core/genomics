@@ -60,7 +60,7 @@ import os
 import io
 import string
 import logging
-import utils
+from . import utils
 
 #######################################################################
 # Class definitions
