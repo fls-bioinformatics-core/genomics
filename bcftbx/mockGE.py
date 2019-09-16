@@ -376,7 +376,7 @@ echo "$exit_code" > %s/__exit_code.%d
         SELECT id,name,user,state,qsub_time,start_time,queue FROM jobs WHERE state != 'c'
         """
         args = []
-        if user != "\*" and user != "*":
+        if user != "\\*" and user != "*":
             sql += "AND user == ?"
             args.append(user)
         cu = self._cx.cursor()
