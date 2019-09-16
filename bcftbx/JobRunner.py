@@ -1064,7 +1064,7 @@ exit $exit_code
         """Internal: sanitize a name for use with GE
         """
         ge_name = str(name)
-        for c in ":*@\?":
+        for c in ":*@\\?":
             ge_name = ge_name.replace(c,'_')
         if ge_name[0].isdigit():
             # Name cannot start with a digit so
