@@ -22,13 +22,16 @@ data chromosome-by-chromosome from a Fasta file.
 # Module metadata
 #######################################################################
 
-__version__ = "0.3.3"
+__version__ = "0.3.4"
 
 #######################################################################
 # Import modules
 #######################################################################
 
-from collections import Iterator
+try:
+    from collections.abc import Iterator
+except ImportError:
+    from collections import Iterator
 import sys
 import os
 import io

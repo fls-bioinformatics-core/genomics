@@ -26,7 +26,7 @@ Information on the FASTQ file format: http://en.wikipedia.org/wiki/FASTQ_format
 
 """
 
-__version__ = "1.0.4"
+__version__ = "1.0.5"
 
 CHUNKSIZE = 102400
 
@@ -34,7 +34,10 @@ CHUNKSIZE = 102400
 # Import modules that this module depends on
 #######################################################################
 from builtins import str
-from collections import Iterator
+try:
+    from collections.abc import Iterator
+except ImportError:
+    from collections import Iterator
 import os
 import io
 import re
