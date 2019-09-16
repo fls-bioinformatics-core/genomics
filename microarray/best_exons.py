@@ -5,7 +5,7 @@
 #
 ########################################################################
 
-__version__ = "1.3.3"
+__version__ = "1.3.4"
 
 """
 best_exons.py
@@ -63,7 +63,10 @@ import os
 import io
 import argparse
 import logging
-from collections import Iterator
+try:
+    from collections.abc import Iterator
+except ImportError:
+    from collections import Iterator
 from operator import attrgetter
 
 # Put .. onto Python search path for modules

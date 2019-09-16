@@ -109,7 +109,7 @@ Alternatively the contents of a sheet (or a subset) can be rendered as text:
 
 """
 
-__version__ = "0.0.12"
+__version__ = "0.0.13"
 
 #######################################################################
 # Import modules that this module depends on
@@ -117,7 +117,10 @@ __version__ = "0.0.12"
 
 from builtins import str
 import re
-from collections import Iterator
+try:
+    from collections.abc import Iterator
+except ImportError:
+    from collections import Iterator
 import logging
 import xlsxwriter
 from . import Spreadsheet
