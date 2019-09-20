@@ -931,7 +931,7 @@ exit $exit_code
         p = subprocess.Popen(cmd,
                              stdout=subprocess.PIPE,
                              universal_newlines=True)
-        p.wait()
+        stdoutdata = p.communicate()[0]
         # Process the output
         qstat_output = []
         # Typical output is:
@@ -940,7 +940,7 @@ exit $exit_code
         # 620848 -499.50000 qc       myname       ...<snipped>...
         # ...
         # i.e. 2 header lines then one line per job
-        for line in p.stdout:
+        for line in stdoutdata.split('\n'):
             try:
                 if line.split()[0].isdigit():
                     qstat_output.append(line.split())
