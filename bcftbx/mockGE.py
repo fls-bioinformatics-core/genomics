@@ -216,14 +216,13 @@ exit_code=$?
 echo "$exit_code" 1>%s/__exit_code.%d
 """ % (self._shell,queue,command,redirect,self._database_dir,job_id))
             os.chmod(script_file,0o775)
-            # Run the command
-            p = subprocess.Popen(script_file,
-                                 cwd=working_dir,
-                                 close_fds=True,
-                                 stdout=subprocess.PIPE,
-                                 stderr=subprocess.STDOUT)
-            # Capture the job id from the output
-            pid = str(p.pid)
+            # Run the command and capture process id
+            pid = subprocess.Popen(script_file,
+                                   cwd=working_dir,
+                                   close_fds=True,
+                                   stdout=subprocess.PIPE,
+                                   stderr=subprocess.STDOUT,
+                                   preexec_fn=os.setpgrp)
             # Update the database
             sql = """
             UPDATE jobs SET pid=?,state='r',start_time=?
