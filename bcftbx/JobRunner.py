@@ -528,15 +528,15 @@ exit $exit_code
                              stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE,
                              universal_newlines=True)
-        p.wait()
+        stdoutdata,stderrdata = p.communicate()
         # Check stderr
-        error = p.stderr.read().strip()
+        error = stderrdata.strip()
         if error:
             # Just echo error message as a warning
             logging.warning("GEJobRunner: '%s'" % error)
         # Capture the job id from the output
         job_id = None
-        for line in p.stdout:
+        for line in stdoutdata.split('\n'):
             if line.startswith('Your job'):
                 job_id = line.split()[2]
         logging.debug("GEJobRunner: done - job id = %s" % job_id)
@@ -560,8 +560,8 @@ exit $exit_code
         logging.debug("GEJobRunner: deleting job")
         qdel=('qdel',job_id)
         p = subprocess.Popen(qdel,stdout=subprocess.PIPE)
-        p.wait()
-        message = p.stdout.read()
+        stdoutdata,stderrdata = p.communicate()
+        message = stdoutdata.strip()
         logging.debug("GEJobRunner: qdel: %s" % message)
         if job_id in self.__start_time:
             del(self.__start_time[job_id])
@@ -997,11 +997,10 @@ exit $exit_code
                              stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE,
                              universal_newlines=True)
-        p.wait()
+        stdoutdata,stderrdata = p.communicate()
         # Check stderr in case output is not available
         # e.g. "error: job id 18384 not found"
-        stderr = p.stderr.read()
-        if stderr.startswith("error: job id"):
+        if stderrdata.startswith("error: job id"):
             logging.debug("Job %s: uable to get qacct info"
                           % job_id)
             return None
