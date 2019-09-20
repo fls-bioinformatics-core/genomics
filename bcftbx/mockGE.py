@@ -1,5 +1,5 @@
 #     mockGE.py: mock Grid Engine functionality for testing
-#     Copyright (C) University of Manchester 2018 Peter Briggs
+#     Copyright (C) University of Manchester 2018-2019 Peter Briggs
 #
 #######################################################################
 
@@ -196,29 +196,29 @@ class MockGE(object):
             logging.debug("Output basename: %s" % out)
             # Set up stdout and stderr targets
             stdout_file = "%s.o%s" % (out,job_id)
-            stdout = io.open(stdout_file,'wt')
+            redirect = "1>%s" % stdout_file
             logging.debug("Stdout: %s" % stdout_file)
             if join_output == 'y':
-                stderr = subprocess.STDOUT
+                redirect = "%s 2>&1" % redirect
             else:
                 stderr_file = "%s.e%s" % (out,job_id)
-                stderr = io.open(stderr_file,'wt')
+                redirect = "%s 2>%s" % (redirect,stderr_file)
                 logging.debug("Stderr: %s" % stderr_file)
             # Build a script to run the command
             script_file = os.path.join(self._database_dir,
                                        "__job%d.sh" % job_id)
-            with io.open(script_file,'w') as fp:
+            with io.open(script_file,'wt') as fp:
                 fp.write(u"""#!%s
-QUEUE=%s %s
+QUEUE=%s %s %s
 exit_code=$?
-echo "$exit_code" > %s/__exit_code.%d
-""" % (self._shell,queue,command,self._database_dir,job_id))
+echo "$exit_code" 1>%s/__exit_code.%d
+""" % (self._shell,queue,command,redirect,self._database_dir,job_id))
             os.chmod(script_file,0o775)
             # Run the command
             p = subprocess.Popen(script_file,
                                  cwd=working_dir,
-                                 stdout=stdout,
-                                 stderr=stderr)
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.STDOUT)
             # Capture the job id from the output
             pid = str(p.pid)
             # Update the database
