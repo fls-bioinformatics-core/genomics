@@ -28,6 +28,7 @@ import getpass
 import time
 import datetime
 import logging
+import atexit
 
 #######################################################################
 # Classes
@@ -99,6 +100,7 @@ class MockGE(object):
         self._max_jobs = max_jobs
         self._qsub_delay = qsub_delay
         self._qacct_delay = qacct_delay
+        atexit.register(self._cleanup_at_exit)
 
     def _init_db(self):
         """
@@ -418,6 +420,28 @@ echo "$exit_code" 1>%s/__exit_code.%d
         cu = self._cx.cursor()
         cu.execute(sql,(new_state,job_id,))
         self._cx.commit()
+
+    def _cleanup_at_exit(self):
+        """
+        Do clean up on exit
+        """
+        logging.debug("Doing cleanup for exit")
+        # Stop jobs that are still running
+        cu = self._cx.cursor()
+        sql = """
+        SELECT id,pid FROM jobs WHERE state=='r'
+        """
+        cu.execute(sql)
+        jobs = cu.fetchall()
+        finished_jobs = []
+        for job in jobs:
+            job_id = job['id']
+            pid = job['pid']
+            try:
+                logging.debug("Checking job=%d pid=%d" % (job_id,pid))
+                os.kill(pid,9)
+            except Exception as ex:
+                pass
 
     def _user(self):
         """
