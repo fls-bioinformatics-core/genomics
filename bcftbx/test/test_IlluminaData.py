@@ -623,9 +623,10 @@ class TestIlluminaDataForBcl2fastq2SpecialCases(BaseTestIlluminaData):
                    'PJ1_S1_L001_R2_001.fastq.gz',
                    'PJ2_S2_L001_R1_001.fastq.gz',
                    'PJ2_S2_L001_R2_001.fastq.gz',):
-            io.open(os.path.join(self.top_dir,
-                                 'test.MockIlluminaData',
-                                 'fastqs',fq),'wt').write(u'')
+            with io.open(os.path.join(self.top_dir,
+                                      'test.MockIlluminaData',
+                                      'fastqs',fq),'wt') as fp:
+                fp.write(u'')
         return os.path.join(self.top_dir,'test.MockIlluminaData')
 
     def makeNonIlluminaDataDirectoryWithNonCanonicalFastqs(self):
@@ -635,9 +636,10 @@ class TestIlluminaDataForBcl2fastq2SpecialCases(BaseTestIlluminaData):
         os.mkdir(os.path.join(self.top_dir,'test.MockIlluminaData','fastqs'))
         for fq in ('PB04_S4_R1_unpaired.fastq.gz',
                    'PB04_trimmoPE_bowtie2_notHg38.1.fastq.gz'):
-            io.open(os.path.join(self.top_dir,
-                                 'test.MockIlluminaData',
-                                 'fastqs',fq),'wt').write(u'')
+            with io.open(os.path.join(self.top_dir,
+                                      'test.MockIlluminaData',
+                                      'fastqs',fq),'wt') as fp:
+                fp.write(u'')
         return os.path.join(self.top_dir,'test.MockIlluminaData')
 
     def test_illumina_data_all_sample_ids_differ_from_sample_names(self):
