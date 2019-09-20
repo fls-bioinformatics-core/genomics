@@ -219,6 +219,7 @@ echo "$exit_code" 1>%s/__exit_code.%d
             # Run the command
             p = subprocess.Popen(script_file,
                                  cwd=working_dir,
+                                 close_fds=True,
                                  stdout=subprocess.PIPE,
                                  stderr=subprocess.STDOUT)
             # Capture the job id from the output
