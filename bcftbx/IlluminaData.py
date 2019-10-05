@@ -1099,7 +1099,10 @@ class SampleSheet(object):
         """
         fields = line.split(',')
         param = fields[0]
-        value = fields[1]
+        if len(fields) > 1:
+            value = fields[1]
+        else:
+            value = ''
         # Handle quoted value containing commas
         if value.startswith('"'):
             for f in fields[2:]:
