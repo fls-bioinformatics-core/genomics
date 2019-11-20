@@ -1746,6 +1746,50 @@ Adapter,CTGTCTCTTATACACATCT
         self.assertEqual(iem.data[0]['Description'],'')
         self.assertEqual(iem.data[0]['Manifest'],'A')
 
+    def test_sample_sheet_with_missing_values_in_header(self):
+        """SampleSheet: handle IEM sample sheet with 'missing' values in header
+
+        """
+        contents = u"""[Header]
+IEMFileVersion,4
+Date,11/16/2015
+Workflow,GenerateFASTQ
+Application,RNA-Seq
+Assay,TruSeq LT
+Description
+Chemistry,Default
+
+[Reads]
+150
+150
+
+[Settings]
+Adapter,CTGTCTCTTATACACATCT
+
+[Data]
+Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_ID,index2,Sample_Project,Description
+A8,A8,,,N701,TAAGGCGA,S501,TAGATCGC,PJB,
+B8,B8,,,N702,CGTACTAG,S501,TAGATCGC,PJB,
+"""
+        iem = SampleSheet(fp=io.StringIO(contents))
+        # Check format
+        self.assertEqual(iem.format,'IEM')
+        # Check header
+        self.assertEqual(iem.header_items,['IEMFileVersion',
+                                           'Date',
+                                           'Workflow',
+                                           'Application',
+                                           'Assay',
+                                           'Description',
+                                           'Chemistry'])
+        self.assertEqual(iem.header['IEMFileVersion'],'4')
+        self.assertEqual(iem.header['Date'],'11/16/2015')
+        self.assertEqual(iem.header['Workflow'],'GenerateFASTQ')
+        self.assertEqual(iem.header['Application'],'RNA-Seq')
+        self.assertEqual(iem.header['Assay'],'TruSeq LT')
+        self.assertEqual(iem.header['Description'],'')
+        self.assertEqual(iem.header['Chemistry'],'Default')
+
 class TestIEMSampleSheet(unittest.TestCase):
     def setUp(self):
         self.hiseq_sample_sheet_content = u"""[Header],,,,,,,,,,
