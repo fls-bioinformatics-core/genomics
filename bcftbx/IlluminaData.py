@@ -1099,7 +1099,11 @@ class SampleSheet(object):
         """
         fields = line.split(',')
         param = fields[0]
-        value = fields[1]
+        try:
+            value = fields[1]
+        except IndexError:
+            # No delimiter i.e. line consists only of 'key'
+            value = ''
         # Handle quoted value containing commas
         if value.startswith('"'):
             for f in fields[2:]:
