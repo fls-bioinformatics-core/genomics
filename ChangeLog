@@ -1,3 +1,11 @@
+2019-11-20  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* genomics-bcftbx version 1.8.1
+	- bcftbx/IlluminaData: fix to `SampleSheet` class to handle
+	  cases when header lines have a 'key' without a comma
+	  delimiter or value (thanks Ryan Golhar @golharam)
+	  https://github.com/fls-bioinformatics-core/genomics/pull/148
+
 2019-09-27  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* genomics-bcftbx version 1.8.0
