@@ -2520,7 +2520,7 @@ def split_run_name_full(dirname):
     component is used as the ID.
     """
     fields = os.path.basename(dirname).split('_')
-    if len(fields) > 3 and fields[0].isdigit and \
+    if len(fields) > 3 and fields[0].isdigit() and \
        (len(fields[0]) == 6 or len(fields[0]) == 8):
         date_stamp = fields[0]
     else:

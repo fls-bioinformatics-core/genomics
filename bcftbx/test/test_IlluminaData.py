@@ -3608,6 +3608,9 @@ class TestSplitRunNameFull(unittest.TestCase):
                           'this_is_nonsense')
         self.assertRaises(IlluminaDataError,
                           split_run_name_full,
+                          'sixchr_10Xrun_BCLFiles_Download')
+        self.assertRaises(IlluminaDataError,
+                          split_run_name_full,
                           '140210')
         self.assertRaises(IlluminaDataError,
                           split_run_name_full,
