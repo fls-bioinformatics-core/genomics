@@ -57,8 +57,9 @@ def main(args=None):
     # Command line processing
     if args is None:
         args = sys.argv[1:]
-    p = argparse.ArgumentParser(version="%(prog)s "+__version__,
-                                description=__description__)
+    p = argparse.ArgumentParser(description=__description__)
+    p.add_argument('--version',action='version',
+                   version="%(prog)s "+__version__)
     p.add_argument('-m','--match',action='store',dest='pattern',
                    default=None,
                    help="extract records that match Python regular "
