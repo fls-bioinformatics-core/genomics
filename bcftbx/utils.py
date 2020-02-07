@@ -238,15 +238,15 @@ def getlines(filen):
         newline character removed.
     """
     if filen.split('.')[-1] == 'gz':
-        fp = gzip.open(filen,'rt')
+        fp = gzip.open(filen,'rb')
     else:
-        fp = io.open(filen,'rt')
+        fp = io.open(filen,'rb')
     # Read in data in chunks
     buf = ''
     lines = []
     while True:
         # Grab a chunk of data
-        data = fp.read(CHUNKSIZE)
+        data = fp.read(CHUNKSIZE).decode("UTF-8")
         # Check for EOF
         if not data:
             break

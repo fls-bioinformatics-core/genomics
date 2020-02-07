@@ -27,6 +27,7 @@ Recognises FASTQ, CSFASTA and QUAL files.
 #######################################################################
 
 from builtins import str
+from builtins import range
 import sys
 import os
 import io
@@ -57,8 +58,9 @@ def main(args=None):
     # Command line processing
     if args is None:
         args = sys.argv[1:]
-    p = argparse.ArgumentParser(version="%(prog)s "+__version__,
-                                description=__description__)
+    p = argparse.ArgumentParser(description=__description__)
+    p.add_argument('--version',action='version',
+                   version="%(prog)s "+__version__)
     p.add_argument('-m','--match',action='store',dest='pattern',
                    default=None,
                    help="extract records that match Python regular "
@@ -115,7 +117,7 @@ def main(args=None):
                                                                       nreads))
             sys.exit(1)
         print("Generating set of %s random indices" % nsubset)
-        subset_indices = random.sample(xrange(nreads),nsubset)
+        subset_indices = random.sample(range(nreads),nsubset)
         # Extract the reads to separate files
         for f in args.infiles:
             if f.endswith('.gz'):
