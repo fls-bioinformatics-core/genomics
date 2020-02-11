@@ -443,7 +443,7 @@ class FastqAttributes(object):
 # Functions
 #######################################################################
 
-def get_fastq_file_handle(fastq):
+def get_fastq_file_handle(fastq,mode='rb'):
     """Return a file handle opened for reading for a FASTQ file
 
     Deals with both compressed (gzipped) and uncompressed FASTQ
@@ -452,15 +452,16 @@ def get_fastq_file_handle(fastq):
     Arguments:
       fastq: name (including path, if required) of FASTQ file.
         The file can be gzipped (must have '.gz' extension)
+      mode: optional mode for file opening (defaults to 'rb')
 
     Returns:
       File handle that can be used for read operations.
 
     """
     if os.path.splitext(fastq)[1] == '.gz':
-        return gzip.open(fastq,'rb')
+        return gzip.open(fastq,mode)
     else:
-        return io.open(fastq,'rb')
+        return io.open(fastq,mode)
 
 def nreads(fastq=None,fp=None):
     """Return number of reads in a FASTQ file
