@@ -99,7 +99,7 @@ class FastqIterator(Iterator):
         self.__fastq_file = fastq_file
         self.__bufsize = bufsize
         if fp is None:
-            self.__fp = get_fastq_file_handle(self.__fastq_file)
+            self.__fp = get_fastq_file_handle(self.__fastq_file,'rb')
         else:
             self.__fp = fp
         self._buf = ''
@@ -117,7 +117,7 @@ class FastqIterator(Iterator):
         # Do we already have a read to return?
         while len(lines) < 4:
             # Fetch more data
-            data = self.__fp.read(bufsize)
+            data = self.__fp.read(bufsize).decode()
             if not data:
                 # Reached EOF
                 if self.__fastq_file is None:
