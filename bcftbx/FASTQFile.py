@@ -1,5 +1,5 @@
 #     FASTQFile.py: read and manipulate FASTQ files and data
-#     Copyright (C) University of Manchester 2012-19 Peter Briggs
+#     Copyright (C) University of Manchester 2012-2020 Peter Briggs
 #
 ########################################################################
 #
@@ -26,14 +26,12 @@ Information on the FASTQ file format: http://en.wikipedia.org/wiki/FASTQ_format
 
 """
 
-__version__ = "1.0.5"
-
 CHUNKSIZE = 102400
 
 #######################################################################
 # Import modules that this module depends on
 #######################################################################
-from builtins import str
+
 try:
     from collections.abc import Iterator
 except ImportError:
@@ -99,7 +97,7 @@ class FastqIterator(Iterator):
         self.__fastq_file = fastq_file
         self.__bufsize = bufsize
         if fp is None:
-            self.__fp = get_fastq_file_handle(self.__fastq_file)
+            self.__fp = get_fastq_file_handle(self.__fastq_file,'rt')
         else:
             self.__fp = fp
         self._buf = ''
@@ -443,7 +441,7 @@ class FastqAttributes(object):
 # Functions
 #######################################################################
 
-def get_fastq_file_handle(fastq):
+def get_fastq_file_handle(fastq,mode='rt'):
     """Return a file handle opened for reading for a FASTQ file
 
     Deals with both compressed (gzipped) and uncompressed FASTQ
@@ -452,15 +450,16 @@ def get_fastq_file_handle(fastq):
     Arguments:
       fastq: name (including path, if required) of FASTQ file.
         The file can be gzipped (must have '.gz' extension)
+      mode: optional mode for file opening (defaults to 'rt')
 
     Returns:
       File handle that can be used for read operations.
 
     """
     if os.path.splitext(fastq)[1] == '.gz':
-        return gzip.open(fastq,'rb')
+        return gzip.open(fastq,mode)
     else:
-        return io.open(fastq,'rb')
+        return io.open(fastq,mode)
 
 def nreads(fastq=None,fp=None):
     """Return number of reads in a FASTQ file
