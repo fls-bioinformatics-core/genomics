@@ -124,7 +124,7 @@ class FastqIterator(Iterator):
                     self.__fp.close()
                 raise StopIteration
             # Add to buffer and split into lines
-            buf = buf + str(data)
+            buf = buf + data
             if buf[-1] != '\n':
                 i = buf.rfind('\n')
                 if i == -1:
