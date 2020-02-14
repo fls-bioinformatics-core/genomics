@@ -33,7 +33,7 @@ CHUNKSIZE = 102400
 #######################################################################
 # Import modules that this module depends on
 #######################################################################
-from builtins import str
+
 try:
     from collections.abc import Iterator
 except ImportError:
@@ -99,7 +99,7 @@ class FastqIterator(Iterator):
         self.__fastq_file = fastq_file
         self.__bufsize = bufsize
         if fp is None:
-            self.__fp = get_fastq_file_handle(self.__fastq_file,'rb')
+            self.__fp = get_fastq_file_handle(self.__fastq_file,'rt')
         else:
             self.__fp = fp
         self._buf = ''
@@ -117,14 +117,14 @@ class FastqIterator(Iterator):
         # Do we already have a read to return?
         while len(lines) < 4:
             # Fetch more data
-            data = self.__fp.read(bufsize).decode()
+            data = self.__fp.read(bufsize)
             if not data:
                 # Reached EOF
                 if self.__fastq_file is None:
                     self.__fp.close()
                 raise StopIteration
             # Add to buffer and split into lines
-            buf = buf + data
+            buf = buf + str(data)
             if buf[-1] != '\n':
                 i = buf.rfind('\n')
                 if i == -1:
