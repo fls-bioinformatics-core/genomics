@@ -1,5 +1,5 @@
 #     FASTQFile.py: read and manipulate FASTQ files and data
-#     Copyright (C) University of Manchester 2012-19 Peter Briggs
+#     Copyright (C) University of Manchester 2012-2020 Peter Briggs
 #
 ########################################################################
 #
@@ -25,8 +25,6 @@ Additionally there are a few utility functions:
 Information on the FASTQ file format: http://en.wikipedia.org/wiki/FASTQ_format
 
 """
-
-__version__ = "1.0.5"
 
 CHUNKSIZE = 102400
 
