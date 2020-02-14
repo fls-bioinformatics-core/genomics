@@ -5,6 +5,10 @@ from builtins import str
 from bcftbx.FASTQFile import *
 import unittest
 import io
+import os
+import tempfile
+import shutil
+import gzip
 
 fastq_data = u"""@73D9FA:3:FC:1:1:7507:1000 1:N:0:
 NACAACCTGATTAGCGGCGTTGACAGATGTATCCAT
@@ -75,6 +79,14 @@ NATAAATCACCTCACTTAAGTGGCTGGAGACAAATA
 class TestFastqIterator(unittest.TestCase):
     """Tests of the FastqIterator class
     """
+    def setUp(self):
+        # Temporary working dir
+        self.wd = tempfile.mkdtemp(suffix='.TestFastqIterator')
+
+    def tearDown(self):
+        # Remove temporary working dir
+        if os.path.isdir(self.wd):
+            shutil.rmtree(self.wd)
 
     def test_fastq_iterator(self):
         """Check iteration over small FASTQ file
@@ -119,6 +131,42 @@ class TestFastqIterator(unittest.TestCase):
         fastq = FastqIterator(fp=fp,bufsize=2)
         nreads = 0
         fastq_source = io.StringIO(fastq_empty_sequence)
+        for read in fastq:
+            nreads += 1
+            self.assertTrue(isinstance(read.seqid,SequenceIdentifier))
+            self.assertEqual(str(read.seqid),fastq_source.readline().rstrip('\n'))
+            self.assertEqual(read.sequence,fastq_source.readline().rstrip('\n'))
+            self.assertEqual(read.optid,fastq_source.readline().rstrip('\n'))
+            self.assertEqual(read.quality,fastq_source.readline().rstrip('\n'))
+        self.assertEqual(nreads,5)
+
+    def test_fastq_iterator_file_from_disk(self):
+        """Check iteration over small FASTQ file from disk
+        """
+        self.fastq_in = os.path.join(self.wd,'test.fq')
+        with open(self.fastq_in,'w') as fp:
+            fp.write(fastq_data)
+        fastq = FastqIterator(self.fastq_in)
+        nreads = 0
+        fastq_source = io.StringIO(fastq_data)
+        for read in fastq:
+            nreads += 1
+            self.assertTrue(isinstance(read.seqid,SequenceIdentifier))
+            self.assertEqual(str(read.seqid),fastq_source.readline().rstrip('\n'))
+            self.assertEqual(read.sequence,fastq_source.readline().rstrip('\n'))
+            self.assertEqual(read.optid,fastq_source.readline().rstrip('\n'))
+            self.assertEqual(read.quality,fastq_source.readline().rstrip('\n'))
+        self.assertEqual(nreads,5)
+
+    def test_fastq_iterator_gzipped_file_from_disk(self):
+        """Check iteration over small gzipped FASTQ file from disk
+        """
+        self.fastq_in = os.path.join(self.wd,'test.fq.gz')
+        with gzip.GzipFile(self.fastq_in,'wb') as fp:
+            fp.write(fastq_data.encode())
+        fastq = FastqIterator(self.fastq_in)
+        nreads = 0
+        fastq_source = io.StringIO(fastq_data)
         for read in fastq:
             nreads += 1
             self.assertTrue(isinstance(read.seqid,SequenceIdentifier))
