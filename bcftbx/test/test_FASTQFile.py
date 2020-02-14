@@ -391,12 +391,36 @@ class TestFastqAttributes(unittest.TestCase):
 class TestNReads(unittest.TestCase):
     """Tests of the nreads function
     """
+    def setUp(self):
+        # Temporary working dir
+        self.wd = tempfile.mkdtemp(suffix='.TestNReads')
+
+    def tearDown(self):
+        # Remove temporary working dir
+        if os.path.isdir(self.wd):
+            shutil.rmtree(self.wd)
 
     def test_nreads(self):
-        """Check that nreads returns correct read count
+        """nreads: check that nreads returns correct read count
         """
         fp = io.StringIO(fastq_data)
         self.assertEqual(nreads(fp=fp),5)
+
+    def test_nreads_from_file_on_disk(self):
+        """nreads: check nreads from FASTQ on disk
+        """
+        self.fastq_in = os.path.join(self.wd,'test.fq')
+        with open(self.fastq_in,'w') as fp:
+            fp.write(fastq_data)
+        self.assertEqual(nreads(self.fastq_in),5)
+
+    def test_nreads_from_gzipped_file_on_disk(self):
+        """nreads: check nreads from gzipped FASTQ on disk
+        """
+        self.fastq_in = os.path.join(self.wd,'test.fq.gz')
+        with gzip.GzipFile(self.fastq_in,'wb') as fp:
+            fp.write(fastq_data.encode())
+        self.assertEqual(nreads(self.fastq_in),5)
 
 class TestFastqsArePair(unittest.TestCase):
     """Tests of the fastqs_are_pair function
