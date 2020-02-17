@@ -1,3 +1,17 @@
+2020-02-17  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* genomics-bcftbx version 1.8.1
+	- bcftbx/IlluminaData: fix error in call to 'digits' method
+	  in 'split_run_name_full'
+	  https://github.com/fls-bioinformatics-core/genomics/pull/149
+	- NGS-general/extract_reads.py: fix bug with handling gzipped
+	  files under Python 2, and broken ``--version`` option under
+	  Python 3
+	  https://github.com/fls-bioinformatics-core/genomics/pull/150
+	- bcftbx/FASTQFile: fix bugs with reading Fastqs from disk
+	  under Python 3
+	  https://github.com/fls-bioinformatics-core/genomics/pull/151
+
 2019-11-20  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* genomics-bcftbx version 1.8.1
