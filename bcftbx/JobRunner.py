@@ -39,6 +39,23 @@ Simple usage example:
 >>> # Get the names of the output files
 >>> log,err = (runner.logFile(job_id),runner.errFile(job_id))
 
+Processes run using a job runner inherit the environment where the runner
+is created and executed.
+
+Additionally runners set the 'JOBRUNNER_NSLOTS' environment variable,
+which is set to the number of slots (aka CPUs/cores/threads) available to
+processes executed by the runner. For both 'SimpleJobRunner' and
+'GEJobRunner', this defaults to one (i.e. serial jobs); the 'nslots'
+option can be used when instantiating 'SimpleJobRunner' objects to
+specify more cores, for example:
+
+>>> multicore_runner = SimpleJobRunner(nslots=4)
+
+For 'GEJobRunner' instances the number of cores is set by specifying
+'-pe smp.pe' as part of the 'ge_extra_args' option, for example:
+
+>>> multicore_runner = GEJobRunner(extra_ge_args=('-pe','smp.pe','4'))
+
 """
 
 #######################################################################
