@@ -175,7 +175,7 @@ class SimpleJobRunner(BaseJobRunner):
     command, and jobs are terminated using 'kill -9'.
     """
 
-    def __init__(self,log_dir=None,join_logs=False):
+    def __init__(self,log_dir=None,join_logs=False,nslots=1):
         """Create a new SimpleJobRunner instance
 
         Arguments:
@@ -183,6 +183,8 @@ class SimpleJobRunner(BaseJobRunner):
                    cwd)
           join_logs: Combine stderr and stdout into a single log file (by
                    default stdout and stderr have their own log files)
+          nslots: Number of threads associated with this runner
+                   instance
 
         """
         # Store a list of job ids (= pids) managed by this class
@@ -195,6 +197,8 @@ class SimpleJobRunner(BaseJobRunner):
         self.set_log_dir(log_dir)
         # Join stderr to stdout
         self.__join_logs = join_logs
+        # Number of slots
+        self.__nslots = nslots
         # Keep track of log files etc
         self.__log_files = {}
         self.__err_files = {}
@@ -222,6 +226,7 @@ class SimpleJobRunner(BaseJobRunner):
         logging.debug("Working_dir: %s" % working_dir)
         logging.debug("Log dir    : %s" % self.log_dir)
         logging.debug("Join logs  : %s" % self.__join_logs)
+        logging.debug("Nslots     : %s" % self.nslots)
         logging.debug("Script     : %s" % script)
         logging.debug("Arguments  : %s" % str(args))
         # Build command to be submitted
@@ -246,8 +251,11 @@ class SimpleJobRunner(BaseJobRunner):
             err = io.open(lognames[1],'wt')
         else:
             err = subprocess.STDOUT
+        # Set up the environment
+        env = os.environ.copy()
+        env['JOBRUNNER_NSLOTS'] = "%s" % self.nslots
         # Start the subprocess
-        p = subprocess.Popen(cmd,cwd=cwd,stdout=log,stderr=err)
+        p = subprocess.Popen(cmd,cwd=cwd,stdout=log,stderr=err,env=env)
         # Capture the job id from the output
         job_id = str(p.pid)
         logging.debug("RunScript: done - job id = %s" % job_id)
@@ -287,6 +295,12 @@ class SimpleJobRunner(BaseJobRunner):
         else:
             logging.error("Failed to delete job %s" % job_id)
             return False
+
+    @property
+    def nslots(self):
+        """Return the number of associated slots
+        """
+        return self.__nslots
 
     def name(self,job_id):
         """Return the name for a job

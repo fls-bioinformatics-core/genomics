@@ -170,6 +170,31 @@ class TestSimpleJobRunner(unittest.TestCase):
         self.assertEqual(os.path.dirname(runner.logFile(jobid3)),self.log_dir)
         self.assertEqual(os.path.dirname(runner.errFile(jobid3)),self.log_dir)
 
+    def test_simple_job_runner_nslots(self):
+        """Test SimpleJobRunner setting nslots
+
+        """
+        # Create a runner and check default nslots
+        runner = SimpleJobRunner()
+        self.assertEqual(runner.nslots,1)
+        jobid = self.run_job(runner,
+                             'test',
+                             self.working_dir,
+                             '/bin/bash',('-c','echo $JOBRUNNER_NSLOTS',))
+        self.wait_for_jobs(runner,jobid)
+        with io.open(runner.logFile(jobid),'rt') as fp:
+            self.assertEqual(u"1\n",fp.read())
+        # Create a runner with multiple nslots
+        runner = SimpleJobRunner(nslots=8)
+        self.assertEqual(runner.nslots,8)
+        jobid = self.run_job(runner,
+                             'test',
+                             self.working_dir,
+                             '/bin/bash',('-c','echo $JOBRUNNER_NSLOTS',))
+        self.wait_for_jobs(runner,jobid)
+        with io.open(runner.logFile(jobid),'rt') as fp:
+            self.assertEqual(u"8\n",fp.read())
+
 class TestGEJobRunner(unittest.TestCase):
 
     def setUp(self):
