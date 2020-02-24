@@ -254,12 +254,12 @@ class SimpleJobRunner(BaseJobRunner):
         if working_dir:
             # Move to working directory
             os.chdir(working_dir)
-        logging.debug("RunScript: command: %s" % cmd)
+        logging.debug("SimpleJobRunner: command: %s" % cmd)
         cwd = os.getcwd()
         # Check that this exists
-        logging.debug("RunScript: executing in %s" % cwd)
+        logging.debug("SimpleJobRunner: executing in %s" % cwd)
         if not os.path.exists(cwd):
-            logging.error("RunScript: cwd doesn't exist!")
+            logging.error("SimpleJobRunner: cwd doesn't exist!")
             return None
         # Set up log files
         lognames = self.__assign_log_files(name,working_dir)
@@ -275,7 +275,7 @@ class SimpleJobRunner(BaseJobRunner):
         p = subprocess.Popen(cmd,cwd=cwd,stdout=log,stderr=err,env=env)
         # Capture the job id from the output
         job_id = str(p.pid)
-        logging.debug("RunScript: done - job id = %s" % job_id)
+        logging.debug("SimpleJobRunner: done - job id = %s" % job_id)
         # Do internal house keeping
         self.__job_list.append(job_id)
         self.__log_files[job_id] = lognames[0]
