@@ -1,5 +1,5 @@
 #     IlluminaData.py: module for handling data about Illumina sequencer runs
-#     Copyright (C) University of Manchester 2012-2019 Peter Briggs
+#     Copyright (C) University of Manchester 2012-2020 Peter Briggs
 #
 ########################################################################
 #
@@ -1856,7 +1856,8 @@ class SampleSheetPredictor(object):
             sample_sheet = SampleSheet(sample_sheet_file)
         # Put data into lane order (if lanes specified)
         if sample_sheet.has_lanes:
-            sample_sheet.data.sort(lambda line: line['Lane'])
+            sample_sheet.data.sort(lambda line: line['Lane']
+                                   if line['Lane'] != '' else 99999)
         s_index = 0
         for line in sample_sheet:
             # Get project and sample info
