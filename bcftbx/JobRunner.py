@@ -458,6 +458,24 @@ class GEJobRunner(BaseJobRunner):
         """
         return self.__ge_extra_args
 
+    @property
+    def nslots(self):
+        """Return the number of associated slots
+
+        This is extracted from the 'ge_extra_args'
+        property, by looking for qsub options of the
+        form '-pe smp.pe N' (in which case 'nslots'
+        will be N).
+        """
+        nslots = 1
+        if self.ge_extra_args is not None:
+            try:
+                i = self.ge_extra_args.index('-pe')
+                nslots = int(self.ge_extra_args[i+2])
+            except ValueError:
+                pass
+        return nslots
+
     def run(self,name,working_dir,script,args):
         """Submit a script or command to the cluster via 'qsub'
 
@@ -505,7 +523,9 @@ class GEJobRunner(BaseJobRunner):
         job_script = os.path.join(job_dir,"job_script.sh")
         with io.open(job_script,'wt') as fp:
             fp.write(u"""#!{shell}
+export JOBRUNNER_NSLOTS=$NSLOTS
 echo "$QUEUE" > {job_dir}/__queue
+echo "$JOBRUNNER_NSLOTS" > {job_dir}/__jobrunner_nslots
 {cmd}
 exit_code=$?
 echo "$exit_code" > {job_dir}/__exit_code.tmp
