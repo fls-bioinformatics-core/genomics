@@ -1,5 +1,5 @@
 #     mockGE.py: mock Grid Engine functionality for testing
-#     Copyright (C) University of Manchester 2018-2019 Peter Briggs
+#     Copyright (C) University of Manchester 2018-2020 Peter Briggs
 #
 #######################################################################
 
@@ -115,6 +115,7 @@ class MockGE(object):
           command     VARCHAR,
           working_dir VARCHAR,
           output_name VARCHAR,
+          nslots      INTEGER,
           queue       VARCHAR,
           join_output CHAR,
           pid         INTEGER,
@@ -132,7 +133,8 @@ class MockGE(object):
             print("Failed to set up database: %s" % ex)
             raise ex
 
-    def _init_job(self,name,command,working_dir,queue,output_name,join_output):
+    def _init_job(self,name,command,working_dir,nslots,queue,
+                  output_name,join_output):
         """
         Create a new job id
         """
@@ -148,8 +150,8 @@ class MockGE(object):
         logging.debug("_init_job: cmd: %s" % cmd)
         try:
             sql = """
-            INSERT INTO jobs (user,state,qsub_time,name,command,working_dir,queue,output_name,join_output)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO jobs (user,state,qsub_time,name,command,working_dir,nslots,queue,output_name,join_output)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """
             cu = self._cx.cursor()
             cu.execute(sql,(self._user(),
@@ -158,6 +160,7 @@ class MockGE(object):
                             name,
                             command,
                             working_dir,
+                            nslots,
                             queue,
                             output_name,
                             join_output))
@@ -172,7 +175,7 @@ class MockGE(object):
         """
         # Get job info
         sql = """
-        SELECT name,command,queue,working_dir,output_name,join_output
+        SELECT name,command,nslots,queue,working_dir,output_name,join_output
         FROM jobs WHERE id==?
         """
         cu = self._cx.cursor()
@@ -180,6 +183,7 @@ class MockGE(object):
         job = cu.fetchone()
         name = job['name']
         command = job['command']
+        nslots = job['nslots']
         queue = job['queue']
         working_dir = job['working_dir']
         output_name = job['output_name']
@@ -211,10 +215,10 @@ class MockGE(object):
                                        "__job%d.sh" % job_id)
             with io.open(script_file,'wt') as fp:
                 fp.write(u"""#!%s
-QUEUE=%s %s %s
+NSLOTS=%s QUEUE=%s %s %s
 exit_code=$?
 echo "$exit_code" 1>%s/__exit_code.%d
-""" % (self._shell,queue,command,redirect,self._database_dir,job_id))
+""" % (self._shell,nslots,queue,command,redirect,self._database_dir,job_id))
             os.chmod(script_file,0o775)
             # Run the command and capture process id
             pid = subprocess.Popen(script_file,
@@ -487,6 +491,11 @@ echo "$exit_code" 1>%s/__exit_code.%d
         else:
             working_dir = os.getcwd()
         logging.debug("Working dir: %s" % working_dir)
+        # Parallel environment
+        if args.pe:
+            nslots = args.pe[1]
+        else:
+            nslots = 1
         # Queue
         queue = "mock.q"
         # Output options
@@ -499,7 +508,7 @@ echo "$exit_code" 1>%s/__exit_code.%d
         else:
             join_output = 'n'
         # Create an initial entry in job table
-        job_id = self._init_job(name,cmd,working_dir,queue,
+        job_id = self._init_job(name,cmd,working_dir,nslots,queue,
                                 output_name,join_output)
         logging.debug("Created job %s" % job_id)
         # Report the job id
