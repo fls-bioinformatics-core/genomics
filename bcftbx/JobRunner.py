@@ -1277,13 +1277,28 @@ def fetch_runner(definition):
       RunnerName[(args)]
 
     RunnerName can be 'SimpleJobRunner' or 'GEJobRunner'.
-    If '(args)' are also supplied then these are passed to
-    the job runner on instantiation (only works for
-    GE runners).
+    If '(args)' are also supplied then:
+
+    - for SimpleJobRunners, this can be a single optional
+      argument of the form 'nslots=N' (where N is an integer);
+      use this to set a non-default number of slots
+    - for GEJobRunners, this is a set of arbitrary 'qsub'
+      options that will be used on job submission.
 
     """
     if definition.startswith('SimpleJobRunner'):
-        return SimpleJobRunner(join_logs=True)
+        if definition.startswith('SimpleJobRunner(') and \
+           definition.endswith(')'):
+            args = definition[len('SimpleJobRunner('):len(definition)-1].split(' ')
+            nslots = 1
+            for arg in args:
+                if arg.startswith("nslots="):
+                    nslots = int(arg.split('=')[-1])
+                else:
+                    raise Exception("Unrecognised argument for SimpleJobRunner definition: %s" % arg)
+            return SimpleJobRunner(join_logs=True,nslots=nslots)
+        else:
+            return SimpleJobRunner(join_logs=True)
     elif definition.startswith('GEJobRunner'):
         if definition.startswith('GEJobRunner(') and definition.endswith(')'):
             ge_extra_args = definition[len('GEJobRunner('):len(definition)-1].split(' ')

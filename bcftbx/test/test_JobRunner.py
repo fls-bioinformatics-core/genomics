@@ -557,6 +557,14 @@ class TestFetchRunnerFunction(unittest.TestCase):
         """
         runner = fetch_runner("SimpleJobRunner")
         self.assertTrue(isinstance(runner,SimpleJobRunner))
+        self.assertEqual(runner.nslots,1)
+
+    def test_fetch_simple_job_runner_with_nslots(self):
+        """fetch_runner returns a SimpleJobRunner with nslots
+        """
+        runner = fetch_runner("SimpleJobRunner(nslots=8)")
+        self.assertTrue(isinstance(runner,SimpleJobRunner))
+        self.assertEqual(runner.nslots,8)
 
     def test_fetch_ge_job_runner(self):
         """fetch_runner returns a GEJobRunner
