@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #     JobRunner.py: classes for starting and managing job runs
-#     Copyright (C) University of Manchester 2011-2019 Peter Briggs
+#     Copyright (C) University of Manchester 2011-2020 Peter Briggs
 #
 ########################################################################
 #
