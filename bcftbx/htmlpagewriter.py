@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #     htmlpagewriter: programmatic generation of HTML files
-#     Copyright (C) University of Manchester 2012-2019 Peter Briggs
+#     Copyright (C) University of Manchester 2012-2020 Peter Briggs
 #
 ########################################################################
 #
@@ -9,7 +9,7 @@
 #
 #########################################################################
 
-__version__ = "1.0.2"
+__version__ = "1.0.3"
 
 """htmlpagewriter
 
