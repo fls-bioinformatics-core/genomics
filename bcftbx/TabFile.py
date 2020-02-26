@@ -189,8 +189,6 @@ TabFile object, for example for a comma-delimited file:
 
 """
 
-__version__ = "0.2.12"
-
 from builtins import str
 import io
 import logging

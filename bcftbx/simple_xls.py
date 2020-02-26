@@ -109,8 +109,6 @@ Alternatively the contents of a sheet (or a subset) can be rendered as text:
 
 """
 
-__version__ = "0.0.13"
-
 #######################################################################
 # Import modules that this module depends on
 #######################################################################
