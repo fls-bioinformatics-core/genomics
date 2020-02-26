@@ -9,8 +9,6 @@
 #
 #########################################################################
 
-__version__ = "1.0.3"
-
 """htmlpagewriter
 
 Provides HTMLPageWriter class which provides a simple programmatic
