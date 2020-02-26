@@ -5,6 +5,8 @@ from bcftbx.htmlpagewriter import HTMLPageWriter
 from bcftbx.htmlpagewriter import PNGBase64Encoder
 import unittest
 import io
+import base64
+import tempfile
 
 class TestHTMLPageWriter(unittest.TestCase):
     """
@@ -95,4 +97,21 @@ body { color: blue; }</style>
 <p>We can see how well it works...</p></body>
 </html>
 """)
-        
+
+class TestPNGBase64Encoder(unittest.TestCase):
+    def setUp(self):
+        # Make a psuedo-PNG test file
+        data = b"PNG data"
+        with tempfile.NamedTemporaryFile(delete=False) as fp:
+            self.filen = fp.name
+            fp.write(data)
+        self.encoded_data = base64.b64encode(data).decode()
+
+    def test_encodePNG(self):
+        self.assertEqual(self.encoded_data,
+                         PNGBase64Encoder().encodePNG(self.filen))
+
+    def test_encodePNG_insert_into_text(self):
+        self.assertEqual("the encoded text is: '%s'" % self.encoded_data,
+                         "the encoded text is: '%s'" %
+                         PNGBase64Encoder().encodePNG(self.filen))
