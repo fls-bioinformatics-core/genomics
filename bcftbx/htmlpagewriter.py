@@ -164,4 +164,4 @@ class PNGBase64Encoder(object):
     def encodePNG(self,pngfile):
         """Return base64 string encoding a PNG file.
         """
-        return base64.b64encode(io.open(pngfile,'rb').read())
+        return base64.b64encode(io.open(pngfile,'rb').read()).decode()

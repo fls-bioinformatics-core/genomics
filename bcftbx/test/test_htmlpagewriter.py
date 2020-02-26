@@ -105,7 +105,7 @@ class TestPNGBase64Encoder(unittest.TestCase):
         with tempfile.NamedTemporaryFile(delete=False) as fp:
             self.filen = fp.name
             fp.write(data)
-        self.encoded_data = base64.b64encode(data)
+        self.encoded_data = base64.b64encode(data).decode()
 
     def test_encodePNG(self):
         self.assertEqual(self.encoded_data,
