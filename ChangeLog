@@ -1,6 +1,19 @@
+2020-02-27  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* genomics-bcftbx version 1.8.3
+	- bcftbx: remove internal version numbers from modules which
+	  still had them
+	  https://github.com/fls-bioinformatics-core/genomics/pull/155
+	- bcftbx/htmlpagewriter: update 'PNGBase64Encoder' for Python
+	  3 compatibility
+	  https://github.com/fls-bioinformatics-core/genomics/pull/154
+	- bcftbx/IlluminaData: 'SampleSheetPredictor' updated to
+	  handle blank lane numbers in input samplesheet
+	  https://github.com/fls-bioinformatics-core/genomics/pull/153
+
 2020-02-17  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
-	* genomics-bcftbx version 1.8.1
+	* genomics-bcftbx version 1.8.2
 	- bcftbx/IlluminaData: fix error in call to 'digits' method
 	  in 'split_run_name_full'
 	  https://github.com/fls-bioinformatics-core/genomics/pull/149
