@@ -7,32 +7,32 @@
 # Programs
 #
 # (Leave blank for programs already on standard PATH)
-export FASTQ_SCREEN=/path/to/fastq_screen
-export FASTQC=/path/to/fastqc
-export SOLID2FASTQ=/path/to/solid2fastq
-export QC_BOXPLOTTER=/path/to/genomics/NGS-general/qc_boxplotter.sh
-export SOLID_PREPROCESS_FILTER=/path/to/SOLiD_preprocess_filter_v2.pl
-export REMOVE_MISPAIRS=/path/to/genomics/NGS-general/remove_mispairs.pl
-export SEPARATE_PAIRED_FASTQ=/path/to/genomics/NGS-general/separate_paired_fastq.pl
+export FASTQ_SCREEN=${FASTQ_SCREEN:-fastq_screen}
+export FASTQC=${FASTQC:-fastqc}
+export SOLID2FASTQ=${SOLID2FASTQ:-solid2fastq}
+export QC_BOXPLOTTER=${QC_BOXPLOTTER:-qc_boxplotter.sh}
+export SOLID_PREPROCESS_FILTER=${SOLID_PREPROCESS_FILTER:-SOLiD_preprocess_filter_v2.pl}
+export REMOVE_MISPAIRS=${REMOVE_MISPAIRS:-remove_mispairs.pl}
+export SEPARATE_PAIRED_FASTQ=${SEPARATE_PAIRED_FASTQ:-separate_paired_fastq.pl}
 #
 # Data files
 #
 # Location of fastq_screen configuration files
 # (leave blank for default)
-export FASTQ_SCREEN_CONF_DIR=/path/to/conf_file_dir
+export FASTQ_SCREEN_CONF_DIR=${FASTQ_SCREEN_CONF_DIR:-}
 # Extensions for letterspace and colorspace indexes
 # e.g. if conf file is 'fastq_screen_model_organisms_nt.conf' for
 # letterspace then the extension is '_nt'
-export FASTQ_SCREEN_CONF_NT_EXT=_nt
-export FASTQ_SCREEN_CONF_CS_EXT=
+export FASTQ_SCREEN_CONF_NT_EXT=${FASTQ_SCREEN_CONF_NT_EXT:-_nt}
+export FASTQ_SCREEN_CONF_CS_EXT=${FASTQ_SCREEN_CONF_CS_EXT:-}
 # Specify custom contaminants file for FASTQC
 # (leave blank for default)
-export FASTQC_CONTAMINANTS_FILE=
+export FASTQC_CONTAMINANTS_FILE=${FASTQC_CONTAMINANTS_FILE:-}
 #
 # Ownership and permissions
 #
 # Group and permissions to assign to QC results
 #
 # (Leave blank to keep default group and/or permissions)
-export SET_GROUP=
-export SET_PERMISSIONS=
+export SET_GROUP=${SET_GROUP:-}
+export SET_PERMISSIONS=${SET_PERMISSIONS:-}
