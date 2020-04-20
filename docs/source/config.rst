@@ -4,22 +4,31 @@ Installation and set up
 Installing the genomics/bcftbx package
 **************************************
 
-It is recommended to install directly from github using ``pip``::
+Currently it is recommended to install ``genomics-bcftbx`` from Github
+into a Python virtual environment, for example:
 
-    pip install git+https://github.com/fls-bioinformatics-core/genomics.git
+::
+   
+    virtualenv venv
+    . venv/bin/activate
+    pip install https://github.com/fls-bioinformatics-core/genomics/archive/1.8.3.tar.gz
 
-from within the top-level source directory to install the package.
-
-To use the package without installing it first you will need to add the
-directory to your ``PYTHONPATH`` environment, and reference the scripts and
-programs using their full paths.
+The list of available releases can be found at https://github.com/fls-bioinformatics-core/genomics/releases
 
 
 Dependencies
 ************
 
-The package consists predominantly of code written in Python, which has been
-used extensively with Python 2.6 and 2.7.
+The package consists predominantly of code written in Python, and the
+following versions are supported:
+
+* Python 2.7
+* Python 3.6
+* Python 3.7
+* Python 3.8
+
+However as Python 2.7 is now end-of-life, support within ``genomics-bcftbx``
+will be withdrawn for this version in the near future.
 
 In addition there are scripts requiring:
 
@@ -126,8 +135,8 @@ for colorspace. (In each case the path is the base name for the index files.)
 
 .. _qc_setup:
 
-Create `qc.setup`
-*****************
+Create ``qc.setup``
+*******************
 
 When the package is installed a template ``qc.setup.sample`` file is
 created in the ``config`` subdirectory - it needs to be copied to ``qc.setup``
