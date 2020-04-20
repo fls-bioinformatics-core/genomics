@@ -2,7 +2,7 @@
 
 Setup script to install genomics/bcftbx
 
-Copyright (C) University of Manchester 2011-15 Peter Briggs
+Copyright (C) University of Manchester 2011-20 Peter Briggs
 
 """
 
@@ -34,7 +34,7 @@ setup(name = "genomics-bcftbx",
       maintainer = 'Peter Briggs',
       maintainer_email = 'peter.briggs@manchester.ac.uk',
       packages = ['bcftbx','bcftbx.qc'],
-      license = 'Artistic License',
+      license = 'AFL-3',
       # Pull in dependencies
       install_requires = ['xlwt >= 0.7.2',
                           'xlrd >= 0.7.1',
@@ -56,5 +56,23 @@ setup(name = "genomics-bcftbx",
                      ['QC-pipeline/qc_boxplotter/colour_QC_script.sh',
                       'QC-pipeline/qc_boxplotter/qual2Rinput_file_per_posn.pl',
                       'QC-pipeline/qc_boxplotter/SOLiD_qual_boxplot.R'])],
+      classifiers=[
+          "Development Status :: 4 - Beta",
+          "Environment :: Console",
+          "Intended Audience :: End Users/Desktop",
+          "Intended Audience :: Science/Research",
+          "Intended Audience :: Developers",
+          "License :: OSI Approved :: Academic Free License (AFL)",
+          "Operating System :: POSIX :: Linux",
+          "Operating System :: MacOS",
+          "Topic :: Scientific/Engineering",
+          "Topic :: Scientific/Engineering :: Bio-Informatics",
+          "Programming Language :: Python :: 2",
+          "Programming Language :: Python :: 2.7"
+          "Programming Language :: Python :: 3",
+          'Programming Language :: Python :: 3.6',
+          'Programming Language :: Python :: 3.7',
+          'Programming Language :: Python :: 3.8',
+      ],
       include_package_data=True,
       zip_safe = False)
