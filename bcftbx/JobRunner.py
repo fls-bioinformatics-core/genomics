@@ -42,7 +42,7 @@ Simple usage example:
 Processes run using a job runner inherit the environment where the runner
 is created and executed.
 
-Additionally runners set the 'JOBRUNNER_NSLOTS' environment variable,
+Additionally runners set an 'BCFTBX_RUNNER_NSLOTS' environment variable,
 which is set to the number of slots (aka CPUs/cores/threads) available to
 processes executed by the runner. For both 'SimpleJobRunner' and
 'GEJobRunner', this defaults to one (i.e. serial jobs); the 'nslots'
@@ -270,7 +270,7 @@ class SimpleJobRunner(BaseJobRunner):
             err = subprocess.STDOUT
         # Set up the environment
         env = os.environ.copy()
-        env['JOBRUNNER_NSLOTS'] = "%s" % self.nslots
+        env['BCFTBX_RUNNER_NSLOTS'] = "%s" % self.nslots
         # Start the subprocess
         p = subprocess.Popen(cmd,cwd=cwd,stdout=log,stderr=err,env=env)
         # Capture the job id from the output
@@ -540,9 +540,9 @@ class GEJobRunner(BaseJobRunner):
         job_script = os.path.join(job_dir,"job_script.sh")
         with io.open(job_script,'wt') as fp:
             fp.write(u"""#!{shell}
-export JOBRUNNER_NSLOTS=$NSLOTS
+export BCFTBX_RUNNER_NSLOTS=$NSLOTS
 echo "$QUEUE" > {job_dir}/__queue
-echo "$JOBRUNNER_NSLOTS" > {job_dir}/__jobrunner_nslots
+echo "$BCFTBX_RUNNER_NSLOTS" > {job_dir}/__jobrunner_nslots
 {cmd}
 exit_code=$?
 echo "$exit_code" > {job_dir}/__exit_code.tmp

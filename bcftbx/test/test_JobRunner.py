@@ -171,7 +171,7 @@ class TestSimpleJobRunner(unittest.TestCase):
         self.assertEqual(os.path.dirname(runner.errFile(jobid3)),self.log_dir)
 
     def test_simple_job_runner_nslots(self):
-        """Test SimpleJobRunner setting nslots
+        """Test SimpleJobRunner sets BCFTBX_RUNNER_NSLOTS
 
         """
         # Create a runner and check default nslots
@@ -180,7 +180,8 @@ class TestSimpleJobRunner(unittest.TestCase):
         jobid = self.run_job(runner,
                              'test',
                              self.working_dir,
-                             '/bin/bash',('-c','echo $JOBRUNNER_NSLOTS',))
+                             '/bin/bash',
+                             ('-c','echo $BCFTBX_RUNNER_NSLOTS',))
         self.wait_for_jobs(runner,jobid)
         with io.open(runner.logFile(jobid),'rt') as fp:
             self.assertEqual(u"1\n",fp.read())
@@ -190,7 +191,8 @@ class TestSimpleJobRunner(unittest.TestCase):
         jobid = self.run_job(runner,
                              'test',
                              self.working_dir,
-                             '/bin/bash',('-c','echo $JOBRUNNER_NSLOTS',))
+                             '/bin/bash',
+                             ('-c','echo $BCFTBX_RUNNER_NSLOTS',))
         self.wait_for_jobs(runner,jobid)
         with io.open(runner.logFile(jobid),'rt') as fp:
             self.assertEqual(u"8\n",fp.read())
@@ -494,7 +496,7 @@ class TestGEJobRunner(unittest.TestCase):
         self.assertEqual(runner.queue(jobid),"mock.q")
 
     def test_simple_job_runner_nslots(self):
-        """Test GEJobRunner sets JOBRUNNER_NSLOTS
+        """Test GEJobRunner sets BCFTBX_RUNNER_NSLOTS
         """
         # Create a runner and check default nslots
         runner = GEJobRunner()
@@ -502,7 +504,8 @@ class TestGEJobRunner(unittest.TestCase):
         jobid = self.run_job(runner,
                              'test',
                              self.working_dir,
-                             '/bin/bash',('-c','echo $JOBRUNNER_NSLOTS',))
+                             '/bin/bash',
+                             ('-c','echo $BCFTBX_RUNNER_NSLOTS',))
         self.wait_for_jobs(runner,jobid)
         with io.open(runner.logFile(jobid),'rt') as fp:
             self.assertEqual(u"1\n",fp.read())
@@ -512,7 +515,8 @@ class TestGEJobRunner(unittest.TestCase):
         jobid = self.run_job(runner,
                              'test',
                              self.working_dir,
-                             '/bin/bash',('-c','echo $JOBRUNNER_NSLOTS',))
+                             '/bin/bash',
+                             ('-c','echo $BCFTBX_RUNNER_NSLOTS',))
         self.wait_for_jobs(runner,jobid)
         with io.open(runner.logFile(jobid),'rt') as fp:
             self.assertEqual(u"8\n",fp.read())
