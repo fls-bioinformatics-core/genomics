@@ -27,8 +27,6 @@ import logging
 import xml.dom.minidom
 import shutil
 import base64
-from . import platforms
-from . import TabFile
 
 #######################################################################
 # Classes
