@@ -1850,6 +1850,8 @@ class SampleSheetPredictor(object):
         self._predict_paired_end = False
         self._predict_no_lane_splitting = False
         self._predict_for_lanes = None
+        self._predict_for_reads = None
+        self._include_index_reads = False
         self._force_sample_dir = False
         # Read in data
         if sample_sheet is None:
@@ -1941,6 +1943,7 @@ class SampleSheetPredictor(object):
 
     def set(self,package=None,paired_end=None,
             no_lane_splitting=None,lanes=None,
+            reads=None,include_index_reads=None,
             force_sample_dir=None):
         """
         Configure settings for prediction
@@ -1949,11 +1952,18 @@ class SampleSheetPredictor(object):
           (can be 'bcl2fastq2' or 'casava')
         - paired_end: if True then predict outputs as if
           data is paired end (i.e. R1 and R2 pairs)
+          (NB ignored if 'reads' argument is set)
         - no_lane_splitting: if True then predict outputs
           as if --no-lane-splitting was used for bcl2fastq
         - lanes: if set then should be a list of lane
           numbers that will be used when generating Fastq
           names
+        - reads: if set then should be a list or other
+          iterable with the reads to include in the
+          prediction (e.g. ('R1','R2','I1','R3'))
+        - include_index_reads: if True then includes
+          index reads (i.e. I1,...) in prediction
+          (NB ignored if 'reads' argument is set)
         - force_sample_dir: if True then force insertion
           of a 'sample name' directory for IEM4 sample
           sheets where sample name and ID are the same
@@ -1966,6 +1976,10 @@ class SampleSheetPredictor(object):
         if no_lane_splitting is not None:
             self._predict_no_lane_splitting = no_lane_splitting
         self._predict_for_lanes = lanes
+        if reads is not None:
+            self._predict_for_reads = reads
+        if include_index_reads is not None:
+            self._include_index_reads = include_index_reads
         if force_sample_dir is not None:
             self._force_sample_dir = force_sample_dir
         # Configure projects with same settings
@@ -1974,6 +1988,8 @@ class SampleSheetPredictor(object):
                         paired_end=paired_end,
                         no_lane_splitting=no_lane_splitting,
                         lanes=lanes,
+                        reads=reads,
+                        include_index_reads=include_index_reads,
                         force_sample_dir=force_sample_dir)
 
 class SampleSheetProject(object):
@@ -2017,6 +2033,8 @@ class SampleSheetProject(object):
         self._predict_paired_end = False
         self._predict_no_lane_splitting = False
         self._predict_for_lanes = None
+        self._predict_for_reads = None
+        self._include_index_reads = False
         self._force_sample_dir = False
 
     @property
@@ -2092,6 +2110,7 @@ class SampleSheetProject(object):
 
     def set(self,package=None,paired_end=None,
             no_lane_splitting=None,lanes=None,
+            reads=None,include_index_reads=None,
             force_sample_dir=None):
         """
         Configure settings for prediction
@@ -2100,11 +2119,18 @@ class SampleSheetProject(object):
           (can be 'bcl2fastq2' or 'casava')
         - paired_end: if True then predict outputs as if
           data is paired end (i.e. R1 and R2 pairs)
+          (NB ignored if 'reads' argument is set)
         - no_lane_splitting: if True then predict outputs
           as if --no-lane-splitting was used for bcl2fastq
         - lanes: if set then should be a list of lane
           numbers that will be used when generating Fastq
           names
+        - reads: if set then should be a list or other
+          iterable with the reads to include in the
+          prediction (e.g. ('R1','R2','I1','R3'))
+        - include_index_reads: if True then includes
+          index reads (i.e. I1,...) in prediction
+          (NB ignored if 'reads' argument is set)
         - force_sample_dir: if True then force insertion
           of a 'sample name' directory for IEM4 sample
           sheets where sample name and ID are the same
@@ -2117,6 +2143,10 @@ class SampleSheetProject(object):
         if no_lane_splitting is not None:
             self._predict_no_lane_splitting = no_lane_splitting
         self._predict_for_lanes = lanes
+        if reads is not None:
+            self._predict_for_reads = reads
+        if include_index_reads is not None:
+            self._include_index_reads = include_index_reads
         if force_sample_dir is not None:
             self._force_sample_dir = force_sample_dir
         # Cascade the settings to child samples
@@ -2125,6 +2155,8 @@ class SampleSheetProject(object):
                        paired_end=paired_end,
                        no_lane_splitting=no_lane_splitting,
                        lanes=lanes,
+                       reads=reads,
+                       include_index_reads=include_index_reads,
                        force_sample_dir=force_sample_dir)
 
     def __repr__(self):
@@ -2180,6 +2212,8 @@ class SampleSheetSample(object):
         self._predict_paired_end = False
         self._predict_no_lane_splitting = False
         self._predict_for_lanes = None
+        self._predict_for_reads = None
+        self._include_index_reads = False
         self._force_sample_dir = False
 
     @property
@@ -2237,17 +2271,28 @@ class SampleSheetSample(object):
 
         """
         predicted_fastqs = []
-        if self._predict_paired_end:
-            reads = (1,2)
+        if self._predict_for_reads:
+            base_reads = sorted([r for r in self._predict_for_reads])
+        elif self._predict_paired_end:
+            base_reads = ["R1","R2"]
         else:
-            reads = (1,)
+            base_reads = ["R1",]
+        include_index_reads = (self._include_index_reads and
+                               self._predict_for_reads is None)
         if self._predict_for_package == "bcl2fastq2":
             for barcode_seq in self.barcode_seqs:
+                # Add index reads?
+                if include_index_reads and barcode_seq:
+                    index_reads = ["I%d" % (i+1)
+                                   for i in range(len(barcode_seq.split('-')))]
+                    reads = index_reads + base_reads
+                else:
+                    reads = base_reads
                 # Check if we need to split lanes
                 if self._predict_no_lane_splitting:
                     # No lanes
                     for read in reads:
-                        fastq = "%s_S%d_R%d_001.fastq.gz" % \
+                        fastq = "%s_S%d_%s_001.fastq.gz" % \
                                 (self.sample_id,
                                  self.s_index,
                                  read)
@@ -2262,13 +2307,14 @@ class SampleSheetSample(object):
                         lanes = (1,)
                     for lane in lanes:
                         for read in reads:
-                            fastq = "%s_S%d_L%03d_R%d_001.fastq.gz" % \
+                            fastq = "%s_S%d_L%03d_%s_001.fastq.gz" % \
                                     (self.sample_id,
                                      self.s_index,
                                      lane,
                                      read)
                             predicted_fastqs.append(fastq)
         elif self._predict_for_package == "casava":
+            reads = base_reads
             for barcode_seq in self.barcode_seqs:
                 if self._predict_for_lanes:
                     lanes = self._predict_for_lanes
@@ -2278,7 +2324,7 @@ class SampleSheetSample(object):
                     lanes = (1,)
                 for lane in lanes:
                     for read in reads:
-                        fastq = "%s_%s_L%03d_R%d_001.fastq.gz" % \
+                        fastq = "%s_%s_L%03d_%s_001.fastq.gz" % \
                                 (self.sample_id,
                                  barcode_seq,
                                  lane,read)
@@ -2288,6 +2334,7 @@ class SampleSheetSample(object):
 
     def set(self,package=None,paired_end=None,
             no_lane_splitting=None,lanes=None,
+            reads=None,include_index_reads=None,
             force_sample_dir=None):
         """
         Configure settings for prediction
@@ -2296,11 +2343,18 @@ class SampleSheetSample(object):
           (can be 'bcl2fastq2' or 'casava')
         - paired_end: if True then predict outputs as if
           data is paired end (i.e. R1 and R2 pairs)
+          (NB ignored if 'reads' argument is set)
         - no_lane_splitting: if True then predict outputs
           as if --no-lane-splitting was used for bcl2fastq
         - lanes: if set then should be a list of lane
           numbers that will be used when generating Fastq
           names
+        - reads: if set then should be a list or other
+          iterable with the reads to include in the
+          prediction (e.g. ('R1','R2','I1','R3'))
+        - include_index_reads: if True then includes
+          index reads (i.e. I1,...) in prediction
+          (NB ignored if 'reads' argument is set)
         - force_sample_dir: if True then force insertion
           of a 'sample name' directory for IEM4 sample
           sheets where sample name and ID are the same
@@ -2313,6 +2367,10 @@ class SampleSheetSample(object):
         if no_lane_splitting is not None:
             self._predict_no_lane_splitting = no_lane_splitting
         self._predict_for_lanes = lanes
+        if reads is not None:
+            self._predict_for_reads = reads
+        if include_index_reads is not None:
+            self._include_index_reads = include_index_reads
         if force_sample_dir is not None:
             self._force_sample_dir = force_sample_dir
 
