@@ -1071,7 +1071,7 @@ class MockIlluminaData(object):
             self.add_fastq_batch(self.__undetermined_dir,sample_name,
                                  fastq_base,lanes=None,reads=reads)
 
-    def create(self):
+    def create(self,force_sample_dir=False):
         """Build and populate the directory structure
 
         Creates the directory structure on disk which has been defined
@@ -1088,6 +1088,13 @@ class MockIlluminaData(object):
         create raises an OSError exception if any part of the directory
         structure already exists.
 
+        Arguments:
+          force_sample_dir (bool): if True then for bcl2fastq-style
+            output, always insert a "sample" subdirectory grouping
+            Fastqs for each sample, even if it wouldn't normally be
+            created (default is to only add sample subdirectory if
+            sample name differs from sample ID)
+
         """
         # Create top level directory
         if os.path.exists(self.dirn):
@@ -1100,7 +1107,7 @@ class MockIlluminaData(object):
         if self.package == 'casava':
             self._populate_casava()
         elif self.package == 'bcl2fastq2':
-            self._populate_bcl2fastq2()
+            self._populate_bcl2fastq2(force_sample_dir=force_sample_dir)
 
     def _populate_casava(self):
         """
@@ -1123,9 +1130,16 @@ class MockIlluminaData(object):
                     fq = os.path.join(sample_dirn,fastq)
                     self._touch(fq)
 
-    def _populate_bcl2fastq2(self):
+    def _populate_bcl2fastq2(self,force_sample_dir=False):
         """
         Populate the MockIlluminaData structure in the style of bcl2fastq2
+
+        Arguments:
+          force_sample_dir (bool): if True then always insert a
+            "sample" subdirectory grouping Fastqs for each sample,
+            even if it wouldn't normally be created (default is
+            to only add sample subdirectory if sample name differs
+            from sample ID)
 
         """
         for project_name in self.__projects:
@@ -1139,7 +1153,7 @@ class MockIlluminaData(object):
                 for fastq in self.__projects[project_name][sample_name]:
                     # Check if sample name matches that for fastq
                     fq_sample_name = IlluminaFastq(fastq).sample_name
-                    if fq_sample_name != sample_name and \
+                    if (force_sample_dir or fq_sample_name != sample_name) and \
                        fq_sample_name != 'Undetermined':
                         # Create an intermediate directory
                         sample_dirn = os.path.join(project_dirn,sample_name)
