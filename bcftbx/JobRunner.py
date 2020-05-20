@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #     JobRunner.py: classes for starting and managing job runs
-#     Copyright (C) University of Manchester 2011-2019 Peter Briggs
+#     Copyright (C) University of Manchester 2011-2020 Peter Briggs
 #
 ########################################################################
 #
@@ -38,6 +38,23 @@ Simple usage example:
 >>>     time.sleep(10)
 >>> # Get the names of the output files
 >>> log,err = (runner.logFile(job_id),runner.errFile(job_id))
+
+Processes run using a job runner inherit the environment where the runner
+is created and executed.
+
+Additionally runners set an 'BCFTBX_RUNNER_NSLOTS' environment variable,
+which is set to the number of slots (aka CPUs/cores/threads) available to
+processes executed by the runner. For both 'SimpleJobRunner' and
+'GEJobRunner', this defaults to one (i.e. serial jobs); the 'nslots'
+option can be used when instantiating 'SimpleJobRunner' objects to
+specify more cores, for example:
+
+>>> multicore_runner = SimpleJobRunner(nslots=4)
+
+For 'GEJobRunner' instances the number of cores is set by specifying
+'-pe smp.pe' as part of the 'ge_extra_args' option, for example:
+
+>>> multicore_runner = GEJobRunner(extra_ge_args=('-pe','smp.pe','4'))
 
 """
 
@@ -175,7 +192,7 @@ class SimpleJobRunner(BaseJobRunner):
     command, and jobs are terminated using 'kill -9'.
     """
 
-    def __init__(self,log_dir=None,join_logs=False):
+    def __init__(self,log_dir=None,join_logs=False,nslots=1):
         """Create a new SimpleJobRunner instance
 
         Arguments:
@@ -183,6 +200,8 @@ class SimpleJobRunner(BaseJobRunner):
                    cwd)
           join_logs: Combine stderr and stdout into a single log file (by
                    default stdout and stderr have their own log files)
+          nslots: Number of threads associated with this runner
+                   instance
 
         """
         # Store a list of job ids (= pids) managed by this class
@@ -195,6 +214,8 @@ class SimpleJobRunner(BaseJobRunner):
         self.set_log_dir(log_dir)
         # Join stderr to stdout
         self.__join_logs = join_logs
+        # Number of slots
+        self.__nslots = nslots
         # Keep track of log files etc
         self.__log_files = {}
         self.__err_files = {}
@@ -222,6 +243,7 @@ class SimpleJobRunner(BaseJobRunner):
         logging.debug("Working_dir: %s" % working_dir)
         logging.debug("Log dir    : %s" % self.log_dir)
         logging.debug("Join logs  : %s" % self.__join_logs)
+        logging.debug("Nslots     : %s" % self.nslots)
         logging.debug("Script     : %s" % script)
         logging.debug("Arguments  : %s" % str(args))
         # Build command to be submitted
@@ -232,12 +254,12 @@ class SimpleJobRunner(BaseJobRunner):
         if working_dir:
             # Move to working directory
             os.chdir(working_dir)
-        logging.debug("RunScript: command: %s" % cmd)
+        logging.debug("SimpleJobRunner: command: %s" % cmd)
         cwd = os.getcwd()
         # Check that this exists
-        logging.debug("RunScript: executing in %s" % cwd)
+        logging.debug("SimpleJobRunner: executing in %s" % cwd)
         if not os.path.exists(cwd):
-            logging.error("RunScript: cwd doesn't exist!")
+            logging.error("SimpleJobRunner: cwd doesn't exist!")
             return None
         # Set up log files
         lognames = self.__assign_log_files(name,working_dir)
@@ -246,11 +268,14 @@ class SimpleJobRunner(BaseJobRunner):
             err = io.open(lognames[1],'wt')
         else:
             err = subprocess.STDOUT
+        # Set up the environment
+        env = os.environ.copy()
+        env['BCFTBX_RUNNER_NSLOTS'] = "%s" % self.nslots
         # Start the subprocess
-        p = subprocess.Popen(cmd,cwd=cwd,stdout=log,stderr=err)
+        p = subprocess.Popen(cmd,cwd=cwd,stdout=log,stderr=err,env=env)
         # Capture the job id from the output
         job_id = str(p.pid)
-        logging.debug("RunScript: done - job id = %s" % job_id)
+        logging.debug("SimpleJobRunner: done - job id = %s" % job_id)
         # Do internal house keeping
         self.__job_list.append(job_id)
         self.__log_files[job_id] = lognames[0]
@@ -287,6 +312,12 @@ class SimpleJobRunner(BaseJobRunner):
         else:
             logging.error("Failed to delete job %s" % job_id)
             return False
+
+    @property
+    def nslots(self):
+        """Return the number of associated slots
+        """
+        return self.__nslots
 
     def name(self,job_id):
         """Return the name for a job
@@ -444,6 +475,24 @@ class GEJobRunner(BaseJobRunner):
         """
         return self.__ge_extra_args
 
+    @property
+    def nslots(self):
+        """Return the number of associated slots
+
+        This is extracted from the 'ge_extra_args'
+        property, by looking for qsub options of the
+        form '-pe smp.pe N' (in which case 'nslots'
+        will be N).
+        """
+        nslots = 1
+        if self.ge_extra_args is not None:
+            try:
+                i = self.ge_extra_args.index('-pe')
+                nslots = int(self.ge_extra_args[i+2])
+            except ValueError:
+                pass
+        return nslots
+
     def run(self,name,working_dir,script,args):
         """Submit a script or command to the cluster via 'qsub'
 
@@ -491,7 +540,9 @@ class GEJobRunner(BaseJobRunner):
         job_script = os.path.join(job_dir,"job_script.sh")
         with io.open(job_script,'wt') as fp:
             fp.write(u"""#!{shell}
+export BCFTBX_RUNNER_NSLOTS=$NSLOTS
 echo "$QUEUE" > {job_dir}/__queue
+echo "$BCFTBX_RUNNER_NSLOTS" > {job_dir}/__jobrunner_nslots
 {cmd}
 exit_code=$?
 echo "$exit_code" > {job_dir}/__exit_code.tmp
@@ -1243,13 +1294,28 @@ def fetch_runner(definition):
       RunnerName[(args)]
 
     RunnerName can be 'SimpleJobRunner' or 'GEJobRunner'.
-    If '(args)' are also supplied then these are passed to
-    the job runner on instantiation (only works for
-    GE runners).
+    If '(args)' are also supplied then:
+
+    - for SimpleJobRunners, this can be a single optional
+      argument of the form 'nslots=N' (where N is an integer);
+      use this to set a non-default number of slots
+    - for GEJobRunners, this is a set of arbitrary 'qsub'
+      options that will be used on job submission.
 
     """
     if definition.startswith('SimpleJobRunner'):
-        return SimpleJobRunner(join_logs=True)
+        if definition.startswith('SimpleJobRunner(') and \
+           definition.endswith(')'):
+            args = definition[len('SimpleJobRunner('):len(definition)-1].split(' ')
+            nslots = 1
+            for arg in args:
+                if arg.startswith("nslots="):
+                    nslots = int(arg.split('=')[-1])
+                else:
+                    raise Exception("Unrecognised argument for SimpleJobRunner definition: %s" % arg)
+            return SimpleJobRunner(join_logs=True,nslots=nslots)
+        else:
+            return SimpleJobRunner(join_logs=True)
     elif definition.startswith('GEJobRunner'):
         if definition.startswith('GEJobRunner(') and definition.endswith(')'):
             ge_extra_args = definition[len('GEJobRunner('):len(definition)-1].split(' ')
