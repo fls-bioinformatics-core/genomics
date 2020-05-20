@@ -1,3 +1,29 @@
+2020-05-20  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* genomics-bcftbx version 1.9.0
+	- bcftbx/JobRunner: enable available number of CPUS (aka slots,
+	  cores, threads) to be set and accessed within the
+	  'SimpleJobRunner' and 'GEJobRunner' classes
+	  https://github.com/fls-bioinformatics-core/genomics/pull/152
+	- bcftbx/mock: update 'MockIlluminaData' class to enable
+	  forcing of creation of sample-level subdirectories when
+	  generating mock data
+	  https://github.com/fls-bioinformatics-core/genomics/pull/161
+	- bcftbx/IlluminaData: update 'SampleSheetPredictor' to
+	  handle prediction of index reads, and to handle arbitrary
+	  reads
+	  https://github.com/fls-bioinformatics-core/genomics/pull/160
+	- bcftbx/htmlpagewriter: remove unused imports
+	  https://github.com/fls-bioinformatics-core/genomics/pull/158
+	- Extend the list of supported Python versions to include
+	  3.6 and 3.8; update the licence to Academic Free License
+	  AFL 3.0
+	  https://github.com/fls-bioinformatics-core/genomics/pull/157
+	- config/qc.setup.sample: updated to allow user-defined
+	  environment variables to take precedence over values defined
+	  in the setup file
+	  https://github.com/fls-bioinformatics-core/genomics/pull/156
+
 2020-02-27  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* genomics-bcftbx version 1.8.3
