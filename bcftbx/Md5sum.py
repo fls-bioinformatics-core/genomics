@@ -480,8 +480,10 @@ def md5sum(f):
 
     """
     chksum = hashlib.md5()
+    close_fp = False
     try:
         fp = io.open(f,"rb",buffering=BLOCKSIZE)
+        close_fp = True
     except TypeError:
         fp = f
     for block in iter(fp.read,''):
@@ -489,4 +491,6 @@ def md5sum(f):
             chksum.update(block)
         else:
             break
+    if close_fp:
+        fp.close()
     return chksum.hexdigest()
