@@ -238,36 +238,36 @@ def getlines(filen):
         newline character removed.
     """
     if filen.split('.')[-1] == 'gz':
-        fp = gzip.open(filen,'rb')
+        open_ = gzip.open
     else:
-        fp = io.open(filen,'rb')
+        open_ = io.open
     # Read in data in chunks
     buf = ''
     lines = []
-    while True:
-        # Grab a chunk of data
-        data = fp.read(CHUNKSIZE).decode("UTF-8")
-        # Check for EOF
-        if not data:
-            fp.close()
-            break
-        # Add to buffer and split into lines
-        buf = buf + data
-        if buf[0] == '\n':
-            buf = buf[1:]
-        if buf[-1] != '\n':
-            i = buf.rfind('\n')
-            if i == -1:
-                continue
+    with open_(filen,'rb') as fp:
+        while True:
+            # Grab a chunk of data
+            data = fp.read(CHUNKSIZE).decode("UTF-8")
+            # Check for EOF
+            if not data:
+                break
+            # Add to buffer and split into lines
+            buf = buf + data
+            if buf[0] == '\n':
+                buf = buf[1:]
+            if buf[-1] != '\n':
+                i = buf.rfind('\n')
+                if i == -1:
+                    continue
+                else:
+                    lines = buf[:i].split('\n')
+                    buf = buf[i+1:]
             else:
-                lines = buf[:i].split('\n')
-                buf = buf[i+1:]
-        else:
-            lines = buf[:-1].split('\n')
-            buf = ''
-        # Return the lines one at a time
-        for line in lines:
-            yield line
+                lines = buf[:-1].split('\n')
+                buf = ''
+            # Return the lines one at a time
+            for line in lines:
+                yield line
 
 #######################################################################
 # File system wrappers and utilities
