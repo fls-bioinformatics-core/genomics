@@ -218,6 +218,7 @@ class TestGEJobRunner(unittest.TestCase):
         self.ge_extra_args = []
 
     def tearDown(self):
+        self.mock_ge.stop()
         os.environ['PATH'] = self.old_path
         shutil.rmtree(self.database_dir)
         shutil.rmtree(self.bin_dir)
@@ -495,7 +496,7 @@ class TestGEJobRunner(unittest.TestCase):
         # Check the queue
         self.assertEqual(runner.queue(jobid),"mock.q")
 
-    def test_simple_job_runner_nslots(self):
+    def test_ge_job_runner_nslots(self):
         """Test GEJobRunner sets BCFTBX_RUNNER_NSLOTS
         """
         # Create a runner and check default nslots

@@ -53,6 +53,10 @@ class MockGE(object):
     Each time any of these are invoked, the 'update_jobs' method is
     called to check the status of any active jobs and update the
     database accordingly; this method can also be invoked directly.
+
+    NB the 'stop' method should be invoked on the 'MockGE' instance
+    when it is not longer needed, to ensure that any running
+    processes are properly terminated.
     """
     def __init__(self,max_jobs=4,qsub_delay=0.0,qacct_delay=15.0,
                  shell='/bin/bash',database_dir=None,debug=False):
@@ -81,6 +85,7 @@ class MockGE(object):
         self._database_dir = os.path.abspath(database_dir)
         self._db_file = os.path.join(self._database_dir,
                                      "mockGE.sqlite")
+        self._processes = []
         if not os.path.exists(self._database_dir):
             os.mkdir(self._database_dir)
         init_db = False
@@ -100,7 +105,13 @@ class MockGE(object):
         self._max_jobs = max_jobs
         self._qsub_delay = qsub_delay
         self._qacct_delay = qacct_delay
-        atexit.register(self._cleanup_at_exit)
+        atexit.register(self.stop)
+
+    def stop(self):
+        """
+        Terminate running jobs when MockGE class no longer needed
+        """
+        self._cleanup_processes()
 
     def _init_db(self):
         """
@@ -221,12 +232,15 @@ echo "$exit_code" 1>%s/__exit_code.%d
 """ % (self._shell,nslots,queue,command,redirect,self._database_dir,job_id))
             os.chmod(script_file,0o775)
             # Run the command and capture process id
-            pid = subprocess.Popen(script_file,
-                                   cwd=working_dir,
-                                   close_fds=True,
-                                   stdout=subprocess.PIPE,
-                                   stderr=subprocess.STDOUT,
-                                   preexec_fn=os.setpgrp)
+            process = subprocess.Popen(script_file,
+                                       cwd=working_dir,
+                                       close_fds=True,
+                                       stdout=subprocess.PIPE,
+                                       stderr=subprocess.STDOUT,
+                                       preexec_fn=os.setpgrp)
+            pid = process.pid
+            # Store process object
+            self._processes.append(process)
             # Update the database
             sql = """
             UPDATE jobs SET pid=?,state='r',start_time=?
@@ -425,9 +439,9 @@ echo "$exit_code" 1>%s/__exit_code.%d
         cu.execute(sql,(new_state,job_id,))
         self._cx.commit()
 
-    def _cleanup_at_exit(self):
+    def _cleanup_processes(self):
         """
-        Do clean up on exit
+        Do clean up (i.e. termination) of processes on exit
         """
         logging.debug("Doing cleanup for exit")
         # Stop jobs that are still running
@@ -437,7 +451,6 @@ echo "$exit_code" 1>%s/__exit_code.%d
         """
         cu.execute(sql)
         jobs = cu.fetchall()
-        finished_jobs = []
         for job in jobs:
             job_id = job['id']
             pid = job['pid']
@@ -446,6 +459,8 @@ echo "$exit_code" 1>%s/__exit_code.%d
                 os.kill(pid,9)
             except Exception as ex:
                 pass
+        for process in self._processes:
+            process.kill()
 
     def _user(self):
         """
