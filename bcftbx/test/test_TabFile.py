@@ -72,7 +72,8 @@ chr2\t1234\t5678\t6.8
         tabfile = TabFile(fp=self.fp)
         out_file = os.path.join(self.working_dir,"test.tsv")
         tabfile.write(filen=out_file)
-        self.assertEqual(io.open(out_file,'rt').read(),self.data)
+        with io.open(out_file,'rt') as fp:
+            self.assertEqual(fp.read(),self.data)
 
     def test_write_data_to_file_include_header(self):
         """Write data to file including header
@@ -80,8 +81,8 @@ chr2\t1234\t5678\t6.8
         tabfile = TabFile(fp=self.fp,first_line_is_header=True)
         out_file = os.path.join(self.working_dir,"test.tsv")
         tabfile.write(filen=out_file,include_header=True)
-        self.assertEqual(io.open(out_file,'rt').read(),
-                         self.header+self.data)
+        with io.open(out_file,'rt') as fp:
+            self.assertEqual(fp.read(),self.header+self.data)
 
     def test_load_data_with_header(self):
         """Create and load Tabfile using first line as header
