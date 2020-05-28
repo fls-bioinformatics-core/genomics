@@ -118,7 +118,7 @@ class FastqIterator(Iterator):
             data = self.__fp.read(bufsize)
             if not data:
                 # Reached EOF
-                if self.__fastq_file is None:
+                if self.__fastq_file is not None:
                     self.__fp.close()
                 raise StopIteration
             # Add to buffer and split into lines
