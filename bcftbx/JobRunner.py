@@ -219,6 +219,8 @@ class SimpleJobRunner(BaseJobRunner):
         # Keep track of log files etc
         self.__log_files = {}
         self.__err_files = {}
+        self.__log_fp = {}
+        self.__err_fp = {}
         self.__exit_status = {}
         self.__job_popen = {}
 
@@ -280,10 +282,13 @@ class SimpleJobRunner(BaseJobRunner):
         self.__job_list.append(job_id)
         self.__log_files[job_id] = lognames[0]
         self.__job_popen[job_id] = p
+        self.__log_fp[job_id] = log
         if not self.__join_logs:
             self.__err_files[job_id] = lognames[1]
+            self.__err_fp[job_id] = err
         else:
             self.__err_files[job_id] = None
+            self.__err_fp[job_id] = None
         # Return to original dir if necessary
         if working_dir:
             # Move to working directory
@@ -349,11 +354,19 @@ class SimpleJobRunner(BaseJobRunner):
             if status is None:
                 job_ids.append(job_id)
             else:
+                # Set exit status
                 logging.debug("Job id %s: finished (%s)" % (job_id,
                                                             status))
                 self.__exit_status[job_id] = status
+                # Close output files
+                self.__log_fp[job_id].close()
+                if self.__err_fp[job_id] is not None:
+                    self.__err_fp[job_id].close()
+                # Remove job record
                 try:
                     del(self.__job_popen[job_id])
+                    del(self.__log_fp[job_id])
+                    del(self.__err_fp[job_id])
                 except KeyError:
                     logging.warning("Job id %s: already deleted"
                                     % job_id)
