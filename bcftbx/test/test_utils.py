@@ -545,7 +545,7 @@ class TestListDirsFunction(unittest.TestCase):
     def touch_file(self,name):
         # Add an empty file
         with io.open(os.path.join(self.parent_dir,name),'wt') as fp:
-            fp.write('')
+            fp.write(u'')
 
     def test_empty_dir(self):
         """list_dirs returns empty list when listing empty directory
