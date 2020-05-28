@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #     Md5sum.py: classes and functions for md5 checksum operations
-#     Copyright (C) University of Manchester 2012-2019 Peter Briggs
+#     Copyright (C) University of Manchester 2012-2020 Peter Briggs
 #
 ########################################################################
 #
@@ -463,13 +463,7 @@ def md5sum(f):
     """Return md5sum digest for a file or stream
     
     This implements the md5sum checksum generation using both
-    the hashlib module (which should be available in Python 2.5) and
-    the deprecated md5 module (which will be used if hashlib is
-    unavailable, as is the case for Python 2.4 and earlier).
-
-    The choice of hashlib versus md5 is made automatically and there
-    is no need for the invoking subprogram to decide: the resulting
-    checksums are the same using either library regardless.
+    the hashlib module.
 
     Arguments:
       f: name of the file to generate the checksum from, or
@@ -480,8 +474,10 @@ def md5sum(f):
 
     """
     chksum = hashlib.md5()
+    close_fp = False
     try:
         fp = io.open(f,"rb",buffering=BLOCKSIZE)
+        close_fp = True
     except TypeError:
         fp = f
     for block in iter(fp.read,''):
@@ -489,4 +485,6 @@ def md5sum(f):
             chksum.update(block)
         else:
             break
+    if close_fp:
+        fp.close()
     return chksum.hexdigest()

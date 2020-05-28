@@ -18,9 +18,8 @@ class TestMd5sum(unittest.TestCase):
         # mkstemp returns a tuple
         tmpfile = tempfile.mkstemp()
         self.filen = tmpfile[1]
-        fp = io.open(self.filen,'wt')
-        fp.write(TEST_TEXT)
-        fp.close()
+        with io.open(self.filen,'wt') as fp:
+            fp.write(TEST_TEXT)
 
     def tearDown(self):
         os.remove(self.filen)
@@ -34,9 +33,9 @@ class TestMd5sum(unittest.TestCase):
     def test_md5sum_for_stream(self):
         """md5sum function generates correct MD5 hash for stream
         """
-        fp = io.open(self.filen,'rb')
-        self.assertEqual(md5sum(fp),
-                         '08a6facee51e5435b9ef3744bd4dd5dc')
+        with io.open(self.filen,'rb') as fp:
+            self.assertEqual(md5sum(fp),
+                             '08a6facee51e5435b9ef3744bd4dd5dc')
 
     def test_no_file_name(self):
         """md5sum function handles 'None' as input file name
