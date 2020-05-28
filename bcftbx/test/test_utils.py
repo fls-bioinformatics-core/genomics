@@ -544,7 +544,8 @@ class TestListDirsFunction(unittest.TestCase):
 
     def touch_file(self,name):
         # Add an empty file
-        io.open(os.path.join(self.parent_dir,name),'wt').close()
+        with io.open(os.path.join(self.parent_dir,name),'wt') as fp:
+            fp.write('')
 
     def test_empty_dir(self):
         """list_dirs returns empty list when listing empty directory
@@ -706,7 +707,8 @@ class TestChmodFunction(unittest.TestCase):
         """Check chmod works on a file
         """
         test_file = os.path.join(self.test_dir,'test.txt')
-        io.open(test_file,'wt').write(u"Some random text")
+        with io.open(test_file,'wt') as fp:
+            fp.write(u"Some random text")
         chmod(test_file,0o644)
         self.assertEqual(stat.S_IMODE(os.lstat(test_file).st_mode),0o644)
         chmod(test_file,0o755)
@@ -726,7 +728,8 @@ class TestChmodFunction(unittest.TestCase):
         """Check chmod doesn't follow symbolic links
         """
         test_file = os.path.join(self.test_dir,'test.txt')
-        io.open(test_file,'w').write(u"Some random text")
+        with io.open(test_file,'w') as fp:
+            fp.write(u"Some random text")
         test_link = os.path.join(self.test_dir,'test.lnk')
         os.symlink(test_file,test_link)
         chmod(test_file,0o644)
@@ -1047,7 +1050,8 @@ NATAAATCACCTCACTTAAGTGGCTGGAGACAAATA
                                 [self.fastq1,self.fastq2],
                                 overwrite=True,
                                 verbose=False)
-        merged_fastq_data = io.open(self.merged_fastq,'rt').read()
+        with io.open(self.merged_fastq,'rt') as fp:
+            merged_fastq_data = fp.read()
         self.assertEqual(merged_fastq_data,self.fastq_data1+self.fastq_data2)
 
     def test_concatenate_fastq_files_gzipped(self):

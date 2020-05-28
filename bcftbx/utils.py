@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #     utils.py: utility classes and functions shared between BCF codes
-#     Copyright (C) University of Manchester 2013-2019 Peter Briggs
+#     Copyright (C) University of Manchester 2013-2020 Peter Briggs
 #
 ########################################################################
 #
@@ -249,6 +249,7 @@ def getlines(filen):
         data = fp.read(CHUNKSIZE).decode("UTF-8")
         # Check for EOF
         if not data:
+            fp.close()
             break
         # Add to buffer and split into lines
         buf = buf + data
