@@ -223,6 +223,8 @@ class SimpleJobRunner(BaseJobRunner):
         self.__err_fp = {}
         self.__exit_status = {}
         self.__job_popen = {}
+        # Job id lock
+        self.__job_lock = ResourceLock()
 
     def __repr__(self):
         return 'SimpleJobRunner'
@@ -345,10 +347,19 @@ class SimpleJobRunner(BaseJobRunner):
         job_ids = []
         for job_id in [jid for jid in self.__job_popen]:
             try:
+                # Get lock on this job id
+                lock = None
+                while lock is None:
+                    lock = self.__job_lock.acquire(job_id)
+                logging.debug("SimpleJobRunner: acquired lock: %s" % lock)
+                # Get the associated Popen instance
                 p = self.__job_popen[job_id]
             except KeyError:
                 # Job has been removed since the list
                 # was fetched? Ignore
+                logging.debug("SimpleJobRunner: job %s has gone away" %
+                              job_id)
+                self.__job_lock.release(lock)
                 continue
             status = p.poll()
             if status is None:
@@ -359,17 +370,25 @@ class SimpleJobRunner(BaseJobRunner):
                                                             status))
                 self.__exit_status[job_id] = status
                 # Close output files
-                self.__log_fp[job_id].close()
-                if self.__err_fp[job_id] is not None:
-                    self.__err_fp[job_id].close()
-                # Remove job record
-                try:
-                    del(self.__job_popen[job_id])
-                    del(self.__log_fp[job_id])
-                    del(self.__err_fp[job_id])
-                except KeyError:
-                    logging.warning("Job id %s: already deleted"
-                                    % job_id)
+                for fp in (self.__log_fp,
+                           self.__err_fp,):
+                    try:
+                        if fp[job_id] is not None:
+                            fp[job_id].close()
+                    except KeyError:
+                        logging.warning("Job id %s: couldn't get output "
+                                        "file to close" % job_id)
+                # Remove job records
+                for data in (self.__job_popen,
+                             self.__log_fp,
+                             self.__err_fp,):
+                    try:
+                        del(data[job_id])
+                    except KeyError:
+                        logging.warning("Job id %s: record already "
+                                        "deleted?" % job_id)
+            # Release the lock
+            self.__job_lock.release(lock)
         return job_ids
 
     def exit_status(self,job_id):
