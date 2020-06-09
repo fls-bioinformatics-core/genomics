@@ -1,3 +1,14 @@
+2020-06-09  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* genomics-bcftbx version 1.9.1
+	- bcftbx: fix unclosed files and related bugs that were
+	  producing 'ResourceWarnings' under Python 3 tests
+	  https://github.com/fls-bioinformatics-core/genomics/pull/163
+	- bcftbx/JobRunner: improvements to thread safety of the
+	  'SimpleJobRunner' class when handling job completion and
+	  cleanup
+	  https://github.com/fls-bioinformatics-core/genomics/pull/166
+
 2020-05-20  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* genomics-bcftbx version 1.9.0
