@@ -253,18 +253,17 @@ class SimpleJobRunner(BaseJobRunner):
         # Build command to be submitted
         cmd = [script]
         cmd.extend(args)
-        # Capture current dir
-        current_dir = os.getcwd()
-        if working_dir:
-            # Move to working directory
-            os.chdir(working_dir)
         logging.debug("SimpleJobRunner: command: %s" % cmd)
-        cwd = os.getcwd()
-        # Check that this exists
-        logging.debug("SimpleJobRunner: executing in %s" % cwd)
-        if not os.path.exists(cwd):
-            logging.error("SimpleJobRunner: cwd doesn't exist!")
-            return None
+        # Check working directory
+        if working_dir:
+            working_dir = os.path.abspath(working_dir)
+            if not os.path.exists(working_dir):
+                logging.error("SimpleJobRunner: working dir '%s' doesn't "
+                              "exist!" % working_dir)
+                return None
+        else:
+            working_dir = os.get_cwd()
+        logging.debug("SimpleJobRunner: executing in %s" % working_dir)
         # Set up log files
         lognames = self.__assign_log_files(name,working_dir)
         log = io.open(lognames[0],'wt')
@@ -276,7 +275,10 @@ class SimpleJobRunner(BaseJobRunner):
         env = os.environ.copy()
         env['BCFTBX_RUNNER_NSLOTS'] = "%s" % self.nslots
         # Start the subprocess
-        p = subprocess.Popen(cmd,cwd=cwd,stdout=log,stderr=err,env=env)
+        p = subprocess.Popen(cmd,
+                             cwd=working_dir,
+                             stdout=log,stderr=err,
+                             env=env)
         # Capture the job id from the output
         job_id = str(p.pid)
         logging.debug("SimpleJobRunner: done - job id = %s" % job_id)
@@ -291,10 +293,6 @@ class SimpleJobRunner(BaseJobRunner):
         else:
             self.__err_files[job_id] = None
             self.__err_fp[job_id] = None
-        # Return to original dir if necessary
-        if working_dir:
-            # Move to working directory
-            os.chdir(current_dir)
         # Store name against job id
         if job_id is not None:
             self.__names[job_id] = name
@@ -414,7 +412,7 @@ class SimpleJobRunner(BaseJobRunner):
         log_file = "%s.o%s" % (name,timestamp)
         error_file = "%s.e%s" % (name,timestamp)
         if self.log_dir is None:
-            log_dir = os.getcwd()
+            log_dir = working_dir
         else:
             log_dir = self.log_dir
         log_file = os.path.join(log_dir,log_file)
