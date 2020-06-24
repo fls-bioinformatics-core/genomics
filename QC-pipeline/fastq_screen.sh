@@ -99,7 +99,7 @@ if [ -z "$subset" ] || [ "$subset" == "0" ] ; then
 	    [0-4])
 		subset_option=
 		;;
-	    [5-9])
+	    [5-9]|1[3-4])
 		if [ "$MINOR_VERSION" == "6" ] ; then
 		    case "$PATCH_VERSION" in
 			[0-2])
@@ -127,7 +127,7 @@ if [ $MAJOR_VERSION == "v0" ] ; then
         [0-8])
             force_option=
             ;;
-        9)
+        9|1[3-4])
             force_option="--force"
             ;;
         *)
@@ -211,7 +211,7 @@ for screen in $SCREENS ; do
 		    fastq_screen_txt=${fastq%.fastq}_screen.txt
 		    fastq_screen_png=${fastq%.fastq}_screen.png
 		    ;;
-		v0.[5-9])
+		v0.[5-9]|v0.1[3-4])
 		    fastq_screen_txt=${fastq_base}_screen.txt
 		    fastq_screen_png=${fastq_base}_screen.png
 		    ;;
