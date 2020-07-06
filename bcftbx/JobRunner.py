@@ -262,7 +262,7 @@ class SimpleJobRunner(BaseJobRunner):
                               "exist!" % working_dir)
                 return None
         else:
-            working_dir = os.get_cwd()
+            working_dir = os.getcwd()
         logging.debug("SimpleJobRunner: executing in %s" % working_dir)
         # Set up log files
         lognames = self.__assign_log_files(name,working_dir)
