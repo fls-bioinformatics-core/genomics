@@ -197,6 +197,18 @@ class TestSimpleJobRunner(unittest.TestCase):
         with io.open(runner.logFile(jobid),'rt') as fp:
             self.assertEqual(u"8\n",fp.read())
 
+    def test_simple_job_runner_repr(self):
+        """Test SimpleJobRunner '__repr__' built-in
+        """
+        self.assertEqual(str(SimpleJobRunner()),
+                         'SimpleJobRunner(join_logs=False)')
+        self.assertEqual(str(SimpleJobRunner(nslots=8)),
+                         'SimpleJobRunner(nslots=8 join_logs=False)')
+        self.assertEqual(str(SimpleJobRunner(join_logs=True)),
+                         'SimpleJobRunner(join_logs=True)')
+        self.assertEqual(str(SimpleJobRunner(nslots=8,join_logs=True)),
+                         'SimpleJobRunner(nslots=8 join_logs=True)')
+
 class TestGEJobRunner(unittest.TestCase):
 
     def setUp(self):
@@ -570,6 +582,13 @@ class TestFetchRunnerFunction(unittest.TestCase):
         runner = fetch_runner("SimpleJobRunner(nslots=8)")
         self.assertTrue(isinstance(runner,SimpleJobRunner))
         self.assertEqual(runner.nslots,8)
+
+    def test_fetch_simple_job_runner_with_join_logs(self):
+        """fetch_runner returns a SimpleJobRunner with join_logs
+        """
+        runner = fetch_runner("SimpleJobRunner(join_logs=False)")
+        self.assertTrue(isinstance(runner,SimpleJobRunner))
+        self.assertEqual(runner.nslots,1)
 
     def test_fetch_ge_job_runner(self):
         """fetch_runner returns a GEJobRunner
