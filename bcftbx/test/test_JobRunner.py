@@ -200,13 +200,14 @@ class TestSimpleJobRunner(unittest.TestCase):
     def test_simple_job_runner_repr(self):
         """Test SimpleJobRunner '__repr__' built-in
         """
-        self.assertEqual(str(SimpleJobRunner()),'SimpleJobRunner')
+        self.assertEqual(str(SimpleJobRunner()),
+                         'SimpleJobRunner(join_logs=False)')
         self.assertEqual(str(SimpleJobRunner(nslots=8)),
-                             'SimpleJobRunner(nslots=8)')
+                         'SimpleJobRunner(nslots=8 join_logs=False)')
         self.assertEqual(str(SimpleJobRunner(join_logs=True)),
-                             'SimpleJobRunner(join_logs=True)')
+                         'SimpleJobRunner(join_logs=True)')
         self.assertEqual(str(SimpleJobRunner(nslots=8,join_logs=True)),
-                             'SimpleJobRunner(nslots=8 join_logs=True)')
+                         'SimpleJobRunner(nslots=8 join_logs=True)')
 
 class TestGEJobRunner(unittest.TestCase):
 

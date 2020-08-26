@@ -231,8 +231,7 @@ class SimpleJobRunner(BaseJobRunner):
         args = []
         if self.__nslots > 1:
             args.append('nslots=%s' % self.__nslots)
-        if self.__join_logs:
-            args.append('join_logs=True')
+        args.append('join_logs=%s' % self.__join_logs)
         if args:
             name += '(%s)' % ' '.join(args)
         return name
