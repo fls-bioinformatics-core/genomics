@@ -582,6 +582,13 @@ class TestFetchRunnerFunction(unittest.TestCase):
         self.assertTrue(isinstance(runner,SimpleJobRunner))
         self.assertEqual(runner.nslots,8)
 
+    def test_fetch_simple_job_runner_with_join_logs(self):
+        """fetch_runner returns a SimpleJobRunner with join_logs
+        """
+        runner = fetch_runner("SimpleJobRunner(join_logs=False)")
+        self.assertTrue(isinstance(runner,SimpleJobRunner))
+        self.assertEqual(runner.nslots,1)
+
     def test_fetch_ge_job_runner(self):
         """fetch_runner returns a GEJobRunner
         """

@@ -1334,9 +1334,14 @@ def fetch_runner(definition):
     RunnerName can be 'SimpleJobRunner' or 'GEJobRunner'.
     If '(args)' are also supplied then:
 
-    - for SimpleJobRunners, this can be a single optional
-      argument of the form 'nslots=N' (where N is an integer);
-      use this to set a non-default number of slots
+    - for SimpleJobRunners, this can be a list of optional
+      arguments separated by spaces:
+      * 'nslots=N' (where N is an integer; sets a non-default
+        number of slots
+      * 'join_logs=BOOLEAN' (where BOOLEAN can be 'True',
+        'true','y','False','false','n'; sets whether stdout
+        and stderr should be written to the same file)
+
     - for GEJobRunners, this is a set of arbitrary 'qsub'
       options that will be used on job submission.
 
@@ -1346,12 +1351,23 @@ def fetch_runner(definition):
            definition.endswith(')'):
             args = definition[len('SimpleJobRunner('):len(definition)-1].split(' ')
             nslots = 1
+            join_logs=True
             for arg in args:
                 if arg.startswith("nslots="):
                     nslots = int(arg.split('=')[-1])
+                elif arg.startswith("join_logs="):
+                    join_logs = arg.split('=')[-1].lower()
+                    if join_logs in ('true','yes','y'):
+                        join_logs = True
+                    elif join_logs in ('false','no','n'):
+                        join_logs = False
+                    else:
+                        raise Exception("Invalid value for SimpleJobRunner "
+                                        "'join_logs': %s" % join_logs)
                 else:
-                    raise Exception("Unrecognised argument for SimpleJobRunner definition: %s" % arg)
-            return SimpleJobRunner(join_logs=True,nslots=nslots)
+                    raise Exception("Unrecognised argument for "
+                                    "SimpleJobRunner definition: %s" % arg)
+            return SimpleJobRunner(join_logs=join_logs,nslots=nslots)
         else:
             return SimpleJobRunner(join_logs=True)
     elif definition.startswith('GEJobRunner'):
