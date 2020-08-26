@@ -227,7 +227,15 @@ class SimpleJobRunner(BaseJobRunner):
         self.__job_lock = ResourceLock()
 
     def __repr__(self):
-        return 'SimpleJobRunner'
+        name = 'SimpleJobRunner'
+        args = []
+        if self.__nslots > 1:
+            args.append('nslots=%s' % self.__nslots)
+        if self.__join_logs:
+            args.append('join_logs=True')
+        if args:
+            name += '(%s)' % ' '.join(args)
+        return name
 
     def run(self,name,working_dir,script,args):
         """Run a command and return the PID (=job id)
