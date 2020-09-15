@@ -2000,6 +2000,29 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
         self.assertEqual(casava[0]['Recipe'],'')
         self.assertEqual(casava[0]['Operator'],'')
         self.assertEqual(casava[0]['SampleProject'],'PJB')
+    def test_handle_empty_trailing_lines(self):
+        """IEMSampleSheet: handle empty trailing lines
+
+        """
+        fp = io.StringIO(u"""[Header],,,,,,,,,,
+IEMFileVersion,4,,,,,,,,,
+Date,06/03/2014,,,,,,,,,
+,,,,,,,,,,
+[Data],,,,,,,,,,
+Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_ID,index2,Sample_Project,Description
+1,PJB1-1579,PJB1-1579,,,N701,CGATGTAT ,N501,TCTTTCCC,PeterBriggs,
+1,PJB2-1580,PJB2-1580,,,N702,TGACCAAT ,N502,TCTTTCCC,PeterBriggs,
+,,,,,,,,,
+,,,,,,,,,,
+""")
+        iem = IEMSampleSheet(fp=fp)
+        self.assertEqual(len(iem.data),2)
+        self.assertEqual(
+            str(iem.data[0]),
+            "1,PJB1-1579,PJB1-1579,,,N701,CGATGTAT,N501,TCTTTCCC,PeterBriggs,")
+        self.assertEqual(
+            str(iem.data[1]),
+            "1,PJB2-1580,PJB2-1580,,,N702,TGACCAAT,N502,TCTTTCCC,PeterBriggs,")
     def test_bad_input_unrecognised_section(self):
         """IEMSampleSheet: raises exception for input with unrecognised section
 
