@@ -51,6 +51,14 @@ class TestIlluminaRun(unittest.TestCase):
         self.assertEqual(run.runinfo_xml,
                          os.path.join(self.mock_illumina_run.dirn,
                                       'RunInfo.xml'))
+        self.assertTrue(isinstance(run.sample_sheet,SampleSheet))
+        self.assertTrue(isinstance(run.runinfo,IlluminaRunInfo))
+        self.assertEqual(run.runinfo.run_id,
+                         '151125_M00879_0001_000000000-ABCDE1')
+        self.assertEqual(run.runinfo.instrument,'M00879')
+        self.assertEqual(run.runinfo.date,'151125')
+        self.assertEqual(run.runinfo.run_number,'0001')
+        self.assertEqual(run.runinfo.flowcell,'000000000-ABCDE1')
         self.assertEqual(run.bcl_extension,".bcl")
         self.assertEqual(run.lanes,[1,])
         self.assertEqual(run.cycles,218)
@@ -76,6 +84,14 @@ class TestIlluminaRun(unittest.TestCase):
         self.assertEqual(run.runinfo_xml,
                          os.path.join(self.mock_illumina_run.dirn,
                                       'RunInfo.xml'))
+        self.assertTrue(isinstance(run.sample_sheet,SampleSheet))
+        self.assertTrue(isinstance(run.runinfo,IlluminaRunInfo))
+        self.assertEqual(run.runinfo.run_id,
+                         '151125_SN700511R_0002_000000000-ABCDE1XX')
+        self.assertEqual(run.runinfo.instrument,'SN700511R')
+        self.assertEqual(run.runinfo.date,'151125')
+        self.assertEqual(run.runinfo.run_number,'0002')
+        self.assertEqual(run.runinfo.flowcell,'000000000-ABCDE1XX')
         self.assertEqual(run.bcl_extension,".bcl.gz")
         self.assertEqual(run.lanes,[1,2,3,4,5,6,7,8])
         self.assertEqual(run.cycles,218)
@@ -98,6 +114,14 @@ class TestIlluminaRun(unittest.TestCase):
         self.assertEqual(run.runinfo_xml,
                          os.path.join(self.mock_illumina_run.dirn,
                                       'RunInfo.xml'))
+        self.assertEqual(run.sample_sheet,None)
+        self.assertTrue(isinstance(run.runinfo,IlluminaRunInfo))
+        self.assertEqual(run.runinfo.run_id,
+                         '151125_NB500968_0003_000000000-ABCDE1XX')
+        self.assertEqual(run.runinfo.instrument,'NB500968')
+        self.assertEqual(run.runinfo.date,'151125')
+        self.assertEqual(run.runinfo.run_number,'0003')
+        self.assertEqual(run.runinfo.flowcell,'000000000-ABCDE1XX')
         self.assertEqual(run.bcl_extension,".bcl.bgzf")
         self.assertEqual(run.lanes,[1,2,3,4])
         self.assertEqual(run.cycles,158)
@@ -133,6 +157,14 @@ class TestIlluminaRun(unittest.TestCase):
         self.assertEqual(run.runinfo_xml,
                          os.path.join(self.mock_illumina_run.dirn,
                                       'RunInfo.xml'))
+        self.assertTrue(isinstance(run.sample_sheet,SampleSheet))
+        self.assertTrue(isinstance(run.runinfo,IlluminaRunInfo))
+        self.assertEqual(run.runinfo.run_id,
+                         '180329_UNKNOWN0001_0001_000000000-ABCDE1')
+        self.assertEqual(run.runinfo.instrument,'UNKNOWN0001')
+        self.assertEqual(run.runinfo.date,'180329')
+        self.assertEqual(run.runinfo.run_number,'0001')
+        self.assertEqual(run.runinfo.flowcell,'000000000-ABCDE1')
         self.assertEqual(run.bcl_extension,".bcl")
         self.assertEqual(run.lanes,[1,])
         self.assertEqual(run.cycles,218)
@@ -144,6 +176,8 @@ class TestIlluminaRun(unittest.TestCase):
         self.assertEqual(run.basecalls_dir,None)
         self.assertEqual(run.sample_sheet_csv,None)
         self.assertEqual(run.runinfo_xml,None)
+        self.assertEqual(run.sample_sheet,None)
+        self.assertEqual(run.runinfo,None)
         self.assertRaises(Exception,getattr,run,'bcl_extension')
         self.assertEqual(run.lanes,[])
         self.assertEqual(run.cycles,None)
@@ -155,6 +189,8 @@ class TestIlluminaRun(unittest.TestCase):
         self.assertEqual(run.basecalls_dir,None)
         self.assertEqual(run.sample_sheet_csv,None)
         self.assertEqual(run.runinfo_xml,None)
+        self.assertEqual(run.sample_sheet,None)
+        self.assertEqual(run.runinfo,None)
         self.assertRaises(Exception,getattr,run,'bcl_extension')
         self.assertEqual(run.lanes,[])
         self.assertEqual(run.cycles,None)
