@@ -188,7 +188,11 @@ class TestIlluminaRunInfo(unittest.TestCase):
         run_info = IlluminaRunInfo(run_info_xml)
         self.assertEqual(run_info.run_id,
                          "151125_NB500968_0003_000000000-ABCDE1XX")
+        self.assertEqual(run_info.date,'151125')
+        self.assertEqual(run_info.instrument,'NB500968')
         self.assertEqual(run_info.run_number,'0003')
+        self.assertEqual(run_info.flowcell,'000000000-ABCDE1XX')
+        self.assertEqual(run_info.lane_count,'8')
         self.assertEqual(run_info.bases_mask,"y101,I8,I8,y101")
         self.assertEqual(len(run_info.reads),4)
         self.assertEqual(run_info.reads[0]['number'],'1')
