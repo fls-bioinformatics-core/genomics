@@ -1044,6 +1044,11 @@ class SampleSheet(object):
             for i,line in enumerate(self._data):
                 if str(line).startswith('#'):
                     del(self._data[i])
+            # Remove empty trailing lines
+            while len(self._data):
+                if ''.join([str(x) for x in self._data[-1]]):
+                    break
+                del(self._data[-1])
         # Guess the format if not already set
         if self._format is None:
             if not self._header and \
