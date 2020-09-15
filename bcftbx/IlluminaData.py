@@ -187,7 +187,11 @@ class IlluminaRunInfo(object):
     Extracts basic information from a RunInfo.xml file:
 
     run_id     : the run id e.g.'130805_PJ600412T_0012_ABCDEZXDYY'
-    run_number : the run number e.g. '12'
+    run_number : the run number e.g. '0012'
+    instrument : the instrument name e.g. 'PJ600412T'
+    date       : the run date e.g. '130805'
+    flowcell   : the flowcell id e.g. 'ABCDEZXDYY'
+    lane_count : the flowcell lane count e.g. 8
     bases_mask : bases mask string derived from the read information
                  e.g. 'y101,I6,y101'
     reads      : a list of Python dictionaries (one per read)
@@ -212,13 +216,23 @@ class IlluminaRunInfo(object):
         self.runinfo_xml = runinfo_xml
         self.run_id = None
         self.run_number = None
+        self.instrument = None
+        self.flowcell = None
+        self.date = None
+        self.lane_count = None
         self.reads = []
         # Process contents
-        #
         doc = xml.dom.minidom.parse(self.runinfo_xml)
         run_tag = doc.getElementsByTagName('Run')[0]
         self.run_id = run_tag.getAttribute('Id')
         self.run_number = run_tag.getAttribute('Number')
+        self.instrument = \
+                doc.getElementsByTagName('Instrument')[0].firstChild.nodeValue
+        self.flowcell = \
+                doc.getElementsByTagName('Flowcell')[0].firstChild.nodeValue
+        self.date = doc.getElementsByTagName('Date')[0].firstChild.nodeValue
+        flowcell_layout_tag = doc.getElementsByTagName('FlowcellLayout')[0]
+        self.lane_count = flowcell_layout_tag.getAttribute('LaneCount')
         read_tags = doc.getElementsByTagName('Read')
         for read_tag in read_tags:
             self.reads.append({'number': read_tag.getAttribute('Number'),

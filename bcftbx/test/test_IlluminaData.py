@@ -4,6 +4,7 @@
 from bcftbx.IlluminaData import *
 from bcftbx.mock import MockIlluminaRun
 from bcftbx.mock import MockIlluminaData
+from bcftbx.mock import RunInfoXml
 from bcftbx.TabFile import TabDataLine
 import bcftbx.utils
 import unittest
@@ -157,6 +158,55 @@ class TestIlluminaRun(unittest.TestCase):
         self.assertRaises(Exception,getattr,run,'bcl_extension')
         self.assertEqual(run.lanes,[])
         self.assertEqual(run.cycles,None)
+
+class TestIlluminaRunInfo(unittest.TestCase):
+    """
+    Tests for the IlluminaRunInfo class
+    """
+    def setUp(self):
+        # Create a temporary working directory
+        self.tmpdir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        # Remove the test directory
+        try:
+            os.rmdir(self.tmpdir)
+        except Exception:
+            pass
+
+    def test_illuminaruninfo(self):
+        """
+        IlluminaRunInfo: check data is extracted
+        """
+        run_info_xml = os.path.join(self.tmpdir,"RunInfo.xml")
+        with open(run_info_xml,'wt') as fp:
+            fp.write(RunInfoXml.create(
+                run_name="151125_NB500968_0003_000000000-ABCDE1XX",
+                bases_mask="y101,I8,I8,y101",
+                nlanes=8,
+                tilecount=16))
+        run_info = IlluminaRunInfo(run_info_xml)
+        self.assertEqual(run_info.run_id,
+                         "151125_NB500968_0003_000000000-ABCDE1XX")
+        self.assertEqual(run_info.date,'151125')
+        self.assertEqual(run_info.instrument,'NB500968')
+        self.assertEqual(run_info.run_number,'0003')
+        self.assertEqual(run_info.flowcell,'000000000-ABCDE1XX')
+        self.assertEqual(run_info.lane_count,'8')
+        self.assertEqual(run_info.bases_mask,"y101,I8,I8,y101")
+        self.assertEqual(len(run_info.reads),4)
+        self.assertEqual(run_info.reads[0]['number'],'1')
+        self.assertEqual(run_info.reads[0]['num_cycles'],'101')
+        self.assertEqual(run_info.reads[0]['is_indexed_read'],'N')
+        self.assertEqual(run_info.reads[1]['number'],'2')
+        self.assertEqual(run_info.reads[1]['num_cycles'],'8')
+        self.assertEqual(run_info.reads[1]['is_indexed_read'],'Y')
+        self.assertEqual(run_info.reads[2]['number'],'3')
+        self.assertEqual(run_info.reads[2]['num_cycles'],'8')
+        self.assertEqual(run_info.reads[2]['is_indexed_read'],'Y')
+        self.assertEqual(run_info.reads[3]['number'],'4')
+        self.assertEqual(run_info.reads[3]['num_cycles'],'101')
+        self.assertEqual(run_info.reads[3]['is_indexed_read'],'N')
 
 class BaseTestIlluminaData(unittest.TestCase):
     """
