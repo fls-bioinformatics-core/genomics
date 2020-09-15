@@ -58,7 +58,10 @@ class IlluminaRun(object):
     platform          : platform e.g. 'miseq'
     bcl_extension     : file extension for bcl files (either "bcl" or "bcl.gz")
     lanes             : list of (integer) lane numbers in the run
-
+    sample_sheet      : SampleSheet instance (if the run has an associated
+                        sample sheet file)
+    runinfo           : IlluminaRunInfo instance (if the run has an
+                        associated RunInfo.xml file)
     """
 
     def __init__(self,illumina_run_dir,platform=None):
@@ -97,10 +100,19 @@ class IlluminaRun(object):
         else:
             self.sample_sheet_csv = None
             self.basecalls_dir = None
+        # Add SampleSheet instance
+        if self.sample_sheet_csv:
+            self.sample_sheet = SampleSheet(self.sample_sheet_csv)
+        else:
+            self.sample_sheet = None
         # RunInfo.xml
         self.runinfo_xml = os.path.join(self.run_dir,'RunInfo.xml')
         if not os.path.isfile(self.runinfo_xml):
             self.runinfo_xml = None
+        if self.runinfo_xml:
+            self.runinfo = IlluminaRunInfo(self.runinfo_xml)
+        else:
+            self.runinfo = None
 
     @property
     def bcl_extension(self):
