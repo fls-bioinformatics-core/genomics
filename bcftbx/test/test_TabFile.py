@@ -236,6 +236,16 @@ chr2\t1234\t5678\t6.8
         self.assertEqual(tabfile.header()[4],'new')
         self.assertEqual(tabfile[0]['new'],'')
 
+    def test_append_column_with_value(self):
+        """Append new column to a Tabfile with a fill value
+        """
+        tabfile = TabFile('test',self.fp,first_line_is_header=True)
+        self.assertEqual(len(tabfile.header()),4)
+        tabfile.appendColumn('new',fill_value='new_value')
+        self.assertEqual(len(tabfile.header()),5)
+        self.assertEqual(tabfile.header()[4],'new')
+        self.assertEqual(tabfile[0]['new'],'new_value')
+
 class TestWhiteSpaceHandlingTabFile(unittest.TestCase):
 
     def setUp(self):
