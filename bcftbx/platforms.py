@@ -27,6 +27,7 @@ PLATFORMS['miseq'] = "Illumina MISeq"
 PLATFORMS['miniseq'] = "MiniSeq"
 PLATFORMS['nextseq'] = "Illumina NextSeq"
 PLATFORMS['iseq'] = "Illumina iSeq"
+PLATFORMS['illumina'] = "Unknown/Illumina"
 PLATFORMS['other'] = "Unknown/external"
 
 # Dictionary matching sequencing platforms to regexp patterns

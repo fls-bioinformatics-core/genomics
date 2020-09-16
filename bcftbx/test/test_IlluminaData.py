@@ -126,15 +126,74 @@ class TestIlluminaRun(unittest.TestCase):
         self.assertEqual(run.lanes,[1,2,3,4])
         self.assertEqual(run.cycles,158)
 
-    def test_illuminarun_unknown_platform(self):
+    def test_illuminarun_unknown_illumina_platform(self):
         # Make a mock run directory for MISeq data with unknown instrument
         self.mock_illumina_run = MockIlluminaRun(
             '180329_UNKNOWN0001_0001_000000000-ABCDE1','miseq',
             top_dir=self.top_dir)
         self.mock_illumina_run.create()
-        self.assertRaises(IlluminaDataPlatformError,
-                          IlluminaRun,
-                          self.mock_illumina_run.dirn)
+        # Load into an IlluminaRun object
+        run = IlluminaRun(self.mock_illumina_run.dirn)
+        # Check the properties
+        self.assertEqual(run.run_dir,self.mock_illumina_run.dirn)
+        self.assertEqual(run.platform,"illumina")
+        self.assertEqual(run.basecalls_dir,
+                         os.path.join(self.mock_illumina_run.dirn,
+                                      'Data','Intensities','BaseCalls'))
+        self.assertEqual(run.sample_sheet_csv,
+                         os.path.join(self.mock_illumina_run.dirn,
+                                      'Data','Intensities','BaseCalls',
+                                      'SampleSheet.csv'))
+        self.assertEqual(run.runinfo_xml,
+                         os.path.join(self.mock_illumina_run.dirn,
+                                      'RunInfo.xml'))
+        self.assertTrue(isinstance(run.sample_sheet,SampleSheet))
+        self.assertTrue(isinstance(run.runinfo,IlluminaRunInfo))
+        self.assertEqual(run.runinfo.run_id,
+                         '180329_UNKNOWN0001_0001_000000000-ABCDE1')
+        self.assertEqual(run.runinfo.instrument,'UNKNOWN0001')
+        self.assertEqual(run.runinfo.date,'180329')
+        self.assertEqual(run.runinfo.run_number,'0001')
+        self.assertEqual(run.runinfo.flowcell,'000000000-ABCDE1')
+        self.assertEqual(run.bcl_extension,".bcl")
+        self.assertEqual(run.lanes,[1,])
+        self.assertEqual(run.cycles,218)
+
+    def test_illuminarun_unknown_illumina_platform_generic_name(self):
+        # Make a mock run directory for MISeq data with unknown instrument
+        self.mock_illumina_run = MockIlluminaRun(
+            '180329_UNKNOWN0001_0001_000000000-ABCDE1','miseq',
+            top_dir=self.top_dir)
+        self.mock_illumina_run.create()
+        # Rename to directory with non-Illumina format name
+        run_dirn = os.path.join(self.top_dir,"ILLUMINA_RUN")
+        os.rename(self.mock_illumina_run.dirn,run_dirn)
+        # Load into an IlluminaRun object
+        run = IlluminaRun(run_dirn)
+        # Check the properties
+        self.assertEqual(run.run_dir,run_dirn)
+        self.assertEqual(run.platform,"illumina")
+        self.assertEqual(run.basecalls_dir,
+                         os.path.join(run_dirn,
+                                      'Data','Intensities','BaseCalls'))
+        self.assertEqual(run.sample_sheet_csv,
+                         os.path.join(run_dirn,
+                                      'Data','Intensities','BaseCalls',
+                                      'SampleSheet.csv'))
+        self.assertEqual(run.runinfo_xml,
+                         os.path.join(run_dirn,
+                                      'RunInfo.xml'))
+        self.assertTrue(isinstance(run.sample_sheet,SampleSheet))
+        self.assertTrue(isinstance(run.runinfo,IlluminaRunInfo))
+        self.assertEqual(run.runinfo.run_id,
+                         '180329_UNKNOWN0001_0001_000000000-ABCDE1')
+        self.assertEqual(run.runinfo.instrument,'UNKNOWN0001')
+        self.assertEqual(run.runinfo.date,'180329')
+        self.assertEqual(run.runinfo.run_number,'0001')
+        self.assertEqual(run.runinfo.flowcell,'000000000-ABCDE1')
+        self.assertEqual(run.bcl_extension,".bcl")
+        self.assertEqual(run.lanes,[1,])
+        self.assertEqual(run.cycles,218)
 
     def test_illuminarun_specify_platform(self):
         # Make a mock run directory for MISeq data with unknown instrument
@@ -171,29 +230,17 @@ class TestIlluminaRun(unittest.TestCase):
 
     def test_illuminarun_miseq_missing_directory(self):
         # Check we can handle IlluminaRun when MISeq directory is missing
-        run = IlluminaRun('/does/not/exist/151125_M00879_0001_000000000-ABCDE1')
-        self.assertEqual(run.platform,"miseq")
-        self.assertEqual(run.basecalls_dir,None)
-        self.assertEqual(run.sample_sheet_csv,None)
-        self.assertEqual(run.runinfo_xml,None)
-        self.assertEqual(run.sample_sheet,None)
-        self.assertEqual(run.runinfo,None)
-        self.assertRaises(Exception,getattr,run,'bcl_extension')
-        self.assertEqual(run.lanes,[])
-        self.assertEqual(run.cycles,None)
+        self.assertRaises(
+            IlluminaDataError,
+            IlluminaRun,
+            '/does/not/exist/151125_M00879_0001_000000000-ABCDE1')
 
     def test_illuminarun_nextseq_missing_directory(self):
         # Check we can handle IlluminaRun when NextSeq directory is missing
-        run = IlluminaRun('/does/not/exist/151125_NB500968_0003_000000000-ABCDE1XX')
-        self.assertEqual(run.platform,"nextseq")
-        self.assertEqual(run.basecalls_dir,None)
-        self.assertEqual(run.sample_sheet_csv,None)
-        self.assertEqual(run.runinfo_xml,None)
-        self.assertEqual(run.sample_sheet,None)
-        self.assertEqual(run.runinfo,None)
-        self.assertRaises(Exception,getattr,run,'bcl_extension')
-        self.assertEqual(run.lanes,[])
-        self.assertEqual(run.cycles,None)
+        self.assertRaises(
+            IlluminaDataError,
+            IlluminaRun,
+            '/does/not/exist/151125_NB500968_0003_000000000-ABCDE1XX')
 
 class TestIlluminaRunInfo(unittest.TestCase):
     """
