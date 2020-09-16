@@ -137,6 +137,8 @@ class RunInfoXml(object):
             flowcell = items[3]
         except IndexError:
             flowcell = "XXXXABCD1"
+        if flowcell[0] in ('A','B',):
+            flowcell = flowcell[1:]
         # Bases mask
         reads = []
         for item in bases_mask.split(","):
