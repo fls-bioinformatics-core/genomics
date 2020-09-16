@@ -78,17 +78,9 @@ class IlluminaRun(object):
         """
         # Top-level directory
         self.run_dir = os.path.abspath(illumina_run_dir)
-        # Platform
-        if platform is None:
-            self.platform = platforms.get_sequencer_platform(self.run_dir)
-        else:
-            self.platform = str(platform)
-        if self.platform is None:
-            raise IlluminaDataPlatformError("Can't determine platform for "
-                                            "%s" % self.run_dir)
-        elif self.platform not in KNOWN_PLATFORMS:
-            raise IlluminaDataPlatformError("%s: not a recognised Illumina "
-                                            "platform" % self.run_dir)
+        if not os.path.isdir(self.run_dir):
+            raise IlluminaDataError("%s: directory not found (or is not "
+                                    "a directory?" % self.run_dir)
         # Basecalls subdirectory
         self.basecalls_dir = os.path.join(self.run_dir,
                                           'Data','Intensities','BaseCalls')
@@ -113,6 +105,30 @@ class IlluminaRun(object):
             self.runinfo = IlluminaRunInfo(self.runinfo_xml)
         else:
             self.runinfo = None
+        # Platform
+        if platform:
+            # Supplied explicitly
+            self.platform = str(platform)
+        else:
+            # Check it looks like an Illumina run
+            if os.path.isdir(self.basecalls_dir) and self.runinfo_xml:
+                # Look up from run name
+                self.platform = platforms.get_sequencer_platform(self.run_dir)
+                if not self.platform:
+                    # Try run name from RunInfo.xml
+                    self.platform = platforms.get_sequencer_platform(
+                        self.runinfo.run_id)
+                if not self.platform:
+                    # Fallback to generic Illumina platform
+                    self.platform = 'illumina'
+            else:
+                # Not an Illumina run?
+                raise IlluminaDataPlatformError("%s: not an Illumina "
+                                                "sequencing run?" %
+                                                self.run_dir)
+        if self.platform not in KNOWN_PLATFORMS:
+            logging.warning("%s: not a recognised Illumina platform" %
+                            self.run_dir)
 
     @property
     def bcl_extension(self):
