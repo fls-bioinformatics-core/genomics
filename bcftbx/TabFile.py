@@ -744,14 +744,16 @@ class TabFile(object):
         self.__data.insert(i,data_line)
         return data_line
 
-    def appendColumn(self,name):
+    def appendColumn(self,name,fill_value=''):
         """Append a new (empty) column
 
         Arguments:
           name: name for the new column
+          fill_value: optional, value to insert into
+            all rows in the new column
         """
         for data in self.__data:
-            data.appendColumn(name,'')
+            data.appendColumn(name,fill_value)
         self.__header.append(name)
         self.__ncols = len(self.__header)
 
