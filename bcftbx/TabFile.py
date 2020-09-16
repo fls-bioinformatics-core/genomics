@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #     TabFile.py: classes for reading and manipulating tab-delimited data
-#     Copyright (C) University of Manchester 2011-2019 Peter Briggs
+#     Copyright (C) University of Manchester 2011-2020 Peter Briggs
 #
 ########################################################################
 #
