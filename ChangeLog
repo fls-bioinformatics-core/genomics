@@ -1,3 +1,33 @@
+2020-09-16  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
+	* genomics-bcftbx version 1.10.0
+	- bcftbx/IlluminaData: relax the platform identification
+	  mechanism in 'IlluminaRun'; Illumina-like run directories
+	  will be identified as generic 'illumina' platform if no
+	  explicit platform is supplied or can be identified from the
+	  instrument name. Exceptions are now only raised for run
+	  directories which do not appear to come from an Illumina
+	  sequencer
+	  https://github.com/fls-bioinformatics-core/genomics/pull/174
+	- bcftbx/IlluminaData: add new properties to 'IlluminaRun'
+	  instances: 'sample_sheet' ('SampleSheet' instance) and
+	  'runinfo' ('IlluminaRunInfo' instance)
+	  https://github.com/fls-bioinformatics-core/genomics/pull/173
+	- bcftbx/IlluminaData: add new properties to 'IlluminaRunInfo'
+	  instances: 'instrument', 'date', 'flowcell' and 'lane_count'
+	  (extracted from 'RunInfo.xml' file)
+	  https://github.com/fls-bioinformatics-core/genomics/pull/172
+	- bcftbx/IlluminaData: 'SampleSheet' class ignores trailing
+	  empty lines present in the input sample sheet file
+	  https://github.com/fls-bioinformatics-core/genomics/pull/171
+	- bcftbx/JobRunner: 'SimpleJobRunner' reports status of
+	  'join_logs' in '__repr__'; 'fetch_runner' handles 'join_logs'
+	  when setting up 'SimpleJobRunner'
+	  https://github.com/fls-bioinformatics-core/genomics/pull/170
+	- QC-pipeline: 'fastq_screen.sh' updated to handle FastqScreen
+	  v0.13 and v0.14
+	  https://github.com/fls-bioinformatics-core/genomics/pull/168
+
 2020-06-09  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
 	* genomics-bcftbx version 1.9.1
