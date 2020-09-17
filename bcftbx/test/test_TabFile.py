@@ -520,6 +520,31 @@ chr1\t1_012\t4_292.6
         self.assertEqual(tabfile[0]['start'],"1_012")
         self.assertEqual(tabfile[0]['end'],"4_292.6")
 
+class TestHandleCommentsInTabFile(unittest.TestCase):
+    """Test handling commented lines
+    """
+    def test_remove_commented_lines_by_default(self):
+        """
+        TabFile: check commented lines are removed by default
+        """
+        fp = io.StringIO(
+u"""#chr\tstart\tend\tdata
+chr1\t1\t234\t1.2
+#chr1\t567\t890\t5.7\t4.6
+#chr2\t1234\t5678\t6.8
+chr2\t2345\t6789\t12.1
+""")
+        tabfile = TabFile(fp=fp,first_line_is_header=True)
+        self.assertEqual(len(tabfile),2)
+        self.assertEqual(tabfile[0]['chr'],"chr1")
+        self.assertEqual(tabfile[0]['start'],1)
+        self.assertEqual(tabfile[0]['end'],234)
+        self.assertEqual(tabfile[0]['data'],1.2)
+        self.assertEqual(tabfile[1]['chr'],"chr2")
+        self.assertEqual(tabfile[1]['start'],2345)
+        self.assertEqual(tabfile[1]['end'],6789)
+        self.assertEqual(tabfile[1]['data'],12.1)
+
 class TestBadTabFile(unittest.TestCase):
     """Test with 'bad' input files
     """
