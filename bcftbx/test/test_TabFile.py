@@ -527,13 +527,17 @@ class TestHandleCommentsInTabFile(unittest.TestCase):
         """
         TabFile: check commented lines are removed by default
         """
-        fp = io.StringIO(
+        content = \
 u"""#chr\tstart\tend\tdata
 chr1\t1\t234\t1.2
-#chr1\t567\t890\t5.7\t4.6
+#chr1\t567\t890\t5.7
 #chr2\t1234\t5678\t6.8
 chr2\t2345\t6789\t12.1
-""")
+"""
+        final = \
+u"""chr1\t1\t234\t1.2
+chr2\t2345\t6789\t12.1"""
+        fp = io.StringIO(content)
         tabfile = TabFile(fp=fp,first_line_is_header=True)
         self.assertEqual(len(tabfile),2)
         self.assertEqual(tabfile[0]['chr'],"chr1")
@@ -544,6 +548,46 @@ chr2\t2345\t6789\t12.1
         self.assertEqual(tabfile[1]['start'],2345)
         self.assertEqual(tabfile[1]['end'],6789)
         self.assertEqual(tabfile[1]['data'],12.1)
+        self.assertEqual(str(tabfile),final)
+
+    def test_keep_commented_lines(self):
+        """
+        TabFile: keep commented lines
+        """
+        content = \
+u"""#chr\tstart\tend\tdata
+chr1\t1\t234\t1.2
+#chr1\t567\t890\t5.7
+#chr2\t1234\t5678\t6.8
+chr2\t2345\t6789\t12.1
+"""
+        final = \
+u"""chr1\t1\t234\t1.2
+#chr1\t567\t890\t5.7
+#chr2\t1234\t5678\t6.8
+chr2\t2345\t6789\t12.1"""
+        fp = io.StringIO(content)
+        tabfile = TabFile(fp=fp,
+                          first_line_is_header=True,
+                          keep_commented_lines=True)
+        self.assertEqual(len(tabfile),4)
+        self.assertEqual(tabfile[0]['chr'],"chr1")
+        self.assertEqual(tabfile[0]['start'],1)
+        self.assertEqual(tabfile[0]['end'],234)
+        self.assertEqual(tabfile[0]['data'],1.2)
+        self.assertEqual(tabfile[1]['chr'],"#chr1")
+        self.assertEqual(tabfile[1]['start'],567)
+        self.assertEqual(tabfile[1]['end'],890)
+        self.assertEqual(tabfile[1]['data'],5.7)
+        self.assertEqual(tabfile[2]['chr'],"#chr2")
+        self.assertEqual(tabfile[2]['start'],1234)
+        self.assertEqual(tabfile[2]['end'],5678)
+        self.assertEqual(tabfile[2]['data'],6.8)
+        self.assertEqual(tabfile[3]['chr'],"chr2")
+        self.assertEqual(tabfile[3]['start'],2345)
+        self.assertEqual(tabfile[3]['end'],6789)
+        self.assertEqual(tabfile[3]['data'],12.1)
+        self.assertEqual(str(tabfile),final)
 
 class TestBadTabFile(unittest.TestCase):
     """Test with 'bad' input files
