@@ -508,7 +508,8 @@ class TabFile(object):
     def __init__(self,filen=None,fp=None,column_names=None,skip_first_line=False,
                  first_line_is_header=False,tab_data_line=TabDataLine,
                  delimiter='\t',convert=True,
-                 allow_underscores_in_numeric_literals=False):
+                 allow_underscores_in_numeric_literals=False,
+                 keep_commented_lines=False):
         """Create a new TabFile object
 
         If either of 'filen' or 'fp' arguments are given then the
@@ -539,6 +540,8 @@ class TabFile(object):
               then treat numerical values with underscores as
               numbers according to PEP 515; if False (the default)
               then treat them as strings
+          keep_commented_lines: (optional) if True then don't
+              remove commented lines
         """
         # Initialise
         self.__filen = filen
@@ -549,6 +552,7 @@ class TabFile(object):
         self.__convert = convert
         self.__allow_underscores_in_numbers = \
                     allow_underscores_in_numeric_literals
+        self.__keep_commented_lines = keep_commented_lines
         # Class to use for data lines
         self.__tabdataline = tab_data_line
         # Set up column names
@@ -595,7 +599,8 @@ class TabFile(object):
                 self.__setHeader(line.strip().strip('#').split(self.__delimiter))
                 first_line_is_header = False
                 continue
-            if line.lstrip().startswith('#'):
+            if line.lstrip().startswith('#') and \
+               not self.__keep_commented_lines:
                 # Skip commented line
                 continue
             # Store data
