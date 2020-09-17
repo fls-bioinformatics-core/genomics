@@ -1,5 +1,19 @@
 2020-09-16  Peter Briggs  <peter.briggs@manchester.ac.uk>
 
+	* genomics-bcftbx version 1.11.0
+	- bcftbx/TabFile: 'TabFile' can keep commented lines from
+	  the input file by specifying 'keep_commented_lines=True'
+	  https://github.com/fls-bioinformatics-core/genomics/pull/178
+	- bcftbx/TabFile: 'TabFile.appendColumn' method accepts new
+	  'fill_value' argument, to provide a default value to put
+	  into all rows in the new column
+	  https://github.com/fls-bioinformatics-core/genomics/pull/176
+	- bcftbx/mock: mock 'RunInfoXml' updated to set the flowcell
+	  ID more consistently with real-life examples
+	  https://github.com/fls-bioinformatics-core/genomics/pull/177
+
+2020-09-16  Peter Briggs  <peter.briggs@manchester.ac.uk>
+
 	* genomics-bcftbx version 1.10.0
 	- bcftbx/IlluminaData: relax the platform identification
 	  mechanism in 'IlluminaRun'; Illumina-like run directories
