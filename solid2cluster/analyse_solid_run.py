@@ -328,7 +328,7 @@ def verify_runs(solid_dirs):
             print(" [FAILED]")
             status = 1
     # Completed
-    print("Overall status:",
+    print("Overall status:",)
     if status == 0:
         print(" [PASSED]")
     else:
@@ -583,7 +583,7 @@ if __name__ == "__main__":
     # Reset logging level for --debug and --quiet
     if args.debug:
         logging.getLogger().setLevel(logging.DEBUG)
-    elif argsoptions.no_warnings:
+    elif args.no_warnings:
         logging.getLogger().setLevel(logging.ERROR)
 
     # Solid run directories
@@ -597,7 +597,7 @@ if __name__ == "__main__":
             solid_dirs = [args.solid_run_dirs[0]]
         else:
             # Add associated directories
-            solid_dirs = SolidData.list_run_directories(solid_run_dirs[0])
+            solid_dirs = SolidData.list_run_directories(args.solid_run_dirs[0])
     else:
         # Use all supplied arguments
         solid_dirs = args
