@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #     fastq_edit.py: edit FASTQ files and data
-#     Copyright (C) University of Manchester 2012,2019 Peter Briggs
+#     Copyright (C) University of Manchester 2012,2019,2021 Peter Briggs
 #
 ########################################################################
 #
@@ -90,7 +90,7 @@ def stats(fastq_file):
     print("Read lengths")
     for len_ in read_lengths:
         print("\t%d: %d" % (len_,read_lengths[len_]))
-    print("Index sequences"
+    print("Index sequences")
     for seq in index_sequences:
         print("\t%s: %d" % (seq,index_sequences[seq]))
 

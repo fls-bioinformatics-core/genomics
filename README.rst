@@ -80,12 +80,10 @@ these can be run individually or via a 'runner' script::
 (Note that this requires that the QC scripts have already been setup after
 installing the package.)
 
-In addition the tests are run via TravisCI whenever this GitHub repository
-is updated:
+In addition the tests are run GitHub Actions whenever the repository is updated:
 
-.. image:: https://travis-ci.org/fls-bioinformatics-core/genomics.png?branch=master
-   :alt: Current status of TravisCI build for master branch
-   :target: https://travis-ci.org/fls-bioinformatics-core/genomics/builds
+.. image:: https://github.com/fls-bioinformatics-core/genomics/workflows/Python%20CI/badge.svg
+   :target: https://github.com/fls-bioinformatics-core/genomics/actions?query=workflow%3A%22Python+CI%22
 
 Developmental version
 *********************
@@ -99,12 +97,6 @@ Use the ``-e`` option to install an 'editable' version (see the section on
 `"Editable" installs
 <https://pip.pypa.io/en/latest/reference/pip_install.html#editable-installs>_`
 in the pip documentation),
-
-The tests are run on TravisCI whenever the developmental version is updated:
-
-.. image:: https://travis-ci.org/fls-bioinformatics-core/genomics.png?branch=devel
-   :alt: Current status of TravisCI build for devel branch
-   :target: https://travis-ci.org/fls-bioinformatics-core/genomics/builds
 
 Dependencies
 ************

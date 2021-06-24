@@ -319,4 +319,4 @@ if __name__ == "__main__":
                                  (len(qstatus_queue.filter('state','r*')),
                                   len(qstatus_queue.filter('state','S*')),
                                   len(qstatus_queue.filter('state','d*')))))
-    print(tr('\t'.join(out_line)))
+    print(str('\t'.join(out_line)))

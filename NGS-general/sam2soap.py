@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #     sam2soap.py: convert from SAM to SOAP format
-#     Copyright (C) University of Manchester 2012-2019 Peter Briggs, Casey Bergman
+#     Copyright (C) University of Manchester 2012-2019,2021 Peter Briggs, Casey Bergman
 #
 #######################################################################
 #
@@ -522,7 +522,7 @@ if __name__ == "__main__":
         # Read from stdin
         samfile = sys.stdin
     # Determine output target
-    if opts.soapfile:
+    if args.soapfile:
         soapfile = io.open(args.soapfile,'wt')
     else:
         soapfile = sys.stdout

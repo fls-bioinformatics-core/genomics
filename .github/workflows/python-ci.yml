@@ -1,0 +1,71 @@
+# This workflow will install Python dependencies, run tests and lint with a variety of Python versions
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+
+name: Python CI
+
+on: [ push, pull_request ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [2.7, 3.6, 3.7, 3.8]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install flake8 pytest
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+    - name: Lint with flake8
+      run: |
+        # stop the build if there are Python syntax errors or undefined names
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+    - name: Test bcftbx
+      run: |
+        python -m pip install .
+        pytest bcftbx
+    - name: Test illumina2cluster utilities
+      run: |
+        illumina2cluster/prep_sample_sheet.py -h
+        pytest illumina2cluster/report_barcodes.py
+    - name: Test RNA-seq utilities
+      run: |
+        RNA-seq/examples/test_bowtie_mapping_stats.sh
+        pytest RNA-seq/bowtie_mapping_stats.py
+    - name: Test ChIP-seq utilities
+      run: |
+        ChIP-seq/examples/test_make_macs_xls.sh
+        ChIP-seq/examples/test_make_macs2_xls.sh
+        pytest ChIP-seq/make_macs2_xls.py
+    - name: Test NGS-general utilities
+      run: |
+        NGS-general/sam2soap.py --test
+        NGS-general/split_fasta.py --test
+        NGS-general/examples/test_extract_reads.sh
+        pytest NGS-general/manage_seqs.py
+        pytest NGS-general/reorder_fasta.py
+        pytest NGS-general/split_fastq.py
+    - name: Test fastq_strand utility
+      run: |
+        pytest QC-pipeline/fastq_strand.py
+    - name: Test microarray utilities
+      run: |
+        microarray/examples/test_best_exons.sh
+        microarray/examples/test_xrorthologs.sh
+        microarray/examples/test_annotate_probesets.sh
+        pytest microarray/annotate_probesets.py
+        pytest microarray/xrorthologs.py
+    - name: Test md5checker utility
+      run: |
+        utils/examples/test_md5checker.sh

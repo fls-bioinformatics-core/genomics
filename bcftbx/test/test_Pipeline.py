@@ -518,6 +518,7 @@ class TestPipelineRunner(unittest.TestCase):
 # Main program
 #######################################################################
 
+import logging
 if __name__ == "__main__":
     # Turn off most logging output for tests
     logging.getLogger().setLevel(logging.CRITICAL)

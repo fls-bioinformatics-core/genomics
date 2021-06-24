@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #     run_pipeline.py: run pipeline script on file sets
-#     Copyright (C) University of Manchester 2011,2019 Peter Briggs
+#     Copyright (C) University of Manchester 2011,2019,2021 Peter Briggs
 #
 ########################################################################
 #
@@ -296,7 +296,7 @@ if __name__ == "__main__":
             if arguments.max_total_jobs > 0 and \
                pipeline.nWaiting() == arguments.max_total_jobs:
                 print("Maximum number of jobs queued (%d)" %
-                      arguments.max_total_jobs))
+                      arguments.max_total_jobs)
                 break
             label = os.path.splitext(os.path.basename(data[0]))[0]
             group = os.path.basename(data_dir)
@@ -313,7 +313,7 @@ if __name__ == "__main__":
 
     # Finished
     if email_addr is not None:
-        print("Sending email notification to %s" % arguments.email_addr))
+        print("Sending email notification to %s" % arguments.email_addr)
         subject = "Pipeline completed: %s" % os.path.basename(script)
         SendEmail(subject,arguments.email_addr,pipeline.report())
     print("Finished")

@@ -1,5 +1,5 @@
 #     simple_xls.py: write simple Excel spreadsheets
-#     Copyright (C) University of Manchester 2013-2019 Peter Briggs
+#     Copyright (C) University of Manchester 2013-2019,2021 Peter Briggs
 #
 ########################################################################
 #
@@ -831,7 +831,7 @@ class XLSWorkSheet(object):
         elif text is not None:
             items = text.split('\t')
         elif fill is not None:
-            items = [fill for i in range(from_row,self.last_row+1)]
+            items = [fill for i in range(from_column,self.last_column+1)]
         else:
             # Nothing to do
             return
