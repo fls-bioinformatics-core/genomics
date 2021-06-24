@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #     report_barcodes.py: analyse barcode sequences from fastq files
-#     Copyright (C) University of Manchester 2014-2019 Peter Briggs
+#     Copyright (C) University of Manchester 2014-2019,2021 Peter Briggs
 #
 ########################################################################
 #
@@ -150,8 +150,9 @@ def main(fastqs,cutoff):
     print("Total # barcode sequences: %d" % len(barcodes.sequences()))
     print("Determining top barcode sequences")
     ordered_seqs = sorted(barcodes.sequences(),
-                          cmp=lambda x,y: cmp(barcodes.count_for(y),
-                                              barcodes.count_for(x)))
+                          cmp=lambda x,y:
+                          (barcodes.count_for(y) > barcodes.count_for(x)) -
+                          (barcodes.count_for(y) < barcodes.count_for(x)))
     print("Rank = position after sorting from most to least common")
     print("Index sequence = the barcode sequence")
     print("Count = number of reads with this exact index sequence")
