@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #     Experiment.py: classes for defining SOLiD sequencing experiments
-#     Copyright (C) University of Manchester 2011-2019 Peter Briggs
+#     Copyright (C) University of Manchester 2011-2019,2021 Peter Briggs
 #
 ########################################################################
 #
@@ -196,7 +196,7 @@ class ExperimentList(object):
                 if not dry_run:
                     # Create top directory
                     print("Creating %s" % top_dir)
-                    utils.mkdir(top_dir,mode=0775)
+                    utils.mkdir(top_dir,mode=0o775)
                 else:
                     # Report what would have been done
                     print("mkdir %s" % top_dir)
@@ -219,7 +219,7 @@ class ExperimentList(object):
             else:
                 if not dry_run:
                     # Create directory
-                    utils.mkdir(expt_dir,mode=0775)
+                    utils.mkdir(expt_dir,mode=0o775)
                 else:
                     # Report what would have been done
                     print("mkdir %s" % expt_dir)
@@ -262,7 +262,7 @@ class ExperimentList(object):
             else:
                 if not dry_run:
                     # Create directory
-                    utils.mkdir(scriptcode_dir,mode=0775)
+                    utils.mkdir(scriptcode_dir,mode=0o775)
                 else:
                     # Report what would have been done
                     print("mkdir %s" % scriptcode_dir)
