@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #     build_illumina_analysis_dir.py: build analysis dir with links to fastq files
-#     Copyright (C) University of Manchester 2012-2013,2019 Peter Briggs
+#     Copyright (C) University of Manchester 2012-2013,2019,2021 Peter Briggs
 #
 
 __version__ = "1.1.1"
@@ -84,7 +84,7 @@ def create_analysis_dir(project,
     else:
         print("Making analysis directory for %s" % project.name)
         if not dry_run:
-            bcf_utils.mkdir(project_dir,mode=0775)
+            bcf_utils.mkdir(project_dir,mode=0o775)
     # Make an empty ScriptCode directory
     scriptcode_dir = os.path.join(project_dir,"ScriptCode")
     if os.path.exists(scriptcode_dir):
@@ -92,7 +92,7 @@ def create_analysis_dir(project,
     else:
         print("Making 'ScriptCode' directory for %s" % project.name)
         if not dry_run:
-            bcf_utils.mkdir(scriptcode_dir,mode=0775)
+            bcf_utils.mkdir(scriptcode_dir,mode=0o775)
     # Check for & create links to fastq files
     if not merge_replicates:
         for sample in project.samples:
