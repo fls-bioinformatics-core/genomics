@@ -188,7 +188,7 @@ if __name__ == '__main__':
     print("Platform   : %s" % platform)
     print("Destination: %s" % destination)
     print("Log file   : %s" % log_file)
-    print("Mirror mode: %s" % options.mirror)
+    print("Mirror mode: %s" % args.mirror)
     # Run rsync
     status = run_rsync(data_dir,destination,dry_run=args.dry_run,
                        log=log_file,chmod=args.chmod,mirror=args.mirror,
