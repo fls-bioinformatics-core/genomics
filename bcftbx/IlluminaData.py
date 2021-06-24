@@ -1,5 +1,5 @@
 #     IlluminaData.py: module for handling data about Illumina sequencer runs
-#     Copyright (C) University of Manchester 2012-2020 Peter Briggs
+#     Copyright (C) University of Manchester 2012-2021 Peter Briggs
 #
 ########################################################################
 #
@@ -19,6 +19,7 @@ conventions.
 #######################################################################
 
 import os
+import sys
 import logging
 import xml.dom.minidom
 import shutil
