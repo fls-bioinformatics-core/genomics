@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #     prep_sample_sheet.py: prepare sample sheet file for Illumina sequencers
-#     Copyright (C) University of Manchester 2012-16,2019 Peter Briggs
+#     Copyright (C) University of Manchester 2012-2021 Peter Briggs
 #
 ########################################################################
 #
@@ -15,7 +15,7 @@ Prepare sample sheet file for Illumina sequencers.
 
 """
 
-__version__ = "0.4.2"
+__version__ = "0.5.0"
 
 #######################################################################
 # Imports
