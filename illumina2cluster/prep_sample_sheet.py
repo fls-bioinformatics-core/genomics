@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #     prep_sample_sheet.py: prepare sample sheet file for Illumina sequencers
-#     Copyright (C) University of Manchester 2012-16,2019 Peter Briggs
+#     Copyright (C) University of Manchester 2012-2021 Peter Briggs
 #
 ########################################################################
 #
@@ -15,7 +15,7 @@ Prepare sample sheet file for Illumina sequencers.
 
 """
 
-__version__ = "0.4.2"
+__version__ = "0.5.0"
 
 #######################################################################
 # Imports
@@ -34,6 +34,18 @@ sys.path.append(SHARE_DIR)
 import bcftbx.IlluminaData as IlluminaData
 from bcftbx.utils import parse_lanes
 from bcftbx.utils import parse_named_lanes
+
+#######################################################################
+# Constants
+#######################################################################
+
+# Complements for nucleotides
+COMPLEMENT = {
+    'A':'T',
+    'C':'G',
+    'G':'C',
+    'T':'A',
+}
 
 #######################################################################
 # Functions
@@ -59,6 +71,12 @@ def truncate_barcode(seq,length):
         # No hyphen: single index barcode
         return seq[:length]
 
+def reverse_complement(seq):
+    """
+    Return reverse complement of a sequence
+    """
+    return ''.join([COMPLEMENT[s] for s in str(seq)[::-1]])
+
 #######################################################################
 # Unit tests
 #######################################################################
@@ -80,6 +98,14 @@ class TestTruncateBarcodeFunction(unittest.TestCase):
         self.assertEqual(truncate_barcode('AGGCAGAA-TAGATCGC',8),'AGGCAGAA')
         self.assertEqual(truncate_barcode('AGGCAGAA-TAGATCGC',10),'AGGCAGAA-TA')
         self.assertEqual(truncate_barcode('AGGCAGAA-TAGATCGC',16),'AGGCAGAA-TAGATCGC')
+
+class TestReverseComplementFunction(unittest.TestCase):
+    """Tests for the 'reverse_complement' function
+
+    """
+    def test_reverse_complement_sequence(self):
+        self.assertEqual(reverse_complement('AGGCAGAA'),'TTCTGCCT')
+        self.assertEqual(reverse_complement('TAGATCGC'),'GCGATCTA')
 
 #######################################################################
 # Main program
@@ -134,6 +160,9 @@ if __name__ == "__main__":
                    "range (e.g. 1-3), or a combination (e.g. 1,3-5,7). If no "
                    "lanes are specified then all samples will have their "
                    "project set to <name>")
+    p.add_argument('--reverse-complement-i5',action="store_true",
+                   help="replace i5 index sequences with their reverse "
+                   "complement")
     p.add_argument('--ignore-warnings',action="store_true",
                    dest="ignore_warnings",default=False,
                    help="ignore warnings about spaces and duplicated "
@@ -252,6 +281,10 @@ if __name__ == "__main__":
                    line['Index'],
                    barcode))
             line['Index'] = barcode
+    # Reverse complement index sequences
+    if args.reverse_complement_i5:
+        for line in data:
+            line['index2'] = reverse_complement(line['index2'])
     # Set adapter sequences
     if args.adapter is not None:
         data.settings['Adapter'] = args.adapter
