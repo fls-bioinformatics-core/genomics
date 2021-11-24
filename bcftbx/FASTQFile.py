@@ -41,7 +41,7 @@ import io
 import re
 import logging
 import gzip
-from future.moves import itertools
+import itertools
 
 #######################################################################
 # Precompiled regular expressions
