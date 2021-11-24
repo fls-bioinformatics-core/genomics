@@ -102,7 +102,7 @@ Dependencies
 ************
 
 The package consists predominantly of code written in Python, which has been
-used extensively with Python 2.6 and 2.7.
+used extensively with Python 3.
 
 In addition there are scripts requiring:
 
