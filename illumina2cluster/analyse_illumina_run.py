@@ -38,11 +38,12 @@ import bcftbx.utils as bcf_utils
 if __name__ == "__main__":
     # Create command line parser
     p = argparse.ArgumentParser(
-        version="%(prog)s "+__version__,
         description="Utility for performing various checks and "
         "operations on Illumina data. 'illumina_data_dir' is the "
         "top-level directory containing the 'Unaligned' directory "
         "with the fastq.gz files.")
+    p.add_argument('--version',action='version',
+                   version=("%%(prog)s %s" % __version__))
     p.add_argument("--report",action="store_true",dest="report",
                    help="report sample names and number of samples for "
                    "each project")

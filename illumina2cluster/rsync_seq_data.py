@@ -123,7 +123,6 @@ def run_rsync(source,target,dry_run=False,mirror=False,chmod=None,
 
 if __name__ == '__main__':
     p = argparse.ArgumentParser(
-        version="%(prog)s "+__version__,
         description="Wrapper to rsync sequencing data: DIR will "
         "be rsync'ed to a subdirectory of BASE_DIR constructed "
         "from the year and platform i.e. BASE_DIR/YEAR/PLATFORM/. "
@@ -132,6 +131,8 @@ if __name__ == '__main__':
         "DIR name (over-ride using the --platform option). "
         "The output from rsync is written to a file "
         "rsync.DIR.log.")
+    p.add_argument('--version',action='version',
+                   version=("%%(prog)s %s" % __version__))
     p.add_argument('--platform',action="store",dest="platform",
                    default=None,
                    help="explicitly specify the sequencer type")
