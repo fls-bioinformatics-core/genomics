@@ -5,11 +5,11 @@
 from builtins import str
 import unittest
 import io
-from best_exons import Exon
-from best_exons import ExonList
-from best_exons import best_exons
-from best_exons import tsv_line
-from best_exons import ordinal
+from bcftbx.cli.best_exons import Exon
+from bcftbx.cli.best_exons import ExonList
+from bcftbx.cli.best_exons import best_exons
+from bcftbx.cli.best_exons import tsv_line
+from bcftbx.cli.best_exons import ordinal
 
 class TestExon(unittest.TestCase):
     """Tests for the Exon class
