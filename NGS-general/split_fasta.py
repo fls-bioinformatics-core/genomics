@@ -138,7 +138,7 @@ class FastaChromIterator(Iterator):
 import unittest
 
 # Test data
-class TestData(object):
+class TestData:
     """Set up example data to use in unit test classes
 
     """

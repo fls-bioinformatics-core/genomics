@@ -41,7 +41,7 @@ import argparse
 # Classes
 #######################################################################
 
-class SeqDb(object):
+class SeqDb:
     """Class for storing set of sequences with associated names
 
     SeqDb stores arbitrary sequence strings associated with

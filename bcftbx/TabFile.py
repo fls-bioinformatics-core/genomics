@@ -193,7 +193,7 @@ from builtins import str
 import io
 import logging
 
-class TabDataLine(object):
+class TabDataLine:
     """Class to store a line of data from a tab-delimited file
 
     Values can be accessed by integer index or by column names (if
@@ -483,7 +483,7 @@ class TabDataLine(object):
     def __repr__(self):
         return self.__delimiter.join([str(x) for x in self.data])
 
-class TabFile(object):
+class TabFile:
     """Class to get data from a tab-delimited file
 
     Loads data from the specified file into a data structure than can

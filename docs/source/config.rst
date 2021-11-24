@@ -22,13 +22,9 @@ Dependencies
 The package consists predominantly of code written in Python, and the
 following versions are supported:
 
-* Python 2.7
 * Python 3.6
 * Python 3.7
 * Python 3.8
-
-However as Python 2.7 is now end-of-life, support within ``genomics-bcftbx``
-will be withdrawn for this version in the near future.
 
 In addition there are scripts requiring:
 

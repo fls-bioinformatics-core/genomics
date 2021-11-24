@@ -47,7 +47,7 @@ KNOWN_PLATFORMS = ('illumina-ga2x',
 # Class definitions
 #######################################################################
 
-class IlluminaRun(object):
+class IlluminaRun:
     """Class for examining 'raw' Illumina data directory.
 
     Provides the following properties:
@@ -210,7 +210,7 @@ class IlluminaRun(object):
             return None
         return ncycles
 
-class IlluminaRunInfo(object):
+class IlluminaRunInfo:
     """Class for examining Illumina RunInfo.xml file
 
     Extracts basic information from a RunInfo.xml file:
@@ -288,7 +288,7 @@ class IlluminaRunInfo(object):
                                 % read['is_indexed_read'])
         return ','.join(bases_mask)
 
-class IlluminaData(object):
+class IlluminaData:
     """Class for examining Illumina data post bcl-to-fastq conversion
 
     Provides the following attributes:
@@ -472,7 +472,7 @@ class IlluminaData(object):
             if project.name == name: return project
         raise IlluminaDataError("No matching project for '%s'" % name)
 
-class IlluminaProject(object):
+class IlluminaProject:
     """Class for storing information on a 'project' within an Illumina run
 
     A project is a subset of fastq files from a run of an Illumina
@@ -656,7 +656,7 @@ class IlluminaProject(object):
         """
         return utils.pretty_print_names(self.samples)
 
-class IlluminaSample(object):
+class IlluminaSample:
     """Class for storing information on a 'sample' within an Illumina project
 
     A sample is a fastq file generated within an Illumina sequencer run.
@@ -774,7 +774,7 @@ class IlluminaSample(object):
         i.e. the sample name."""
         return str(self.name)
 
-class SampleSheet(object):
+class SampleSheet:
     """
     Class for handling Illumina sample sheets
 
@@ -1816,7 +1816,7 @@ class CasavaSampleSheet(SampleSheet):
         """
         SampleSheet.write(self,filen=filen,fp=fp,fmt='CASAVA')
 
-class SampleSheetPredictor(object):
+class SampleSheetPredictor:
     """
     Class to predict outputs of a sample sheet file
 
@@ -2040,7 +2040,7 @@ class SampleSheetPredictor(object):
                         include_index_reads=include_index_reads,
                         force_sample_dir=force_sample_dir)
 
-class SampleSheetProject(object):
+class SampleSheetProject:
     """
     Class describing a project from a sample sheet file
 
@@ -2211,7 +2211,7 @@ class SampleSheetProject(object):
         # Implement repr built-in
         return str(self.name)
 
-class SampleSheetSample(object):
+class SampleSheetSample:
     """
     Class describing a sample from a sample sheet file
 
@@ -2422,7 +2422,7 @@ class SampleSheetSample(object):
         if force_sample_dir is not None:
             self._force_sample_dir = force_sample_dir
 
-class IlluminaFastq(object):
+class IlluminaFastq:
     """Class for extracting information about Fastq files
 
     Given the name of a Fastq file from CASAVA/Illumina platform, extract

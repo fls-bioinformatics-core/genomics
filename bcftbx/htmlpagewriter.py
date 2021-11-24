@@ -32,7 +32,7 @@ import base64
 # Classes
 #######################################################################
 
-class HTMLPageWriter(object):
+class HTMLPageWriter:
     """Generic HTML generation class
 
     HTMLPageWriter provides basic operations for writing HTML
@@ -147,7 +147,7 @@ class HTMLPageWriter(object):
             fp.close()
 
 # Utility class to encode PNGs for embedding in HTML
-class PNGBase64Encoder(object):
+class PNGBase64Encoder:
     """Utility class to encode PNG file into a base64 string
 
     Base64 encoded PNGs can be embedded in HTML <img> tags.

@@ -57,7 +57,7 @@ import logging
 # Classes
 #######################################################################
 
-class Qstat(object):
+class Qstat:
     """Class for acquiring and filtering qstat data
 
     'qstat' is a command line utility that reports per-job Grid Engine
@@ -165,7 +165,7 @@ class Qstat(object):
         # Implement len built-in
         return len(self.jobs)
     
-class QstatJob(object):
+class QstatJob:
     """Class representing a job reported by Qstat.
 
     QstatJob has the following properties:

@@ -43,7 +43,7 @@ from .utils import OrderedDictionary
 #######################################################################
 
 # Command parser
-class CommandParser(object):
+class CommandParser:
     """Class defining multiple command line parsers
 
     This parser can process command lines of the form

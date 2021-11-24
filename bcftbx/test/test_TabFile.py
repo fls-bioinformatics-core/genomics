@@ -9,10 +9,6 @@ import tempfile
 import os
 import shutil
 
-# Import long int for Python3 backwards
-# compatibility with Python2
-from past.builtins import long
-
 class TestTabFile(unittest.TestCase):
 
     def setUp(self):
@@ -444,7 +440,7 @@ chr2\t1234\t6.8
         tabfile = TabFile('test',self.fp,first_line_is_header=True)
         for line in tabfile:
             self.assertTrue(isinstance(line[0],str))
-            self.assertTrue(isinstance(line[1],(int,long)))
+            self.assertTrue(isinstance(line[1],int))
             self.assertTrue(isinstance(line[2],float))
 
     def test_convert_values_to_str_read_from_file(self):
@@ -463,7 +459,7 @@ chr2\t1234\t6.8
         tabfile.append(tabdata="chr3\t5678\t7.9")
         for line in tabfile:
             self.assertEqual(line[0],str(line[0]))
-            self.assertTrue(isinstance(line[1],(int,long)))
+            self.assertTrue(isinstance(line[1],int))
             self.assertTrue(isinstance(line[2],float))
 
     def test_convert_values_to_str_append_tabdata(self):
@@ -484,7 +480,7 @@ chr2\t1234\t6.8
         tabfile.append(data=["chr3",5678,7.9])
         for line in tabfile:
             self.assertEqual(line[0],str(line[0]))
-            self.assertTrue(isinstance(line[1],(int,long)))
+            self.assertTrue(isinstance(line[1],int))
             self.assertTrue(isinstance(line[2],float))
 
     def test_convert_values_to_str_append_list(self):

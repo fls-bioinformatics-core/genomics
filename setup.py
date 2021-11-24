@@ -2,7 +2,7 @@
 
 Setup script to install genomics/bcftbx
 
-Copyright (C) University of Manchester 2011-20 Peter Briggs
+Copyright (C) University of Manchester 2011-2021 Peter Briggs
 
 """
 
@@ -39,8 +39,7 @@ setup(name = "genomics-bcftbx",
       install_requires = ['xlwt >= 0.7.2',
                           'xlrd >= 0.7.1',
                           'xlutils >= 1.4.1',
-                          'xlsxwriter >= 0.8.4',
-                          'future',],
+                          'xlsxwriter >= 0.8.4',],
       # Enable 'python setup.py test'
       test_suite='nose.collector',
       tests_require=['nose'],
@@ -67,8 +66,6 @@ setup(name = "genomics-bcftbx",
           "Operating System :: MacOS",
           "Topic :: Scientific/Engineering",
           "Topic :: Scientific/Engineering :: Bio-Informatics",
-          "Programming Language :: Python :: 2",
-          "Programming Language :: Python :: 2.7"
           "Programming Language :: Python :: 3",
           'Programming Language :: Python :: 3.6',
           'Programming Language :: Python :: 3.7',

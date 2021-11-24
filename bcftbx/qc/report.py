@@ -42,7 +42,7 @@ FASTQ_SCREEN_NAMES=('model_organisms','other_organisms','rRNA')
 # Base class definitions
 #######################################################################
 
-class QCReporter(object):
+class QCReporter:
     """Base class for reporting QC runs
 
     This is a general class for reporting runs of the FLS NGS QC
@@ -311,7 +311,7 @@ class QCReporter(object):
             status = (sample.verify() and status)
         return status
 
-class QCSample(object):
+class QCSample:
     """Base class for reporting QC for a single sample
 
     This is a general class for reporting the QC outputs associated

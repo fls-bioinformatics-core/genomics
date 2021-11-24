@@ -43,7 +43,7 @@ import bcftbx.Md5sum as Md5sum
 # Classes
 #######################################################################
 
-class CmpResult(object):
+class CmpResult:
     """Class to hold results of a file comparison
     """
     # Human-readable text corresponding to comparison outcomes

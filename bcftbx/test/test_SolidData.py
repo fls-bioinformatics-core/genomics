@@ -7,7 +7,7 @@ import io
 import tempfile
 import shutil
 
-class TestUtils(object):
+class TestUtils:
     """Utilities to help with setting up/running tests etc
 
     Provides methods for creating mock SOLiD directory structure populated

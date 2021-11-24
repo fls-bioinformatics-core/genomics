@@ -45,7 +45,7 @@ import bcftbx.FASTQFile as FASTQFile
 # Class definitions
 #######################################################################
 
-class BarcodeMatcher(object):
+class BarcodeMatcher:
     """BarcodeMatcher
 
     Class for testing whether a sequence matches a barcode.

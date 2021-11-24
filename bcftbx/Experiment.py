@@ -30,7 +30,7 @@ import utils
 # Class definitions
 #######################################################################
 
-class Experiment(object):
+class Experiment:
     """Class defining an experiment from a SOLiD run.
 
     An 'experiment' is a collection of related data.
@@ -89,7 +89,7 @@ class Experiment(object):
         expt_copy.library = self.library
         return expt_copy
 
-class ExperimentList(object):
+class ExperimentList:
     """Container for a collection of Experiments
 
     Experiments are created and added to the ExperimentList by calling
@@ -302,7 +302,7 @@ class ExperimentList(object):
     def __len__(self):
         return len(self.experiments)
 
-class LinkNames(object):
+class LinkNames:
     """Class to construct names for links to primary data files
 
     The LinkNames class encodes a set of naming schemes that are used to

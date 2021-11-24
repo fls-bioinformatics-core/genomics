@@ -34,7 +34,7 @@ import atexit
 # Classes
 #######################################################################
 
-class MockGE(object):
+class MockGE:
     """
     Class implementing qsub, qstat, qacct & qdel-like functionality
 

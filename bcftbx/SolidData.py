@@ -66,7 +66,7 @@ from . import utils
 # Class definitions
 #######################################################################
 
-class SolidRun(object):
+class SolidRun:
     """Describe a SOLiD run.
 
     The SolidRun class provides an interface to data about a SOLiD
@@ -455,7 +455,7 @@ class SolidRun(object):
         else:
             return True
 
-class SolidSample(object):
+class SolidSample:
     """Store information about a sample in a SOLiD run.
 
     A sample has a name and contains a set of libraries.
@@ -575,7 +575,7 @@ class SolidSample(object):
         # Not found
         return None
 
-class SolidLibrary(object):
+class SolidLibrary:
     """Store information about a SOLiD library.
 
     The following properties hold data about the library:
@@ -677,7 +677,7 @@ class SolidLibrary(object):
         i.e. the library name."""
         return str(self.name)
 
-class SolidPrimaryData(object):
+class SolidPrimaryData:
     """Class to store references to primary data files
 
     This is a convenience class for storing references to csfasta/qual
@@ -718,7 +718,7 @@ class SolidPrimaryData(object):
     def __repr__(self):
         return self.timestamp
 
-class SolidProject(object):
+class SolidProject:
     """Class to hold information about a SOLiD 'project'
 
     A SolidProject object holds a collection of libraries which
@@ -865,7 +865,7 @@ class SolidProject(object):
                     timestamps.append(primary_data.timestamp)
         return timestamps
 
-class SolidRunInfo(object):
+class SolidRunInfo:
     """Extract data about a run from the run name
         
     Run names are of the form 'solid0123_20130426_FRAG_BC_2'
@@ -950,7 +950,7 @@ class SolidRunInfo(object):
         """
         return self.name
 
-class SolidRunDefinition(object):
+class SolidRunDefinition:
     """Class to store data from a SOLiD run definition file
 
     Once the SolidRunDefinition object is populated from a run
@@ -1081,7 +1081,7 @@ class SolidRunDefinition(object):
         # Finished
         f.close()
 
-class SolidBarcodeStatistics(object):
+class SolidBarcodeStatistics:
     """Store data from a SOLiD BarcodeStatistics file"""
 
     def __init__(self,barcode_statistics_file):

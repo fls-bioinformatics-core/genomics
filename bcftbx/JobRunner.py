@@ -78,7 +78,7 @@ import random
 # Classes
 #######################################################################
 
-class BaseJobRunner(object):
+class BaseJobRunner:
     """Base class for implementing job runners
 
     This class can be used as a template for implementing custom
@@ -1159,7 +1159,7 @@ exit $exit_code
             ge_name = "_%s" % ge_name
         return ge_name
 
-class ResourceLock(object):
+class ResourceLock:
     """
     Class for managing in-process locks on 'resources'
 

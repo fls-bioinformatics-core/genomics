@@ -32,16 +32,13 @@ CHUNKSIZE = 102400
 # Import modules that this module depends on
 #######################################################################
 
-try:
-    from collections.abc import Iterator
-except ImportError:
-    from collections import Iterator
+from collections.abc import Iterator
 import os
 import io
 import re
 import logging
 import gzip
-from future.moves import itertools
+import itertools
 
 #######################################################################
 # Precompiled regular expressions
@@ -147,13 +144,7 @@ class FastqIterator(Iterator):
         self._ip = ip
         return FastqRead(*read)
 
-    def next(self):
-        """
-        Implemented for Python2 compatibility
-        """
-        return self.__next__()
-
-class FastqRead(object):
+class FastqRead:
     """Class to store a FASTQ record with information about a read
 
     Provides the following properties for accessing the read data:
@@ -271,7 +262,7 @@ class FastqRead(object):
     def __eq__(self,other):
         return (str(self) == str(other))
 
-class SequenceIdentifier(object):
+class SequenceIdentifier:
     """Class to store/manipulate sequence identifier information from a FASTQ record
 
     Provides access to the data items in the sequence identifier line of a FASTQ
@@ -395,7 +386,7 @@ class SequenceIdentifier(object):
             # Return what was put in
             return self.__seqid
 
-class FastqAttributes(object):
+class FastqAttributes:
     """Class to provide access to gross attributes of a FASTQ file
 
     Given a FASTQ file (can be uncompressed or gzipped), enables

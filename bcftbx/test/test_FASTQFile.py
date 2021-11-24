@@ -162,8 +162,8 @@ class TestFastqIterator(unittest.TestCase):
         """Check iteration over small gzipped FASTQ file from disk
         """
         self.fastq_in = os.path.join(self.wd,'test.fq.gz')
-        with gzip.GzipFile(self.fastq_in,'wb') as fp:
-            fp.write(fastq_data.encode())
+        with gzip.open(self.fastq_in,'wt') as fp:
+            fp.write(fastq_data)
         fastq = FastqIterator(self.fastq_in)
         nreads = 0
         fastq_source = io.StringIO(fastq_data)
@@ -418,8 +418,8 @@ class TestNReads(unittest.TestCase):
         """nreads: check nreads from gzipped FASTQ on disk
         """
         self.fastq_in = os.path.join(self.wd,'test.fq.gz')
-        with gzip.GzipFile(self.fastq_in,'wb') as fp:
-            fp.write(fastq_data.encode())
+        with gzip.open(self.fastq_in,'wt') as fp:
+            fp.write(fastq_data)
         self.assertEqual(nreads(self.fastq_in),5)
 
 class TestFastqsArePair(unittest.TestCase):

@@ -142,7 +142,7 @@ class TabFileIterator(Iterator):
                 self.__fp.close()
             raise StopIteration
 
-class ExonList(object):
+class ExonList:
     """List of exons associated with a gene symbol
 
     Attributes:
@@ -306,7 +306,7 @@ class ExonList(object):
         # Makes object iterable
         return self.exons[i]
 
-class Exon(object):
+class Exon:
     """Store data for a single exon
 
     Attributes:

@@ -64,7 +64,7 @@ import logging
 #######################################################################
 
 # Job: container for a script run
-class Job(object):
+class Job:
     """Wrapper class for setting up, submitting and monitoring running scripts
 
     Set up a job by creating a Job instance specifying the name, working directory,
@@ -262,7 +262,7 @@ class Job(object):
         return self.__runner
 
 # PipelineRunner: class to set up and run multiple jobs
-class PipelineRunner(object):
+class PipelineRunner:
     """Class to run and manage multiple concurrent jobs.
 
     PipelineRunner enables multiple jobs to be queued via the 'queueJob' method. The

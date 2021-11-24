@@ -31,7 +31,7 @@ import argparse
 import itertools
 import tempfile
 import logging
-from future.moves.itertools import zip_longest
+from itertools import zip_longest
 
 #######################################################################
 # Module metadata
