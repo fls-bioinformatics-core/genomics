@@ -34,6 +34,7 @@ logging.basicConfig(format="%(levelname)s %(message)s")
 from ..TabFile import TabFile
 from ..simple_xls import Limits
 from ..simple_xls import ColumnRange
+from ..simple_xls import XLSLimits
 from ..simple_xls import XLSXLimits
 from ..simple_xls import XLSStyle
 from ..simple_xls import XLSWorkBook
