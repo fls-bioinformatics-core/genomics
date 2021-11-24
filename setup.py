@@ -16,7 +16,6 @@ for pattern in ('build-indexes/*.sh',
                 'microarray/*.py',
                 'NGS-general/*.pl','NGS-general/*.py','NGS-general/*.sh',
                 'QC-pipeline/*.py','QC-pipeline/*.sh',
-                'RNA-seq/*.py',
                 'solid2cluster/*.py','solid2cluster/*.sh',
                 'utils/*.pl','utils/*.py','utils/*.R','utils/*.sh'):
     scripts.extend(glob(pattern))
