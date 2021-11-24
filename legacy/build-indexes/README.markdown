@@ -1,7 +1,7 @@
-build-indexes
-=============
+build-indexes (legacy)
+======================
 
-Scripts for setting up genome indexes for various programs:
+Deprecated scripts for setting up genome indexes for various programs:
 
  *  `fetch_fasta.sh`: download and build FASTA file for pre-defined organisms
  *  `build_indexes.sh`: build all indexes from a FASTA file
