@@ -41,8 +41,7 @@ jobs:
         ./bin/verify_paired.py -h
     - name: Test RNA-seq utilities
       run: |
-        RNA-seq/examples/test_bowtie_mapping_stats.sh
-        pytest RNA-seq/bowtie_mapping_stats.py
+        examples/RNA-seq/test_bowtie_mapping_stats.sh
     - name: Test ChIP-seq utilities
       run: |
         examples/ChIP-seq/test_make_macs_xls.sh
