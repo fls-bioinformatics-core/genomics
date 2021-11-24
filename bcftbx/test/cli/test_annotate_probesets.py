@@ -3,7 +3,7 @@
 #######################################################################
 
 import unittest
-from bcftbx.cli.annotate_probeset import get_probeset_extension
+from bcftbx.cli.annotate_probesets import get_probeset_extension
 
 class TestProbesetAnnotation(unittest.TestCase):
 
