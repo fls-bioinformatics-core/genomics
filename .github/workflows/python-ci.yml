@@ -37,8 +37,8 @@ jobs:
         pytest bcftbx
     - name: Test illumina2cluster utilities
       run: |
-        illumina2cluster/prep_sample_sheet.py -h
-        pytest illumina2cluster/report_barcodes.py
+        ./bin/prep_sample_sheet.py -h
+        ./bin/verify_paired.py -h
     - name: Test RNA-seq utilities
       run: |
         RNA-seq/examples/test_bowtie_mapping_stats.sh

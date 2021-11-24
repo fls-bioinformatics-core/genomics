@@ -2,20 +2,10 @@
 #
 #     prep_sample_sheet.py: prepare sample sheet file for Illumina sequencers
 #     Copyright (C) University of Manchester 2012-2021 Peter Briggs
-#
-########################################################################
-#
-# prep_sample_sheet.py
-#
-#########################################################################
-
-"""prep_sample_sheet.py
-
-Prepare sample sheet file for Illumina sequencers.
 
 """
-
-__version__ = "0.5.0"
+Prepare sample sheet file for Illumina sequencers.
+"""
 
 #######################################################################
 # Imports
@@ -26,14 +16,11 @@ import sys
 import argparse
 import logging
 import pydoc
-# Put .. onto Python search path for modules
-SHARE_DIR = os.path.abspath(
-    os.path.normpath(
-        os.path.join(os.path.dirname(sys.argv[0]),'..')))
-sys.path.append(SHARE_DIR)
-import bcftbx.IlluminaData as IlluminaData
-from bcftbx.utils import parse_lanes
-from bcftbx.utils import parse_named_lanes
+from ..IlluminaData import SampleSheet
+from ..IlluminaData import SampleSheetPredictor
+from ..utils import parse_lanes
+from ..utils import parse_named_lanes
+from .. import get_version
 
 #######################################################################
 # Constants
@@ -78,40 +65,10 @@ def reverse_complement(seq):
     return ''.join([COMPLEMENT[s] for s in str(seq)[::-1]])
 
 #######################################################################
-# Unit tests
-#######################################################################
-
-import unittest
-
-class TestTruncateBarcodeFunction(unittest.TestCase):
-    """Tests for the 'truncate_barcode' function
-
-    """
-    def test_truncate_single_index_barcode(self):
-        self.assertEqual(truncate_barcode('CGTACTAG',0),'')
-        self.assertEqual(truncate_barcode('CGTACTAG',6),'CGTACT')
-        self.assertEqual(truncate_barcode('CGTACTAG',8),'CGTACTAG')
-        self.assertEqual(truncate_barcode('CGTACTAG',10),'CGTACTAG')
-    def test_truncate_dual_index_barcode(self):
-        self.assertEqual(truncate_barcode('AGGCAGAA-TAGATCGC',0),'')
-        self.assertEqual(truncate_barcode('AGGCAGAA-TAGATCGC',6),'AGGCAG')
-        self.assertEqual(truncate_barcode('AGGCAGAA-TAGATCGC',8),'AGGCAGAA')
-        self.assertEqual(truncate_barcode('AGGCAGAA-TAGATCGC',10),'AGGCAGAA-TA')
-        self.assertEqual(truncate_barcode('AGGCAGAA-TAGATCGC',16),'AGGCAGAA-TAGATCGC')
-
-class TestReverseComplementFunction(unittest.TestCase):
-    """Tests for the 'reverse_complement' function
-
-    """
-    def test_reverse_complement_sequence(self):
-        self.assertEqual(reverse_complement('AGGCAGAA'),'TTCTGCCT')
-        self.assertEqual(reverse_complement('TAGATCGC'),'GCGATCTA')
-
-#######################################################################
 # Main program
 #######################################################################
 
-if __name__ == "__main__":
+def main():
     # Set up logging output
     logging.basicConfig(format="%(levelname)s %(message)s")
 
@@ -122,7 +79,7 @@ if __name__ == "__main__":
         "update or fix information such as sample IDs and project "
         "names before running BCL to FASTQ conversion.")
     p.add_argument('--version',action='version',
-                   version="%(prog)s "+__version__)
+                   version=("%%(prog)s %s" % get_version()))
     p.add_argument('-o',action="store",dest="samplesheet_out",
                    default=None,
                    help="output new sample sheet to SAMPLESHEET_OUT")
@@ -212,7 +169,7 @@ if __name__ == "__main__":
         logging.error("sample sheet '%s': not found" % samplesheet)
         sys.exit(1)
     # Read in the sample sheet
-    data = IlluminaData.SampleSheet(samplesheet)
+    data = SampleSheet(samplesheet)
     if data.format is None:
         logging.error("Unable to determine samplesheet format")
         sys.exit(1)
@@ -335,7 +292,7 @@ if __name__ == "__main__":
     if check_status == 0 or args.ignore_warnings or args.view:
         # Generate prediction
         prediction = []
-        predictor = IlluminaData.SampleSheetPredictor(sample_sheet=data)
+        predictor = SampleSheetPredictor(sample_sheet=data)
         title = "Predicted projects:"
         prediction.append("%s\n%s" % (title,('='*len(title))))
         for project_name in predictor.project_names:
@@ -395,4 +352,3 @@ if __name__ == "__main__":
             data.write(args.samplesheet_out,fmt=fmt)
     # Finish
     sys.exit(check_status)
-    

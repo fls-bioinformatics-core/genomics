@@ -10,9 +10,10 @@ Copyright (C) University of Manchester 2011-2021 Peter Briggs
 # install into 'bin'
 from glob import glob
 scripts = []
+for pattern in ('bin/*.py','bin/*.sh',):
+    scripts.extend(glob(pattern))
 for pattern in ('build-indexes/*.sh',
                 'ChIP-seq/*.pl','ChIP-seq/*.py',
-                'illumina2cluster/*.py','illumina2cluster/*.sh',
                 'microarray/*.py',
                 'NGS-general/*.pl','NGS-general/*.py','NGS-general/*.sh',
                 'QC-pipeline/*.py','QC-pipeline/*.sh',
@@ -33,7 +34,9 @@ setup(name = "genomics-bcftbx",
       url = 'https://github.com/fls-bioinformatics-core/genomics',
       maintainer = 'Peter Briggs',
       maintainer_email = 'peter.briggs@manchester.ac.uk',
-      packages = ['bcftbx','bcftbx.qc'],
+      packages = ['bcftbx',
+                  'bcftbx.cli',
+                  'bcftbx.qc'],
       license = 'AFL-3',
       # Pull in dependencies
       install_requires = ['xlwt >= 0.7.2',

@@ -182,12 +182,13 @@ if __name__ == "__main__":
 
     # Create command line parser
     p = argparse.ArgumentParser(
-        version="%(prog)s "+__version__,
         description="Reassign reads with undetermined index sequences. "
         "(i.e. barcodes). DIR is the name (including any leading path) "
         "of the 'Undetermined_indices' directory produced by CASAVA, "
         "which contains the FASTQ files with the undetermined reads from "
         "each lane.")
+    p.add_argument('--version',action='version',
+                   version=("%%(prog)s %s" % __version__))
     p.add_argument("--barcode",action="append",dest="barcode_info",
                    default=[],
                    help="specify barcode sequence and corresponding sample "
