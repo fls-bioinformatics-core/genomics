@@ -4,7 +4,6 @@ Command Reference
 .. toctree::
    :maxdepth: 2
 
-   reference/build_indexes
    reference/solid2cluster
    reference/illumina2cluster
    reference/ngs_general
