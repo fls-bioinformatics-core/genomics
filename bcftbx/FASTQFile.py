@@ -32,10 +32,7 @@ CHUNKSIZE = 102400
 # Import modules that this module depends on
 #######################################################################
 
-try:
-    from collections.abc import Iterator
-except ImportError:
-    from collections import Iterator
+from collections.abc import Iterator
 import os
 import io
 import re
@@ -146,12 +143,6 @@ class FastqIterator(Iterator):
         self._buf = buf
         self._ip = ip
         return FastqRead(*read)
-
-    def next(self):
-        """
-        Implemented for Python2 compatibility
-        """
-        return self.__next__()
 
 class FastqRead(object):
     """Class to store a FASTQ record with information about a read
