@@ -59,11 +59,9 @@ jobs:
         pytest QC-pipeline/fastq_strand.py
     - name: Test microarray utilities
       run: |
-        microarray/examples/test_best_exons.sh
-        microarray/examples/test_xrorthologs.sh
-        microarray/examples/test_annotate_probesets.sh
-        pytest microarray/annotate_probesets.py
-        pytest microarray/xrorthologs.py
+        examples/microarray/test_annotate_probesets.sh
+        examples/microarray/test_best_exons.sh
+        examples/microarray/test_xrorthologs.sh
     - name: Test md5checker utility
       run: |
         utils/examples/test_md5checker.sh
