@@ -45,9 +45,8 @@ jobs:
         pytest RNA-seq/bowtie_mapping_stats.py
     - name: Test ChIP-seq utilities
       run: |
-        ChIP-seq/examples/test_make_macs_xls.sh
-        ChIP-seq/examples/test_make_macs2_xls.sh
-        pytest ChIP-seq/make_macs2_xls.py
+        examples/ChIP-seq/test_make_macs_xls.sh
+        examples/ChIP-seq/test_make_macs2_xls.sh
     - name: Test NGS-general utilities
       run: |
         NGS-general/sam2soap.py --test
