@@ -13,7 +13,6 @@ scripts = []
 for pattern in ('bin/*.py','bin/*.sh',):
     scripts.extend(glob(pattern))
 for pattern in ('build-indexes/*.sh',
-                'ChIP-seq/*.pl','ChIP-seq/*.py',
                 'microarray/*.py',
                 'NGS-general/*.pl','NGS-general/*.py','NGS-general/*.sh',
                 'QC-pipeline/*.py','QC-pipeline/*.sh',
