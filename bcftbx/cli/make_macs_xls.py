@@ -1,15 +1,12 @@
 #!/usr/bin/env python
 #
 #     make_macs_xls.py: Convert MACS output file to XLS spreadsheet
-#     Copyright (C) University of Manchester 2011-2012,2019 Peter Briggs
+#     Copyright (C) University of Manchester 2011-2021 Peter Briggs
 #
-########################################################################
-#
-# make_macs_xls.py
-#
-#########################################################################
 
-"""make_macs_xls.py
+
+"""
+make_macs_xls.py
 
 Convert MACS output file to XLS spreadsheet
 
@@ -19,10 +16,11 @@ from that data (e.g. summit+/-100bps); one containing the header
 information from the input; and one describing what each of the columns
 in the data sheet are.
 
-The program was developed to work with MACS 1.4."""
+The program was developed to work with MACS 1.4.
+"""
 
 #######################################################################
-# Import modules that this module depends on
+# Imports
 #######################################################################
 
 from builtins import str
@@ -33,37 +31,17 @@ import argparse
 import logging
 # Configure logging output
 logging.basicConfig(format="[%(levelname)s] %(message)s")
-# Put .. onto Python search path for modules
-SHARE_DIR = os.path.abspath(
-    os.path.normpath(
-        os.path.join(os.path.dirname(sys.argv[0]),'..')))
-sys.path.append(SHARE_DIR)
-from bcftbx.TabFile import TabFile
-import bcftbx.Spreadsheet as Spreadsheet
 
-#######################################################################
-# Module metadata
-#######################################################################
+from ..TabFile import TabFile
+from ..Spreadsheet import Workbook
+from .. import get_version
 
-__version__ = '0.2.2'
-
-#######################################################################
-# Class definitions
-#######################################################################
-
-# No classes defined
-
-#######################################################################
-# Functions
-#######################################################################
-
-# No functions defined
 
 #######################################################################
 # Main program
 #######################################################################
 
-if __name__ == "__main__":
+def main()
     # Process command line
     p = argparse.ArgumentParser(
         description=
@@ -72,7 +50,7 @@ if __name__ == "__main__":
         "if supplied then <XLS_OUT> is the name to use for the output "
         "file, otherwise it will be called 'XLS_<MACS_OUTPUT>.xls'.")
     p.add_argument('--version',action='version',
-                   version="%(prog)s "+__version__)
+                   version="%(prog)s "+get_version())
     p.add_argument('macs_in',metavar="MACS_OUTPUT",action='store',
                    help="output .xls file from MACS")
     p.add_argument('xls_out',metavar="XLS_OUT",action='store',nargs='?',
@@ -165,7 +143,7 @@ fold_enrichment\tFold enrichment for this region against random Poisson distribu
 FDR(%)\tFalse discovery rate (FDR) as a percentage
 """
     # Create a new spreadsheet
-    wb = Spreadsheet.Workbook()
+    wb = Workbook()
 
     # Create the sheets
     #
@@ -211,5 +189,3 @@ FDR(%)\tFalse discovery rate (FDR) as a percentage
 
     # Write the spreadsheet to file
     wb.save(xls_out)
-
-
