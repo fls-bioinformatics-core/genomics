@@ -2,7 +2,7 @@
 
 Setup script to install genomics/bcftbx
 
-Copyright (C) University of Manchester 2011-20 Peter Briggs
+Copyright (C) University of Manchester 2011-2021 Peter Briggs
 
 """
 
@@ -67,8 +67,6 @@ setup(name = "genomics-bcftbx",
           "Operating System :: MacOS",
           "Topic :: Scientific/Engineering",
           "Topic :: Scientific/Engineering :: Bio-Informatics",
-          "Programming Language :: Python :: 2",
-          "Programming Language :: Python :: 2.7"
           "Programming Language :: Python :: 3",
           'Programming Language :: Python :: 3.6',
           'Programming Language :: Python :: 3.7',
