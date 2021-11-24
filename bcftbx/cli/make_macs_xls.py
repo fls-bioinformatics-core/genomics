@@ -41,7 +41,7 @@ from .. import get_version
 # Main program
 #######################################################################
 
-def main()
+def main():
     # Process command line
     p = argparse.ArgumentParser(
         description=
