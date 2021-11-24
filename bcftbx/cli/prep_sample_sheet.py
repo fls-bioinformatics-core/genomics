@@ -169,7 +169,7 @@ def main():
         logging.error("sample sheet '%s': not found" % samplesheet)
         sys.exit(1)
     # Read in the sample sheet
-    data = IlluminaData.SampleSheet(samplesheet)
+    data = SampleSheet(samplesheet)
     if data.format is None:
         logging.error("Unable to determine samplesheet format")
         sys.exit(1)
@@ -292,7 +292,7 @@ def main():
     if check_status == 0 or args.ignore_warnings or args.view:
         # Generate prediction
         prediction = []
-        predictor = IlluminaData.SampleSheetPredictor(sample_sheet=data)
+        predictor = SampleSheetPredictor(sample_sheet=data)
         title = "Predicted projects:"
         prediction.append("%s\n%s" % (title,('='*len(title))))
         for project_name in predictor.project_names:
