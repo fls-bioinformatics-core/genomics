@@ -146,7 +146,7 @@ class AttributeDictionary(dict):
             raise AttributeError("'AttributeDictionary' has no "
                                  "attribute '%s'" % attr)
 
-class OrderedDictionary(object):
+class OrderedDictionary:
     """Augumented dictionary which keeps keys in order
 
     OrderedDictionary provides an augmented Python dictionary
@@ -273,7 +273,7 @@ def getlines(filen):
 # File system wrappers and utilities
 #######################################################################
 
-class PathInfo(object):
+class PathInfo:
     """Collect and report information on a file
 
     The PathInfo class provides an interface to getting general
@@ -972,7 +972,7 @@ def strip_ext(name,ext=None):
 # Symbolic link handling
 #######################################################################
 
-class Symlink(object):
+class Symlink:
     """Class for interrogating and modifying symbolic links
 
     The Symlink class provides an interface for getting information

@@ -43,7 +43,7 @@ import bcftbx.Md5sum
 # Module constants
 #######################################################################
 
-class TestUtils(object):
+class TestUtils:
     """Utilities to help with setting up/running tests etc
 
     """
@@ -104,7 +104,7 @@ class TestUtils(object):
         shutil.rmtree(dirname)
 
 # Base class for making test data directories
-class BaseExampleDir(object):
+class BaseExampleDir:
     """Base class for making test data directories
 
     Create, populate and destroy directory with test data.

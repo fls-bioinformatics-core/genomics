@@ -116,7 +116,7 @@ except ImportError as ex:
 # Classes
 #######################################################################
 
-class BowtieMappingStats(object):
+class BowtieMappingStats:
     """Collect and output mapping statistics for multiple samples
 
     Read and store mapping stats from one or more samples from one
@@ -340,7 +340,7 @@ class BowtieMappingStats(object):
             io.open(tab_file,'wt').write(txt)
         return txt
 
-class BowtieSample(object):
+class BowtieSample:
     """Store mapping statistics for a sample
 
     Simple holder for mapping statistics extracted from a bowtie

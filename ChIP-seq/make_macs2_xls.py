@@ -57,7 +57,7 @@ __version__ = '0.6.3'
 # Class definitions
 #######################################################################
 
-class MacsXLS(object):
+class MacsXLS:
     """Class for reading and manipulating XLS output from MACS
 
     Reads the XLS output file from the MACS peak caller and

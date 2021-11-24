@@ -43,7 +43,7 @@ from builtins import range
 # Module data
 #######################################################################
 
-class SampleSheets(object):
+class SampleSheets:
     """
     Class with example sample sheets
 
@@ -103,7 +103,7 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
 7,ML7,ML7,,,N701,GCCAATAT,S502,TCTTTCCC,ML,
 8,VL8,VL8,,,N701,GCCAATAT,S503,TCTTTCCC,VL,"""
 
-class RunInfoXml(object):
+class RunInfoXml:
     """
     Class with example RunInfo.xml files
 
@@ -400,7 +400,7 @@ class MockSampleSheet(SampleSheet):
             output = '\n'.join(padded_output)
         return output
 
-class MockIlluminaRun(object):
+class MockIlluminaRun:
     """
     Utility class for creating mock Illumina sequencer output dirctories
 
@@ -666,7 +666,7 @@ class MockIlluminaRun(object):
             shutil.rmtree(self.dirn)
             self._created = False
 
-class MockIlluminaData(object):
+class MockIlluminaData:
     """Utility class for creating mock Illumina analysis data directories
 
     The MockIlluminaData class allows artificial Illumina analysis data

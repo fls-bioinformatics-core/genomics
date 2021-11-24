@@ -59,7 +59,7 @@ BLOCKSIZE = 1024*1024
 # Classes
 #######################################################################
 
-class Md5Checker(object):
+class Md5Checker:
     """Provides static methods for performing checks using MD5 sums
 
     The Md5Checker class is a collection of static methods that can
@@ -313,7 +313,7 @@ class Md5Checker(object):
                 status = self.MD5_ERROR
             yield (f,status)
 
-class Md5CheckReporter(object):
+class Md5CheckReporter:
     """Provides a generic reporting class for Md5Checker methods
 
     Typical usage modes are either:

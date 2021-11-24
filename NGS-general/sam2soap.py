@@ -34,7 +34,7 @@ from builtins import range
 # Class definitions
 #######################################################################
 
-class SAMBitwiseFlag(object):
+class SAMBitwiseFlag:
     """Class to decode bitwise flag from SAM file.
 
     Deconvolutes the decimal value of the bitwise flag from a
@@ -86,7 +86,7 @@ class SAMBitwiseFlag(object):
         except IndexError:
             return False
 
-class SAMLine(object):
+class SAMLine:
     """Class to represent SAM alignment data line
 
     Decodes a SAM alignment data line and sets the class properties
@@ -159,7 +159,7 @@ class SAMLine(object):
             # Derived class properties
             self.bitwiseFlag = SAMBitwiseFlag(self.flag)
 
-class SOAPLine(object):
+class SOAPLine:
     """Class to represent SOAP file line
 
     The class has the following properties which can be set by

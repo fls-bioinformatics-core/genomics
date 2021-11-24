@@ -53,7 +53,7 @@ from builtins import range
 # Class definitions
 #######################################################################
 
-class ProbeSetLookup(object):
+class ProbeSetLookup:
 
     def __init__(self,lookup_data_file=None,lookup_data_fp=None,
                  cols=(0,3), major_delimiter='\t',minor_delimiter=',',
@@ -142,7 +142,7 @@ class ProbeSetLookup(object):
             # Not found, return empty list
             return []
 
-class IndexedFile(object):
+class IndexedFile:
     """Read a file into memory and index for fast retrieval of lines
     """
     def __init__(self,filen=None,fp=None,first_line_is_header=False):

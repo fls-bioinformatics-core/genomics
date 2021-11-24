@@ -30,7 +30,7 @@ import bcftbx.FASTQFile as FASTQFile
 # Class definitions
 #######################################################################
 
-class Barcodes(object):
+class Barcodes:
     """Class for counting index sequences in Fastq files
 
     """

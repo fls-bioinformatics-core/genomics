@@ -106,7 +106,7 @@ MAX_NUMBER_ROWS_PER_WORKSHEET = 65536
 # Class definitions
 #######################################################################
 
-class Workbook(object):
+class Workbook:
     """Class for writing data to an XLS spreadsheet.
 
     A Workbook represents an XLS spreadsheet, which conists of sheets
@@ -190,7 +190,7 @@ class Workbook(object):
             logging.debug("Overwriting existing file: '%s'" % xls_name)
         self.workbook.save(xls_name)
 
-class Worksheet(object):
+class Worksheet:
     """Class for writing to a sheet in an XLS spreadsheet.
 
     A Worksheet object represents a sheet in an XLS spreadsheet.
@@ -633,7 +633,7 @@ class Worksheet(object):
         # Finished
         return
 
-class Styles(object):
+class Styles:
     """Class for creating and caching EasyXfStyle objects.
 
     XLS files have a limit of 4,000 styles, so cache and reuse EasyXfStyle
@@ -709,7 +709,7 @@ class Styles(object):
         self.styles[style_key] = xf_style
         return xf_style
 
-class Spreadsheet(object):
+class Spreadsheet:
     """Class for creating and writing a spreadsheet.
 
     This creates a very simple single-sheet workbook.

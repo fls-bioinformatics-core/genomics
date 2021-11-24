@@ -133,12 +133,12 @@ from builtins import range
 BAD_REF="## !REF ##"
 
 # Number formats
-class NumberFormats(object):
+class NumberFormats:
     THOUSAND_SEPARATOR=0
     PERCENTAGE=1
 
 # Spreadsheet limits
-class XLSLimits(object):
+class XLSLimits:
     """
     Limits for XLS files
     """
@@ -147,7 +147,7 @@ class XLSLimits(object):
     MAX_NUMBER_ROWS_PER_WORKSHEET = 65536 # Max number of rows per worksheet
     MAX_NUMBER_COLS_PER_WORKSHEET = 256 # Max nuber of columns per worksheet
 
-class XLSXLimits(object):
+class XLSXLimits:
     """
     Limits for XLSX files
     """
@@ -165,7 +165,7 @@ class Limits(XLSLimits):
 # Class definitions
 #######################################################################
 
-class XLSWorkBook(object):
+class XLSWorkBook:
     """Class for creating an Excel (xls) spreadsheet
 
     An XLSWorkBook instance provides an interface to creating an
@@ -320,7 +320,7 @@ class XLSWorkBook(object):
                 ws.freeze_panes(worksheet.freeze_panes)
         xlsx.close()
 
-class XLSWorkSheet(object):
+class XLSWorkSheet:
     """Class for creating sheets within an XLS workbook.
 
     XLSWorkSheet objects represent a sheet within an Excel
@@ -1125,7 +1125,7 @@ class XLSWorkSheet(object):
             text.append('\t'.join(line))
         return '\n'.join(text)
 
-class XLSStyle(object):
+class XLSStyle:
     """Class representing a set of styling and formatting data
 
     An XLSStyle object represents a collection of data used for
@@ -1332,7 +1332,7 @@ class ColumnRange(Iterator):
             raise StopIteration
         return column_integer_to_index(self.column)
 
-class CellIndex(object):
+class CellIndex:
     """Convenience class for handling XLS-style cell indices
 
     The CellIndex class provides a way of handling XLS-style
@@ -1383,7 +1383,7 @@ class CellIndex(object):
         return "%s%s" % ('' if self.column is None else self.column,
                          '' if self.row is None else self.row)
 
-class XLSColumn(object):
+class XLSColumn:
     """Class representing a column in a XLSWorkSheet
 
     An XLSColumn object provides access to data in a column
