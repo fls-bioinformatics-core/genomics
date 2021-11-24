@@ -34,6 +34,7 @@ logging.basicConfig(format="%(levelname)s %(message)s")
 from ..TabFile import TabFile
 from ..simple_xls import Limits
 from ..simple_xls import ColumnRange
+from ..simple_xls import XLSXLimits
 from ..simple_xls import XLSStyle
 from ..simple_xls import XLSWorkBook
 from .. import get_version
@@ -516,11 +517,11 @@ def make_macs2_xls(macs_file,xls_out,xls_format="xlsx",bed_out=None):
     # Create XLS file
     print("Generating XLS file")
     if xls_format == "xlsx":
-        xls_max_rows = simple_xls.XLSXLimits.MAX_NUMBER_ROWS_PER_WORKSHEET
-        xls_cell_width = simple_xls.XLSXLimits.MAX_LEN_WORKSHEET_CELL_VALUE
+        xls_max_rows = XLSXLimits.MAX_NUMBER_ROWS_PER_WORKSHEET
+        xls_cell_width = XLSXLimits.MAX_LEN_WORKSHEET_CELL_VALUE
     elif xls_format == "xls":
-        xls_max_rows = simple_xls.XLSLimits.MAX_NUMBER_ROWS_PER_WORKSHEET
-        xls_cell_width = simple_xls.XLSLimits.MAX_LEN_WORKSHEET_CELL_VALUE
+        xls_max_rows = XLSLimits.MAX_NUMBER_ROWS_PER_WORKSHEET
+        xls_cell_width = XLSLimits.MAX_LEN_WORKSHEET_CELL_VALUE
     try:
         xls = xls_for_macs2(macs_xls,
                             row_limit=xls_max_rows,
@@ -577,7 +578,7 @@ def main():
     if xls_format not in ('xls','xlsx'):
         p.error("Unrecognised Excel format: %s" % xls_format)
     # Report version
-    print("%s %s" % (os.path.basename(sys.argv[0]),__version__))
+    print("%s %s" % (os.path.basename(sys.argv[0]),get_version()))
     # Build output file name: if not explicitly supplied on the command
     # line then use "XLS_<input_name>.<xls_format>"
     if args.xls_out:
