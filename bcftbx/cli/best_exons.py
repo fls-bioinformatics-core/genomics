@@ -1,11 +1,9 @@
 #!/usr/bin/env python
 #
 #     best_exons.py: pick 'best' exons for gene symbols and average data
-#     Copyright (C) University of Manchester 2013-2019 Peter Briggs
+#     Copyright (C) University of Manchester 2013-2021 Peter Briggs
 #
 ########################################################################
-
-__version__ = "1.3.4"
 
 """
 best_exons.py
@@ -50,7 +48,6 @@ Output file format
 ------------------
 
 TSV file with one gene symbol per line plus averaged data.
-
 """
 
 ########################################################################
@@ -63,19 +60,11 @@ import os
 import io
 import argparse
 import logging
-try:
-    from collections.abc import Iterator
-except ImportError:
-    from collections import Iterator
+from collections.abc import Iterator
 from operator import attrgetter
-
-# Put .. onto Python search path for modules
-SHARE_DIR = os.path.abspath(
-    os.path.normpath(
-        os.path.join(os.path.dirname(sys.argv[0]),'..')))
-sys.path.append(SHARE_DIR)
-import bcftbx.TabFile as TabFile
-import bcftbx.utils as bcf_utils
+from bcftbx.TabFile import TabDataLine
+from bcftbx.utils import OrderedDictionary
+from .. import get_version
 
 ########################################################################
 # Classes
@@ -132,9 +121,9 @@ class TabFileIterator(Iterator):
         line = self.__fp.readline()
         self.__lineno += 1
         if line != '':
-            return TabFile.TabDataLine(line=line,
-                                       column_names=self.__column_names,
-                                       lineno=self.__lineno)
+            return TabDataLine(line=line,
+                               column_names=self.__column_names,
+                               lineno=self.__lineno)
         else:
             # Reached EOF
             if self.__filen is not None:
@@ -387,7 +376,7 @@ def best_exons(fp_in,fp_out,rank_by='log2_fold_change',
 
     """
     # Dictionary to store gene symbols
-    gene_symbols = bcf_utils.OrderedDictionary()
+    gene_symbols = OrderedDictionary()
     
     # Report lookup for specific columns
     print("Column assignments (numbered from zero):")
@@ -505,7 +494,7 @@ def ordinal(i):
 # Main program
 #########################################################################
 
-if __name__ == "__main__":
+def main():
 
     # Set up logging output format
     logging.basicConfig(format='%(levelname)s: %(message)s')
@@ -516,7 +505,7 @@ if __name__ == "__main__":
         "and picks the top three exons for each gene symbol, then "
         "outputs averages of the associated values to BEST_EXONS.")
     p.add_argument('--version',action='version',
-                   version="%(prog)s "+__version__)
+                   version="%(prog)s "+get_version())
     p.add_argument("--rank-by",action="store",dest="criterion",
                    default='log2_fold_change',
                    choices=('log2_fold_change','p_value',),
@@ -555,7 +544,7 @@ if __name__ == "__main__":
     # Deal with input and output files
     filein = args.filein
     fileout = args.fileout
-    print("%s %s" % (os.path.basename(sys.argv[0]),__version__))
+    print("%s %s" % (os.path.basename(sys.argv[0]),get_version()))
     print("Reading data from %s, writing output to %s" % (filein,fileout))
 
     # Open files
