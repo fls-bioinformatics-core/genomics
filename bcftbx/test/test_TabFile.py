@@ -1004,8 +1004,6 @@ class TestTabDataLineNoTypeConversion(unittest.TestCase):
         for i in range(len(test_values)):
             self.assertEqual(line[i],str(test_values[i]))
 
-    
-
 class TestTabDataLineDelimiters(unittest.TestCase):
 
     def test_default_delimiters(self):
@@ -1024,6 +1022,71 @@ class TestTabDataLineDelimiters(unittest.TestCase):
                            delimiter=',')
         for i in range(len(input_data)):
             self.assertEqual(input_data[i],line[i])
+
+class TestTabFileIterator(unittest.TestCase):
+
+    def setUp(self):
+        # Tab-delimited data
+        self.data = \
+u"""chr1\t1\t234\t4.6
+chr1\t567\t890\t5.7
+chr2\t1234\t5678\t6.8
+"""
+        # Make file-like object to read data in
+        self.fp = io.StringIO(self.data)
+
+        # Make temporary directory
+        self.working_dir = tempfile.mkdtemp(suffix='TestTabFileIterator')
+
+    def tearDown(self):
+        # Close the open file-like input
+        self.fp.close()
+        # Remove the temporary directory
+        if os.path.exists(self.working_dir):
+            shutil.rmtree(self.working_dir)
+
+    def test_tabfileiterator_iterate_through_file(self):
+        """
+        TabFileIterator: iterates through TSV file
+        """
+        # Make test file
+        tabfile = os.path.join(self.working_dir,'test.tsv')
+        with open(tabfile,'wt') as fp:
+            fp.write(self.data)
+        # Iterate though file
+        tsv = TabFileIterator(tabfile)
+        for tabline,data in zip(tsv,self.data.split('\n')):
+            self.assertTrue(isinstance(tabline,TabDataLine))
+            self.assertEqual(str(tabline),data)
+
+    def test_tabfileiterator_iterate_through_file_object(self):
+        """
+        TabFileIterator: iterates through TSV file-like object
+        """
+        # Make file-like object to read data from
+        self.fp = io.StringIO(self.data)
+        # Iterate though data
+        tsv = TabFileIterator(fp=self.fp)
+        for tabline,data in zip(tsv,self.data.split('\n')):
+            self.assertTrue(isinstance(tabline,TabDataLine))
+            self.assertEqual(str(tabline),data)
+
+    def test_tabfileiterator_set_column_names(self):
+        """
+        TabFileIterator: specify column names
+        """
+        # Make file-like object to read data from
+        self.fp = io.StringIO(self.data)
+        # Column names for data
+        columns = ['chrom','start','end','p_value']
+        # Iterate though data
+        tsv = TabFileIterator(fp=self.fp,column_names=columns)
+        for tabline,data in zip(tsv,self.data.split('\n')):
+            self.assertTrue(isinstance(tabline,TabDataLine))
+            self.assertEqual(str(tabline),data)
+            # Check columns
+            for col,value in zip(columns,data.split('\t')):
+                self.assertEqual(str(tabline[col]),value)
         
 ########################################################################
 # Main: test runner
