@@ -259,6 +259,12 @@ A1BG-AS1	6.68543666667	6.36481	6.60468333333	6.50084333333	6.54916	6.57107333333
         output = fp_out.getvalue()
         for obs,exp in zip(output.split(),expected_output.split()):
             ##print("%s, %s" % (obs,exp))
+            try:
+                # Convert floats to 8 dp
+                exp = "%.8f" % float(exp)
+                obs = "%.8f" % float(obs)
+            except ValueError:
+                pass
             self.assertEqual(obs,exp)
 
     def test_best_exons_by_p_value(self):
@@ -272,6 +278,12 @@ A1BG-AS1	6.68543666667	6.36481	6.60468333333	6.50084333333	6.54916	6.57107333333
         output = fp_out.getvalue()
         for obs,exp in zip(output.split(),expected_output.split()):
             ##print("%s, %s" % (obs,exp))
+            try:
+                # Convert floats to 8 dp
+                exp = "%.8f" % float(exp)
+                obs = "%.8f" % float(obs)
+            except ValueError:
+                pass
             self.assertEqual(obs,exp)
 
 class TestTSVLineFunction(unittest.TestCase):
