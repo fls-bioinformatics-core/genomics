@@ -32,6 +32,7 @@ import itertools
 import tempfile
 import logging
 from itertools import zip_longest
+from .. import get_version
 
 #######################################################################
 # Module metadata
@@ -100,47 +101,14 @@ def cmp_chrom_names(x,y):
     return 0
 
 #######################################################################
-# Unit tests
-#######################################################################
-
-import unittest
-
-class TestSplitChromName(unittest.TestCase):
-    def test_split_chrom_name(self):
-        self.assertEqual(split_chrom_name("chr1"),[1])
-        self.assertEqual(split_chrom_name("chr10"),[10])
-        self.assertEqual(split_chrom_name("chrX"),["X"])
-        self.assertEqual(split_chrom_name("chr21_gl000210_random"),
-                                          [21,"gl000210","random"])
-
-class TestCmpChromNames(unittest.TestCase):
-    def test_cmp_chrom_names_equal(self):
-        self.assertTrue(cmp_chrom_names("chr1","chr1") == 0)
-        self.assertTrue(cmp_chrom_names("chr10","chr10") == 0)
-        self.assertTrue(cmp_chrom_names("chr17_gl000203_random",
-                                        "chr17_gl000203_random") == 0)
-    def test_cmp_chrom_names_lt(self):
-        self.assertTrue(cmp_chrom_names("chr1","chr10") < 0)
-        self.assertTrue(cmp_chrom_names("chr1",
-                                        "chr17_gl000203_random") < 0)
-        self.assertTrue(cmp_chrom_names("chr17",
-                                        "chr17_gl000203_random") < 0)
-    def test_cmp_chrom_names_gt(self):
-        self.assertTrue(cmp_chrom_names("chr10","chr1") > 0)
-        self.assertTrue(cmp_chrom_names("chr17_gl000203_random",
-                                        "chr1") > 0)
-        self.assertTrue(cmp_chrom_names("chr17_gl000203_random",
-                                        "chr17") > 0)
-
-#######################################################################
 # Main
 #######################################################################
 
-def main(args=None):
+def reorder_fasta():
     # Process command line
-    if args is None:
-        args = sys.argv[1:]
     p = argparse.ArgumentParser(description=__description__)
+    p.add_argument('--version',action='version',
+                   version="%(prog)s "+get_version())
     p.add_argument("fasta",metavar="FASTA",
                    help="FASTA file to reorder")
     args = p.parse_args()
@@ -191,5 +159,5 @@ def main(args=None):
     print("Wrote reordered FASTA file to %s" % fasta_reordered)
     print("Finished")
 
-if __name__ == "__main__":
-    main()
+def main():
+    reorder_fasta()
