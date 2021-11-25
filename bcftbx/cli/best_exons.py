@@ -60,76 +60,14 @@ import os
 import io
 import argparse
 import logging
-from collections.abc import Iterator
 from operator import attrgetter
-from bcftbx.TabFile import TabDataLine
+from bcftbx.TabFile import TabFileIterator
 from bcftbx.utils import OrderedDictionary
 from .. import get_version
 
 ########################################################################
 # Classes
 #########################################################################
-
-class TabFileIterator(Iterator):
-    """TabFileIterator
-
-    Class to loop over all lines in a TSV file, returning a TabDataLine
-    object for each record.
-
-    """
-
-    def __init__(self,filen=None,fp=None,column_names=None):
-        """Create a new TabFileIterator
-
-        The input file should be a tab-delimited text file, specified as
-        either a file name (using the 'filen' argument), or a file-like
-        object opened for line reading (using the 'fp' argument).
-
-        Each iteration returns a TabDataLine populated with data from
-        the file.
-
-        Example usage:
-
-        >>> for line in TabFileIterator(filen='data.tsv'):
-        ...   print(line)
-
-        Arguments:
-          filen: name of the file to iterate through
-          fp: file-like object opened for reading
-          column_names: optional list of names to use as
-            column headers in the returned TabDataLines
-
-        """
-        self.__filen = filen
-        self.__column_names = column_names
-        self.__lineno = 0
-        if fp is None:
-            self.__fp = io.open(filen,'rt')
-        else:
-            self.__fp = fp
-
-    def next(self):
-        """Return next record from TSV file as a TabDataLine object (Python 2)
-
-        """
-        return self.__next__()
-
-    def __next__(self):
-        """Return next record from TSV file as a TabDataLine object
-
-        """
-        line = self.__fp.readline()
-        self.__lineno += 1
-        if line != '':
-            return TabDataLine(line=line,
-                               column_names=self.__column_names,
-                               lineno=self.__lineno)
-        else:
-            # Reached EOF
-            if self.__filen is not None:
-                # Assume we opened the file originally
-                self.__fp.close()
-            raise StopIteration
 
 class ExonList:
     """List of exons associated with a gene symbol

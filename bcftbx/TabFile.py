@@ -187,11 +187,24 @@ TabFile object, for example for a comma-delimited file:
 
 >>> data = TabFile('data.txt',delimiter=',')
 
+TabFileIterator: iterating through a tab-delimited file
+-------------------------------------------------------
+
+The ``TabFileIterator`` provides a light-weight alternative to
+``TabFile`` in situations where it is only necessary to iterate
+through each line in a tab-delimited file:
+
+>>> for line in TabFileIterator(filen='data.tsv'):
+...   print(line)
+
+Each line is returned as a ``TabDataLine`` instance, so the
+methods available that class can be used on the data.
 """
 
 from builtins import str
 import io
 import logging
+from collections.abc import Iterator
 
 class TabDataLine:
     """Class to store a line of data from a tab-delimited file
@@ -917,3 +930,59 @@ class TabFile:
 
     def __repr__(self):
         return '\n'.join([str(x) for x in self.__data])
+
+class TabFileIterator(Iterator):
+    """
+    Iterate through lines in a tab-delimited file
+
+    Class to loop over all lines in a TSV file, returning a TabDataLine
+    object for each record.
+    """
+
+    def __init__(self,filen=None,fp=None,column_names=None):
+        """
+        Create a new TabFileIterator
+
+        The input file should be a tab-delimited text file, specified as
+        either a file name (using the 'filen' argument), or a file-like
+        object opened for line reading (using the 'fp' argument).
+
+        Each iteration returns a TabDataLine populated with data from
+        the file.
+
+        Example usage:
+
+        >>> for line in TabFileIterator(filen='data.tsv'):
+        ...   print(line)
+
+        Arguments:
+          filen: name of the file to iterate through
+          fp: file-like object opened for reading
+          column_names: optional list of names to use as
+            column headers in the returned TabDataLines
+
+        """
+        self.__filen = filen
+        self.__column_names = column_names
+        self.__lineno = 0
+        if fp is None:
+            self.__fp = io.open(filen,'rt')
+        else:
+            self.__fp = fp
+
+    def __next__(self):
+        """
+        Return next record from TSV file as a TabDataLine object
+        """
+        line = self.__fp.readline()
+        self.__lineno += 1
+        if line != '':
+            return TabDataLine(line=line,
+                               column_names=self.__column_names,
+                               lineno=self.__lineno)
+        else:
+            # Reached EOF
+            if self.__filen is not None:
+                # Assume we opened the file originally
+                self.__fp.close()
+            raise StopIteration
