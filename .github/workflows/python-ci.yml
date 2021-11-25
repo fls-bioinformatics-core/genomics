@@ -39,6 +39,9 @@ jobs:
       run: |
         ./bin/prep_sample_sheet.py -h
         ./bin/verify_paired.py -h
+    - name: Test solid2cluster utilities
+      run: |
+        ./bin/analyse_solid_run.py -h
     - name: Test RNA-seq utilities
       run: |
         examples/RNA-seq/test_bowtie_mapping_stats.sh

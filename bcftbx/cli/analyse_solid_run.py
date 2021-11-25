@@ -1,19 +1,13 @@
 #!/usr/bin/env python
 #
 #     analyse_solid_run.py: analyse and report on SOLiD sequencer runs
-#     Copyright (C) University of Manchester 2011-12,2019 Peter Briggs
-#
-########################################################################
-#
-# analyse_solid_run.py
-#
-#########################################################################
+#     Copyright (C) University of Manchester 2011-2021 Peter Briggs
 
-"""analyse_solid_run.py
-
+"""
 Provides functionality for analysing a SOLiD run, to verify and report data
 about the run, and suggest a layout scheme for the analysis directories.
 """
+
 
 #######################################################################
 # Import modules that this module depends on
@@ -28,24 +22,15 @@ import gzip
 import argparse
 import logging
 logging.basicConfig(format="%(levelname)s %(message)s")
-
-# Put .. onto Python search path for modules
-SHARE_DIR = os.path.abspath(
-    os.path.normpath(
-        os.path.join(os.path.dirname(sys.argv[0]),'..')))
-sys.path.append(SHARE_DIR)
-import bcftbx.SolidData as SolidData
-import bcftbx.Experiment as Experiment
-import bcftbx.Md5sum as Md5sum
+from ..SolidData import SolidRun
+from ..SolidData import list_run_directories
+from ..Experiment import Experiment
+from ..Md5sum import md5sum
+from ..Spreadsheet import Spreadsheet
+from .. import get_version
 
 #######################################################################
-# Class definitions
-#######################################################################
-
-# No classes defined
-
-#######################################################################
-# Module Functions: program functions
+# Functions
 #######################################################################
 
 def report_run(solid_runs,report_paths=False):
@@ -133,7 +118,7 @@ def write_spreadsheet(solid_runs,spreadsheet):
     write_date = True
 
     # Open spreadsheet
-    wb = Spreadsheet.Spreadsheet(spreadsheet,'SOLiD Runs')
+    wb = Spreadsheet(spreadsheet,'SOLiD Runs')
 
     # Header row
     if write_header:
@@ -265,7 +250,7 @@ def suggest_analysis_layout(solid_runs):
             for project in sample.projects:
                 # Create one experiment per project
                 cmd_line = []
-                expt = Experiment.Experiment()
+                expt = Experiment()
                 expt.name = project.getProjectName()
                 expt.type = "expt"
                 expt.sample = project.getSample().name
@@ -318,7 +303,7 @@ def verify_runs(solid_dirs):
     for solid_dir in solid_dirs:
         # Initialise
         run_status = 0
-        run = SolidData.SolidRun(solid_dir)
+        run = SolidRun(solid_dir)
         if not run.verify():
             run_status = 1
         print("%s:" % run.run_name,)
@@ -488,24 +473,24 @@ def print_md5sums(library):
     """
     # F3 primary data
     try:
-        print("%s  %s" % (Md5sum.md5sum(library.csfasta),
+        print("%s  %s" % (md5sum(library.csfasta),
                           strip_prefix(library.csfasta,os.getcwd())))
     except Exception as ex:
         logging.error("FAILED for F3 csfasta: %s" % ex)
     try:
-        print("%s  %s" % (Md5sum.md5sum(library.qual),
+        print("%s  %s" % (md5sum(library.qual),
                           strip_prefix(library.qual,os.getcwd())))
     except Exception as ex:
         logging.error("FAILED for F3 qual: %s" % ex)
     # F5 primary data
     if library.parent_sample.parent_run.is_paired_end:
         try:
-            print("%s  %s" % (Md5sum.md5sum(library.csfasta_f5),
+            print("%s  %s" % (md5sum(library.csfasta_f5),
                               strip_prefix(library.csfasta_f5,os.getcwd())))
         except Exception as ex:
             logging.error("FAILED for F5 csfasta: %s" % ex)
         try:
-            print("%s  %s" % (Md5sum.md5sum(library.qual_f5),
+            print("%s  %s" % (md5sum(library.qual_f5),
                               strip_prefix(library.qual_f5,os.getcwd())))
         except Exception as ex:
             logging.error("FAILED for F5 qual: %s" % ex)
@@ -525,7 +510,7 @@ def strip_prefix(path,prefix):
 # Main program
 #######################################################################
 
-if __name__ == "__main__":
+def main():
 
     # Set up command line parser
     p = argparse.ArgumentParser(
@@ -536,7 +521,8 @@ if __name__ == "__main__":
         "and operates on all associated directories "
         "from the same instrument and with the same "
         "timestamp.")
-
+    p.add_argument('--version',action='version',
+                   version="%(prog)s "+get_version())
     p.add_argument("--only",action="store_true",dest="only",
                    help="only operate on the specified solid_run_dir, don't "
                    "locate associated run directories")
@@ -597,7 +583,7 @@ if __name__ == "__main__":
             solid_dirs = [args.solid_run_dirs[0]]
         else:
             # Add associated directories
-            solid_dirs = SolidData.list_run_directories(args.solid_run_dirs[0])
+            solid_dirs = list_run_directories(args.solid_run_dirs[0])
     else:
         # Use all supplied arguments
         solid_dirs = args
@@ -623,7 +609,7 @@ if __name__ == "__main__":
     # Get the run information
     solid_runs = []
     for solid_dir in solid_dirs:
-        run = SolidData.SolidRun(solid_dir)
+        run = SolidRun(solid_dir)
         if not run:
             logging.error("Error extracting run data for %s" % solid_dir)
             sys.exit(1)
