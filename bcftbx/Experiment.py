@@ -23,8 +23,10 @@ collection of experiments which are typically part of the same SOLiD run.
 
 import os
 import logging
-import SolidData
-import utils
+from .SolidData import SolidRun
+from .SolidData import is_paired_end
+from .utils import mkdir
+from .utils import mklink
 
 #######################################################################
 # Class definitions
@@ -126,7 +128,7 @@ class ExperimentList:
             logging.debug("Acquiring run information")
             for solid_dir in (self.solid_run_dir,self.solid_run_dir+"_2"):
                 logging.debug("Examining %s" % solid_dir)
-                run = SolidData.SolidRun(solid_dir)
+                run = SolidRun(solid_dir)
                 if not run:
                     logging.debug("Unable to get run data for %s" % solid_dir)
                 else:
@@ -196,7 +198,7 @@ class ExperimentList:
                 if not dry_run:
                     # Create top directory
                     print("Creating %s" % top_dir)
-                    utils.mkdir(top_dir,mode=0o775)
+                    mkdir(top_dir,mode=0o775)
                 else:
                     # Report what would have been done
                     print("mkdir %s" % top_dir)
@@ -219,13 +221,13 @@ class ExperimentList:
             else:
                 if not dry_run:
                     # Create directory
-                    utils.mkdir(expt_dir,mode=0o775)
+                    mkdir(expt_dir,mode=0o775)
                 else:
                     # Report what would have been done
                     print("mkdir %s" % expt_dir)
             # Locate the primary data
             for run in self.solid_runs:
-                paired_end = SolidData.is_paired_end(run)
+                paired_end = is_paired_end(run)
                 libraries = run.fetchLibraries(expt.sample,expt.library)
                 for library in libraries:
                     # Get names for links to primary data - F3
@@ -262,7 +264,7 @@ class ExperimentList:
             else:
                 if not dry_run:
                     # Create directory
-                    utils.mkdir(scriptcode_dir,mode=0o775)
+                    mkdir(scriptcode_dir,mode=0o775)
                 else:
                     # Report what would have been done
                     print("mkdir %s" % scriptcode_dir)
@@ -291,7 +293,7 @@ class ExperimentList:
             return
         if not dry_run:
             # Make symbolic links
-            utils.mklink(source,target,relative=relative)
+            mklink(source,target,relative=relative)
         else:
             # Report what would have been done
             print("ln -s %s %s" % (source,target))
@@ -375,7 +377,7 @@ class LinkNames:
         """
         # Alternative naming schemes for primary data for links
         run = library.parent_sample.parent_run
-        if not SolidData.is_paired_end(run):
+        if not is_paired_end(run):
             # Library names alone
             return ("%s.csfasta" % library.name,
                     "%s.qual" % library.name)
@@ -395,7 +397,7 @@ class LinkNames:
         name = '_'.join([run.run_info.instrument,
                          run.run_info.datestamp,
                          library.name])
-        if not SolidData.is_paired_end(run):
+        if not is_paired_end(run):
             return ("%s.csfasta" % name,
                     "%s_QV.qual" % name)
         else:
@@ -411,7 +413,7 @@ class LinkNames:
         """Internal: link names based on 'full' naming scheme
         """
         run = library.parent_sample.parent_run
-        if not SolidData.is_paired_end(run):
+        if not is_paired_end(run):
             return (os.path.basename(library.csfasta),
                     os.path.basename(library.qual))
         else:
