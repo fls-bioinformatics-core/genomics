@@ -53,7 +53,7 @@ jobs:
       run: |
         NGS-general/sam2soap.py --test
         NGS-general/split_fasta.py --test
-        NGS-general/examples/test_extract_reads.sh
+        examples/NGS-general/test_extract_reads.sh
         pytest NGS-general/manage_seqs.py
         pytest NGS-general/reorder_fasta.py
         pytest NGS-general/split_fastq.py
