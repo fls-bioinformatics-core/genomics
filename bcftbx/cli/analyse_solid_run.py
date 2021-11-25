@@ -26,6 +26,7 @@ from ..SolidData import SolidRun
 from ..SolidData import list_run_directories
 from ..Experiment import Experiment
 from ..Md5sum import md5sum
+from ..Spreadsheet import Spreadsheet
 from .. import get_version
 
 #######################################################################
@@ -117,7 +118,7 @@ def write_spreadsheet(solid_runs,spreadsheet):
     write_date = True
 
     # Open spreadsheet
-    wb = Spreadsheet.Spreadsheet(spreadsheet,'SOLiD Runs')
+    wb = Spreadsheet(spreadsheet,'SOLiD Runs')
 
     # Header row
     if write_header:
