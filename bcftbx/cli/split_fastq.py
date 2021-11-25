@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
-#     split_fastq.py: split fastq by lane
-#     Copyright (C) University of Manchester 2018-2019 Peter Briggs
+#     split_fastq.py: split Fastq by lane
+#     Copyright (C) University of Manchester 2018-2021 Peter Briggs
 #
 
 #######################################################################
@@ -13,134 +13,12 @@ import argparse
 import re
 import os
 import io
-from bcftbx.IlluminaData import IlluminaFastq
-from bcftbx.IlluminaData import IlluminaDataError
-from bcftbx.utils import parse_lanes
-from bcftbx.ngsutils import getreads
-from bcftbx.ngsutils import getreads_regex
-
-#######################################################################
-# Unit tests
-#######################################################################
-import unittest
-import tempfile
-import shutil
-import gzip
-
-class TestGetFastqLanes(unittest.TestCase):
-    def setUp(self):
-        self.wd = tempfile.mkdtemp()
-        self.fastq_data = u"""@K00311:43:HL3LWBBXX:2:1101:21440:1121 1:N:0:CNATGT
-GCCNGACAGCAGAAAT
-+
-AAF#FJJJJJJJJJJJ
-@K00311:43:HL3LWBBXX:2:1101:21460:1121 1:N:0:CNATGT
-GGGNGTCATTGATCAT
-+
-AAF#FJJJJJJJJJJJ
-@K00311:43:HL3LWBBXX:2:1101:21805:1121 1:N:0:CNATGT
-CCCNACCCTTGCCTAC
-+
-AAF#FJJJJJJJJJJJ
-@K00311:43:HL3LWBBXX:8:1101:21440:1121 1:N:0:CNATGT
-GCCNGACAGCAGAAAT
-+
-AAF#FJJJJJJJJJJJ
-@K00311:43:HL3LWBBXX:8:1101:21460:1121 1:N:0:CNATGT
-GGGNGTCATTGATCAT
-+
-AAF#FJJJJJJJJJJJ
-"""
-        
-    def tearDown(self):
-        if os.path.exists(self.wd):
-            shutil.rmtree(self.wd)
-    def test_get_fastq_lanes(self):
-        # Make test Fastq
-        fastq_in = os.path.join(self.wd,"Test_S1_R1_001.fastq")
-        with io.open(fastq_in,'wt') as fp:
-            fp.write(self.fastq_data)
-        # Extract lanes
-        nreads,lanes = get_fastq_lanes(fastq_in)
-        # Check results
-        self.assertEqual(nreads,5)
-        self.assertEqual(lanes,[2,8])
-    def test_get_fastq_lanes_from_gzipped_input(self):
-        # Make test gzipped Fastq
-        fastq_in = os.path.join(self.wd,"Test_S1_R1_001.fastq.gz")
-        with gzip.open(fastq_in,'wt') as fp:
-            fp.write(self.fastq_data)
-        # Extract lanes
-        nreads,lanes = get_fastq_lanes(fastq_in)
-        # Check results
-        self.assertEqual(nreads,5)
-        self.assertEqual(lanes,[2,8])
-
-class TestExtractReadsForLane(unittest.TestCase):
-    def setUp(self):
-        self.wd = tempfile.mkdtemp()
-        self.fastq_data_l2 = u"""@K00311:43:HL3LWBBXX:2:1101:21440:1121 1:N:0:CNATGT
-GCCNGACAGCAGAAAT
-+
-AAF#FJJJJJJJJJJJ
-@K00311:43:HL3LWBBXX:2:1101:21460:1121 1:N:0:CNATGT
-GGGNGTCATTGATCAT
-+
-AAF#FJJJJJJJJJJJ
-@K00311:43:HL3LWBBXX:2:1101:21805:1121 1:N:0:CNATGT
-CCCNACCCTTGCCTAC
-+
-AAF#FJJJJJJJJJJJ
-"""
-        self.fastq_data_l8 = u"""@K00311:43:HL3LWBBXX:8:1101:21440:1121 1:N:0:CNATGT
-GCCNGACAGCAGAAAT
-+
-AAF#FJJJJJJJJJJJ
-@K00311:43:HL3LWBBXX:8:1101:21460:1121 1:N:0:CNATGT
-GGGNGTCATTGATCAT
-+
-AAF#FJJJJJJJJJJJ
-"""
-        
-    def tearDown(self):
-        if os.path.exists(self.wd):
-            shutil.rmtree(self.wd)
-    def test_extract_reads_for_lane(self):
-        # Make test Fastq
-        fastq_in = os.path.join(self.wd,"Test_S1_R1_001.fastq")
-        with io.open(fastq_in,'wt') as fp:
-            fp.write(self.fastq_data_l2)
-            fp.write(self.fastq_data_l8)
-        # Extract reads for lane 2
-        reads_l2 = []
-        for r in extract_reads_for_lane(fastq_in,2):
-            reads_l2.append(r)
-        self.assertEqual(len(reads_l2),3)
-        self.assertEqual('\n'.join(reads_l2),self.fastq_data_l2.strip())
-        # Extract reads for lane 8
-        reads_l8 = []
-        for r in extract_reads_for_lane(fastq_in,8):
-            reads_l8.append(r)
-        self.assertEqual(len(reads_l8),2)
-        self.assertEqual('\n'.join(reads_l8),self.fastq_data_l8.strip())
-    def test_get_fastq_lanes_from_gzipped_input(self):
-        # Make test gzipped Fastq
-        fastq_in = os.path.join(self.wd,"Test_S1_R1_001.fastq.gz")
-        with gzip.open(fastq_in,'wt') as fp:
-            fp.write(self.fastq_data_l2)
-            fp.write(self.fastq_data_l8)
-        # Extract reads for lane 2
-        reads_l2 = []
-        for r in extract_reads_for_lane(fastq_in,2):
-            reads_l2.append(r)
-        self.assertEqual(len(reads_l2),3)
-        self.assertEqual('\n'.join(reads_l2),self.fastq_data_l2.strip())
-        # Extract reads for lane 8
-        reads_l8 = []
-        for r in extract_reads_for_lane(fastq_in,8):
-            reads_l8.append(r)
-        self.assertEqual(len(reads_l8),2)
-        self.assertEqual('\n'.join(reads_l8),self.fastq_data_l8.strip())
+from ..IlluminaData import IlluminaFastq
+from ..IlluminaData import IlluminaDataError
+from ..utils import parse_lanes
+from ..ngsutils import getreads
+from ..ngsutils import getreads_regex
+from .. import get_version
 
 #######################################################################
 # Functions
@@ -223,11 +101,13 @@ def output_fastq_name(fastq,lane):
 # Main program
 #######################################################################
 
-if __name__ == "__main__":
+def main():
     # Process command line
     p = argparse.ArgumentParser(
         description="Split input Fastq file into multiple output Fastqs "
         "where each output only contains reads from a single lane.")
+    p.add_argument('--version',action='version',
+                   version="%(prog)s "+get_version())
     p.add_argument("-l","--lanes",metavar="LANES",
                    help="lanes to extract: can be a single integer, "
                    "a comma-separated list (e.g. 1,3), a range (e.g. "
