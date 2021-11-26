@@ -1,20 +1,16 @@
-NGS-general
-===========
+NGS-general (legacy)
+====================
 
-General NGS scripts that are used for both ChIP-seq and RNA-seq.
+Deprecated general NGS scripts that are used for both ChIP-seq and RNA-seq.
 
   * `explain_sam_flag.sh`: decodes bit-wise flag from SAM file
-  * `extract_reads.py`: write out subsets of reads from input data files
   * `fastq_edit.py`: edit FASTQ files and data
   * `fastq_sniffer.py`: "sniff" FASTQ file to determine quality encoding
-  * `manage_seqs.py`: handling sets of named sequences (e.g. FastQC contaminants file)
   * `SamStats`: counts uniquely map reads per chromosome/contig
   * `splitBarcodes.pl`: separate multiple barcodes in SOLiD data
   * `remove_mispairs.pl`: remove "singleton" reads from paired end fastq
   * `remove_mispairs.py`: remove "singleton" reads from paired end fastq
-  * `sam2soap.py`: convert from SAM file to SOAP format
   * `separate_paired_fastq.pl`: separate F3 and F5 reads from fastq
-  * `split_fasta.py`: extract individual chromosome sequences from fasta file
   * `trim_fastq.pl`: trim down sequences in fastq file from 5' end
   * `uncompress_fastqgz.sh`: create ungzipped version of a compressed FASTQ file
 
@@ -23,28 +19,6 @@ explain_sam_flag.sh
 -------------------
 Convert a decimal bitwise SAM flag value to binary representation and
 interpret each bit.
-
-
-extract_reads.py
-----------------
-
-Usage: `extract_reads.py OPTIONS infile [infile ...]`
-
-Extract subsets of reads from each of the supplied files according to
-specified criteria (e.g. random, matching a pattern etc). Input files can be
-any mixture of FASTQ (.fastq, .fq), CSFASTA (.csfasta) and QUAL (.qual).
-Output file names will be the input file names with '.subset' appended.
-
-Options:
-
-    --version             show program's version number and exit
-    -h, --help            show this help message and exit
-    -m PATTERN, --match=PATTERN
-                          Extract records that match Python regular expression
-                          PATTERN
-    -n N                  Extract N random records from the input file(s)
-                          (default 500). If multiple input files are specified,
-                          the same subsets will be extracted for each.
 
 
 fastq_edit.py
@@ -90,43 +64,6 @@ Options:
                        the first N_SUBSET reads. (Quicker than using all reads
                        but may not be accurate if subset is not representative
                        of the file as a whole.)
-
-
-manage_seqs.py
---------------
-
-Read sequences and names from one or more INFILEs (which can be a mixture of
-FastQC 'contaminants' format and or Fasta format), check for redundancy (i.e.
-sequences with multiple associated names) and contradictions (i.e. names with
-multiple associated sequences).
-
-Usage:
-
-    manage_seqs.py OPTIONS FILE [FILE...]
-
-To append a 
-
-Options:
-
-    --version       show program's version number and exit
-    -h, --help      show this help message and exit
-    -o OUT_FILE     write all sequences to OUT_FILE in FastQC 'contaminants'
-                    format
-    -a APPEND_FILE  append sequences to existing APPEND_FILE (not compatible
-                    with -o)
-    -d DESCRIPTION  supply arbitrary text to write to the header of the output
-                    file
-
-Intended to help create/update files with lists of "contaminant" sequences to
-input into the `FastQC` program (using `FastQC`'s `--contaminants` option).
-
-To create a contaminants file using sequences from a FASTA file do e.g.:
-
-    % manage_seqs.py -o custom_contaminants.txt sequences.fa
-
-To append sequences to an existing contaminants file do e.g.
-
-    % manage_seqs.py -a my_contaminantes.txt additional_seqs.fa
 
 
 SamStats
