@@ -51,12 +51,12 @@ jobs:
         examples/ChIP-seq/test_make_macs2_xls.sh
     - name: Test NGS-general utilities
       run: |
-        NGS-general/sam2soap.py --test
-        NGS-general/split_fasta.py --test
         examples/NGS-general/test_extract_reads.sh
-        pytest NGS-general/manage_seqs.py
-        pytest NGS-general/reorder_fasta.py
-        pytest NGS-general/split_fastq.py
+        ./bin/manage_seqs.py -h
+        ./bin/reorder_fasta.py -h
+        ./bin/sam2soap.py -h
+        ./bin/split_fastq.py -h
+        ./bin/split_fasta.py -h
     - name: Test fastq_strand utility
       run: |
         pytest QC-pipeline/fastq_strand.py
