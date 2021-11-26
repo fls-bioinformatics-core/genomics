@@ -12,8 +12,7 @@ from glob import glob
 scripts = []
 for pattern in ('bin/*.py','bin/*.sh',):
     scripts.extend(glob(pattern))
-for pattern in ('NGS-general/*.pl','NGS-general/*.py','NGS-general/*.sh',
-                'QC-pipeline/*.py','QC-pipeline/*.sh',
+for pattern in ('QC-pipeline/*.py','QC-pipeline/*.sh',
                 'utils/*.pl','utils/*.py','utils/*.R','utils/*.sh'):
     scripts.extend(glob(pattern))
 

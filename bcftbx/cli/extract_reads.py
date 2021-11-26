@@ -1,16 +1,10 @@
 #!/usr/bin/env python
 #
 #     extract_reads.py: write random subsets of read records from input files
-#     Copyright (C) University of Manchester 2012,2019 Peter Briggs
+#     Copyright (C) University of Manchester 2012-2021 Peter Briggs
 #
-########################################################################
-#
-# extract_reads.py
-#
-#########################################################################
-#
-"""extract_reads.py
 
+"""
 Pull random sets of read records from various files
 
 Usage: extract_reads.py -m PATTERN | -n NREADS infile [infile ...]
@@ -19,7 +13,6 @@ If multiple infiles are specified then the same set of records from
 each file.
 
 Recognises FASTQ, CSFASTA and QUAL files.
-
 """
 
 #######################################################################
@@ -35,15 +28,14 @@ import gzip
 import argparse
 import random
 import re
-from bcftbx.ngsutils import getreads
-from bcftbx.ngsutils import getreads_subset
-from bcftbx.ngsutils import getreads_regex
+from ..ngsutils import getreads
+from ..ngsutils import getreads_subset
+from ..ngsutils import getreads_regex
+from .. import get_version
 
 #######################################################################
 # Module metadata
 #######################################################################
-
-__version__ = "0.3.2"
 
 __description__ = """Extract subsets of reads from each of the
 supplied files according to specified criteria (e.g. random,
@@ -60,7 +52,7 @@ def main(args=None):
         args = sys.argv[1:]
     p = argparse.ArgumentParser(description=__description__)
     p.add_argument('--version',action='version',
-                   version="%(prog)s "+__version__)
+                   version="%(prog)s "+get_version())
     p.add_argument('-m','--match',action='store',dest='pattern',
                    default=None,
                    help="extract records that match Python regular "
@@ -129,6 +121,3 @@ def main(args=None):
             with io.open(outfile,'wt') as fp:
                 for read in getreads_subset(f,subset_indices):
                     fp.write('\n'.join(read) + '\n')
-
-if __name__ == "__main__":
-    main()

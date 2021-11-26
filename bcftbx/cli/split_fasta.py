@@ -1,42 +1,30 @@
 #!/usr/bin/env python
 #
 #     split_fasta.py: extract individual chromosome sequences from fasta file
-#     Copyright (C) University of Manchester 2013-2019 Peter Briggs
+#     Copyright (C) University of Manchester 2013-2021 Peter Briggs
 #
-########################################################################
-#
-# split_fasta.py
-#
-#########################################################################
-#
-"""split_fasta.py
+
+"""
+split_fasta.py
 
 Split input FASTA file with multiple sequences into multiple files, each
 containing sequences for a single chromosome.
 
 The program is built around the FastaChromIterator class which reads
 data chromosome-by-chromosome from a Fasta file.
-
 """
-#######################################################################
-# Module metadata
-#######################################################################
-
-__version__ = "0.3.4"
 
 #######################################################################
 # Import modules
 #######################################################################
 
-try:
-    from collections.abc import Iterator
-except ImportError:
-    from collections import Iterator
 import sys
 import os
 import io
 import argparse
+from collections.abc import Iterator
 import logging
+from .. import get_version
 
 #######################################################################
 # Classes
@@ -81,12 +69,6 @@ class FastaChromIterator(Iterator):
         # Internal: store last line read from file
         self.__line = None
 
-    def next(self):
-        """Return next chromosome from Fasta file as a (name,sequence) tuple (Python 2)
-
-        """
-        return self.__next__()
-
     def __next__(self):
         """Return next chromosome from Fasta file as a (name,sequence) tuple
        
@@ -128,91 +110,22 @@ class FastaChromIterator(Iterator):
             raise StopIteration
 
 #######################################################################
-# Functions
-#######################################################################
-
-#######################################################################
-# Tests
-#######################################################################
-
-import unittest
-
-# Test data
-class TestData:
-    """Set up example data to use in unit test classes
-
-    """
-    def __init__(self):
-        # Data for individual example chromosomes
-        self.chrom = []
-        self.chrom.append(("chr1","""CCACACCACACCCACACACCCACACACCACACCACACACCACACCACACCCACACACACA
-CATCCTAACACTACCCTAACACAGCCCTAATCTAACCCTGGCCAACCTGTCTCTCAACTT
-"""))
-        self.chrom.append(("chr2","""AAATAGCCCTCATGTACGTCTCCTCCAAGCCCTGTTGTCTCTTACCCGGATGTTCAACCA
-AAAGCTACTTACTACCTTTATTTTATGTTTACTTTTTATAGGTTGTCTTTTTATCCCACT
-"""))
-        self.chrom.append(("chr3","""CCCACACACCACACCCACACCACACCCACACACCACACACACCACACCCACACACCCACA
-CCACACCACACCCACACCACACCCACACACCCACACCCACACACCACACCCACACACACC
-"""))
-        # Build example fasta from chromosomes
-        self.fasta = []
-        for chrom in self.chrom:
-            self.fasta.append(u">%s\n%s" % (chrom[0],chrom[1]))
-        self.fasta = ''.join(self.fasta)
-
-class TestFastaChromIterator(unittest.TestCase):
-    """Tests for the FastaChromIterator class
-
-    """
-    def setUp(self):
-        # Instantiate test data
-        self.test_data = TestData()
-
-    def test_loop_over_chromosomes(self):
-        """Test that example Fasta file deconvolutes into individual chromosomes
-
-        """
-        fp = io.StringIO(self.test_data.fasta)
-        i = 0
-        for chrom in FastaChromIterator(fp=fp):
-            self.assertEqual(chrom,self.test_data.chrom[i])
-            i += 1
-
-def run_tests():
-    """Run the tests
-    """
-    suite = unittest.TestSuite(unittest.TestLoader().\
-                                   discover(os.path.dirname(sys.argv[0]), \
-                                                pattern=os.path.basename(sys.argv[0])))
-    unittest.TextTestRunner(verbosity=2).run(suite)
-
-#######################################################################
 # Main program
 #######################################################################
 
-if __name__ == "__main__":
+def main():
     # Process the command line
     p = argparse.ArgumentParser(
         description="Split input FASTA file with multiple sequences "
         "into multiple files each containing sequences for a single "
         "chromosome.")
     p.add_argument('--version',action='version',
-                   version="%(prog)s "+__version__)
-    p.add_argument("--test",action="store_true",dest="run_tests",
-                   default=False,
-                   help="Run unit tests")
+                   version="%(prog)s "+get_version())
     p.add_argument('fasta_file',nargs='?',
                    help="input FASTA file to split")
     arguments = p.parse_args()
-    # Run unit tests option
-    if arguments.run_tests:
-        print("Running unit tests")
-        run_tests()
-        print("Tests finished")
-        sys.exit()
-    else:
-        if not arguments.fasta_file:
-            p.error("Need to supply FASTA file as input")
+    if not arguments.fasta_file:
+        p.error("Need to supply FASTA file as input")
     # Keep a record of file names from chromosome names
     file_names = []
     # Loop over chromosomes and output each one to a separate file
@@ -237,4 +150,3 @@ if __name__ == "__main__":
             sys.stderr.write("WARNING '%s' already exists, overwriting\n" % fasta)
         with io.open(fasta,'wt') as fp:
             fp.write(">%s\n%s" % (name,seq))
-

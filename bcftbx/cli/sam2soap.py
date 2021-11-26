@@ -1,15 +1,11 @@
 #!/usr/bin/env python
 #
 #     sam2soap.py: convert from SAM to SOAP format
-#     Copyright (C) University of Manchester 2012-2019,2021 Peter Briggs, Casey Bergman
+#     Copyright (C) University of Manchester 2012-2021 Peter Briggs, Casey Bergman
 #
-#######################################################################
-#
-# sam2soap.py
-#
-#######################################################################
 
-"""sam2soap.py
+"""
+sam2soap.py
 
 Convert SAM file into SOAP format:
 
@@ -29,6 +25,7 @@ import io
 import logging
 import argparse
 from builtins import range
+from .. import get_version
 
 #######################################################################
 # Class definitions
@@ -437,83 +434,27 @@ def sam_to_soap(samline):
     return soap
 
 #######################################################################
-# Tests
-#######################################################################
-
-import unittest
-
-class TestRecoverReferenceSequence(unittest.TestCase):
-    def test_mutations_only(self):
-        self.assertEqual(recover_reference_sequence(
-                "CGATACGGGGACATCCGGCCTGCTCCTTCTCACATG",
-                "36M",
-                "MD:Z:1A0C0C0C1T0C0T27"),
-                         "CACCCCTCTGACATCCGGCCTGCTCCTTCTCACATG")
-    def test_insertions(self):
-        self.assertEqual(recover_reference_sequence(
-                "GAGACGGGGTGACATCCGGCCTGCTCCTTCTCACAT",
-                "6M1I29M",
-                "MD:Z:0C1C0C1C0T0C27"),
-                         "CACCCCTCTGACATCCGGCCTGCTCCTTCTCACAT")
-    def test_deletions(self):
-        self.assertEqual(recover_reference_sequence(
-                "AGTGATGGGGGGGTTCCAGGTGGAGACGAGGACTCC",
-                "9M9D27M",
-                "MD:Z:2G0A5^ATGATGTCA27"),
-                         "AGGAATGGGATGATGTCAGGGGTTCCAGGTGGAGACGAGGACTCC")
-    def test_insertions_and_deletions(self):
-        self.assertEqual(recover_reference_sequence(
-                "AGTGATGGGAGGATGTCTCGTCTGTGAGTTACAGCA",
-                "2M1I7M6D26M",
-                "MD:Z:3C3T1^GCTCAG25T0"),
-                         "AGGCTGGTAGCTCAGGGATGTCTCGTCTGTGAGTTACAGCT")
-
-class TestSoapTypeFromSam(unittest.TestCase):
-    def test_soap_type_from_sam(self):
-        self.assertEqual(soap_type_from_sam(
-                "TATAGTTATATAAAAGACCTGAGTAGTACGTTTTATATAATCTGATTTTATGGCTATACTTTTTTTGACATGTAGC",
-                "#####################AAAA7AAAA2AA7AAAAAAA1,:0/57:8855)))),''(03388*',''))))#)",
-                "76M","MD:Z:75T0"),
-                         "1\tT->75C2\t76M\t75T")
-
-class TestSamToSoap(unittest.TestCase):
-    def test_sam_to_soap(self):
-        sam = SAMLine("SRR189243_1-SRR189243.3751	81	gi|42410857|gb|AE017196.1|	60083	30	76M	*	0	0	TATAGTTATATAAAAGACCTGAGTAGTACGTTTTATATAATCTGATTTTATGGCTATACTTTTTTTGACATGTAGC	#####################AAAA7AAAA2AA7AAAAAAA1,:0/57:8855)))),''(03388*',''))))#	NM:i:1	MD:Z:75T0")
-        self.assertEqual(str(sam_to_soap(sam)),
-                         "SRR189243_1-SRR189243.3751	TATAGTTATATAAAAGACCTGAGTAGTACGTTTTATATAATCTGATTTTATGGCTATACTTTTTTTGACATGTAGC	#####################AAAA7AAAA2AA7AAAAAAA1,:0/57:8855)))),''(03388*',''))))#	1	a	76	-	gi|42410857|gb|AE017196.1|	60083	1	T->75C2	76M	75T")
-
-def run_tests():
-    print("Running unit tests")
-    suite = unittest.TestSuite(unittest.TestLoader().\
-                                   discover(os.path.dirname(sys.argv[0]), \
-                                                pattern=os.path.basename(sys.argv[0])))
-    unittest.TextTestRunner(verbosity=2).run(suite)
-    print("Tests finished")
-    sys.exit()
-
-#######################################################################
 # Main program
 #######################################################################
 
-if __name__ == "__main__":
+def main():
     # Process command line
     p = argparse.ArgumentParser(
         description="Convert SAM file to SOAP format - reads from stdin "
         "(or SAMFILE, if specified), and writes output to stdout unless "
         "-o option is specified.")
+    p.add_argument('--version',action='version',
+                   version="%(prog)s "+get_version())
     p.add_argument('-o',action="store",dest="soapfile",default=None,
                    help="Output SOAP file name")
     p.add_argument('--debug',action="store_true",dest="debug",default=False,
                    help="Turn on debugging output")
-    p.add_argument('--test',action="store_true",dest="run_tests",default=False,
-                   help="Run unit tests")
     p.add_argument('samfile',metavar="SAMFILE",nargs='?',
                    help="SAM file to convert (or stdin if not specified)")
     args = p.parse_args()
     # Debugging output
-    if args.debug: logging.getLogger().setLevel(logging.DEBUG)
-    # Unit tests
-    if args.run_tests: run_tests()
+    if args.debug:
+        logging.getLogger().setLevel(logging.DEBUG)
     # Determine source of SAM data
     if args.samfile:
         # Read from file
