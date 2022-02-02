@@ -12,8 +12,7 @@ from glob import glob
 scripts = []
 for pattern in ('bin/*.py','bin/*.sh',):
     scripts.extend(glob(pattern))
-for pattern in ('QC-pipeline/*.py','QC-pipeline/*.sh',
-                'utils/*.pl','utils/*.py','utils/*.R','utils/*.sh'):
+for pattern in ('utils/*.pl','utils/*.py','utils/*.R','utils/*.sh'):
     scripts.extend(glob(pattern))
 
 # Setup for installation etc
@@ -43,15 +42,8 @@ setup(name = "genomics-bcftbx",
       # Scripts
       scripts = scripts,
       # Configuration file for QC
-      data_files = [('config',['config/qc.setup.sample']),
-                    ('share',['share/bcftbx.functions.sh',
-                              'share/bcftbx.ngs_utils.sh',
-                              'share/bcftbx.versions.sh',
-                              'share/bcftbx.lock.sh']),
-                    ('bin/qc_boxplotter',
-                     ['QC-pipeline/qc_boxplotter/colour_QC_script.sh',
-                      'QC-pipeline/qc_boxplotter/qual2Rinput_file_per_posn.pl',
-                      'QC-pipeline/qc_boxplotter/SOLiD_qual_boxplot.R'])],
+      data_files = [('share',['share/bcftbx.functions.sh',
+                              'share/bcftbx.lock.sh']),],
       classifiers=[
           "Development Status :: 4 - Beta",
           "Environment :: Console",

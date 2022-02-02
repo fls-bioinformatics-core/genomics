@@ -57,9 +57,6 @@ jobs:
         ./bin/sam2soap.py -h
         ./bin/split_fastq.py -h
         ./bin/split_fasta.py -h
-    - name: Test fastq_strand utility
-      run: |
-        pytest QC-pipeline/fastq_strand.py
     - name: Test microarray utilities
       run: |
         examples/microarray/test_annotate_probesets.sh
