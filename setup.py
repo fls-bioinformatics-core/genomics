@@ -12,8 +12,6 @@ from glob import glob
 scripts = []
 for pattern in ('bin/*.py','bin/*.sh',):
     scripts.extend(glob(pattern))
-for pattern in ('utils/*.pl','utils/*.py','utils/*.R','utils/*.sh'):
-    scripts.extend(glob(pattern))
 
 # Setup for installation etc
 from setuptools import setup
