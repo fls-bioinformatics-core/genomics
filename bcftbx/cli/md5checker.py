@@ -20,6 +20,7 @@ import os
 import io
 import argparse
 import logging
+from ..Md5sum import md5sum
 from ..Md5sum import Md5CheckReporter
 from ..Md5sum import Md5Checker
 from .. import get_version
