@@ -1,7 +1,7 @@
-utils
-=====
+utils (legacy)
+==============
 
-Place to put general utility scripts/tools.
+Place to put deprecated general utility scripts/tools.
 
  *  `cd_set_umask.sh`: setup script to automagically set umask for specific directory
  *  `cmpdirs.py`: compare contents of two directories
@@ -10,7 +10,6 @@ Place to put general utility scripts/tools.
  *  `makeBinsFromBed.pl`: create bin files for binning applications
  *  `makeRegularBinsFromGenomeTable.R`: make bin file from set of chromosomes
  *  `make_mock_solid_dir.py`: create mock SOLiD directory structure for testing
- *  `md5checker.py`: check files and directories using MD5 sums
  *  `symlink_checker.py`: check and update symbolic links
 
 See below for more detailed usage documentation.
@@ -167,75 +166,6 @@ Usage:
 Arguments:
 
     --paired-end          Create directory structure for paired-end run
-
-
-md5checker.py
--------------
-Utility for checking files and directories using MD5 checksums.
-
-Usage:
-
-To generate MD5 sums for a directory:
-
-    md5checker.py [ -o CHKSUM_FILE ] DIR
-
-To generate the MD5 sum for a file:
-
-    md5checker.py [ -o CHKSUM_FILE ] FILE
-
-To check a set of files against MD5 sums stored in a file:
-
-    md5checker.py -c CHKSUM_FILE
-
-To compare the contents of source directory recursively against the contents of a destination
-directory, checking that files in the source are present in the target and have the same MD5
-sums:
-
-    md5checker.py --diff SOURCE_DIR DEST_DIR
-
-To compare two files by their MD5 sums:
-
-    md5checker.py --diff FILE1 FILE2
-
-
-sam2soap.py
------------
-Convert a SAM file into SOAP format.
-
-Usage:
-
-    sam2soap.py OPTIONS [ SAMFILE ]
-
-Convert SAM file to SOAP format - reads from stdin (or SAMFILE, if specified),
-and writes output to stdout unless -o option is specified.
-
-Options:
-
-    -o SOAPFILE  Output SOAP file name
-    --debug      Turn on debugging output
-    --test       Run unit tests
-
-
-split_fasta.py
---------------
-Extract individual chromosome sequences from a fasta file.
-
-Usage:
-
-    split_fasta.py OPTIONS fasta_file
-
-Split input FASTA file with multiple sequences into multiple files each
-containing sequences for a single chromosome.
-
-Options:
-
-    --version   show program's version number and exit
-    -h, --help  show this help message and exit
-    --tests     Run unit tests
-
-For each chromosome CHROM found in the input Fasta file (delimited by a line
-`>CHROM`), outputs a file called `CHROM.fa` in the current directory
-containing just the sequence for that chromosome.
 
 
 symlink_checker.py
