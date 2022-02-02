@@ -42,10 +42,7 @@ setup(name = "genomics-bcftbx",
       # Scripts
       scripts = scripts,
       # Configuration file for QC
-      data_files = [('config',['config/qc.setup.sample']),
-                    ('share',['share/bcftbx.functions.sh',
-                              'share/bcftbx.ngs_utils.sh',
-                              'share/bcftbx.versions.sh',
+      data_files = [('share',['share/bcftbx.functions.sh',
                               'share/bcftbx.lock.sh']),],
       classifiers=[
           "Development Status :: 4 - Beta",
