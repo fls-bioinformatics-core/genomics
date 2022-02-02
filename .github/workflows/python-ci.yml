@@ -64,4 +64,4 @@ jobs:
         examples/microarray/test_xrorthologs.sh
     - name: Test md5checker utility
       run: |
-        utils/examples/test_md5checker.sh
+        examples/utils/test_md5checker.sh
