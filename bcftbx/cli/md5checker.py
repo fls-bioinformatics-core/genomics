@@ -1,31 +1,18 @@
 #!/usr/bin/env python
 #
 #     md5checker.py: check files and directories using md5 checksums
-#     Copyright (C) University of Manchester 2012-2014,2019 Peter Briggs
+#     Copyright (C) University of Manchester 2012-2022 Peter Briggs
 #
-########################################################################
-#
-# md5checker.py
-#
-#########################################################################
 
-"""md5checker
-
+"""
 Utility for checking files and directories using md5 checksums.
 
-Uses the 'Md5Checker' and 'Md5Reporter' classes from the Md5sum module
-to perform the underlying operations.
-
+Uses the 'Md5Checker' and 'Md5CheckReporter' classes from the Md5sum
+module to perform the underlying operations.
 """
 
 #######################################################################
-# Module metadata
-#######################################################################
-
-__version__ = "0.4.3"
-
-#######################################################################
-# Import modules that this module depends on
+# Imports
 #######################################################################
 
 import sys
@@ -33,12 +20,10 @@ import os
 import io
 import argparse
 import logging
-# Put .. onto Python search path for modules
-SHARE_DIR = os.path.abspath(
-    os.path.normpath(
-        os.path.join(os.path.dirname(sys.argv[0]),'..')))
-sys.path.append(SHARE_DIR)
-import bcftbx.Md5sum as Md5sum
+from ..Md5sum import md5sum
+from ..Md5sum import Md5CheckReporter
+from ..Md5sum import Md5Checker
+from .. import get_version
 
 #######################################################################
 # Functions
@@ -69,7 +54,7 @@ def compute_md5sums(dirn,output_file=None,relative=False):
         fp = io.open(output_file,'wt')
     else:
         fp = sys.stdout
-    for filen,chksum in Md5sum.Md5Checker.compute_md5sums(dirn):
+    for filen,chksum in Md5Checker.compute_md5sums(dirn):
         if not relative:
             filen = os.path.join(dirn,filen)
         fp.write(u"%s  %s\n" % (chksum,filen))
@@ -100,7 +85,7 @@ def compute_md5sum_for_file(filen,output_file=None):
     else:
         fp = sys.stdout
     try:
-        chksum = Md5sum.md5sum(filen)
+        chksum = md5sum(filen)
         fp.write(u"%s  %s\n" % (chksum,filen))
     except IOError as ex:
         # Error accessing file, report and skip
@@ -131,8 +116,8 @@ def verify_md5sums(chksum_file,verbose=False):
 
     """
     # Set up reporter object
-    reporter = Md5sum.Md5CheckReporter(Md5sum.Md5Checker.verify_md5sums(chksum_file),
-                                       verbose=verbose)
+    reporter = Md5CheckReporter(Md5Checker.verify_md5sums(chksum_file),
+                                verbose=verbose)
     # Summarise
     if verbose: reporter.summary()
     return reporter.status
@@ -164,8 +149,8 @@ def diff_directories(dirn1,dirn2,verbose=False):
 
     """
     # Set up reporter object
-    reporter = Md5sum.Md5CheckReporter(Md5sum.Md5Checker.md5cmp_dirs(dirn1,dirn2),
-                                       verbose=verbose)
+    reporter = Md5CheckReporter(Md5Checker.md5cmp_dirs(dirn1,dirn2),
+                                verbose=verbose)
     # Summarise
     if verbose: reporter.summary()
     return reporter.status
@@ -186,9 +171,9 @@ def diff_files(filen1,filen2,verbose=False):
 
     """
     # Set up reporter object
-    reporter = Md5sum.Md5CheckReporter()
+    reporter = Md5CheckReporter()
     # Compare files
-    reporter.add_result(filen1,Md5sum.Md5Checker.md5cmp_files(filen1,filen2))
+    reporter.add_result(filen1,Md5Checker.md5cmp_files(filen1,filen2))
     if verbose:
         if reporter.n_ok:
             print("OK: MD5 sums match")
@@ -212,7 +197,10 @@ def report(msg,verbose=False):
 # Main program
 #######################################################################
 
-if __name__ == "__main__":
+def main():
+    """
+    Driver for md5checker
+    """
     usage = """
   %(prog)s -d SOURCE_DIR DEST_DIR
   %(prog)s -d FILE1 FILE2
@@ -226,7 +214,7 @@ if __name__ == "__main__":
 
     # Define options
     p.add_argument('--version',action='version',
-                   version="%(prog)s "+__version__)
+                   version="%(prog)s "+get_version())
     p.add_argument('-d','--diff',action="store_true",dest="diff",
                    default=False,
                    help="for two directories: check that contents of "
