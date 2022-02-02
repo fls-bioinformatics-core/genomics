@@ -63,4 +63,4 @@ def main():
         if os.path.isfile(fasta):
             sys.stderr.write("WARNING '%s' already exists, overwriting\n" % fasta)
         with io.open(fasta,'wt') as fp:
-            fp.write(">%s\n%s" % (name,seq))
+            fp.write(">%s\n%s\n" % (name,seq))
