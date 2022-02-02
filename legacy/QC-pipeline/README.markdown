@@ -1,7 +1,7 @@
-QC-pipeline
-===========
+QC-pipeline (legacy)
+====================
 
-Scripts and utilities for running QC pipelines on sequencing data.
+Deprecated scripts and utilities for running QC pipelines on sequencing data.
 
 There is a core pipeline runner program:
 
@@ -46,9 +46,6 @@ There are other scripts which perform QC substeps:
     with the output from the preprocess filter step to a log file.
 
 These also use `functions.sh` and `ngs_utils.sh` from the `share` directory.
-
-The `fastq_strand.py` utility can be used to determine the strandedness of
-paired-end data.
 
 Finally there is a reporting utility which generates HTML reports from QC runs:
 
