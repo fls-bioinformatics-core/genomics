@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #     Pipeline.py: classes for running scripts iteratively
-#     Copyright (C) University of Manchester 2011-2019 Peter Briggs
+#     Copyright (C) University of Manchester 2011-2022 Peter Briggs
 #
 ########################################################################
 #
@@ -88,6 +88,7 @@ class Job:
 
       job_id      The id number for the running job returned by the JobRunner
       log         The log file for the job (relative to working_dir)
+      err         The error log file for the job
       start_time  The start time (seconds since the epoch)
       end_time    The end time (seconds since the epoch)
       exit_status The exit code from the command that was run (integer, or None)
@@ -119,6 +120,7 @@ class Job:
         self.group_label = group
         self.job_id = None
         self.log = None
+        self.err = None
         self.submitted = False
         self.failed = False
         self.terminated = False
@@ -155,6 +157,7 @@ class Job:
             self.submitted = True
             self.start_time = time.time()
             self.log = self.__runner.logFile(self.job_id)
+            self.err = self.__runner.errFile(self.job_id)
             # Wait for evidence that the job has started
             logging.debug("Waiting for job to start")
             time_waiting = 0
