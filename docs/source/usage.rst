@@ -9,4 +9,4 @@ tasks
 
    usage/illumina
    usage/solid
-   protocols/utilities
+   usage/general

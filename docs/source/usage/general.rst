@@ -39,8 +39,3 @@ if ``copy_of_my_work`` contains additional files then these won't be checked or
 reported.)
 
 Run ``md5checker.py -h`` to see the other available options.
-
-Checking symbolic links
-***********************
-
-Use the ``symlink_checker.py`` utility.
