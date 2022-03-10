@@ -13,7 +13,6 @@ at the University of Manchester (UoM).
    usage
    reference
    bcftbx
-   external
    deprecated
 
 Indices and tables
