@@ -8,6 +8,6 @@ tasks
    :maxdepth: 2
 
    usage/illumina
-   protocols/prep_solid
+   usage/solid
    protocols/qc
    protocols/utilities
