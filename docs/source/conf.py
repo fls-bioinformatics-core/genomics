@@ -244,3 +244,60 @@ texinfo_documents = [
 
 # How to display URL addresses: 'footnote', 'no', or 'inline'.
 #texinfo_show_urls = 'footnote'
+
+# -- Make command reference documents ------------------------------------------
+
+reference = os.path.join(os.getcwd(),"reference.rst")
+with open(reference,'w') as fp:
+    fp.write("""
+Command reference
+=================
+
+.. note::
+
+   This documentation has been auto-generated from the
+   command help
+
+The following utilities are available:
+
+.. contents:: :local:
+
+""")
+import subprocess
+for utility in ("analyse_solid_run.py",
+                "annotate_probesets.py",
+                "best_exons.py",
+                "bowtie_mapping_stats.py",
+                "extract_reads.py",
+                "fastq_strand.py",
+                "log_seq_data.sh",
+                "make_macs_xls.py",
+                "make_macs2_xls.py",
+                "manage_seqs.py",
+                "md5checker.py",
+                "prep_sample_sheet.py",
+                "reorder_fasta.py",
+                "sam2soap.py",
+                "split_fasta.py",
+                "split_fastq.py",
+                "verify_paired.py",
+                "xrorthologs.py"):
+    # Capture the output
+    help_text_file = "%s.help" % utility
+    with open(help_text_file,'w') as fp:
+        subprocess.call([utility,'--help'],
+                        stdout=fp,
+                        stderr=subprocess.STDOUT)
+    # Write into the document
+    with open(reference,'a') as fp:
+        help_text = open(help_text_file,'r').read()
+        title = "%s" % utility
+        ref = ".. _reference_%s:" % os.path.splitext(utility)[0]
+        fp.write("%s\n\n%s\n%s\n\n::\n\n" % (ref,
+                                             title,
+                                             "*"*len(title)))
+        if not help_text:
+            help_text = "No output from --help command?"
+        for line in help_text.split('\n'):
+            fp.write("    %s\n" % line)
+        os.remove(help_text_file)
