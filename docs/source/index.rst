@@ -14,11 +14,3 @@ at the University of Manchester (UoM).
    reference
    bcftbx
    deprecated
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
