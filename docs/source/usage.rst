@@ -9,5 +9,4 @@ tasks
 
    usage/illumina
    usage/solid
-   protocols/qc
    protocols/utilities

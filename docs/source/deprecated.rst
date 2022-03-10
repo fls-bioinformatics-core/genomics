@@ -10,3 +10,4 @@ Information on the deprecated utilities and scripts
    deprecated/prep_ref_data
    deprecated/prep_illumina
    deprecated/prep_solid
+   deprecated/qc
