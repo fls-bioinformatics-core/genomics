@@ -3,7 +3,6 @@ SOLiD data handling utilities
 
 Utilities for transferring data from the SOLiD instrument to the cluster:
 
-* :ref:`log_seq_data`: maintain logging file of transferred runs and analysis data
 * :ref:`analyse_solid_run`: report on the primary data directories from SOLiD runs
 
 Background
@@ -144,57 +143,6 @@ when without any other arguments i.e.::
     analyse_solid_run.py solid0123_20111101_FRAG_BC
 
 This works for both multiplex fragment and multiplex paired-end sequencing.
-
-.. _log_seq_data:
-
-log_seq_data.sh
-***************
-
-Script to add entries for transferred SOLiD run or analysis directories to a
-logging file.
-
-Usage::
-
-    log_seq_data.sh [-u|-d] <logging_file> <solid_run_dir> [<description>]
-
-A new entry for the directory ``<solid_run_dir>`` will be added to
-``<logging_file>``, consisting of the path to the directory, a UNIX timestamp,
-and the optional description.
-
-The path can be relative or absolute; relative paths are automatically converted
-to full paths.
-
-If the logging file doesn't exist then it will be created. A new entry won't be
-created for any SOLiD run directory that is already in the logging file.
-
-Options:
-
-.. cmdoption:: -u
-
-    Updates an existing entry
-
-.. cmdoption:: -d
-
-    Deletes an existing entry
-
-Examples:
-
-Log a primary data directory::
-
-    log_seq_data.sh /mnt/data/SEQ_DATA.log /mnt/data/solid0127_20110914_FRAG_BC "Primary data"
-
-Log an analysis directory (no description)::
-
-    log_seq_data.sh /mnt/data/SEQ_DATA.log /mnt/data/solid0127_20110914_FRAG_BC_analysis
-
-Update an entry to add a description::
-
-    log_seq_data.sh /mnt/data/SEQ_DATA.log -u /mnt/data/solid0127_20110914_FRAG_BC_analysis \
-        "Analysis directory"
-
-Delete an entry::
-
-    log_seq_data.sh /mnt/data/SEQ_DATA.log -d /mnt/data/solid0127_20110914_FRAG_BC_analysis
 
 .. _analyse_solid_run:
 

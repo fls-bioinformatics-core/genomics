@@ -1,5 +1,55 @@
-General Utilities
-=================
+General non-bioinformatic utilities
+===================================
+
+Logging details of sequencing runs (log_seq_runs.sh)
+****************************************************
+
+Script to add entries for transferred SOLiD run or analysis directories to a
+logging file.
+
+Usage::
+
+    log_seq_data.sh [-u|-d] <logging_file> <solid_run_dir> [<description>]
+
+A new entry for the directory ``<solid_run_dir>`` will be added to
+``<logging_file>``, consisting of the path to the directory, a UNIX timestamp,
+and the optional description.
+
+The path can be relative or absolute; relative paths are automatically converted
+to full paths.
+
+If the logging file doesn't exist then it will be created. A new entry won't be
+created for any SOLiD run directory that is already in the logging file.
+
+Options:
+
+.. cmdoption:: -u
+
+    Updates an existing entry
+
+.. cmdoption:: -d
+
+    Deletes an existing entry
+
+Examples:
+
+Log a primary data directory::
+
+    log_seq_data.sh /mnt/data/SEQ_DATA.log /mnt/data/solid0127_20110914_FRAG_BC "Primary data"
+
+Log an analysis directory (no description)::
+
+    log_seq_data.sh /mnt/data/SEQ_DATA.log /mnt/data/solid0127_20110914_FRAG_BC_analysis
+
+Update an entry to add a description::
+
+    log_seq_data.sh /mnt/data/SEQ_DATA.log -u /mnt/data/solid0127_20110914_FRAG_BC_analysis \
+        "Analysis directory"
+
+Delete an entry::
+
+    log_seq_data.sh /mnt/data/SEQ_DATA.log -d /mnt/data/solid0127_20110914_FRAG_BC_analysis
+
 
 Checking files and directories using MD5 sums
 *********************************************
