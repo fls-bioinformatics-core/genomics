@@ -1,5 +1,5 @@
-``bcftbx`` Reference
-====================
+``bcftbx`` library reference
+============================
 
 .. toctree::
    :maxdepth: 2
