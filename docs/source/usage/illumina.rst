@@ -1,5 +1,10 @@
-Preparing Illumina Data for analysis
-====================================
+Illumina data handling utilities
+================================
+
+Utilities for preparing data on the cluster from the Illumina instrument:
+
+* :ref:`prep_sample_sheet`: edit SampleSheet.csv before generating FASTQ
+* :ref:`verify_paired`: utility to check FASTQs form R1/R2 pair
 
 Background
 **********
@@ -22,7 +27,7 @@ The directories produced by the runs have the format::
 
     <date_stamp>_<instrument_name>_<run_id>_FC
 
-(For example ``120518_ILLUMINA-13AD3FA_00002_FC``) 
+(For example ``120518_ILLUMINA-13AD3FA_00002_FC``)
 
 The components are:
 
@@ -240,235 +245,119 @@ assigned to "undetermined" instead, and there will be an additional
 ``Undetermined_indexes`` "project" produced under the ``Unaligned``
 directory.
 
-FASTQ generation and analysis directory setup
-*********************************************
+.. _prep_sample_sheet:
 
-Overview
---------
+prep_sample_sheet.py
+********************
 
-This section outlines the protocol for generating FASTQ files from the
-raw bcl data and setting up per-project analysis directories using the
-scripts and utilities included in this package.
+Prepare sample sheet files for Illumina sequencers for input into CASAVA.
 
-The basic procedure is:
+Usage::
 
-1. Create top-level analysis directory
-2. Generate FASTQ files
-3. Populate analysis subdirectories for each project
+    prep_sample_sheet.py [OPTIONS] SampleSheet.csv
 
-Subsequently the QC pipeline should be run for each project.
+Utility to prepare SampleSheet files from Illumina sequencers. Can be used to
+view, validate and update or fix information such as sample IDs and project
+names before running BCL to FASTQ conversion.
 
-Create top-level analysis directory
------------------------------------
+Options:
 
-Create a top-level analysis directory where the FASTQs and per-project
-analysis directories will be created, for example::
+.. cmdoption:: -o SAMPLESHEET_OUT
 
-    mkdir /scratch/120919_SN7001250_0035_BC133VACXX_analysis
+    output new sample sheet to ``SAMPLESHEET_OUT``
 
-.. note::
+.. cmdoption::  -f FMT, --format=FMT
 
-    Conventionally we name analysis directories by appending ``_analysis``
-    to the primary data directory name.
+    specify the format of the output sample sheet written by the ``-o`` option;
+    can be either ``CASAVA`` or ``IEM`` (defaults to the format of the original
+    file)
 
-FASTQ generation
-----------------
+.. cmdoption:: -v, --view
 
-Within the top-level directory create a customised copy of the original
-``SampleSheet.csv`` from the primary data directory. This is best done
-using the :ref:`prep_sample_sheet` utility, as it will automatically
-convert the original file to the correct format.
-
-``prep_sample_sheet.py`` can automatically address specific issues, for
-example:
+    view contents of sample sheet
 
 .. cmdoption:: --fix-spaces
 
-    replaces spaces in sampleId and sampleProject fields with underscore
-    characters
+    replace spaces in sample ID and project fields with underscores
 
 .. cmdoption:: --fix-duplicates
 
-    appends indices to sampleIds to make sampleId/sampleProject
-    combinations unique 
+    append unique indices to Sample IDs where original ID and project name
+    combination are duplicated
 
-These two options together should automatically fix most problems with
-sample sheets, e.g.::
+.. cmdoption:: --fix-empty-projects
 
-    prep_sample_sheet.py \
-        --fix-spaces --fix-duplicates \
-        -o custom_samplesheet.csv \
-        /mnt/data/120919_SN7001250_0035_BC133VACXX/SampleSheet.csv
+    create sample project names where these are blank in the original sample sheet
 
-It also has options to edit the sample sheet file fields: for example the
-``--set-id=...`` and ``--set-project=`` options allow resetting of sampleId
-and sampleProject fields.
+.. cmdoption:: --set-id=SAMPLE_ID
 
-.. note::
+    update/set the values in the Sample ID field;
+    SAMPLE_ID should be of the form ``<lanes>:<name>``,
+    where ``<lanes>`` is a single integer (e.g. 1), a set of
+    integers (e.g. 1,3,...), a range (e.g. 1-3), or a
+    combination (e.g. 1,3-5,7)
 
-    ``prep_sample_sheet.py`` will only write a new sample sheet file if
-    it thinks that the problems have been addressed; to override this use
-    the ``--ignore-warnings`` option.
+.. cmdoption:: --set-project=SAMPLE_PROJECT
 
-To generate FASTQS, run the :ref:`bclToFastq` script in the top-level
-analysis directory, e.g.::
+    update/set values in the sample project field;
+    ``SAMPLE_PROJECT`` should be of the form ``[<lanes>:]<name>``,
+    where the optional ``<lanes>`` part can be a single integer (e.g. 1), a set of
+    integers (e.g. 1,3,...), a range (e.g. 1-3), or a
+    combination (e.g. 1,3-5,7). If no lanes are specified then all
+    samples will have their project set to ``<name>``
 
-    qsub -b y -cwd -V bclToFastq.sh \
-        /mnt/data/120919_SN7001250_0035_BC133VACXX \
-        Unaligned custom_samplesheet.csv
+.. cmdoption:: --ignore-warnings
 
-This automatically runs the ``configureBlcToFastq.ps`` and ``make`` steps
-(above) together and creates a new subdirectory called ``Unaligned`` with
-the FASTQS.
+    ignore warnings about spaces and duplicated sampleID/sampleProject
+    combinations when writing new samplesheet.csv file
 
-The general syntax for this step is::
+.. cmdoption:: --include-lanes=LANES
 
-    bclToFastq.sh /path/to/ILLUMINA_RUN_DIR output_dir [ samplesheet.csv ]
+    specify a subset of lanes to include in the output sample sheet;
+    ``LANES`` should be single integer (e.g. 1), a list of integers (e.g.
+    1,3,...), a range (e.g. 1-3) or a combination (e.g. 1,3-5,7).
+    Default is to include all lanes
 
-.. note::
+Deprecated options:
 
-    If bcl-to-fastq fails to generate the FASTQ files due to some problem
-    with the input data then the
-    :ref:`troubleshooting_bcl_to_fastq_conversion` section below may help.
+.. cmdoption:: --truncate-barcodes=BARCODE_LEN
 
-Populate analysis subdirectories
---------------------------------
+    trim barcode sequences in sample sheet to number of bases specified
+    by ``BARCODE_LEN``. Default is to leave barcode sequences unmodified
+    (deprecated; only works for CASAVA-style sample sheets)
 
-Use the :ref:`build_illumina_analysis_dirs` utility to create subdirectories
-for each project named in the input sample sheet file, and populate these
-with links to the FASTQ files generated in the previous step.
+.. cmdoption:: --miseq
 
-Use the ``--list`` option to see what projects and samples the program will
-use, e.g.::
-
-    build_illumina_analysis_dir.py --list \
-       /scratch/120919_SN7001250_0035_BC133VACXX_analysis
-
-which produces output of the form::
-
- Project: AB (4 samples)
-         AB1
-                 AB1_NoIndex_L002_R1_001.fastq.gz
-         AB2
-                 AB2_NoIndex_L003_R1_001.fastq.gz
-         AB3
-                 AB3_NoIndex_L004_R1_001.fastq.gz
-         AB4
-                 AB4_NoIndex_L005_R1_001.fastq.gz
- Project: Control (4 samples)
-         PhiX1
-                 PhiX1_NoIndex_L001_R1_001.fastq.gz
-         PhiX2
-                 PhiX2_NoIndex_L006_R1_001.fastq.gz
-         PhiX3
-                 PhiX3_NoIndex_L007_R1_001.fastq.gz
-         PhiX4
-                 PhiX4_NoIndex_L008_R1_001.fastq.gz
-
-Use the ``--expt=EXPT_TYPE`` option to specify a library type for one or
-more projects, e.g.::
-
-    build_illumina_analysis_dir.py \
-       --expt=AB:ChIP-seq \
-       /mnt/analyses/120919_ILLUMINA-73D9FA_00008_FC_analysis
-
-This creates new subdirectories for each project which contain symbolic
-links to the FASTQ files::
-
-  <YYMMDD>_<machinename>_<XXXXX>_FC_analysis/
-          |
-          +-- Unaligned/
-          |     |
-          |    ...
-          |
-          +-- <PI>_<library>/
-          |     |
-          |     +-- *.fastq.gz -> ../Unaligned/.../*.fastq.gz
-          |
-          |
-          +-- <PI>_<library>/
-          |     |
-          |     +-- *.fastq.gz -> ../Unaligned/.../*.fastq.gz
-          |
-         ...
-
-``Unaligned`` is the output from the ``bclToFastq.sh`` run (see the
-previous section), and will contain the fastq files.  The fastq.gz files
-in these directories are symbolic links to the files in the ``Unaligned``
-directory.
-
-By default the FASTQ names are simplified versions of the original FASTQs;
-use the ``--keep-names`` to preserve the full names of the FASTQ files.
+    convert MiSEQ input sample sheet to CASAVA-compatible format (deprecated;
+    conversion is performed specify -f/--format CASAVA to convert IEM sample
+    sheet to older format)
 
 
-Merging replicates
-------------------
+Examples:
 
-Multiplexed runs can produce large numbers of replicates of each sample,
-with each replicate producing a single FASTQ file - so if there are 20
-samples each with 8 replicates then this will produce 160 FASTQ files.
+1. Read in the sample sheet file ``SampleSheet.csv``, update the ``SampleProject``
+   and ``SampleID`` for lanes 1 and 8, and write the updated sample sheet to the
+   file ``SampleSheet2.csv``::
 
-In this situation it can be more helpful to concatenate the replicates
-into single FASTQ files, and can be done automatically when creating the
-analysis subdirectories using the ``--merge-replicates`` option.
+     prep_sample_sheet.py -o SampleSheet2.csv --set-project=1,8:Control \
+          --set-id=1:PhiX_10pM --set-id=8:PhiX_12pM SampleSheet.csv
 
-``--merge-replicates`` doesn't require any additional input; it produces
-concatenated FASTQ files (rather than symbolic links) when creating the
-analysis subdirectory for each project, e.g.::
+2. Automatically fix spaces and duplicated ``sampleID``/``sampleProject``
+   combinations and write out to ``SampleSheet3.csv``::
 
-    build_illumina_analysis_dir.py \
-        --expt=AB:RNA-seq \
-        --merge-replicates \
-        /mnt/analyses/120919_SN7001250_0035_BC133VACXX_analysis
+     prep_sample_sheet.py --fix-spaces --fix-duplicates \
+          -o SampleSheet3.csv SampleSheet.csv
 
-.. note::
+.. _verify_paired:
 
-    Use the :ref:`verify_paired` utility to check that the order of
-    reads in the merged files are correct.
+verify_paired.py
+****************
 
-.. _troubleshooting_bcl_to_fastq_conversion:
+Utility to verify that two fastq files form an R1/R2 pair.
 
-Troubleshooting bcl to FASTQ conversion
-***************************************
+Usage::
 
-**Failure with error "sample-dir not valid: number of directories must
-match the number of barcodes"**
+    verify_paired.py OPTIONS R1.fastq R2.fastq
 
-This might be due to the presence of spaces in the ``sampleID`` and
-``sampleProjects`` fields in the ``sampleSheet.csv`` file, which seems
-to confuse CASAVA.
-
-The solution is to edit the sample sheet file to remove the spaces;
-this can be done automatically using the ``--fix-spaces`` option of the
-:ref:`prep_sample_sheet` program e.g.::
-
-    prep_sample_sheet.py --fix-spaces -o custom_SampleSheet.csv sampleSheet.csv
-
-will create a copy of the original sample sheet file with any spaces
-replaced by underscores.
-
-**Failure with error "barcode XXXXXX for lane 1 has length Y: expected
-barcode lenth (including delimiters) is Z"**
-
-This can happen when attempting to demultiplex paired barcoded samples.
-The information that CASAVA needs should be read automatically from the
-``RunInfo.xml`` file, but it appears that this doesn't always happen (or
-perhaps the information is not consistent with the ``bcl`` files e.g.
-because the sequencing run didn't complete properly).
-
-To fix this use the ``--use-bases-mask`` option of
-``configureBclToFastq.pl`` (or ``bclToFastq.sh``) to tell CASAVA how to
-deal with each base. For example::
-
-    --use-bases-mask y101,I8,I8,y85
-
-instructs the software to treat the first 101 bases as the first sequence,
-the next 8 as the first index (i.e. barcoded tag attached to the first
-sequence), the next 8 as the second index, and then the next 85 bases as
-the second sequence.
-
-.. note::
-
-    See also this BioStars question about dealing with the CASAVA error:
-    *"barcode CTTGTA for lane 1 has length X: expected barcode lenth is Y"*
-    http://www.biostars.org/post/show/49599/casava-error-barcode-cttgta-for-lane-1-has-length-6-expected-barcode-lenth-is-7/#55718
+Check that read headers for R1 and R2 fastq files are in agreement, and that
+the files form an R1/2 pair.

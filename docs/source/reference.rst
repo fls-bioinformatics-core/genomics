@@ -5,7 +5,6 @@ Command Reference
    :maxdepth: 2
 
    reference/solid2cluster
-   reference/illumina2cluster
    reference/ngs_general
    reference/chip_seq
    reference/rna_seq

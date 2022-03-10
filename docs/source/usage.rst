@@ -7,7 +7,7 @@ tasks
 .. toctree::
    :maxdepth: 2
 
-   protocols/prep_illumina
+   usage/illumina
    protocols/prep_solid
    protocols/qc
    protocols/utilities

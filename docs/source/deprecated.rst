@@ -8,3 +8,4 @@ Information on the deprecated utilities and scripts
 
    deprecated/config
    deprecated/prep_ref_data
+   deprecated/prep_illumina
