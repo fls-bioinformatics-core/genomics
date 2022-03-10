@@ -14,6 +14,7 @@ at the University of Manchester (UoM).
    reference
    bcftbx
    external
+   deprecated
 
 Indices and tables
 ==================
