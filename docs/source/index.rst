@@ -14,3 +14,8 @@ at the University of Manchester (UoM).
    reference
    bcftbx
    deprecated
+
+.. toctree::
+   :maxdepth: 1
+
+   changes
