@@ -45,7 +45,6 @@ of the Faculty of Biology, Medicine and Health (FBMH) at the
    :caption: bcftbx Library
 
    bcftbx
-   deprecated
 
 .. toctree::
    :maxdepth: 1
