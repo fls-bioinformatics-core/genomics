@@ -1,5 +1,5 @@
-Working with microarray data
-============================
+Microarray data
+===============
 
 *******************
 Probeset annotation
