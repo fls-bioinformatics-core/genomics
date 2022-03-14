@@ -27,14 +27,12 @@ of the Faculty of Biology, Medicine and Health (FBMH) at the
    :maxdepth: 2
    :caption: Usage
 
-   usage/illumina
-   usage/solid
-   usage/chip_seq
-   usage/rna_seq
-   usage/strandedness
+   usage/seq_data
+   usage/ngs
+   usage/fastq
+   usage/fasta
    usage/microarray
-   usage/ngs_general
-   usage/general
+   usage/general_utils
 
 .. toctree::
    :maxdepth: 2
