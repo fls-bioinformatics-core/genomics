@@ -9,7 +9,7 @@ of the Faculty of Biology, Medicine and Health (FBMH) at the
 `University of Manchester <https://www.manchester.ac.uk/>`_ (UoM).
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Getting started
 
    overview
@@ -18,9 +18,28 @@ of the Faculty of Biology, Medicine and Health (FBMH) at the
 
 .. toctree::
    :maxdepth: 2
+   :caption: Background
+
+   background/illumina
+   background/solid
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Usage
+
+   usage/illumina
+   usage/solid
+   usage/chip_seq
+   usage/rna_seq
+   usage/strandedness
+   usage/microarray
+   usage/ngs_general
+   usage/general
+
+.. toctree::
+   :maxdepth: 2
    :caption: Utilities
 
-   usage
    reference
 
 .. toctree::

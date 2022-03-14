@@ -1,56 +1,7 @@
-General non-bioinformatic utilities
-===================================
+Non-bioinformatics utilities
+============================
 
-Logging details of sequencing runs (log_seq_runs.sh)
-****************************************************
-
-Script to add entries for transferred SOLiD run or analysis directories to a
-logging file.
-
-Usage::
-
-    log_seq_data.sh [-u|-d] <logging_file> <solid_run_dir> [<description>]
-
-A new entry for the directory ``<solid_run_dir>`` will be added to
-``<logging_file>``, consisting of the path to the directory, a UNIX timestamp,
-and the optional description.
-
-The path can be relative or absolute; relative paths are automatically converted
-to full paths.
-
-If the logging file doesn't exist then it will be created. A new entry won't be
-created for any SOLiD run directory that is already in the logging file.
-
-Options:
-
-.. cmdoption:: -u
-
-    Updates an existing entry
-
-.. cmdoption:: -d
-
-    Deletes an existing entry
-
-Examples:
-
-Log a primary data directory::
-
-    log_seq_data.sh /mnt/data/SEQ_DATA.log /mnt/data/solid0127_20110914_FRAG_BC "Primary data"
-
-Log an analysis directory (no description)::
-
-    log_seq_data.sh /mnt/data/SEQ_DATA.log /mnt/data/solid0127_20110914_FRAG_BC_analysis
-
-Update an entry to add a description::
-
-    log_seq_data.sh /mnt/data/SEQ_DATA.log -u /mnt/data/solid0127_20110914_FRAG_BC_analysis \
-        "Analysis directory"
-
-Delete an entry::
-
-    log_seq_data.sh /mnt/data/SEQ_DATA.log -d /mnt/data/solid0127_20110914_FRAG_BC_analysis
-
-
+*********************************************
 Checking files and directories using MD5 sums
 *********************************************
 
@@ -89,3 +40,40 @@ if ``copy_of_my_work`` contains additional files then these won't be checked or
 reported.)
 
 Run ``md5checker.py -h`` to see the other available options.
+
+**********************************
+Logging details of sequencing runs
+**********************************
+
+The :ref:`reference_log_seq_data` script can be used to add and manage
+entries for sequencing runs, analyses etc to a tab-delimited "logging
+file".
+
+For example, logging the primary data directory for a SOLiD sequencing run
+to the file ``SEQ_DATA.log`` with the associated description
+``Primary data``:
+
+::
+
+    log_seq_data.sh SEQ_DATA.log /mnt/data/solid0127_20110914_FRAG_BC "Primary data"
+
+Logging an analysis directory associated with an Illumina sequencing run,
+with no description:
+
+::
+
+    log_seq_data.sh SEQ_DATA.log /mnt/data/220314_NB189782_0020_AHBXXXYX_analysis
+
+Updating an existing entry to add a description:
+
+::
+
+    log_seq_data.sh SEQ_DATA.log -u \
+        /mnt/data/220314_NB189782_0020_AHBXXXYX_analysis \
+        "Analysis of paired end NextSeq run"
+
+Deleting an existing entry:
+
+::
+
+    log_seq_data.sh SEQ_DATA.log -d /mnt/data/220314_NB189782_0020_AHBXXXYX_analysis

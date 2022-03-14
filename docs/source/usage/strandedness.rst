@@ -1,23 +1,15 @@
-QC utilities
-============
+Determining strandedness of sequencing data
+===========================================
 
-Scripts for running general QC and data preparation on sequencing data
-prior to library-specific analyses.
+The :ref:`reference_fastq_strand` utility can be used to determine the
+strandedness (forward, reverse, or unstranded) of sequencing data in Fastq
+format, using either a single Fastq file, or an an R1/R2 pair of Fastqs.
 
-* :ref:`fastq_strand`
+.. note::
 
-.. _fastq_strand:
-
-fastq_strand.py
-***************
-
-Utility to determine the strandedness (forward, reverse, or both) from
-an R1/R2 pair of Fastq files.
-
-Requires that the ``STAR`` mapper is also installed and available on the
-user's ``PATH``.
-
-**Usage examples:**
+   The utility is a wrapper for the ``STAR`` mapper and requires that
+   ``STAR`` has been installed separately and is available on the
+   ``PATH``.
 
 The simplest example checks the strandedness for a single genome::
 

@@ -1,105 +1,48 @@
-Microarray utilities
-====================
+Working with microarray data
+============================
 
-Scripts and tools for microarray specific tasks.
+*******************
+Probeset annotation
+*******************
 
-* :ref:`annotate_probesets`: annotate probe set list based on probeset
-  names
-* :ref:`best_exons`: average data for 'best' exons for each gene symbol
-  in a file
-* :ref:`xrorthologs`: cross-reference data for two species using probeset
-  lookup
+The :ref:`reference_annotate_probesets` utility can be used to annotate
+a probeset list based on probe set names.
 
-.. _annotate_probesets:
+It requires a tab-delimited file as input, where the first column
+comprises the probeset names (any other other columns are ignored), and
+outputs each name to a new tab-delimited file alongside a description of
+each.
 
-annotate_probesets.py
-*********************
+For example input, the following input:
 
-Usage::
-
-     annotate_probesets.py OPTIONS probe_set_file
-
-Annotate a probeset list based on probe set names: reads in first column
-of tab-delimited input file `probe_set_file` as a list of probeset names
-and outputs these names to another tab-delimited file with a description
-for each.
-
-Output file name can be specified with the `-o` option, otherwise it will
-be the input file name with `_annotated` appended.
-
-Options:
-
-.. cmdoption:: -o OUT_FILE
-
-    specify output file name
-
-Example input::
+::
 
     ...
     1769726_at
     1769727_s_at
     ...
 
-generates output::
+generates:
+
+::
 
     ...
     1769726_at	Rank 1: _at : anti-sense target (most probe sets on the array)
     1769727_s_at	Warning: _s_at : designates probe sets that share common probes among multiple transcripts from different genes
     ...
 
-.. _best_exons:
+*****************************
+Average data for 'best' exons
+*****************************
 
-best_exons.py
-*************
+The :ref:`reference_best_exons` utility picks the 'top' three exons
+for each gene symbol from a tab-delimited (TSV) input file containing
+the exon data, and outputs a single line for that gene symbol with
+values averaged over the top three.
 
-Average data for 'best' exons for each gene symbol in a file.
-
-Usage::
-
-    best_exons.py [OPTIONS] EXONS_IN BEST_EXONS
-
-Read exon and gene symbol data from ``EXONS_IN`` and picks the top three exons for
-each gene symbol, then outputs averages of the associated values to ``BEST_EXONS``.
-
-Options:
-
-.. cmdoption:: --rank-by=CRITERION
-
-    select the criterion for ranking the 'best' exons; possible options are:
-    ``log2_fold_change`` (default), or ``p_value``.
-
-.. cmdoption:: --probeset-col=PROBESET_COL
-
-    specify column with probeset names (default=0, columns start counting from
-    zero)
-
-.. cmdoption:: --gene-symbol-col=GENE_SYMBOL_COL
-
-    specify column with gene symbols (default=1, columns start counting from
-    zero)
-
-.. cmdoption:: --log2-fold-change-col=LOG2_FOLD_CHANGE_COL
-
-    specify column with log2 fold change (default=12, columns start counting
-    from zero)
-
-.. cmdoption:: --p-value-col=P_VALUE_COL
-
-    specify column with p-value (default=13; columns start counting from zero)
-
-.. cmdoption:: --debug
-
-    Turn on debug output
-
-Description
------------
-
-Program to pick 'top' three exons for each gene symbol from a TSV file
-with the exon data (file has one exon per line) and output a single
-line for that gene symbol with values averaged over the top three.
-
-'Top' or 'best' exons are determined by ranking on either the ``log2FoldChange``
-(the default) or ``pValue`` (see the ``--rank-by`` option):
+'Top' or 'best' exons are determined by ranking on either the
+``log2FoldChange`` (the default) or ``pValue`` (this is set using the
+``--rank-by`` option):
 
 * For ``log2FoldChange``, the 'best' exon is the one with the biggest
   absolute ``log2FoldChange``; if this is positive or zero then takes
@@ -130,30 +73,27 @@ Column numbering starts from zero.
 Output file format
 -------------------
 
-TSV file with one gene symbol per line plus averaged data for the 'best'
-exons, and an extra column which has a ``*`` to indicate which gene symbols
-had 4 or fewer exons associated with them in the input file.
+TSV file with one gene symbol per line plus averaged data for the three
+'best' exons (according to the specified criterion), and an extra column
+which has a ``*`` to indicate which gene symbols had 4 or fewer exons
+associated with them in the input file.
 
-.. _xrorthologs:
+Note that the averages are just the mean of all the values.
 
-xrorthologs.py
-**************
+************************************
+Cross-reference data for two species
+************************************
 
-Cross-reference data for two species using probe set lookup
+The :ref:`reference_xrorthologs` utility will cross-reference data from
+two species, given a lookup file that maps probe set IDs from one species
+onto those onto the other.
 
-Usage::
+The lookup file is a tab-delimited file with one probe set for species #1
+per line in the first column, and a comma-separated list of the equivalent
+probe sets for species 2 in the fourth column (columns two and three
+are ignored).
 
-    xrorthologs.py [options] LOOKUPFILE SPECIES1 SPECIES2
-
-Description
------------
-
-Cross-reference data from two species given a lookup file that maps probe set
-IDs from one species onto those onto the other.
-
-``LOOKUPFILE`` is a tab-delimited file with one probe set for species 1 per line in
-first column and a comma-separated list of the equivalent probe sets for species 2
-in the fourth column, e.g.
+For example:
 
 ::
 
@@ -165,15 +105,17 @@ in the fourth column, e.g.
     1405_i_at	6352	20304	1418126_at
     ...
 
-Data for the two species are in tab-delimited files ``SPECIES1`` and ``SPECIES2``,
-where the first column in each is a probe set ID (this is the only requirement).
+Data for the two species are supplied via tab-delimited files ``SPECIES1``
+and ``SPECIES2``, where the first column in each is a probe set ID (this
+is the only requirement).
 
 The output consists of two files:
 
-* ``SPECIES1_appended.txt``: a copy of ``SPECIES1`` with the cross-referenced data
-  from ``SPECIES2`` appended to each line, and
-* ``SPECIES2_appended.txt``: a copy of ``SPECIES2`` with the ``SPECIES1`` data
-  appended.
+* ``SPECIES1_appended.txt``: a copy of ``SPECIES1`` with the
+  cross-referenced data from ``SPECIES2`` appended to each line, and
 
-Where there are multiple matching orthologs to a probe set ID, the data for each
-match is appended onto a single line on the output.
+* ``SPECIES2_appended.txt``: a copy of ``SPECIES2`` with the ``SPECIES1``
+  data appended.
+
+Where there are multiple matching orthologs to a probe set ID, the data
+for each match is appended onto a single line on the output.

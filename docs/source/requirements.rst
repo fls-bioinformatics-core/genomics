@@ -24,3 +24,9 @@ Software dependencies
 Some of the utilities also use 3rd-party software packages, including:
 
 * ``STAR`` https://github.com/alexdobin/STAR
+
+Other utilities perform post-processing of output from the following
+external software packages:
+
+* ``MACS`` https://github.com/macs3-project/MACS
+* ``bowtie2`` http://bowtie-bio.sourceforge.net/bowtie2/index.shtml

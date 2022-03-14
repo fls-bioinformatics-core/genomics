@@ -1,57 +1,28 @@
-General NGS utilities
-=====================
+NGS utilities
+=============
 
-General NGS scripts that are used for both ChIP-seq and RNA-seq.
+******************************************************
+Extract subsets of reads from Fastq/CSFASTA/QUAL files
+******************************************************
 
-* :ref:`extract_reads`: write out subsets of reads from input data files
-* :ref:`reorder_fasta`: reorder chromosomes in FASTA file in karyotypic order
-* :ref:`sam2soap`: convert from SAM file to SOAP format
-* :ref:`split_fasta`: extract individual chromosome sequences from fasta file
-* :ref:`split_fastq` : split fastq file by lane
+The :ref:`reference_extract_reads` utility extracts subsets of
+reads from each of the supplied files according to specified
+criteria (either a random subset of a specified number reads, or
+readings matching a specified pattern).
 
-.. _extract_reads:
+Input files can be any mixture of Fastq (``.fastq``, ``.fq``), or
+CSFASTA (``.csfasta``) and QUAL (``.qual``) files; output file
+names will be the input file names with ``.subset`` appended.
 
-extract_reads.py
-****************
+****************************************
+Reorder FASTA file into karyotypic order
+****************************************
 
-Usage::
+The :ref:`reference_reorder_fasta` utility will reorder the
+chromosome records in a FASTA file into 'karyotypic' order,
+for example:
 
-    extract_reads.py OPTIONS infile [infile ...]
-
-Extract subsets of reads from each of the supplied files according to
-specified criteria (e.g. random, matching a pattern etc). Input files
-can be any mixture of FASTQ (``.fastq``, ``.fq``), CSFASTA
-(``.csfasta``) and QUAL (``.qual``).
-
-Output file names will be the input file names with ``.subset``
-appended.
-
-Options:
-
-.. cmdoption:: -m PATTERN, --match=PATTERN
-
-    Extract records that match Python regular expression
-    ``PATTERN``
-
-..cmdoption:: -n N
-
-    Extract ``N`` random records from the input file(s)
-    (default 500). If multiple input files are specified,
-    the same subsets will be extracted for each.
-
-.. _reorder_fasta:
-
-reorder_fasta.py
-****************
-
-Reorder the chromosome records in a FASTA file into karyotypic order.
-
-Usage::
-
-    reorder_fasta.py INFILE.fa
-
-Reorders the chromosome records from a FASTA file into 'kayrotypic'
-order, e.g.::
+::
 
     chr1
     chr2
@@ -59,66 +30,45 @@ order, e.g.::
     chr10
     chr11
 
-The output FASTA file will be called ``INFILE.karyotypic.fa``.
+in contrast to standard alphanumeric sorting (e.g. ``chr1``,
+``chr10``, ``chr11``, ``chr2`` etc).
 
-.. _sam2soap:
+*******************************
+Convert SAM file to SOAP format
+*******************************
 
-sam2soap.py
-***********
+The :ref:`reference_sam2soap` utility converts a SAM file to SOAP
+format
 
-Convert a SAM file into SOAP format.
+********************************************
+Extract chromosome sequences from FASTA file
+********************************************
 
-Usage::
+The :ref:`reference_split_fasta` utility extracts the sequences
+associated with individual chromosomes from one or more FASTA
+files.
 
-    sam2soap.py OPTIONS [ SAMFILE ]
+Specifically, for each chromosome ``CHROM`` found in the input
+FASTA file, outputs a file called ``CHROM.fa`` containing just
+the sequence for that chromosome.
 
-Convert SAM file to SOAP format - reads from stdin (or SAMFILE, if
-specified), and writes output to stdout unless -o option is
-specified.
+Sequences are identified as belonging to a specific chromosome
+by a line ``>CHROM``.
 
-Options:
+********************************************
+Split multi-lane Fastq into individual lanes
+********************************************
 
-.. cmdoption:: -o SOAPFILE
+Given a multi-lane Fastq file (that is, a Fastq file containing
+reads for several different sequencer lanes), the
+:ref:`reference_split_fastq` utility splits that data into
+multiple output Fastqs where each file only contains reads from
+a single lane.
 
-    Output SOAP file name
+**********************************
+Verify that Fastq files are paired
+**********************************
 
-.. _split_fasta:
-
-split_fasta.py
-**************
-
-Extract individual chromosome sequences from a fasta file.
-
-Usage::
-
-    split_fasta.py fasta_file
-
-Split input FASTA file with multiple sequences into multiple
-files each containing sequences for a single chromosome.
-
-For each chromosome CHROM found in the input Fasta file (delimited
-by a line ``>CHROM``), outputs a file called ``CHROM.fa`` in the
-current directory containing just the sequence for that chromosome.
-
-.. _split_fastq:
-
-split_fastq
-***********
-
-Splits a Fastq file by lane.
-
-Usage::
-
-    split_fastq.py [-h] [-l LANES] FASTQ
-
-Split input Fastq file into multiple output Fastqs where each output only
-contains reads from a single lane. 
-
-Options:
-
-.. cmdoption:: -l LANES, --lanes LANES
-
-    lanes to extract: can be a single integer, a comma-
-    separated list (e.g. 1,3), a range (e.g. 5-7) or a
-    combination (e.g. 1,3,5-7). Default is to extract all
-    lanes in the Fastq
+The :ref:`reference_verify_paired` utility verifies that two
+Fastqs form an R1/R2 pair, by checking that read headers for
+corresponding records from the input Fastq files are in agreement.
