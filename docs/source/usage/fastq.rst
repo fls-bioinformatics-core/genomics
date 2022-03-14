@@ -1,18 +1,24 @@
 Fastq manipulation
 ==================
 
-******************************************************
-Extract subsets of reads from Fastq/CSFASTA/QUAL files
-******************************************************
+*****************************************
+Extract subsets of reads from Fastq files
+*****************************************
 
 The :ref:`reference_extract_reads` utility extracts subsets of
-reads from each of the supplied files according to specified
+reads from each of the supplied Fastq files according to specified
 criteria (either a random subset of a specified number reads, or
 readings matching a specified pattern).
 
-Input files can be any mixture of Fastq (``.fastq``, ``.fq``), or
-CSFASTA (``.csfasta``) and QUAL (``.qual``) files; output file
-names will be the input file names with ``.subset`` appended.
+Multiple files are assumed to be pairs (e.g. R1/R2 Fastqs) or
+groups (R1/I1/R2 Fastqs), with the same number of read records.
+The same subset will be extracted from each file, so that
+pairing/grouping is preserved.
+
+.. note::
+
+   Input files can be any mixture of Fastq (``.fastq``, ``.fq``),
+   or CSFASTA (``.csfasta``) and QUAL (``.qual``) files.
 
 ********************************************
 Split multi-lane Fastq into individual lanes
