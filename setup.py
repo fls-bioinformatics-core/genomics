@@ -2,7 +2,7 @@
 
 Setup script to install genomics/bcftbx
 
-Copyright (C) University of Manchester 2011-2021 Peter Briggs
+Copyright (C) University of Manchester 2011-2022 Peter Briggs
 
 """
 
@@ -57,6 +57,8 @@ setup(name = "genomics-bcftbx",
           'Programming Language :: Python :: 3.6',
           'Programming Language :: Python :: 3.7',
           'Programming Language :: Python :: 3.8',
+          'Programming Language :: Python :: 3.9',
+          'Programming Language :: Python :: 3.10',
       ],
       include_package_data=True,
       zip_safe = False)
