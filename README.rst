@@ -1,51 +1,68 @@
 genomics/bcftbx
 ===============
 
-Utilities for NGS and genomics-related bioinformatics developed within the
-Bioinformatics Core Facility (BCF) within the Faculty of Life Sciences (FLS)
-at the University of Manchester (UoM).
-
-Full documentation is available at http://genomics-bcftbx.readthedocs.org.
-
 Overview
 ********
 
-The utilities are divided into broad categories:
+``genomics-bcftbx`` provides a Python library and a set of utilities
+used for NGS and genomics-related bioinformatics tasks, developed to
+support the Bioinformatics Core Facility (BCF) of the Faculty of
+Biology, Medicine and Health (FBMH) at the University of Manchester
+(UoM).
 
-- Handling data from SOLiD and Illumina sequencers (``solid2cluster``,
-  ``illumina2cluster``)
-- Performing QC and manipulation of NGS data (``QC-pipeline``)
-- Setting up reference data (``build-indexes``)
-- Supporting analysis of ChIP-seq, RNA-seq and microarray data (``ChIP-seq``,
-  ``RNA-seq``, ``microarray``, ``NGS-general``)
-- General non-bioinformatics utilities (``utils``)
+The ``bcftbx`` library provides submodules for various tasks, including:
 
-There is also a Python package called ``bcftbx`` which is used by many of the
-programs, and which provides a wide range of utility functions.
+* handling data from Illumina and SOLiD sequencing platforms;
+* working with various file formats including Fastq, Fasta, MS
+  Excel (.xls and .xlsx), HTML and tab-delimited (.tsv) files;
+* running commands on local and cluster systems;
+* general filesystem operations, text manipulation and checksumming.
+
+The library includes a collection of utilities for tasks including:
+
+* handling Illumina and SOLiD sequencing data;
+* reporting outputs from bioinformatics software;
+* analysing and reporting microarray data;
+* performing basic manipulations on Fastq and Fasta files;
+* working with MD5 checksumming of files.
+
+Full documentation is available at http://genomics-bcftbx.readthedocs.org.
 
 Installation
 ************
 
-It is recommended to use::
+It is recommended to install the package into a Python ``virtualenv``,
+for example:
 
-    pip install .
+::
 
-from within the top-level source directory to install the package.
+    virtualenv venv.bcftbx
+    . venv.bcftbx/bin/activate
 
-To use the package without installing it first you will need to add the
-directory to your ``PYTHONPATH`` environment.
+To install a specific version, first download and unpack the source
+code, e.g.:
 
-To install directly from github using ``pip``::
+::
 
-    pip install git+https://github.com/fls-bioinformatics-core/genomics.git
+    wget https://github.com/fls-bioinformatics-core/genomics/archive/2.0.0.tar.gz
+    tar zxf 2.0.0.tar.gz
 
-Setup
-*****
+Then install the package using:
 
-Many of the scripts should run directly after installation without additional
-setup. The exceptions are the QC scripts, which require a ``qc_setup.sh``
-file to be created and edited to point to the locations of the ``fastq_screen``
-configuration files.
+::
+
+    pip install ./genomics-2.0.0
+
+.. note::
+
+   It is also possible to use the package without installing it, by
+   first ownloading and unpacking the ``.tar.gz`` archive and then
+   adding the ``genomics`` directory to your ``PYTHONPATH`` environment
+   and the ``bin`` directory to your ``PATH``.
+
+   In this case you will also need to ensure that the additional
+   packages required by the submodules are also installed (e.g.
+   ``xlwt``, ``xlrd`` and ``xlutils``).
 
 Documentation
 *************
@@ -66,21 +83,12 @@ both of which create the documentation in the ``docs/build`` subdirectory.
 Running Tests
 *************
 
-The Python unit tests can be run using::
+The tests can be run using::
 
     python setup.py test
 
-Note that this requires the ``nose`` package.
-
-There are also some test scripts in the ``QC-pipeline/tests`` directory,
-these can be run individually or via a 'runner' script::
-
-    run_tests.sh
-
-(Note that this requires that the QC scripts have already been setup after
-installing the package.)
-
-In addition the tests are run GitHub Actions whenever the repository is updated:
+In addition the tests are run by GitHub Actions whenever the repository
+is updated:
 
 .. image:: https://github.com/fls-bioinformatics-core/genomics/workflows/Python%20CI/badge.svg
    :target: https://github.com/fls-bioinformatics-core/genomics/actions?query=workflow%3A%22Python+CI%22
@@ -89,39 +97,8 @@ Developmental version
 *********************
 
 The developmental branch of the code on github is ``devel``, this can be
-installed using::
+installed using:
+
+::
 
     pip install git+https://github.com/fls-bioinformatics-core/genomics.git@devel
-
-Use the ``-e`` option to install an 'editable' version (see the section on
-`"Editable" installs
-<https://pip.pypa.io/en/latest/reference/pip_install.html#editable-installs>_`
-in the pip documentation),
-
-Dependencies
-************
-
-The package consists predominantly of code written in Python, which has been
-used extensively with Python 3.
-
-In addition there are scripts requiring:
-
-- bash
-- Perl
-- R
-
-The following packages are required for subsets of the code:
-
-- perl: ``Statistics::Descriptive`` and ``BioPerl``
-- python: ``xlwt``, ``xlrd`` and ``xlutils``
-
-Some of the scripts also use third party software, including:
-
-- bowtie
-- bowtie2
-- bfast
-- fastq_screen
-- fastqc
-- ``convert`` (from ImageMagick)
-
-There are also a couple of Java-based programs.
