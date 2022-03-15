@@ -52,17 +52,17 @@ class IlluminaRun:
 
     Provides the following properties:
 
-    run_dir           : name and full path to the top-level data directory
-    basecalls_dir     : name and full path to the subdirectory holding bcl files
-    sample_sheet_csv  : full path of the SampleSheet.csv file
-    runinfo_xml       : full path of the RunInfo.xml file
-    platform          : platform e.g. 'miseq'
-    bcl_extension     : file extension for bcl files (either "bcl" or "bcl.gz")
-    lanes             : list of (integer) lane numbers in the run
-    sample_sheet      : SampleSheet instance (if the run has an associated
-                        sample sheet file)
-    runinfo           : IlluminaRunInfo instance (if the run has an
-                        associated RunInfo.xml file)
+    - run_dir: name and full path to the top-level data directory
+    - basecalls_dir: name and full path to the subdirectory holding bcl files
+    - sample_sheet_csv: full path of the SampleSheet.csv file
+    - runinfo_xml: full path of the RunInfo.xml file
+    - platform: platform e.g. 'miseq'
+    - bcl_extension: file extension for bcl files (either "bcl" or "bcl.gz")
+    - lanes: list of (integer) lane numbers in the run
+    - sample_sheet: SampleSheet instance (if the run has an associated
+      sample sheet file)
+    - runinfo: IlluminaRunInfo instance (if the run has an associated
+      RunInfo.xml file)
     """
 
     def __init__(self,illumina_run_dir,platform=None):
@@ -215,22 +215,22 @@ class IlluminaRunInfo:
 
     Extracts basic information from a RunInfo.xml file:
 
-    run_id     : the run id e.g.'130805_PJ600412T_0012_ABCDEZXDYY'
-    run_number : the run number e.g. '0012'
-    instrument : the instrument name e.g. 'PJ600412T'
-    date       : the run date e.g. '130805'
-    flowcell   : the flowcell id e.g. 'ABCDEZXDYY'
-    lane_count : the flowcell lane count e.g. 8
-    bases_mask : bases mask string derived from the read information
-                 e.g. 'y101,I6,y101'
-    reads      : a list of Python dictionaries (one per read)
+    - run_id: the run id e.g.'130805_PJ600412T_0012_ABCDEZXDYY'
+    - run_number: the run number e.g. '0012'
+    - instrument: the instrument name e.g. 'PJ600412T'
+    - date: the run date e.g. '130805'
+    - flowcell: the flowcell id e.g. 'ABCDEZXDYY'
+    - lane_count: the flowcell lane count e.g. 8
+    - bases_mask: bases mask string derived from the read
+      information e.g. 'y101,I6,y101'
+    - reads: a list of Python dictionaries (one per read)
 
     Each dictionary in the 'reads' list has the following keys:
 
-    number          : the read number (1,2,3,...)
-    num_cycles      : the number of cycles in the read e.g. 101
-    is_indexed_read : whether the read is an index (i.e. barcode)
-                      Either 'Y' or 'N'
+    - number: the read number (1,2,3,...)
+    - num_cycles: the number of cycles in the read e.g. 101
+    - is_indexed_read: whether the read is an index (i.e.
+      barcode); either 'Y' or 'N'
 
     """
 
@@ -293,24 +293,26 @@ class IlluminaData:
 
     Provides the following attributes:
 
-    analysis_dir:  top-level directory holding the 'Unaligned' subdirectory
-                   with the primary fastq.gz files
-    projects:      list of IlluminaProject objects (one for each project
-                   defined at the fastq creation stage)
-    undetermined:  IlluminaProject object for the undetermined reads
-    unaligned_dir: full path to the 'Unaligned' directory holding the
-                   primary fastq.gz files
-    paired_end:    True if at least one project is paired end, False otherwise
-    format:        Format of the directory structure layout (either
-                   'casava' or 'bcl2fastq2', or None if the format cannot
-                   be determined)
-    lanes:         List of lane numbers present; if there are no lanes
-                   then this will be a list with 'None' as the only value
+    - analysis_dir: top-level directory holding the 'Unaligned'
+      subdirectory with the primary fastq.gz files
+    - projects: list of IlluminaProject objects (one for each
+      project defined at the fastq creation stage)
+    - undetermined:  IlluminaProject object for the undetermined
+      reads
+    - unaligned_dir: full path to the 'Unaligned' directory
+      holding the primary fastq.gz files
+    - paired_end: True if at least one project is paired end,
+      False otherwise
+    - format: Format of the directory structure layout (either
+      'casava' or 'bcl2fastq2', or None if the format cannot
+      be determined)
+    - lanes: List of lane numbers present; if there are no lanes
+      then this will be a list with 'None' as the only value
 
     Provides the following methods:
 
-    get_project(): lookup and return an IlluminaProject object corresponding
-                   to the supplied project name
+    - get_project(): lookup and return an IlluminaProject object
+      corresponding to the supplied project name
 
     """
 
@@ -486,15 +488,15 @@ class IlluminaProject:
 
     Provides the following attributes:
 
-    name:      name of the project
-    dirn:      (full) path of the directory for the project
-    expt_type: the application type for the project e.g. RNA-seq, ChIP-seq
-               Initially set to None; should be explicitly set by the
-               calling subprogram
-    samples:   list of IlluminaSample objects for each sample within the
-               project
-    paired_end: True if all samples are paired end, False otherwise
-    undetermined: True if 'samples' are actually undetermined reads
+    - name: name of the project
+    - dirn: (full) path of the directory for the project
+    - expt_type: the application type for the project e.g. RNA-seq,
+      ChIP-seq (initially set to None; should be explicitly set by
+      the calling subprogram)
+    - samples: list of IlluminaSample objects for each sample within
+      the project
+    - paired_end: True if all samples are paired end, False otherwise
+    - undetermined: True if 'samples' are actually undetermined reads
 
     """
 
@@ -663,11 +665,11 @@ class IlluminaSample:
 
     Provides the following attributes:
 
-    name:  sample name
-    dirn:  (full) path of the directory for the sample
-    fastq: name of the fastq.gz file (without leading directory, join to
-           'dirn' to get full path)
-    paired_end: boolean; indicates whether sample is paired end
+    - name: sample name
+    - dirn: (full) path of the directory for the sample
+    - fastq: name of the fastq.gz file (without leading directory,
+      join to 'dirn' to get full path)
+    - paired_end: boolean; indicates whether sample is paired end
 
     """
 
@@ -814,17 +816,17 @@ class SampleSheet:
     first line being a 'header' and the remainder being values for
     each of the fields:
 
-    FCID: flow cell ID
-    Lane: lane number (integer from 1 to 8)
-    SampleID: ID (name) for the sample
-    SampleRef: reference used for alignment for the sample
-    Index: index sequences (multiple index reads are separated by a
+    - FCID: flow cell ID
+    - Lane: lane number (integer from 1 to 8)
+    - SampleID: ID (name) for the sample
+    - SampleRef: reference used for alignment for the sample
+    - Index: index sequences (multiple index reads are separated by a
       hyphen e.g. ACCAGTAA-GGACATGA
-    Description: Description of the sample
-    Control: Y indicates this lane is a control lane, N means sample
-    Recipe: Recipe used during sequencing
-    Operator: Name or ID of the operator
-    SampleProject: project the sample belongs to
+    - Description: Description of the sample
+    - Control: Y indicates this lane is a control lane, N means sample
+    - Recipe: Recipe used during sequencing
+    - Operator: Name or ID of the operator
+    - SampleProject: project the sample belongs to
 
     Although the CASAVA-style sample sheet looks much like the IEM
     'Data' section, note that it has different fields and field

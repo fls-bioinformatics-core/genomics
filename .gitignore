@@ -5,3 +5,5 @@
 build
 dist
 *.egg-info
+docs/build
+docs/source/reference.rst

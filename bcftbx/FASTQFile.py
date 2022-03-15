@@ -149,25 +149,27 @@ class FastqRead:
 
     Provides the following properties for accessing the read data:
 
-    seqid: the "sequence identifier" information (first line of the read record)
-      as a SequenceIdentifier object
-    sequence: the raw sequence (second line of the record)
-    optid: the optional sequence identifier line (third line of the record)
-    quality: the quality values (fourth line of the record)
+    - seqid: the "sequence identifier" information (first line of the
+      read record) as a SequenceIdentifier object
+    - sequence: the raw sequence (second line of the record)
+    - optid: the optional sequence identifier line (third line of the
+      record)
+    - quality: the quality values (fourth line of the record)
 
     Additional properties:
 
-    raw_seqid: the original sequence identifier string supplied when the
-               object was created
-    seqlen: length of the sequence
-    maxquality: maximum quality value (in character representation)
-    minquality: minimum quality value (in character representation)
+    - raw_seqid: the original sequence identifier string supplied
+      when the object was created
+    - seqlen: length of the sequence
+    - maxquality: maximum quality value (in character representation)
+    - minquality: minimum quality value (in character representation)
+    - is_colorspace: returns True if the read looks like a colorspace
+      read, False otherwise
 
-    (Note that quality scores can only be obtained from character representations
-    once the encoding scheme is known)
+    .. note::
 
-    is_colorspace: returns True if the read looks like a colorspace read, False
-      otherwise
+       Quality scores can only be obtained from character
+       representations once the encoding scheme is known.
 
     """
 

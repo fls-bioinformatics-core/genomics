@@ -1,6 +1,7 @@
-General Utilities
-=================
+Non-bioinformatics utilities
+============================
 
+*********************************************
 Checking files and directories using MD5 sums
 *********************************************
 
@@ -40,7 +41,39 @@ reported.)
 
 Run ``md5checker.py -h`` to see the other available options.
 
-Checking symbolic links
-***********************
+**********************************
+Logging details of sequencing runs
+**********************************
 
-Use the ``symlink_checker.py`` utility.
+The :ref:`reference_log_seq_data` script can be used to add and manage
+entries for sequencing runs, analyses etc to a tab-delimited "logging
+file".
+
+For example, logging the primary data directory for a SOLiD sequencing run
+to the file ``SEQ_DATA.log`` with the associated description
+``Primary data``:
+
+::
+
+    log_seq_data.sh SEQ_DATA.log /mnt/data/solid0127_20110914_FRAG_BC "Primary data"
+
+Logging an analysis directory associated with an Illumina sequencing run,
+with no description:
+
+::
+
+    log_seq_data.sh SEQ_DATA.log /mnt/data/220314_NB189782_0020_AHBXXXYX_analysis
+
+Updating an existing entry to add a description:
+
+::
+
+    log_seq_data.sh SEQ_DATA.log -u \
+        /mnt/data/220314_NB189782_0020_AHBXXXYX_analysis \
+        "Analysis of paired end NextSeq run"
+
+Deleting an existing entry:
+
+::
+
+    log_seq_data.sh SEQ_DATA.log -d /mnt/data/220314_NB189782_0020_AHBXXXYX_analysis

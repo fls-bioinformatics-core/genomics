@@ -35,7 +35,6 @@ Utility classes and functions
 .. autofunction:: bcftbx.IlluminaData.get_unique_fastq_names
 .. autofunction:: bcftbx.IlluminaData.split_run_name
 .. autofunction:: bcftbx.IlluminaData.summarise_projects
-.. autofunction:: bcftbx.IlluminaData.get_unique_fastq_names
 
 Exception classes
 *****************
