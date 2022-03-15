@@ -334,13 +334,13 @@ class Md5CheckReporter:
     To find out how many results were processed in total, how many
     failed etc use the following properties:
 
-    n_files  : total number of results examined
-    n_ok     : number that passed MD5 checks (MD5_OK)
-    n_failed : number that failed due to different MD5 sums (MD5_FAILED)
-    n_missing: number that failed due to a missing target file
-               (MISSING_TARGET)
-    n_errors : number that had errors calculating their MD5 sums
-               (MD5 ERROR)
+    - n_files  : total number of results examined
+    - n_ok     : number that passed MD5 checks (MD5_OK)
+    - n_failed : number that failed due to different MD5 sums (MD5_FAILED)
+    - n_missing: number that failed due to a missing target file
+      (MISSING_TARGET)
+    - n_errors : number that had errors calculating their MD5 sums
+      (MD5 ERROR)
 
     """
     def __init__(self,results=None,verbose=False,fp=sys.stdout):

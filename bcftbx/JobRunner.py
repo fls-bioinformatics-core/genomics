@@ -88,18 +88,18 @@ class BaseJobRunner:
 
     A job runner needs to implement the following methods:
 
-      run        : starts a job running
-      terminate  : kills a running job
-      list       : lists the running job ids
-      logFile    : returns the name of the log file for a job
-      errFile    : returns the name of the error file for a job
-      exit_status: returns the exit status for the command (or
-                   None if the job is still running)
+    - run        : starts a job running
+    - terminate  : kills a running job
+    - list       : lists the running job ids
+    - logFile    : returns the name of the log file for a job
+    - errFile    : returns the name of the error file for a job
+    - exit_status: returns the exit status for the command (or
+      None if the job is still running)
 
     Optionally it can also implement the methods:
 
-      errorState: indicates if running job is in an "error state"
-      isRunning : checks if a specific job is running
+    - errorState: indicates if running job is in an "error state"
+    - isRunning : checks if a specific job is running
 
     if the default implementations are not sufficient.
     """
@@ -1328,13 +1328,16 @@ def fetch_runner(definition):
 
     Definitions are of the form:
 
-      RunnerName[(args)]
+    ::
+
+        RunnerName[(args)]
 
     RunnerName can be 'SimpleJobRunner' or 'GEJobRunner'.
     If '(args)' are also supplied then:
 
     - for SimpleJobRunners, this can be a list of optional
       arguments separated by spaces:
+
       * 'nslots=N' (where N is an integer; sets a non-default
         number of slots
       * 'join_logs=BOOLEAN' (where BOOLEAN can be 'True',

@@ -342,10 +342,10 @@ class XLSWorkSheet:
 
     >>> ws.insert_column_data('B',[1,2,3])
     >>> ws.insert_row_data(4,['x','y','z'])
-    >>> ws.insert_block_data("This\tis\nthe\tdata")
+    >>> ws.insert_block_data("This\\tis\\nthe\\tdata")
 
     A column can be "filled" with a single repeating value:
-    
+
     >>> ws.fill_column('D','single value')
 
     The extent of the sheet can be determined from the
@@ -1513,12 +1513,13 @@ def eval_formula(item,worksheet):
     including looking up (and if necessary also evaluating) the
     contents of any cells that are referenced.
 
-    *** Note that the implementation of the evaluation is very
-        simplistic and cannot handle complex formulae or functions
+    .. note::
 
-    Currently it can only deal with:
-
-    * basic mathematical operations (+-*/)
+       The implementation of the evaluation is very
+       simplistic and cannot handle complex formulae
+       or functions, it can only deal with basic
+       mathematical operations (i.e. ``+``, ``-``,
+       ``*`` and ``/``)
 
     """
     # Evaluate a formula from a cell item and return the computed value

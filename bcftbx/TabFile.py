@@ -881,8 +881,8 @@ class TabFile:
             also specified
           fp: (optional) a file-like object opened for writing; used in
             preference to filen if set to a non-null value
-              Note that the calling program must close the stream in
-              these cases.
+            Note that the calling program must close the stream in
+            these cases.
           include_header: (optional) if set to True, the first
             line will be a 'header' line
           no_hash: (optional) if set to True and include_header is

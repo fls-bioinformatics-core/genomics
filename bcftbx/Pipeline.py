@@ -25,7 +25,7 @@ There are also some useful methods:
 
 * GetSolidDataFiles: collect csfasta/qual file pairs from a specific
   directory
-* GetSolidPairedEndFile: collect csfasta/qual file pairs for paired
+* GetSolidPairedEndFiles: collect csfasta/qual file pairs for paired
   end data
 * GetFastqFiles: collect fastq files from a specific directory
 * GetFastqGzFiles: collect gzipped fastq files

@@ -22,10 +22,10 @@ object's properties.
 
 The most useful are:
 
-SolidRun.run_info: a SolidRunInfo object which holds data extracted
+* SolidRun.run_info: a SolidRunInfo object which holds data extracted
   from the run name (e.g. instrument, datestamp etc)
 
-SolidRun.samples: a list of SolidSample objects which hold data about
+* SolidRun.samples: a list of SolidSample objects which hold data about
   each of the samples in the run.
 
 Each sample in turn holds a list of libraries within that sample
@@ -80,12 +80,12 @@ class SolidRun:
     One initialised, access the data about the run via the SolidRun
     object's properties:
 
-    run_dir: directory with the run data
-    run_name: name of the run e.g. solid0123_20130426_FRAG_BC
-    run_info: a SolidRunInfo object with data derived from the run name
-    run_definition: a SolidRunDefinition object with data extracted from
+    - run_dir: directory with the run data
+    - run_name: name of the run e.g. solid0123_20130426_FRAG_BC
+    - run_info: a SolidRunInfo object with data derived from the run name
+    - run_definition: a SolidRunDefinition object with data extracted from
       the run_definition.txt file
-    samples: a list of SolidSample objects representing the samples in
+    - samples: a list of SolidSample objects representing the samples in
       the run
     """
 
@@ -462,21 +462,21 @@ class SolidSample:
     The information about the sample can be accessed via the
     following properties:
 
-    name: the sample name
-    libraries: a list of SolidLibrary objects representing the libraries
+    - name: the sample name
+    - libraries: a list of SolidLibrary objects representing the libraries
       within the sample
-    projects: a list of SolidProject objects representing groups of
+    - projects: a list of SolidProject objects representing groups of
       related libraries within the sample
-    unassigned: SolidProject object representing the 'unassigned' data
-    barcode_stats: a SolidBarcodeStats object with data extracted from
+    - unassigned: SolidProject object representing the 'unassigned' data
+    - barcode_stats: a SolidBarcodeStats object with data extracted from
       the BarcodeStatistics file (or None, if no file was available)
-    parent_run: the parent SolidRun object, or None.
+    - parent_run: the parent SolidRun object, or None.
 
     The class also provides the following methods:
 
-    addLibrary: to create and append a SolidLibrary object
-    getLibrary: fetch an existing SolidLibrary
-    getProject: fetch an existing SolidProject
+    - addLibrary: to create and append a SolidLibrary object
+    - getLibrary: fetch an existing SolidLibrary
+    - getProject: fetch an existing SolidProject
 
     Typically the calling subprogram calls the 'addLibrary' method to
     add a SolidLibrary object, which it then populates itself.
@@ -580,26 +580,26 @@ class SolidLibrary:
 
     The following properties hold data about the library:
 
-    name: the library name
-    initials: the experimenter's initials
-    prefix: the library name prefix (i.e. name without the trailing
+    - name: the library name
+    - initials: the experimenter's initials
+    - prefix: the library name prefix (i.e. name without the trailing
       numbers)
-    index_as_string: the trailing numbers from the name, as a string
+    - index_as_string: the trailing numbers from the name, as a string
       (preserves any leading zeroes)
-    index: the trailing numbers from the name as an integer
-    csfasta: full path to the csfasta file for the library (F3 reads)
-    qual: full path to qual file for the library (F3 reads)
-    csfasta_f5: full path to the F5 read (paired-end runs, otherwise
+    - index: the trailing numbers from the name as an integer
+    - csfasta: full path to the csfasta file for the library (F3 reads)
+    - qual: full path to qual file for the library (F3 reads)
+    - csfasta_f5: full path to the F5 read (paired-end runs, otherwise
       will be None)
-    qual_f5: full path to the F5 read (paired-end runs, otherwise will
+    - qual_f5: full path to the F5 read (paired-end runs, otherwise will
       be None)
-    primary_data: list of SolidPrimaryData objects for all possible
+    - primary_data: list of SolidPrimaryData objects for all possible
       primary data file pairs associated with the library
-    parent_sample: parent SolidSample object, or None.
+    - parent_sample: parent SolidSample object, or None.
 
     The following methods are also available:
 
-    addPrimaryData: creates a new SolidPrimaryData object and appends
+    - addPrimaryData: creates a new SolidPrimaryData object and appends
       to the list in the primary_data property
     """
 
@@ -739,9 +739,9 @@ class SolidProject:
 
     Also has the following methods:
 
-    getSample(): returns the parent SolidSample
-    getRun(): returns the parent SolidRun
-    isBarcoded(): returns boolean indicating whether the libraries
+    - getSample(): returns the parent SolidSample
+    - getRun(): returns the parent SolidRun
+    - isBarcoded(): returns boolean indicating whether the libraries
       in the sample are barcoded
     """
 
