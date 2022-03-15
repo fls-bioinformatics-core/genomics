@@ -32,7 +32,8 @@ File system wrappers and utilities
 .. autofunction:: get_current_user
 .. autofunction:: get_user_from_uid
 .. autofunction:: get_uid_from_user
-.. autofunction:: get_group from_group
+.. autofunction:: get_group_from_gid
+.. autofunction:: get_gid_from_group
 .. autofunction:: walk
 .. autofunction:: list_dirs
 .. autofunction:: strip_ext

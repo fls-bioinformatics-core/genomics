@@ -14,6 +14,6 @@ Functions
 *********
 
 .. autofunction:: GetSolidDataFiles
-.. autofunction:: GetSolidPairedEndFile
+.. autofunction:: GetSolidPairedEndFiles
 .. autofunction:: GetFastqFiles
 .. autofunction:: GetFastqGzFiles
