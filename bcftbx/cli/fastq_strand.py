@@ -25,6 +25,10 @@ from ..ngsutils import getreads_subset
 from ..qc.report import strip_ngs_extensions
 from .. import get_version
 
+# Module specific logger
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
+
 #######################################################################
 # Main script
 #######################################################################
@@ -98,7 +102,7 @@ def fastq_strand(argv,working_dir=None):
     # Check that STAR is on the path
     star_exe = find_program("STAR")
     if star_exe is None:
-        logging.critical("STAR not found")
+        logger.critical("STAR not found")
         return 1
     print("STAR\t: %s" % star_exe)
     # Gather genome indices
@@ -117,7 +121,7 @@ def fastq_strand(argv,working_dir=None):
     else:
         star_genomedirs = args.star_genomedirs
     if not star_genomedirs:
-        logging.critical("No genome indices specified")
+        logger.critical("No genome indices specified")
         return 1
     print("Genomes:")
     for genome in star_genomedirs:
@@ -128,15 +132,15 @@ def fastq_strand(argv,working_dir=None):
     else:
         outdir = os.path.abspath(args.outdir)
     if not os.path.exists(outdir):
-        logging.critical("Output directory doesn't exist: %s" %
-                         outdir)
+        logger.critical("Output directory doesn't exist: %s" %
+                        outdir)
         return 1
     # Output file
     outfile = "%s_fastq_strand.txt" % os.path.join(
         outdir,
         os.path.basename(strip_ngs_extensions(args.r1)))
     if os.path.exists(outfile):
-        logging.warning("Removing existing output file '%s'" % outfile)
+        logger.warning("Removing existing output file '%s'" % outfile)
         os.remove(outfile)
     # Prefix for temporary output
     prefix = "fastq_strand_"
@@ -192,8 +196,8 @@ def fastq_strand(argv,working_dir=None):
             while os.path.exists(backup_dir):
                 i += 1
                 backup_dir = "%s.bak%s" % (star_output_dir,i)
-            logging.warning("Moving existing output directory to %s" %
-                            backup_dir)
+            logger.warning("Moving existing output directory to %s" %
+                           backup_dir)
             os.rename(star_output_dir,backup_dir)
         # Make the directory
         os.mkdir(star_output_dir)
@@ -265,7 +269,7 @@ def fastq_strand(argv,working_dir=None):
                 forward_1st = float(sum_col3)/float(sum_col2)*100.0
                 reverse_2nd = float(sum_col4)/float(sum_col2)*100.0
             else:
-                logging.warning("Sum of mapped reads is zero!")
+                logger.warning("Sum of mapped reads is zero!")
                 forward_1st = 0.0
                 reverse_2nd = 0.0
             print("Strand percentages:")
@@ -309,7 +313,7 @@ def main():
         retval = fastq_strand(sys.argv[1:],
                               working_dir=working_dir)
     except Exception as ex:
-        logging.critical("Exception: %s" % ex)
+        logger.critical("Exception: %s" % ex)
         retval = 1
     # Clean up the working dir
     print("Cleaning up working directory")
