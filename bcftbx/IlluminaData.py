@@ -1,5 +1,5 @@
 #     IlluminaData.py: module for handling data about Illumina sequencer runs
-#     Copyright (C) University of Manchester 2012-2021 Peter Briggs
+#     Copyright (C) University of Manchester 2012-2022 Peter Briggs
 #
 ########################################################################
 #
@@ -40,6 +40,7 @@ KNOWN_PLATFORMS = ('illumina-ga2x',
                    'hiseq4000',
                    'miseq',
                    'nextseq',
+                   'novaseq6000',
                    'miniseq',
                    'iseq')
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #     platforms.py: utilities and data to identify sequencer platforms
-#     Copyright (C) University of Manchester 2013-2018 Peter Briggs
+#     Copyright (C) University of Manchester 2013-2022 Peter Briggs
 #
 ########################################################################
 #
@@ -26,6 +26,7 @@ PLATFORMS['hiseq'] = "Illumina HISeq"
 PLATFORMS['miseq'] = "Illumina MISeq"
 PLATFORMS['miniseq'] = "MiniSeq"
 PLATFORMS['nextseq'] = "Illumina NextSeq"
+PLATFORMS['novaseq6000'] = "NovaSeq 6000"
 PLATFORMS['iseq'] = "Illumina iSeq"
 PLATFORMS['illumina'] = "Unknown/Illumina"
 PLATFORMS['other'] = "Unknown/external"
