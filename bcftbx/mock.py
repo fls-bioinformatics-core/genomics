@@ -770,6 +770,8 @@ class MockIlluminaRun:
             self._include_cycles = True
             self._include_config = True
             self._include_sample_sheet = True
+            self._flowcell_mode = None
+            self._rta_version = "2.11.4.0"
         elif self._platform == "hiseq":
             # HISeq
             self._nlanes = 8
@@ -783,6 +785,8 @@ class MockIlluminaRun:
             self._include_cycles = True
             self._include_config = True
             self._include_sample_sheet = True
+            self._flowcell_mode = None
+            self._rta_version = "2.11.4.0"
         elif self._platform == "nextseq":
             # NextSeq
             self._nlanes = 4
@@ -796,6 +800,23 @@ class MockIlluminaRun:
             self._include_cycles = False
             self._include_config = False
             self._include_sample_sheet = False
+            self._flowcell_mode = None
+            self._rta_version = "2.11.4.0"
+        elif self._platform == "novaseq":
+            # NovaSeq
+            self._nlanes = 2
+            self._bcl_ext = '.bcl.bgzf'
+            self._sample_sheet_content = None
+            self._bases_mask = "y76,I0,I10,y76"
+            self._ntiles = 158
+            self._include_filter = True
+            self._include_control = False
+            self._include_bci = True
+            self._include_cycles = False
+            self._include_config = False
+            self._include_sample_sheet = False
+            self._flowcell_mode = 'SP'
+            self._rta_version = "v3.4.4"
         else:
             raise Exception("Unrecognised platform: %s" %
                             self._platform)
@@ -877,6 +898,8 @@ class MockIlluminaRun:
         ncycles = 0
         for rd in bases_mask.split(','):
             ncycles += int(rd[1:])
+        flowcell_mode = self._flowcell_mode
+        rta_version = self._rta_version
         # Basic directory structure
         mkdir(self._path('Data'))
         mkdir(self._path('Data','Intensities'))
@@ -953,6 +976,15 @@ class MockIlluminaRun:
                                          nlanes)
         with io.open(self._path('RunInfo.xml'),'wt') as fp:
             fp.write(run_info_xml)
+        # RunParameters.xml
+        run_parameters_xml = RunParametersXml.create(
+            self.name,
+            bases_mask,
+            nlanes=nlanes,
+            flowcell_mode=flowcell_mode,
+            rta_version=rta_version)
+        with io.open(self._path('RunParameters.xml'),'wt') as fp:
+            fp.write(run_parameters_xml)
         # SampleSheet.csv
         if self._include_sample_sheet and \
            self._sample_sheet_content is not None:
