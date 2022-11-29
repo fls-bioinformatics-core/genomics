@@ -5,6 +5,7 @@ from bcftbx.IlluminaData import *
 from bcftbx.mock import MockIlluminaRun
 from bcftbx.mock import MockIlluminaData
 from bcftbx.mock import RunInfoXml
+from bcftbx.mock import RunParametersXml
 from bcftbx.TabFile import TabDataLine
 import bcftbx.utils
 import unittest
@@ -290,6 +291,48 @@ class TestIlluminaRunInfo(unittest.TestCase):
         self.assertEqual(run_info.reads[3]['number'],'4')
         self.assertEqual(run_info.reads[3]['num_cycles'],'101')
         self.assertEqual(run_info.reads[3]['is_indexed_read'],'N')
+
+class TestIlluminaRunParameters(unittest.TestCase):
+    """
+    Tests for the IlluminaRunParameters class
+    """
+    def setUp(self):
+        # Create a temporary working directory
+        self.tmpdir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        # Remove the test directory
+        try:
+            os.rmdir(self.tmpdir)
+        except Exception:
+            pass
+
+    def test_illuminarunparameters_rta_2_11_4_0(self):
+        """
+        IlluminaRunParameters: check data is extracted (RTA 2.11.4.0)
+        """
+        run_parameters_xml = os.path.join(self.tmpdir,"RunParameters.xml")
+        with open(run_parameters_xml,'wt') as fp:
+            fp.write(RunParametersXml.create(
+                run_name="151125_NB500968_0003_000000000-ABCDE1XX",
+                bases_mask="y101,I8,I8,y101",
+                rta_version="2.11.4.0"))
+        run_parameters = IlluminaRunParameters(run_parameters_xml)
+        self.assertEqual(run_parameters.flowcell_mode,None)
+
+    def test_illuminarunparameters_rta_v3_4_4(self):
+        """
+        IlluminaRunParameters: check data is extracted (RTA v3.4.4)
+        """
+        run_parameters_xml = os.path.join(self.tmpdir,"RunParameters.xml")
+        with open(run_parameters_xml,'wt') as fp:
+            fp.write(RunParametersXml.create(
+                run_name="151125_NB500968_0003_000000000-ABCDE1XX",
+                bases_mask="y101,I8,I8,y101",
+                flowcell_mode="S1",
+                rta_version="v3.4.4"))
+        run_parameters = IlluminaRunParameters(run_parameters_xml)
+        self.assertEqual(run_parameters.flowcell_mode,"S1")
 
 class BaseTestIlluminaData(unittest.TestCase):
     """

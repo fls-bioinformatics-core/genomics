@@ -289,6 +289,34 @@ class IlluminaRunInfo:
                                 % read['is_indexed_read'])
         return ','.join(bases_mask)
 
+class IlluminaRunParameters:
+    """Class for examining Illumina RunParameters.xml file
+
+    Extracts basic information from a RunParameters.xml file:
+
+    - flowcell_mode: the flowcell mode e.g. 'SP','S4'
+
+    Arguments:
+      runparameters_xml (str): path to the RunParameters.xml
+        file
+    """
+    def __init__(self,runparameters_xml):
+        """
+        Create and populate a new IlluminaRunParameters object
+        """
+        self.runparameters_xml = runparameters_xml
+        self.flowcell_mode = None
+        # Process contents
+        doc = xml.dom.minidom.parse(self.runparameters_xml)
+        run_params = doc.getElementsByTagName('RunParameters')[0]
+        try:
+            self.flowcell_mode = run_params.\
+                                 getElementsByTagName('FlowCellMode')[0].\
+                                 firstChild.nodeValue
+        except IndexError:
+            # Element not found
+            self.flowcell_mode = None
+
 class IlluminaData:
     """Class for examining Illumina data post bcl-to-fastq conversion
 
