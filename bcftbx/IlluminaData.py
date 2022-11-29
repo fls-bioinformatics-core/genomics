@@ -57,6 +57,7 @@ class IlluminaRun:
     - basecalls_dir: name and full path to the subdirectory holding bcl files
     - sample_sheet_csv: full path of the SampleSheet.csv file
     - runinfo_xml: full path of the RunInfo.xml file
+    - runparameters_xml: full path of the RunParameters.xml file
     - platform: platform e.g. 'miseq'
     - bcl_extension: file extension for bcl files (either "bcl" or "bcl.gz")
     - lanes: list of (integer) lane numbers in the run
@@ -64,6 +65,8 @@ class IlluminaRun:
       sample sheet file)
     - runinfo: IlluminaRunInfo instance (if the run has an associated
       RunInfo.xml file)
+    - runparameters: IlluminaRunParameters instance (if the run has an
+      associated RunParameters.xml file)
     """
 
     def __init__(self,illumina_run_dir,platform=None):
@@ -107,6 +110,16 @@ class IlluminaRun:
             self.runinfo = IlluminaRunInfo(self.runinfo_xml)
         else:
             self.runinfo = None
+        # RunParameters.xml
+        self.runparameters_xml = os.path.join(self.run_dir,
+                                              'RunParameters.xml')
+        if not os.path.isfile(self.runparameters_xml):
+            self.runparameters_xml = None
+        if self.runparameters_xml:
+            self.runparameters = IlluminaRunParameters(
+                self.runparameters_xml)
+        else:
+            self.runparameters = None
         # Platform
         if platform:
             # Supplied explicitly
@@ -233,15 +246,13 @@ class IlluminaRunInfo:
     - is_indexed_read: whether the read is an index (i.e.
       barcode); either 'Y' or 'N'
 
+    Arguments:
+      runinfo_xml (str): path to the RunInfo.xml file
     """
 
     def __init__(self,runinfo_xml):
-        """Create and populate a new IlluminaRun object
-
-        Arguments:
-          illumina_run_dir: path to the top-level directory holding
-            the 'raw' sequencing data
-
+        """
+        Create and populate a new IlluminaRunInfo object
         """
         self.runinfo_xml = runinfo_xml
         self.run_id = None

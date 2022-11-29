@@ -32,6 +32,9 @@ class TestIlluminaRun(unittest.TestCase):
             pass
 
     def test_illuminarun_miseq(self):
+        """
+        IlluminaRun: test for MiSEQ run
+        """
         # Make a mock run directory for MISeq format
         self.mock_illumina_run = MockIlluminaRun(
             '151125_M00879_0001_000000000-ABCDE1','miseq',
@@ -52,6 +55,9 @@ class TestIlluminaRun(unittest.TestCase):
         self.assertEqual(run.runinfo_xml,
                          os.path.join(self.mock_illumina_run.dirn,
                                       'RunInfo.xml'))
+        self.assertEqual(run.runparameters_xml,
+                         os.path.join(self.mock_illumina_run.dirn,
+                                      'RunParameters.xml'))
         self.assertTrue(isinstance(run.sample_sheet,SampleSheet))
         self.assertTrue(isinstance(run.runinfo,IlluminaRunInfo))
         self.assertEqual(run.runinfo.run_id,
@@ -60,11 +66,17 @@ class TestIlluminaRun(unittest.TestCase):
         self.assertEqual(run.runinfo.date,'151125')
         self.assertEqual(run.runinfo.run_number,'0001')
         self.assertEqual(run.runinfo.flowcell,'000000000-ABCDE1')
+        self.assertTrue(isinstance(run.runparameters,
+                                   IlluminaRunParameters))
+        self.assertEqual(run.runparameters.flowcell_mode,None)
         self.assertEqual(run.bcl_extension,".bcl")
         self.assertEqual(run.lanes,[1,])
         self.assertEqual(run.cycles,218)
 
     def test_illuminarun_hiseq(self):
+        """
+        IlluminaRun: test for HiSEQ run
+        """
         # Make a mock run directory for HISeq format
         self.mock_illumina_run = MockIlluminaRun(
             '151125_SN700511R_0002_000000000-ABCDE1XX','hiseq',
@@ -85,6 +97,9 @@ class TestIlluminaRun(unittest.TestCase):
         self.assertEqual(run.runinfo_xml,
                          os.path.join(self.mock_illumina_run.dirn,
                                       'RunInfo.xml'))
+        self.assertEqual(run.runparameters_xml,
+                         os.path.join(self.mock_illumina_run.dirn,
+                                      'RunParameters.xml'))
         self.assertTrue(isinstance(run.sample_sheet,SampleSheet))
         self.assertTrue(isinstance(run.runinfo,IlluminaRunInfo))
         self.assertEqual(run.runinfo.run_id,
@@ -93,12 +108,18 @@ class TestIlluminaRun(unittest.TestCase):
         self.assertEqual(run.runinfo.date,'151125')
         self.assertEqual(run.runinfo.run_number,'0002')
         self.assertEqual(run.runinfo.flowcell,'000000000-ABCDE1XX')
+        self.assertTrue(isinstance(run.runparameters,
+                                   IlluminaRunParameters))
+        self.assertEqual(run.runparameters.flowcell_mode,None)
         self.assertEqual(run.bcl_extension,".bcl.gz")
         self.assertEqual(run.lanes,[1,2,3,4,5,6,7,8])
         self.assertEqual(run.cycles,218)
 
     def test_illuminarun_nextseq(self):
-        # Make a mock run directory for HISeq format
+        """
+        IlluminaRun: test for NextSeq run
+        """
+        # Make a mock run directory for NextSeq format
         self.mock_illumina_run = MockIlluminaRun(
             '151125_NB500968_0003_000000000-ABCDE1XX','nextseq',
             top_dir=self.top_dir)
@@ -115,6 +136,9 @@ class TestIlluminaRun(unittest.TestCase):
         self.assertEqual(run.runinfo_xml,
                          os.path.join(self.mock_illumina_run.dirn,
                                       'RunInfo.xml'))
+        self.assertEqual(run.runparameters_xml,
+                         os.path.join(self.mock_illumina_run.dirn,
+                                      'RunParameters.xml'))
         self.assertEqual(run.sample_sheet,None)
         self.assertTrue(isinstance(run.runinfo,IlluminaRunInfo))
         self.assertEqual(run.runinfo.run_id,
@@ -123,11 +147,58 @@ class TestIlluminaRun(unittest.TestCase):
         self.assertEqual(run.runinfo.date,'151125')
         self.assertEqual(run.runinfo.run_number,'0003')
         self.assertEqual(run.runinfo.flowcell,'000000000-ABCDE1XX')
+        self.assertTrue(isinstance(run.runparameters,
+                                   IlluminaRunParameters))
+        self.assertEqual(run.runparameters.flowcell_mode,None)
         self.assertEqual(run.bcl_extension,".bcl.bgzf")
         self.assertEqual(run.lanes,[1,2,3,4])
         self.assertEqual(run.cycles,158)
 
+    def test_illuminarun_novaseq(self):
+        """
+        IlluminaRun: test for NovaSeq run
+        """
+        # Make a mock run directory for NextSeq format
+        self.mock_illumina_run = MockIlluminaRun(
+            '221125_A500968_0038_ABCDE1XX',
+            'novaseq',
+            top_dir=self.top_dir)
+        self.mock_illumina_run.create()
+        # Load into an IlluminaRun object
+        run = IlluminaRun(self.mock_illumina_run.dirn,
+                          platform="novaseq")
+        # Check the properties
+        self.assertEqual(run.run_dir,self.mock_illumina_run.dirn)
+        self.assertEqual(run.platform,"novaseq")
+        self.assertEqual(run.basecalls_dir,
+                         os.path.join(self.mock_illumina_run.dirn,
+                                      'Data','Intensities','BaseCalls'))
+        self.assertEqual(run.sample_sheet_csv,None)
+        self.assertEqual(run.runinfo_xml,
+                         os.path.join(self.mock_illumina_run.dirn,
+                                      'RunInfo.xml'))
+        self.assertEqual(run.runparameters_xml,
+                         os.path.join(self.mock_illumina_run.dirn,
+                                      'RunParameters.xml'))
+        self.assertEqual(run.sample_sheet,None)
+        self.assertTrue(isinstance(run.runinfo,IlluminaRunInfo))
+        self.assertEqual(run.runinfo.run_id,
+                         '221125_A500968_0038_ABCDE1XX')
+        self.assertEqual(run.runinfo.instrument,'A500968')
+        self.assertEqual(run.runinfo.date,'221125')
+        self.assertEqual(run.runinfo.run_number,'0038')
+        self.assertEqual(run.runinfo.flowcell,'BCDE1XX')
+        self.assertTrue(isinstance(run.runparameters,
+                                   IlluminaRunParameters))
+        self.assertEqual(run.runparameters.flowcell_mode,'SP')
+        self.assertEqual(run.bcl_extension,".bcl.bgzf")
+        self.assertEqual(run.lanes,[1,2])
+        self.assertEqual(run.cycles,158)
+
     def test_illuminarun_unknown_illumina_platform(self):
+        """
+        IlluminaRun: test for run from unknown platform
+        """
         # Make a mock run directory for MISeq data with unknown instrument
         self.mock_illumina_run = MockIlluminaRun(
             '180329_UNKNOWN0001_0001_000000000-ABCDE1','miseq',
@@ -148,6 +219,9 @@ class TestIlluminaRun(unittest.TestCase):
         self.assertEqual(run.runinfo_xml,
                          os.path.join(self.mock_illumina_run.dirn,
                                       'RunInfo.xml'))
+        self.assertEqual(run.runparameters_xml,
+                         os.path.join(self.mock_illumina_run.dirn,
+                                      'RunParameters.xml'))
         self.assertTrue(isinstance(run.sample_sheet,SampleSheet))
         self.assertTrue(isinstance(run.runinfo,IlluminaRunInfo))
         self.assertEqual(run.runinfo.run_id,
@@ -156,11 +230,17 @@ class TestIlluminaRun(unittest.TestCase):
         self.assertEqual(run.runinfo.date,'180329')
         self.assertEqual(run.runinfo.run_number,'0001')
         self.assertEqual(run.runinfo.flowcell,'000000000-ABCDE1')
+        self.assertTrue(isinstance(run.runparameters,
+                                   IlluminaRunParameters))
+        self.assertEqual(run.runparameters.flowcell_mode,None)
         self.assertEqual(run.bcl_extension,".bcl")
         self.assertEqual(run.lanes,[1,])
         self.assertEqual(run.cycles,218)
 
     def test_illuminarun_unknown_illumina_platform_generic_name(self):
+        """
+        IlluminaRun: test for MiSEQ run with unknown instrument
+        """
         # Make a mock run directory for MISeq data with unknown instrument
         self.mock_illumina_run = MockIlluminaRun(
             '180329_UNKNOWN0001_0001_000000000-ABCDE1','miseq',
@@ -184,6 +264,9 @@ class TestIlluminaRun(unittest.TestCase):
         self.assertEqual(run.runinfo_xml,
                          os.path.join(run_dirn,
                                       'RunInfo.xml'))
+        self.assertEqual(run.runparameters_xml,
+                         os.path.join(run_dirn,
+                                      'RunParameters.xml'))
         self.assertTrue(isinstance(run.sample_sheet,SampleSheet))
         self.assertTrue(isinstance(run.runinfo,IlluminaRunInfo))
         self.assertEqual(run.runinfo.run_id,
@@ -192,11 +275,17 @@ class TestIlluminaRun(unittest.TestCase):
         self.assertEqual(run.runinfo.date,'180329')
         self.assertEqual(run.runinfo.run_number,'0001')
         self.assertEqual(run.runinfo.flowcell,'000000000-ABCDE1')
+        self.assertTrue(isinstance(run.runparameters,
+                                   IlluminaRunParameters))
+        self.assertEqual(run.runparameters.flowcell_mode,None)
         self.assertEqual(run.bcl_extension,".bcl")
         self.assertEqual(run.lanes,[1,])
         self.assertEqual(run.cycles,218)
 
-    def test_illuminarun_specify_platform(self):
+    def test_illuminarun_miseq_specify_platform(self):
+        """
+        IlluminaRun: test for MiSEQ run explicitly specifying platform
+        """
         # Make a mock run directory for MISeq data with unknown instrument
         self.mock_illumina_run = MockIlluminaRun(
             '180329_UNKNOWN0001_0001_000000000-ABCDE1','miseq',
@@ -217,6 +306,9 @@ class TestIlluminaRun(unittest.TestCase):
         self.assertEqual(run.runinfo_xml,
                          os.path.join(self.mock_illumina_run.dirn,
                                       'RunInfo.xml'))
+        self.assertEqual(run.runparameters_xml,
+                         os.path.join(self.mock_illumina_run.dirn,
+                                      'RunParameters.xml'))
         self.assertTrue(isinstance(run.sample_sheet,SampleSheet))
         self.assertTrue(isinstance(run.runinfo,IlluminaRunInfo))
         self.assertEqual(run.runinfo.run_id,
@@ -225,11 +317,17 @@ class TestIlluminaRun(unittest.TestCase):
         self.assertEqual(run.runinfo.date,'180329')
         self.assertEqual(run.runinfo.run_number,'0001')
         self.assertEqual(run.runinfo.flowcell,'000000000-ABCDE1')
+        self.assertTrue(isinstance(run.runparameters,
+                                   IlluminaRunParameters))
+        self.assertEqual(run.runparameters.flowcell_mode,None)
         self.assertEqual(run.bcl_extension,".bcl")
         self.assertEqual(run.lanes,[1,])
         self.assertEqual(run.cycles,218)
 
     def test_illuminarun_miseq_missing_directory(self):
+        """
+        IlluminaRun: test for MiSEQ raises IlluminaDataError for missing dir
+        """
         # Check we can handle IlluminaRun when MISeq directory is missing
         self.assertRaises(
             IlluminaDataError,
@@ -237,6 +335,9 @@ class TestIlluminaRun(unittest.TestCase):
             '/does/not/exist/151125_M00879_0001_000000000-ABCDE1')
 
     def test_illuminarun_nextseq_missing_directory(self):
+        """
+        IlluminaRun: test for NextSeq raises IlluminaDataError for missing dir
+        """
         # Check we can handle IlluminaRun when NextSeq directory is missing
         self.assertRaises(
             IlluminaDataError,
