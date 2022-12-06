@@ -108,6 +108,31 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
 6,EB6,EB6,,F3,N703,AGGCAGAA,S506,ACTGCATA,EB,
 7,ML7,ML7,,,N701,GCCAATAT,S502,TCTTTCCC,ML,
 8,VL8,VL8,,,N701,GCCAATAT,S503,TCTTTCCC,VL,"""
+    novaseq = u"""[Header],,,,,,,,,,,
+IEMFileVersion,5,,,,,,,,,,
+Experiment Name,NovaSeq Run 40,,,,,,,,,,
+Date,12/02/2022,,,,,,,,,,
+Workflow,GenerateFASTQ,,,,,,,,,,
+Application,NovaSeq FASTQ Only,,,,,,,,,,
+Instrument Type,NovaSeq,,,,,,,,,,
+Assay,Illumina Stranded mRNA,,,,,,,,,,
+Index Adapters,IDT-Ilmn RNA UD Indexes SetABCD Ligation,,,,,,,,,,
+Chemistry,Amplicon,,,,,,,,,,
+,,,,,,,,,,,
+[Reads],,,,,,,,,,,
+101,,,,,,,,,,,
+101,,,,,,,,,,,
+,,,,,,,,,,,
+[Settings],,,,,,,,,,,
+Adapter,CTGTCTCTTATACACATCT,,,,,,,,,,
+,,,,,,,,,,,
+[Data],,,,,,,,,,,
+Sample_ID,Sample_Name,Sample_Plate,Sample_Well,Index_Plate,Index_Plate_Well,I7_Index_ID,index,I5_Index_ID,index2,Sample_Project,Description
+AI1,AI1,,,A,A04,UDP0025,AACCATAGAA,UDP0025,CCATCTCGCC,AI,
+AI2,AI2,,,A,B04,UDP0026,GGTTGCGAGG,UDP0026,TTGCTCTATT,AI,
+SC1,SC1,,,B,A12,UDP0185,ACGGTCCAAC,UDP0185,TGATGTAAGA,SC,
+SC2,SC2,,,B,B12,UDP0186,GTAACTTGGT,UDP0186,AGGTATGGCG,SC,
+"""
 
 class RunInfoXml:
     """
