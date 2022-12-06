@@ -2,6 +2,52 @@ Version History and Changes
 ===========================
 
 ---------------------------
+Version 1.12.0 (2022-12-06)
+---------------------------
+
+* bcftbx/IlluminaData: add basic support for 'RunParameters.xml'
+  files in Illumina runs
+  https://github.com/fls-bioinformatics-core/genomics/pull/206
+* bcftbx: add NovaSeq 6000 as a recognised sequencing platform
+  ('novaseq6000')
+  https://github.com/fls-bioinformatics-core/genomics/pull/205
+* bcftbx: add Python 3.9 and 3.10 to list of supported versions
+  https://github.com/fls-bioinformatics-core/genomics/pull/202
+* bcftbx/Pipeline: expose stderr output from the 'Job' class
+  https://github.com/fls-bioinformatics-core/genomics/pull/201
+* Substantial refactoring of utility scripts (and removal of
+  some deprecated legacy scripts):
+  - utils:
+    https://github.com/fls-bioinformatics-core/genomics/pull/198
+  - QC-pipeline:
+    https://github.com/fls-bioinformatics-core/genomics/pull/197
+  - NGS-utils:
+    https://github.com/fls-bioinformatics-core/genomics/pull/195
+  - solid2cluster:
+    https://github.com/fls-bioinformatics-core/genomics/pull/194
+  - microarray:
+    https://github.com/fls-bioinformatics-core/genomics/pull/192
+  - build-indexes:
+    https://github.com/fls-bioinformatics-core/genomics/pull/190
+  - RNA-seq:
+    https://github.com/fls-bioinformatics-core/genomics/pull/189
+  - ChIP-seq:
+    https://github.com/fls-bioinformatics-core/genomics/pull/188
+  - illumina2cluster:
+    https://github.com/fls-bioinformatics-core/genomics/pull/187
+* bcftbx/fasta: new library module with 'FastaChromIterator'
+  class (relocated from 'split_fasta.py' utility)
+  https://github.com/fls-bioinformatics-core/genomics/pull/196
+* bcftbx/TabFile: add 'TabFileIterator' class (relocated from
+  'best_exons.py' utility)
+  https://github.com/fls-bioinformatics-core/genomics/pull/193
+* bcftbx: drop support for Python 2
+  https://github.com/fls-bioinformatics-core/genomics/pull/185
+* prep_sample_sheet.py: add option to reverse complement i5
+  indexes
+  https://github.com/fls-bioinformatics-core/genomics/pull/183
+
+---------------------------
 Version 1.11.1 (2021-06-07)
 ---------------------------
 
