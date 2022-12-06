@@ -57,6 +57,7 @@ class IlluminaRun:
     - basecalls_dir: name and full path to the subdirectory holding bcl files
     - sample_sheet_csv: full path of the SampleSheet.csv file
     - runinfo_xml: full path of the RunInfo.xml file
+    - runparameters_xml: full path of the RunParameters.xml file
     - platform: platform e.g. 'miseq'
     - bcl_extension: file extension for bcl files (either "bcl" or "bcl.gz")
     - lanes: list of (integer) lane numbers in the run
@@ -64,6 +65,8 @@ class IlluminaRun:
       sample sheet file)
     - runinfo: IlluminaRunInfo instance (if the run has an associated
       RunInfo.xml file)
+    - runparameters: IlluminaRunParameters instance (if the run has an
+      associated RunParameters.xml file)
     """
 
     def __init__(self,illumina_run_dir,platform=None):
@@ -107,6 +110,16 @@ class IlluminaRun:
             self.runinfo = IlluminaRunInfo(self.runinfo_xml)
         else:
             self.runinfo = None
+        # RunParameters.xml
+        self.runparameters_xml = os.path.join(self.run_dir,
+                                              'RunParameters.xml')
+        if not os.path.isfile(self.runparameters_xml):
+            self.runparameters_xml = None
+        if self.runparameters_xml:
+            self.runparameters = IlluminaRunParameters(
+                self.runparameters_xml)
+        else:
+            self.runparameters = None
         # Platform
         if platform:
             # Supplied explicitly
@@ -233,15 +246,13 @@ class IlluminaRunInfo:
     - is_indexed_read: whether the read is an index (i.e.
       barcode); either 'Y' or 'N'
 
+    Arguments:
+      runinfo_xml (str): path to the RunInfo.xml file
     """
 
     def __init__(self,runinfo_xml):
-        """Create and populate a new IlluminaRun object
-
-        Arguments:
-          illumina_run_dir: path to the top-level directory holding
-            the 'raw' sequencing data
-
+        """
+        Create and populate a new IlluminaRunInfo object
         """
         self.runinfo_xml = runinfo_xml
         self.run_id = None
@@ -288,6 +299,34 @@ class IlluminaRunInfo:
                 raise Exception("Unrecognised value for is_indexed_read: '%s'"
                                 % read['is_indexed_read'])
         return ','.join(bases_mask)
+
+class IlluminaRunParameters:
+    """Class for examining Illumina RunParameters.xml file
+
+    Extracts basic information from a RunParameters.xml file:
+
+    - flowcell_mode: the flowcell mode e.g. 'SP','S4'
+
+    Arguments:
+      runparameters_xml (str): path to the RunParameters.xml
+        file
+    """
+    def __init__(self,runparameters_xml):
+        """
+        Create and populate a new IlluminaRunParameters object
+        """
+        self.runparameters_xml = runparameters_xml
+        self.flowcell_mode = None
+        # Process contents
+        doc = xml.dom.minidom.parse(self.runparameters_xml)
+        run_params = doc.getElementsByTagName('RunParameters')[0]
+        try:
+            self.flowcell_mode = run_params.\
+                                 getElementsByTagName('FlowCellMode')[0].\
+                                 firstChild.nodeValue
+        except IndexError:
+            # Element not found
+            self.flowcell_mode = None
 
 class IlluminaData:
     """Class for examining Illumina data post bcl-to-fastq conversion
