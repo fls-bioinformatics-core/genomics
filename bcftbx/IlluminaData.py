@@ -411,7 +411,8 @@ class IlluminaData:
                     lane = IlluminaFastq(fq).lane_number
                     if lane not in self.lanes:
                         self.lanes.append(lane)
-        self.lanes = sorted(self.lanes)
+        self.lanes = sorted([l for l in self.lanes
+                             if l is not None or len(self.lanes) == 1])
 
     def _populate_casava_style(self):
         """

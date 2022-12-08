@@ -919,6 +919,35 @@ class TestIlluminaDataForBcl2fastq2SpecialCases(BaseTestIlluminaData):
                 fp.write(u'')
         return os.path.join(self.top_dir,'test.MockIlluminaData')
 
+    def makeIlluminaDataDirectoryWithMixedLaneAndNoLaneSplitting(self):
+        # Create initial dir with lane splitting
+        mock_illumina_data = MockIlluminaData('test.MockIlluminaData',
+                                               'bcl2fastq2',
+                                               paired_end=True,
+                                               no_lane_splitting=False,
+                                               top_dir=self.top_dir)
+        mock_illumina_data.add_fastq_batch('AB','AB1','AB1_S1',lanes=(1,2))
+        mock_illumina_data.add_fastq_batch('AB','AB2','AB2_S2',lanes=(1,2))
+        mock_illumina_data.add_fastq_batch('CDE','CDE3','CDE3_S3')
+        mock_illumina_data.add_fastq_batch('CDE','CDE4','CDE4_S4')
+        mock_illumina_data.add_undetermined(lanes=(1,2))
+        mock_illumina_data.create()
+        # Create second dir with no lane splitting
+        mock_illumina_data2 = MockIlluminaData('test.MockIlluminaData2',
+                                               'bcl2fastq2',
+                                               paired_end=True,
+                                               no_lane_splitting=True,
+                                               top_dir=self.top_dir)
+        mock_illumina_data2.add_fastq_batch('CDE','CDE3','CDE3_S3')
+        mock_illumina_data2.add_fastq_batch('CDE','CDE4','CDE4_S4')
+        mock_illumina_data2.create()
+        # Move no lane splitting project into first dir
+        shutil.rmtree(os.path.join(mock_illumina_data.unaligned_dir,"CDE"))
+        shutil.move(os.path.join(mock_illumina_data2.unaligned_dir,"CDE"),
+                    mock_illumina_data.unaligned_dir)
+        # Finish
+        self.mock_illumina_data = mock_illumina_data
+
     def test_illumina_data_all_sample_ids_differ_from_sample_names(self):
         """Read bcl2fastq2 output when all sample ids differ from names
 
@@ -985,6 +1014,25 @@ class TestIlluminaDataForBcl2fastq2SpecialCases(BaseTestIlluminaData):
         self.assertRaises(IlluminaDataError,IlluminaData,
                           os.path.dirname(dirn),
                           unaligned_dir=os.path.basename(dirn))
+
+    def test_illumina_data_multiple_projects_paired_end_mixed_lane_splitting(self):
+        """Read bcl2fastq2-style output with multiple projects & paired-end data (mixture of lanes and no-lane-splitting)
+
+        """
+        # Make a mock Illumina data directory with mixture of
+        # lane-split and non-lane-split Fastqs
+        self.makeIlluminaDataDirectoryWithMixedLaneAndNoLaneSplitting()
+        # Check that IlluminaData can handle it
+        illumina_data = IlluminaData(self.mock_illumina_data.dirn)
+        for p,p_name in zip(illumina_data.projects,
+                        self.mock_illumina_data.projects):
+            self.assertEqual(p.name,p_name)
+            for s,s_name in zip(p.samples,
+                                self.mock_illumina_data.samples_in_project(
+                                    p_name)):
+                self.assertEqual(s.name,s_name)
+        self.assertEqual(illumina_data.format,'bcl2fastq2')
+        self.assertEqual(illumina_data.lanes,[1,2])
 
 class TestCasavaSampleSheet(unittest.TestCase):
 
