@@ -928,8 +928,10 @@ class TestIlluminaDataForBcl2fastq2SpecialCases(BaseTestIlluminaData):
                                                top_dir=self.top_dir)
         mock_illumina_data.add_fastq_batch('AB','AB1','AB1_S1',lanes=(1,2))
         mock_illumina_data.add_fastq_batch('AB','AB2','AB2_S2',lanes=(1,2))
-        mock_illumina_data.add_fastq_batch('CDE','CDE3','CDE3_S3')
-        mock_illumina_data.add_fastq_batch('CDE','CDE4','CDE4_S4')
+        mock_illumina_data.add_fastq_batch('CDE','CDE3','CDE3_S3',
+                                           lanes=(3,4))
+        mock_illumina_data.add_fastq_batch('CDE','CDE4','CDE4_S4',
+                                           lanes=(3,4))
         mock_illumina_data.add_undetermined(lanes=(1,2))
         mock_illumina_data.create()
         # Create second dir with no lane splitting
@@ -938,13 +940,20 @@ class TestIlluminaDataForBcl2fastq2SpecialCases(BaseTestIlluminaData):
                                                paired_end=True,
                                                no_lane_splitting=True,
                                                top_dir=self.top_dir)
-        mock_illumina_data2.add_fastq_batch('CDE','CDE3','CDE3_S3')
-        mock_illumina_data2.add_fastq_batch('CDE','CDE4','CDE4_S4')
+        mock_illumina_data2.add_fastq_batch('CDE','CDE3','CDE3_S3',
+                                           lanes=(3,4))
+        mock_illumina_data2.add_fastq_batch('CDE','CDE4','CDE4_S4',
+                                           lanes=(3,4))
+        mock_illumina_data2.add_undetermined(lanes=(3,4))
         mock_illumina_data2.create()
         # Move no lane splitting project into first dir
         shutil.rmtree(os.path.join(mock_illumina_data.unaligned_dir,"CDE"))
         shutil.move(os.path.join(mock_illumina_data2.unaligned_dir,"CDE"),
                     mock_illumina_data.unaligned_dir)
+        for f in ("Undetermined_S0_R1_001.fastq.gz",
+                  "Undetermined_S0_R2_001.fastq.gz"):
+            shutil.move(os.path.join(mock_illumina_data2.unaligned_dir,f),
+                        mock_illumina_data.unaligned_dir)
         # Finish
         self.mock_illumina_data = mock_illumina_data
 
@@ -1033,6 +1042,13 @@ class TestIlluminaDataForBcl2fastq2SpecialCases(BaseTestIlluminaData):
                 self.assertEqual(s.name,s_name)
         self.assertEqual(illumina_data.format,'bcl2fastq2')
         self.assertEqual(illumina_data.lanes,[1,2])
+        # Also check undetermined Fastqs are not double counted
+        undetermined_fastqs = []
+        for sample in illumina_data.undetermined.samples:
+            for fq in sample.fastq:
+                self.assertFalse(fq in undetermined_fastqs,
+                                 "%s: Fastq appears multiple times" % fq)
+                undetermined_fastqs.append(fq)
 
 class TestCasavaSampleSheet(unittest.TestCase):
 
