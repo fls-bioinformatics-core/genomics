@@ -655,13 +655,15 @@ class IlluminaProject:
                                                        leading_dir[0])
                 else:
                     # Handle 'undetermined' data
-                    try:
-                        fqs = [f for f in fastqs
-                               if "lane%d" % IlluminaFastq(f).lane_number
-                               == sample_name]
-                    except TypeError:
-                        # No lane, take all fastqs
-                        fqs = [fq for fq in fastqs]
+                    # Try Fastqs with matching lane
+                    fqs = [fq for fq in fastqs
+                           if IlluminaFastq(fq).lane_number is not None and
+                           "lane%d" % IlluminaFastq(fq).lane_number
+                           == sample_name]
+                    if not fqs:
+                        # No lane, take all fastqs without a lane
+                        fqs = [fq for fq in fastqs
+                               if IlluminaFastq(fq).lane_number is None]
                 self.samples.append(IlluminaSample(sample_dirn,
                                                    fastqs=fqs,
                                                    name=sample_name,
