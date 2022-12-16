@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #     Md5sum.py: classes and functions for md5 checksum operations
-#     Copyright (C) University of Manchester 2012-2020 Peter Briggs
+#     Copyright (C) University of Manchester 2012-2022 Peter Briggs
 #
 ########################################################################
 #
@@ -471,20 +471,19 @@ def md5sum(f):
         
     Returns:
       Md5sum digest for the named file.
-
     """
     chksum = hashlib.md5()
     close_fp = False
     try:
-        fp = io.open(f,"rb",buffering=BLOCKSIZE)
+        fp = open(f,"rb")
         close_fp = True
     except TypeError:
         fp = f
-    for block in iter(fp.read,''):
-        if block:
-            chksum.update(block)
-        else:
+    while True:
+        buf = fp.read(BLOCKSIZE)
+        if not buf:
             break
+        chksum.update(buf)
     if close_fp:
         fp.close()
     return chksum.hexdigest()
