@@ -964,6 +964,7 @@ class MockIlluminaRun:
         mkdir(self._path('Data'))
         mkdir(self._path('Data','Intensities'))
         mkdir(self._path('Data','Intensities','BaseCalls'))
+        mkdir(self._path('InterOp'))
         # Lanes
         for i in range(1,nlanes+1):
             # .locs files
