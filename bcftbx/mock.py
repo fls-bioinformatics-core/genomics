@@ -785,7 +785,23 @@ class MockIlluminaRun:
             self._top_dir = os.getcwd()
         self._platform = platform
         # Set defaults for platform
-        if self._platform == "miseq":
+        if self._platform == "miniseq":
+            # MiniSeq
+            self._nlanes = 1
+            self._bcl_ext = '.bcl.bgzf'
+            self._sample_sheet_content = None
+            self._bases_mask = "y80,I6,y80"
+            self._ntiles = 1 #158
+            self._include_filter = True
+            self._include_control = True
+            self._include_bci = False
+            self._include_cycles = True
+            self._include_config = True
+            self._include_sample_sheet = False
+            self._flowcell_mode = None
+            self._rta_version = "2.11.4.0"
+            self._completion_files = ("RTAComplete.txt",)
+        elif self._platform == "miseq":
             # MISeq
             self._nlanes = 1
             self._bcl_ext = '.bcl'
