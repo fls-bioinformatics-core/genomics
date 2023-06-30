@@ -752,7 +752,8 @@ class MockIlluminaRun:
     """
     def __init__(self,name,platform,top_dir=None,
                  ntiles=None,bases_mask=None,
-                 sample_sheet_content=None):
+                 sample_sheet_content=None,
+                 flowcell_mode=None):
         """
         Create a new MockIlluminaRun instance
 
@@ -773,6 +774,8 @@ class MockIlluminaRun:
             e.g. "y101,I6,y101"
           sample_sheet_content (str): optionally specify content to
             be used to generate a sample sheet
+          flowcell_mode (str): optionally specify the flow cell
+            mode to be included in the run parameters
         """
         self._created = False
         self._name = name
@@ -852,6 +855,8 @@ class MockIlluminaRun:
             self._sample_sheet_content = sample_sheet_content
         if bases_mask is not None:
             self._bases_mask = bases_mask
+        if flowcell_mode is not None:
+            self._flowcell_mode = flowcell_mode
 
     @property
     def name(self):
@@ -880,6 +885,13 @@ class MockIlluminaRun:
         List of lane numbers
         """
         return [l for l in range(1,self._nlanes+1)]
+
+    @property
+    def flowcell_mode(self):
+        """
+        Flowcell mode
+        """
+        return self._flowcell_mode
 
     @property
     def dirn(self):
