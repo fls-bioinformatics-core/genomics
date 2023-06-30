@@ -800,6 +800,7 @@ class MockIlluminaRun:
             self._include_sample_sheet = True
             self._flowcell_mode = None
             self._rta_version = "2.11.4.0"
+            self._completion_files = ("RTAComplete.txt",)
         elif self._platform == "hiseq":
             # HISeq
             self._nlanes = 8
@@ -815,6 +816,7 @@ class MockIlluminaRun:
             self._include_sample_sheet = True
             self._flowcell_mode = None
             self._rta_version = "2.11.4.0"
+            self._completion_files = None
         elif self._platform == "nextseq":
             # NextSeq
             self._nlanes = 4
@@ -830,6 +832,8 @@ class MockIlluminaRun:
             self._include_sample_sheet = False
             self._flowcell_mode = None
             self._rta_version = "2.11.4.0"
+            self._completion_files = ("CopyComplete.txt",
+                                      "RTAComplete.txt",)
         elif self._platform == "novaseq":
             # NovaSeq
             self._nlanes = 2
@@ -845,6 +849,9 @@ class MockIlluminaRun:
             self._include_sample_sheet = False
             self._flowcell_mode = 'SP'
             self._rta_version = "v3.4.4"
+            self._completion_files = ("CopyComplete.txt",
+                                      "RTAComplete.txt",
+                                      "SequenceComplete.txt")
         else:
             raise Exception("Unrecognised platform: %s" %
                             self._platform)
@@ -1033,6 +1040,10 @@ class MockIlluminaRun:
             io.open(self._path('Data','Intensities','config.xml'),'wb+').close()
             io.open(self._path('Data','Intensities','BaseCalls','config.xml'),
                     'wb+').close()
+        # Run completion files (e.g. 'RTAComplete.txt' etc)
+        if self._completion_files:
+            for f in self._completion_files:
+                io.open(self._path(f),'wb+').close()
 
     def remove(self):
         """
