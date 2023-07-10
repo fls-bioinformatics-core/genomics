@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #     utils.py: utility classes and functions shared between BCF codes
-#     Copyright (C) University of Manchester 2013-2020 Peter Briggs
+#     Copyright (C) University of Manchester 2013-2023 Peter Briggs
 #
 ########################################################################
 #
@@ -31,6 +31,7 @@ File system wrappers and utilities:
   chmod
   touch
   format_file_size
+  convert_size_to_bytes
   commonprefix
   is_gzipped_file
   rootname
@@ -91,6 +92,7 @@ import grp
 import datetime
 import re
 import socket
+import math
 from builtins import range
 
 #######################################################################
@@ -716,7 +718,28 @@ def format_file_size(fsize,units=None):
             else:
                 break
     return "%.1f%s" % (fsize,unit)
-            
+
+def convert_size_to_bytes(size):
+    """
+    Converts a human-readable size specification to bytes
+
+    Given an arbitary human-readable file size (e.g.
+    '4.0K', '186M', '1.5G'), returns the equivalent size
+    in bytes.
+
+    Arguments:
+      size (str): size specification string
+
+    Returns:
+      Integer: size expressed as number of bytes.
+    """
+    try:
+        return int(str(size))
+    except ValueError:
+        units = str(size)[-1].upper()
+        p = "KMGTP".index(units) + 1
+        return int(float(str(size)[:-1])) * int(math.pow(1024,p))
+
 def commonprefix(path1,path2):
     """Determine common prefix path for path1 and path2
 
