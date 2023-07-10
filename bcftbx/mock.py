@@ -752,7 +752,8 @@ class MockIlluminaRun:
     """
     def __init__(self,name,platform,top_dir=None,
                  ntiles=None,bases_mask=None,
-                 sample_sheet_content=None):
+                 sample_sheet_content=None,
+                 flowcell_mode=None):
         """
         Create a new MockIlluminaRun instance
 
@@ -773,6 +774,8 @@ class MockIlluminaRun:
             e.g. "y101,I6,y101"
           sample_sheet_content (str): optionally specify content to
             be used to generate a sample sheet
+          flowcell_mode (str): optionally specify the flow cell
+            mode to be included in the run parameters
         """
         self._created = False
         self._name = name
@@ -782,7 +785,23 @@ class MockIlluminaRun:
             self._top_dir = os.getcwd()
         self._platform = platform
         # Set defaults for platform
-        if self._platform == "miseq":
+        if self._platform == "miniseq":
+            # MiniSeq
+            self._nlanes = 1
+            self._bcl_ext = '.bcl.bgzf'
+            self._sample_sheet_content = None
+            self._bases_mask = "y80,I6,y80"
+            self._ntiles = 1 #158
+            self._include_filter = True
+            self._include_control = True
+            self._include_bci = False
+            self._include_cycles = True
+            self._include_config = True
+            self._include_sample_sheet = False
+            self._flowcell_mode = None
+            self._rta_version = "2.11.4.0"
+            self._completion_files = ("RTAComplete.txt",)
+        elif self._platform == "miseq":
             # MISeq
             self._nlanes = 1
             self._bcl_ext = '.bcl'
@@ -797,6 +816,7 @@ class MockIlluminaRun:
             self._include_sample_sheet = True
             self._flowcell_mode = None
             self._rta_version = "2.11.4.0"
+            self._completion_files = ("RTAComplete.txt",)
         elif self._platform == "hiseq":
             # HISeq
             self._nlanes = 8
@@ -812,6 +832,7 @@ class MockIlluminaRun:
             self._include_sample_sheet = True
             self._flowcell_mode = None
             self._rta_version = "2.11.4.0"
+            self._completion_files = None
         elif self._platform == "nextseq":
             # NextSeq
             self._nlanes = 4
@@ -827,6 +848,8 @@ class MockIlluminaRun:
             self._include_sample_sheet = False
             self._flowcell_mode = None
             self._rta_version = "2.11.4.0"
+            self._completion_files = ("CopyComplete.txt",
+                                      "RTAComplete.txt",)
         elif self._platform == "novaseq":
             # NovaSeq
             self._nlanes = 2
@@ -842,6 +865,9 @@ class MockIlluminaRun:
             self._include_sample_sheet = False
             self._flowcell_mode = 'SP'
             self._rta_version = "v3.4.4"
+            self._completion_files = ("CopyComplete.txt",
+                                      "RTAComplete.txt",
+                                      "SequenceComplete.txt")
         else:
             raise Exception("Unrecognised platform: %s" %
                             self._platform)
@@ -852,6 +878,8 @@ class MockIlluminaRun:
             self._sample_sheet_content = sample_sheet_content
         if bases_mask is not None:
             self._bases_mask = bases_mask
+        if flowcell_mode is not None:
+            self._flowcell_mode = flowcell_mode
 
     @property
     def name(self):
@@ -880,6 +908,13 @@ class MockIlluminaRun:
         List of lane numbers
         """
         return [l for l in range(1,self._nlanes+1)]
+
+    @property
+    def flowcell_mode(self):
+        """
+        Flowcell mode
+        """
+        return self._flowcell_mode
 
     @property
     def dirn(self):
@@ -929,6 +964,7 @@ class MockIlluminaRun:
         mkdir(self._path('Data'))
         mkdir(self._path('Data','Intensities'))
         mkdir(self._path('Data','Intensities','BaseCalls'))
+        mkdir(self._path('InterOp'))
         # Lanes
         for i in range(1,nlanes+1):
             # .locs files
@@ -1021,6 +1057,10 @@ class MockIlluminaRun:
             io.open(self._path('Data','Intensities','config.xml'),'wb+').close()
             io.open(self._path('Data','Intensities','BaseCalls','config.xml'),
                     'wb+').close()
+        # Run completion files (e.g. 'RTAComplete.txt' etc)
+        if self._completion_files:
+            for f in self._completion_files:
+                io.open(self._path(f),'wb+').close()
 
     def remove(self):
         """
