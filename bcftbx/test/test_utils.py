@@ -801,6 +801,20 @@ class TestFormatFileSize(unittest.TestCase):
         self.assertEqual("0.0T",format_file_size(195035136,units='T'))
         self.assertEqual("0.2T",format_file_size(171798691900,units='T'))
 
+class TestConvertSizeToBytes(unittest.TestCase):
+    """
+    Unit tests for converting file sizes to bytes
+    """
+    def test_convert_size_to_bytes(self):
+        """
+        convert_size_to_bytes: handle different inputs
+        """
+        self.assertEqual(convert_size_to_bytes('4.0K'),4096)
+        self.assertEqual(convert_size_to_bytes('4.0M'),4194304)
+        self.assertEqual(convert_size_to_bytes('4.0G'),4294967296)
+        self.assertEqual(convert_size_to_bytes('4.0T'),4398046511104)
+        self.assertEqual(convert_size_to_bytes('4T'),4398046511104)
+
 class ExampleDirLinks(ExampleDirSpiders):
     """Extended example dir for testing symbolic link handling
 
