@@ -2,6 +2,25 @@ Version History and Changes
 ===========================
 
 ---------------------------
+Version 1.13.0 (2023-17-10)
+---------------------------
+
+* bcftbx/utils: new function 'convert_size_to_bytes'
+  https://github.com/fls-bioinformatics-core/genomics/pull/213
+* bcftbx/mock: 'MockIlluminaRun' updated to add 'miniseq' as
+  a platform, expose flow cell mode, and create additional files
+  (including run completion indicators) in mock run directories
+  https://github.com/fls-bioinformatics-core/genomics/pull/212
+* bcftbx/md5sum: reimplement 'md5sum' function to reduce
+  memory footprint
+  https://github.com/fls-bioinformatics-core/genomics/pull/211
+* bcftbx/IlluminData: fix bugs in 'IlluminaProject' when
+  assigning Fastqs when there is a mixture of lanes and no-lanes
+  in Fastq names
+  https://github.com/fls-bioinformatics-core/genomics/pull/210
+  https://github.com/fls-bioinformatics-core/genomics/pull/208
+
+---------------------------
 Version 1.12.0 (2022-12-06)
 ---------------------------
 
