@@ -176,6 +176,7 @@ class RunInfoXml:
             is_indexed_read = ('Y' if item.upper().startswith("I")
                                else 'N')
             num_cycles = item[1:]
+            assert int(num_cycles) > 0
             reads.append({ 'is_indexed_read': is_indexed_read,
                            'num_cycles': num_cycles})
         # Other attributes
@@ -855,7 +856,7 @@ class MockIlluminaRun:
             self._nlanes = 2
             self._bcl_ext = '.bcl.bgzf'
             self._sample_sheet_content = None
-            self._bases_mask = "y76,I0,I10,y76"
+            self._bases_mask = "y76,I10,I10,y76"
             self._ntiles = 158
             self._include_filter = True
             self._include_control = False
