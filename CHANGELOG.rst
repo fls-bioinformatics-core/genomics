@@ -2,6 +2,14 @@ Version History and Changes
 ===========================
 
 ---------------------------
+Version 1.13.1 (2023-12-19)
+---------------------------
+
+* bcftbx/mock: bug fixed with invalid default bases mask being
+  supplied for 'novaseq' platform in the 'MockIlluminaRun' class
+  https://github.com/fls-bioinformatics-core/genomics/pull/215
+
+---------------------------
 Version 1.13.0 (2023-17-10)
 ---------------------------
 
