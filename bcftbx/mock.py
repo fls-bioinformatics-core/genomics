@@ -856,7 +856,7 @@ class MockIlluminaRun:
             self._nlanes = 2
             self._bcl_ext = '.bcl.bgzf'
             self._sample_sheet_content = None
-            self._bases_mask = "y76,I0,I10,y76"
+            self._bases_mask = "y76,I10,I10,y76"
             self._ntiles = 158
             self._include_filter = True
             self._include_control = False
