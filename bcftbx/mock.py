@@ -176,6 +176,7 @@ class RunInfoXml:
             is_indexed_read = ('Y' if item.upper().startswith("I")
                                else 'N')
             num_cycles = item[1:]
+            assert int(num_cycles) > 0
             reads.append({ 'is_indexed_read': is_indexed_read,
                            'num_cycles': num_cycles})
         # Other attributes
