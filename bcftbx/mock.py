@@ -42,6 +42,7 @@ import argparse
 from .IlluminaData import IlluminaFastq
 from .IlluminaData import SampleSheet
 from .TabFile import TabFile
+from .platforms import get_run_completion_files
 from .utils import OrderedDictionary
 from .utils import mkdir
 
@@ -801,7 +802,7 @@ class MockIlluminaRun:
             self._include_sample_sheet = False
             self._flowcell_mode = None
             self._rta_version = "2.11.4.0"
-            self._completion_files = ("RTAComplete.txt",)
+            self._completion_files = get_run_completion_files("miniseq")
         elif self._platform == "miseq":
             # MISeq
             self._nlanes = 1
@@ -817,7 +818,7 @@ class MockIlluminaRun:
             self._include_sample_sheet = True
             self._flowcell_mode = None
             self._rta_version = "2.11.4.0"
-            self._completion_files = ("RTAComplete.txt",)
+            self._completion_files = get_run_completion_files("miseq")
         elif self._platform == "hiseq":
             # HISeq
             self._nlanes = 8
@@ -833,7 +834,7 @@ class MockIlluminaRun:
             self._include_sample_sheet = True
             self._flowcell_mode = None
             self._rta_version = "2.11.4.0"
-            self._completion_files = None
+            self._completion_files = get_run_completion_files("hiseq")
         elif self._platform == "nextseq":
             # NextSeq
             self._nlanes = 4
@@ -849,8 +850,7 @@ class MockIlluminaRun:
             self._include_sample_sheet = False
             self._flowcell_mode = None
             self._rta_version = "2.11.4.0"
-            self._completion_files = ("CopyComplete.txt",
-                                      "RTAComplete.txt",)
+            self._completion_files = get_run_completion_files("nextseq")
         elif self._platform == "novaseq":
             # NovaSeq
             self._nlanes = 2
@@ -866,9 +866,7 @@ class MockIlluminaRun:
             self._include_sample_sheet = False
             self._flowcell_mode = 'SP'
             self._rta_version = "v3.4.4"
-            self._completion_files = ("CopyComplete.txt",
-                                      "RTAComplete.txt",
-                                      "SequenceComplete.txt")
+            self._completion_files = get_run_completion_files("novaseq6000")
         else:
             raise Exception("Unrecognised platform: %s" %
                             self._platform)
