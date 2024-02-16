@@ -1,5 +1,5 @@
 #     mock.py: module providing mock Illumina data for testing
-#     Copyright (C) University of Manchester 2012-2022 Peter Briggs
+#     Copyright (C) University of Manchester 2012-2024 Peter Briggs
 #
 ########################################################################
 
@@ -755,7 +755,7 @@ class MockIlluminaRun:
     def __init__(self,name,platform,top_dir=None,
                  ntiles=None,bases_mask=None,
                  sample_sheet_content=None,
-                 flowcell_mode=None):
+                 flowcell_mode=None,complete=True):
         """
         Create a new MockIlluminaRun instance
 
@@ -778,6 +778,9 @@ class MockIlluminaRun:
             be used to generate a sample sheet
           flowcell_mode (str): optionally specify the flow cell
             mode to be included in the run parameters
+          complete (bool): default is to include the appropriate
+            run completion files in the mock run; set to False to
+            omit these files
         """
         self._created = False
         self._name = name
@@ -786,6 +789,7 @@ class MockIlluminaRun:
         else:
             self._top_dir = os.getcwd()
         self._platform = platform
+        self._complete = bool(complete)
         # Set defaults for platform
         if self._platform == "miniseq":
             # MiniSeq
@@ -1057,7 +1061,7 @@ class MockIlluminaRun:
             io.open(self._path('Data','Intensities','BaseCalls','config.xml'),
                     'wb+').close()
         # Run completion files (e.g. 'RTAComplete.txt' etc)
-        if self._completion_files:
+        if self._complete and self._completion_files:
             for f in self._completion_files:
                 io.open(self._path(f),'wb+').close()
 
