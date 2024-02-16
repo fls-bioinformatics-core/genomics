@@ -1,5 +1,5 @@
 #     mock.py: module providing mock Illumina data for testing
-#     Copyright (C) University of Manchester 2012-2022 Peter Briggs
+#     Copyright (C) University of Manchester 2012-2024 Peter Briggs
 #
 ########################################################################
 
@@ -42,6 +42,7 @@ import argparse
 from .IlluminaData import IlluminaFastq
 from .IlluminaData import SampleSheet
 from .TabFile import TabFile
+from .platforms import get_run_completion_files
 from .utils import OrderedDictionary
 from .utils import mkdir
 
@@ -754,7 +755,7 @@ class MockIlluminaRun:
     def __init__(self,name,platform,top_dir=None,
                  ntiles=None,bases_mask=None,
                  sample_sheet_content=None,
-                 flowcell_mode=None):
+                 flowcell_mode=None,complete=True):
         """
         Create a new MockIlluminaRun instance
 
@@ -777,6 +778,9 @@ class MockIlluminaRun:
             be used to generate a sample sheet
           flowcell_mode (str): optionally specify the flow cell
             mode to be included in the run parameters
+          complete (bool): default is to include the appropriate
+            run completion files in the mock run; set to False to
+            omit these files
         """
         self._created = False
         self._name = name
@@ -785,6 +789,7 @@ class MockIlluminaRun:
         else:
             self._top_dir = os.getcwd()
         self._platform = platform
+        self._complete = bool(complete)
         # Set defaults for platform
         if self._platform == "miniseq":
             # MiniSeq
@@ -801,7 +806,7 @@ class MockIlluminaRun:
             self._include_sample_sheet = False
             self._flowcell_mode = None
             self._rta_version = "2.11.4.0"
-            self._completion_files = ("RTAComplete.txt",)
+            self._completion_files = get_run_completion_files("miniseq")
         elif self._platform == "miseq":
             # MISeq
             self._nlanes = 1
@@ -817,7 +822,7 @@ class MockIlluminaRun:
             self._include_sample_sheet = True
             self._flowcell_mode = None
             self._rta_version = "2.11.4.0"
-            self._completion_files = ("RTAComplete.txt",)
+            self._completion_files = get_run_completion_files("miseq")
         elif self._platform == "hiseq":
             # HISeq
             self._nlanes = 8
@@ -833,7 +838,7 @@ class MockIlluminaRun:
             self._include_sample_sheet = True
             self._flowcell_mode = None
             self._rta_version = "2.11.4.0"
-            self._completion_files = None
+            self._completion_files = get_run_completion_files("hiseq")
         elif self._platform == "nextseq":
             # NextSeq
             self._nlanes = 4
@@ -849,8 +854,7 @@ class MockIlluminaRun:
             self._include_sample_sheet = False
             self._flowcell_mode = None
             self._rta_version = "2.11.4.0"
-            self._completion_files = ("CopyComplete.txt",
-                                      "RTAComplete.txt",)
+            self._completion_files = get_run_completion_files("nextseq")
         elif self._platform == "novaseq":
             # NovaSeq
             self._nlanes = 2
@@ -866,9 +870,7 @@ class MockIlluminaRun:
             self._include_sample_sheet = False
             self._flowcell_mode = 'SP'
             self._rta_version = "v3.4.4"
-            self._completion_files = ("CopyComplete.txt",
-                                      "RTAComplete.txt",
-                                      "SequenceComplete.txt")
+            self._completion_files = get_run_completion_files("novaseq6000")
         else:
             raise Exception("Unrecognised platform: %s" %
                             self._platform)
@@ -1059,7 +1061,7 @@ class MockIlluminaRun:
             io.open(self._path('Data','Intensities','BaseCalls','config.xml'),
                     'wb+').close()
         # Run completion files (e.g. 'RTAComplete.txt' etc)
-        if self._completion_files:
+        if self._complete and self._completion_files:
             for f in self._completion_files:
                 io.open(self._path(f),'wb+').close()
 

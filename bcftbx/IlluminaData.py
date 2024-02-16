@@ -1,5 +1,5 @@
 #     IlluminaData.py: module for handling data about Illumina sequencer runs
-#     Copyright (C) University of Manchester 2012-2022 Peter Briggs
+#     Copyright (C) University of Manchester 2012-2024 Peter Briggs
 #
 ########################################################################
 #
@@ -223,6 +223,26 @@ class IlluminaRun:
         if ncycles == 0:
             return None
         return ncycles
+
+    @property
+    def complete(self):
+        """
+        Check if run is complete
+
+        Returns:
+          Boolean: True if run is complete (i.e. all appropriate
+            sentinel files are present), False if not (i.e.
+            some sentiel files are missing).
+        """
+        # Acquire run completion files
+        try:
+            files = platforms.RUN_COMPLETION_FILES[self.platform]
+        except KeyError:
+            # Fallback to default
+            files = platforms.RUN_COMPLETION_FILES['default']
+        # Check if all are present
+        return all([os.path.exists(os.path.join(self.run_dir,f))
+                    for f in files])
 
 class IlluminaRunInfo:
     """Class for examining Illumina RunInfo.xml file

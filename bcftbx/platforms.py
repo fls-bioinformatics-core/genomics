@@ -31,6 +31,20 @@ PLATFORMS['iseq'] = "Illumina iSeq"
 PLATFORMS['illumina'] = "Unknown/Illumina"
 PLATFORMS['other'] = "Unknown/external"
 
+# Expected run completion files for different platforms
+RUN_COMPLETION_FILES = {
+    'default': ("RTAComplete.txt",),
+    'solid4': tuple(),
+    'solid5500': tuple(),
+    'hiseq4000': ("RTAComplete.txt",
+                  "SequencingComplete.txt"),
+    'nextseq': ("CopyComplete.txt",
+                "RTAComplete.txt",),
+    'novaseq6000': ("CopyComplete.txt",
+                    "RTAComplete.txt",
+                    "SequenceComplete.txt"),
+}
+
 # Dictionary matching sequencing platforms to regexp patterns
 # for specific instruments
 SEQUENCERS = {
@@ -49,6 +63,26 @@ def list_platforms():
 
     """
     return [x for x in PLATFORMS]
+
+def get_run_completion_files(platform):
+    """
+    Return a list of files indication run completion
+
+    Given a platform name, return a list of the files
+    that are used to indicate when the run is complete.
+
+    Arguments:
+      platform (str): name of the sequencing platform
+        (e.g. 'novaseq6000')
+
+    Returns:
+      Tuple: list of run completion files for the
+        specified platform.
+    """
+    try:
+        return RUN_COMPLETION_FILES[platform]
+    except KeyError:
+        return RUN_COMPLETION_FILES['default']
 
 def get_sequencer_platform(sequencer_name):
     """Attempt to determine platform from sequencer name
