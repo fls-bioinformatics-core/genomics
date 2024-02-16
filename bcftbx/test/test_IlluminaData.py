@@ -72,6 +72,7 @@ class TestIlluminaRun(unittest.TestCase):
         self.assertEqual(run.bcl_extension,".bcl")
         self.assertEqual(run.lanes,[1,])
         self.assertEqual(run.cycles,218)
+        self.assertEqual(run.complete,True)
 
     def test_illuminarun_hiseq(self):
         """
@@ -114,6 +115,7 @@ class TestIlluminaRun(unittest.TestCase):
         self.assertEqual(run.bcl_extension,".bcl.gz")
         self.assertEqual(run.lanes,[1,2,3,4,5,6,7,8])
         self.assertEqual(run.cycles,218)
+        self.assertEqual(run.complete,True)
 
     def test_illuminarun_nextseq(self):
         """
@@ -153,12 +155,13 @@ class TestIlluminaRun(unittest.TestCase):
         self.assertEqual(run.bcl_extension,".bcl.bgzf")
         self.assertEqual(run.lanes,[1,2,3,4])
         self.assertEqual(run.cycles,158)
+        self.assertEqual(run.complete,True)
 
     def test_illuminarun_novaseq(self):
         """
         IlluminaRun: test for NovaSeq run
         """
-        # Make a mock run directory for NextSeq format
+        # Make a mock run directory for NovaSeq format
         self.mock_illumina_run = MockIlluminaRun(
             '221125_A500968_0038_ABCDE1XX',
             'novaseq',
@@ -194,6 +197,7 @@ class TestIlluminaRun(unittest.TestCase):
         self.assertEqual(run.bcl_extension,".bcl.bgzf")
         self.assertEqual(run.lanes,[1,2])
         self.assertEqual(run.cycles,158)
+        self.assertEqual(run.complete,True)
 
     def test_illuminarun_unknown_illumina_platform(self):
         """
@@ -236,6 +240,7 @@ class TestIlluminaRun(unittest.TestCase):
         self.assertEqual(run.bcl_extension,".bcl")
         self.assertEqual(run.lanes,[1,])
         self.assertEqual(run.cycles,218)
+        self.assertEqual(run.complete,True)
 
     def test_illuminarun_unknown_illumina_platform_generic_name(self):
         """
@@ -281,6 +286,7 @@ class TestIlluminaRun(unittest.TestCase):
         self.assertEqual(run.bcl_extension,".bcl")
         self.assertEqual(run.lanes,[1,])
         self.assertEqual(run.cycles,218)
+        self.assertEqual(run.complete,True)
 
     def test_illuminarun_miseq_specify_platform(self):
         """
@@ -323,6 +329,24 @@ class TestIlluminaRun(unittest.TestCase):
         self.assertEqual(run.bcl_extension,".bcl")
         self.assertEqual(run.lanes,[1,])
         self.assertEqual(run.cycles,218)
+        self.assertEqual(run.complete,True)
+
+    def test_illuminarun_incomplete(self):
+        """
+        IlluminaRun: test 'complete' property when completion files missing
+        """
+        # Make a mock run directory for NovaSeq format
+        self.mock_illumina_run = MockIlluminaRun(
+            '221125_A500968_0038_ABCDE1XX',
+            'novaseq',
+            complete=False,
+            top_dir=self.top_dir)
+        self.mock_illumina_run.create()
+        # Load into an IlluminaRun object
+        run = IlluminaRun(self.mock_illumina_run.dirn,
+                          platform="novaseq")
+        # Check that run is not complete
+        self.assertEqual(run.complete,False)
 
     def test_illuminarun_miseq_missing_directory(self):
         """
