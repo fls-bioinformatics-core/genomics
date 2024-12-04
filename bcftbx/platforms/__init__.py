@@ -1,18 +1,16 @@
 #!/usr/bin/env python
 #
 #     platforms.py: utilities and data to identify sequencer platforms
-#     Copyright (C) University of Manchester 2013-2022 Peter Briggs
+#     Copyright (C) University of Manchester 2013-2024 Peter Briggs
 #
 ########################################################################
 #
-# platforms.py
+# platforms
 #
 #########################################################################
 
-"""platforms.py
-
+"""
 Utilities and data to identify NGS sequencer platforms
-
 """
 
 # Dictionary of sequencer platforms
