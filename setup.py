@@ -27,6 +27,7 @@ setup(name = "genomics-bcftbx",
       maintainer_email = 'peter.briggs@manchester.ac.uk',
       packages = ['bcftbx',
                   'bcftbx.cli',
+                  'bcftbx.platforms',
                   'bcftbx.qc'],
       license = 'AFL-3',
       # Pull in dependencies
