@@ -30,14 +30,14 @@ The most useful are:
 
 Each sample in turn holds a list of libraries within that sample
 ('Library' objects in 'Sample.libraries') and a list of projects
-('Project' objects in 'Sample.projects'). The 'getLibrary' and
+('Project' objects in 'Sample.projects'). The 'get_library' and
 'getProject' methods also provide ways to look up specific libraries
 or projects.
 
 "Projects" are groupings of libraries (based on library names) which
 are assumed to form a single experiment. The libraries within a
 project can be obtained via 'Library.projects', or using the
-'getLibrary' method.
+'get_library' method.
 
 Finally, 'Library' objects hold data about the location of the
 primary data files. The 'Library.csfasta' and 'Library.qual'
@@ -149,9 +149,9 @@ class Run:
             self.run_name = self.run_definition.runName
             self.run_info = self._cls.RunInfo(self.run_name)
             # Populate libraries
-            for i in range(0,self.run_definition.nSamples()):
-                sample_name = self.run_definition.getDataItem('sampleName',i)
-                library_name = self.run_definition.getDataItem('library',i)
+            for i in range(0,self.run_definition.n_samples()):
+                sample_name = self.run_definition.get_data_item('sampleName',i)
+                library_name = self.run_definition.get_data_item('library',i)
                 # Barcoded samples
                 #
                 # Look for content in the "barcodes" column for the library
@@ -163,7 +163,7 @@ class Run:
                 # --> "1,2,3,4,5,6,7,8"
                 # (or could be empty)
                 try:
-                    barcodes = self.run_definition.getDataItem('barcodes',i)
+                    barcodes = self.run_definition.get_data_item('barcodes',i)
                 except IndexError:
                     barcodes = ''
                 logger.debug("%s: barcodes: %s" % (library_name,barcodes))
@@ -261,11 +261,11 @@ class Run:
                     if os.path.isdir(reads_dir):
                         csfasta,qual = get_primary_data_file_pair(reads_dir)
                         if csfasta and qual:
-                            sample.unassigned.addPrimaryData(csfasta,qual)
+                            sample.unassigned.add_primary_data(csfasta,qual)
                             logger.debug("-----> Adding primary data "
                                           "(unassigned)")
             # Store the library
-            library = sample.addLibrary(library_name)
+            library = sample.add_library(library_name)
             library.is_barcoded = is_barcoded
             # Locate data files for this library
             #
@@ -309,7 +309,7 @@ class Run:
                         csfasta,qual = get_primary_data_file_pair(reads)
                         # Add to list of primary data
                         if csfasta and qual:
-                            library.addPrimaryData(csfasta,qual)
+                            library.add_primary_data(csfasta,qual)
                             logger.debug("-----> Adding primary data")
             # Finished locating primary data
             if not len(library.primary_data):
@@ -413,7 +413,7 @@ class Run:
         # Completed checks
         return run_ok
 
-    def fetchLibraries(self, sample_name='*', library_name='*'):
+    def fetch_libraries(self, sample_name='*', library_name='*'):
         """
         Retrieve libraries based on sample and library names
 
@@ -448,7 +448,7 @@ class Run:
         # Finished
         return matching_libraries
 
-    def slideLayout(self):
+    def slide_layout(self):
         """
         Return description of the slide layout
 
@@ -494,11 +494,11 @@ class Sample:
 
     The class also provides the following methods:
 
-    - addLibrary: to create and append a Library object
-    - getLibrary: fetch an existing Library
+    - add_library: to create and append a Library object
+    - get_library: fetch an existing Library
     - getProject: fetch an existing Project
 
-    Typically the calling subprogram calls the 'addLibrary' method to
+    Typically the calling subprogram calls the 'add_library' method to
     add a Library object, which it then populates itself.
 
     The Sample class automatically creates Project objects based on
@@ -530,7 +530,7 @@ class Sample:
             if cls in self._cls:
                 self._cls[cls] = classes[cls]
 
-    def addLibrary(self, library_name):
+    def add_library(self, library_name):
         """
         Associate a library with the sample
 
@@ -545,7 +545,7 @@ class Sample:
           Library: Library object representing the library.
         """
         # Check if the library is already in the list
-        library = self.getLibrary(library_name)
+        library = self.get_library(library_name)
         if not library:
             # Create new library object and add to list
             library = self._cls.Library(library_name,
@@ -556,17 +556,17 @@ class Sample:
                                     key=lambda l: (l.prefix,l.index))
         # Deal with projects
         project_name = library.initials
-        project = self.getProject(project_name)
+        project = self.get_project(project_name)
         if not project:
             # Create new project
             project = self._cls.Project(project_name)
             self.projects.append(project)
         # Add the library to the project
-        project.addLibrary(library)
+        project.add_library(library)
         # Return library object
         return library
 
-    def getLibrary(self, library_name):
+    def get_library(self, library_name):
         """
         Look up library object matching a library name
 
@@ -583,7 +583,7 @@ class Sample:
         # Not found 
         return None
 
-    def getProject(self, project_name):
+    def get_project(self, project_name):
         """
         Look up project object matching a project name
 
@@ -628,7 +628,7 @@ class Library:
 
     The following methods are also available:
 
-    - addPrimaryData: creates a new PrimaryData object and appends
+    - add_primary_data: creates a new PrimaryData object and appends
       to the list in the primary_data property
 
     Arguments
@@ -667,7 +667,7 @@ class Library:
             if cls in self._cls:
                 self._cls[cls] = classes[cls]
 
-    def addPrimaryData(self, csfasta, qual):
+    def add_primary_data(self, csfasta, qual):
         """
         Add reference to primary data to the library
 
@@ -771,7 +771,7 @@ class Project:
     name e.g. DR for DR1, EP for EP_NCYC2669 - but this determination
     is made at the application level.
 
-    Libraries are added to the project via the addLibrary method.
+    Libraries are added to the project via the add_library method.
     Data about the project can be accessed via the following
     properties:
 
@@ -780,9 +780,9 @@ class Project:
 
     Also has the following methods:
 
-    - getSample(): returns the parent Sample
-    - getRun(): returns the parent Run
-    - isBarcoded(): returns boolean indicating whether the libraries
+    - get_sample(): returns the parent Sample
+    - get_run(): returns the parent Run
+    - is_barcoded(): returns boolean indicating whether the libraries
       in the sample are barcoded
 
     Arguments:
@@ -794,7 +794,7 @@ class Project:
         self.name = name
         self.libraries = []
 
-    def addLibrary(self,library):
+    def add_library(self, library):
         """
         Add a library to the project.
 
@@ -802,10 +802,10 @@ class Project:
           library (Library): Library object to add to the project
         """
         if not isinstance(library, Library):
-            raise TypeError("addLibrary requires 'Library' instance")
+            raise TypeError("add_library requires 'Library' instance")
         self.libraries.append(library)
 
-    def getSample(self):
+    def get_sample(self):
         """
         Return the parent sample for the project.
 
@@ -817,7 +817,7 @@ class Project:
         else:
             return None
 
-    def getRun(self):
+    def get_run(self):
         """
         Return the parent run for the project.
 
@@ -826,13 +826,13 @@ class Project:
         Returns None if no parent sample is defined, or if the
         parent sample doesn't have a parent run.
         """
-        parent_sample = self.getSample()
+        parent_sample = self.get_sample()
         if parent_sample:
             return parent_sample.parent_run
         else:
             return None
 
-    def isBarcoded(self):
+    def is_barcoded(self):
         """
         Return boolean indicating if the libraries are barcoded.
 
@@ -847,7 +847,7 @@ class Project:
         # Will be True as long as there's at least one library
         return len(self.libraries) > 0
 
-    def getLibraryNamePattern(self):
+    def get_library_name_pattern(self):
         """
         Return wildcard pattern matching all library names in the project.
 
@@ -874,7 +874,7 @@ class Project:
                         new_pattern.append(pattern[i])
         return pattern
 
-    def getProjectName(self):
+    def get_project_name(self):
         """
         Return a name for the project.
 
@@ -884,12 +884,12 @@ class Project:
         sample are also in the project) - then the project name is
         the sample name.
         """
-        if len(self.getSample().libraries) == len(self.libraries):
-            return self.getSample().name
+        if len(self.get_sample().libraries) == len(self.libraries):
+            return self.get_sample().name
         else:
             return self.name
 
-    def prettyPrintLibraries(self):
+    def pretty_print_libraries(self):
         """
         Return a nicely formatted string describing the library names
 
@@ -936,7 +936,7 @@ class RunInfo:
         run directory
     """
 
-    def __init__(self,run_name):
+    def __init__(self, run_name):
         # Initialise
         self.name = str(run_name)
         self.id = None
@@ -989,16 +989,16 @@ class RunDefinition:
     Class to store data from a SOLiD run definition file
 
     Once the RunDefinition object is populated from a run
-    definition file, use the 'nSamples' method to find out how
+    definition file, use the 'n_samples' method to find out how
     many 'samples' (actually sample/library pairs) are defined,
     and the 'fields' method to get a list of column headings for
     each.
 
-    Data can be extracted for each sample using the 'getDataItem'
+    Data can be extracted for each sample using the 'get_data_item'
     method to look up the value for a particular field on a
     particular line, e.g.:
 
-    >>> library = run_defn.getDataItem('library',0)
+    >>> library = run_defn.get_data_item('library',0)
 
     The RunDefinition object also has a number of attributes
     populated from the header of the run definition file,
@@ -1018,7 +1018,7 @@ class RunDefinition:
         (including any leading path) from which to extract
         data
     """
-    def __init__(self,run_definition_file):
+    def __init__(self, run_definition_file):
         self.file = run_definition_file
         # Header attributes
         self.version = None
@@ -1043,19 +1043,19 @@ class RunDefinition:
         """
         return self.header_fields
 
-    def nSamples(self):
+    def n_samples(self):
         """
         Return the number of samples
         """
         return len(self.data)
 
-    def getDataItem(self,field,i):
+    def get_data_item(self, field, idx):
         """
         Return data item from specified row
 
         Arguments:
           field (str): one of the fields read in from the file
-          i (int): row index
+          idx (int): row index
 
         Returns:
           Value stored for 'field' in row 'i'. Returns None
@@ -1067,7 +1067,7 @@ class RunDefinition:
         except ValueError:
             logging.error("Field '%s' not found in '%s'" % (field,self.file))
             return None
-        return self.data[i][pos]
+        return self.data[idx][pos]
 
     def populate(self):
         """
@@ -1160,13 +1160,13 @@ class BarcodeStatistics:
         """
         return self.header
 
-    def nRows(self):
+    def n_rows(self):
         """
         Return the number of rows
         """
         return len(self.data)
 
-    def getDataByName(self,name):
+    def get_data_by_name(self, name):
         """
         Return a row of data matching 'name'
         """
@@ -1175,7 +1175,7 @@ class BarcodeStatistics:
                 return data
         return None
 
-    def totalReads(self):
+    def total_reads(self):
         """
         Return the total reads
 
@@ -1385,12 +1385,12 @@ def match(pattern,word):
         return (word == pattern)
 
 
-def slide_layout(nsamples):
+def slide_layout(n_samples):
     """
     Description of the slide layout based on number of samples
 
     Arguments:
-      nsamples (int): number of samples in the run
+      n_samples (int): number of samples in the run
 
     Returns:
       String: description of the slide layout for the run based
@@ -1398,12 +1398,12 @@ def slide_layout(nsamples):
         "Quads", "Octets" etc. Returns None if the number of samples
         doesn't map to a recognised layout.
     """
-    if nsamples == 1:
+    if n_samples == 1:
         return "Whole slide"
-    elif nsamples == 4:
+    elif n_samples == 4:
         return "Quads"
-    elif nsamples == 8:
+    elif n_samples == 8:
         return "Octets"
     else:
-        logging.warning("Undefined layout for '%s' samples" % nsamples)
+        logging.warning("Undefined layout for '%s' samples" % n_samples)
         return None
