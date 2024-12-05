@@ -1250,7 +1250,7 @@ def list_run_directories(solid_run_dir):
     run_name = os.path.basename(solid_run_dir.rstrip(os.sep))
     # Get the run info from the name
     try:
-        base_run_info = SolidRunInfo(run_name)
+        base_run_info = RunInfo(run_name)
     except Exception:
         # Wrong format for name
         logging.error("'%s' not a valid SOLiD run directory name" %
