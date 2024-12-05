@@ -585,20 +585,20 @@ class TestSample(unittest.TestCase):
         sample = Sample(sample_name)
         self.assertEqual(0,len(sample.libraries))
         # Add first library
-        library = sample.addLibrary('PJB_NY_17')
+        library = sample.add_library('PJB_NY_17')
         self.assertTrue(isinstance(library, Library))
         self.assertEqual(1,len(sample.libraries))
-        self.assertEqual(library,sample.getLibrary('PJB_NY_17'))
+        self.assertEqual(library,sample.get_library('PJB_NY_17'))
         # Add second library
-        library2 = sample.addLibrary('PJB_NY_18')
+        library2 = sample.add_library('PJB_NY_18')
         self.assertTrue(isinstance(library2, Library))
         self.assertEqual(2,len(sample.libraries))
-        self.assertEqual(library2,sample.getLibrary('PJB_NY_18'))
+        self.assertEqual(library2,sample.get_library('PJB_NY_18'))
         # Add same library again
-        self.assertEqual(library2,sample.addLibrary('PJB_NY_18'))
+        self.assertEqual(library2,sample.add_library('PJB_NY_18'))
         self.assertEqual(2,len(sample.libraries))
         # Fetch non-existent library
-        self.assertEqual(None,sample.getLibrary('PJB_NY_19'))
+        self.assertEqual(None,sample.get_library('PJB_NY_19'))
 
     def test_solid_sample_get_project(self):
         """
@@ -608,14 +608,14 @@ class TestSample(unittest.TestCase):
         sample = Sample(sample_name)
         self.assertEqual(0,len(sample.projects))
         # Add libraries
-        library = sample.addLibrary('PJB_NY_17')
-        library = sample.addLibrary('PJB_NY_18')
+        library = sample.add_library('PJB_NY_17')
+        library = sample.add_library('PJB_NY_18')
         # Fetch project
         self.assertEqual(1,len(sample.projects))
-        project = sample.getProject('PJB')
+        project = sample.get_project('PJB')
         self.assertTrue(isinstance(project, Project))
         # Fetch non-existant project
-        self.assertEqual(None,sample.getProject('BJP'))
+        self.assertEqual(None,sample.get_project('BJP'))
 
 
 class TestProject(unittest.TestCase):
@@ -630,7 +630,7 @@ class TestProject(unittest.TestCase):
                               'PJB_NY_19']
         self.sample = Sample('PJB_pool')
         for name in self.library_names:
-            self.sample.addLibrary(name)
+            self.sample.add_library(name)
         self.project = self.sample.projects[0]
 
     def test_libraries(self):
@@ -651,47 +651,47 @@ class TestProject(unittest.TestCase):
         solid.data.Project: retrieve of parent sample
         """
         # Check for project with parent sample defined
-        self.assertEqual(self.sample, self.project.getSample())
+        self.assertEqual(self.sample, self.project.get_sample())
         # Check for project with no parent sample
-        self.assertEqual(None, Project('No_sample').getSample())
+        self.assertEqual(None, Project('No_sample').get_sample())
 
     def test_get_run(self):
         """
         solid.data.Project: retrieve parent run
         """
-        self.assertEqual(None, self.project.getRun())
+        self.assertEqual(None, self.project.get_run())
 
     def test_is_barcoded(self):
         """
         solid.data.Project: check if all libraries are barcoded
         """
         # Check test project
-        self.assertFalse(self.project.isBarcoded())
+        self.assertFalse(self.project.is_barcoded())
         # Alter libraries in project so all have barcode flag set
         for lib in self.project.libraries:
             lib.is_barcoded = True
-        self.assertTrue(self.project.isBarcoded())
+        self.assertTrue(self.project.is_barcoded())
         # Check with empty project (i.e. no libraries)
-        self.assertFalse(Project('No_libraries').isBarcoded())
+        self.assertFalse(Project('No_libraries').is_barcoded())
 
     def test_get_library_name_pattern(self):
         """
         solid.data.Project: generate pattern for library names
         """
         self.assertEqual('PJB_NY_1*',
-                         self.project.getLibraryNamePattern())
+                         self.project.get_library_name_pattern())
 
     def test_get_project_name(self):
         """
         solid.data.Project: check assigned project name
         """
-        self.assertEqual('PJB_pool', self.project.getProjectName())
+        self.assertEqual('PJB_pool', self.project.get_project_name())
 
     def test_pretty_print_libraries(self):
         """
         solid.data.Project: pretty print libraries
         """
-        self.assertEqual('PJB_NY_17-19',self.project.prettyPrintLibraries())
+        self.assertEqual('PJB_NY_17-19',self.project.pretty_print_libraries())
 
 
 class TestRunDefinition(unittest.TestCase):
@@ -716,7 +716,7 @@ class TestRunDefinition(unittest.TestCase):
         """
         solid.data.RunDefinition: basic properties
         """
-        self.assertEqual(12,self.run_defn.nSamples())
+        self.assertEqual(12,self.run_defn.n_samples())
 
     def test_run_definition_attributes(self):
         """
@@ -752,26 +752,26 @@ class TestRunDefinition(unittest.TestCase):
         """
         # Check first line
         self.assertEqual('AB_CD_EF_pool',
-                         self.run_defn.getDataItem('sampleName',0))
+                         self.run_defn.get_data_item('sampleName',0))
         self.assertEqual('CD_UV5',self.
-                         run_defn.getDataItem('library',0))
+                         run_defn.get_data_item('library',0))
         self.assertEqual('mm9',
-                         self.run_defn.getDataItem('secondaryAnalysis',0))
+                         self.run_defn.get_data_item('secondaryAnalysis',0))
         # Check line in middle
         self.assertEqual('AB_CD_EF_pool',
-                         self.run_defn.getDataItem('sampleName',4))
+                         self.run_defn.get_data_item('sampleName',4))
         self.assertEqual('EF12',
-                         self.run_defn.getDataItem('library',4))
+                         self.run_defn.get_data_item('library',4))
         self.assertEqual('dm5',
-                         self.run_defn.getDataItem('secondaryAnalysis',4))
+                         self.run_defn.get_data_item('secondaryAnalysis',4))
         # Check non-existent line
         self.assertRaises(IndexError,
-                          self.run_defn.getDataItem,'sampleName',12)
+                          self.run_defn.get_data_item,'sampleName',12)
         # Check non-existent field
         self.assertEqual(None,
-                         self.run_defn.getDataItem('tertiaryAnalysis',0))
+                         self.run_defn.get_data_item('tertiaryAnalysis',0))
         self.assertEqual(None,
-                         self.run_defn.getDataItem('tertiaryAnalysis',12))
+                         self.run_defn.get_data_item('tertiaryAnalysis',12))
 
     def test_nonexistent_run_definition_file(self):
         """
@@ -800,11 +800,11 @@ class TestBarcodeStatistics(unittest.TestCase):
         self.assertTrue(isinstance(self.stats, BarcodeStatistics))
         self.assertTrue(self.stats)
 
-    def test_barcode_statistics_nRows(self):
+    def test_barcode_statistics_n_rows(self):
         """
         solid.data.BarcodeStatistics: number of rows
         """
-        self.assertEqual(31,self.stats.nRows())
+        self.assertEqual(31,self.stats.n_rows())
 
     def test_barcode_statistics_header(self):
         """
@@ -827,16 +827,16 @@ class TestBarcodeStatistics(unittest.TestCase):
                           '409927600',
                           '39452331',
                           '457541973'],
-                         self.stats.getDataByName('All Beads'))
+                         self.stats.get_data_by_name('All Beads'))
         # Check non-existent line
-        self.assertEqual(None,self.stats.getDataByName('All beads'))
+        self.assertEqual(None,self.stats.get_data_by_name('All beads'))
 
     def test_barcode_statistics_total_reads(self):
         """
         solid.data.BarcodeStatistics: total number of reads
         """
         # Total number for this example is 446268790
-        self.assertEqual(446268790,self.stats.totalReads())
+        self.assertEqual(446268790,self.stats.total_reads())
 
     def test_barcode_statistics_nonexistent_barcode_stats_file(self):
         """
@@ -907,25 +907,29 @@ class TestRun(unittest.TestCase):
         solid.data.Run: retrieve libraries
         """
         # Defaults should retrieve everything
-        libraries = self.solid_run.fetchLibraries()
+        libraries = self.solid_run.fetch_libraries()
         self.assertEqual(len(libraries),12)
         for lib in libraries:
             self.assertEqual(libraries.count(lib),1)
         # "Bad" sample name shouldn't retrieve anything
-        libraries = self.solid_run.fetchLibraries(sample_name='XY_PQ_VW_pool',library_name='*')
+        libraries = self.solid_run.fetch_libraries(
+            sample_name='XY_PQ_VW_pool',library_name='*')
         self.assertEqual(len(libraries),0)
         # Specify exact sample and library names
-        libraries = self.solid_run.fetchLibraries(sample_name='AB_CD_EF_pool',library_name='AB_A1M1')
+        libraries = self.solid_run.fetch_libraries(
+            sample_name='AB_CD_EF_pool',library_name='AB_A1M1')
         self.assertEqual(len(libraries),1)
         self.assertEqual(libraries[0].name,'AB_A1M1')
         # Specify wildcard library name
-        libraries = self.solid_run.fetchLibraries(sample_name='AB_CD_EF_pool',library_name='AB_*')
+        libraries = self.solid_run.fetch_libraries(
+            sample_name='AB_CD_EF_pool',library_name='AB_*')
         self.assertEqual(len(libraries),4)
         for lib in libraries:
             self.assertTrue(str(lib.name).startswith('AB_'))
             self.assertEqual(libraries.count(lib),1)
         # Specify wildcard sample and library name
-        libraries = self.solid_run.fetchLibraries(sample_name='*',library_name='AB_*')
+        libraries = self.solid_run.fetch_libraries(
+            sample_name='*',library_name='AB_*')
         self.assertEqual(len(libraries),4)
         for lib in libraries:
             self.assertTrue(str(lib.name).startswith('AB_'))
@@ -935,7 +939,7 @@ class TestRun(unittest.TestCase):
         """
         solid.data.Run: check slide layout information
         """
-        self.assertEqual(self.solid_run.slideLayout(),"Whole slide")
+        self.assertEqual(self.solid_run.slide_layout(),"Whole slide")
 
     def test_run_nonexistent_solid_run_dir(self):
         """
@@ -1019,27 +1023,29 @@ class TestRunPairedEnd(unittest.TestCase):
         solid.data.Run: retrieve libraries for paired end run
         """
         # Defaults should retrieve everything
-        libraries = self.solid_run.fetchLibraries()
+        libraries = self.solid_run.fetch_libraries()
         self.assertEqual(len(libraries),11)
         for lib in libraries:
             self.assertEqual(libraries.count(lib),1)
         # "Bad" sample name shouldn't retrieve anything
-        libraries = self.solid_run.fetchLibraries(sample_name='XY_PQ_VW_pool',library_name='*')
+        libraries = self.solid_run.fetch_libraries(
+            sample_name='XY_PQ_VW_pool',library_name='*')
         self.assertEqual(len(libraries),0)
         # Specify exact sample and library names
-        libraries = self.solid_run.fetchLibraries(sample_name='AB_CD_pool',library_name='AB_SEQ26')
+        libraries = self.solid_run.fetch_libraries(
+            sample_name='AB_CD_pool',library_name='AB_SEQ26')
         self.assertEqual(len(libraries),1)
         self.assertEqual(libraries[0].name,'AB_SEQ26')
         # Specify wildcard library name
-        libraries = self.solid_run.fetchLibraries(sample_name='AB_CD_pool',
-                                                  library_name='AB_*')
+        libraries = self.solid_run.fetch_libraries(sample_name='AB_CD_pool',
+                                                   library_name='AB_*')
         self.assertEqual(len(libraries),8)
         for lib in libraries:
             self.assertTrue(str(lib.name).startswith('AB_'))
             self.assertEqual(libraries.count(lib),1)
         # Specify wildcard sample and library name
-        libraries = self.solid_run.fetchLibraries(sample_name='*',
-                                                  library_name='AB_*')
+        libraries = self.solid_run.fetch_libraries(sample_name='*',
+                                                   library_name='AB_*')
         self.assertEqual(len(libraries),8)
         for lib in libraries:
             self.assertTrue(str(lib.name).startswith('AB_'))
