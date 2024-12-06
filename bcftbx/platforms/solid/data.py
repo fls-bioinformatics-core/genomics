@@ -13,21 +13,21 @@
 Provides classes for extracting data about SOLiD runs from directory
 structure, data files and naming conventions.
 
-Typical usage is to create a new 'Run' instance by pointing it at
+Typical usage is to create a new 'RunDir' instance by pointing it at
 the top-level output directory produced by the sequencer:
 
->>> solid_run = Run('/path/to/solid0123_20141225_FRAG_BC')
+>>> solid_run = RunDir('/path/to/solid0123_20141225_FRAG_BC')
 
 This will automatically attempt to collect the data about the run,
-which can then be accessed via other objects linked through the 'Run'
+which can then be accessed via other objects linked through the 'RunDir'
 object's properties.
 
 The most useful are:
 
-* Run.run_info: a 'RunInfo' object which holds data extracted
+* RunDir.run_info: a 'RunInfo' object which holds data extracted
   from the run name (e.g. instrument, datestamp etc)
 
-* Run.samples: a list of 'Sample' objects which hold data about
+* RunDir.samples: a list of 'Sample' objects which hold data about
   each of the samples in the run.
 
 Each sample in turn holds a list of libraries within that sample
@@ -47,7 +47,7 @@ properties hold the locations of the data for the F3 reads, while for
 paired-end runs the 'Library.csfasta_f5' and 'Library.qual_f5'
 properties point to the F5 reads.
 
-The 'is_paired_end' function can be used to test whether a Run
+The 'is_paired_end' function can be used to test whether a RunDir
 object holds data for a paired-end run.
 """
 
@@ -71,11 +71,11 @@ logger = logging.getLogger(__name__)
 #######################################################################
 
 
-class Run:
+class RunDir:
     """
     Class describing a SOLiD run.
 
-    The 'Run' class provides an interface to data about a SOLiD
+    The 'RunDir' class provides an interface to data about a SOLiD
     run. It analyses the SOLiD data directory to look for run
     definitions, statistics files and primary data files.
 
@@ -83,7 +83,7 @@ class Run:
     files produced by the SOLiD instrument, so a run contains
     'samples' and each sample contains one or more 'libraries'.
 
-    One initialised, access the data about the run via the 'Run'
+    One initialised, access the data about the run via the 'RunDir'
     object's properties:
 
     - run_dir: directory with the run data
@@ -216,7 +216,7 @@ class Run:
     def add_library(self, sample_name, library_name, libraries_dir,
                     is_barcoded):
         """
-        Add a library to the Run
+        Add a library to the RunDir
 
         Arguments:
           sample_name (str): name of the sample
@@ -492,7 +492,7 @@ class Sample:
     - unassigned: Project object representing the 'unassigned' data
     - barcode_stats: a BarcodeStats object with data extracted from
       the BarcodeStatistics file (or None, if no file was available)
-    - parent_run: the parent Run object, or None.
+    - parent_run: the parent RunDir object, or None.
 
     The class also provides the following methods:
 
@@ -509,7 +509,7 @@ class Sample:
 
     Arguments:
       name (str): name of the sample (e.g. AS_XC_pool)
-      parent_run (Run): (optional) the parent Run object
+      parent_run (RunDir): (optional) the parent RunDir object
       classes (dict): dictionary of class names to override the
         defaults with
     """
@@ -783,13 +783,13 @@ class Project:
     Also has the following methods:
 
     - get_sample(): returns the parent Sample
-    - get_run(): returns the parent Run
+    - get_run(): returns the parent RunDir
     - is_barcoded(): returns boolean indicating whether the libraries
       in the sample are barcoded
 
     Arguments:
       name (str): the name of the project.
-      run (Run): (optional) the parent Run oject for the project
+      run (RunDir): (optional) the parent RunDir oject for the project
       sample (Sample): (optional) the parent Sample for the project
     """
     def __init__(self,name,run=None,sample=None):
@@ -823,7 +823,7 @@ class Project:
         """
         Return the parent run for the project.
 
-        Returns the parent Run object for the project, by
+        Returns the parent RunDir object for the project, by
         looking up the run that the parent sample belongs to.
         Returns None if no parent sample is defined, or if the
         parent sample doesn't have a parent run.
@@ -1289,10 +1289,10 @@ def list_run_directories(solid_run_dir):
 
 def is_paired_end(solid_run):
     """
-    Determine if a Run instance is a paired-end run
+    Determine if a RunDir instance is a paired-end run
 
     Arguments:
-      solid_run (Run): a populated Run instance
+      solid_run (RunDir): a populated RunDir instance
 
     Returns:
       Boolean: True if run is paired-end, False otherwise.
