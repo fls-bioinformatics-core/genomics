@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+#
 #     platforms.solid.data.py: handle SOLiD sequencer runs
 #     Copyright (C) University of Manchester 2011-2024 Peter Briggs
 #
