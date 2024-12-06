@@ -846,29 +846,29 @@ class TestBarcodeStatistics(unittest.TestCase):
         self.assertFalse(stats)
 
 
-class TestRun(unittest.TestCase):
+class TestRunDir(unittest.TestCase):
     """
-    Unit tests for Run class.
+    Unit tests for RunDir class.
     """
     def setUp(self):
         # Set up a mock SOLiD directory structure
         self.solid_test_dir = \
             TestUtils().make_solid_dir('solid0123_20130426_FRAG_BC')
-        # Create a Run object for tests
-        self.solid_run = Run(self.solid_test_dir)
+        # Create a RunDir object for tests
+        self.solid_run = RunDir(self.solid_test_dir)
 
     def tearDown(self):
         shutil.rmtree(self.solid_test_dir)
 
     def test_run(self):
         """
-        solid.data.Run: basic check
+        solid.data.RunDir: basic check
         """
         self.assertTrue(self.solid_run)
 
     def test_run_libraries_are_assigned(self):
         """
-        solid.data.Run: check libraries are assigned
+        solid.data.RunDir: check libraries are assigned
         """
         for sample in self.solid_run.samples:
             for library in sample.libraries:
@@ -883,7 +883,7 @@ class TestRun(unittest.TestCase):
 
     def test_run_library_files_in_same_location(self):
         """
-        solid.data.Run: check libraries locations are correct
+        solid.data.RunDir: check libraries locations are correct
         """
         for sample in self.solid_run.samples:
             for library in sample.libraries:
@@ -893,7 +893,7 @@ class TestRun(unittest.TestCase):
 
     def test_run_library_parent_dir_has_reject(self):
         """
-        solid.data.Run: check library parent dir has 'reject' subdir
+        solid.data.RunDir: check library parent dir has 'reject' subdir
         """
         for sample in self.solid_run.samples:
             for library in sample.libraries:
@@ -904,7 +904,7 @@ class TestRun(unittest.TestCase):
 
     def test_run_fetch_libraries(self):
         """
-        solid.data.Run: retrieve libraries
+        solid.data.RunDir: retrieve libraries
         """
         # Defaults should retrieve everything
         libraries = self.solid_run.fetch_libraries()
@@ -937,41 +937,41 @@ class TestRun(unittest.TestCase):
 
     def test_run_slide_layout(self):
         """
-        solid.data.Run: check slide layout information
+        solid.data.RunDir: check slide layout information
         """
         self.assertEqual(self.solid_run.slide_layout(),"Whole slide")
 
     def test_run_nonexistent_solid_run_dir(self):
         """
-        solid.data.Run: missing SOLiD run directory
+        solid.data.RunDir: missing SOLiD run directory
         """
-        solid_run = Run("/i/dont/exist/solid0123_20131013_FRAG_BC")
+        solid_run = RunDir("/i/dont/exist/solid0123_20131013_FRAG_BC")
         self.assertFalse(solid_run)
 
 
-class TestRunPairedEnd(unittest.TestCase):
+class TestRunDirPairedEnd(unittest.TestCase):
     """
-    Unit tests for Run class for paired-end run data.
+    Unit tests for RunDir class for paired-end run data.
     """
     def setUp(self):
         # Set up a mock SOLiD directory structure
         self.solid_test_dir = \
             TestUtils().make_solid_dir_paired_end('solid0123_20130426_PE_BC')
-        # Create a Run object for tests
-        self.solid_run = Run(self.solid_test_dir)
+        # Create a RunDir object for tests
+        self.solid_run = RunDir(self.solid_test_dir)
 
     def tearDown(self):
         shutil.rmtree(self.solid_test_dir)
 
     def test_paired_end_run(self):
         """
-        solid.data.Run: paired end run
+        solid.data.RunDir: paired end run
         """
         self.assertTrue(self.solid_run)
 
     def test_paired_end_run_libraries_are_assigned(self):
         """
-        solid.data.Run: libraries are assigned for paired end run
+        solid.data.RunDir: libraries are assigned for paired end run
         """
         for sample in self.solid_run.samples:
             for library in sample.libraries:
@@ -994,7 +994,7 @@ class TestRunPairedEnd(unittest.TestCase):
 
     def test_paired_end_run_library_files_in_same_location(self):
         """
-        solid.data.Run: library files in same location for paired end run
+        solid.data.RunDir: library files in same location for paired end run
         """
         for sample in self.solid_run.samples:
             for library in sample.libraries:
@@ -1006,7 +1006,7 @@ class TestRunPairedEnd(unittest.TestCase):
 
     def test_paired_end_run_library_parent_dir_has_reject(self):
         """
-        solid.data.Run: library parent dir has "reject" dir for paired end run
+        solid.data.RunDir: library parent dir has "reject" dir for paired end run
         """
         for sample in self.solid_run.samples:
             for library in sample.libraries:
@@ -1020,7 +1020,7 @@ class TestRunPairedEnd(unittest.TestCase):
 
     def test_paired_end_run_fetch_libraries(self):
         """
-        solid.data.Run: retrieve libraries for paired end run
+        solid.data.RunDir: retrieve libraries for paired end run
         """
         # Defaults should retrieve everything
         libraries = self.solid_run.fetch_libraries()
@@ -1052,9 +1052,9 @@ class TestRunPairedEnd(unittest.TestCase):
             self.assertEqual(libraries.count(lib),1)
 
 
-class TestRunDifferentDirName(unittest.TestCase):
+class TestRunDirDifferentDirName(unittest.TestCase):
     """
-    Unit tests for Run class when directory name doesn't match run name.
+    Unit tests for RunDir class when directory name doesn't match run name.
     """
     def setUp(self):
         # Set up a mock SOLiD directory structure
@@ -1068,18 +1068,18 @@ class TestRunDifferentDirName(unittest.TestCase):
 
     def test_solid_run_different_dir_name(self):
         """
-        solid.data.Run: directory name doesn't match run name
+        solid.data.RunDir: directory name doesn't match run name
         """
-        # Create a Run
-        self.solid_run = Run(self.solid_test_dir)
+        # Create a RunDir
+        self.solid_run = RunDir(self.solid_test_dir)
         self.assertTrue(self.solid_run)
         # Check the run name
         self.assertEqual(self.solid_run.run_name,'solid0123_20130426_FRAG_BC')
 
 
-class TestRunVerify(unittest.TestCase):
+class TestRunDirVerify(unittest.TestCase):
     """
-    Unit tests for Run.verify method
+    Unit tests for RunDir.verify method
     """
     def setUp(self):
         # Set up a mock SOLiD directory structure
@@ -1090,34 +1090,34 @@ class TestRunVerify(unittest.TestCase):
 
     def test_run_verify(self):
         """
-        solid.data.Run: test 'verify'
+        solid.data.RunDir: test 'verify'
         """
-        self.assertTrue(Run(self.solid_test_dir).verify())
+        self.assertTrue(RunDir(self.solid_test_dir).verify())
 
     def test_run_verify_missing_csfasta(self):
         """
-        solid.data.Run: test 'verify' (missing .csfasta file)
+        solid.data.RunDir: test 'verify' (missing .csfasta file)
         """
         # Remove some files
-        solid_run = Run(self.solid_test_dir)
+        solid_run = RunDir(self.solid_test_dir)
         os.remove(solid_run.samples[0].libraries[0].csfasta)
         # Test
-        self.assertFalse(Run(self.solid_test_dir).verify())
+        self.assertFalse(RunDir(self.solid_test_dir).verify())
 
     def test_run_verify_missing_qual(self):
         """
-        solid.data.Run: test 'verify' (missing .qual file)
+        solid.data.RunDir: test 'verify' (missing .qual file)
         """
         # Remove some files
-        solid_run = Run(self.solid_test_dir)
+        solid_run = RunDir(self.solid_test_dir)
         os.remove(solid_run.samples[0].libraries[0].qual)
         # Test
-        self.assertFalse(Run(self.solid_test_dir).verify())
+        self.assertFalse(RunDir(self.solid_test_dir).verify())
 
 
-class TestRunVerifyPairedEnd(unittest.TestCase):
+class TestRunDirVerifyPairedEnd(unittest.TestCase):
     """
-    Unit tests for Run.verify method for paired-end data
+    Unit tests for RunDir.verify method for paired-end data
     """
     def setUp(self):
         # Set up a mock SOLiD directory structure
@@ -1129,34 +1129,34 @@ class TestRunVerifyPairedEnd(unittest.TestCase):
 
     def test_run_verify(self):
         """
-        solid.data.Run: test 'verify' with paired end data
+        solid.data.RunDir: test 'verify' with paired end data
         """
-        self.assertTrue(Run(self.solid_test_dir).verify())
+        self.assertTrue(RunDir(self.solid_test_dir).verify())
 
     def test_run_verify_missing_csfasta(self):
         """
-        solid.data.Run: test 'verify' with paired end data (missing .csfasta)
+        solid.data.RunDir: test 'verify' with paired end data (missing .csfasta)
         """
         # Remove some files
-        solid_run = Run(self.solid_test_dir)
+        solid_run = RunDir(self.solid_test_dir)
         os.remove(solid_run.samples[0].libraries[0].csfasta)
         # Test
-        self.assertFalse(Run(self.solid_test_dir).verify())
+        self.assertFalse(RunDir(self.solid_test_dir).verify())
 
     def test_run_verify_missing_qual(self):
         """
-        solid.data.Run: test 'verify' with paired end data (missing .qual)
+        solid.data.RunDir: test 'verify' with paired end data (missing .qual)
         """
         # Remove some files
-        solid_run = Run(self.solid_test_dir)
+        solid_run = RunDir(self.solid_test_dir)
         os.remove(solid_run.samples[0].libraries[0].qual)
         # Test
-        self.assertFalse(Run(self.solid_test_dir).verify())
+        self.assertFalse(RunDir(self.solid_test_dir).verify())
 
 
-class TestRunNoRunDefinition(unittest.TestCase):
+class TestRunDirNoRunDefinition(unittest.TestCase):
     """
-    Unit tests for Run class when directory doesn't have RunDefinition
+    Unit tests for RunDir class when directory doesn't have RunDefinition
     file.
     """
     def setUp(self):
@@ -1172,10 +1172,10 @@ class TestRunNoRunDefinition(unittest.TestCase):
 
     def test_run_with_no_run_definition(self):
         """
-        solid.data.Run: missing run definition file
+        solid.data.RunDir: missing run definition file
         """
-        # Create a Run
-        self.solid_run = Run(self.solid_test_dir)
+        # Create a RunDir
+        self.solid_run = RunDir(self.solid_test_dir)
         self.assertTrue(self.solid_run)
         # Check the run name
         self.assertEqual(self.solid_run.run_name,
@@ -1184,7 +1184,7 @@ class TestRunNoRunDefinition(unittest.TestCase):
         self.assertFalse(self.solid_run.is_paired_end)
 
 
-class TestRunNotASolidRunDir(unittest.TestCase):
+class TestRunDirNotASolidRunDir(unittest.TestCase):
     def setUp(self):
         # Set up a non-SOLiD directory structure
         self.test_dir = tempfile.mkdtemp()
@@ -1199,10 +1199,10 @@ class TestRunNotASolidRunDir(unittest.TestCase):
 
     def test_run_not_a_solid_run_dir(self):
         """
-        solid.data.Run: try to load a non-SOLiD run directory
+        solid.data.RunDir: try to load a non-SOLiD run directory
         """
-        # Create a Run
-        self.solid_run = Run(self.test_dir)
+        # Create a RunDir
+        self.solid_run = RunDir(self.test_dir)
         self.assertFalse(self.solid_run)
 
 
@@ -1217,13 +1217,13 @@ class TestFunctions(unittest.TestCase):
         # Test with non-paired end mock SOLiD directory
         self.solid_test_dir = TestUtils().make_solid_dir(
             'solid0123_20130426_FRAG_BC')
-        self.solid_run = Run(self.solid_test_dir)
+        self.solid_run = RunDir(self.solid_test_dir)
         self.assertFalse(is_paired_end(self.solid_run))
         shutil.rmtree(self.solid_test_dir)
         # Test with paired end mock SOLiD directory
         self.solid_test_dir = TestUtils().make_solid_dir_paired_end(
             'solid0123_20130426_PE_BC')
-        self.solid_run = Run(self.solid_test_dir)
+        self.solid_run = RunDir(self.solid_test_dir)
         self.assertTrue(is_paired_end(self.solid_run))
         shutil.rmtree(self.solid_test_dir)
 
