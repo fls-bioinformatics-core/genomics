@@ -75,8 +75,8 @@ class SolidSample(solid.Sample):
     """
     def __init__(self, name, parent_run=None):
         solid.Sample.__init__(self, name, parent_run=parent_run,
-                        classes=dict(Library=SolidLibrary,
-                                     Project=SolidProject))
+                              classes=dict(Library=SolidLibrary,
+                                           Project=SolidProject))
 
     def addLibrary(self, library_name):
         """
@@ -108,8 +108,8 @@ class SolidLibrary(solid.Library):
     """
     def __init__(self,name,parent_sample=None):
         solid.Library.__init__(self, name, parent_sample=parent_sample,
-                         classes=dict(PrimaryData=SolidPrimaryData,
-                                      Project=SolidProject))
+                               classes=dict(PrimaryData=SolidPrimaryData,
+                                            Project=SolidProject))
 
     def addPrimaryData(self, csfasta, qual):
         """
@@ -212,7 +212,8 @@ class SolidRunDefinition(solid.RunDefinition):
 
     def __init__(self,run_definition_file):
         solid.RunDefinition.__init__(self,
-                               run_definition_file=run_definition_file)
+                                     run_definition_file=\
+                                     run_definition_file)
 
     def nSamples(self):
         """
