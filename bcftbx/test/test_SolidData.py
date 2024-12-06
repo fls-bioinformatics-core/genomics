@@ -1,11 +1,13 @@
 #######################################################################
 # Tests for SolidData.py module
 #######################################################################
-from bcftbx.SolidData import *
+
+import os
 import unittest
 import io
 import tempfile
 import shutil
+from bcftbx.SolidData import *
 
 class TestUtils:
     """Utilities to help with setting up/running tests etc
