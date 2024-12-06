@@ -1212,7 +1212,7 @@ class TestFunctions(unittest.TestCase):
     """
     def test_is_paired_end(self):
         """
-        is_paired_end: check returns correct values
+        solid.data.is_paired_end: check returns correct values
         """
         # Test with non-paired end mock SOLiD directory
         self.solid_test_dir = TestUtils().make_solid_dir(
@@ -1229,7 +1229,7 @@ class TestFunctions(unittest.TestCase):
 
     def test_extract_library_timestamp(self):
         """
-        extract_library_timestamp: check timestamp is extracted
+        solid.data.extract_library_timestamp: check timestamp is extracted
         """
         self.assertEqual(extract_library_timestamp("/path/to/data/solid0123_20120712_FRAG_BC/AB_CD_EF_POOL/results.F1B1/libraries/AB2/primary.20120705075541493"),'20120705075541493')
         self.assertEqual(extract_library_timestamp("/path/to/data/solid0123_20120712_FRAG_BC/AB_CD_EF_POOL/results.F1B1/libraries/AB2/primary.20120705075541493/"),'20120705075541493')
@@ -1238,7 +1238,7 @@ class TestFunctions(unittest.TestCase):
 
     def test_slide_layout(self):
         """
-        slide_layout: check slide layout descriptions
+        solid.data.slide_layout: check slide layout descriptions
         """
         self.assertEqual("Whole slide",slide_layout(1))
         self.assertEqual("Quads",slide_layout(4))
