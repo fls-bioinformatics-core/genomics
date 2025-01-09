@@ -518,8 +518,8 @@ class GEJobRunner(BaseJobRunner):
 
         This is extracted from the 'ge_extra_args'
         property, by looking for qsub options of the
-        form '-pe smp.pe N' (in which case 'nslots'
-        will be N).
+        form '-pe XXXX N' (e.g. '-pe smp.pe 8'), where
+        'nslots' will be N.
         """
         nslots = 1
         if self.ge_extra_args is not None:
