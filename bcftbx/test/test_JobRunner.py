@@ -509,7 +509,7 @@ class TestGEJobRunner(unittest.TestCase):
         self.assertEqual(runner.queue(jobid),"mock.q")
 
     def test_ge_job_runner_nslots(self):
-        """Test GEJobRunner sets BCFTBX_RUNNER_NSLOTS
+        """Test GEJobRunner sets BCFTBX_RUNNER_NSLOTS (-pe smp.pe)
         """
         # Create a runner and check default nslots
         runner = GEJobRunner()
@@ -524,6 +524,32 @@ class TestGEJobRunner(unittest.TestCase):
             self.assertEqual(u"1\n",fp.read())
         # Create a runner with multiple nslots
         runner = GEJobRunner(ge_extra_args=['-pe','smp.pe','8'])
+        self.assertEqual(runner.nslots,8)
+        jobid = self.run_job(runner,
+                             'test',
+                             self.working_dir,
+                             '/bin/bash',
+                             ('-c','echo $BCFTBX_RUNNER_NSLOTS',))
+        self.wait_for_jobs(runner,jobid)
+        with io.open(runner.logFile(jobid),'rt') as fp:
+            self.assertEqual(u"8\n",fp.read())
+
+    def test_ge_job_runner_nslots_amd_pe(self):
+        """Test GEJobRunner sets BCFTBX_RUNNER_NSLOTS (-pe amd.pe)
+        """
+        # Create a runner and check default nslots
+        runner = GEJobRunner()
+        self.assertEqual(runner.nslots,1)
+        jobid = self.run_job(runner,
+                             'test',
+                             self.working_dir,
+                             '/bin/bash',
+                             ('-c','echo $BCFTBX_RUNNER_NSLOTS',))
+        self.wait_for_jobs(runner,jobid)
+        with io.open(runner.logFile(jobid),'rt') as fp:
+            self.assertEqual(u"1\n",fp.read())
+        # Create a runner with multiple nslots
+        runner = GEJobRunner(ge_extra_args=['-pe','amd.pe','8'])
         self.assertEqual(runner.nslots,8)
         jobid = self.run_job(runner,
                              'test',
