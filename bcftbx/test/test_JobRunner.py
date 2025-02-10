@@ -1079,6 +1079,73 @@ class TestFetchRunnerFunction(unittest.TestCase):
         self.assertTrue(isinstance(runner,GEJobRunner))
         self.assertEqual(runner.ge_extra_args,['-j','y'])
 
+    def test_fetch_slurm_runner(self):
+        """fetch_runner returns a SlurmRunner
+        """
+        runner = fetch_runner("SlurmRunner")
+        self.assertTrue(isinstance(runner, SlurmRunner))
+        self.assertEqual(runner.nslots, 1)
+        self.assertEqual(runner.partition, None)
+        self.assertFalse(runner.join_logs)
+        self.assertEqual(runner.slurm_extra_args, None)
+
+    def test_fetch_slurm_runner_with_nslots(self):
+        """fetch_runner returns a SlurmRunner with nslots
+        """
+        runner = fetch_runner("SlurmRunner(nslots=8)")
+        self.assertTrue(isinstance(runner, SlurmRunner))
+        self.assertEqual(runner.nslots, 8)
+        self.assertEqual(runner.partition, None)
+        self.assertFalse(runner.join_logs)
+        self.assertEqual(runner.slurm_extra_args, None)
+
+    def test_fetch_slurm_runner_with_partition(self):
+        """fetch_runner returns a SlurmRunner with partition
+        """
+        runner = fetch_runner("SlurmRunner(partition=default)")
+        self.assertTrue(isinstance(runner, SlurmRunner))
+        self.assertEqual(runner.nslots, 1)
+        self.assertEqual(runner.partition, "default")
+        self.assertFalse(runner.join_logs)
+        self.assertEqual(runner.slurm_extra_args, None)
+
+    def test_fetch_slurm_runner_with_join_logs(self):
+        """fetch_runner returns a SlurmRunner with join_logs
+        """
+        runner = fetch_runner("SlurmRunner(join_logs=True)")
+        self.assertTrue(isinstance(runner, SlurmRunner))
+        self.assertEqual(runner.nslots, 1)
+        self.assertEqual(runner.partition, None)
+        self.assertTrue(runner.join_logs)
+        self.assertEqual(runner.slurm_extra_args, None)
+
+    def test_fetch_slurm_runner_with_extra_args(self):
+        """fetch_runner returns a SlurmRunner with additional arguments
+        """
+        # Extra args that set nslots and partition
+        runner = fetch_runner("SlurmRunner(-n 8 -p default)")
+        self.assertTrue(isinstance(runner, SlurmRunner))
+        self.assertEqual(runner.nslots, 8)
+        self.assertEqual(runner.partition, "default")
+        self.assertFalse(runner.join_logs)
+        self.assertEqual(runner.slurm_extra_args, None)
+        # Extra args plus join_logs
+        runner = fetch_runner("SlurmRunner(-n 8 -p default join_logs=y)")
+        self.assertTrue(isinstance(runner, SlurmRunner))
+        self.assertEqual(runner.nslots, 8)
+        self.assertEqual(runner.partition, "default")
+        self.assertTrue(runner.join_logs)
+        self.assertEqual(runner.slurm_extra_args, None)
+        # Arbitrary non-reserved extra args
+        runner = fetch_runner("SlurmRunner(-n 8 --mail-type=ALL --mail-user=emailaddr@manchester.ac.uk join_logs=n)")
+        self.assertTrue(isinstance(runner, SlurmRunner))
+        self.assertEqual(runner.nslots, 8)
+        self.assertEqual(runner.partition, None)
+        self.assertFalse(runner.join_logs)
+        self.assertEqual(runner.slurm_extra_args,
+                         ["--mail-type=ALL",
+                          "--mail-user=emailaddr@manchester.ac.uk"])
+
     def test_fetch_bad_runner_raises_exception(self):
         """fetch_runner raises exception for unknown runner
         """
