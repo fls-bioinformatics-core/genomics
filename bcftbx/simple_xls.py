@@ -1,5 +1,5 @@
 #     simple_xls.py: write simple Excel spreadsheets
-#     Copyright (C) University of Manchester 2013-2019,2021 Peter Briggs
+#     Copyright (C) University of Manchester 2013-2025,2021 Peter Briggs
 #
 ########################################################################
 #
@@ -15,6 +15,8 @@ It is currently built on top of SpreadSheet.py, which itself uses the xlwt,
 xlrd and xlutils modules. In future the relevant parts may be rewritten to
 remove the dependence on Spreadsheet.py and call the appropriate xl* classes
 and functions directly.
+
+It uses the Xlsxwriter module directly to output XLSX format spreadsheets.
 
 Example usage
 -------------
@@ -279,7 +281,7 @@ class XLSWorkBook:
                             if style.bold:
                                 xlsx_fmt.set_bold()
                             if style.color is not None:
-                                xlsx_fmt.set_color(style.color)
+                                xlsx_fmt.set_font_color(style.color)
                             if style.bgcolor is not None:
                                 xlsx_fmt.set_bg_color(style.bgcolor)
                             if style.font_size is not None:
