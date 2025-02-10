@@ -594,7 +594,7 @@ echo "$exit_code" 1>%s/__exit_code.%d
             else:
                 nodelist = "mock-node01"
             line = f"{job_id:>18} {partition:>9} {name:>8} {user:>8} {state:>2} {job_time:>10.2} {num_nodes:>6} {nodelist}"
-            prin(line)
+            print(line)
 
     def scancel(self,argv):
         """
