@@ -8,9 +8,7 @@ on: [ push, pull_request ]
 jobs:
   build:
 
-    # Switched from ubuntu-latest to ubuntu-20.04 as former
-    # doesn't support Python 3.6
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
