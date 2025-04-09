@@ -14,6 +14,8 @@ following versions are supported:
 * Python 3.8
 * Python 3.9
 * Python 3.10
+* Python 3.11
+* Python 3.12
 
 Older Python 3 versions may also still work but are no longer included
 in the automated tests.
