@@ -8,13 +8,11 @@ on: [ push, pull_request ]
 jobs:
   build:
 
-    # Switched from ubuntu-latest to ubuntu-20.04 as former
-    # doesn't support Python 3.6
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.6', '3.7', '3.8', '3.9', '3.10']
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
 
     steps:
     - uses: actions/checkout@v2

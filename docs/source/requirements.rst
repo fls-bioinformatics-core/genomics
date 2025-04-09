@@ -11,11 +11,14 @@ Supported Python versions
 The package consists predominantly of code written in Python, and the
 following versions are supported:
 
-* Python 3.6
-* Python 3.7
 * Python 3.8
 * Python 3.9
 * Python 3.10
+* Python 3.11
+* Python 3.12
+
+Older Python 3 versions may also still work but are no longer included
+in the automated tests.
 
 .. _software_dependencies:
 
