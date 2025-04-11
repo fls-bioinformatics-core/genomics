@@ -1498,7 +1498,7 @@ exit $exit_code
         state', False otherwise.
         """
         # FIXME don't know how to detect error state for Slurm job
-        logging.warning("SlurmRunner: 'errorState' method not implemented")
+        logging.debug("SlurmRunner: 'errorState' method not implemented")
         return False
 
     def list(self):
