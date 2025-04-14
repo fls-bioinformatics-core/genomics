@@ -405,6 +405,9 @@ echo "$exit_code" 1>%s/__exit_code.%d
     def _mark_for_deletion(self, job_id):
         """
         Mark a job for termination/deletion
+
+        Return None if successfully marked, or error message
+        if there an error.
         """
         # Look up the job and check it can be deleted
         sql = """
@@ -414,10 +417,10 @@ echo "$exit_code" 1>%s/__exit_code.%d
         cu.execute(sql, (job_id,))
         job = cu.fetchone()
         if job is None:
-            return
+            return "Invalid job id specified"
         state = job['state']
         if state not in ('PD', 'R', 'F'):
-            return
+            return "Job/step already completing or completed"
         new_state = 'CA'
         sql = """
         UPDATE jobs SET state=? WHERE id=?
@@ -425,6 +428,7 @@ echo "$exit_code" 1>%s/__exit_code.%d
         cu = self._cx.cursor()
         cu.execute(sql,(new_state,job_id,))
         self._cx.commit()
+        return None
 
     def _cleanup_processes(self):
         """
@@ -605,15 +609,19 @@ echo "$exit_code" 1>%s/__exit_code.%d
         self.update_jobs()
         # Process supplied arguments
         p = argparse.ArgumentParser()
+        p.add_argument("-v", dest="verbose", action="store_true")
         p.add_argument("job_id",action="store",nargs="+")
         args = p.parse_args(argv)
         # Loop over job ids
         for job_id in args.job_id:
             job_id = int(job_id)
             # Mark the job for deletion
-            self._mark_for_deletion(job_id)
-            # FIXME check what message scancel actually prints
-            print("Job %s has been marked for deletion" % job_id)
+            status = self._mark_for_deletion(job_id)
+            if args.verbose:
+                print(f"scancel: Terminating job {job_id}")
+                if status is not None:
+                    # Echo status error message
+                    print(f"scancel: error: {status}")
 
 #######################################################################
 # Functions
