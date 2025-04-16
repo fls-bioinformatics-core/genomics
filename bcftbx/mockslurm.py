@@ -563,10 +563,9 @@ echo "$exit_code" 1>%s/__exit_code.%d
             user = args.user
         # Get jobs
         jobs = self._list_jobs(user=user)
-        if not jobs:
-            return
-        # Print job info
+        # Print header even if there are no jobs to report
         print("             JOBID PARTITION     NAME     USER ST       TIME  NODES NODELIST(REASON)")
+        # Print info for each job
         # From manpage, default output string is:
         # "%.18i %.9P %.8j %.8u %.2t %.10M %.6D %R"
         # where . indicates right-justified (otherwise left-justified)
