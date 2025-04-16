@@ -1010,6 +1010,63 @@ class TestSlurmRunner(unittest.TestCase):
         with io.open(runner.logFile(jobid),'rt') as fp:
             self.assertEqual(u"8\n",fp.read())
 
+    def test_slurm_runner_externally_terminated_job(self):
+        """
+        Test SlurmRunner handles job terminated externally
+        """
+        # Create a runner
+        runner = SlurmRunner(poll_interval=1.0)
+        self.assertEqual(runner.nslots, 1)
+        self.assertEqual(runner.partition, None)
+        self.assertFalse(runner.join_logs)
+        # Start sleep command
+        jobid = self.run_job(runner,
+                             "slurm_test",
+                             self.working_dir,
+                             'sleep', ('5s',))
+        self.assertTrue(runner.isRunning(jobid))
+        # Terminate the job outside the runner
+        # (runner will still think it's running)
+        self.mock_slurm.scancel(["-v", jobid])
+        self.update_jobs()
+        # Wait for runner to finalise externally terminated job
+        self.wait_for_jobs(runner, jobid)
+        # Check exit status of job
+        self.assertEqual(runner.name(jobid), "slurm_test")
+        self.assertEqual(runner.exit_status(jobid), 127)
+
+    def test_slurm_runner_externally_terminated_job_with_normal_job(self):
+        """
+        Test SlurmRunner handles job terminated externally alongside normal job
+        """
+        # Create a runner
+        runner = SlurmRunner(poll_interval=1.0)
+        self.assertEqual(runner.nslots, 1)
+        self.assertEqual(runner.partition, None)
+        self.assertFalse(runner.join_logs)
+        # Start sleep commands
+        jobid1 = self.run_job(runner,
+                              "slurm_test_1",
+                              self.working_dir,
+                              'sleep', ('5s',))
+        self.assertTrue(runner.isRunning(jobid1))
+        jobid2 = self.run_job(runner,
+                              "slurm_test_2",
+                              self.working_dir,
+                              'sleep', ('5s',))
+        self.assertTrue(runner.isRunning(jobid2))
+        # Terminate one of the jobs outside the runner
+        # (runner will still think it's running)
+        self.mock_slurm.scancel(["-v", jobid1])
+        # Wait for runner to finalise all jobs
+        self.wait_for_jobs(runner, jobid1, jobid2)
+        # Check exit status of jobs
+        self.assertEqual(runner.name(jobid1), "slurm_test_1")
+        self.assertEqual(runner.exit_status(jobid1), 127)
+        self.assertEqual(runner.name(jobid2), "slurm_test_2")
+        self.assertEqual(runner.exit_status(jobid2), 0)
+
+
 class TestResourceLock(unittest.TestCase):
     """
     Tests for the ResourceLock class

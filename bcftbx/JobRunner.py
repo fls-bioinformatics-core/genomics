@@ -1231,6 +1231,11 @@ class SlurmRunner(BaseJobRunner):
         # Polling intervals and timeout periods (seconds)
         self._poll_interval = int(poll_interval)
         self._timeout = int(timeout)
+        # Handling "missing" jobs (in runner but not in Slurm)
+        self._missing = {}
+        self._missing_job_timeout = 1.0
+        self._missing_job_last_checked = 0.0
+        self._missing_job_poll_interval = self._poll_interval*10
         # Register clean up function
         atexit.register(self._clean_up_admin_dir)
         # Slurm-specific variables
@@ -1547,6 +1552,16 @@ exit $exit_code
                     logging.debug("SlurmRunner: -- no exit code file, "
                                   f"{job_id} still running")
                     job_ids.append(job_id)
+        # Check for "missing" jobs that are in the runner but no
+        # longer in the Slurm system
+        jobs_still_in_grace_period = bool(self._grace_period_jobs())
+        if job_ids and not jobs_still_in_grace_period:
+            check_missing_jobs = ((time.time() -
+                                   self._missing_job_last_checked) >
+                                  self._missing_job_poll_interval)
+            if check_missing_jobs:
+                logging.debug(f"SlurmRunner: checking for missing jobs")
+                job_ids = self._handle_missing_jobs(job_ids)
         # Update cache
         logging.debug("SlurmRunner: updating the cache")
         self._cached_job_list_timestamp = time.time()
@@ -1672,6 +1687,51 @@ exit $exit_code
                               job_id)
         # Release update lock
         self._updating_grace_period.release(lock)
+
+    def _handle_missing_jobs(self, job_list):
+        """
+        Internal: handle any jobs in runner missing from Slurm
+
+        Jobs present in the runner are checked to see if they
+        are also present in Slurm, with jobs that are missing
+        being flagged initially and then removed from the runner
+        if still missing after a "timeout" period.
+
+        Arguments:
+          job_list (list): list of job IDs to check
+
+        Returns:
+          List: updated list of job IDs with missing jobs
+            removed.
+        """
+        updated_job_list = []
+        squeue_jobs = [j[0] for j in self._run_squeue()]
+        for job_id in job_list:
+            if job_id not in squeue_jobs:
+                logging.debug(f"SlurmRunner: job {job_id} has gone away?")
+                if job_id not in self._missing:
+                    # Set time when job went missing
+                    self._missing[job_id] = time.time()
+                    updated_job_list.append(job_id)
+                elif (time.time() - self._missing[job_id]) > \
+                     self._missing_job_timeout:
+                    # Job is still missing after interval, terminate it
+                    logging.debug(f"SlurmRunner: forcing job completion "
+                                  f"for missing job {job_id} from runner "
+                                  f"(timeout was exceeded)")
+                    self.terminate(job_id, exit_code=127)
+                    # Perform immediate job completion
+                    self._handle_job_completion(job_id)
+                    # Remove the "missing" flag
+                    del(self._missing[job_id])
+            else:
+                # Job is no longer missing?
+                logging.debug(f"SlurmRunner: previously missing job {job_id} "
+                              f"has come back?")
+                updated_job_list.append(job_id)
+                if job_id in self._missing:
+                    del(self._missing[job_id])
+        return updated_job_list
 
     def _handle_job_completion(self,job_id):
         """
