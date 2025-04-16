@@ -1441,7 +1441,7 @@ exit $exit_code
         # Return the job id
         return job_id
 
-    def terminate(self, job_id):
+    def terminate(self, job_id, exit_code=-1):
         """
         Remove a job from the Slurm queue using 'scancel'
         """
@@ -1458,7 +1458,7 @@ exit $exit_code
                                       str(self._job_number[job_id]),
                                       "__exit_code")
         with open("%s.tmp" % exit_code_file, "wt") as fp:
-            fp.write("-1\n")
+            fp.write(f"{exit_code}\n")
         os.rename("%s.tmp" % exit_code_file, exit_code_file)
         # Force update of cached job list
         self._cached_job_list_force_update = True
