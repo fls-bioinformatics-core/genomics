@@ -1562,6 +1562,7 @@ exit $exit_code
             if check_missing_jobs:
                 logging.debug(f"SlurmRunner: checking for missing jobs")
                 job_ids = self._handle_missing_jobs(job_ids)
+                self._missing_job_last_checked = time.time()
         # Update cache
         logging.debug("SlurmRunner: updating the cache")
         self._cached_job_list_timestamp = time.time()
