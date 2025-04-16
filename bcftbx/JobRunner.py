@@ -1223,7 +1223,7 @@ class SlurmRunner(BaseJobRunner):
         self._cached_job_list = []
         self._cached_job_list_force_update = True
         # Cached qstat output
-        self._cached_squeue_output_lifetime = 2.0
+        self._cached_squeue_output_lifetime = 0.5
         self._cached_squeue_output_timestamp = 0.0
         self._cached_squeue_output = None
         # Grace period for new jobs
