@@ -1513,17 +1513,15 @@ exit $exit_code
             logging.debug("SlurmRunner: using cached job list")
             job_ids = self._cached_job_list
             # Add the jobs in grace period
-            grace_period_jobs = list(self._start_time.keys())
-            for job_id in grace_period_jobs:
+            for job_id in self._grace_period_jobs():
                 if job_id not in job_ids:
                     job_ids.append(job_id)
             return job_ids
         else:
             logging.debug("SlurmRunner: building job list")
         # Update jobs in grace period
-        for job_id in list(self._start_time.keys()):
+        for job_id in self._grace_period_jobs():
             self._update_job_in_grace_period(job_id)
-        grace_period_jobs = list(self._start_time.keys())
         # Build initial list from directory contents
         job_ids = []
         for job_id in list(self._job_number.keys()):
@@ -1555,7 +1553,7 @@ exit $exit_code
         self._cached_job_list = [j for j in job_ids]
         self._cached_job_list_force_update = False
         # Add the jobs in the grace period
-        for job_id in grace_period_jobs:
+        for job_id in self._grace_period_jobs():
             if job_id not in job_ids:
                 job_ids.append(job_id)
             else:
@@ -1625,6 +1623,16 @@ exit $exit_code
             logging.warning("SlurmRunner: exception removing "
                             "admin dir '%s': %s" %
                             (self._admin_dir, ex))
+
+    def _grace_period_jobs(self):
+        """
+        Internal: return list of jobs in the grace period
+
+        Returns list of job IDs where each job has an entry
+        in the `_start_time` dictionary which is newer than
+        the grace period timeout.
+        """
+        return list(self._start_time.keys())
 
     def _update_job_in_grace_period(self,job_id):
         """
