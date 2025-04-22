@@ -1015,7 +1015,10 @@ class TestSlurmRunner(unittest.TestCase):
         Test SlurmRunner handles job terminated externally
         """
         # Create a runner
-        runner = SlurmRunner(poll_interval=1.0)
+        # NB reduce the poll interval and missing job timeout
+        # so test will run in a reasonable time
+        runner = SlurmRunner(poll_interval=1.0,
+                             missing_job_timeout=1.0)
         self.assertEqual(runner.nslots, 1)
         self.assertEqual(runner.partition, None)
         self.assertFalse(runner.join_logs)
@@ -1040,7 +1043,10 @@ class TestSlurmRunner(unittest.TestCase):
         Test SlurmRunner handles job terminated externally alongside normal job
         """
         # Create a runner
-        runner = SlurmRunner(poll_interval=1.0)
+        # NB reduce the poll interval and missing job timeout
+        # so test will run in a reasonable time
+        runner = SlurmRunner(poll_interval=1.0,
+                             missing_job_timeout=1.0)
         self.assertEqual(runner.nslots, 1)
         self.assertEqual(runner.partition, None)
         self.assertFalse(runner.join_logs)

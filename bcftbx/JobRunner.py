@@ -1186,15 +1186,19 @@ class SlurmRunner(BaseJobRunner):
         log files)
       slurm_extra_args (list): arbitrary additional arguments to supply
         to 'sbatch' (e.g. '["-n", 8]')
-      poll_interval (int): time interval to use when polling Slurm using
-        'squeue' etc (default 5s)
-      timeout (int): maximum length of time to wait before giving up when
-        polling Slurm (default 30s)
+      poll_interval (int): time interval to use (in seconds) when polling
+        Slurm using 'squeue' (seconds) (default: 300.0)
+      timeout (int): maximum length of time to wait (in seconds) before
+        giving up when submitting jobs to Slurm and finalizing jobs
+        (default: 30.0)
+      missing_job_timeout (int): minimum time (in seconds) that a job
+        needs to be flagged as "missing" before it's removed from the
+        runner (default: 600.0)
     """
 
     def __init__(self, log_dir=None, nslots=None, partition=None,
-                 join_logs=None, slurm_extra_args=None, poll_interval=5.0,
-                 timeout=30.0):
+                 join_logs=None, slurm_extra_args=None,
+                 poll_interval=300, timeout=30, missing_job_timeout=600):
         # Internal parameters
         self._name = "SlurmRunner"
         self._admin_dir = None
@@ -1233,9 +1237,8 @@ class SlurmRunner(BaseJobRunner):
         self._timeout = int(timeout)
         # Handling "missing" jobs (in runner but not in Slurm)
         self._missing = {}
-        self._missing_job_timeout = 1.0
+        self._missing_job_timeout = int(missing_job_timeout)
         self._missing_job_last_checked = 0.0
-        self._missing_job_poll_interval = self._poll_interval*10
         # Register clean up function
         atexit.register(self._clean_up_admin_dir)
         # Slurm-specific variables
@@ -1558,7 +1561,7 @@ exit $exit_code
         if job_ids and not jobs_still_in_grace_period:
             check_missing_jobs = ((time.time() -
                                    self._missing_job_last_checked) >
-                                  self._missing_job_poll_interval)
+                                  self._poll_interval)
             if check_missing_jobs:
                 logging.debug(f"SlurmRunner: checking for missing jobs")
                 job_ids = self._handle_missing_jobs(job_ids)
