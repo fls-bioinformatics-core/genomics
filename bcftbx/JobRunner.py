@@ -3,29 +3,26 @@
 #     JobRunner.py: classes for starting and managing job runs
 #     Copyright (C) University of Manchester 2011-2025 Peter Briggs
 #
-########################################################################
-#
-# JobRunner.py
-#
-#########################################################################
 
 """
 Classes for starting, stopping and managing jobs.
 
-Class BaseJobRunner is a template with methods that need to be implemented
-by subclasses. The subclasses implemented here are:
+Class ``BaseJobRunner`` is a template with methods that need to be
+implemented by subclasses. The subclasses implemented here are:
 
-* SimpleJobRunner: run jobs (e.g. scripts) on a local file system.
-* GEJobRunner    : run jobs using Grid Engine (GE) i.e. qsub, qdel etc
-* SlurmRunner    : run jobs using Slurm i.e. sbatch, scancel etc
+* ``SimpleJobRunner``: run jobs (e.g. scripts) on a local file system.
+* ``GEJobRunner``    : run jobs using Grid Engine (GE) i.e. qsub, qdel etc
+* ``SlurmRunner``    : run jobs using Slurm i.e. sbatch, scancel etc
 
-A single JobRunner instance can be used to start and manage multiple processes.
+A single job runner instance can be used to start and manage multiple
+processes.
 
-Each job is started by invoking the 'run' method of the runner. This returns
-an id string which is then used in calls to the 'isRunning', 'terminate' etc
-methods to check on and control the job.
+Each job is started by invoking the ``run`` method of the runner. This
+returns an id string which is then used in calls to the various job
+monitoring and control methods (e.g. ``isRunning``, ``terminate`` etc)
+to interact with the job.
 
-The runner's 'list' method returns a list of running job ids.
+The runner's ``list`` method returns a list of running job ids.
 
 Simple usage example:
 
@@ -43,17 +40,17 @@ Simple usage example:
 Processes run using a job runner inherit the environment where the runner
 is created and executed.
 
-Additionally runners set an 'BCFTBX_RUNNER_NSLOTS' environment variable,
+Additionally runners set an ``BCFTBX_RUNNER_NSLOTS`` environment variable,
 which is set to the number of slots (aka CPUs/cores/threads) available to
 processes executed by the runner. For all runners this defaults to one
-(i.e. serial jobs); the 'nslots' option can be used when instantiating
-'SimpleJobRunner' and 'SlurmRunner' objects to specify more cores, for
+(i.e. serial jobs); the ``nslots`` option can be used when instantiating
+``SimpleJobRunner`` and 'SlurmRunner' objects to specify more cores, for
 example:
 
 >>> multicore_runner = SimpleJobRunner(nslots=4)
 
-For 'GEJobRunner' instances the number of cores is set by specifying
-'-pe smp.pe' as part of the 'ge_extra_args' option, for example:
+For ``GEJobRunner`` instances the number of cores is set by specifying
+the ``-pe`` argument as part of the 'ge_extra_args' option, for example:
 
 >>> multicore_runner = GEJobRunner(extra_ge_args=('-pe','smp.pe','4'))
 
@@ -89,18 +86,18 @@ class BaseJobRunner:
 
     A job runner needs to implement the following methods:
 
-    - run        : starts a job running
-    - terminate  : kills a running job
-    - list       : lists the running job ids
-    - logFile    : returns the name of the log file for a job
-    - errFile    : returns the name of the error file for a job
-    - exit_status: returns the exit status for the command (or
+    - ``run``        : starts a job running
+    - ``terminate``  : kills a running job
+    - ``list``       : lists the running job ids
+    - ``logFile``    : returns the name of the log file for a job
+    - ``errFile``    : returns the name of the error file for a job
+    - ``exit_status``: returns the exit status for the command (or
       None if the job is still running)
 
     Optionally it can also implement the methods:
 
-    - errorState: indicates if running job is in an "error state"
-    - isRunning : checks if a specific job is running
+    - ``errorState``: indicates if running job is in an "error state"
+    - ``isRunning`` : checks if a specific job is running
 
     if the default implementations are not sufficient.
     """
@@ -188,23 +185,19 @@ class BaseJobRunner:
 class SimpleJobRunner(BaseJobRunner):
     """Class implementing job runner for local system
 
-    SimpleJobRunner starts jobs as processes on a local system;
-    the status of jobs is determined using the Linux 'ps eu'
-    command, and jobs are terminated using 'kill -9'.
+    ``SimpleJobRunner`` starts jobs as processes on a local system;
+    the status of jobs is determined using the Linux ``ps eu``
+    command, and jobs are terminated using ``kill -9``.
+
+    Arguments:
+      log_dir: Directory to write log files to (set to 'None' to use
+        CWD)
+      join_logs: Combine stderr and stdout into a single log file (by
+        default stdout and stderr have their own log files)
+      nslots: Number of threads associated with this runner instance
     """
 
     def __init__(self,log_dir=None,join_logs=False,nslots=1):
-        """Create a new SimpleJobRunner instance
-
-        Arguments:
-          log_dir: Directory to write log files to (set to 'None' to use
-                   cwd)
-          join_logs: Combine stderr and stdout into a single log file (by
-                   default stdout and stderr have their own log files)
-          nslots: Number of threads associated with this runner
-                   instance
-
-        """
         # Store a list of job ids (= pids) managed by this class
         self.__job_list = []
         # Names
@@ -432,8 +425,8 @@ class GEJobRunner(BaseJobRunner):
     """Class implementing job runner for Grid Engine
 
     GEJobRunner submits jobs to a Grid Engine cluster using the
-    'qsub' command, determines the status of jobs using 'qstat'
-    and terminates then using 'qdel'.
+    ``qsub`` command, determines the status of jobs using
+    ``qstat`` and terminates them using ``qdel``.
 
     Additionally the runner can be configured for a specific GE
     queue on initialisation.
@@ -441,21 +434,23 @@ class GEJobRunner(BaseJobRunner):
     Each GEJobRunner instance creates a temporary directory which
     it uses for internal admin; this will be removed at program
     exit via 'atexit'.
+
+    Arguments:
+      queue (str): name of GE queue to use (set to 'None' to use
+        default queue)
+      log_dir (str): directory to write log files to (set to 'None'
+        to use CWD)
+      ge_extra_args (list): arbitrary additional arguments to supply
+        to ``qsub``
+      poll_interval (int): time interval (in seconds) to use when
+        polling Grid Engine e.g. to acquire ``qacct`` information
+        (default: 5)
+      timeout (int): maximum length of time (in seconds) to wait
+        before giving up when polling Grid Engine (default: 30)
     """
 
     def __init__(self,queue=None,log_dir=None,ge_extra_args=None,
-                 poll_interval=5.0,timeout=30.0):
-        """Create a new GEJobRunner instance
-
-        Arguments:
-          queue:   Name of GE queue to use (set to 'None' to use default queue)
-          log_dir: Directory to write log files to (set to 'None' to use cwd)
-          ge_extra_args: Arbitrary additional arguments to supply to qsub
-          poll_interval: time interval to use when polling Grid Engine e.g.
-            to acquire qacct information (default 5s)
-          timeout: maximum length of time to wait before giving up when
-            polling Grid Engine (default 30s)
-        """
+                 poll_interval=5,timeout=30):
         # Internal parameters
         self.__admin_dir = self.__make_admin_dir()
         self.__job_count = 0
@@ -1164,9 +1159,9 @@ class SlurmRunner(BaseJobRunner):
     """
     Class implementing job runner for Slurm
 
-    SlurmRunner submits jobs to a Slurm cluster using the 'sbatch'
-    command, determines the status of jobs using 'squeue', and
-    and terminates them using 'scancel'.
+    SlurmRunner submits jobs to a Slurm cluster using the ``sbatch``
+    command, determines the status of jobs using ``squeue``, and
+    and terminates them using ``scancel``.
 
     Additionally the runner can be configured to target a specific
     partition and number of cores on initialisation.
@@ -1190,10 +1185,10 @@ class SlurmRunner(BaseJobRunner):
         Slurm using 'squeue' (seconds) (default: 300.0)
       timeout (int): maximum length of time to wait (in seconds) before
         giving up when submitting jobs to Slurm and finalizing jobs
-        (default: 30.0)
+        (default: 30)
       missing_job_timeout (int): minimum time (in seconds) that a job
         needs to be flagged as "missing" before it's removed from the
-        runner (default: 600.0)
+        runner (default: 600)
     """
 
     def __init__(self, log_dir=None, nslots=None, partition=None,
