@@ -1,13 +1,13 @@
 #######################################################################
-# Tests for SolidData.py module
+# Tests for solid.data.py module
 #######################################################################
 
-import os
+from bcftbx.platforms.solid.data import *
 import unittest
 import io
 import tempfile
 import shutil
-from bcftbx.SolidData import *
+
 
 class TestUtils:
     """Utilities to help with setting up/running tests etc
@@ -415,16 +415,21 @@ All Beads	Totals	409927600	39452331	457541973
         fp.write(u">1_14_622_F3\n33 33 32 -1 29 32 32 11 33 29 26 26 28 32 4 18 24 4 33 23 28 28 28 28 29 15 30 12 30 4 24 32 17 27 8 18 30 7 19 9 18 21 4 32 4 19 5 10 24 4 \n>1_14_1098_F3\n33 33 33 -1 33 33 33 30 33 31 28 31 30 31 29 32 33 31 33 33 27 32 24 33 31 32 31 30 32 24 32 24 31 33 31 33 24 33 10 22 30 25 4 17 22 27 22 28 31 19 \n")
         fp.close()
 
-class TestSolidRunInfo(unittest.TestCase):
-    """Unit tests for SolidRunInfo class.
+
+class TestRunInfo(unittest.TestCase):
+    """
+    Unit tests for RunInfo class.
     """
     def test_flow_cell_one(self):
+        """
+        solid.data.RunInfo: flow cell one
+        """
         instrument = 'solid0123'
         datestamp  = '20130426'
         fragment   = 'FRAG'
         barcode    = 'BC'
         run_name   = instrument+'_'+datestamp+'_'+fragment+'_'+barcode
-        info = SolidRunInfo(run_name)
+        info = RunInfo(run_name)
         self.assertEqual(run_name,info.name)
         self.assertEqual(run_name,info.id)
         self.assertEqual(instrument,info.instrument)
@@ -437,13 +442,16 @@ class TestSolidRunInfo(unittest.TestCase):
         self.assertEqual(str(info),run_name)
 
     def test_flow_cell_two(self):
+        """
+        solid.data.RunInfo: flow cell two
+        """
         instrument = 'solid0123'
         datestamp  = '20130426'
         fragment   = 'FRAG'
         barcode    =  'BC'
         run_id     =  instrument+'_'+datestamp+'_'+fragment+'_'+barcode
         run_name   =  run_id+'_2'
-        info = SolidRunInfo(run_name)
+        info = RunInfo(run_name)
         self.assertEqual(run_name,info.name)
         self.assertEqual(run_id,info.id)
         self.assertEqual(instrument,info.instrument)
@@ -456,12 +464,15 @@ class TestSolidRunInfo(unittest.TestCase):
         self.assertEqual(str(info),run_name)
 
     def test_paired_end(self):
+        """
+        solid.data.RunInfo: paired end
+        """
         instrument = 'solid0123'
         datestamp  = '20130426'
         paired_end = 'PE'
         barcode    = 'BC'
         run_name   = instrument+'_'+datestamp+'_'+paired_end+'_'+barcode
-        info = SolidRunInfo(run_name)
+        info = RunInfo(run_name)
         self.assertEqual(run_name,info.name)
         self.assertEqual(run_name,info.id)
         self.assertEqual(instrument,info.instrument)
@@ -474,19 +485,27 @@ class TestSolidRunInfo(unittest.TestCase):
         self.assertEqual(str(info),run_name)
 
     def test_bad_run_names(self):
-        info = SolidRunInfo('bad_name')
+        """
+        solid.data.RunInfo: handle 'bad' names
+        """
+        info = RunInfo('bad_name')
         self.assertEqual('bad_name',info.name)
-        info = SolidRunInfo('badname')
+        info = RunInfo('badname')
         self.assertEqual('badname',info.name)
 
-class TestSolidLibrary(unittest.TestCase):
-    """Unit tests for SolidLibrary class.
+
+class TestLibrary(unittest.TestCase):
+    """
+    Unit tests for Library class.
     """
     def test_solid_library(self):
+        """
+        solid.data.Library: basic properties
+        """
         sample_name = 'PJB_pool'
         library_name = 'PJB_NY17'
-        sample = SolidSample(sample_name)
-        library = SolidLibrary(library_name,sample)
+        sample = Sample(sample_name)
+        library = Library(library_name,sample)
         self.assertEqual(library_name,library.name)
         self.assertEqual('PJB',library.initials)
         self.assertEqual('PJB_NY',library.prefix)
@@ -499,10 +518,13 @@ class TestSolidLibrary(unittest.TestCase):
         self.assertEqual(library_name,str(library))
 
     def test_solid_library_with_files(self):
+        """
+        solid.data.Library: with files
+        """
         sample_name = 'PJB_pool'
         library_name = 'PJB_NY17'
-        sample = SolidSample(sample_name)
-        library = SolidLibrary(library_name,sample)
+        sample = Sample(sample_name)
+        library = Library(library_name,sample)
         library.csfasta = '/path/to/solid_PJB.csfasta'
         library.qual = '/path/to/solid_PJB_QV.qual'
         self.assertEqual('/path/to/solid_PJB.csfasta',library.csfasta)
@@ -510,33 +532,44 @@ class TestSolidLibrary(unittest.TestCase):
         self.assertEqual(library_name,str(library))
 
     def test_solid_library_with_no_sample(self):
+        """
+        solid.data.Library: no samples
+        """
         library_name = 'PJB_NY17'
-        library = SolidLibrary(library_name)
+        library = Library(library_name)
         self.assertEqual(None,library.parent_sample)
 
     def test_solid_library_indexes(self):
+        """
+        solid.data.Library: handle indexes
+        """
         # No index
         library_name = 'PJB_NY'
-        library = SolidLibrary(library_name)
+        library = Library(library_name)
         self.assertEqual('',library.index_as_string)
         self.assertEqual(None,library.index)
         # Leading zero
         library_name = 'PJB_NY_01'
-        library = SolidLibrary(library_name)
+        library = Library(library_name)
         self.assertEqual('01',library.index_as_string)
         self.assertEqual(1,library.index)
         # Trailing zero
         library_name = 'PJB_NY_10'
-        library = SolidLibrary(library_name)
+        library = Library(library_name)
         self.assertEqual('10',library.index_as_string)
         self.assertEqual(10,library.index)
 
-class TestSolidSample(unittest.TestCase):
-    """Unit tests for SolidSample class.
+
+class TestSample(unittest.TestCase):
+    """
+    Unit tests for Sample class.
     """
     def test_solid_sample(self):
+        """
+        solid.data.Sample: basic properties
+        """
         sample_name = 'PJB_pool'
-        sample = SolidSample(sample_name)
+        sample = Sample(sample_name)
         self.assertEqual(sample_name,sample.name)
         self.assertEqual(None,sample.parent_run)
         self.assertEqual(None,sample.barcode_stats)
@@ -545,123 +578,150 @@ class TestSolidSample(unittest.TestCase):
         self.assertEqual(0,len(sample.projects))
 
     def test_solid_sample_add_library(self):
+        """
+        solid.data.Sample: add libraries
+        """
         sample_name = 'PJB_pool'
-        sample = SolidSample(sample_name)
+        sample = Sample(sample_name)
         self.assertEqual(0,len(sample.libraries))
         # Add first library
-        library = sample.addLibrary('PJB_NY_17')
-        self.assertTrue(isinstance(library,SolidLibrary))
+        library = sample.add_library('PJB_NY_17')
+        self.assertTrue(isinstance(library, Library))
         self.assertEqual(1,len(sample.libraries))
-        self.assertEqual(library,sample.getLibrary('PJB_NY_17'))
+        self.assertEqual(library,sample.get_library('PJB_NY_17'))
         # Add second library
-        library2 = sample.addLibrary('PJB_NY_18')
-        self.assertTrue(isinstance(library2,SolidLibrary))
+        library2 = sample.add_library('PJB_NY_18')
+        self.assertTrue(isinstance(library2, Library))
         self.assertEqual(2,len(sample.libraries))
-        self.assertEqual(library2,sample.getLibrary('PJB_NY_18'))
+        self.assertEqual(library2,sample.get_library('PJB_NY_18'))
         # Add same library again
-        self.assertEqual(library2,sample.addLibrary('PJB_NY_18'))
+        self.assertEqual(library2,sample.add_library('PJB_NY_18'))
         self.assertEqual(2,len(sample.libraries))
         # Fetch non-existent library
-        self.assertEqual(None,sample.getLibrary('PJB_NY_19'))
+        self.assertEqual(None,sample.get_library('PJB_NY_19'))
 
     def test_solid_sample_get_project(self):
+        """
+        solid.data.Sample: get project
+        """
         sample_name = 'PJB_pool'
-        sample = SolidSample(sample_name)
+        sample = Sample(sample_name)
         self.assertEqual(0,len(sample.projects))
         # Add libraries
-        library = sample.addLibrary('PJB_NY_17')
-        library = sample.addLibrary('PJB_NY_18')
+        library = sample.add_library('PJB_NY_17')
+        library = sample.add_library('PJB_NY_18')
         # Fetch project
         self.assertEqual(1,len(sample.projects))
-        project = sample.getProject('PJB')
-        self.assertTrue(isinstance(project,SolidProject))
+        project = sample.get_project('PJB')
+        self.assertTrue(isinstance(project, Project))
         # Fetch non-existant project
-        self.assertEqual(None,sample.getProject('BJP'))
+        self.assertEqual(None,sample.get_project('BJP'))
 
-class TestSolidProject(unittest.TestCase):
-    """Unit tests for SolidProject class
+
+class TestProject(unittest.TestCase):
     """
-
+    Unit tests for Project class
+    """
     def setUp(self):
         # Construct a sample object and populate
         # with libraries
         self.library_names = ['PJB_NY_17',
                               'PJB_NY_18',
                               'PJB_NY_19']
-        self.sample = SolidSample('PJB_pool')
+        self.sample = Sample('PJB_pool')
         for name in self.library_names:
-            self.sample.addLibrary(name)
+            self.sample.add_library(name)
         self.project = self.sample.projects[0]
 
     def test_libraries(self):
-        """Check that library information is correct
+        """
+        solid.data.Project: check library data
         """
         # Correct number of libraries
-        self.assertEqual(len(self.library_names),len(self.project.libraries))
+        self.assertEqual(len(self.library_names),
+                         len(self.project.libraries))
         # Check each library
         for i in range(len(self.library_names)):
-            self.assertTrue(isinstance(self.project.libraries[i],SolidLibrary))
-            self.assertEqual(self.library_names[i],self.project.libraries[i].name)
+            self.assertTrue(isinstance(self.project.libraries[i], Library))
+            self.assertEqual(self.library_names[i],
+                             self.project.libraries[i].name)
 
     def test_get_sample(self):
-        """Test retrieval of parent sample
+        """
+        solid.data.Project: retrieve of parent sample
         """
         # Check for project with parent sample defined
-        self.assertEqual(self.sample,self.project.getSample())
+        self.assertEqual(self.sample, self.project.get_sample())
         # Check for project with no parent sample
-        self.assertEqual(None,SolidProject('No_sample').getSample())
+        self.assertEqual(None, Project('No_sample').get_sample())
 
     def test_get_run(self):
-        """Test retrieval of parent run
         """
-        self.assertEqual(None,self.project.getRun())
+        solid.data.Project: retrieve parent run
+        """
+        self.assertEqual(None, self.project.get_run())
 
     def test_is_barcoded(self):
-        """Test check on whether all libraries in the project are barcoded
+        """
+        solid.data.Project: check if all libraries are barcoded
         """
         # Check test project
-        self.assertFalse(self.project.isBarcoded())
+        self.assertFalse(self.project.is_barcoded())
         # Alter libraries in project so all have barcode flag set
         for lib in self.project.libraries:
             lib.is_barcoded = True
-        self.assertTrue(self.project.isBarcoded())
+        self.assertTrue(self.project.is_barcoded())
         # Check with empty project (i.e. no libraries)
-        self.assertFalse(SolidProject('No_libraries').isBarcoded())
+        self.assertFalse(Project('No_libraries').is_barcoded())
 
     def test_get_library_name_pattern(self):
-        """Test generation of pattern for library names in the project
         """
-        self.assertEqual('PJB_NY_1*',self.project.getLibraryNamePattern())
+        solid.data.Project: generate pattern for library names
+        """
+        self.assertEqual('PJB_NY_1*',
+                         self.project.get_library_name_pattern())
 
     def test_get_project_name(self):
-        """Test the name assigned to the project
         """
-        self.assertEqual('PJB_pool',self.project.getProjectName())
+        solid.data.Project: check assigned project name
+        """
+        self.assertEqual('PJB_pool', self.project.get_project_name())
 
     def test_pretty_print_libraries(self):
-        """Test wrapper to pretty_print_libraries
         """
-        self.assertEqual('PJB_NY_17-19',self.project.prettyPrintLibraries())
+        solid.data.Project: pretty print libraries
+        """
+        self.assertEqual('PJB_NY_17-19',self.project.pretty_print_libraries())
 
-class TestSolidRunDefinition(unittest.TestCase):
-    """Unit tests for SolidRunDefinition class.
+
+class TestRunDefinition(unittest.TestCase):
     """
-
+    Unit tests for RunDefinition class.
+    """
     def setUp(self):
         self.tmp_defn_file = TestUtils().make_run_definition_file()
-        self.run_defn = SolidRunDefinition(self.tmp_defn_file)
+        self.run_defn = RunDefinition(self.tmp_defn_file)
 
     def tearDown(self):
         os.remove(self.tmp_defn_file)
 
-    def test_solid_run_definition(self):
-        self.assertTrue(isinstance(self.run_defn,SolidRunDefinition))
+    def test_run_definition(self):
+        """
+        solid.data.RunDefinition: basic properties
+        """
+        self.assertTrue(isinstance(self.run_defn, RunDefinition))
         self.assertTrue(self.run_defn)
 
-    def test_nsamples(self):
-        self.assertEqual(12,self.run_defn.nSamples())
+    def test_run_definition_n_samples(self):
+        """
+        solid.data.RunDefinition: basic properties
+        """
+        self.assertEqual(12,self.run_defn.n_samples())
 
-    def test_attributes(self):
+    def test_run_definition_attributes(self):
+        """
+        solid.data.RunDefinition: check attributes
+        """
         self.assertEqual(self.run_defn.version,'v0.0')
         self.assertEqual(self.run_defn.userId,'user')
         self.assertEqual(self.run_defn.runType,'FRAGMENT')
@@ -671,7 +731,10 @@ class TestSolidRunDefinition(unittest.TestCase):
         self.assertEqual(self.run_defn.mask,'1_spot_mask_sf')
         self.assertEqual(self.run_defn.protocol,'SOLiD4 Multiplex')
 
-    def test_fields(self):
+    def test_run_definition_fields(self):
+        """
+        solid.data.RunDefinition: check fields
+        """
         self.assertEqual(['sampleName',
                           'sampleDesc',
                           'spotAssignments',
@@ -683,55 +746,70 @@ class TestSolidRunDefinition(unittest.TestCase):
                           'barcodes'],
                          self.run_defn.fields())
 
-    def test_get_data_item(self):
+    def test_run_definition_get_data_item(self):
+        """
+        solid.data.RunDefinition: get data items
+        """
         # Check first line
         self.assertEqual('AB_CD_EF_pool',
-                         self.run_defn.getDataItem('sampleName',0))
+                         self.run_defn.get_data_item('sampleName',0))
         self.assertEqual('CD_UV5',self.
-                         run_defn.getDataItem('library',0))
+                         run_defn.get_data_item('library',0))
         self.assertEqual('mm9',
-                         self.run_defn.getDataItem('secondaryAnalysis',0))
+                         self.run_defn.get_data_item('secondaryAnalysis',0))
         # Check line in middle
         self.assertEqual('AB_CD_EF_pool',
-                         self.run_defn.getDataItem('sampleName',4))
+                         self.run_defn.get_data_item('sampleName',4))
         self.assertEqual('EF12',
-                         self.run_defn.getDataItem('library',4))
+                         self.run_defn.get_data_item('library',4))
         self.assertEqual('dm5',
-                         self.run_defn.getDataItem('secondaryAnalysis',4))
+                         self.run_defn.get_data_item('secondaryAnalysis',4))
         # Check non-existent line
         self.assertRaises(IndexError,
-                          self.run_defn.getDataItem,'sampleName',12)
+                          self.run_defn.get_data_item,'sampleName',12)
         # Check non-existent field
         self.assertEqual(None,
-                         self.run_defn.getDataItem('tertiaryAnalysis',0))
+                         self.run_defn.get_data_item('tertiaryAnalysis',0))
         self.assertEqual(None,
-                         self.run_defn.getDataItem('tertiaryAnalysis',12))
+                         self.run_defn.get_data_item('tertiaryAnalysis',12))
 
     def test_nonexistent_run_definition_file(self):
-        """Check failure mode when run definition file is missing
         """
-        run_defn = SolidRunDefinition("i_dont_exist")
+        solid.data.RunDefinition: missing run definition file
+        """
+        run_defn = RunDefinition("i_dont_exist")
         self.assertFalse(run_defn)
 
-class TestSolidBarcodeStatistics(unittest.TestCase):
-    """Unit tests for SolidBarcodeStatistics class.
+
+class TestBarcodeStatistics(unittest.TestCase):
+    """
+    Unit tests for BarcodeStatistics class.
     """
 
     def setUp(self):
         self.tmp_stats_file = TestUtils().make_barcode_statistics_file()
-        self.stats = SolidBarcodeStatistics(self.tmp_stats_file)
+        self.stats = BarcodeStatistics(self.tmp_stats_file)
 
     def tearDown(self):
         os.remove(self.tmp_stats_file)
 
-    def test_solid_barcode_statistics(self):
-        self.assertTrue(isinstance(self.stats,SolidBarcodeStatistics))
+    def test_barcode_statistics(self):
+        """
+        solid.data.BarcodeStatistics: basic properties
+        """
+        self.assertTrue(isinstance(self.stats, BarcodeStatistics))
         self.assertTrue(self.stats)
 
-    def test_nRows(self):
-        self.assertEqual(31,self.stats.nRows())
+    def test_barcode_statistics_n_rows(self):
+        """
+        solid.data.BarcodeStatistics: number of rows
+        """
+        self.assertEqual(31,self.stats.n_rows())
 
-    def test_header(self):
+    def test_barcode_statistics_header(self):
+        """
+        solid.data.BarcodeStatistics: header
+        """
         self.assertEqual(['Library',
                           'Barcode',
                           '0 Mismatches',
@@ -739,46 +817,59 @@ class TestSolidBarcodeStatistics(unittest.TestCase):
                           'Total'],
                          self.stats.header)
 
-    def test_get_data_by_name(self):
+    def test_barcode_statistics_get_data_by_name(self):
+        """
+        solid.data.BarcodeStatistics: get data by name
+        """
         # Check "All Beads" line
         self.assertEqual(['All Beads',
                           'Totals',
                           '409927600',
                           '39452331',
                           '457541973'],
-                         self.stats.getDataByName('All Beads'))
+                         self.stats.get_data_by_name('All Beads'))
         # Check non-existent line
-        self.assertEqual(None,self.stats.getDataByName('All beads'))
+        self.assertEqual(None,self.stats.get_data_by_name('All beads'))
 
-    def test_total_reads(self):
-        """Check total number of reads
+    def test_barcode_statistics_total_reads(self):
+        """
+        solid.data.BarcodeStatistics: total number of reads
         """
         # Total number for this example is 446268790
-        self.assertEqual(446268790,self.stats.totalReads())
+        self.assertEqual(446268790,self.stats.total_reads())
 
-    def test_nonexistent_barcode_stats_file(self):
-        """Check failure mode when barcode statistics file is missing
+    def test_barcode_statistics_nonexistent_barcode_stats_file(self):
         """
-        stats = SolidBarcodeStatistics("i_dont_exist")
+        solid.data.BarcodeStatistics: missing barcode statistics
+        """
+        stats = BarcodeStatistics("i_dont_exist")
         self.assertFalse(stats)
 
-class TestSolidRun(unittest.TestCase):
-    """Unit tests for SolidRun class.
+
+class TestRunDir(unittest.TestCase):
+    """
+    Unit tests for RunDir class.
     """
     def setUp(self):
         # Set up a mock SOLiD directory structure
         self.solid_test_dir = \
             TestUtils().make_solid_dir('solid0123_20130426_FRAG_BC')
-        # Create a SolidRun object for tests
-        self.solid_run = SolidRun(self.solid_test_dir)
+        # Create a RunDir object for tests
+        self.solid_run = RunDir(self.solid_test_dir)
 
     def tearDown(self):
         shutil.rmtree(self.solid_test_dir)
 
-    def test_solid_run(self):
+    def test_run(self):
+        """
+        solid.data.RunDir: basic check
+        """
         self.assertTrue(self.solid_run)
 
-    def test_libraries_are_assigned(self):
+    def test_run_libraries_are_assigned(self):
+        """
+        solid.data.RunDir: check libraries are assigned
+        """
         for sample in self.solid_run.samples:
             for library in sample.libraries:
                 # Check names were assigned to data files
@@ -790,14 +881,20 @@ class TestSolidRun(unittest.TestCase):
                 self.assertEqual(None,library.csfasta_f5)
                 self.assertEqual(None,library.qual_f5)
 
-    def test_library_files_in_same_location(self):
+    def test_run_library_files_in_same_location(self):
+        """
+        solid.data.RunDir: check libraries locations are correct
+        """
         for sample in self.solid_run.samples:
             for library in sample.libraries:
                 # Check they're in the same location as each other
                 self.assertEqual(os.path.dirname(library.csfasta),
                                  os.path.dirname(library.qual))
 
-    def test_library_parent_dir_has_reject(self):
+    def test_run_library_parent_dir_has_reject(self):
+        """
+        solid.data.RunDir: check library parent dir has 'reject' subdir
+        """
         for sample in self.solid_run.samples:
             for library in sample.libraries:
                 # Check that the parent dir also has "reject" dir
@@ -805,62 +902,77 @@ class TestSolidRun(unittest.TestCase):
                         os.path.join(os.path.dirname(library.csfasta),
                                      '..','reject')))
 
-    def test_fetch_libraries(self):
-        """Retrieve libraries based on sample and library names
+    def test_run_fetch_libraries(self):
+        """
+        solid.data.RunDir: retrieve libraries
         """
         # Defaults should retrieve everything
-        libraries = self.solid_run.fetchLibraries()
+        libraries = self.solid_run.fetch_libraries()
         self.assertEqual(len(libraries),12)
         for lib in libraries:
             self.assertEqual(libraries.count(lib),1)
         # "Bad" sample name shouldn't retrieve anything
-        libraries = self.solid_run.fetchLibraries(sample_name='XY_PQ_VW_pool',library_name='*')
+        libraries = self.solid_run.fetch_libraries(
+            sample_name='XY_PQ_VW_pool',library_name='*')
         self.assertEqual(len(libraries),0)
         # Specify exact sample and library names
-        libraries = self.solid_run.fetchLibraries(sample_name='AB_CD_EF_pool',library_name='AB_A1M1')
+        libraries = self.solid_run.fetch_libraries(
+            sample_name='AB_CD_EF_pool',library_name='AB_A1M1')
         self.assertEqual(len(libraries),1)
         self.assertEqual(libraries[0].name,'AB_A1M1')
         # Specify wildcard library name
-        libraries = self.solid_run.fetchLibraries(sample_name='AB_CD_EF_pool',library_name='AB_*')
+        libraries = self.solid_run.fetch_libraries(
+            sample_name='AB_CD_EF_pool',library_name='AB_*')
         self.assertEqual(len(libraries),4)
         for lib in libraries:
             self.assertTrue(str(lib.name).startswith('AB_'))
             self.assertEqual(libraries.count(lib),1)
         # Specify wildcard sample and library name
-        libraries = self.solid_run.fetchLibraries(sample_name='*',library_name='AB_*')
+        libraries = self.solid_run.fetch_libraries(
+            sample_name='*',library_name='AB_*')
         self.assertEqual(len(libraries),4)
         for lib in libraries:
             self.assertTrue(str(lib.name).startswith('AB_'))
             self.assertEqual(libraries.count(lib),1)
 
-    def test_slide_layout(self):
-        """Check slide layout information
+    def test_run_slide_layout(self):
         """
-        self.assertEqual(self.solid_run.slideLayout(),"Whole slide")
+        solid.data.RunDir: check slide layout information
+        """
+        self.assertEqual(self.solid_run.slide_layout(),"Whole slide")
 
-    def test_nonexistent_solid_run_dir(self):
-        """Check failure mode when SOLiD run directory is missing
+    def test_run_nonexistent_solid_run_dir(self):
         """
-        solid_run = SolidRun("/i/dont/exist/solid0123_20131013_FRAG_BC")
+        solid.data.RunDir: missing SOLiD run directory
+        """
+        solid_run = RunDir("/i/dont/exist/solid0123_20131013_FRAG_BC")
         self.assertFalse(solid_run)
 
-class TestSolidRunPairedEnd(unittest.TestCase):
-    """Unit tests for SolidRun class for paired-end run data.
+
+class TestRunDirPairedEnd(unittest.TestCase):
+    """
+    Unit tests for RunDir class for paired-end run data.
     """
     def setUp(self):
         # Set up a mock SOLiD directory structure
         self.solid_test_dir = \
             TestUtils().make_solid_dir_paired_end('solid0123_20130426_PE_BC')
-        # Create a SolidRun object for tests
-        self.solid_run = SolidRun(self.solid_test_dir)
+        # Create a RunDir object for tests
+        self.solid_run = RunDir(self.solid_test_dir)
 
     def tearDown(self):
         shutil.rmtree(self.solid_test_dir)
 
-    def test_solid_run(self):
+    def test_paired_end_run(self):
+        """
+        solid.data.RunDir: paired end run
+        """
         self.assertTrue(self.solid_run)
 
-    def test_libraries_are_assigned(self):
+    def test_paired_end_run_libraries_are_assigned(self):
+        """
+        solid.data.RunDir: libraries are assigned for paired end run
+        """
         for sample in self.solid_run.samples:
             for library in sample.libraries:
                 # Check names were assigned to data files
@@ -880,7 +992,10 @@ class TestSolidRunPairedEnd(unittest.TestCase):
                 self.assertTrue(library.csfasta_f5.rfind("_F5-BC_") > -1)
                 self.assertTrue(library.qual_f5.rfind("_F5-BC_") > -1)
 
-    def test_library_files_in_same_location(self):
+    def test_paired_end_run_library_files_in_same_location(self):
+        """
+        solid.data.RunDir: library files in same location for paired end run
+        """
         for sample in self.solid_run.samples:
             for library in sample.libraries:
                 # Check they're in the same location as each other
@@ -889,7 +1004,10 @@ class TestSolidRunPairedEnd(unittest.TestCase):
                 self.assertEqual(os.path.dirname(library.csfasta_f5),
                                  os.path.dirname(library.qual_f5))
 
-    def test_library_parent_dir_has_reject(self):
+    def test_paired_end_run_library_parent_dir_has_reject(self):
+        """
+        solid.data.RunDir: library parent dir has "reject" dir for paired end run
+        """
         for sample in self.solid_run.samples:
             for library in sample.libraries:
                 # Check that the parent dirs also has "reject" dir
@@ -900,36 +1018,43 @@ class TestSolidRunPairedEnd(unittest.TestCase):
                         os.path.join(os.path.dirname(library.csfasta_f5),
                                      '..','reject')))
 
-    def test_fetch_libraries(self):
-        """Retrieve libraries based on sample and library names
+    def test_paired_end_run_fetch_libraries(self):
+        """
+        solid.data.RunDir: retrieve libraries for paired end run
         """
         # Defaults should retrieve everything
-        libraries = self.solid_run.fetchLibraries()
+        libraries = self.solid_run.fetch_libraries()
         self.assertEqual(len(libraries),11)
         for lib in libraries:
             self.assertEqual(libraries.count(lib),1)
         # "Bad" sample name shouldn't retrieve anything
-        libraries = self.solid_run.fetchLibraries(sample_name='XY_PQ_VW_pool',library_name='*')
+        libraries = self.solid_run.fetch_libraries(
+            sample_name='XY_PQ_VW_pool',library_name='*')
         self.assertEqual(len(libraries),0)
         # Specify exact sample and library names
-        libraries = self.solid_run.fetchLibraries(sample_name='AB_CD_pool',library_name='AB_SEQ26')
+        libraries = self.solid_run.fetch_libraries(
+            sample_name='AB_CD_pool',library_name='AB_SEQ26')
         self.assertEqual(len(libraries),1)
         self.assertEqual(libraries[0].name,'AB_SEQ26')
         # Specify wildcard library name
-        libraries = self.solid_run.fetchLibraries(sample_name='AB_CD_pool',library_name='AB_*')
+        libraries = self.solid_run.fetch_libraries(sample_name='AB_CD_pool',
+                                                   library_name='AB_*')
         self.assertEqual(len(libraries),8)
         for lib in libraries:
             self.assertTrue(str(lib.name).startswith('AB_'))
             self.assertEqual(libraries.count(lib),1)
         # Specify wildcard sample and library name
-        libraries = self.solid_run.fetchLibraries(sample_name='*',library_name='AB_*')
+        libraries = self.solid_run.fetch_libraries(sample_name='*',
+                                                   library_name='AB_*')
         self.assertEqual(len(libraries),8)
         for lib in libraries:
             self.assertTrue(str(lib.name).startswith('AB_'))
             self.assertEqual(libraries.count(lib),1)
 
-class TestSolidRunDifferentDirName(unittest.TestCase):
-    """Unit tests for SolidRun class when directory name doesn't match run name.
+
+class TestRunDirDifferentDirName(unittest.TestCase):
+    """
+    Unit tests for RunDir class when directory name doesn't match run name.
     """
     def setUp(self):
         # Set up a mock SOLiD directory structure
@@ -941,15 +1066,20 @@ class TestSolidRunDifferentDirName(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.solid_test_dir)
 
-    def test_solid_run(self):
-        # Create a SolidRun
-        self.solid_run = SolidRun(self.solid_test_dir)
+    def test_solid_run_different_dir_name(self):
+        """
+        solid.data.RunDir: directory name doesn't match run name
+        """
+        # Create a RunDir
+        self.solid_run = RunDir(self.solid_test_dir)
         self.assertTrue(self.solid_run)
         # Check the run name
         self.assertEqual(self.solid_run.run_name,'solid0123_20130426_FRAG_BC')
 
-class TestVerifySolidRun(unittest.TestCase):
-    """Unit tests for SolidRun.verify method
+
+class TestRunDirVerify(unittest.TestCase):
+    """
+    Unit tests for RunDir.verify method
     """
     def setUp(self):
         # Set up a mock SOLiD directory structure
@@ -958,25 +1088,36 @@ class TestVerifySolidRun(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.solid_test_dir)
 
-    def test_verify(self):
-        self.assertTrue(SolidRun(self.solid_test_dir).verify())
+    def test_run_verify(self):
+        """
+        solid.data.RunDir: test 'verify'
+        """
+        self.assertTrue(RunDir(self.solid_test_dir).verify())
 
-    def test_verify_missing_csfasta(self):
+    def test_run_verify_missing_csfasta(self):
+        """
+        solid.data.RunDir: test 'verify' (missing .csfasta file)
+        """
         # Remove some files
-        solid_run = SolidRun(self.solid_test_dir)
+        solid_run = RunDir(self.solid_test_dir)
         os.remove(solid_run.samples[0].libraries[0].csfasta)
         # Test
-        self.assertFalse(SolidRun(self.solid_test_dir).verify())
+        self.assertFalse(RunDir(self.solid_test_dir).verify())
 
-    def test_verify_missing_qual(self):
+    def test_run_verify_missing_qual(self):
+        """
+        solid.data.RunDir: test 'verify' (missing .qual file)
+        """
         # Remove some files
-        solid_run = SolidRun(self.solid_test_dir)
+        solid_run = RunDir(self.solid_test_dir)
         os.remove(solid_run.samples[0].libraries[0].qual)
         # Test
-        self.assertFalse(SolidRun(self.solid_test_dir).verify())
+        self.assertFalse(RunDir(self.solid_test_dir).verify())
 
-class TestVerifySolidRunPairedEnd(unittest.TestCase):
-    """Unit tests for SolidRun.verify method for paired-end data
+
+class TestRunDirVerifyPairedEnd(unittest.TestCase):
+    """
+    Unit tests for RunDir.verify method for paired-end data
     """
     def setUp(self):
         # Set up a mock SOLiD directory structure
@@ -986,46 +1127,64 @@ class TestVerifySolidRunPairedEnd(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.solid_test_dir)
 
-    def test_verify(self):
-        self.assertTrue(SolidRun(self.solid_test_dir).verify())
+    def test_run_verify(self):
+        """
+        solid.data.RunDir: test 'verify' with paired end data
+        """
+        self.assertTrue(RunDir(self.solid_test_dir).verify())
 
-    def test_verify_missing_csfasta(self):
+    def test_run_verify_missing_csfasta(self):
+        """
+        solid.data.RunDir: test 'verify' with paired end data (missing .csfasta)
+        """
         # Remove some files
-        solid_run = SolidRun(self.solid_test_dir)
+        solid_run = RunDir(self.solid_test_dir)
         os.remove(solid_run.samples[0].libraries[0].csfasta)
         # Test
-        self.assertFalse(SolidRun(self.solid_test_dir).verify())
+        self.assertFalse(RunDir(self.solid_test_dir).verify())
 
-    def test_verify_missing_qual(self):
+    def test_run_verify_missing_qual(self):
+        """
+        solid.data.RunDir: test 'verify' with paired end data (missing .qual)
+        """
         # Remove some files
-        solid_run = SolidRun(self.solid_test_dir)
+        solid_run = RunDir(self.solid_test_dir)
         os.remove(solid_run.samples[0].libraries[0].qual)
         # Test
-        self.assertFalse(SolidRun(self.solid_test_dir).verify())
+        self.assertFalse(RunDir(self.solid_test_dir).verify())
 
-class TestSolidRunNoRunDefinition(unittest.TestCase):
-    """Unit tests for SolidRun class when directory doesn't have RunDefinition file.
+
+class TestRunDirNoRunDefinition(unittest.TestCase):
+    """
+    Unit tests for RunDir class when directory doesn't have RunDefinition
+    file.
     """
     def setUp(self):
         # Set up a mock SOLiD directory structure
         self.solid_test_dir = TestUtils().make_solid_dir('solid0123_20130426_FRAG_BC')
         # Remove RunDefinition file
-        os.remove(os.path.join(self.solid_test_dir,
-                               'solid0123_20130426_FRAG_BC_run_definition.txt'))
+        os.remove(os.path.join(
+            self.solid_test_dir,
+            'solid0123_20130426_FRAG_BC_run_definition.txt'))
 
     def tearDown(self):
         shutil.rmtree(self.solid_test_dir)
 
-    def test_solid_run_with_no_run_definition(self):
-        # Create a SolidRun
-        self.solid_run = SolidRun(self.solid_test_dir)
+    def test_run_with_no_run_definition(self):
+        """
+        solid.data.RunDir: missing run definition file
+        """
+        # Create a RunDir
+        self.solid_run = RunDir(self.solid_test_dir)
         self.assertTrue(self.solid_run)
         # Check the run name
-        self.assertEqual(self.solid_run.run_name,'solid0123_20130426_FRAG_BC')
+        self.assertEqual(self.solid_run.run_name,
+                         'solid0123_20130426_FRAG_BC')
         # Check the paired-ended-ness
         self.assertFalse(self.solid_run.is_paired_end)
 
-class TestSolidRunNotASolidRunDir(unittest.TestCase):
+
+class TestRunDirNotASolidRunDir(unittest.TestCase):
     def setUp(self):
         # Set up a non-SOLiD directory structure
         self.test_dir = tempfile.mkdtemp()
@@ -1038,34 +1197,48 @@ class TestSolidRunNotASolidRunDir(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.test_dir)
 
-    def test_not_a_solid_run_dir(self):
-        # Create a SolidRun
-        self.solid_run = SolidRun(self.test_dir)
+    def test_run_not_a_solid_run_dir(self):
+        """
+        solid.data.RunDir: try to load a non-SOLiD run directory
+        """
+        # Create a RunDir
+        self.solid_run = RunDir(self.test_dir)
         self.assertFalse(self.solid_run)
 
+
 class TestFunctions(unittest.TestCase):
-    """Unit tests for module functions.
+    """
+    Unit tests for module functions.
     """
     def test_is_paired_end(self):
+        """
+        solid.data.is_paired_end: check returns correct values
+        """
         # Test with non-paired end mock SOLiD directory
-        self.solid_test_dir = TestUtils().make_solid_dir('solid0123_20130426_FRAG_BC')
-        self.solid_run = SolidRun(self.solid_test_dir)
+        self.solid_test_dir = TestUtils().make_solid_dir(
+            'solid0123_20130426_FRAG_BC')
+        self.solid_run = RunDir(self.solid_test_dir)
         self.assertFalse(is_paired_end(self.solid_run))
         shutil.rmtree(self.solid_test_dir)
         # Test with paired end mock SOLiD directory
-        self.solid_test_dir = TestUtils().make_solid_dir_paired_end('solid0123_20130426_PE_BC')
-        self.solid_run = SolidRun(self.solid_test_dir)
+        self.solid_test_dir = TestUtils().make_solid_dir_paired_end(
+            'solid0123_20130426_PE_BC')
+        self.solid_run = RunDir(self.solid_test_dir)
         self.assertTrue(is_paired_end(self.solid_run))
         shutil.rmtree(self.solid_test_dir)
 
     def test_extract_library_timestamp(self):
+        """
+        solid.data.extract_library_timestamp: check timestamp is extracted
+        """
         self.assertEqual(extract_library_timestamp("/path/to/data/solid0123_20120712_FRAG_BC/AB_CD_EF_POOL/results.F1B1/libraries/AB2/primary.20120705075541493"),'20120705075541493')
         self.assertEqual(extract_library_timestamp("/path/to/data/solid0123_20120712_FRAG_BC/AB_CD_EF_POOL/results.F1B1/libraries/AB2/primary.20120705075541493/"),'20120705075541493')
         self.assertEqual(extract_library_timestamp("/path/to/data/solid0123_20120712_FRAG_BC/AB_CD_EF_POOL/results.F1B1/libraries/AB2/primary.20120705075541493/reads"),'20120705075541493')
         self.assertEqual(extract_library_timestamp("/path/to/data/solid0123_20120712_FRAG_BC/AB_CD_EF_POOL/results.F1B1/libraries/AB2"),None)
 
     def test_slide_layout(self):
-        """Check descriptions for slide layout based on number of samples
+        """
+        solid.data.slide_layout: check slide layout descriptions
         """
         self.assertEqual("Whole slide",slide_layout(1))
         self.assertEqual("Quads",slide_layout(4))
@@ -1073,13 +1246,3 @@ class TestFunctions(unittest.TestCase):
         # Example of "bad" numbers of sample
         self.assertEqual(None,slide_layout(7))
         self.assertEqual(None,slide_layout("porkchops"))
-
-#######################################################################
-# Main program
-#######################################################################
-
-if __name__ == "__main__":
-    # Turn off most logging output for tests
-    logging.getLogger().setLevel(logging.CRITICAL)
-    # Run tests
-    unittest.main()
