@@ -2,6 +2,24 @@ Version History and Changes
 ===========================
 
 ---------------------------
+Version 1.14.0 (2025-05-07)
+---------------------------
+
+* bcftbx/JobRunner: new job runner class 'SlurmRunner' (for
+  Slurm-based compute clusters)
+  https://github.com/fls-bioinformatics-core/genomics/pull/226
+* CI testing: drop support for Python 3.6 and 3.7, add support
+  for 3.11 and 3.12
+  https://github.com/fls-bioinformatics-core/genomics/pull/229
+* bcftbx/simple_xls: fix compatibility bug with Xlsxwrtiter 3.2.2
+  https://github.com/fls-bioinformatics-core/genomics/pull/227
+* bcftbx/platforms: refactor from module to a subpackage
+  https://github.com/fls-bioinformatics-core/genomics/pull/220
+* bcftbx/platforms: add data on sequencer run completion files
+  bcftbx/IlluminaData: add 'property' method to 'IlluminaRun'
+  https://github.com/fls-bioinformatics-core/genomics/pull/217
+
+---------------------------
 Version 1.13.1 (2023-12-19)
 ---------------------------
 
