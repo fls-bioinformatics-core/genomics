@@ -377,6 +377,16 @@ class TestSequenceIdentifier(unittest.TestCase):
         self.assertFalse(SequenceIdentifier(seqid1).is_pair_of(SequenceIdentifier(seqid1)))
         self.assertFalse(SequenceIdentifier(seqid3).is_pair_of(SequenceIdentifier(seqid1)))
 
+    def test_handle_r1_r2_r3_pair_id(self):
+        """Check that R1/R2/R3 sequence identifiers have correct pair ID
+        """
+        seqid1 = "@HWI-700511R:183:D2C8UACXX:1:1101:1115:2123 1:N:0:GCCAAT"
+        seqid2 = "@HWI-700511R:183:D2C8UACXX:1:1101:1115:2123 2:N:0:GCCAAT"
+        seqid3 = "@HWI-700511R:183:D2C8UACXX:1:1101:1115:2123 3:N:0:GCCAAT"
+        self.assertEqual(SequenceIdentifier(seqid1).pair_id, "1")
+        self.assertEqual(SequenceIdentifier(seqid2).pair_id, "2")
+        self.assertEqual(SequenceIdentifier(seqid3).pair_id, "3")
+
 class TestFastqAttributes(unittest.TestCase):
     """Tests of the FastqAttributes class
     """

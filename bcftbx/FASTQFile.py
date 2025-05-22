@@ -1,5 +1,5 @@
 #     FASTQFile.py: read and manipulate FASTQ files and data
-#     Copyright (C) University of Manchester 2012-2020 Peter Briggs
+#     Copyright (C) University of Manchester 2012-2025 Peter Briggs
 #
 ########################################################################
 #
@@ -46,7 +46,7 @@ import itertools
 
 # Match Illumina 1.8+ format, e.g.:
 # @EAS139:136:FC706VJ:2:2104:15343:197393 1:Y:18:ATCACG
-RE_ILLUMINA18 = re.compile(r"^@([^:]+):([0-9]+):([^:]+):([0-9]+):([0-9]+):([0-9]+):([0-9]+) (1|2):(Y|N):([0-9]+):(.*)$")
+RE_ILLUMINA18 = re.compile(r"^@([^:]+):([0-9]+):([^:]+):([0-9]+):([0-9]+):([0-9]+):([0-9]+) (1|2|3):(Y|N):([0-9]+):(.*)$")
 #
 # Match  earlier Illumina format (1.3/1.5), e.g.:
 # @HWUSI-EAS100R:6:73:941:1973#0/1
