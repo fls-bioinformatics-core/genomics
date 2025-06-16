@@ -28,7 +28,6 @@ setup(name = "genomics-bcftbx",
       packages = ['bcftbx',
                   'bcftbx.cli',
                   'bcftbx.platforms',
-                  'bcftbx.platforms.solid',
                   'bcftbx.qc'],
       license = 'AFL-3',
       # Pull in dependencies
