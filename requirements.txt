@@ -1,4 +1,4 @@
 xlwt>=0.7.2
 xlrd>=0.7.1
 xlutils>=1.4.1
-xlsxwriter>=0.8.4
+xlsxwriter>=0.8.4,<=3.2.2
