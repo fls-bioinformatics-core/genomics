@@ -43,10 +43,10 @@ import io
 import shutil
 import gzip
 import argparse
-from .IlluminaData import IlluminaFastq
-from .IlluminaData import SampleSheet
-from .TabFile import TabFile
+from .platforms.illumina.utils import IlluminaFastq
+from .platforms.illumina.samplesheet import SampleSheet
 from .platforms import get_run_completion_files
+from .TabFile import TabFile
 from .utils import OrderedDictionary
 from .utils import mkdir
 
