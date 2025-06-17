@@ -43,6 +43,7 @@ The module also provides the following utility function:
 #######################################################################
 
 import os
+import sys
 import logging
 from ... import TabFile
 from ...utils import OrderedDictionary
