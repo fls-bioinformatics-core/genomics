@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #     split_fastq.py: split Fastq by lane
-#     Copyright (C) University of Manchester 2018-2021 Peter Briggs
+#     Copyright (C) University of Manchester 2018-2025 Peter Briggs
 #
 
 #######################################################################
@@ -13,8 +13,8 @@ import argparse
 import re
 import os
 import io
-from ..IlluminaData import IlluminaFastq
-from ..IlluminaData import IlluminaDataError
+from ..platforms.illumina.utils import IlluminaFastq
+from ..platforms.illumina.exceptions import IlluminaError
 from ..utils import parse_lanes
 from ..ngsutils import getreads
 from ..ngsutils import getreads_regex
@@ -92,7 +92,7 @@ def output_fastq_name(fastq,lane):
         fastq_name = IlluminaFastq(fastq)
         fastq_name.lane_number = int(lane)
         return "%s.fastq" % fastq_name
-    except IlluminaDataError:
+    except IlluminaError:
         # Non-standard name
         return "%s.L%03d.fastq" % (os.path.basename(fastq),
                                     lane)
