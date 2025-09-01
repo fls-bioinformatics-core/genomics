@@ -69,6 +69,7 @@ class TestRunDir(unittest.TestCase):
         self.assertEqual(run.bcl_extension, ".bcl")
         self.assertEqual(run.lanes, [1,])
         self.assertEqual(run.cycles, 218)
+        self.assertEqual(run.platform, "miseq")
 
     def test_rundir_hiseq(self):
         """
@@ -109,6 +110,7 @@ class TestRunDir(unittest.TestCase):
         self.assertEqual(run.bcl_extension, ".bcl.gz")
         self.assertEqual(run.lanes, [1,2,3,4,5,6,7,8])
         self.assertEqual(run.cycles, 218)
+        self.assertEqual(run.platform, "hiseq")
 
     def test_rundir_nextseq(self):
         """
@@ -146,6 +148,7 @@ class TestRunDir(unittest.TestCase):
         self.assertEqual(run.bcl_extension, ".bcl.bgzf")
         self.assertEqual(run.lanes, [1,2,3,4])
         self.assertEqual(run.cycles, 158)
+        self.assertEqual(run.platform, "nextseq")
 
     def test_rundir_novaseq(self):
         """
@@ -153,7 +156,7 @@ class TestRunDir(unittest.TestCase):
         """
         # Make a mock run directory for NovaSeq format
         self.mock_illumina_run = MockIlluminaRun(
-            '221125_A500968_0038_ABCDE1XX',
+            '221125_A50096_0038_ABCDE1XX',
             'novaseq',
             top_dir=self.top_dir)
         self.mock_illumina_run.create()
@@ -174,8 +177,8 @@ class TestRunDir(unittest.TestCase):
         self.assertEqual(run.sample_sheet, None)
         self.assertTrue(isinstance(run.runinfo, RunInfo))
         self.assertEqual(run.runinfo.run_id,
-                         '221125_A500968_0038_ABCDE1XX')
-        self.assertEqual(run.runinfo.instrument, 'A500968')
+                         '221125_A50096_0038_ABCDE1XX')
+        self.assertEqual(run.runinfo.instrument, 'A50096')
         self.assertEqual(run.runinfo.date, '221125')
         self.assertEqual(run.runinfo.run_number, '0038')
         self.assertEqual(run.runinfo.flowcell, 'BCDE1XX')
@@ -184,6 +187,7 @@ class TestRunDir(unittest.TestCase):
         self.assertEqual(run.bcl_extension, ".bcl.bgzf")
         self.assertEqual(run.lanes, [1,2])
         self.assertEqual(run.cycles, 158)
+        self.assertEqual(run.platform, "novaseq6000")
 
     def test_rundir_missing_directory(self):
         """

@@ -63,6 +63,7 @@ from ... import utils
 from .samplesheet import SampleSheet
 from .samplesheet import SampleSheetPredictor
 from .utils import IlluminaFastq
+from .utils import identify_platform
 from .exceptions import IlluminaError
 from .. import RUN_COMPLETION_FILES
 
@@ -93,6 +94,7 @@ class RunDir:
       RunInfo.xml file)
     - runparameters: RunParameters instance (if the run has an
       associated RunParameters.xml file)
+    - platform: platform name
 
     Arguments:
       run_dir (str): path to the top-level directory holding
@@ -142,6 +144,14 @@ class RunDir:
                 self.runparameters_xml)
         else:
             self.runparameters = None
+        # Platform
+        if self.runinfo is not None:
+            try:
+                self.platform = identify_platform(self.runinfo.run_id)
+            except IlluminaPlatformError:
+                self.platform = "unknown"
+        else:
+            self.platform = identify_platform(self.path)
 
     @property
     def bcl_extension(self):
