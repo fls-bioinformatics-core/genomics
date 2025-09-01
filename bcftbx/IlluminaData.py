@@ -113,23 +113,11 @@ class IlluminaRun(illumina.RunDir):
         if platform:
             # Supplied explicitly
             self.platform = str(platform)
-        else:
-            # Check it looks like an Illumina run
-            if os.path.isdir(self.basecalls_dir) and self.runinfo_xml:
-                # Look up from run name
-                self.platform = platforms.get_sequencer_platform(self.run_dir)
-                if not self.platform:
-                    # Try run name from RunInfo.xml
-                    self.platform = platforms.get_sequencer_platform(
-                        self.runinfo.run_id)
-                if not self.platform:
-                    # Fallback to generic Illumina platform
-                    self.platform = 'illumina'
-            else:
-                # Not an Illumina run?
-                raise IlluminaDataPlatformError("%s: not an Illumina "
-                                                "sequencing run?" %
-                                                self.run_dir)
+        elif self.platform == "unknown":
+            # Not an Illumina run?
+            raise IlluminaDataPlatformError("%s: not an Illumina "
+                                            "sequencing run?" %
+                                            self.run_dir)
         if self.platform not in KNOWN_PLATFORMS:
             logging.warning("%s: not a recognised Illumina platform" %
                             self.run_dir)
