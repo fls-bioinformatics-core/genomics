@@ -65,6 +65,7 @@ from .samplesheet import SampleSheetPredictor
 from .utils import IlluminaFastq
 from .utils import identify_platform
 from .exceptions import IlluminaError
+from .exceptions import IlluminaPlatformError
 from .. import RUN_COMPLETION_FILES
 
 # Module specific logger
