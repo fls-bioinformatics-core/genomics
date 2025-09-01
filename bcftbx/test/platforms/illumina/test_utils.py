@@ -204,6 +204,81 @@ class TestSplitRunName(unittest.TestCase):
                           '1402100_M00879_XYZ')
 
 
+class TestIdentifyPlatform(unittest.TestCase):
+
+    def test_identify_platform_novaseq6000(self):
+        """
+        identify_platform: check 'novaseq6000' (NovaSeq 6000)
+        """
+        self.assertEqual(
+            identify_platform("221125_A50096_0038_ABCDE1XX"),
+            "novaseq6000")
+
+    def test_identify_platform_nextseq(self):
+        """
+        identify_platform: check 'nextseq' (NextSeq)
+        """
+        self.assertEqual(
+            identify_platform("151125_NB500968_0003_000000000-ABCDE1XX"),
+            "nextseq")
+
+    def test_identify_platform_hiseq(self):
+        """
+        identify_platform: check 'hiseq' (HiSeq 2000/2500)
+        """
+        self.assertEqual(
+            identify_platform("151125_SN700511R_0002_000000000-ABCDE1XX"),
+            "hiseq")
+
+    def test_identify_platform_hiseq4000(self):
+        """
+        identify_platform: check 'hiseq4000' (HiSeq 3000/4000)
+        """
+        self.assertEqual(
+            identify_platform("181004_K00322_0007_AHTVYFBBXX"),
+            "hiseq4000")
+
+    def test_identify_platform_miseq(self):
+        """
+        identify_platform: check 'miseq' (MiSeq)
+        """
+        self.assertEqual(
+            identify_platform("151125_M00978_0001_000000000-ABCDE1"),
+            "miseq")
+
+    def test_identify_platform_miniseq(self):
+        """
+        identify_platform: check 'miniseq' (MiniSeq)
+        """
+        self.assertEqual(
+            identify_platform("170905_MN00123_0005_A000H2MC27"),
+            "miniseq")
+
+    def test_identify_platform_illumina_ga2x(self):
+        """
+        identify_platform: check 'illumina-ga2x'
+        """
+        self.assertEqual(
+            identify_platform("130617_ILLUMINA-94E7FA_00012_FC"),
+            "illumina-ga2x")
+
+    def test_identify_platform_unknown_illumina(self):
+        """
+        identify_platform: check 'illumina' (unknown Illumina)
+        """
+        self.assertEqual(
+            identify_platform("180329_UNKNOWN0001_0001_000000000-ABCDE1"),
+            "illumina")
+
+    def test_identify_platform_unknown(self):
+        """
+        identify_platform: check 'unknown' (unidentifiable)
+        """
+        self.assertRaises(IlluminaPlatformError,
+                          identify_platform,
+                          "SequencerRun25")
+
+
 class TestFixBasesMask(unittest.TestCase):
 
     def test_fix_bases_mask_single_index(self):

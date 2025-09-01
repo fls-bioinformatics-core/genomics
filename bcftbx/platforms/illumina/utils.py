@@ -20,6 +20,7 @@ The following classes are available:
 The following functions are available:
 
 * split_run_name: splits a canonical run directory name
+* identify_platform: attempts to identify sequencer platform
 * run_is_complete: checks if a sequencing run has completed
 * fix_bases_mask: adjust bases mask to match index sequence lengths
 * normalise_barcode: normalise index sequence information
@@ -31,8 +32,10 @@ The following functions are available:
 #######################################################################
 
 import os
+import re
 from .. import RUN_COMPLETION_FILES
 from .exceptions import IlluminaError
+from .exceptions import IlluminaPlatformError
 
 
 #######################################################################
@@ -217,6 +220,10 @@ def split_run_name(dirname):
     Returns:
       Tuple: tuple of (date_stamp, instrument_name, run_number,
         flow_cell_prefix, flow_cell_id)
+
+    Raises:
+      IlluminaError: if the name cannot be split into the expected
+        components.
     """
     fields = os.path.basename(dirname).split("_")
     if len(fields) > 3 and fields[0].isdigit() and \
@@ -250,6 +257,43 @@ def split_run_name(dirname):
             run_number,
             flow_cell_prefix,
             flow_cell)
+
+
+def identify_platform(run_dir):
+    """
+    Return platform from run name
+
+    Extracts the instrument name from the run name and uses
+    this to identify the platform (i.e. instrument type)
+
+    Arguments:
+      run_dir (str): path or name of the run directory
+
+    Return:
+      String: Platform name.
+
+    Raises:
+      IlluminaPlatformError: if the platform cannot be
+        identified.
+    """
+    instruments = {
+        "novaseq6000": "A[0-9]{5}",
+        "nextseq": "NB[0-9]{6}",
+        "miniseq": "MN[0-9]{5}",
+        "miseq": "M[0-9]{5}",
+        "hiseq4000": "K[0-9]{5}",
+        "hiseq": "SN[0-9]{6}[A-Z0-9]",
+        "illumina-ga2x": "ILLUMINA-[A-Z0-9]{6}",
+    }
+    try:
+        instrument_name = split_run_name(run_dir)[1]
+        for name in instruments:
+            if re.search("^" + instruments[name] + "$", instrument_name):
+                return name
+        return "illumina"
+    except IlluminaError:
+        pass
+    raise IlluminaPlatformError(f"'{run_dir}': cannot identify platform")
 
 
 def run_is_complete(run_dir, platform=None):
