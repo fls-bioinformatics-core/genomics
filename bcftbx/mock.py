@@ -1,5 +1,5 @@
 #     mock.py: module providing mock Illumina data for testing
-#     Copyright (C) University of Manchester 2012-2024 Peter Briggs
+#     Copyright (C) University of Manchester 2012-2025 Peter Briggs
 #
 ########################################################################
 
@@ -14,7 +14,7 @@ These include:
 
 - MockSampleSheet: synthesises a SampleSheet.csv
 - MockIlluminaRun: synthesises the raw data output from a sequencer
-- MockIlluminaData: synthesises the output from CASAVA/bcl2fastq run
+- MockFastqDir: synthesises the output from CASAVA/bcl2fastq run
 
 There are also static classes with example data:
 
@@ -25,6 +25,10 @@ There are also static classes with example data:
 There is a function for mocking the STAR aligner:
 
 - mockSTAR: driver function for a "mock" STAR executable
+
+The following legacy mocking classes are also provided:
+
+- MockIlluminaData: synthesises the output from CASAVA/bcl2fastq run
 
 """
 
@@ -39,10 +43,10 @@ import io
 import shutil
 import gzip
 import argparse
-from .IlluminaData import IlluminaFastq
-from .IlluminaData import SampleSheet
-from .TabFile import TabFile
+from .platforms.illumina.utils import IlluminaFastq
+from .platforms.illumina.samplesheet import SampleSheet
 from .platforms import get_run_completion_files
+from .TabFile import TabFile
 from .utils import OrderedDictionary
 from .utils import mkdir
 
@@ -1077,7 +1081,510 @@ class MockIlluminaRun:
             shutil.rmtree(self.dirn)
             self._created = False
 
-class MockIlluminaData:
+class MockFastqDir:
+    """
+    Utility class for creating Bcl-to-Fastq output directories
+
+    The MockFastqDir class allows artificial Illumina Bcl-to-Fastq data
+    directories to be defined, created and populated, and then destroyed.
+
+    These artifical directories are intended to be used for testing
+    purposes.
+
+    Two styles of analysis directories can be produced: 'casava'-style
+    aims to mimic that produced from the CASAVA and bcl2fastq 1.8
+    processing software; 'bcl2fastq2' mimics that from the bcl2fastq
+    2.* software.
+
+    Basic example usage:
+
+    >>> mockfastqdir = MockFastqDir("fastqs", "bcl2fastq2")
+    >>> mockfastqdir.add_fastq("PJB", "PJB1", "PJB1_S1_L001_R1_001.fastq.gz')
+    >>> ...
+    >>> mockfastqdir.create()
+
+    This will make a bcl2fastq2-style directory structure like:
+
+    fastqs/
+        PJB/
+            PJB1_S1_L001_R1_001.fastq.gz
+        ...
+
+    NB if the sample name in the Fastq file name differs from the supplied
+    sample name then the sample name will be used to create an additional
+    directory level, e.g.:
+
+    >>> mockfastqdir = MockFastqDir("fastq", "bcl2fastq2")
+    >>> mockfastqdir.add_fastq("PJB", "PJB2",'PJB2_input_S1_L001_R1_001.fastq.gz')
+
+    will create:
+
+    fastqs/
+        PJB/
+            PJB2/
+                PJB2_input_S1_L001_R1_001.fastq.gz
+        ...
+
+    (this replicates the situation for bcl2fastq v2 where Sample_ID and
+    Sample_Name differ.)
+
+    Multiple fastqs can be more easily added using e.g.:
+
+    >>> mockfastqdir.add_fastq_batch("PJB", "PJB2", "PJB2_S2',lanes=(1,4,5))
+
+    which creates 3 fastq entries for sample PJB2, with lane numbers 1, 4
+    and 5.
+
+    Paired-end mock data can be created using the 'paired_end' flag
+    when instantiating the MockFastqDir object.
+
+    To delete the physical directory structure when finished:
+
+    >>> mockfastqdir.remove()
+
+    Arguments:
+      path (str): path to the directory for the mock data
+      package (str): name of the conversion software package to mimic
+        (can be "casava" or "bcl2fastq2")
+      paired_end (bool): specify whether mock data is paired end (default)
+        or not
+      no_lane_splitting (bool): mimick output from bcl2fastq2 run with
+        --no-lane-splitting (i.e. fastq names don't contain lane numbers)
+       (default is False)  (bcl2fastq2 only)
+    """
+    def __init__(self, path, package,
+                 paired_end=True,
+                 no_lane_splitting=False):
+        self._created = False
+        self._path = os.path.abspath(path)
+        if package not in ("casava", "bcl2fastq2"):
+            raise Exception(f"'{package}': unrecognised package")
+        self._package = package
+        self._paired_end = bool(paired_end)
+        if package == 'bcl2fastq2':
+            self._no_lane_splitting = bool(no_lane_splitting)
+        else:
+            self._no_lane_splitting = False
+        self._undetermined_dir = 'Undetermined_indices'
+        self._projects = {}
+
+    @property
+    def path(self):
+        """
+        Path to the mock data
+        """
+        return self._path
+
+    @property
+    def package(self):
+        """
+        Software package output that is being mimicked
+        """
+        return self._package
+
+    @property
+    def paired_end(self):
+        """
+        Whether or not the mock data is paired ended
+        """
+        return self._paired_end
+
+    @property
+    def no_lane_splitting(self):
+        """
+        Whether or not the mock data is split by lanes
+        """
+        return self._no_lane_splitting
+
+    @property
+    def projects(self):
+        """
+        List of project names within the mock data
+        """
+        projects = []
+        for project_name in self._projects:
+            if project_name.startswith('Project_'):
+                projects.append(project_name.split('_')[1])
+            else:
+                projects.append(project_name)
+        projects.sort()
+        return projects
+
+    @property
+    def has_undetermined(self):
+        """
+        Whether or not undetermined indices are included
+        """
+        return (self._undetermined_dir in self._projects)
+
+    def samples_in_project(self, project_name):
+        """
+        List of sample names associated with a specific project
+
+        Arguments:
+          project_name (str): name of a project
+
+        Returns:
+          List: list of sample names
+        """
+        project = self._projects[self._project_dir(project_name)]
+        samples = []
+        for sample_name in project:
+            if sample_name.startswith('Sample_'):
+                samples.append(sample_name.split('_')[1])
+            else:
+                samples.append(sample_name)
+        samples.sort()
+        return samples
+
+    def fastqs_in_sample(self, project_name, sample_name):
+        """
+        List of Fastq names associated with a project/sample pair
+
+        Arguments:
+          project_name (str): name of a project
+          sample_name (str): name of a sample
+
+        Returns:
+          List: list of Fastq names.
+        """
+        project_dir = self._project_dir(project_name)
+        sample_dir = self._sample_dir(sample_name)
+        return self._projects[project_dir][sample_dir]
+
+    def _project_dir(self, project_name):
+        """
+        Internal: convert project name to internal representation
+
+        Project names which are prepended with "Project_" will have this
+        part removed.
+
+        Arguments:
+          project_name (str): name of a project
+
+        Returns:
+          String: canonical project name for internal storage.
+        """
+        if project_name.startswith('Project_'):
+            return project_name[8:]
+        else:
+            return project_name
+
+    def _sample_dir(self, sample_name):
+        """
+        Internal: convert sample name to internal representation
+
+        Sample names which are prepended with "Sample_" will have this
+        part removed.
+
+        Arguments:
+          sample_name (str): name of a sample
+
+        Returns:
+          String: canonical sample name for internal storage.
+        """
+        if sample_name.startswith('Sample_'):
+            return sample_name[7:]
+        else:
+            return sample_name
+
+    def add_project(self, project_name):
+        """
+        Add a project to the MockFastqDirinstance
+
+        Defines a project within the MockFastqDir structure.
+        Note that any leading 'Project_' is ignored i.e. the project
+        name is taken to be the remainder of the name.
+
+        No error is raised if the project already exists.
+
+        Arguments:
+          project_name (str): name of the new project
+
+        Returns:
+          Dictionary: dictionary object corresponding to the
+            project.
+        """
+        project_dir = self._project_dir(project_name)
+        if project_dir not in self._projects:
+            self._projects[project_dir] = {}
+        return self._projects[project_dir]
+
+    def add_sample(self, project_name, sample_name):
+        """
+        Add a sample to a project within the MockFastqDir instance
+
+        Defines a sample with a project in the MockFastqDir
+        structure. Note that any leading 'Sample_' is ignored i.e.
+        the sample name is taken to be the remainder of the name.
+
+        If the parent project doesn't exist yet then it will be
+        added automatically; no error is raised if the sample already
+        exists.
+
+        Arguments:
+          project_name (str): name of the parent project
+          sample_name (str): name of the new sample
+
+        Returns:
+          List: 'list' object corresponding to the sample.
+        """
+        project = self.add_project(project_name)
+        sample_dir = self._sample_dir(sample_name)
+        if sample_dir not in project:
+            project[sample_dir] = []
+        return project[sample_dir]
+
+    def add_fastq(self, project_name, sample_name, fastq):
+        """
+        Add a Fastq to a sample within the MockFastqDir instance
+
+        Defines a fastq within a project/sample pair in the MockFastqDir
+        structure.
+
+        NOTE: it is recommended to use add_fastq_batch, which offers more
+        flexibility and automatically maintains consistency e.g. when
+        mocking a paired end data structure.
+
+        Arguments:
+          project_name (str): parent project
+          sample_name (str): parent sample
+          fastq (str): name of the fastq to add
+        """
+        sample = self.add_sample(project_name,sample_name)
+        sample.append(fastq)
+        sample.sort()
+
+    def add_fastq_batch(self, project_name, sample_name, fastq_base,
+                        fastq_ext="fastq.gz", lanes=(1,), reads=None):
+        """
+        Add a set of Fastqs within a sample
+
+        This method adds a set of Fastqs within a sample with a single
+        invocation, and is intended to simulate the situation where there
+        are multiple fastqs due to paired end sequencing and/or sequencing
+        of the sample across multiple lanes.
+
+        The Fastq names are constructed from a base name (e.g.
+        "PJB-1_S1"), plus a list of lane numbers. One Fastq will be added
+        for each lane number specified, e.g.:
+
+        >>> d.add_fastq_batch("PJB", "PJB-1", "PJB-1_S1", lanes=(1,4,5))
+
+        will add PJB-1_S1_L001_R1_001, PJB-1_S1_L004_R1_001 and
+        PJB-1_S1_L005_R1_001 fastqs.
+
+        If the MockFastqDir object was created with the paired_end flag
+        set to True then matching R2 Fastqs will also be added.
+
+        If the MockFastqDir object was created with the no_lane_splitting
+        flag set to True and the package as 'bcl2fastq' then the 'lanes'
+        specification will be ignored and the fastq names will not contain
+        lane identifiers.
+
+        Arguments:
+          project_name (str): parent project
+          sample_name (str): parent sample
+          fastq_base (str): base name of the fastq name i.e. just the
+            sample name and barcode sequence/S-index
+          fastq_ext (str): file extension to use (optional, defaults to
+            "fastq.gz")
+          lanes (list): specify lane numbers to add (optional, defaults
+            to (1,))
+          reads (list): specify reads to make (optional, defaults to
+            ("R1") for single end and ("R1","R2") for paired end)
+        """
+        if reads is None:
+            if self.paired_end:
+                reads = ("R1", "R2")
+            else:
+                reads = ("R1",)
+        if not self.no_lane_splitting:
+            # Include explicit lane information
+            for lane in lanes:
+                for read in reads:
+                    fastq = "%s_L%03d_%s_001.%s" % (fastq_base,
+                                                    lane,read,
+                                                    fastq_ext)
+                    self.add_fastq(project_name,sample_name,fastq)
+        else:
+            # Replicate output from bcl2fastq --no-lane-splitting
+            for read in reads:
+                fastq = "%s_%s_001.%s" % (fastq_base,
+                                          read,
+                                          fastq_ext)
+                self.add_fastq(project_name,sample_name,fastq)
+
+    def add_undetermined(self, lanes=(1,) ,reads=None):
+        """
+        Add directories and files for undetermined reads
+
+        This method adds a set of Fastqs for any undetermined reads from
+        demultiplexing.
+
+        Arguments:
+          lanes (list): lane numbers (optional, defaults to (1,))
+          reads (list): reads to make (optional, defaults to ("R1")
+            for single end and ("R1", "R2") for paired end)
+        """
+        if not self.no_lane_splitting:
+            for lane in lanes:
+                sample_name = "lane%d" % lane
+                if self.package == "casava":
+                    # CASAVA-style naming
+                    fastq_base = "lane%d_Undetermined" % lane
+                elif self.package == "bcl2fastq2":
+                    # bcl2fastq2-style naming
+                    fastq_base = "Undetermined_S0"
+                self.add_sample(self._undetermined_dir, sample_name)
+                self.add_fastq_batch(self._undetermined_dir, sample_name,
+                                     fastq_base, lanes=(lane,), reads=reads)
+        else:
+            sample_name = "undetermined"
+            fastq_base = "Undetermined_S0"
+            self.add_sample(self._undetermined_dir, sample_name)
+            self.add_fastq_batch(self._undetermined_dir, sample_name,
+                                 fastq_base, lanes=None, reads=reads)
+
+    def create(self, force_sample_dir=False):
+        """
+        Build and populate the directory structure
+
+        Creates the directory structure on disk which has been defined
+        within the MockFastqDir object.
+
+        Invoke the 'remove' method to delete the directory structure.
+
+        The contents of the MockFastqDir object can be modified
+        after the directory structure has been created, but changes will
+        not be reflected on disk. Instead it is necessary to first
+        remove the directory structure, and then re-invoke the create
+        method.
+
+        create raises an OSError exception if any part of the directory
+        structure already exists.
+
+        Arguments:
+          force_sample_dir (bool): if True then for bcl2fastq-style
+            output, always insert a "sample" subdirectory grouping
+            Fastqs for each sample, even if it wouldn't normally be
+            created (default is to only add sample subdirectory if
+            sample name differs from sample ID)
+
+        """
+        # Create top level directory
+        if os.path.exists(self.path):
+            raise OSError("%s already exists" % self.path)
+        else:
+            mkdir(self.path)
+            self._created = True
+        if self.package == 'casava':
+            self._populate_casava()
+        elif self.package == 'bcl2fastq2':
+            self._populate_bcl2fastq2(force_sample_dir=force_sample_dir)
+
+    def _populate_casava(self):
+        """
+        Populate the MockFastqDir structure in the style of CASAVA
+        """
+        # Populate with projects, samples etc
+        for project_name in self._projects:
+            if project_name == self._undetermined_dir:
+                project_dirn = os.path.join(self.path, project_name)
+            else:
+                project_dirn = os.path.join(self.path,
+                                            "Project_%s" % project_name)
+            mkdir(project_dirn)
+            for sample_name in self._projects[project_name]:
+                sample_dirn = os.path.join(project_dirn,
+                                           "Sample_%s" % sample_name)
+                mkdir(sample_dirn)
+                for fastq in self._projects[project_name][sample_name]:
+                    fq = os.path.join(sample_dirn,fastq)
+                    self._touch(fq)
+
+    def _populate_bcl2fastq2(self, force_sample_dir=False):
+        """
+        Populate the MockFastqDir structure in the style of bcl2fastq2
+
+        Arguments:
+          force_sample_dir (bool): if True then always insert a
+            "sample" subdirectory grouping Fastqs for each sample,
+            even if it wouldn't normally be created (default is
+            to only add sample subdirectory if sample name differs
+            from sample ID)
+        """
+        for project_name in self._projects:
+            if project_name == self._undetermined_dir:
+                project_dirn = self.path
+            else:
+                project_dirn = os.path.join(self.path, project_name)
+            mkdir(project_dirn)
+            for sample_name in self._projects[project_name]:
+                fastqs = []
+                for fastq in self._projects[project_name][sample_name]:
+                    # Check if sample name matches that for fastq
+                    fq_sample_name = IlluminaFastq(fastq).sample_name
+                    if (force_sample_dir or fq_sample_name != sample_name) and \
+                       fq_sample_name != "Undetermined":
+                        # Create an intermediate directory
+                        sample_dirn = os.path.join(project_dirn, sample_name)
+                        mkdir(sample_dirn)
+                    else:
+                        sample_dirn = project_dirn
+                    # Check for leading directory on fastq name
+                    if os.path.dirname(fastq):
+                        leading_dir = os.path.join(sample_dirn,
+                                                   os.path.dirname(fastq))
+                        mkdir(leading_dir)
+                    # "Touch" the file (i.e. creates an empty file)
+                    fq = os.path.join(sample_dirn, fastq)
+                    self._touch(fq)
+                    fastqs.append(os.path.basename(fastq))
+                # Update the list of fastqs
+                self._projects[project_name][sample_name] = fastqs
+            # Add 'Reports' and 'Stats' directories
+            for name in ("Reports", "Stats",):
+                mkdir(os.path.join(self.path, name))
+
+    def _touch(self,f):
+        """
+        Internal: create empty file
+        """
+        if f.endswith(".gz"):
+            # Make empty gzipped file
+            with gzip.open(f,'wb') as fp:
+                fp.write(b"")
+        else:
+            # Make regular empty file
+            with io.open(f,'wb') as fp:
+                fp.write(b"")
+
+    def remove(self):
+        """
+        Delete the directory structure and contents
+
+        This removes the directory structure from disk that has
+        previously been created using the create method.
+        """
+        if self._created:
+            shutil.rmtree(self.path)
+            self._created = False
+
+    def __repr__(self):
+        """Implement __repr__ for debug purposes
+        """
+        if not self.__created:
+            return ("<%s: not created>" % self.path)
+        rep = []
+        for d in os.walk(self.path):
+            for d1 in d[1]:
+                rep.append(os.path.join(d[0], d1))
+            for f in d[2]:
+                rep.append(os.path.join(d[0], f))
+        return '\n'.join(sorted(rep))
+
+class MockIlluminaData(MockFastqDir):
     """Utility class for creating mock Illumina analysis data directories
 
     The MockIlluminaData class allows artificial Illumina analysis data
@@ -1178,24 +1685,19 @@ class MockIlluminaData:
             the current working directory)
 
         """
-        self.__created = False
         self.__name = name
-        if package not in ('casava','bcl2fastq2'):
-            raise Exception("Unknown package '%s': cannot make mock output dir"
-                            % package)
-        self.__package = package
         self.__unaligned_dir = unaligned_dir
-        self.__paired_end = paired_end
-        if package == 'bcl2fastq2':
-            self.__no_lane_splitting = no_lane_splitting
-        else:
-            self.__no_lane_splitting = False
-        self.__undetermined_dir = 'Undetermined_indices'
         if top_dir is not None:
             self.__top_dir = os.path.abspath(top_dir)
         else:
             self.__top_dir = os.getcwd()
-        self.__projects = {}
+        self.__created = False
+        MockFastqDir.__init__(self, self.unaligned_dir, package,
+                              paired_end=paired_end,
+                              no_lane_splitting=no_lane_splitting)
+        if package not in ('casava','bcl2fastq2'):
+            raise Exception("Unknown package '%s': cannot make mock output dir"
+                            % package)
 
     @property
     def name(self):
@@ -1203,14 +1705,6 @@ class MockIlluminaData:
 
         """
         return self.__name
-
-    @property
-    def package(self):
-        """
-        Software package output that is being mimicked
-
-        """
-        return self.__package
 
     @property
     def dirn(self):
@@ -1225,264 +1719,6 @@ class MockIlluminaData:
 
         """
         return os.path.join(self.dirn,self.__unaligned_dir)
-
-    @property
-    def paired_end(self):
-        """Whether or not the mock data is paired ended
-
-        """
-        return self.__paired_end
-
-    @property
-    def projects(self):
-        """List of project names within the mock data
-
-        """
-        projects = []
-        for project_name in self.__projects:
-            if project_name.startswith('Project_'):
-                projects.append(project_name.split('_')[1])
-            else:
-                projects.append(project_name)
-        projects.sort()
-        return projects
-
-    @property
-    def has_undetermined(self):
-        """Whether or not undetermined indices are included
-
-        """
-        return (self.__undetermined_dir in self.__projects)
-
-    def samples_in_project(self,project_name):
-        """List of sample names associated with a specific project
-
-        Arguments:
-          project_name: name of a project
-
-        Returns:
-          List of sample names
-
-        """
-        project = self.__projects[self.__project_dir(project_name)]
-        samples = []
-        for sample_name in project:
-            if sample_name.startswith('Sample_'):
-                samples.append(sample_name.split('_')[1])
-            else:
-                samples.append(sample_name)
-        samples.sort()
-        return samples
-
-    def fastqs_in_sample(self,project_name,sample_name):
-        """List of fastq names associated with a project/sample pair
-
-        Arguments:
-          project_name: name of a project
-          sample_name: name of a sample
-
-        Returns:
-          List of fastq names.
-
-        """
-        project_dir = self.__project_dir(project_name)
-        sample_dir = self.__sample_dir(sample_name)
-        return self.__projects[project_dir][sample_dir]
-
-    def __project_dir(self,project_name):
-        """Internal: convert project name to internal representation
-
-        Project names which are prepended with "Project_" will have this
-        part removed.
-
-        Arguments:
-          project_name: name of a project
-
-        Returns:
-          Canonical project name for internal storage.
-
-        """
-        if project_name.startswith('Project_'):
-            return project_name[8:]
-        else:
-            return project_name
-
-    def __sample_dir(self,sample_name):
-        """Internal: convert sample name to internal representation
-
-        Sample names which are prepended with "Sample_" will have this
-        part removed.
-
-        Arguments:
-          sample_name: name of a sample
-
-        Returns:
-          Canonical sample name for internal storage.
-
-        """
-        if sample_name.startswith('Sample_'):
-            return sample_name[7:]
-        else:
-            return sample_name
-
-    def add_project(self,project_name):
-        """Add a project to the MockIlluminaData instance
-
-        Defines a project within the MockIlluminaData structure.
-        Note that any leading 'Project_' is ignored i.e. the project
-        name is taken to be the remainder of the name.
-
-        No error is raised if the project already exists.
-
-        Arguments:
-          project_name: name of the new project
-
-        Returns:
-          Dictionary object corresponding to the project.
-
-        """
-        project_dir = self.__project_dir(project_name)
-        if project_dir not in self.__projects:
-            self.__projects[project_dir] = {}
-        return self.__projects[project_dir]
-
-    def add_sample(self,project_name,sample_name):
-        """Add a sample to a project within the MockIlluminaData instance
-
-        Defines a sample with a project in the MockIlluminaData
-        structure. Note that any leading 'Sample_' is ignored i.e. the
-        sample name is taken to be the remainder of the name.
-
-        If the parent project doesn't exist yet then it will be
-        added automatically; no error is raised if the sample already
-        exists.
-
-        Arguments:
-          project_name: name of the parent project
-          sample_name: name of the new sample
-
-        Returns:
-          List object corresponding to the sample.
-
-        """
-        project = self.add_project(project_name)
-        sample_dir = self.__sample_dir(sample_name)
-        if sample_dir not in project:
-            project[sample_dir] = []
-        return project[sample_dir]
-
-    def add_fastq(self,project_name,sample_name,fastq):
-        """Add a fastq to a sample within the MockIlluminaData instance
-
-        Defines a fastq within a project/sample pair in the MockIlluminaData
-        structure.
-
-        NOTE: it is recommended to use add_fastq_batch, which offers more
-        flexibility and automatically maintains consistency e.g. when
-        mocking a paired end data structure.
-
-        Arguments:
-          project_name: parent project
-          sample_name: parent sample
-          fastq: name of the fastq to add
-
-        """
-        sample = self.add_sample(project_name,sample_name)
-        sample.append(fastq)
-        sample.sort()
-
-    def add_fastq_batch(self,project_name,sample_name,fastq_base,fastq_ext='fastq.gz',
-                        lanes=(1,),reads=None):
-        """Add a set of fastqs within a sample
-
-        This method adds a set of fastqs within a sample with a single
-        invocation, and is intended to simulate the situation where there
-        are multiple fastqs due to paired end sequencing and/or sequencing
-        of the sample across multiple lanes.
-
-        The fastq names are constructed from a base name (e.g. 'PJB-1_GCCAAT'),
-        plus a list/tuple of lane numbers. One fastq will be added for each
-        lane number specified, e.g.:
-
-        >>> d.add_fastq_batch('PJB','PJB-1','PJB-1_GCCAAT',lanes=(1,4,5))
-
-        will add PJB-1_GCCAAT_L001_R1_001, PJB-1_GCCAAT_L004_R1_001 and
-        PJB-1_GCCAAT_L005_R1_001 fastqs.
-
-        If the MockIlluminaData object was created with the paired_end flag
-        set to True then matching R2 fastqs will also be added.
-
-        If the MockIlluminaData object was created with the no_lane_splitting
-        flag set to True and the package as 'bcl2fastq' then the 'lanes'
-        specification will be ignored and the fastq names will not contain
-        lane identifiers.
-
-        Arguments:
-          project_name: parent project
-          sample_name: parent sample
-          fastq_base: base name of the fastq name i.e. just the sample name
-            and barcode sequence (e.g. 'PJB-1_GCCAAT')
-          fastq_ext: file extension to use (optional, defaults to 'fastq.gz')
-          lanes: list, tuple or iterable with lane numbers (optional,
-            defaults to (1,))
-          reads: list, tuple or iterable with reads to make (optional,
-            defaults to ('R1') for single end and ('R1','R2') for paired
-            end)
-
-        """
-        if reads is None:
-            if self.__paired_end:
-                reads = ('R1','R2')
-            else:
-                reads = ('R1',)
-        if not self.__no_lane_splitting:
-            # Include explicit lane information
-            for lane in lanes:
-                for read in reads:
-                    fastq = "%s_L%03d_%s_001.%s" % (fastq_base,
-                                                    lane,read,
-                                                    fastq_ext)
-                    self.add_fastq(project_name,sample_name,fastq)
-        else:
-            # Replicate output from bcl2fastq --no-lane-splitting
-            for read in reads:
-                fastq = "%s_%s_001.%s" % (fastq_base,
-                                          read,
-                                          fastq_ext)
-                self.add_fastq(project_name,sample_name,fastq)
-
-    def add_undetermined(self,lanes=(1,),reads=None):
-        """Add directories and files for undetermined reads
-
-        This method adds a set of fastqs for any undetermined reads from
-        demultiplexing.
-
-        Arguments:
-          lanes: list, tuple or iterable with lane numbers (optional,
-            defaults to (1,))
-          reads: list, tuple or iterable with reads to make (optional,
-            defaults to ('R1') for single end and ('R1','R2') for paired
-            end)
-
-        """
-        if not self.__no_lane_splitting:
-            for lane in lanes:
-                sample_name = "lane%d" % lane
-                if self.package == 'casava':
-                    # CASAVA-style naming
-                    fastq_base = "lane%d_Undetermined" % lane
-                elif self.package == 'bcl2fastq2':
-                    # bcl2fastq2-style naming
-                    fastq_base = "Undetermined_S0"
-                self.add_sample(self.__undetermined_dir,sample_name)
-                self.add_fastq_batch(self.__undetermined_dir,sample_name,
-                                     fastq_base,lanes=(lane,),reads=reads)
-        else:
-            sample_name = "undetermined"
-            fastq_base = "Undetermined_S0"
-            self.add_sample(self.__undetermined_dir,sample_name)
-            self.add_fastq_batch(self.__undetermined_dir,sample_name,
-                                 fastq_base,lanes=None,reads=reads)
 
     def create(self,force_sample_dir=False):
         """Build and populate the directory structure
@@ -1516,90 +1752,7 @@ class MockIlluminaData:
             mkdir(self.dirn)
             self.__created = True
         # "Unaligned" directory
-        mkdir(self.unaligned_dir)
-        if self.package == 'casava':
-            self._populate_casava()
-        elif self.package == 'bcl2fastq2':
-            self._populate_bcl2fastq2(force_sample_dir=force_sample_dir)
-
-    def _populate_casava(self):
-        """
-        Populate the MockIlluminaData structure in the style of CASAVA
-
-        """
-        # Populate with projects, samples etc
-        for project_name in self.__projects:
-            if project_name == self.__undetermined_dir:
-                project_dirn = os.path.join(self.unaligned_dir,project_name)
-            else:
-                project_dirn = os.path.join(self.unaligned_dir,
-                                            "Project_%s" % project_name)
-            mkdir(project_dirn)
-            for sample_name in self.__projects[project_name]:
-                sample_dirn = os.path.join(project_dirn,
-                                           "Sample_%s" % sample_name)
-                mkdir(sample_dirn)
-                for fastq in self.__projects[project_name][sample_name]:
-                    fq = os.path.join(sample_dirn,fastq)
-                    self._touch(fq)
-
-    def _populate_bcl2fastq2(self,force_sample_dir=False):
-        """
-        Populate the MockIlluminaData structure in the style of bcl2fastq2
-
-        Arguments:
-          force_sample_dir (bool): if True then always insert a
-            "sample" subdirectory grouping Fastqs for each sample,
-            even if it wouldn't normally be created (default is
-            to only add sample subdirectory if sample name differs
-            from sample ID)
-
-        """
-        for project_name in self.__projects:
-            if project_name == self.__undetermined_dir:
-                project_dirn = self.unaligned_dir
-            else:
-                project_dirn = os.path.join(self.unaligned_dir,project_name)
-            mkdir(project_dirn)
-            for sample_name in self.__projects[project_name]:
-                fastqs = []
-                for fastq in self.__projects[project_name][sample_name]:
-                    # Check if sample name matches that for fastq
-                    fq_sample_name = IlluminaFastq(fastq).sample_name
-                    if (force_sample_dir or fq_sample_name != sample_name) and \
-                       fq_sample_name != 'Undetermined':
-                        # Create an intermediate directory
-                        sample_dirn = os.path.join(project_dirn,sample_name)
-                        mkdir(sample_dirn)
-                    else:
-                        sample_dirn = project_dirn
-                    # Check for leading directory on fastq name
-                    if os.path.dirname(fastq):
-                        leading_dir = os.path.join(sample_dirn,
-                                                   os.path.dirname(fastq))
-                        mkdir(leading_dir)
-                    # "Touch" the file (i.e. creates an empty file)
-                    fq = os.path.join(sample_dirn,fastq)
-                    self._touch(fq)
-                    fastqs.append(os.path.basename(fastq))
-                # Update the list of fastqs
-                self.__projects[project_name][sample_name] = fastqs
-            # Add 'Reports' and 'Stats' directories
-            for name in ('Reports','Stats',):
-                dirn = os.path.join(self.unaligned_dir,name)
-                mkdir(dirn)
-
-    def _touch(self,f):
-        """Internal: create empty file
-        """
-        if f.endswith(".gz"):
-            # Make empty gzipped file
-            with gzip.open(f,'wb') as fp:
-                fp.write(b"")
-        else:
-            # Make regular empty file
-            with io.open(f,'wb') as fp:
-                fp.write(b"")
+        MockFastqDir.create(self, force_sample_dir=force_sample_dir)
 
     def remove(self):
         """Delete the directory structure and contents
