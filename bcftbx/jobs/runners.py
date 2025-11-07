@@ -19,6 +19,8 @@ methods that need to be implemented by job runner subclasses.
 The subclasses implemented here are:
 
 * ``LocalRunner``: executes jobs on the local file system
+* ``GridEngineRunner``: executes jobs using Sun Grid Engine (GE)
+  i.e. qsub, qdel etc
 
 A single job runner instance can be used to start and manage multiple
 processes.
@@ -65,9 +67,12 @@ the ``-pe`` argument as part of the 'ge_extra_args' option, for example:
 >>> multicore_runner = GridEngineRunner(extra_ge_args=('-pe','smp.pe','4'))
 """
 
+import atexit
 import os
-import time
+import shutil
 import subprocess
+import tempfile
+import time
 import uuid
 import logging
 
@@ -526,6 +531,805 @@ class LocalRunner(JobRunner):
         error_file = os.path.join(log_dir, error_file)
         self._log_id += 1
         return (log_file, error_file)
+
+
+class GridEngineRunner(JobRunner):
+    """
+    Job runner for Sun Grid Engine
+
+    ``GridEngineRunner`` submits jobs to a Grid Engine cluster
+    using the ``qsub`` command, determines the status of jobs
+    using ``qstat``, and terminates them using ``qdel``.
+
+    Additionally, the runner can be configured for a specific Grid
+    Engine queue on initialisation.
+
+    Each ``GridEngineRunner`` instance creates a temporary
+    directory which it uses for internal admin; this will be
+    removed at program exit via 'atexit'.
+
+    Arguments:
+      queue (str): name of GE queue to use (set to 'None' to use
+        default queue)
+      log_dir (str): directory to write log files to (set to 'None'
+        to use CWD)
+      ge_extra_args (list): arbitrary additional arguments to supply
+        to ``qsub``
+      poll_interval (int): time interval (in seconds) to use when
+        polling Grid Engine e.g. to acquire ``qacct`` information
+        (default: 5)
+      timeout (int): maximum length of time (in seconds) to wait
+        before giving up when polling Grid Engine (default: 30)
+    """
+
+    def __init__(self, queue=None, log_dir=None, ge_extra_args=None,
+                 poll_interval=5, timeout=30):
+        # Internal parameters
+        self._runner_name = "GridEngineRunner"
+        self._admin_dir = self._make_admin_dir()
+        self._job_count = 0
+        self._shell = "/bin/bash"
+        self._ge_queue = queue
+        # Directory for log files
+        self.set_log_dir(log_dir)
+        # Keep track of data (names, log dirs etc) for each job
+        self._job_number = {}
+        self._names = {}
+        self._log_dirs = {}
+        self._error_state = {}
+        self._exit_status = {}
+        self._finalizing = {}
+        self._queue = {}
+        self._start_time = {}
+        self._ge_extra_args = ge_extra_args
+        # Job id lock
+        self._job_lock = ResourceLock()
+        # Job grace period lock
+        self._updating_grace_period = ResourceLock()
+        # Job submission lock
+        self._submit_lock = ResourceLock()
+        # Cached job list
+        self._cached_job_list_lifetime = 2.0
+        self._cached_job_list_timestamp = 0.0
+        self._cached_job_list = []
+        self._cached_job_list_force_update = True
+        # Cached qstat output
+        self._cached_qstat_output_lifetime = 2.0
+        self._cached_qstat_output_timestamp = 0.0
+        self._cached_qstat_output = None
+        # Grace period for new jobs
+        self._new_job_grace_period = 2.0
+        # Polling intervals and timeout periods (seconds)
+        self._ge_poll_interval = poll_interval
+        self._ge_timeout = timeout
+        # Register clean up function
+        atexit.register(self._clean_up_admin_dir)
+
+    def __repr__(self):
+        name = self._runner_name
+        if self._ge_extra_args is not None:
+            name += '(%s)' % ' '.join(self._ge_extra_args)
+        return name
+
+    def name(self, job_id):
+        """
+        Return the name for a job
+
+        Arguments:
+            job_id (str): id of job
+
+        Returns:
+            str: name of the job
+        """
+        return self._names[job_id]
+
+    @property
+    def ge_extra_args(self):
+        """
+        Return the extra ``qsub`` arguments
+
+        Returns:
+            list: list of extra arguments to supply to ``qsub``
+        """
+        return self._ge_extra_args
+
+    @property
+    def nslots(self):
+        """
+        Return the number of associated slots
+
+        This is extracted from the 'ge_extra_args'
+        property, by looking for qsub options of the
+        form ``-pe XXXX N`` (e.g. ``-pe smp.pe 8``), where
+        'nslots' will be N.
+
+        Returns:
+            Integer: number of slots
+        """
+        nslots = 1
+        if self.ge_extra_args is not None:
+            try:
+                i = self.ge_extra_args.index('-pe')
+                nslots = int(self.ge_extra_args[i+2])
+            except ValueError:
+                pass
+        return nslots
+
+    def run(self, name, working_dir, script, args):
+        """
+        Submit a script or command to the cluster via 'qsub'
+
+        Arguments:
+          name (str): Name to give the job
+          working_dir (str): path to the directory to run the job in
+          script (str): path to the script file to run
+          args (list): arguments to supply to the script
+
+        Returns:
+          str or None: job id for submitted job, or 'None' if job
+          failed to start.
+        """
+        logger.debug(f"{self._runner_name}: submitting job")
+        logger.debug("Name       : %s" % name)
+        logger.debug("Queue      : %s" % self._ge_queue)
+        logger.debug("Extra args : %s" % self._ge_extra_args)
+        logger.debug("Log dir    : %s" % self.log_dir)
+        logger.debug("Working_dir: %s" % working_dir)
+        logger.debug("Script     : %s" % script)
+        logger.debug("Arguments  : %s" % str(args))
+        # Wait for lock on job submission
+        start_time = time.time()
+        submit_lock = None
+        while submit_lock is None:
+            submit_lock = self._submit_lock.acquire("job_submission",
+                                                    timeout=self._ge_timeout)
+        # Get internal job number
+        self._job_count += 1
+        job_number = self._job_count
+        logger.debug("Internal job count: %s" % job_number)
+        # Release the lock
+        self._submit_lock.release(submit_lock)
+        # Build script to run the command to be submitted
+        job_dir = os.path.join(self._admin_dir, str(job_number))
+        logger.debug("Job admin dir     : %s" % job_dir)
+        os.mkdir(job_dir)
+        cmd_args = [script]
+        for arg in args:
+            # Quote arguments containing whitespace
+            if arg.count(" ") or arg.count("\t"):
+                arg = "\"%s\"" % arg
+            cmd_args.append(arg)
+        cmd = " ".join(cmd_args)
+        job_script = os.path.join(job_dir, "job_script.sh")
+        with open(job_script, "wt") as fp:
+            fp.write("""#!{shell}
+export BCFTBX_RUNNER_NSLOTS=$NSLOTS
+echo "$QUEUE" > {job_dir}/__queue
+echo "$BCFTBX_RUNNER_NSLOTS" > {job_dir}/__jobrunner_nslots
+{cmd}
+exit_code=$?
+echo "$exit_code" > {job_dir}/__exit_code.tmp
+mv {job_dir}/__exit_code.tmp {job_dir}/__exit_code
+exit $exit_code
+""".format(shell=self._shell, job_dir=job_dir, cmd=cmd))
+        os.chmod(job_script,0o755)
+        # Sanitize name for GE by replacing invalid characters
+        # (colon, asterisk...)
+        ge_name = self._ge_name(name)
+        logger.debug("GE job name: %s" % ge_name)
+        # Build qsub command to submit script
+        qsub = ['qsub', '-b', 'y', '-V', '-N', ge_name]
+        if self._ge_queue:
+            qsub.extend(('-q', self.__ge_queue))
+        if self.log_dir:
+            qsub.extend(('-o', self.log_dir, '-e',self.log_dir))
+        if not working_dir:
+            qsub.append('-cwd')
+        else:
+            qsub.extend(('-wd', working_dir))
+        if self._ge_extra_args:
+            qsub.extend(self._ge_extra_args)
+        qsub.append(job_script)
+        logger.debug(f"{self._runner_name}: qsub command: %s" % qsub)
+        # Run the qsub job in the current directory
+        cwd = os.getcwd()
+        # Check that this exists
+        logger.debug(f"{self._runner_name}: executing in %s" % cwd)
+        if not os.path.exists(cwd):
+            logger.error(f"{self._runner_name}: cwd doesn't exist!")
+            return None
+        p = subprocess.Popen(qsub,
+                             cwd=cwd,
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE,
+                             universal_newlines=True)
+        stdoutdata, stderrdata = p.communicate()
+        # Check stderr
+        error = stderrdata.strip()
+        if error:
+            # Just echo error message as a warning
+            logger.warning(f"{self._runner_name}: '%s'" % error)
+        # Capture the job id from the output
+        job_id = None
+        for line in stdoutdata.split('\n'):
+            if line.startswith('Your job'):
+                job_id = line.split()[2]
+        logger.debug(f"{self._runner_name}: done - job id = %s" % job_id)
+        # Store internal number, name and log dir against job id
+        if job_id is not None:
+            self._job_number[job_id] = job_number
+            self._names[job_id] = name
+            if self.log_dir is None:
+                self._log_dirs[job_id] = working_dir
+            else:
+                self._log_dirs[job_id] = self.log_dir
+            self._start_time[job_id] = time.time()
+        # Force refresh of job list
+        self._cached_job_list_force_update = True
+        # Return the job id
+        return job_id
+
+    def terminate(self, job_id):
+        """
+        Remove a job from the Grid Engine queue using 'qdel'
+
+        Arguments:
+            job_id (str): id of job to terminate
+
+        Returns:
+            Boolean: True if termination was successful, False
+            otherwise
+        """
+        logger.debug(f"{self._runner_name}: deleting job")
+        qdel=('qdel', job_id)
+        p = subprocess.Popen(qdel, stdout=subprocess.PIPE)
+        stdoutdata, stderrdata = p.communicate()
+        message = stdoutdata.strip()
+        logger.debug(f"{self._runner_name}: qdel: %s" % message)
+        if job_id in self._start_time:
+            del(self._start_time[job_id])
+        # Write an exit code file for the job
+        exit_code_file = os.path.join(self._admin_dir,
+                                      str(self._job_number[job_id]),
+                                      "__exit_code")
+        with open("%s.tmp" % exit_code_file, "wt") as fp:
+            fp.write("-1\n")
+        os.rename("%s.tmp" % exit_code_file, exit_code_file)
+        # Force update of cached job list
+        self._cached_job_list_force_update = True
+        return True
+
+    def log_file(self, job_id):
+        """
+        Return the log file path for a job
+
+        The name should be '<name>.o<job_id>'
+
+        Arguments:
+            job_id (str): id of job
+
+        Returns:
+            str: path to log file for the specified job
+        """
+        name = self._ge_name(self._names[job_id])
+        log_file = "%s.o%s" % (name, job_id)
+        if self._log_dirs[job_id] is not None:
+            log_file = os.path.join(self._log_dirs[job_id],log_file)
+        return log_file
+
+    def err_file(self,job_id):
+        """
+        Return the error file name for a job
+
+        The name should be '<name>.e<job_id>'
+
+        Arguments:
+            job_id (str): id of job
+
+        Returns:
+            str: path to error file for the specified job
+        """
+        name = self._ge_name(self._names[job_id])
+        err_file = "%s.e%s" % (name, job_id)
+        if self._log_dirs[job_id] is not None:
+            err_file = os.path.join(self._log_dirs[job_id], err_file)
+        return err_file
+
+    def error_state(self, job_id):
+        """
+        Check if the job is in an error state
+
+        Arguments:
+            job_id (str): id of job
+
+        Returns:
+            True if the job is deemed to be in an 'error
+            state' (i.e. qstat returns the state as 'E..'),
+            False otherwise.
+        """
+        # Check job is running at all
+        if job_id not in self._job_number:
+            return False
+        # See if a value was stored for this job
+        try:
+            return self._error_state[job_id]
+        except KeyError:
+            pass
+        # Job is in error state if state code starts with E
+        in_error_state = self._job_state_code(job_id).startswith('E')
+        if in_error_state:
+            self._error_state[job_id] = True
+            return True
+        # Not in error state
+        return False
+
+    def queue(self, job_id):
+        """
+        Fetch the job queue name
+
+        Arguments:
+            job_id (str): id of job
+
+        Returns:
+            str: the queue as reported by qstat, or None if
+            not found.
+        """
+        if job_id in self._queue:
+            # Return cached queue
+            return self._queue[job_id]
+        # Look for __queue file from job
+        queue_file = os.path.join(self._admin_dir,
+                                  str(self._job_number[job_id]),
+                                  "__queue")
+        logger.debug(f"{self._runner_name}: queue file: %s" % queue_file)
+        if not os.path.exists(queue_file):
+            # No queue file available
+            logger.debug(f"{self._runner_name}: queue file not found")
+            return None
+        # Extract queue name from file
+        try:
+            with open(queue_file, "rt") as fp:
+                queue = fp.read().strip()
+            logger.debug(f"{self._runner_name}: queue: %s" % queue)
+        except Exception as ex:
+            logger.error(f"{self._runner_name}: exception when reading queue "
+                          "for job %s: %s" % (job_id,ex))
+            return None
+        self._queue[job_id] = queue
+        return queue
+
+    def list(self):
+        """
+        Get list of job ids which are queued or running
+
+        Returns:
+            list: list of job ids for currently running jobs.
+        """
+        # Check cached job list
+        use_cache = (not self._cached_job_list_force_update)
+        if use_cache:
+            if (time.time() - self._cached_job_list_timestamp) < \
+               self._cached_job_list_lifetime:
+                logger.debug(f"{self._runner_name}: using cached job list")
+                job_ids = self._cached_job_list
+                # Add the jobs in grace period
+                grace_period_jobs = list(self._start_time.keys())
+                for job_id in grace_period_jobs:
+                    if job_id not in job_ids:
+                        job_ids.append(job_id)
+                return job_ids
+        # Update jobs in grace period
+        for job_id in list(self._start_time.keys()):
+            self._update_job_grace_period(job_id)
+        grace_period_jobs = list(self._start_time.keys())
+        # Build initial list from directory contents
+        job_ids = []
+        for job_id in list(self._job_number.keys()):
+            try:
+                job_number = self._job_number[job_id]
+            except KeyError:
+                # Job has been removed since the list was
+                # fetched? Ignore
+                continue
+            job_dir = os.path.join(self._admin_dir, str(job_number))
+            exit_code_file = os.path.join(job_dir, "__exit_code")
+            logger.debug(f"{self._runner_name}: checking job %s (#%s)"
+                          % (job_id, job_number))
+            if os.path.exists(job_dir):
+                logger.debug(f"{self._runner_name}: -- found %s" % job_dir)
+                # Job dir exists
+                if os.path.exists(exit_code_file):
+                    # Job has finished, handle completion
+                    self._handle_job_completion(job_id)
+                else:
+                    # Job still running
+                    job_ids.append(job_id)
+        # Update cache
+        self._cached_job_list_timestamp = time.time()
+        self._cached_job_list = [j for j in job_ids]
+        self._cached_job_list_force_update = False
+        # Add the jobs in the grace period
+        for job_id in grace_period_jobs:
+            if job_id not in job_ids:
+                job_ids.append(job_id)
+            else:
+                # Job now visible so no longer in grace period
+                self._update_job_grace_period(job_id)
+        logger.debug(f"{self._runner_name}: 'list' returning %s" % job_ids)
+        return job_ids
+
+    def exit_status(self, job_id):
+        """
+        Return exit status from command run by a job
+
+        If the job is still running then returns 'None'.
+
+        Arguments:
+            job_id (str): id of job
+
+        Returns:
+            int or None: exit status code from the command
+            that was run by the specified job (or None if
+            the job hasn't exited yet).
+        """
+        if self.is_running(job_id):
+            # Return None if job is still running
+            return None
+        # Check if job is being finalized
+        start_time = time.time()
+        while job_id in self._finalizing:
+            # Wait until exit_status is ready
+            time.sleep(1.0)
+            if (time.time() - start_time) > self._ge_timeout:
+                logger.warning(f"{self._runner_name}: timed out waiting "
+                                "for job %s to finalize" % job_id)
+                return None
+        # Return cached exit status
+        return self._exit_status[job_id]
+
+    def _make_admin_dir(self):
+        """Internal: create temporary directory for admin etc
+
+        The directory will be created in a '.<runner_name>'
+        subdirectory of the current working directory.
+        """
+        try:
+            # Return current value, if set
+            return self._admin_dir
+        except AttributeError:
+            pass
+        # Make new dir in current dir
+        parent_dir = os.path.join(os.getcwd(),
+                                  f".{self._runner_name.lower()}")
+        try:
+            os.mkdir(parent_dir)
+        except OSError:
+            pass
+        admin_dir = tempfile.mkdtemp(dir=parent_dir)
+        return admin_dir
+
+    def _clean_up_admin_dir(self):
+        """Internal: remove the admin dir
+
+        Shouldn't be called directly; instead register with
+        'atexit' to force clean up on program exit
+        """
+        logger.debug(f"{self._runner_name}: removing admin dir '%s'" %
+                      self._admin_dir)
+        # Check if jobs are still being finalized
+        start_time = time.time()
+        while self._finalizing:
+            # Wait until everything has finalized
+            time.sleep(1.0)
+            if (time.time() - start_time) > self._ge_timeout:
+                logger.warning(f"{self._runner_name}: timed out waiting "
+                                "for jobs to finalize")
+                break
+        # Try to remove the admin dir and contents
+        try:
+            shutil.rmtree(self._admin_dir)
+        except Exception as ex:
+            logger.warning(f"{self._runner_name}: exception removing "
+                            "admin dir '%s': %s" %
+                            (self._admin_dir, ex))
+
+    def _update_job_grace_period(self,job_id):
+        """
+        Internal: handling update of job in grace period
+
+        Checks if a job is still within the grace period
+        (i.e. has an entry in the `_start_time`
+        dictionary which is newer than the grace period).
+
+        If the job is no longer in the grace period then
+        removes its entry in the `_start_time`
+        dictionary.
+        """
+        logger.debug(f"{self._runner_name}: update grace period for "
+                      "for job %s" % job_id)
+        lock = None
+        while lock is None:
+            lock = self._updating_grace_period.acquire(job_id)
+        logger.debug(f"{self._runner_name}: acquired lock for grace period "
+                      "update: %s" % lock)
+        try:
+            start_time = self._start_time[job_id]
+        except KeyError:
+            logger.debug(f"{self._runner_name}: update grace period: job %s "
+                          "has gone away (ignored)" % job_id)
+            self._updating_grace_period.release(lock)
+            return
+        if ((time.time() - start_time) > self._new_job_grace_period):
+            # Job no longer in grace period
+            logger.debug(f"{self._runner_name}: job %s no longer in grace "
+                          "period" % job_id)
+            try:
+                del(self._start_time[job_id])
+            except KeyError:
+                logger.debug(f"{self._runner_name}: update grace period: "
+                              "job %s has gone away (ignored)" %
+                              job_id)
+        # Release update lock
+        self._updating_grace_period.release(lock)
+
+    def _handle_job_completion(self,job_id):
+        """
+        Internal: deal with completion of job
+
+        Peforms the following operations:
+
+        - checks that an '__exit_code' file exists for
+          the job
+        - read and store the exit status/return code from
+          this file
+        - ensure that the queue is set for the job
+        - call the clean up function to remove all the
+          associated files
+        - remove the job from the internal job count
+
+        If the '__exit_code' file associated with the job
+        can't be found after a number of attempts to locate
+        it, or if the exit status cannot be read from the
+        file, then the exit status for the job will be
+        set to '127'.
+        """
+        logger.debug(f"{self._runner_name}: handle job completion for %s"
+                      % job_id)
+        lock = None
+        while lock is None:
+            lock = self._job_lock.acquire(job_id)
+        logger.debug(f"{self._runner_name}: acquired lock: %s" % lock)
+        if job_id not in self._job_number:
+            # Job has gone away
+            logger.debug(f"{self._runner_name}: job %s has gone away" %
+                          job_id)
+            self._job_lock.release(lock)
+            return
+        self._finalizing[job_id] = True
+        # Check there is an exit code file
+        exit_code_file = os.path.join(self._admin_dir,
+                                      str(self._job_number[job_id]),
+                                      "__exit_code")
+        assert(os.path.exists(exit_code_file))
+        try:
+            with open(exit_code_file, "rt") as fp:
+                exit_status = int(fp.read())
+        except Exception as ex:
+            # Set exit status to 127
+            logger.error(f"{self._runner_name}: exception when "
+                          "reading exit_status for job "
+                          "%s: %s" % (job_id,ex))
+            exit_status = 127
+        # Update queue information
+        self.queue(job_id)
+        # Store exit status and clean up
+        self._exit_status[job_id] = exit_status
+        self._clean_up_job(job_id)
+        # Release finalization lock
+        del(self._finalizing[job_id])
+        # Release job lock
+        self._job_lock.release(lock)
+
+    def _clean_up_job(self, job_id):
+        """Internal: clean up internal job files
+
+        Removes the internal directory associated with a job, along
+        with any files it contains (e.g. job script, exit code etc).
+
+        This method should only be invoked for jobs that have
+        finished running. If the job is still running then returns
+        with no action.
+        """
+        # Do clean up
+        logger.debug(f"{self._runner_name}: cleaning up after job %s" % job_id)
+        try:
+            job_number = self._job_number[job_id]
+        except KeyError:
+            logger.error(f"{self._runner_name}: job %d not found, can't do "
+                          "clean up" % job_id)
+            return
+        job_dir = os.path.join(self._admin_dir,str(job_number))
+        try:
+            # Remove the directory and contents
+            shutil.rmtree(job_dir)
+        except Exception as ex:
+            logger.warning(f"{self._runner_name}: exception cleaning up for "
+                            "job %s (ignored): %s" % (job_id,ex))
+        # Clear stored error state
+        try:
+            del(self._error_state[job_id])
+        except KeyError:
+            pass
+        # Remove the internally stored job number
+        del(self._job_number[job_id])
+
+
+    def _run_qstat(self):
+        """Internal: run qstat and return data as a list of lists
+
+        Runs 'qstat' command, processes the output and returns a
+        list where each item is the data for a job in the form of
+        another list, with the items in this list being the data
+        returned by qstat.
+
+        NB as 'qstat' calls can be expensive to make, a caching
+        mechanism is used which stores the output from 'qstat'
+        for a specified period.
+        """
+        # Should we return the cached data?
+        if (time.time() - self._cached_qstat_output_timestamp) < \
+           self._cached_qstat_output_lifetime:
+            logger.debug(f"{self._runner_name}: returning cached qstat output")
+            return self._cached_qstat_output
+        # Run qstat and collect the output
+        try:
+            cmd = ['qstat','-u',os.getlogin()]
+        except OSError:
+            # os.getlogin() not guaranteed to work in all environments?
+            cmd = ['qstat']
+        # Run qstat command
+        p = subprocess.Popen(cmd,
+                             stdout=subprocess.PIPE,
+                             universal_newlines=True)
+        stdoutdata = p.communicate()[0]
+        # Process the output
+        qstat_output = []
+        # Typical output is:
+        # job-ID  prior   name       user         ...<snipped>...
+        # ----------------------------------------...<snipped>...
+        # 620848 -499.50000 qc       myname       ...<snipped>...
+        # ...
+        # i.e. 2 header lines then one line per job
+        for line in stdoutdata.split('\n'):
+            try:
+                if line.split()[0].isdigit():
+                    qstat_output.append(line.split())
+            except IndexError:
+                # Skip this line
+                pass
+        # Update the cache
+        self._cached_qstat_output_timestamp = time.time()
+        self._cached_qstat_output = qstat_output
+        return qstat_output
+
+    def _run_qacct(self, job_id):
+        """Internal: run qacct and return data as a dictionary
+
+        Runs 'qacct -j' command to get the accounting information
+        for the specified job ID, processes the output and returns
+        it as a dictionary, for example:
+
+        { 'qname': 'serial.q', 'exit_status': '0', ... }
+
+        The full set of accounting parameters are listed in the
+        Grid Engine 'accounting (5)' manpage, for example:
+
+        https://arc.liv.ac.uk/SGE/htmlman/htmlman5/accounting.html
+
+        **Use of this method is deprecated**
+
+        This method is now deprecated for a number of reasons:
+
+        * Use of 'qacct' requires that Grid Engine accounting has
+          been turned on, which is not guaranteed.
+
+        * On systems where accounting information is available,
+          there may also be a significant delay between job
+          completion and the information becoming available via
+          'qacct'.
+
+        (According to the documentation this interval is governed
+        by the `accounting_flush_time` parameter in the
+        `reporting_params` line of the Grid Engine configuration
+        file - for example:
+
+        > grep $SGE_ROOT/$SGE_CELL/common/configuration
+        reporting_params             accounting=true reporting=false flush_time=00:00:15 joblog=false sharelog=00:00:00
+        )
+
+        As a result calls to 'qacct' can be time-consuming and
+        expensive to perform, and are best avoided unless absolutely
+        necessary.
+        """
+        cmd = ['qacct','-j',"%s" % job_id]
+        # Run the qacct command
+        p = subprocess.Popen(cmd,
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE,
+                             universal_newlines=True)
+        stdoutdata, stderrdata = p.communicate()
+        # Check stderr in case output is not available
+        # e.g. "error: job id 18384 not found"
+        if stderrdata.startswith("error: job id"):
+            logger.debug("Job %s: unable to get qacct info"
+                          % job_id)
+            return None
+        # Process the output
+        qacct_dict = {}
+        # Typical output is:
+        # qname        serial.q
+        # hostname     node015.prv.cluster
+        # group        users
+        # owner        pjb
+        # jobname      copy.MH
+        # jobnumber    9859
+        # taskid       undefined
+        # account      sge
+        # priority     0
+        # qsub_time    Thu Aug 18 11:28:50 2016
+        # start_time   Thu Aug 18 11:28:50 2016
+        # end_time     Thu Aug 18 12:27:09 2016
+        # granted_pe   NONE
+        # slots        1
+        # failed       0
+        # exit_status  0
+        # ...
+        # i.e. key-value pairs, one pair per line
+        for line in p.stdout:
+            try:
+                i = line.index(" ")
+                key = line[:i].strip()
+                value = line[i:].strip()
+                qacct_dict[key] = value
+            except ValueError:
+                # Skip this line
+                pass
+        return qacct_dict
+
+    def _job_state_code(self,job_id):
+        """
+        Internal: get the state code for a job id
+
+        Will be one of the GE job state codes, or an empty
+        string if the job id isn't found.
+        """
+        # Run qstat and process output to get job states
+        logger.debug(f"{self._runner_name}: acquiring state for job %s"
+                      % job_id)
+        qstat = self._run_qstat()
+        job_ids = []
+        job_states = {}
+        for job_data in qstat:
+            id_ = job_data[0]
+            state = job_data[4]
+            logger.debug(f"{self._runner_name}: found job %s (state '%s')"
+                          % (id_,state))
+            if id_ == job_id:
+                return state
+        # Job not found
+        return ""
+
+    def _ge_name(self,name):
+        """Internal: sanitize a name for use with GE
+        """
+        ge_name = str(name)
+        for c in ":*@\\?":
+            ge_name = ge_name.replace(c,'_')
+        if ge_name[0].isdigit():
+            # Name cannot start with a digit so
+            # prepend an underscore
+            ge_name = "_%s" % ge_name
+        return ge_name
 
 
 class ResourceLock:
