@@ -50,42 +50,6 @@ Simple usage example:
 Processes run using a job runner inherit the environment where the runner
 is created and executed.
 
-Addi
-Classes for starting, stopping and managing jobs.
-
-Class ``BaseJobRunner`` is a template with methods that need to be
-implemented by subclasses. The subclasses implemented here are:
-
-* ``SimpleJobRunner``: run jobs (e.g. scripts) on a local file system.
-* ``GEJobRunner``    : run jobs using Grid Engine (GE) i.e. qsub, qdel etc
-* ``SlurmRunner``    : run jobs using Slurm i.e. sbatch, scancel etc
-
-A single job runner instance can be used to start and manage multiple
-processes.
-
-Each job is started by invoking the ``run`` method of the runner. This
-returns an id string which is then used in calls to the various job
-monitoring and control methods (e.g. ``isRunning``, ``terminate`` etc)
-to interact with the job.
-
-The runner's ``list`` method returns a list of running job ids.
-
-Simple usage example:
-
->>> # Create a JobRunner instance
->>> runner = SimpleJobRunner()
->>> # Start a job using the runner and collect its id
->>> job_id = runner.run('Example',None,'myscript.sh')
->>> # Wait for job to complete
->>> import time
->>> while runner.isRunning(job_id):
->>>     time.sleep(10)
->>> # Get the names of the output files
->>> log,err = (runner.logFile(job_id),runner.errFile(job_id))
-
-Processes run using a job runner inherit the environment where the runner
-is created and executed.
-
 Additionally, runners set the ``BCFTBX_RUNNER_NSLOTS`` environment variable,
 which is set to the number of slots (aka CPUs/cores/threads) available to
 processes executed by the runner. For all runners this defaults to one
