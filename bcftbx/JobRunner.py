@@ -60,6 +60,8 @@ the ``-pe`` argument as part of the 'ge_extra_args' option, for example:
 # Import modules that this module depends on
 #######################################################################
 
+from .jobs.runners import ResourceLock
+from .jobs import runners
 from builtins import str
 import os
 import io
@@ -69,8 +71,6 @@ import time
 import tempfile
 import shutil
 import atexit
-import uuid
-import random
 
 #######################################################################
 # Classes
@@ -182,12 +182,11 @@ class BaseJobRunner:
         else:
             self.__log_dir = None
 
-class SimpleJobRunner(BaseJobRunner):
+class SimpleJobRunner(runners.LocalRunner):
     """Class implementing job runner for local system
 
-    ``SimpleJobRunner`` starts jobs as processes on a local system;
-    the status of jobs is determined using the Linux ``ps eu``
-    command, and jobs are terminated using ``kill -9``.
+    ``SimpleJobRunner`` is a wrapper for the ``LocalRunner``
+    class from the ``jobs.runners`` module.
 
     Arguments:
       log_dir: Directory to write log files to (set to 'None' to use
@@ -198,228 +197,25 @@ class SimpleJobRunner(BaseJobRunner):
     """
 
     def __init__(self,log_dir=None,join_logs=False,nslots=1):
-        # Store a list of job ids (= pids) managed by this class
-        self.__job_list = []
-        # Names
-        self.__names = {}
-        # Base log id
-        self.__log_id = int(time.time())
-        # Directory for log files
-        self.set_log_dir(log_dir)
-        # Join stderr to stdout
-        self.__join_logs = join_logs
-        # Number of slots
-        self.__nslots = nslots
-        # Keep track of log files etc
-        self.__log_files = {}
-        self.__err_files = {}
-        self.__log_fp = {}
-        self.__err_fp = {}
-        self.__exit_status = {}
-        self.__job_popen = {}
-        # Job id lock
-        self.__job_lock = ResourceLock()
+        super(SimpleJobRunner,self).__init__(log_dir=log_dir,
+                                             join_logs=join_logs,
+                                             nslots=nslots)
+        self._runner_name = "SimpleJobRunner"
 
-    def __repr__(self):
-        name = 'SimpleJobRunner'
-        args = []
-        if self.__nslots > 1:
-            args.append('nslots=%s' % self.__nslots)
-        args.append('join_logs=%s' % self.__join_logs)
-        if args:
-            name += '(%s)' % ' '.join(args)
-        return name
-
-    def run(self,name,working_dir,script,args):
-        """Run a command and return the PID (=job id)
-
-        Arguments:
-          name: Name to give the job
-          working_dir: Directory to run the job in
-          script: Script file to run
-          args: List of arguments to supply to the script
-
-        Returns:
-          Job id for submitted job, or 'None' if job failed to
-          start.
+    def isRunning(self, job_id):
+        """Check if a job is running
         """
-        logging.debug("SimpleJobRunner: submitting job")
-        logging.debug("Name       : %s" % name)
-        logging.debug("Working_dir: %s" % working_dir)
-        logging.debug("Log dir    : %s" % self.log_dir)
-        logging.debug("Join logs  : %s" % self.__join_logs)
-        logging.debug("Nslots     : %s" % self.nslots)
-        logging.debug("Script     : %s" % script)
-        logging.debug("Arguments  : %s" % str(args))
-        # Build command to be submitted
-        cmd = [script]
-        cmd.extend(args)
-        logging.debug("SimpleJobRunner: command: %s" % cmd)
-        # Check working directory
-        if working_dir:
-            working_dir = os.path.abspath(working_dir)
-            if not os.path.exists(working_dir):
-                logging.error("SimpleJobRunner: working dir '%s' doesn't "
-                              "exist!" % working_dir)
-                return None
-        else:
-            working_dir = os.getcwd()
-        logging.debug("SimpleJobRunner: executing in %s" % working_dir)
-        # Set up log files
-        lognames = self.__assign_log_files(name,working_dir)
-        log = io.open(lognames[0],'wt')
-        if not self.__join_logs:
-            err = io.open(lognames[1],'wt')
-        else:
-            err = subprocess.STDOUT
-        # Set up the environment
-        env = os.environ.copy()
-        env['BCFTBX_RUNNER_NSLOTS'] = "%s" % self.nslots
-        # Start the subprocess
-        p = subprocess.Popen(cmd,
-                             cwd=working_dir,
-                             stdout=log,stderr=err,
-                             env=env)
-        # Capture the job id from the output
-        job_id = str(p.pid)
-        logging.debug("SimpleJobRunner: done - job id = %s" % job_id)
-        # Do internal house keeping
-        self.__job_list.append(job_id)
-        self.__log_files[job_id] = lognames[0]
-        self.__job_popen[job_id] = p
-        self.__log_fp[job_id] = log
-        if not self.__join_logs:
-            self.__err_files[job_id] = lognames[1]
-            self.__err_fp[job_id] = err
-        else:
-            self.__err_files[job_id] = None
-            self.__err_fp[job_id] = None
-        # Store name against job id
-        if job_id is not None:
-            self.__names[job_id] = name
-        # Return the job id
-        return job_id
-
-    def terminate(self,job_id):
-        """Kill a running job using 'kill -9'
-        """
-        # Check it's one of ours
-        if job_id not in self.__job_list:
-            logging.debug("Don't own job %s, can't delete" % job_id)
-            return False
-        # Attempt to terminate
-        logging.debug("KillJob: deleting job")
-        p = self.__job_popen[job_id]
-        p.terminate()
-        p.wait()
-        if job_id not in self.list():
-            logging.debug("KillJob: deleted job %s" % job_id)
-            return True
-        else:
-            logging.error("Failed to delete job %s" % job_id)
-            return False
-
-    @property
-    def nslots(self):
-        """Return the number of associated slots
-        """
-        return self.__nslots
-
-    def name(self,job_id):
-        """Return the name for a job
-        """
-        return self.__names[job_id]
+        return self.is_running(job_id)
 
     def logFile(self,job_id):
         """Return the log file name for a job
         """
-        return self.__log_files[job_id]
+        return self.log_file(job_id)
 
     def errFile(self,job_id):
         """Return the error file name for a job
         """
-        return self.__err_files[job_id]
-
-    def list(self):
-        """Return a list of running job_ids
-        """
-        job_ids = []
-        for job_id in [jid for jid in self.__job_popen]:
-            try:
-                # Get lock on this job id
-                lock = None
-                while lock is None:
-                    lock = self.__job_lock.acquire(job_id)
-                logging.debug("SimpleJobRunner: acquired lock: %s" % lock)
-                # Get the associated Popen instance
-                p = self.__job_popen[job_id]
-            except KeyError:
-                # Job has been removed since the list
-                # was fetched? Ignore
-                logging.debug("SimpleJobRunner: job %s has gone away" %
-                              job_id)
-                self.__job_lock.release(lock)
-                continue
-            status = p.poll()
-            if status is None:
-                job_ids.append(job_id)
-            else:
-                # Set exit status
-                logging.debug("Job id %s: finished (%s)" % (job_id,
-                                                            status))
-                self.__exit_status[job_id] = status
-                # Close output files
-                for fp in (self.__log_fp,
-                           self.__err_fp,):
-                    try:
-                        if fp[job_id] is not None:
-                            fp[job_id].close()
-                    except KeyError:
-                        logging.warning("Job id %s: couldn't get output "
-                                        "file to close" % job_id)
-                # Remove job records
-                for data in (self.__job_popen,
-                             self.__log_fp,
-                             self.__err_fp,):
-                    try:
-                        del(data[job_id])
-                    except KeyError:
-                        logging.warning("Job id %s: record already "
-                                        "deleted?" % job_id)
-            # Release the lock
-            self.__job_lock.release(lock)
-        return job_ids
-
-    def exit_status(self,job_id):
-        """Return exit status from command run by a job
-        """
-        if job_id in self.__job_popen:
-            # Job exists but still running
-            return None
-        # Look for return code
-        try:
-            return self.__exit_status[job_id]
-        except KeyError:
-            logging.error("Don't know anything about job %s" % job_id)
-            return None
-
-    def __assign_log_files(self,name,working_dir):
-        """Internal: return log file names for stdout and stderr
-
-        Since the job id isn't known before the job starts, create
-        names based on the timestamp plus the supplied 'name'
-        """
-        timestamp = self.__log_id
-        log_file = "%s.o%s" % (name,timestamp)
-        error_file = "%s.e%s" % (name,timestamp)
-        if self.log_dir is None:
-            log_dir = working_dir
-        else:
-            log_dir = self.log_dir
-        log_file = os.path.join(log_dir,log_file)
-        error_file = os.path.join(log_dir,error_file)
-        self.__log_id += 1
-        return (log_file,error_file)
+        return self.err_file(job_id)
 
 class GEJobRunner(BaseJobRunner):
     """Class implementing job runner for Grid Engine
@@ -1957,164 +1753,6 @@ exit $exit_code
                 new_args.append(arg)
         # Update the extra arguments
         self._slurm_extra_args = new_args
-
-
-class ResourceLock:
-    """
-    Class for managing in-process locks on 'resources'
-
-    A 'resource' is identified by an arbitrary string.
-
-    Example usage: create a new ResourceLock instance
-    and check if a resource is locked:
-
-    >>> r = ResourceLock()
-    >>> r.is_locked("resource1")
-    False
-
-    Try to acquire the lock on the resource:
-
-    >>> lock = r.acquire("resource1")
-    >>> r.is_locked("resource1")
-    True
-
-    Release the lock on the resource:
-
-    >>> r.release(lock)
-    >>> r.is_locked("resource1")
-    False
-    """
-    def __init__(self):
-        """
-        Create a new ResourceLock instance
-        """
-        self._locks = dict()
-
-    def _get_lock_name(self,resource_name):
-        """
-        Internal: return a unique lock name
-
-        Returns a unique timestamped lock name
-        for the named resource.
-
-        Arguments:
-          resource_name (str): name of the resource
-            to create a lock name for
-
-        Returns:
-          String: lock name for the resource.
-        """
-        return "%s@%s@%s" % (resource_name,
-                             time.time(),
-                             uuid.uuid4())
-
-    def _split_lock_name(self,lock):
-        """
-        Internal: split a lock name into components
-
-        Arguments:
-          lock (str): lock name to split
-
-        Returns:
-          Tuple: tuple consisting of (resource_name,
-            timestamp, unique ID). The timestamp is
-            returned as a float.
-        """
-        resource_name,timestamp,uuid_ = lock.split('@')
-        timestamp = float(timestamp)
-        return (resource_name,timestamp,uuid_)
-
-    def acquire(self,resource_name,timeout=None):
-        """
-        Attempt to acquire the lock on a resource
-
-        Arguments:
-          resource_name (str): name of the resource
-            to acquire the lock name for
-          timeout (float): optional, specifies a
-            timeout period after which failure to
-            acquire the lock raises an exception.
-
-        Returns:
-          String: lock name.
-        """
-        logging.debug("ResourceLock: attempting to get lock for "
-                      "resource '%s'" % resource_name)
-        start_time = time.time()
-        has_lock = False
-        while not has_lock:
-            # Assume we have the lock, until proven otherwise
-            has_lock = True
-            # Register a putative lock
-            lock = self._get_lock_name(resource_name)
-            self._locks[lock] = True
-            logging.debug("ResourceLock: made new lock '%s'" % lock)
-            # Wait
-            time.sleep(0.001)
-            # Check all locks for this resource and see if any
-            # pre-date the new lock
-            resource_name,timestamp,uuid_ = self._split_lock_name(lock)
-            for l in list(self._locks.keys()):
-                if l == lock:
-                    continue
-                n,ts,uid = self._split_lock_name(lock)
-                if n == resource_name:
-                    if ts < timestamp:
-                        # Resource is already locked
-                        logging.debug("ResourceLock: resource '%s' already "
-                                      "locked" % resource_name)
-                        # Remove attempted lock
-                        self.release(lock)
-                        return None
-                    elif ts == timestamp:
-                        # Deadlock: two locks with same priority
-                        logging.debug("ResourceLock: two locks with same "
-                                      "priority for resource '%s'" %
-                                      resource_name)
-                        # We don't have the lock after all
-                        has_lock = False
-                        # Release the putative lock
-                        self.release(lock)
-                        # Retry after a random delay
-                        time.sleep(random.random())
-                        break
-            # Check for timeout
-            if not has_lock and timeout is not None:
-                if (time.time() - start_time) > timeout:
-                    raise Exception("ResourceLock: timed out trying to "
-                                    "acquire lock for resource '%s'" %
-                                    resource_name)
-        # This lock has priority
-        logging.debug("ResourceLock: acquired lock: '%s'" % lock)
-        return lock
-
-    def release(self,lock):
-        """
-        Release a lock on a resource
-
-        Arguments:
-          lock (str): lock to release.
-        """
-        logging.debug("ResourceLock: releasing '%s'" % lock)
-        del self._locks[lock]
-
-    def is_locked(self,resource_name):
-        """
-        Check if a resource is locked
-
-        Arguments:
-          resource_name (str): name of the resource
-            to check the lock for
-
-        Returns:
-          Boolean: True if resource is locked, False
-            if not.
-        """
-        for lock in [l for l in self._locks.keys()]:
-            n,ts,uid = self._split_lock_name(lock)
-            if n == resource_name:
-                return True
-        return False
 
 #######################################################################
 # Functions

@@ -1072,23 +1072,6 @@ class TestSlurmRunner(unittest.TestCase):
         self.assertEqual(runner.name(jobid2), "slurm_test_2")
         self.assertEqual(runner.exit_status(jobid2), 0)
 
-
-class TestResourceLock(unittest.TestCase):
-    """
-    Tests for the ResourceLock class
-    """
-    def test_resource_lock(self):
-        """
-        ResourceLock: check acquiring and releasing a lock
-        """
-        resource_lock = ResourceLock()
-        self.assertFalse(resource_lock.is_locked("test"))
-        lock = resource_lock.acquire("test")
-        self.assertEqual(lock.split('@')[0],"test")
-        self.assertTrue(resource_lock.is_locked("test"))
-        resource_lock.release(lock)
-        self.assertFalse(resource_lock.is_locked("test"))
-
     def test_resource_lock_timeout(self):
         """
         ResourceLock: check lock acquisition timeout
