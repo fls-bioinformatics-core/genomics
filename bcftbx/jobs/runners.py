@@ -69,6 +69,7 @@ the ``-pe`` argument as part of the 'ge_extra_args' option, for example:
 
 import atexit
 import os
+import random
 import shutil
 import subprocess
 import tempfile
