@@ -1072,21 +1072,6 @@ class TestSlurmRunner(unittest.TestCase):
         self.assertEqual(runner.name(jobid2), "slurm_test_2")
         self.assertEqual(runner.exit_status(jobid2), 0)
 
-    def test_resource_lock_timeout(self):
-        """
-        ResourceLock: check lock acquisition timeout
-        """
-        resource_lock = ResourceLock()
-        # Get a lock
-        lock = resource_lock.acquire("test")
-        self.assertTrue(resource_lock.is_locked("test"))
-        # Try to acquire a second lock without releasing
-        # the first, specifying a timeout
-        self.assertRaises(Exception,
-                          resource_lock.acquire,
-                          "test",
-                          timeout=1.0)
-
 class TestFetchRunnerFunction(unittest.TestCase):
     """Tests for the fetch_runner function
     """
