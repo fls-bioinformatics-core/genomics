@@ -6,6 +6,7 @@ from bcftbx.jobs.runners import LocalRunner
 from bcftbx.jobs.runners import GridEngineRunner
 from bcftbx.jobs.runners import SlurmRunner
 from bcftbx.jobs.runners import ResourceLock
+from bcftbx.jobs.runners import fetch_runner
 from bcftbx.mockGE import setup_mock_GE
 from bcftbx.mockGE import MockGE
 from bcftbx.mockslurm import setup_mock_slurm
@@ -1121,3 +1122,125 @@ class TestResourceLock(unittest.TestCase):
                           resource_lock.acquire,
                           "test",
                           timeout=1.0)
+
+
+class TestFetchRunnerFunction(unittest.TestCase):
+    """
+    Tests for the fetch_runner function
+    """
+    def test_fetch_local_runner(self):
+        """
+        fetch_runner: returns default 'LocalRunner'
+        """
+        runner = fetch_runner("LocalRunner")
+        self.assertTrue(isinstance(runner, LocalRunner))
+        self.assertEqual(runner.nslots,1)
+
+    def test_fetch_local_runner_with_nslots(self):
+        """
+        fetch_runner: returns 'LocalRunner' with nslots
+        """
+        runner = fetch_runner("LocalRunner(nslots=8)")
+        self.assertTrue(isinstance(runner, LocalRunner))
+        self.assertEqual(runner.nslots,8)
+
+    def test_fetch_local_runner_with_join_logs(self):
+        """
+        fetch_runner: returns 'LocalRunner' with join_logs
+        """
+        runner = fetch_runner("LocalRunner(join_logs=False)")
+        self.assertTrue(isinstance(runner, LocalRunner))
+        self.assertFalse(runner.join_logs)
+
+    def test_fetch_grid_engine_runner(self):
+        """
+        fetch_runner: returns default 'GridEngineRunner'
+        """
+        runner = fetch_runner("GridEngineRunner")
+        self.assertTrue(isinstance(runner, GridEngineRunner))
+
+    def test_fetch_grid_engine_runner_with_extra_args(self):
+        """
+        fetch_runner: returns 'GridEngineRunner' with additional arguments
+        """
+        runner = fetch_runner("GridEngineRunner(-j y)")
+        self.assertTrue(isinstance(runner, GridEngineRunner))
+        self.assertEqual(runner.ge_extra_args,['-j','y'])
+
+    def test_fetch_slurm_runner(self):
+        """
+        fetch_runner: returns default 'SlurmRunner'
+        """
+        runner = fetch_runner("SlurmRunner")
+        self.assertTrue(isinstance(runner, SlurmRunner))
+        self.assertEqual(runner.nslots, 1)
+        self.assertEqual(runner.partition, None)
+        self.assertFalse(runner.join_logs)
+        self.assertEqual(runner.slurm_extra_args, None)
+
+    def test_fetch_slurm_runner_with_nslots(self):
+        """
+        fetch_runner: returns 'SlurmRunner' with nslots
+        """
+        runner = fetch_runner("SlurmRunner(nslots=8)")
+        self.assertTrue(isinstance(runner, SlurmRunner))
+        self.assertEqual(runner.nslots, 8)
+        self.assertEqual(runner.partition, None)
+        self.assertFalse(runner.join_logs)
+        self.assertEqual(runner.slurm_extra_args, None)
+
+    def test_fetch_slurm_runner_with_partition(self):
+        """
+        fetch_runner: returns 'SlurmRunner' with partition
+        """
+        runner = fetch_runner("SlurmRunner(partition=default)")
+        self.assertTrue(isinstance(runner, SlurmRunner))
+        self.assertEqual(runner.nslots, 1)
+        self.assertEqual(runner.partition, "default")
+        self.assertFalse(runner.join_logs)
+        self.assertEqual(runner.slurm_extra_args, None)
+
+    def test_fetch_slurm_runner_with_join_logs(self):
+        """
+        fetch_runner: returns 'SlurmRunner' with join_logs
+        """
+        runner = fetch_runner("SlurmRunner(join_logs=True)")
+        self.assertTrue(isinstance(runner, SlurmRunner))
+        self.assertEqual(runner.nslots, 1)
+        self.assertEqual(runner.partition, None)
+        self.assertTrue(runner.join_logs)
+        self.assertEqual(runner.slurm_extra_args, None)
+
+    def test_fetch_slurm_runner_with_extra_args(self):
+        """
+        fetch_runner: returns 'SlurmRunner' with additional arguments
+        """
+        # Extra args that set nslots and partition
+        runner = fetch_runner("SlurmRunner(-n 8 -p default)")
+        self.assertTrue(isinstance(runner, SlurmRunner))
+        self.assertEqual(runner.nslots, 8)
+        self.assertEqual(runner.partition, "default")
+        self.assertFalse(runner.join_logs)
+        self.assertEqual(runner.slurm_extra_args, None)
+        # Extra args plus join_logs
+        runner = fetch_runner("SlurmRunner(-n 8 -p default join_logs=y)")
+        self.assertTrue(isinstance(runner, SlurmRunner))
+        self.assertEqual(runner.nslots, 8)
+        self.assertEqual(runner.partition, "default")
+        self.assertTrue(runner.join_logs)
+        self.assertEqual(runner.slurm_extra_args, None)
+        # Arbitrary non-reserved extra args
+        runner = fetch_runner("SlurmRunner(-n 8 --mail-type=ALL --mail-user=emailaddr@manchester.ac.uk join_logs=n)")
+        self.assertTrue(isinstance(runner, SlurmRunner))
+        self.assertEqual(runner.nslots, 8)
+        self.assertEqual(runner.partition, None)
+        self.assertFalse(runner.join_logs)
+        self.assertEqual(runner.slurm_extra_args,
+                         ["--mail-type=ALL",
+                          "--mail-user=emailaddr@manchester.ac.uk"])
+
+    def test_fetch_bad_runner_raises_exception(self):
+        """
+        fetch_runner: raises exception for unknown runner
+        """
+        self.assertRaises(Exception, fetch_runner, "SimpleJobRunner")

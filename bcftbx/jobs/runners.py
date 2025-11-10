@@ -65,6 +65,11 @@ For ``GridEngineRunner`` instances the number of cores is set by specifying
 the ``-pe`` argument as part of the 'ge_extra_args' option, for example:
 
 >>> multicore_runner = GridEngineRunner(extra_ge_args=('-pe','smp.pe','4'))
+
+The module also provides the ``fetch_runner`` function which can be used
+to create job runner instances based on a string definition, for example:
+
+>>> runner = fetch_runner('LocalRunner(nslots=4 join_logs=True)')
 """
 
 import atexit
@@ -2322,3 +2327,122 @@ exit $exit_code
                 new_args.append(arg)
         # Update the extra arguments
         self._slurm_extra_args = new_args
+
+
+#######################################################################
+# Functions
+#######################################################################
+
+
+def fetch_runner(definition):
+    """
+    Return job runner instance based on a definition string
+
+    Given a definition string, returns an appropriate runner
+    instance.
+
+    Definitions are of the form:
+
+    ::
+
+        RunnerName[(args)]
+
+    RunnerName can be 'LocalRunner', 'GridEngineRunner' or
+    'SlurmRunner'. If '(args)' are also supplied then:
+
+    - for LocalRunners, this can be a list of optional
+      arguments separated by spaces:
+
+      * 'nslots=N' (where N is an integer; sets a non-default
+        number of slots
+      * 'join_logs=BOOLEAN' (where BOOLEAN can be 'True',
+        'true','y','False','false','n'; sets whether stdout
+        and stderr should be written to the same file)
+
+    - for GridEngineRunners, this is a set of arbitrary 'qsub'
+      options that will be used on job submission
+
+    - for SlurmRunners, this can be a list of optional
+      arguments separated by spaces:
+
+      * 'nslots=N' (where N is an integer; sets a non-default
+        number of slots
+      * 'partition=STRING' (where STRING is the name of the
+        target Slurm partition)
+      * 'join_logs=BOOLEAN' (where BOOLEAN can be 'True',
+        'true','y','False','false','n'; sets whether stdout
+        and stderr should be written to the same file)
+      * a sting with arbitrary 'sbatch' options that will be
+        included on job submission (note: '-J', '-o', '-e'
+        and '--export' cannot be specified)
+
+    Arguments:
+        definition (str): runner definition string
+
+    Returns:
+        JobRunner: instance of appropriate JobRunner subclass
+    """
+    # Parse the definition string
+    definition = definition.strip()
+    if "(" in definition and not definition.endswith(")"):
+        raise Exception("Invalid runner definition: %s" % definition)
+    try:
+        name, args = definition.rstrip(")").split("(",1)
+    except ValueError:
+        name = definition
+        args = ""
+    # Handle different runner types
+    if name == "LocalRunner":
+        kw_args = { "join_logs": True }
+        for arg in args.split(" "):
+            if arg.startswith("nslots="):
+                kw_args["nslots"] = int(arg.split('=')[-1])
+            elif arg.startswith("join_logs="):
+                join_logs = arg.split('=')[-1].lower()
+                if join_logs in ('true','yes','y'):
+                    join_logs = True
+                elif join_logs in ('false','no','n'):
+                    join_logs = False
+                else:
+                    raise Exception("Invalid value for LocalJobRunner "
+                                    "'join_logs': %s" % join_logs)
+                kw_args["join_logs"] = join_logs
+            elif not arg:
+                # Ignore empty argument (e.g. no args supplied)
+                pass
+            else:
+                raise Exception("Unrecognised argument for "
+                                "LocalRunner definition: '%s'" % arg)
+        return LocalRunner(**kw_args)
+    elif name == "GridEngineRunner":
+        if args:
+            return GridEngineRunner(ge_extra_args=args.split(" "))
+        else:
+            return GridEngineRunner()
+    elif name == "SlurmRunner":
+        kw_args = {}
+        for arg in args.split(" "):
+            if arg.startswith("nslots="):
+                kw_args["nslots"] = int(arg.split("=")[-1])
+            elif arg.startswith("partition="):
+                kw_args["partition"] = arg.split("=")[-1]
+            elif arg.startswith("join_logs="):
+                join_logs = arg.split('=')[-1].lower()
+                if join_logs in ("true", "yes", "y"):
+                    join_logs = True
+                elif join_logs in ("false", "no", "n"):
+                    join_logs = False
+                else:
+                    raise Exception(f"Invalid value for SlurmRunner "
+                                    f"'join_logs': %s" % join_logs)
+                kw_args["join_logs"] = join_logs
+            elif not arg:
+                # Ignore empty argument (e.g. no args supplied)
+                pass
+            else:
+                try:
+                    kw_args["slurm_extra_args"].append(arg)
+                except KeyError:
+                    kw_args["slurm_extra_args"] = [arg]
+        return SlurmRunner(**kw_args)
+    raise Exception("Unrecognised runner class: %s" % name)
