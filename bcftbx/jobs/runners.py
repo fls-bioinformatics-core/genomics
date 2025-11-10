@@ -21,9 +21,10 @@ The subclasses implemented here are:
 * ``LocalRunner``: executes jobs on the local file system
 * ``GridEngineRunner``: executes jobs using Sun Grid Engine (GE)
   i.e. qsub, qdel etc
+* ``SlurmRunner``: executes jobs using Slurm (sbatch, scancel etc)
 
 A single job runner instance can be used to start and manage multiple
-processes.
+processes which require the same resources.
 
 Usage of job runners is as follows:
 
