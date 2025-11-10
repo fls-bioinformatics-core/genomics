@@ -1566,7 +1566,7 @@ class SlurmRunner(JobRunner):
                  join_logs=None, slurm_extra_args=None,
                  poll_interval=300, timeout=30, missing_job_timeout=600):
         # Internal parameters
-        self._name = "SlurmRunner"
+        self._runner_name = "SlurmRunner"
         self._admin_dir = None
         self._job_count = 0
         self._shell = "/bin/bash"
@@ -1631,9 +1631,9 @@ class SlurmRunner(JobRunner):
         if self._slurm_extra_args:
             args.append(f"slurm_args={' '.join(self.slurm_extra_args)}")
         if args:
-            return self._name + f"({','.join(args)})"
+            return self._runner_name + f"({','.join(args)})"
         else:
-            return self._name
+            return self._runner_name
 
     def name(self, job_id):
         """
@@ -1701,7 +1701,7 @@ class SlurmRunner(JobRunner):
           Job id for submitted job, or 'None' if job failed to
           start.
         """
-        logging.debug(f"{self._name:11}: submitting job")
+        logging.debug(f"{self._runner_name:11}: submitting job")
         logging.debug(f"Name       : {name}")
         logging.debug(f"Nslots     : {self.nslots}")
         logging.debug(f"Partition  : {self.partition}")
