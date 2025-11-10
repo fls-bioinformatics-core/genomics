@@ -59,6 +59,7 @@ class TestLocalRunner(unittest.TestCase):
         """
         # Create a runner and execute the echo command
         runner = LocalRunner()
+        self.assertFalse(runner.join_logs)
         jobid = self._run_job(runner, 'test', self.working_dir, 'echo', ('this is a test',))
         self.assertEqual(runner.exit_status(jobid),None)
         self._wait_for_jobs(runner,jobid)
@@ -111,6 +112,7 @@ class TestLocalRunner(unittest.TestCase):
         """
         # Create a runner and execute the echo command
         runner = LocalRunner(join_logs=True)
+        self.assertTrue(runner.join_logs)
         jobid = self._run_job(runner, 'test', self.working_dir, 'echo', ('this is a test',))
         self._wait_for_jobs(runner, jobid)
         # Check outputs
@@ -296,6 +298,7 @@ class TestGridEngineRunner(unittest.TestCase):
         """
         # Create a runner and execute the echo command
         runner = GridEngineRunner(ge_extra_args=self.ge_extra_args)
+        self.assertFalse(runner.join_logs)
         jobid = self._run_job(runner,'test',self.working_dir,'echo',('this is a quick test',))
         self.assertTrue(runner.is_running(jobid))
         self._wait_for_jobs(runner,jobid)
@@ -400,6 +403,7 @@ class TestGridEngineRunner(unittest.TestCase):
         # Create a runner and execute the echo command
         self.ge_extra_args.extend(('-j','y'))
         runner = GridEngineRunner(ge_extra_args=self.ge_extra_args)
+        self.assertTrue(runner.join_logs)
         self.assertEqual(runner.ge_extra_args,self.ge_extra_args)
         jobid = self._run_job(runner,'test',self.working_dir,'echo',('this is a test',))
         self._wait_for_jobs(runner,jobid)

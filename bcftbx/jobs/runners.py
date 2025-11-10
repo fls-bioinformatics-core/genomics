@@ -285,9 +285,9 @@ class LocalRunner(JobRunner):
     def __repr__(self):
         name = self._runner_name
         args = []
-        if self._nslots > 1:
-            args.append("nslots=%s" % self._nslots)
-        args.append("join_logs=%s" % self._join_logs)
+        if self.nslots > 1:
+            args.append("nslots=%s" % self.nslots)
+        args.append("join_logs=%s" % self.join_logs)
         if args:
             name += '(%s)' % ' '.join(args)
         return name
@@ -403,6 +403,20 @@ class LocalRunner(JobRunner):
             Integer: number of slots
         """
         return self._nslots
+
+    @property
+    def join_logs(self):
+        """
+        Return whether stderr and stdout are joined
+
+        Returns:
+            Boolean: True if stderr and stdout are joined
+            into a single log file, False otherwise
+        """
+        if self._join_logs is None:
+            return False
+        else:
+            return bool(self._join_logs)
 
     def name(self, job_id):
         """
@@ -655,6 +669,22 @@ class GridEngineRunner(JobRunner):
             except ValueError:
                 pass
         return nslots
+
+    @property
+    def join_logs(self):
+        """
+        Return whether stderr and stdout are joined
+
+        Returns:
+            Boolean: True if stderr and stdout are joined
+            into a single log file, False otherwise
+        """
+        try:
+            i = self.ge_extra_args.index("-j")
+            join_logs = bool(self.ge_extra_args[i+1] == "y")
+        except (ValueError, IndexError):
+            join_logs = False
+        return join_logs
 
     def run(self, name, working_dir, script, args):
         """
