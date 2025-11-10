@@ -1448,8 +1448,6 @@ class SlurmRunner(JobRunner):
         self._missing = {}
         self._missing_job_timeout = int(missing_job_timeout)
         self._missing_job_last_checked = 0.0
-        # Register clean up function
-        atexit.register(self._clean_up_admin_dir)
         # Slurm-specific variables
         self._join_logs = join_logs
         self._nslots = nslots
