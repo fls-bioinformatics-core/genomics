@@ -5,24 +5,25 @@
 #
 
 """
-Classes for starting, stopping and managing jobs.
+Legacy module providing job runner classes for starting, stopping and
+managing jobs.
 
-Class ``BaseJobRunner`` is a template with methods that need to be
-implemented by subclasses. The subclasses implemented here are:
+The core functionality has been moved to the ``jobs.runners`` module,
+which implements the base ``JobRunner`` class and subclasses for
+various job management systems.
+
+This module provides legacy job runner classes based on the new
+classes (which mostly have different names and different interfaces)
+for backwards compatibility. The legacy runner classes implemented here
+are:
 
 * ``SimpleJobRunner``: run jobs (e.g. scripts) on a local file system.
 * ``GEJobRunner``    : run jobs using Grid Engine (GE) i.e. qsub, qdel etc
 * ``SlurmRunner``    : run jobs using Slurm i.e. sbatch, scancel etc
 
-A single job runner instance can be used to start and manage multiple
-processes.
-
-Each job is started by invoking the ``run`` method of the runner. This
-returns an id string which is then used in calls to the various job
-monitoring and control methods (e.g. ``isRunning``, ``terminate`` etc)
-to interact with the job.
-
-The runner's ``list`` method returns a list of running job ids.
+These classes use the legacy names for interface methods (e.g. ``isRunning``,
+``logFile`` etc) but otherwise provide the same functionality as the
+corresponding classes in the ``jobs.runners`` module.
 
 Simple usage example:
 
@@ -37,23 +38,10 @@ Simple usage example:
 >>> # Get the names of the output files
 >>> log,err = (runner.logFile(job_id),runner.errFile(job_id))
 
-Processes run using a job runner inherit the environment where the runner
-is created and executed.
-
-Additionally runners set an ``BCFTBX_RUNNER_NSLOTS`` environment variable,
-which is set to the number of slots (aka CPUs/cores/threads) available to
-processes executed by the runner. For all runners this defaults to one
-(i.e. serial jobs); the ``nslots`` option can be used when instantiating
-``SimpleJobRunner`` and 'SlurmRunner' objects to specify more cores, for
-example:
-
->>> multicore_runner = SimpleJobRunner(nslots=4)
-
-For ``GEJobRunner`` instances the number of cores is set by specifying
-the ``-pe`` argument as part of the 'ge_extra_args' option, for example:
-
->>> multicore_runner = GEJobRunner(extra_ge_args=('-pe','smp.pe','4'))
-
+The version of ``fetch_runner`` provided here can be used to create
+legacy runner instances based on a definition string; it is separate
+from the version in ``jobs.runners`` to maintain backwards
+compatibility.
 """
 
 #######################################################################
