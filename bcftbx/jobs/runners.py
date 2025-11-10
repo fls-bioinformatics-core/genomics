@@ -610,9 +610,9 @@ class GridEngineRunner(JobRunner):
     Additionally, the runner can be configured for a specific Grid
     Engine queue on initialisation.
 
-    Each ``GridEngineRunner`` instance creates a temporary
-    directory which it uses for internal admin; this will be
-    removed at program exit via 'atexit'.
+    Each ``GridEngineRunner`` instance automatically creates a
+    temporary directory which it uses for internal admin; this will
+    be removed at program exit.
 
     Arguments:
       queue (str): name of GE queue to use (set to 'None' to use
@@ -1380,8 +1380,8 @@ class SlurmRunner(JobRunner):
     partition and number of cores on initialisation.
 
     Each SlurmRunner instance creates a temporary directory which
-    it uses for internal admin; this will be removed at program
-    exit via 'atexit'.
+    it uses for internal admin; this will be removed automatically
+    at program exit.
 
     Arguments:
       log_dir (str): path of directory to write log files to (set to 'None'
