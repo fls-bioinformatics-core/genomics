@@ -102,3 +102,9 @@ installed using:
 ::
 
     pip install git+https://github.com/fls-bioinformatics-core/genomics.git@devel
+
+Contributing
+************
+
+See `CONTRIBUTING.md <CONTRIBUTING.md>`_ file for guidelines on how to
+contribute to the project.
