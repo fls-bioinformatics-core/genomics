@@ -257,11 +257,9 @@ class JobRunner:
         subdirectory of the current working directory and will be
         scheduled for removal at program exit via 'atexit'.
         """
-        try:
-            # Return current value, if set
+        # Return current value, if set
+        if self._admin_dir:
             return self._admin_dir
-        except AttributeError:
-            pass
         # Make new dir in current dir
         try:
             self._admin_dir = tempfile.mkdtemp(dir=os.getcwd(),
@@ -269,7 +267,7 @@ class JobRunner:
             atexit.register(self._clean_up_admin_dir)
         except Exception as ex:
             logger.warning(f"{self._runner_name}: couldn't make temporary admin dir: {ex}")
-            pass
+            raise Exception(f"{self._runner_name}: failed to create temporary admin dir")
         return self._admin_dir
 
     def _clean_up_admin_dir(self):
