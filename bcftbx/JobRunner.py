@@ -90,6 +90,15 @@ class SimpleJobRunner(runners.LocalRunner):
         """
         return self.err_file(job_id)
 
+    def errorState(self,job_id):
+        """Check if the job is in an error state
+
+        Return True if the job is deemed to be in an 'error
+        state' (i.e. qstat returns the state as 'E..'),
+        False otherwise.
+        """
+        return self.error_state(job_id)
+
 class GEJobRunner(runners.GridEngineRunner):
     """Class implementing job runner for Grid Engine
 
