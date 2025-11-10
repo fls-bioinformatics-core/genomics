@@ -118,7 +118,9 @@ class JobRunner:
     """
 
     def __init__(self):
+        self._runner_name = "JobRunner"
         self._log_dir = None
+        self._admin_dir = None
 
     def run(self, name, working_dir, script, args):
         """
@@ -244,6 +246,50 @@ class JobRunner:
         else:
             self._log_dir = None
 
+    def _make_admin_dir(self):
+        """
+        Internal: create temporary directory for admin etc
+
+        The directory will be created in a '.<runner_name>.XXXXXX'
+        subdirectory of the current working directory and will be
+        scheduled for removal at program exit via 'atexit'.
+        """
+        try:
+            # Return current value, if set
+            return self._admin_dir
+        except AttributeError:
+            pass
+        # Make new dir in current dir
+        try:
+            self._admin_dir = tempfile.mkdtemp(dir=os.getcwd(),
+                                               prefix=f".{self._runner_name}.")
+            atexit.register(self._clean_up_admin_dir)
+        except Exception as ex:
+            logger.warning(f"{self._runner_name}: couldn't make temporary admin dir: {ex}")
+            pass
+        return self._admin_dir
+
+    def _clean_up_admin_dir(self):
+        """
+        Internal: remove the admin dir
+
+        Shouldn't be called directly; instead register with
+        'atexit' to force clean up on program exit
+        """
+        logger.debug(f"{self._runner_name}: removing admin dir '%s'" %
+                     self._admin_dir)
+        # Check if there are still running jobs
+        if self.list():
+            logger.warning(f"{self._runner_name}: jobs still running "
+                            "when cleaning up admin dir")
+        # Try to remove the admin dir and contents
+        try:
+            shutil.rmtree(self._admin_dir)
+        except Exception as ex:
+            logger.warning(f"{self._runner_name}: exception removing "
+                            "admin dir '%s': %s" %
+                            (self._admin_dir, ex))
+
 
 class LocalRunner(JobRunner):
     """
@@ -262,6 +308,8 @@ class LocalRunner(JobRunner):
         instance
     """
     def __init__(self, log_dir=None, join_logs=False, nslots=1):
+        # Call base class init
+        super().__init__()
         # Runner name
         self._runner_name = "LocalRunner"
         # Store a list of job ids (= pids) managed by this class
@@ -285,8 +333,6 @@ class LocalRunner(JobRunner):
         self._job_popen = {}
         # Job id lock
         self._job_lock = ResourceLock()
-        # Call base class init
-        super().__init__()
 
     def __repr__(self):
         name = self._runner_name
@@ -587,7 +633,6 @@ class GridEngineRunner(JobRunner):
                  poll_interval=5, timeout=30):
         # Internal parameters
         self._runner_name = "GridEngineRunner"
-        self._admin_dir = self._make_admin_dir()
         self._job_count = 0
         self._shell = "/bin/bash"
         self._ge_queue = queue
@@ -623,8 +668,8 @@ class GridEngineRunner(JobRunner):
         # Polling intervals and timeout periods (seconds)
         self._ge_poll_interval = poll_interval
         self._ge_timeout = timeout
-        # Register clean up function
-        atexit.register(self._clean_up_admin_dir)
+        # Set up admin dir
+        self._make_admin_dir()
 
     def __repr__(self):
         name = self._runner_name
@@ -1024,52 +1069,6 @@ exit $exit_code
         # Return cached exit status
         return self._exit_status[job_id]
 
-    def _make_admin_dir(self):
-        """Internal: create temporary directory for admin etc
-
-        The directory will be created in a '.<runner_name>'
-        subdirectory of the current working directory.
-        """
-        try:
-            # Return current value, if set
-            return self._admin_dir
-        except AttributeError:
-            pass
-        # Make new dir in current dir
-        parent_dir = os.path.join(os.getcwd(),
-                                  f".{self._runner_name.lower()}")
-        try:
-            os.mkdir(parent_dir)
-        except OSError:
-            pass
-        admin_dir = tempfile.mkdtemp(dir=parent_dir)
-        return admin_dir
-
-    def _clean_up_admin_dir(self):
-        """Internal: remove the admin dir
-
-        Shouldn't be called directly; instead register with
-        'atexit' to force clean up on program exit
-        """
-        logger.debug(f"{self._runner_name}: removing admin dir '%s'" %
-                      self._admin_dir)
-        # Check if jobs are still being finalized
-        start_time = time.time()
-        while self._finalizing:
-            # Wait until everything has finalized
-            time.sleep(1.0)
-            if (time.time() - start_time) > self._ge_timeout:
-                logger.warning(f"{self._runner_name}: timed out waiting "
-                                "for jobs to finalize")
-                break
-        # Try to remove the admin dir and contents
-        try:
-            shutil.rmtree(self._admin_dir)
-        except Exception as ex:
-            logger.warning(f"{self._runner_name}: exception removing "
-                            "admin dir '%s': %s" %
-                            (self._admin_dir, ex))
-
     def _update_job_grace_period(self,job_id):
         """
         Internal: handling update of job in grace period
@@ -1410,7 +1409,6 @@ class SlurmRunner(JobRunner):
                  poll_interval=300, timeout=30, missing_job_timeout=600):
         # Internal parameters
         self._runner_name = "SlurmRunner"
-        self._admin_dir = None
         self._job_count = 0
         self._shell = "/bin/bash"
         # Directory for log files
@@ -1809,47 +1807,6 @@ exit $exit_code
                 return None
         # Return cached exit status
         return self._exit_status[job_id]
-
-    def _make_admin_dir(self):
-        """
-        Internal: create temporary directory for admin
-
-        The directory will be created in a subdirectory of
-        the current working directory.
-        """
-        if self._admin_dir:
-            # Return current value, if set
-            return self._admin_dir
-        # Create a new temporary directory
-        self._admin_dir = tempfile.mkdtemp(prefix=".slurmrunner.",
-                                           dir=os.getcwd())
-        return self._admin_dir
-
-    def _clean_up_admin_dir(self):
-        """
-        Internal: remove the admin dir
-
-        Shouldn't be called directly; instead register with
-        'atexit' to force clean up on program exit
-        """
-        logging.debug("SlurmRunner: removing admin dir '%s'" %
-                      self._admin_dir)
-        # Check if jobs are still being finalized
-        start_time = time.time()
-        while self._finalizing:
-            # Wait until everything has finalized
-            time.sleep(1.0)
-            if (time.time() - start_time) > self._timeout:
-                logging.warning("SlurmRunner: timed out waiting "
-                                "for jobs to finalize")
-                break
-        # Try to remove the admin dir and contents
-        try:
-            shutil.rmtree(self._admin_dir)
-        except Exception as ex:
-            logging.warning("SlurmRunner: exception removing "
-                            "admin dir '%s': %s" %
-                            (self._admin_dir, ex))
 
     def _grace_period_jobs(self):
         """
