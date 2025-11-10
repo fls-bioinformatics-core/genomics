@@ -49,118 +49,11 @@ compatibility.
 #######################################################################
 
 from .jobs import runners
-import os
 import time
 
 #######################################################################
 # Classes
 #######################################################################
-
-class BaseJobRunner:
-    """Base class for implementing job runners
-
-    This class can be used as a template for implementing custom
-    job runners. The idea is that the runners wrap the specifics
-    of interacting with an underlying job control system and thus
-    provide a generic interface to be used by higher level classes.
-
-    A job runner needs to implement the following methods:
-
-    - ``run``        : starts a job running
-    - ``terminate``  : kills a running job
-    - ``list``       : lists the running job ids
-    - ``logFile``    : returns the name of the log file for a job
-    - ``errFile``    : returns the name of the error file for a job
-    - ``exit_status``: returns the exit status for the command (or
-      None if the job is still running)
-
-    Optionally it can also implement the methods:
-
-    - ``errorState``: indicates if running job is in an "error state"
-    - ``isRunning`` : checks if a specific job is running
-
-    if the default implementations are not sufficient.
-    """
-
-    def __init__(self):
-        self.__log_dir = None
-
-    def run(self,name,working_dir,script,args):
-        """Start a job running
-
-        Arguments:
-          name: Name to give the job
-          working_dir: Directory to run the job in
-          script: Script file to run
-          args: List of arguments to supply to the script
-
-        Returns:
-          Returns a job id, or None if the job failed to start
-        """
-        raise NotImplementedError("Subclass must implement 'run'")
-
-    def terminate(self,job_id):
-        """Terminate a job
-
-        Returns True if termination was successful, False
-        otherwise
-        """
-        raise NotImplementedError("Subclass must implement 'terminate'")
-
-    def list(self):
-        """Return a list of running job_ids
-        """
-        raise NotImplementedError("Subclass must implement 'list'")
-
-    def logFile(self,job_id):
-        """Return name of log file relative to working directory
-        """
-        raise NotImplementedError("Subclass must implement 'logFile'")
-
-    def errFile(self,job_id):
-        """Return name of error file relative to working directory
-        """
-        raise NotImplementedError("Subclass must implement 'errFile'")
-
-    def isRunning(self,job_id):
-        """Check if a job is running
-
-        Returns True if job is still running, False if not
-        """
-        return job_id in self.list()
-
-    def errorState(self,job_id):
-        """Check if the job is in an error state
-
-        Return True if the job is deemed to be in an 'error state',
-        False otherwise.
-        """
-        return False
-
-    def exit_status(self,job_id):
-        """Return the exit status code for the command
-
-        Return the exit status code from the command that was
-        run by the specified job, or None if the job hasn't
-        exited yet.
-        """
-        return None
-
-    @property
-    def log_dir(self):
-        """Return the current log directory setting
-
-        """
-        return self.__log_dir
-
-    def set_log_dir(self,log_dir):
-        """(Re)set the directory to write log files to
-
-        """
-        if log_dir is not None:
-            self.__log_dir = os.path.abspath(log_dir)
-        else:
-            self.__log_dir = None
 
 class SimpleJobRunner(runners.LocalRunner):
     """Class implementing job runner for local system

@@ -6,7 +6,8 @@ from bcftbx.mockGE import setup_mock_GE
 from bcftbx.mockGE import MockGE
 from bcftbx.mockslurm import setup_mock_slurm
 from bcftbx.mockslurm import MockSlurm
-import bcftbx.utils
+import io
+import os
 import unittest
 import tempfile
 import time
