@@ -262,8 +262,9 @@ class JobRunner:
             return self._admin_dir
         # Make new dir in current dir
         try:
-            self._admin_dir = tempfile.mkdtemp(dir=os.getcwd(),
-                                               prefix=f".{self._runner_name}.")
+            self._admin_dir = tempfile.mkdtemp(
+                dir=os.getcwd(),
+                prefix=f".{self._runner_name.lower()}.")
             atexit.register(self._clean_up_admin_dir)
         except Exception as ex:
             logger.warning(f"{self._runner_name}: couldn't make temporary admin dir: {ex}")
