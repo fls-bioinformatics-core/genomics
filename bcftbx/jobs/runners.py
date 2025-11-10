@@ -115,10 +115,13 @@ class JobRunner:
     - ``is_running`` : checks if a specific job is running
 
     if the default implementations are not sufficient.
+
+    Arguments:
+      name (str): name to give the job runner instance
     """
 
-    def __init__(self):
-        self._runner_name = "JobRunner"
+    def __init__(self, name="JobRunner"):
+        self._runner_name = str(name)
         self._log_dir = None
         self._admin_dir = None
 
@@ -309,9 +312,7 @@ class LocalRunner(JobRunner):
     """
     def __init__(self, log_dir=None, join_logs=False, nslots=1):
         # Call base class init
-        super().__init__()
-        # Runner name
-        self._runner_name = "LocalRunner"
+        super().__init__(name="LocalRunner")
         # Store a list of job ids (= pids) managed by this class
         self._job_list = []
         # Names
@@ -631,8 +632,9 @@ class GridEngineRunner(JobRunner):
 
     def __init__(self, queue=None, log_dir=None, ge_extra_args=None,
                  poll_interval=5, timeout=30):
+        # Initialize base class
+        super().__init__(name="GridEngineRunner")
         # Internal parameters
-        self._runner_name = "GridEngineRunner"
         self._job_count = 0
         self._shell = "/bin/bash"
         self._ge_queue = queue
@@ -1407,8 +1409,9 @@ class SlurmRunner(JobRunner):
     def __init__(self, log_dir=None, nslots=None, partition=None,
                  join_logs=None, slurm_extra_args=None,
                  poll_interval=300, timeout=30, missing_job_timeout=600):
+        # Initialize base class
+        super().__init__(name="SlurmRunner")
         # Internal parameters
-        self._runner_name = "SlurmRunner"
         self._job_count = 0
         self._shell = "/bin/bash"
         # Directory for log files
