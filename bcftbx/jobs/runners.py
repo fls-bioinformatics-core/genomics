@@ -1368,164 +1368,6 @@ exit $exit_code
         return ge_name
 
 
-class ResourceLock:
-    """
-    Class for managing in-process locks on 'resources'
-
-    A 'resource' is identified by an arbitrary string.
-
-    Example usage: create a new ResourceLock instance
-    and check if a resource is locked:
-
-    >>> r = ResourceLock()
-    >>> r.is_locked("resource1")
-    False
-
-    Try to acquire the lock on the resource:
-
-    >>> lock = r.acquire("resource1")
-    >>> r.is_locked("resource1")
-    True
-
-    Release the lock on the resource:
-
-    >>> r.release(lock)
-    >>> r.is_locked("resource1")
-    False
-    """
-    def __init__(self):
-        """
-        Create a new ResourceLock instance
-        """
-        self._locks = dict()
-
-    def _get_lock_name(self,resource_name):
-        """
-        Internal: return a unique lock name
-
-        Returns a unique timestamped lock name
-        for the named resource.
-
-        Arguments:
-          resource_name (str): name of the resource
-            to create a lock name for
-
-        Returns:
-          String: lock name for the resource.
-        """
-        return "%s@%s@%s" % (resource_name,
-                             time.time(),
-                             uuid.uuid4())
-
-    def _split_lock_name(self,lock):
-        """
-        Internal: split a lock name into components
-
-        Arguments:
-          lock (str): lock name to split
-
-        Returns:
-          Tuple: tuple consisting of (resource_name,
-            timestamp, unique ID). The timestamp is
-            returned as a float.
-        """
-        resource_name,timestamp,uuid_ = lock.split('@')
-        timestamp = float(timestamp)
-        return (resource_name,timestamp,uuid_)
-
-    def acquire(self,resource_name,timeout=None):
-        """
-        Attempt to acquire the lock on a resource
-
-        Arguments:
-          resource_name (str): name of the resource
-            to acquire the lock name for
-          timeout (float): optional, specifies a
-            timeout period after which failure to
-            acquire the lock raises an exception.
-
-        Returns:
-          String: lock name.
-        """
-        logger.debug("ResourceLock: attempting to get lock for "
-                      "resource '%s'" % resource_name)
-        start_time = time.time()
-        has_lock = False
-        while not has_lock:
-            # Assume we have the lock, until proven otherwise
-            has_lock = True
-            # Register a putative lock
-            lock = self._get_lock_name(resource_name)
-            self._locks[lock] = True
-            logger.debug("ResourceLock: made new lock '%s'" % lock)
-            # Wait
-            time.sleep(0.001)
-            # Check all locks for this resource and see if any
-            # pre-date the new lock
-            resource_name,timestamp,uuid_ = self._split_lock_name(lock)
-            for l in list(self._locks.keys()):
-                if l == lock:
-                    continue
-                n,ts,uid = self._split_lock_name(lock)
-                if n == resource_name:
-                    if ts < timestamp:
-                        # Resource is already locked
-                        logger.debug("ResourceLock: resource '%s' already "
-                                      "locked" % resource_name)
-                        # Remove attempted lock
-                        self.release(lock)
-                        return None
-                    elif ts == timestamp:
-                        # Deadlock: two locks with same priority
-                        logger.debug("ResourceLock: two locks with same "
-                                      "priority for resource '%s'" %
-                                      resource_name)
-                        # We don't have the lock after all
-                        has_lock = False
-                        # Release the putative lock
-                        self.release(lock)
-                        # Retry after a random delay
-                        time.sleep(random.random())
-                        break
-            # Check for timeout
-            if not has_lock and timeout is not None:
-                if (time.time() - start_time) > timeout:
-                    raise Exception("ResourceLock: timed out trying to "
-                                    "acquire lock for resource '%s'" %
-                                    resource_name)
-        # This lock has priority
-        logger.debug("ResourceLock: acquired lock: '%s'" % lock)
-        return lock
-
-    def release(self,lock):
-        """
-        Release a lock on a resource
-
-        Arguments:
-          lock (str): lock to release.
-        """
-        logger.debug("ResourceLock: releasing '%s'" % lock)
-        del self._locks[lock]
-
-    def is_locked(self,resource_name):
-        """
-        Check if a resource is locked
-
-        Arguments:
-          resource_name (str): name of the resource
-            to check the lock for
-
-        Returns:
-          Boolean: True if resource is locked, False
-            if not.
-        """
-        for lock in [l for l in self._locks.keys()]:
-            n,ts,uid = self._split_lock_name(lock)
-            if n == resource_name:
-                return True
-        return False
-
-
 class SlurmRunner(JobRunner):
     """
     Class implementing job runner for Slurm
@@ -2327,6 +2169,164 @@ exit $exit_code
                 new_args.append(arg)
         # Update the extra arguments
         self._slurm_extra_args = new_args
+
+
+class ResourceLock:
+    """
+    Class for managing in-process locks on 'resources'
+
+    A 'resource' is identified by an arbitrary string.
+
+    Example usage: create a new ResourceLock instance
+    and check if a resource is locked:
+
+    >>> r = ResourceLock()
+    >>> r.is_locked("resource1")
+    False
+
+    Try to acquire the lock on the resource:
+
+    >>> lock = r.acquire("resource1")
+    >>> r.is_locked("resource1")
+    True
+
+    Release the lock on the resource:
+
+    >>> r.release(lock)
+    >>> r.is_locked("resource1")
+    False
+    """
+    def __init__(self):
+        """
+        Create a new ResourceLock instance
+        """
+        self._locks = dict()
+
+    def _get_lock_name(self,resource_name):
+        """
+        Internal: return a unique lock name
+
+        Returns a unique timestamped lock name
+        for the named resource.
+
+        Arguments:
+          resource_name (str): name of the resource
+            to create a lock name for
+
+        Returns:
+          String: lock name for the resource.
+        """
+        return "%s@%s@%s" % (resource_name,
+                             time.time(),
+                             uuid.uuid4())
+
+    def _split_lock_name(self,lock):
+        """
+        Internal: split a lock name into components
+
+        Arguments:
+          lock (str): lock name to split
+
+        Returns:
+          Tuple: tuple consisting of (resource_name,
+            timestamp, unique ID). The timestamp is
+            returned as a float.
+        """
+        resource_name,timestamp,uuid_ = lock.split('@')
+        timestamp = float(timestamp)
+        return (resource_name,timestamp,uuid_)
+
+    def acquire(self,resource_name,timeout=None):
+        """
+        Attempt to acquire the lock on a resource
+
+        Arguments:
+          resource_name (str): name of the resource
+            to acquire the lock name for
+          timeout (float): optional, specifies a
+            timeout period after which failure to
+            acquire the lock raises an exception.
+
+        Returns:
+          String: lock name.
+        """
+        logger.debug("ResourceLock: attempting to get lock for "
+                      "resource '%s'" % resource_name)
+        start_time = time.time()
+        has_lock = False
+        while not has_lock:
+            # Assume we have the lock, until proven otherwise
+            has_lock = True
+            # Register a putative lock
+            lock = self._get_lock_name(resource_name)
+            self._locks[lock] = True
+            logger.debug("ResourceLock: made new lock '%s'" % lock)
+            # Wait
+            time.sleep(0.001)
+            # Check all locks for this resource and see if any
+            # pre-date the new lock
+            resource_name,timestamp,uuid_ = self._split_lock_name(lock)
+            for l in list(self._locks.keys()):
+                if l == lock:
+                    continue
+                n,ts,uid = self._split_lock_name(lock)
+                if n == resource_name:
+                    if ts < timestamp:
+                        # Resource is already locked
+                        logger.debug("ResourceLock: resource '%s' already "
+                                      "locked" % resource_name)
+                        # Remove attempted lock
+                        self.release(lock)
+                        return None
+                    elif ts == timestamp:
+                        # Deadlock: two locks with same priority
+                        logger.debug("ResourceLock: two locks with same "
+                                      "priority for resource '%s'" %
+                                      resource_name)
+                        # We don't have the lock after all
+                        has_lock = False
+                        # Release the putative lock
+                        self.release(lock)
+                        # Retry after a random delay
+                        time.sleep(random.random())
+                        break
+            # Check for timeout
+            if not has_lock and timeout is not None:
+                if (time.time() - start_time) > timeout:
+                    raise Exception("ResourceLock: timed out trying to "
+                                    "acquire lock for resource '%s'" %
+                                    resource_name)
+        # This lock has priority
+        logger.debug("ResourceLock: acquired lock: '%s'" % lock)
+        return lock
+
+    def release(self,lock):
+        """
+        Release a lock on a resource
+
+        Arguments:
+          lock (str): lock to release.
+        """
+        logger.debug("ResourceLock: releasing '%s'" % lock)
+        del self._locks[lock]
+
+    def is_locked(self,resource_name):
+        """
+        Check if a resource is locked
+
+        Arguments:
+          resource_name (str): name of the resource
+            to check the lock for
+
+        Returns:
+          Boolean: True if resource is locked, False
+            if not.
+        """
+        for lock in [l for l in self._locks.keys()]:
+            n,ts,uid = self._split_lock_name(lock)
+            if n == resource_name:
+                return True
+        return False
 
 
 #######################################################################
