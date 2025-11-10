@@ -1073,6 +1073,26 @@ class TestSlurmRunner(unittest.TestCase):
         self.assertEqual(runner.name(jobid2), "slurm_test_2")
         self.assertEqual(runner.exit_status(jobid2), 0)
 
+class TestBaseJobRunner(unittest.TestCase):
+    """Basic test that BaseJobRunner is available
+    """
+    def test_base_job_runner(self):
+        """
+        BaseJobRunner: check class is available
+        """
+        runner = BaseJobRunner()
+        self.assertIsNotNone(runner)
+
+class TestResourceLock(unittest.TestCase):
+    """Basic test that ResourceLock is available
+    """
+    def test_resource_lock(self):
+        """
+        ResourceLock: check class is available
+        """
+        lock = ResourceLock()
+        self.assertIsNotNone(lock)
+
 class TestFetchRunnerFunction(unittest.TestCase):
     """Tests for the fetch_runner function
     """

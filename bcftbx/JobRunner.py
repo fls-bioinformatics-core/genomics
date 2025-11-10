@@ -224,6 +224,16 @@ class SlurmRunner(runners.SlurmRunner):
         """
         return self.error_state(job_id)
 
+class BaseJobRunner(runners.JobRunner):
+    """
+    Provided for backwards compatibility
+    """
+
+class ResourceLock(runners.ResourceLock):
+    """
+    Provided for backwards compatibility
+    """
+
 #######################################################################
 # Functions
 #######################################################################
