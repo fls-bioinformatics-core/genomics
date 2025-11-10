@@ -60,17 +60,9 @@ the ``-pe`` argument as part of the 'ge_extra_args' option, for example:
 # Import modules that this module depends on
 #######################################################################
 
-from .jobs.runners import ResourceLock
 from .jobs import runners
-from builtins import str
 import os
-import io
-import logging
-import subprocess
 import time
-import tempfile
-import shutil
-import atexit
 
 #######################################################################
 # Classes
