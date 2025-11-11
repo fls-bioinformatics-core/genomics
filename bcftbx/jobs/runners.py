@@ -1177,14 +1177,8 @@ exit $exit_code
         # Do clean up
         logger.debug(f"{self._runner_name}: cleaning up after job %s" % job_id)
         try:
-            job_number = self._job_number[job_id]
-        except KeyError:
-            logger.error(f"{self._runner_name}: job %d not found, can't do "
-                          "clean up" % job_id)
-            return
-        try:
             # Remove the job directory and contents
-            self._remove_job_dir(job_number)
+            self._remove_job_dir(job_id)
         except Exception as ex:
             logger.warning(f"{self._runner_name}: exception cleaning up for "
                             "job %s (ignored): %s" % (job_id,ex))
@@ -1962,14 +1956,8 @@ exit $exit_code
         # Do clean up
         logger.debug("SlurmRunner: cleaning up after job %s" % job_id)
         try:
-            job_number = self._job_number[job_id]
-        except KeyError:
-            logger.error("SlurmRunner: job %d not found, can't do "
-                         "clean up" % job_id)
-            return
-        try:
             # Remove the directory and contents
-            self._remove_job_dir(job_number)
+            self._remove_job_dir(job_id)
         except Exception as ex:
             logger.warning("SlurmRunner: exception cleaning up for "
                            "job %s (ignored): %s" % (job_id, ex))
