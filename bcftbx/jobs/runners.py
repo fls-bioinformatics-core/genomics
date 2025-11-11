@@ -123,6 +123,7 @@ class JobRunner:
     def __init__(self, name="JobRunner"):
         self._runner_name = str(name)
         self._log_dir = None
+        self._job_dirs = {}
         self._admin_dir = None
 
     def run(self, name, working_dir, script, args):
@@ -249,48 +250,49 @@ class JobRunner:
         else:
             self._log_dir = None
 
-    def _make_admin_dir(self):
+    def _get_job_dir(self, job_id):
         """
-        Internal: create temporary directory for admin etc
+        Internal: return path to admin dir for a specific job
 
-        The directory will be created in a '.<runner_name>.XXXXXX'
-        subdirectory of the current working directory and will be
-        scheduled for removal at program exit via 'atexit'.
+        Arguments:
+            job_id (str): id of job
+
+        Returns:
+            str: path to temporary directory that can be used
+            by the runner for this specific job
         """
         # Return current value, if set
-        if self._admin_dir:
-            return self._admin_dir
-        # Make new dir in current dir
+        job_id = str(job_id)
         try:
-            self._admin_dir = tempfile.mkdtemp(
+            return self._job_dirs[job_id]
+        except KeyError:
+            pass
+        # Make new dir for the job in cwd
+        try:
+            job_dir = tempfile.mkdtemp(
                 dir=os.getcwd(),
                 prefix=f".{self._runner_name.lower()}.")
-            atexit.register(self._clean_up_admin_dir)
         except Exception as ex:
-            logger.warning(f"{self._runner_name}: couldn't make temporary admin dir: {ex}")
-            raise Exception(f"{self._runner_name}: failed to create temporary admin dir")
-        return self._admin_dir
+            logger.error(f"{self._runner_name}: exception when trying to make temporary "
+                         f"job directory: {ex}")
+            raise Exception(f"{self._runner_name}: failed to create temporary job dir")
+        self._job_dirs[job_id] = job_dir
+        # Register clean up
+        atexit.register(self._remove_job_dir, job_id)
+        # Return the job dir
+        return self._job_dirs[job_id]
 
-    def _clean_up_admin_dir(self):
+    def _remove_job_dir(self, job_id):
         """
-        Internal: remove the admin dir
-
-        Shouldn't be called directly; instead register with
-        'atexit' to force clean up on program exit
+        Internal: remove a temporary job directory
         """
-        logger.debug(f"{self._runner_name}: removing admin dir '%s'" %
-                     self._admin_dir)
-        # Check if there are still running jobs
-        if self.list():
-            logger.warning(f"{self._runner_name}: jobs still running "
-                            "when cleaning up admin dir")
-        # Try to remove the admin dir and contents
         try:
-            shutil.rmtree(self._admin_dir)
-        except Exception as ex:
-            logger.warning(f"{self._runner_name}: exception removing "
-                            "admin dir '%s': %s" %
-                            (self._admin_dir, ex))
+            job_dir = self._job_dirs[job_id]
+            if os.path.exists(job_dir):
+                shutil.rmtree(job_dir)
+            del(self._job_dirs[job_id])
+        except KeyError:
+            pass
 
 
 class LocalRunner(JobRunner):
@@ -611,9 +613,10 @@ class GridEngineRunner(JobRunner):
     Additionally, the runner can be configured for a specific Grid
     Engine queue on initialisation.
 
-    Each ``GridEngineRunner`` instance automatically creates a
-    temporary directory which it uses for internal admin; this will
-    be removed at program exit.
+    Each job run by the ``GridEngineRunner`` instance automatically
+    creates a temporary directory which it uses for internal
+    book-keeping; these will be removed automatically on job
+    completion, or on program exit.
 
     Arguments:
       queue (str): name of GE queue to use (set to 'None' to use
@@ -669,8 +672,6 @@ class GridEngineRunner(JobRunner):
         # Polling intervals and timeout periods (seconds)
         self._ge_poll_interval = poll_interval
         self._ge_timeout = timeout
-        # Set up admin dir
-        self._make_admin_dir()
 
     def __repr__(self):
         name = self._runner_name
@@ -773,9 +774,8 @@ class GridEngineRunner(JobRunner):
         # Release the lock
         self._submit_lock.release(submit_lock)
         # Build script to run the command to be submitted
-        job_dir = os.path.join(self._admin_dir, str(job_number))
+        job_dir = self._get_job_dir(job_number)
         logger.debug("Job admin dir     : %s" % job_dir)
-        os.mkdir(job_dir)
         cmd_args = [script]
         for arg in args:
             # Quote arguments containing whitespace
@@ -872,8 +872,7 @@ exit $exit_code
         if job_id in self._start_time:
             del(self._start_time[job_id])
         # Write an exit code file for the job
-        exit_code_file = os.path.join(self._admin_dir,
-                                      str(self._job_number[job_id]),
+        exit_code_file = os.path.join(self._get_job_dir(self._job_number[job_id]),
                                       "__exit_code")
         with open("%s.tmp" % exit_code_file, "wt") as fp:
             fp.write("-1\n")
@@ -961,8 +960,7 @@ exit $exit_code
             # Return cached queue
             return self._queue[job_id]
         # Look for __queue file from job
-        queue_file = os.path.join(self._admin_dir,
-                                  str(self._job_number[job_id]),
+        queue_file = os.path.join(self._get_job_dir(self._job_number[job_id]),
                                   "__queue")
         logger.debug(f"{self._runner_name}: queue file: %s" % queue_file)
         if not os.path.exists(queue_file):
@@ -1014,7 +1012,7 @@ exit $exit_code
                 # Job has been removed since the list was
                 # fetched? Ignore
                 continue
-            job_dir = os.path.join(self._admin_dir, str(job_number))
+            job_dir = self._get_job_dir(job_number)
             exit_code_file = os.path.join(job_dir, "__exit_code")
             logger.debug(f"{self._runner_name}: checking job %s (#%s)"
                           % (job_id, job_number))
@@ -1144,8 +1142,7 @@ exit $exit_code
             return
         self._finalizing[job_id] = True
         # Check there is an exit code file
-        exit_code_file = os.path.join(self._admin_dir,
-                                      str(self._job_number[job_id]),
+        exit_code_file = os.path.join(self._get_job_dir(self._job_number[job_id]),
                                       "__exit_code")
         assert(os.path.exists(exit_code_file))
         try:
@@ -1185,10 +1182,9 @@ exit $exit_code
             logger.error(f"{self._runner_name}: job %d not found, can't do "
                           "clean up" % job_id)
             return
-        job_dir = os.path.join(self._admin_dir,str(job_number))
         try:
-            # Remove the directory and contents
-            shutil.rmtree(job_dir)
+            # Remove the job directory and contents
+            self._remove_job_dir(job_number)
         except Exception as ex:
             logger.warning(f"{self._runner_name}: exception cleaning up for "
                             "job %s (ignored): %s" % (job_id,ex))
@@ -1199,7 +1195,6 @@ exit $exit_code
             pass
         # Remove the internally stored job number
         del(self._job_number[job_id])
-
 
     def _run_qstat(self):
         """Internal: run qstat and return data as a list of lists
@@ -1380,9 +1375,9 @@ class SlurmRunner(JobRunner):
     Additionally the runner can be configured to target a specific
     partition and number of cores on initialisation.
 
-    Each SlurmRunner instance creates a temporary directory which
-    it uses for internal admin; this will be removed automatically
-    at program exit.
+    Each job run through the SlurmRunner instance creates a temporary
+    directory which is used for internal book-keeping; these will be
+    removed automatically on job completion or at program exit.
 
     Arguments:
       log_dir (str): path of directory to write log files to (set to 'None'
@@ -1458,8 +1453,6 @@ class SlurmRunner(JobRunner):
             self._slurm_extra_args = None
         # FIXME clean up extra arguments to remove -n, -p etc?
         self._check_slurm_extra_args()
-        # Create admin dir
-        self._make_admin_dir()
 
     def __repr__(self):
         args = []
@@ -1565,9 +1558,8 @@ class SlurmRunner(JobRunner):
         # Release the lock
         self._submit_lock.release(submit_lock)
         # Build script to run the command to be submitted
-        job_dir = os.path.join(self._admin_dir, str(job_number))
+        job_dir = self._get_job_dir(job_number)
         logging.debug("Job admin dir     : %s" % job_dir)
-        os.mkdir(job_dir)
         cmd_args = [script]
         for arg in args:
             # Quote arguments containing whitespace
@@ -1669,8 +1661,7 @@ exit $exit_code
         if job_id in self._start_time:
             del(self._start_time[job_id])
         # Write an exit code file for the job
-        exit_code_file = os.path.join(self._admin_dir,
-                                      str(self._job_number[job_id]),
+        exit_code_file = os.path.join(self._get_job_dir(self._job_number[job_id]),
                                       "__exit_code")
         with open("%s.tmp" % exit_code_file, "wt") as fp:
             fp.write(f"{exit_code}\n")
@@ -1746,7 +1737,7 @@ exit $exit_code
                 # Job has been removed since the list was
                 # fetched? Ignore
                 continue
-            job_dir = os.path.join(self._admin_dir, str(job_number))
+            job_dir = self._get_job_dir(job_number)
             if os.path.exists(job_dir):
                 # Job dir exists
                 logging.debug("SlurmRunner: -- found %s" % job_dir)
@@ -1937,8 +1928,7 @@ exit $exit_code
             return
         self._finalizing[job_id] = True
         # Check there is an exit code file
-        exit_code_file = os.path.join(self._admin_dir,
-                                      str(self._job_number[job_id]),
+        exit_code_file = os.path.join(self._get_job_dir(self._job_number[job_id]),
                                       "__exit_code")
         assert(os.path.exists(exit_code_file))
         try:
@@ -1977,10 +1967,9 @@ exit $exit_code
             logging.error("SlurmRunner: job %d not found, can't do "
                           "clean up" % job_id)
             return
-        job_dir = os.path.join(self._admin_dir, str(job_number))
         try:
             # Remove the directory and contents
-            shutil.rmtree(job_dir)
+            self._remove_job_dir(job_number)
         except Exception as ex:
             logging.warning("SlurmRunner: exception cleaning up for "
                             "job %s (ignored): %s" % (job_id, ex))
