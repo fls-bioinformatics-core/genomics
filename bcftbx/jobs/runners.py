@@ -1535,16 +1535,16 @@ class SlurmRunner(JobRunner):
           Job id for submitted job, or 'None' if job failed to
           start.
         """
-        logging.debug(f"{self._runner_name:11}: submitting job")
-        logging.debug(f"Name       : {name}")
-        logging.debug(f"Nslots     : {self.nslots}")
-        logging.debug(f"Partition  : {self.partition}")
-        logging.debug(f"Join logs  : {self.join_logs}")
-        logging.debug(f"Extra args : {self.slurm_extra_args}")
-        logging.debug(f"Log dir    : {self.log_dir}")
-        logging.debug(f"Working_dir: {working_dir}")
-        logging.debug(f"Script     : {script}")
-        logging.debug(f"Arguments  : {str(args)}")
+        logger.debug(f"{self._runner_name:11}: submitting job")
+        logger.debug(f"Name       : {name}")
+        logger.debug(f"Nslots     : {self.nslots}")
+        logger.debug(f"Partition  : {self.partition}")
+        logger.debug(f"Join logs  : {self.join_logs}")
+        logger.debug(f"Extra args : {self.slurm_extra_args}")
+        logger.debug(f"Log dir    : {self.log_dir}")
+        logger.debug(f"Working_dir: {working_dir}")
+        logger.debug(f"Script     : {script}")
+        logger.debug(f"Arguments  : {str(args)}")
         # Wait for lock on job submission
         start_time = time.time()
         submit_lock = None
@@ -1554,12 +1554,12 @@ class SlurmRunner(JobRunner):
         # Get internal job number
         self._job_count += 1
         job_number = self._job_count
-        logging.debug("Internal job count: %s" % job_number)
+        logger.debug("Internal job count: %s" % job_number)
         # Release the lock
         self._submit_lock.release(submit_lock)
         # Build script to run the command to be submitted
         job_dir = self._get_job_dir(job_number)
-        logging.debug("Job admin dir     : %s" % job_dir)
+        logger.debug("Job admin dir     : %s" % job_dir)
         cmd_args = [script]
         for arg in args:
             # Quote arguments containing whitespace
@@ -1580,7 +1580,7 @@ exit $exit_code
 """.format(shell=self._shell, job_dir=job_dir, cmd=cmd))
         os.chmod(job_script,0o755)
         job_name = self._sanitize_job_name(name)
-        logging.debug("Slurm job name: %s" % job_name)
+        logger.debug("Slurm job name: %s" % job_name)
         # Log file (replicate Grid Engine)
         stdout = "%x.o%j"
         if self.log_dir:
@@ -1606,34 +1606,34 @@ exit $exit_code
         if self.slurm_extra_args:
             sbatch.extend(self.slurm_extra_args)
         sbatch.append(job_script)
-        logging.debug("SlurmRunner: sbatch command: %s" % sbatch)
+        logger.debug("SlurmRunner: sbatch command: %s" % sbatch)
         # Run the sbatch job in the current directory
         cwd = os.getcwd()
         if not os.path.exists(cwd):
-            logging.error("SlurmRunner: cwd doesn't exist!")
+            logger.error("SlurmRunner: cwd doesn't exist!")
             return None
-        logging.debug("SlurmRunner: executing in %s" % cwd)
+        logger.debug("SlurmRunner: executing in %s" % cwd)
         p = subprocess.Popen(sbatch, cwd=cwd,
                              stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE,
                              universal_newlines=True)
         stdoutdata, stderrdata = p.communicate()
-        logging.debug(f"SlurmRunner: sbatch output: {stdoutdata}")
-        logging.debug(f"SlurmRunner: sbatch error: {stderrdata}")
+        logger.debug(f"SlurmRunner: sbatch output: {stdoutdata}")
+        logger.debug(f"SlurmRunner: sbatch error: {stderrdata}")
         # Check stderr to try and detect error with submission
         error = stderrdata.strip()
         if error:
             # Just echo error message as a warning
-            logging.warning("SlurmRunner: '%s'" % error)
+            logger.warning("SlurmRunner: '%s'" % error)
         # Capture the job id from the output
         job_id = None
         for line in stdoutdata.split('\n'):
             if line.startswith("Submitted batch job"):
                 job_id = line.split()[-1]
         if job_id is None:
-            logging.error("SlurmRunner: failed to get job ID from "
-                          "sbatch output: %r" % stdoutdata)
-        logging.debug(f"SlurmRunner: done - job id = {job_id}")
+            logger.error("SlurmRunner: failed to get job ID from "
+                         "sbatch output: %r" % stdoutdata)
+        logger.debug(f"SlurmRunner: done - job id = {job_id}")
         # Store internal number, name and log dir against job id
         if job_id is not None:
             self._job_number[job_id] = job_number
@@ -1652,12 +1652,12 @@ exit $exit_code
         """
         Remove a job from the Slurm queue using 'scancel'
         """
-        logging.debug("SlurmRunner: deleting job")
+        logger.debug("SlurmRunner: deleting job")
         scancel=("scancel", job_id)
         p = subprocess.Popen(scancel, stdout=subprocess.PIPE)
         stdoutdata, stderrdata = p.communicate()
         message = stdoutdata.strip()
-        logging.debug("Slurmrunner: scancel: %s" % message)
+        logger.debug("Slurmrunner: scancel: %s" % message)
         if job_id in self._start_time:
             del(self._start_time[job_id])
         # Write an exit code file for the job
@@ -1703,7 +1703,7 @@ exit $exit_code
         Return True if the job is deemed to be in an 'error
         state', False otherwise.
         """
-        logging.debug("SlurmRunner: 'error_state' method not implemented")
+        logger.debug("SlurmRunner: 'error_state' method not implemented")
         return False
 
     def list(self):
@@ -1715,7 +1715,7 @@ exit $exit_code
                      (time.time() - self._cached_job_list_timestamp) <
                      self._cached_job_list_lifetime)
         if use_cache:
-            logging.debug("SlurmRunner: using cached job list")
+            logger.debug("SlurmRunner: using cached job list")
             job_ids = self._cached_job_list
             # Add the jobs in grace period
             for job_id in self._grace_period_jobs():
@@ -1723,14 +1723,14 @@ exit $exit_code
                     job_ids.append(job_id)
             return job_ids
         else:
-            logging.debug("SlurmRunner: building job list")
+            logger.debug("SlurmRunner: building job list")
         # Update jobs in grace period
         for job_id in self._grace_period_jobs():
             self._update_job_in_grace_period(job_id)
         # Build initial list from directory contents
         job_ids = []
         for job_id in list(self._job_number.keys()):
-            logging.debug(f"SlurmRunner: -- checking job {job_id}")
+            logger.debug(f"SlurmRunner: -- checking job {job_id}")
             try:
                 job_number = self._job_number[job_id]
             except KeyError:
@@ -1740,17 +1740,17 @@ exit $exit_code
             job_dir = self._get_job_dir(job_number)
             if os.path.exists(job_dir):
                 # Job dir exists
-                logging.debug("SlurmRunner: -- found %s" % job_dir)
+                logger.debug("SlurmRunner: -- found %s" % job_dir)
                 exit_code_file = os.path.join(job_dir, "__exit_code")
                 if os.path.exists(exit_code_file):
                     # Job has finished, handle completion
-                    logging.debug("SlurmRunner: -- exit code file exists, "
-                                  f"completing job {job_id}")
+                    logger.debug("SlurmRunner: -- exit code file exists, "
+                                 f"completing job {job_id}")
                     self._handle_job_completion(job_id)
                 else:
                     # Job still running
-                    logging.debug("SlurmRunner: -- no exit code file, "
-                                  f"{job_id} still running")
+                    logger.debug("SlurmRunner: -- no exit code file, "
+                                 f"{job_id} still running")
                     job_ids.append(job_id)
         # Check for "missing" jobs that are in the runner but no
         # longer in the Slurm system
@@ -1760,11 +1760,11 @@ exit $exit_code
                                    self._missing_job_last_checked) >
                                   self._poll_interval)
             if check_missing_jobs:
-                logging.debug(f"SlurmRunner: checking for missing jobs")
+                logger.debug(f"SlurmRunner: checking for missing jobs")
                 job_ids = self._handle_missing_jobs(job_ids)
                 self._missing_job_last_checked = time.time()
         # Update cache
-        logging.debug("SlurmRunner: updating the cache")
+        logger.debug("SlurmRunner: updating the cache")
         self._cached_job_list_timestamp = time.time()
         self._cached_job_list = [j for j in job_ids]
         self._cached_job_list_force_update = False
@@ -1775,7 +1775,7 @@ exit $exit_code
             else:
                 # Job now visible so no longer in grace period
                 self._update_job_in_grace_period(job_id)
-        logging.debug("SlurmRunner: 'list' returning %s" % job_ids)
+        logger.debug("SlurmRunner: 'list' returning %s" % job_ids)
         return job_ids
 
     def exit_status(self,job_id):
@@ -1793,8 +1793,8 @@ exit $exit_code
             # Wait until exit_status is ready
             time.sleep(1.0)
             if (time.time() - start_time) > self._timeout:
-                logging.warning("SlurmRunner: timed out waiting "
-                                "for job %s to finalize" % job_id)
+                logger.warning("SlurmRunner: timed out waiting "
+                               "for job %s to finalize" % job_id)
                 return None
         # Return cached exit status
         return self._exit_status[job_id]
@@ -1821,30 +1821,30 @@ exit $exit_code
         removes its entry in the `_start_time`
         dictionary.
         """
-        logging.debug("SlurmRunner: checking if job %s is still in "
+        logger.debug("SlurmRunner: checking if job %s is still in "
                       "grace period" % job_id)
         lock = None
         while lock is None:
             lock = self._updating_grace_period.acquire(job_id)
-        logging.debug("SlurmRunner: acquired lock for grace period "
-                      "update: %s" % lock)
+        logger.debug("SlurmRunner: acquired lock for grace period "
+                     "update: %s" % lock)
         try:
             start_time = self._start_time[job_id]
         except KeyError:
-            logging.debug("SlurmRunner: update grace period: job %s "
-                          "has gone away (ignored)" % job_id)
+            logger.debug("SlurmRunner: update grace period: job %s "
+                         "has gone away (ignored)" % job_id)
             self._updating_grace_period.release(lock)
             return
         if ((time.time() - start_time) > self._new_job_grace_period):
             # Job no longer in grace period
-            logging.debug("SlurmRunner: job %s no longer in grace "
-                          "period" % job_id)
+            logger.debug("SlurmRunner: job %s no longer in grace "
+                         "period" % job_id)
             try:
                 del(self._start_time[job_id])
             except KeyError:
-                logging.debug("SlurmRunner: update grace period: "
-                              "job %s has gone away (ignored)" %
-                              job_id)
+                logger.debug("SlurmRunner: update grace period: "
+                             "job %s has gone away (ignored)" %
+                             job_id)
         # Release update lock
         self._updating_grace_period.release(lock)
 
@@ -1868,7 +1868,7 @@ exit $exit_code
         squeue_jobs = [j[0] for j in self._run_squeue()]
         for job_id in job_list:
             if job_id not in squeue_jobs:
-                logging.debug(f"SlurmRunner: job {job_id} has gone away?")
+                logger.debug(f"SlurmRunner: job {job_id} has gone away?")
                 if job_id not in self._missing:
                     # Set time when job went missing
                     self._missing[job_id] = time.time()
@@ -1876,7 +1876,7 @@ exit $exit_code
                 elif (time.time() - self._missing[job_id]) > \
                      self._missing_job_timeout:
                     # Job is still missing after interval, terminate it
-                    logging.debug(f"SlurmRunner: forcing job completion "
+                    logger.debug(f"SlurmRunner: forcing job completion "
                                   f"for missing job {job_id} from runner "
                                   f"(timeout was exceeded)")
                     self.terminate(job_id, exit_code=127)
@@ -1886,8 +1886,8 @@ exit $exit_code
                     del(self._missing[job_id])
             else:
                 # Job is no longer missing?
-                logging.debug(f"SlurmRunner: previously missing job {job_id} "
-                              f"has come back?")
+                logger.debug(f"SlurmRunner: previously missing job {job_id} "
+                             f"has come back?")
                 updated_job_list.append(job_id)
                 if job_id in self._missing:
                     del(self._missing[job_id])
@@ -1914,16 +1914,16 @@ exit $exit_code
         file, then the exit status for the job will be
         set to '127'.
         """
-        logging.debug("SlurmRunner: handle job completion for %s"
+        logger.debug("SlurmRunner: handle job completion for %s"
                       % job_id)
         lock = None
         while lock is None:
             lock = self._job_lock.acquire(job_id)
-        logging.debug("SlurmRunner: acquired lock: %s" % lock)
+        logger.debug("SlurmRunner: acquired lock: %s" % lock)
         if job_id not in self._job_number:
             # Job has gone away
-            logging.debug("SlurmRunner: job %s has gone away" %
-                          job_id)
+            logger.debug("SlurmRunner: job %s has gone away" %
+                         job_id)
             self._job_lock.release(lock)
             return
         self._finalizing[job_id] = True
@@ -1936,9 +1936,9 @@ exit $exit_code
                 exit_status = int(fp.read())
         except Exception as ex:
             # Set exit status to 127
-            logging.error("SlurmRunner: exception when "
-                          "reading exit_status for job "
-                          "%s: %s" % (job_id, ex))
+            logger.error("SlurmRunner: exception when "
+                         "reading exit_status for job "
+                         "%s: %s" % (job_id, ex))
             exit_status = 127
         # Store exit status and clean up
         self._exit_status[job_id] = exit_status
@@ -1960,19 +1960,19 @@ exit $exit_code
         with no action.
         """
         # Do clean up
-        logging.debug("SlurmRunner: cleaning up after job %s" % job_id)
+        logger.debug("SlurmRunner: cleaning up after job %s" % job_id)
         try:
             job_number = self._job_number[job_id]
         except KeyError:
-            logging.error("SlurmRunner: job %d not found, can't do "
-                          "clean up" % job_id)
+            logger.error("SlurmRunner: job %d not found, can't do "
+                         "clean up" % job_id)
             return
         try:
             # Remove the directory and contents
             self._remove_job_dir(job_number)
         except Exception as ex:
-            logging.warning("SlurmRunner: exception cleaning up for "
-                            "job %s (ignored): %s" % (job_id, ex))
+            logger.warning("SlurmRunner: exception cleaning up for "
+                           "job %s (ignored): %s" % (job_id, ex))
         # Clear stored error state
         try:
             del(self._error_state[job_id])
@@ -1997,7 +1997,7 @@ exit $exit_code
         # Should we return the cached data?
         if (time.time() - self._cached_squeue_output_timestamp) < \
            self._cached_squeue_output_lifetime:
-            logging.debug("SlurmRunner: returning cached squeue output")
+            logger.debug("SlurmRunner: returning cached squeue output")
             return self._cached_squeue_output
         # Run squeue and collect the output
         try:
@@ -2010,7 +2010,7 @@ exit $exit_code
                              stdout=subprocess.PIPE,
                              universal_newlines=True)
         stdoutdata = p.communicate()[0]
-        logging.debug(f"SlurmRunner: output from 'squeue': {stdoutdata}")
+        logger.debug(f"SlurmRunner: output from 'squeue': {stdoutdata}")
         # Process the output
         squeue_output = []
         # Output has a header line with field names then one
@@ -2025,8 +2025,8 @@ exit $exit_code
             try:
                 squeue_output.append((data[idx_jobid], data[idx_state]))
             except IndexError:
-                logging.debug(f"SlurmRunner: failed to parse 'squeue' "
-                              f"output: '{line}' (ignored)")
+                logger.debug(f"SlurmRunner: failed to parse 'squeue' "
+                             f"output: '{line}' (ignored)")
         # Update the cache
         self._cached_squeue_output_timestamp = time.time()
         self._cached_squeue_output = squeue_output
@@ -2040,15 +2040,15 @@ exit $exit_code
         string if the job id isn't found.
         """
         # Run squeue and process output to get job states
-        logging.debug("SlurmRunner: acquiring state for job %s"
-                      % job_id)
+        logger.debug("SlurmRunner: acquiring state for job %s"
+                     % job_id)
         squeue = self._run_squeue()
         job_ids = []
         job_states = {}
         for job_data in squeue:
             id_ = job_data[0]
             state = job_data[1]
-            logging.debug(f"SlurmRunner: found job {id_} (state '{state}')")
+            logger.debug(f"SlurmRunner: found job {id_} (state '{state}')")
             if id_ == job_id:
                 return state
         # Job not found
