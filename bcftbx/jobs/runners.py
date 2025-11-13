@@ -122,6 +122,7 @@ class JobRunner:
 
     def __init__(self, name="JobRunner"):
         self._runner_name = str(name)
+        self._internal_job_number = 0
         self._log_dir = None
         self._job_dirs = {}
         self._lock = ResourceLock()
@@ -249,6 +250,23 @@ class JobRunner:
             self._log_dir = os.path.abspath(log_dir)
         else:
             self._log_dir = None
+
+    def _next_job_number(self):
+        """
+        Internal: return the next internal job number
+        """
+        # Get a lock
+        lock = None
+        while lock is None:
+            lock = self._lock.acquire(f"{self._runner_name}_job_number",
+                                      timeout=10)
+        # Increment and return job number
+        try:
+            self._internal_job_number += 1
+            return self._internal_job_number
+        finally:
+            # Release the lock
+            self._lock.release(lock)
 
     def _make_job_dir(self, job_number):
         """
@@ -697,7 +715,6 @@ class GridEngineRunner(JobRunner):
         # Initialize base class
         super().__init__(name="GridEngineRunner")
         # Internal parameters
-        self._job_count = 0
         self._shell = "/bin/bash"
         self._ge_queue = queue
         # Directory for log files
@@ -828,8 +845,7 @@ class GridEngineRunner(JobRunner):
             submit_lock = self._submit_lock.acquire("job_submission",
                                                     timeout=self._ge_timeout)
         # Get internal job number
-        self._job_count += 1
-        job_number = self._job_count
+        job_number = self._next_job_number()
         logger.debug("Internal job count: %s" % job_number)
         # Release the lock
         self._submit_lock.release(submit_lock)
@@ -1460,7 +1476,6 @@ class SlurmRunner(JobRunner):
         # Initialize base class
         super().__init__(name="SlurmRunner")
         # Internal parameters
-        self._job_count = 0
         self._shell = "/bin/bash"
         # Directory for log files
         self.set_log_dir(log_dir)
@@ -1606,8 +1621,7 @@ class SlurmRunner(JobRunner):
             submit_lock = self._submit_lock.acquire("job_submission",
                                                     timeout=self._timeout)
         # Get internal job number
-        self._job_count += 1
-        job_number = self._job_count
+        job_number = self._next_job_number()
         logger.debug("Internal job count: %s" % job_number)
         # Release the lock
         self._submit_lock.release(submit_lock)
