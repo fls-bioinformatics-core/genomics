@@ -383,23 +383,26 @@ class TestGridEngineRunner(unittest.TestCase):
         """
         # Create a runner and execute commands with known exit codes
         runner = GridEngineRunner(ge_extra_args=self.ge_extra_args)
-        jobid_ok = self._run_job(runner,'test_ok',self.working_dir,
-                                       '/bin/bash',('-c','exit 0',))
-        jobid_error = self._run_job(runner,'test_error',self.working_dir,
-                                   '/bin/bash',('-c','exit 1',))
-        # Get job admin dirs
-        job_dir_ok = runner._get_job_dir(jobid_ok)
-        job_dir_error = runner._get_job_dir(jobid_error)
-        self.assertTrue(os.path.exists(job_dir_ok))
-        self.assertTrue(os.path.exists(job_dir_error))
-        # Wait for jobs to finish
-        self._wait_for_jobs(runner,jobid_ok,jobid_error)
-        # Check exit codes
-        self.assertEqual(runner.exit_status(jobid_ok),0)
-        self.assertEqual(runner.exit_status(jobid_error),1)
-        # Job admin dirs should have been removed
-        self.assertFalse(os.path.exists(job_dir_ok))
-        self.assertFalse(os.path.exists(job_dir_error))
+        # Check initial job admin dirs
+        job_dirs = [d for d in os.listdir(os.getcwd()) if d.startswith(".gridenginerunner.")]
+        n_job_dirs = len(job_dirs)
+        self.assertEqual(n_job_dirs, 0)
+        # Execute command
+        jobid = self._run_job(runner,
+                              'sleep_5',
+                              self.working_dir,
+                              '/bin/bash', ('-c','sleep 5',))
+        self.assertTrue(runner.is_running(jobid))
+        job_dir = runner._get_job_dir(runner._job_number[jobid])
+        self.assertTrue(os.path.exists(job_dir))
+        # Check there is only one job directory
+        job_dirs = [d for d in os.listdir(os.getcwd()) if d.startswith(".gridenginerunner.")]
+        self.assertEqual(len(job_dirs), 1)
+        # Wait for job to finish
+        self._wait_for_jobs(runner, jobid)
+        # Job admin dir should have been removed
+        job_dirs = [d for d in os.listdir(os.getcwd()) if d.startswith(".gridenginerunner.")]
+        self.assertEqual(len(job_dirs), 0)
 
     def test_grid_engine_runner_termination(self):
         """
@@ -802,30 +805,26 @@ class TestSlurmRunner(unittest.TestCase):
         """
         # Create a runner
         runner = SlurmRunner()
-        # Execute commands with known exit codes
-        jobid_ok = self._run_job(runner,
-                                "slurm_ok",
-                                 self.working_dir,
-                                '/bin/bash', ('-c','exit 0',))
-        self.assertTrue(runner.is_running(jobid_ok))
-        jobid_error = self._run_job(runner,
-                                   "slurm_error",
-                                    self.working_dir,
-                                   '/bin/bash', ('-c','exit 1',))
-        self.assertTrue(runner.is_running(jobid_error))
-        # Get job admin dirs
-        job_dir_ok = runner._get_job_dir(jobid_ok)
-        job_dir_error = runner._get_job_dir(jobid_error)
-        self.assertTrue(os.path.exists(job_dir_ok))
-        self.assertTrue(os.path.exists(job_dir_error))
-        # Wait for jobs to finish
-        self._wait_for_jobs(runner, jobid_ok, jobid_error)
-        # Check exit codes
-        self.assertEqual(runner.exit_status(jobid_ok), 0)
-        self.assertEqual(runner.exit_status(jobid_error), 1)
-        # Job admin dirs should have been removed
-        self.assertFalse(os.path.exists(job_dir_ok))
-        self.assertFalse(os.path.exists(job_dir_error))
+        # Check initial job admin dirs
+        job_dirs = [d for d in os.listdir(os.getcwd()) if d.startswith(".slurmrunner.")]
+        n_job_dirs = len(job_dirs)
+        self.assertEqual(n_job_dirs, 0)
+        # Execute command
+        jobid = self._run_job(runner,
+                              "sleep_5",
+                              self.working_dir,
+                              '/bin/bash', ('-c','sleep 5',))
+        self.assertTrue(runner.is_running(jobid))
+        job_dir = runner._get_job_dir(runner._job_number[jobid])
+        self.assertTrue(os.path.exists(job_dir))
+        # Check there is only one job directory
+        job_dirs = [d for d in os.listdir(os.getcwd()) if d.startswith(".slurmrunner.")]
+        self.assertEqual(len(job_dirs), 1)
+        # Wait for job to finish
+        self._wait_for_jobs(runner, jobid)
+        # Job admin dir should have been removed
+        job_dirs = [d for d in os.listdir(os.getcwd()) if d.startswith(".slurmrunner.")]
+        self.assertEqual(len(job_dirs), 0)
 
     def test_slurm_runner_termination(self):
         """

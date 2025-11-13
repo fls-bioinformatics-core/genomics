@@ -124,7 +124,7 @@ class JobRunner:
         self._runner_name = str(name)
         self._log_dir = None
         self._job_dirs = {}
-        self._admin_dir = None
+        self._lock = ResourceLock()
 
     def run(self, name, working_dir, script, args):
         """
@@ -250,49 +250,109 @@ class JobRunner:
         else:
             self._log_dir = None
 
-    def _get_job_dir(self, job_id):
+    def _make_job_dir(self, job_number):
         """
-        Internal: return path to admin dir for a specific job
+        Internal: create a temporary job directory
+
+        As part of the creation process, the directory
+        is registered for deletion on exit, however
+        good practice is to explicitly remove the
+        directory once the associated job has
+        completed.
 
         Arguments:
-            job_id (str): id of job
+            job_number (str): internal job number
 
         Returns:
             str: path to temporary directory that can be used
             by the runner for this specific job
         """
-        # Return current value, if set
-        job_id = str(job_id)
+        # Normalize job number
+        job_number = str(job_number)
+        # Get a lock
+        lock = None
+        while lock is None:
+            lock = self._lock.acquire(f"{self._runner_name}_job_dirs",
+                                      timeout=10)
+        # Perform operations
         try:
-            return self._job_dirs[job_id]
-        except KeyError:
-            pass
-        # Make new dir for the job in cwd
-        try:
-            job_dir = tempfile.mkdtemp(
-                dir=os.getcwd(),
-                prefix=f".{self._runner_name.lower()}.")
-        except Exception as ex:
-            logger.error(f"{self._runner_name}: exception when trying to make temporary "
-                         f"job directory: {ex}")
-            raise Exception(f"{self._runner_name}: failed to create temporary job dir")
-        self._job_dirs[job_id] = job_dir
-        # Register clean up
-        atexit.register(self._remove_job_dir, job_id)
-        # Return the job dir
-        return self._job_dirs[job_id]
+            # Check if directory is already registered
+            if job_number in self._job_dirs:
+                raise Exception(f"{self._runner_name}: job dir for job "
+                                f"{job_number} already registered")
+            # Make new dir for the job in cwd
+            try:
+                job_dir = tempfile.mkdtemp(
+                    dir=os.getcwd(),
+                    prefix=f".{self._runner_name.lower()}.")
+                self._job_dirs[job_number] = job_dir
+                # Register clean up
+                atexit.register(self._remove_job_dir, job_number)
+                return job_dir
+            except Exception as ex:
+                logger.error(f"{self._runner_name}: exception when trying to make temporary "
+                             f"job directory: {ex}")
+                raise Exception(f"{self._runner_name}: failed to create temporary job dir")
+        finally:
+            # Release the lock
+            self._lock.release(lock)
 
-    def _remove_job_dir(self, job_id):
+    def _get_job_dir(self, job_number):
+        """
+        Internal: return path to temporary dir for a job
+
+        Directory must previously have been created by
+        a call to the '_make_job_dir' method.
+
+        Arguments:
+            job_number (str): internal job number
+
+        Returns:
+            str: path to temporary directory that can be used
+            by the runner for this specific job
+        """
+        # Normalize job number
+        job_number = str(job_number)
+        # Get a lock
+        lock = None
+        while lock is None:
+            lock = self._lock.acquire(f"{self._runner_name}_job_dirs",
+                                      timeout=10)
+        # Fetch the job dir
+        try:
+            return self._job_dirs[job_number]
+        except KeyError:
+            raise Exception(f"{self._runner_name}: no job dir registered "
+                            f"for job {job_number}")
+        finally:
+            # Release the lock
+            self._lock.release(lock)
+
+    def _remove_job_dir(self, job_number):
         """
         Internal: remove a temporary job directory
+
+        Arguments:
+            job_number (str): internal job number
         """
+        # Normalize job number
+        job_number = str(job_number)
+        # Get a lock
+        lock = None
+        while lock is None:
+            lock = self._lock.acquire(f"{self._runner_name}_job_dirs",
+                                      timeout=10)
+        # Remove the job dir
         try:
-            job_dir = self._job_dirs[job_id]
+            job_dir = self._job_dirs[job_number]
             if os.path.exists(job_dir):
                 shutil.rmtree(job_dir)
-            del(self._job_dirs[job_id])
+            del(self._job_dirs[job_number])
         except KeyError:
             pass
+        finally:
+            # Release the lock
+            self._lock.release(lock)
 
 
 class LocalRunner(JobRunner):
@@ -774,7 +834,7 @@ class GridEngineRunner(JobRunner):
         # Release the lock
         self._submit_lock.release(submit_lock)
         # Build script to run the command to be submitted
-        job_dir = self._get_job_dir(job_number)
+        job_dir = self._make_job_dir(job_number)
         logger.debug("Job admin dir     : %s" % job_dir)
         cmd_args = [script]
         for arg in args:
@@ -1178,7 +1238,7 @@ exit $exit_code
         logger.debug(f"{self._runner_name}: cleaning up after job %s" % job_id)
         try:
             # Remove the job directory and contents
-            self._remove_job_dir(job_id)
+            self._remove_job_dir(self._job_number[job_id])
         except Exception as ex:
             logger.warning(f"{self._runner_name}: exception cleaning up for "
                             "job %s (ignored): %s" % (job_id,ex))
@@ -1552,7 +1612,7 @@ class SlurmRunner(JobRunner):
         # Release the lock
         self._submit_lock.release(submit_lock)
         # Build script to run the command to be submitted
-        job_dir = self._get_job_dir(job_number)
+        job_dir = self._make_job_dir(job_number)
         logger.debug("Job admin dir     : %s" % job_dir)
         cmd_args = [script]
         for arg in args:
@@ -1891,7 +1951,7 @@ exit $exit_code
         """
         Internal: deal with completion of job
 
-        Peforms the following operations:
+        Performs the following operations:
 
         - checks that an '__exit_code' file exists for
           the job
@@ -1957,7 +2017,7 @@ exit $exit_code
         logger.debug("SlurmRunner: cleaning up after job %s" % job_id)
         try:
             # Remove the directory and contents
-            self._remove_job_dir(job_id)
+            self._remove_job_dir(self._job_number[job_id])
         except Exception as ex:
             logger.warning("SlurmRunner: exception cleaning up for "
                            "job %s (ignored): %s" % (job_id, ex))
