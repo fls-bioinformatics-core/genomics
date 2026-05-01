@@ -2,7 +2,7 @@
 
 Setup script to install genomics/bcftbx
 
-Copyright (C) University of Manchester 2011-2022 Peter Briggs
+Copyright (C) University of Manchester 2011-2026 Peter Briggs
 
 """
 
@@ -31,7 +31,8 @@ setup(name = "genomics-bcftbx",
                   'bcftbx.platforms',
                   'bcftbx.platforms.illumina',
                   'bcftbx.platforms.solid',
-                  'bcftbx.qc'],
+                  'bcftbx.qc',
+                  'bcftbx.utils'],
       license = 'AFL-3',
       # Pull in dependencies
       install_requires = ['xlwt >= 0.7.2',
