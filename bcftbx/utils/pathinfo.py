@@ -264,9 +264,7 @@ class PathInfo:
         if self.__st is None:
             return False
         if self.is_link:
-            print(f"{self.__path} is a link")
             return PathInfo(Symlink(self.__path).resolve_target()).is_executable
-        print(f"{self.__path} is NOT a link")
         return bool(self.__st.st_mode & stat.S_IXUSR) and self.is_file
 
     @property
