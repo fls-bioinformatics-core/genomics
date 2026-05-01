@@ -8,6 +8,8 @@ import tempfile
 import shutil
 import gzip
 import pickle
+import pwd
+import grp
 from bcftbx.test import mock_data
 from bcftbx.test.mock_data import ExampleDirSpiders
 from bcftbx.utils import *
@@ -1185,13 +1187,3 @@ class TestParseLanesFunction(unittest.TestCase):
         """
         self.assertEqual(parse_lanes("1,3,5-8"),
                          [1,3,5,6,7,8])
-
-#######################################################################
-# Main program
-#######################################################################
-
-if __name__ == "__main__":
-    # Turn off most logging output for tests
-    logging.getLogger().setLevel(logging.CRITICAL)
-    # Run tests
-    unittest.main()
