@@ -185,6 +185,7 @@ from .os import chmod
 from .os import touch
 from .os import find_program
 from .os import walk
+from .os import links
 from .os import list_dirs
 from .os import get_hostname
 from .path import commonprefix
@@ -661,31 +662,6 @@ class Symlink:
 
         """
         return self._path
-
-def links(dirn):
-    """Traverse and return all symbolic links in under a directory
-
-    Given a starting directory, traverses the structure underneath
-    and yields the path for each symlink that is found.
-
-    Arguments:
-      dirn: name of the top-level directory
-
-    Returns:
-      Yields the name and full path for each symbolic link under 'dirn'.
-
-    """
-    for d in os.walk(dirn):
-        if os.path.islink(d[0]):
-            yield d[0]
-        for sd in d[1]:
-            path = os.path.join(d[0],sd)
-            if os.path.islink(path):
-                yield path
-        for f in d[2]:
-            path = os.path.join(d[0],f)
-            if os.path.islink(path):
-                yield path
 
 #######################################################################
 # Sample/library name utilities

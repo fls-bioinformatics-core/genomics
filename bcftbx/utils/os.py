@@ -15,6 +15,8 @@ Miscellaneous operating system interfaces:
 * find_program: search for executable file
 * walk: traverse and return directories and files
 * list_dirs: list subdirectories and files
+* links: find all symbolic links in directory tree
+* get_hostname: get hostname for system
 """
 
 
@@ -225,6 +227,33 @@ def list_dirs(parent, matches=None, startswith=None):
                     dirs.append(d)
     dirs.sort()
     return dirs
+
+
+def links(dirn):
+    """
+    Traverse and return all symbolic links in under a directory
+
+    Given a starting directory, traverses the structure underneath
+    and yields the path for each symlink that is found.
+
+    Arguments:
+      dirn (str): name of the top-level directory
+
+    Yields:
+      String: full path for each symbolic link under 'dirn'.
+
+    """
+    for d in os.walk(dirn):
+        if os.path.islink(d[0]):
+            yield d[0]
+        for sd in d[1]:
+            path = os.path.join(d[0],sd)
+            if os.path.islink(path):
+                yield path
+        for f in d[2]:
+            path = os.path.join(d[0],f)
+            if os.path.islink(path):
+                yield path
 
 
 def get_hostname():

@@ -17,10 +17,35 @@ from bcftbx.utils.os import chmod
 from bcftbx.utils.os import touch
 from bcftbx.utils.os import find_program
 from bcftbx.utils.os import walk
+from bcftbx.utils.os import links
 from bcftbx.utils.os import list_dirs
 
 
 from bcftbx.test import mock_data
+from bcftbx.test.mock_data import ExampleDirSpiders
+
+
+class ExampleDirLinks(ExampleDirSpiders):
+    """
+    Extended example dir for testing symbolic link handling
+    """
+    def __init__(self):
+        ExampleDirSpiders.__init__(self)
+
+    def create_directory(self):
+        ExampleDirSpiders.create_directory(self)
+        # Add an absolute link
+        self.add_link("absolute.txt",self.path("fly.txt"))
+        # Add a broken absolute link
+        self.add_link("absolutely_broken.txt",self.path("absolutely_missing.txt"))
+        # Add a relative link with '..'
+        self.add_link("web/relative.txt","../spider.txt")
+        # Add a link to a directory
+        self.add_link("web2","web")
+        # Add a link to a link
+        self.add_link("web/related.txt","relative.txt")
+        # Add a file that will appear in the linked directory
+        self.add_file("web/parlour.txt","I have a little something here")
 
 
 class TestMkdirFunction(unittest.TestCase):
@@ -273,6 +298,40 @@ class TestWalkFunction(unittest.TestCase):
             filelist.remove(f)
         self.assertEqual(len(filelist),0,"Items not returned: %s" %
                          ','.join(filelist))
+
+
+class TestLinksFunction(unittest.TestCase):
+    """
+    Tests for the 'links' function
+    """
+    def setUp(self):
+        self.example_dir = ExampleDirLinks()
+        self.wd = self.example_dir.create_directory()
+        self.links = []
+        for l in ("itsy-bitsy.txt",
+                  "itsy-bitsy2.txt",
+                  "broken.txt",
+                  "broken2.txt",
+                  "absolute.txt",
+                  "absolutely_broken.txt",
+                  "web/relative.txt",
+                  "web/related.txt",
+                  "web2"):
+            self.links.append(self.example_dir.path(l))
+
+    def tearDown(self):
+        self.example_dir.delete_directory()
+
+    def test_links(self):
+        """
+        utils.os.links: yields all symlinks
+        """
+        # Walk the example directory and check all yielded files
+        # are in the list of links
+        for l in links(self.example_dir.dirn):
+            self.assertTrue(l in self.links,"%s not in link list" % l)
+            self.links.remove(l)
+        self.assertEqual(len(self.links),0,"Some links not found: %s" % ",".join(self.links))
 
 
 class TestListDirsFunction(unittest.TestCase):
