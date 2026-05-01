@@ -146,7 +146,7 @@ from .io import concatenate_fastq_files
 # Text manipulations
 #######################################################################
 
-
+from .text import split_into_lines
 
 #######################################################################
 # Command line parsing utilities
