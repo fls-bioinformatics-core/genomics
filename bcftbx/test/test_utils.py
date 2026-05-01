@@ -8,8 +8,8 @@ import tempfile
 import shutil
 import gzip
 import pickle
-from bcftbx.test import mock_data as mock_data
-from mock_data import ExampleDirSpiders
+from bcftbx.test import mock_data
+from bcftbx.test.mock_data import ExampleDirSpiders
 from bcftbx.utils import *
 
 class TestAttributeDictionary(unittest.TestCase):
