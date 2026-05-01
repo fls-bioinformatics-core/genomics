@@ -85,8 +85,6 @@ import string
 import gzip
 import shutil
 import stat
-import pwd
-import grp
 import datetime
 import math
 from builtins import range
@@ -193,6 +191,11 @@ from .path import commonprefix
 from .path import rootname
 from .path import strip_ext
 from .path import is_gzipped_file
+from .users import get_current_user
+from .users import get_gid_from_group
+from .users import get_uid_from_user
+from .users import get_group_from_gid
+from .users import get_user_from_uid
 
 
 class PathInfo:
@@ -567,70 +570,6 @@ def convert_size_to_bytes(size):
         units = str(size)[-1].upper()
         p = "KMGTP".index(units) + 1
         return int(float(str(size)[:-1])) * int(math.pow(1024,p))
-
-def get_current_user():
-    """Return name of the current user
-
-    Looks up user name for the current user; returns
-    None if no matching name can be found.
-
-    """
-    try:
-        return pwd.getpwuid(os.getuid()).pw_name
-    except (KeyError,ValueError,OverflowError):
-        return None
-
-def get_user_from_uid(uid):
-    """Return user name from UID
-
-    Looks up user name matching the supplied UID;
-    returns None if no matching name can be found.
-
-    """
-    try:
-        return pwd.getpwuid(int(uid)).pw_name
-    except (KeyError,ValueError,OverflowError):
-        return None
-
-def get_uid_from_user(user):
-    """Return UID from user name
-
-    Looks up UID matching the supplied user name;
-    returns None if no matching name can be found.
-
-    NB returned UID will be an integer.
-
-    """
-    try:
-        return pwd.getpwnam(str(user)).pw_uid
-    except KeyError:
-        return None
-
-def get_group_from_gid(gid):
-    """Return group name from GID
-
-    Looks up group name matching the supplied GID;
-    returns None if no matching name can be found.
-
-    """
-    try:
-        return grp.getgrgid(int(gid)).gr_name
-    except (KeyError,ValueError,OverflowError):
-        return None
-
-def get_gid_from_group(group):
-    """Return GID from group name
-
-    Looks up GID matching the supplied group name;
-    returns None if no matching name can be found.
-
-    NB returned GID will be an integer.
-
-    """
-    try:
-        return grp.getgrnam(group).gr_gid
-    except KeyError as ex:
-        return None
 
 #######################################################################
 # Symbolic link handling
