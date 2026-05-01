@@ -10,6 +10,7 @@ import gzip
 import pickle
 import pwd
 import grp
+import stat
 from bcftbx.test import mock_data
 from bcftbx.test.mock_data import ExampleDirSpiders
 from bcftbx.utils import *
