@@ -189,6 +189,8 @@ from .os import mklink
 from .os import chmod
 from .os import touch
 from .path import commonprefix
+from .path import rootname
+from .path import strip_ext
 
 
 class PathInfo:
@@ -576,24 +578,6 @@ def is_gzipped_file(filename):
     """
     return os.path.splitext(filename)[1] == '.gz'
 
-def rootname(name):
-    """Remove all extensions from name
-
-    Arguments:
-      name: name of a file
-
-    Returns:
-      Leading part of name up to first dot, i.e. name without any
-      trailing extensions.
-
-    """
-    try:
-        i = name.index('.')
-        return name[0:i]
-    except ValueError:
-        # No dot
-        return name
-
 def find_program(name):
     """Find a program on the PATH
 
@@ -733,56 +717,6 @@ def list_dirs(parent,matches=None,startswith=None):
                     dirs.append(d)
     dirs.sort()
     return dirs
-
-def strip_ext(name,ext=None):
-    """Strip extension from file name
-
-    Given a file name or path, remove the extension (including the
-    dot) and return just the leading part of the name.
-
-    If an extension is explicitly specified then only remove the
-    extension if it matches.
-
-    Extension can be multipart e.g. 'fastq.gz' and can include a
-    leading dot e.g. '.gz' or 'gz'.
-
-    Arguments:
-      name: name of a file
-
-    Returns:
-      Leading part of name excluding specified extension, or first
-      extension i.e. to last dot.
-
-    """
-    name0 = name
-    try:
-        for ext in ext.lstrip('.').split('.')[::-1]:
-            # Loop over extensions in reverse order
-            try:
-                i = name0.rindex('.')
-                if name0[i+1:] == ext:
-                    # Trim off matching extension
-                    name0 = name0[:i]
-                else:
-                    # At least one part of the
-                    # extension doesn't match so
-                    # return original name
-                    return name
-            except ValueError:
-                # At least one part of the
-                # extension doesn't match
-                return name
-        # All extensions matched, return
-        # stripped name
-        return name0
-    except AttributeError:
-        # Unable to split the strip, lose just the
-        # last extension
-        try:
-            i = name.rindex('.')
-            return name[:i]
-        except ValueError:
-            return name
 
 #######################################################################
 # Symbolic link handling
