@@ -45,7 +45,7 @@ from bcftbx.utils.users import get_user_from_uid
 from bcftbx.utils.users import get_group_from_gid
 from bcftbx.utils.users import get_uid_from_user
 from bcftbx.utils.users import get_gid_from_group
-from bcftbx.utils import split_into_lines
+from bcftbx.utils.text import split_into_lines
 
 class TestAttributeDictionary(unittest.TestCase):
     """Tests for the AttributeDictionary class
