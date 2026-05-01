@@ -81,7 +81,6 @@ Command line parsing utilities:
 
 import os
 import io
-import logging
 import string
 import gzip
 import shutil
@@ -89,8 +88,6 @@ import stat
 import pwd
 import grp
 import datetime
-import re
-import socket
 import math
 from builtins import range
 
@@ -188,9 +185,14 @@ from .os import mkdirs
 from .os import mklink
 from .os import chmod
 from .os import touch
+from .os import find_program
+from .os import walk
+from .os import list_dirs
+from .os import get_hostname
 from .path import commonprefix
 from .path import rootname
 from .path import strip_ext
+from .path import is_gzipped_file
 
 
 class PathInfo:
@@ -566,33 +568,6 @@ def convert_size_to_bytes(size):
         p = "KMGTP".index(units) + 1
         return int(float(str(size)[:-1])) * int(math.pow(1024,p))
 
-def is_gzipped_file(filename):
-    """Check if a file has a .gz extension
-
-    Arguments:
-      filename: name of the file to be tested (can include leading path)
-
-    Returns:
-      True if filename has trailing .gz extension, False if not.
-
-    """
-    return os.path.splitext(filename)[1] == '.gz'
-
-def find_program(name):
-    """Find a program on the PATH
-
-    Search the current PATH for the specified program name and return
-    the full path, or None if not found.
-
-    """
-    if os.path.isabs(name) and PathInfo(name).is_executable:
-        return name
-    for path in os.environ['PATH'].split(os.pathsep):
-        name_path = os.path.abspath(os.path.join(path,name))
-        if PathInfo(name_path).is_executable:
-            return name_path
-    return None
-
 def get_current_user():
     """Return name of the current user
 
@@ -656,67 +631,6 @@ def get_gid_from_group(group):
         return grp.getgrnam(group).gr_gid
     except KeyError as ex:
         return None
-
-def get_hostname():
-    """
-    Return the hostname for the current system
-    """
-    return socket.getfqdn()
-
-def walk(dirn,include_dirs=True,pattern=None):
-    """Traverse the directory, subdirectories and files
-
-    Essentially this 'walk' function is a convenience wrapper
-    for the 'os.walk' function.
-
-    Arguments:
-      dirn: top-level directory to start traversal from
-      include_dirs: if True then yield directories as well
-        as files (default)
-      pattern: if not None then specifies a regular expression
-        pattern which restricts the set of yielded files and
-        directories to a subset of those which match the
-        pattern
-        
-    """
-    if pattern is not None:
-        matcher = re.compile(pattern)
-    if include_dirs:
-        if pattern is None or matcher.match(dirn):
-            yield dirn
-    for dirpath,dirnames,filenames in os.walk(dirn):
-        if include_dirs:
-            for d in dirnames:
-                d1 = os.path.join(dirpath,d)
-                if pattern is None or matcher.match(d1):
-                    yield d1
-        for f in filenames:
-            f1 = os.path.join(dirpath,f)
-            if pattern is None or matcher.match(f1):
-                yield f1
-
-def list_dirs(parent,matches=None,startswith=None):
-    """Return list of subdirectories relative to 'parent'
-
-    Arguments:
-      parent: directory to list subdirectories of
-      matches: if not None then only include subdirectories
-        that exactly match the supplied string
-      startswith: if not None then then return subset of
-        subdirectories that start with the supplied string
-
-    Returns:
-      List of subdirectories (relative to the parent dir).
-
-    """
-    dirs = []
-    for d in os.listdir(parent):
-        if os.path.isdir(os.path.join(parent,d)):
-            if startswith is None or d.startswith(startswith):
-                if matches is None or d == matches:
-                    dirs.append(d)
-    dirs.sort()
-    return dirs
 
 #######################################################################
 # Symbolic link handling

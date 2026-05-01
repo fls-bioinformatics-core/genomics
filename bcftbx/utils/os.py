@@ -3,6 +3,7 @@
 #     os.py: miscellaneous operating system interfaces
 #     Copyright (C) University of Manchester 2026 Peter Briggs
 
+
 """
 Miscellaneous operating system interfaces:
 
@@ -11,10 +12,16 @@ Miscellaneous operating system interfaces:
 * mklink: make a symbolic link
 * chmod: change file or directory permissions
 * touch: create empty file and/or update modification time
+* find_program: search for executable file
+* walk: traverse and return directories and files
+* list_dirs: list subdirectories and files
 """
 
 
 import os
+import re
+import socket
+import stat
 import logging
 from .path import commonprefix
 
@@ -126,3 +133,105 @@ def touch(path):
         with open(path, "wb+") as f:
             pass
     os.utime(path,None)
+
+
+def find_program(name):
+    """
+    Find a program on the PATH
+
+    Search the current PATH for the specified program name and return
+    the full path, or None if not found.
+
+    Arguments:
+        name (str): name of the program
+
+    Returns:
+        String: the full path of the program
+    """
+    if os.path.isabs(name):
+        search_path = [name]
+    else:
+        search_path = os.environ["PATH"].split(os.pathsep)
+    for path in search_path:
+        name_path = os.path.abspath(os.path.join(path, name))
+        if os.path.islink(name_path):
+            # Resolve symbolic link and substitute
+            link_path = os.readlink(path)
+            if os.path.isabs(link_path):
+                # Absolute path
+                name_path = link_path
+            else:
+                # Relative path
+                name_path = os.path.normpath(
+                    os.path.join(os.path.dirname(path), link_path))
+        if os.path.isfile(name_path) and bool(os.lstat(name_path).st_mode & stat.S_IXUSR):
+            return name_path
+    return None
+
+
+def walk(dirn, include_dirs=True, pattern=None):
+    """
+    Traverse the directory, subdirectories and files
+
+    Essentially this 'walk' function is a convenience wrapper
+    for the 'os.walk' function.
+
+    Arguments:
+      dirn (str): top-level directory to start traversal from
+      include_dirs (bool): if True then yield directories as well
+        as files (default)
+      pattern (str): if not None then specifies a regular expression
+        pattern which restricts the set of yielded files and
+        directories to a subset of those which match the
+        pattern
+    """
+    if pattern is not None:
+        matcher = re.compile(pattern)
+    if include_dirs:
+        if pattern is None or matcher.match(dirn):
+            yield dirn
+    for dirpath, dirnames, filenames in os.walk(dirn):
+        if include_dirs:
+            for d in dirnames:
+                d1 = os.path.join(dirpath,d)
+                if pattern is None or matcher.match(d1):
+                    yield d1
+        for f in filenames:
+            f1 = os.path.join(dirpath,f)
+            if pattern is None or matcher.match(f1):
+                yield f1
+
+
+def list_dirs(parent, matches=None, startswith=None):
+    """
+    Return list of subdirectories relative to 'parent'
+
+    Arguments:
+      parent (str): directory to list subdirectories of
+      matches (str): if not None then only include subdirectories
+        that exactly match the supplied string
+      startswith (str): if not None then then return subset of
+        subdirectories that start with the supplied string
+
+    Returns:
+      List: names of matching subdirectories relative to the parent
+        directory.
+    """
+    dirs = []
+    for d in os.listdir(parent):
+        if os.path.isdir(os.path.join(parent,d)):
+            if startswith is None or d.startswith(startswith):
+                if matches is None or d == matches:
+                    dirs.append(d)
+    dirs.sort()
+    return dirs
+
+
+def get_hostname():
+    """
+    Return the hostname for the current system
+
+    Returns:
+        String: the fully-qualified hostname
+    """
+    return socket.getfqdn()

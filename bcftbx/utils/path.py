@@ -9,7 +9,8 @@ Pathname manipulations:
 
 * commonprefix: longest common prefix for two paths
 * rootname: path with extensions stripped off
-* strip_ext:
+* strip_ext: strip extension from path
+* is_gzipped_file: check if path has '.gz' extension
 """
 
 
@@ -88,7 +89,6 @@ def strip_ext(name, ext=None):
     Returns:
       Leading part of name excluding specified extension, or first
       extension i.e. to last dot.
-
     """
     name0 = name
     try:
@@ -119,3 +119,16 @@ def strip_ext(name, ext=None):
             return name[:i]
         except ValueError:
             return name
+
+
+def is_gzipped_file(filename):
+    """
+    Check if a file has a .gz extension
+
+    Arguments:
+      filename (str): name of the file to be tested (can include leading path)
+
+    Returns:
+      Boolean: True if filename has trailing .gz extension, False if not.
+    """
+    return os.path.splitext(filename)[1] == '.gz'
