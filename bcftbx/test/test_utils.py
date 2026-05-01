@@ -1,5 +1,5 @@
 #######################################################################
-# Tests for bcf_utils.py module
+# Tests for legacy bcf_utils.py module
 #######################################################################
 import unittest
 import os
@@ -13,7 +13,39 @@ import grp
 import stat
 from bcftbx.test import mock_data
 from bcftbx.test.mock_data import ExampleDirSpiders
-from bcftbx.utils import *
+from bcftbx.utils.collections import AttributeDictionary
+from bcftbx.utils.collections import OrderedDictionary
+from bcftbx.utils.format import format_file_size
+from bcftbx.utils.format import convert_size_to_bytes
+from bcftbx.utils.pathinfo import PathInfo
+from bcftbx.utils.pathinfo import Symlink
+from bcftbx.utils.io import getlines
+from bcftbx.utils.io import concatenate_fastq_files
+from bcftbx.utils.names import extract_initials
+from bcftbx.utils.names import extract_prefix
+from bcftbx.utils.names import extract_index_as_string
+from bcftbx.utils.names import extract_index
+from bcftbx.utils.names import pretty_print_names
+from bcftbx.utils.names import name_matches
+from bcftbx.utils.os import list_dirs
+from bcftbx.utils.os import walk
+from bcftbx.utils.os import links
+from bcftbx.utils.os import mkdir
+from bcftbx.utils.os import mkdirs
+from bcftbx.utils.os import chmod
+from bcftbx.utils.os import touch
+from bcftbx.utils.os import find_program
+from bcftbx.utils.parser import parse_named_lanes
+from bcftbx.utils.parser import parse_lanes
+from bcftbx.utils.path import commonprefix
+from bcftbx.utils.path import is_gzipped_file
+from bcftbx.utils.path import rootname
+from bcftbx.utils.path import strip_ext
+from bcftbx.utils.users import get_user_from_uid
+from bcftbx.utils.users import get_group_from_gid
+from bcftbx.utils.users import get_uid_from_user
+from bcftbx.utils.users import get_gid_from_group
+from bcftbx.utils import split_into_lines
 
 class TestAttributeDictionary(unittest.TestCase):
     """Tests for the AttributeDictionary class
