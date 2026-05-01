@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 #     collections.py: specialized container datatypes
 #     Copyright (C) University of Manchester 2026 Peter Briggs

@@ -182,6 +182,15 @@ def getlines(filen):
 # File system wrappers and utilities
 #######################################################################
 
+
+from .os import mkdir
+from .os import mkdirs
+from .os import mklink
+from .os import chmod
+from .os import touch
+from .path import commonprefix
+
+
 class PathInfo:
     """Collect and report information on a file
 
@@ -498,98 +507,6 @@ class PathInfo:
         """
         return str(self.__path)
 
-def mkdir(dirn,mode=None,recursive=False):
-    """Make a directory
-
-    Arguments:
-      dirn: the path of the directory to be created
-      mode: (optional) a mode specifier to be applied to the
-        new directory once it has been created e.g. 0775 or 0664
-      recursive: (optional) if True then also create any
-        intermediate parent directories if they don't already
-        exist
-    """
-    if os.path.exists(dirn):
-        return
-    if recursive:
-        parent = os.path.dirname(dirn)
-        if not os.path.exists(parent):
-            mkdir(parent,recursive=True)
-    os.mkdir(dirn)
-    if mode is not None: chmod(dirn,mode)
-
-def mkdirs(dirn,mode=None):
-    """Make a directory recursively
-
-    Arguments:
-      dirn: the path of the directory to be created
-      mode: (optional) a mode specifier to be applied to the
-        new directory once it has been created e.g. 0775 or 0664
-    """
-    return mkdir(dirn,mode=mode,recursive=True)
-
-def mklink(target,link_name,relative=False):
-    """Make a symbolic link
-
-    Arguments:
-      target: the file or directory to link to
-      link_name: name of the link
-      relative: if True then make a relative link (if possible);
-        otherwise link to the target as given (default)"""
-    target_path = target
-    if relative:
-        # Try to construct relative link to target
-        target_abs_path = os.path.abspath(target)
-        link_abs_path = os.path.abspath(link_name)
-        common_prefix = commonprefix(target_abs_path,link_abs_path)
-        if common_prefix:
-            # Use relpath to generate the relative path from the link
-            # to the target
-            target_path = os.path.relpath(target_abs_path,os.path.dirname(link_abs_path))
-    os.symlink(target_path,link_name)
-
-def chmod(target,mode):
-    """Change mode of file or directory
-
-    This a wrapper for the os.chmod function, with the
-    addition that it doesn't follow symbolic links.
-
-    For symbolic links it attempts to use the os.lchmod
-    function instead, as this operates on the link
-    itself and not the link target. If os.lchmod is not
-    available then links are ignored.
-
-    Arguments:
-      target: file or directory to apply new mode to
-      mode: a valid mode specifier e.g. 0775 or 0664
-
-    """
-    try:
-        if os.path.islink(target):
-            # Try to use lchmod to operate on the link
-            try:
-                os.lchmod(target,mode)
-            except AttributeError as ex:
-                # lchmod is not available on all systems
-                # If not then just ignore
-                logging.debug("os.lchmod not available? Exception: %s" % ex)
-        else:
-            # Use os.chmod for everything else
-            os.chmod(target,mode)
-    except OSError as ex:
-        logging.warning("Failed to change permissions on %s to %s: %s" % (target,mode,ex))
-
-def touch(filename):
-    """Create new empty file, or update modification time if already exists
-
-    Arguments:
-      filename: name of the file to create (can include leading path)
-
-    """
-    if not os.path.exists(filename):
-        io.open(filename,'wb+').close()
-    os.utime(filename,None)
-
 def format_file_size(fsize,units=None):
     """Format a file size from bytes to human-readable form
 
@@ -646,37 +563,6 @@ def convert_size_to_bytes(size):
         units = str(size)[-1].upper()
         p = "KMGTP".index(units) + 1
         return int(float(str(size)[:-1])) * int(math.pow(1024,p))
-
-def commonprefix(path1,path2):
-    """Determine common prefix path for path1 and path2
-
-    Use this in preference to os.path.commonprefix as the version
-    in os.path compares the two paths in a character-wise fashion
-    and so can give counter-intuitive matches; this version compares
-    path components which seems more sensible.
-
-    For example: for two paths /mnt/dir1/file and /mnt/dir2/file,
-    os.path.commonprefix will return /mnt/dir, whereas this function
-    will return /mnt.
-
-    Arguments:
-      path1: first path in comparison
-      path2: second path in comparison
-
-    Returns:
-      Leading part of path which is common to both input paths.
-    """
-    path1_components = str(path1).split(os.sep)
-    path2_components = str(path2).split(os.sep)
-    common_components = []
-    ncomponents = min(len(path1_components),len(path2_components))
-    for i in range(ncomponents):
-        if path1_components[i] == path2_components[i]:
-            common_components.append(path1_components[i])
-        else:
-            break
-    commonprefix = "%s" % os.sep.join(common_components)
-    return commonprefix
 
 def is_gzipped_file(filename):
     """Check if a file has a .gz extension
