@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 #
 #     jobs.runners.py: start, stop and managing job runs
-#     Copyright (C) University of Manchester 2011-2025 Peter Briggs
+#     Copyright (C) University of Manchester 2011-2026 Peter Briggs
 #
 ########################################################################
 #
@@ -1801,11 +1801,11 @@ exit $exit_code
             logger.debug(f"SlurmRunner: -- checking job {job_id}")
             try:
                 job_number = self._job_number[job_id]
+                job_dir = self._get_job_dir(job_number)
             except KeyError:
                 # Job has been removed since the list was
                 # fetched? Ignore
                 continue
-            job_dir = self._get_job_dir(job_number)
             if os.path.exists(job_dir):
                 # Job dir exists
                 logger.debug("SlurmRunner: -- found %s" % job_dir)
