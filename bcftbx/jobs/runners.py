@@ -328,6 +328,10 @@ class JobRunner:
         Returns:
             str: path to temporary directory that can be used
             by the runner for this specific job
+
+        Raises:
+            KeyError: if no matching job is found for the
+            supplied job number
         """
         # Normalize job number
         job_number = str(job_number)
@@ -340,8 +344,8 @@ class JobRunner:
         try:
             return self._job_dirs[job_number]
         except KeyError:
-            raise Exception(f"{self._runner_name}: no job dir registered "
-                            f"for job {job_number}")
+            raise KeyError(f"{self._runner_name}: no job dir registered "
+                           f"for job {job_number}")
         finally:
             # Release the lock
             self._lock.release(lock)
