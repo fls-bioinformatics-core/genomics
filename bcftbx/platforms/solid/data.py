@@ -62,6 +62,13 @@ import io
 import string
 import logging
 from ... import utils
+from ...utils.collections import AttributeDictionary
+from ...utils.os import list_dirs
+from ...utils.names import extract_prefix
+from ...utils.names import extract_index
+from ...utils.names import extract_index_as_string
+from ...utils.names import extract_initials
+from ...utils.names import pretty_print_names
 
 # Module specific logger
 logger = logging.getLogger(__name__)
@@ -109,7 +116,7 @@ class RunDir:
         self.run_definition = None
         self.samples = []
         # Default classes to use for managing data
-        self._cls = utils.AttributeDictionary(
+        self._cls = AttributeDictionary(
             BarcodeStatistics=BarcodeStatistics,
             Library=Library,
             RunDefinition=RunDefinition,
@@ -195,7 +202,7 @@ class RunDir:
             self.run_info = self._cls.RunInfo(self.run_name)
             # Try to guess samples and libraries
             samples = []
-            for s in utils.list_dirs(self.run_dir):
+            for s in list_dirs(self.run_dir):
                 logger.debug("Examining subdir %s" % s)
                 # Look for 'results' subdir
                 results = os.path.join(self.run_dir,s,'results')
@@ -209,7 +216,7 @@ class RunDir:
                 else:
                     continue
                 # Look for possible libraries
-                for d in utils.list_dirs(libraries_dir):
+                for d in list_dirs(libraries_dir):
                     logger.debug("Examining putative library subdir %s" % d)
                     self.add_library(s,d,libraries_dir,False)
 
@@ -523,7 +530,7 @@ class Sample:
         self.unassigned = None
         self.parent_run = parent_run
         # Default classes to use for managing data
-        self._cls = utils.AttributeDictionary(
+        self._cls = AttributeDictionary(
             Library=Library,
             Project=Project
         )
@@ -644,10 +651,10 @@ class Library:
         # Name
         self.name = str(name)
         # Name-based information
-        self.initials = utils.extract_initials(self.name)
-        self.prefix = utils.extract_prefix(self.name)
-        self.index_as_string = utils.extract_index_as_string(self.name)
-        self.index = utils.extract_index(self.name)
+        self.initials = extract_initials(self.name)
+        self.prefix = extract_prefix(self.name)
+        self.index_as_string = extract_index_as_string(self.name)
+        self.index = extract_index(self.name)
         # Barcoding
         self.is_barcoded = False
         # Associated canonical data files
@@ -660,7 +667,7 @@ class Library:
         # Parent sample
         self.parent_sample = parent_sample
         # Default classes to use for managing data
-        self._cls = utils.AttributeDictionary(
+        self._cls = AttributeDictionary(
             PrimaryData=PrimaryData,
             Project=Project
         )
@@ -897,7 +904,7 @@ class Project:
 
         Wraps a call to 'pretty_print_names' function.
         """
-        return utils.pretty_print_names(self.libraries)
+        return pretty_print_names(self.libraries)
 
     def getTimeStamps(self):
         """

@@ -59,7 +59,7 @@ import os
 import logging
 import xml.dom.minidom
 from functools import reduce
-from ... import utils
+from ...utils.names import pretty_print_names
 from .samplesheet import SampleSheet
 from .samplesheet import SampleSheetPredictor
 from .utils import IlluminaFastq
@@ -702,7 +702,7 @@ class FastqDirProject:
 
         Wraps a call to 'pretty_print_names' function.
         """
-        return utils.pretty_print_names(self.samples)
+        return pretty_print_names(self.samples)
 
 
 class FastqDirSample:

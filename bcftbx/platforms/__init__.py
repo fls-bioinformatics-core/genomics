@@ -14,7 +14,7 @@ Utilities and data to identify NGS sequencer platforms
 """
 
 # Dictionary of sequencer platforms
-from ..utils import OrderedDictionary
+from ..utils.collections import OrderedDictionary
 PLATFORMS = OrderedDictionary()
 PLATFORMS['solid4'] = "SOLiD 4"
 PLATFORMS['solid5500'] = "SOLiD 5500"
