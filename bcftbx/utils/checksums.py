@@ -269,7 +269,7 @@ class Md5Checker:
         if fp is not None:
             filen=None
         else:
-            fp = io.open(filen,'rt')
+            fp = open(filen,'rt')
         for line in fp:
             items = line.strip().split()
             if len(items) < 2:
