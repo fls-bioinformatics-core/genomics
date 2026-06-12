@@ -12,13 +12,6 @@ The core ``md5sum`` function computes the MD5 hash for a file, for example:
 >>> md5sum("myfile.txt")
 ... eacc9c036025f0e64fb724cacaadd8b4
 
-.. note::
-
-   This module implements two methods for generating the md5 digest of a file:
-   the first uses a method based on the hashlib module, while the second (used
-   as a fallback for pre-2.5 Python) uses the now deprecated md5 module. Note
-   however that the md5sum function determines itself which method to use.
-
 In addition there are two utility classes:
 
 * ``Md5Checker``: provides class methods for checking MD5 sums across all files
