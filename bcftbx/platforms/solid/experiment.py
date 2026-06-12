@@ -32,9 +32,9 @@ import os
 import logging
 from .data import RunDir
 from .data import is_paired_end
-from ...utils import AttributeDictionary
-from ...utils import mkdir
-from ...utils import mklink
+from ...utils.collections import AttributeDictionary
+from ...utils.os import mkdir
+from ...utils.os import mklink
 
 # Module specific logger
 logger = logging.getLogger(__name__)

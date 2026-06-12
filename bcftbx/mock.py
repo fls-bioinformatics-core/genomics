@@ -47,8 +47,8 @@ from .platforms.illumina.utils import IlluminaFastq
 from .platforms.illumina.samplesheet import SampleSheet
 from .platforms import get_run_completion_files
 from .TabFile import TabFile
-from .utils import OrderedDictionary
-from .utils import mkdir
+from .utils.collections import OrderedDictionary
+from .utils.os import mkdir
 
 #######################################################################
 # Module data

@@ -1,5 +1,5 @@
 #######################################################################
-# Tests for bcf_utils.py module
+# Tests for legacy bcf_utils.py module
 #######################################################################
 import unittest
 import os
@@ -8,9 +8,44 @@ import tempfile
 import shutil
 import gzip
 import pickle
-from . import mock_data
-from .mock_data import ExampleDirSpiders
-from bcftbx.utils import *
+import pwd
+import grp
+import stat
+from bcftbx.test import mock_data
+from bcftbx.test.mock_data import ExampleDirSpiders
+from bcftbx.utils import AttributeDictionary
+from bcftbx.utils import OrderedDictionary
+from bcftbx.utils import format_file_size
+from bcftbx.utils import convert_size_to_bytes
+from bcftbx.utils import PathInfo
+from bcftbx.utils import Symlink
+from bcftbx.utils import getlines
+from bcftbx.utils import concatenate_fastq_files
+from bcftbx.utils import extract_initials
+from bcftbx.utils import extract_prefix
+from bcftbx.utils import extract_index_as_string
+from bcftbx.utils import extract_index
+from bcftbx.utils import pretty_print_names
+from bcftbx.utils import name_matches
+from bcftbx.utils import list_dirs
+from bcftbx.utils import walk
+from bcftbx.utils import links
+from bcftbx.utils import mkdir
+from bcftbx.utils import mkdirs
+from bcftbx.utils import chmod
+from bcftbx.utils import touch
+from bcftbx.utils import find_program
+from bcftbx.utils import parse_named_lanes
+from bcftbx.utils import parse_lanes
+from bcftbx.utils import commonprefix
+from bcftbx.utils import is_gzipped_file
+from bcftbx.utils import rootname
+from bcftbx.utils import strip_ext
+from bcftbx.utils import get_user_from_uid
+from bcftbx.utils import get_group_from_gid
+from bcftbx.utils import get_uid_from_user
+from bcftbx.utils import get_gid_from_group
+from bcftbx.utils import split_into_lines
 
 class TestAttributeDictionary(unittest.TestCase):
     """Tests for the AttributeDictionary class
@@ -1185,13 +1220,3 @@ class TestParseLanesFunction(unittest.TestCase):
         """
         self.assertEqual(parse_lanes("1,3,5-8"),
                          [1,3,5,6,7,8])
-
-#######################################################################
-# Main program
-#######################################################################
-
-if __name__ == "__main__":
-    # Turn off most logging output for tests
-    logging.getLogger().setLevel(logging.CRITICAL)
-    # Run tests
-    unittest.main()

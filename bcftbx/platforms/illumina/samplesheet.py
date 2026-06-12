@@ -46,9 +46,9 @@ import os
 import sys
 import logging
 from ... import TabFile
-from ...utils import OrderedDictionary
-from ...utils import extract_prefix
-from ...utils import extract_index
+from ...utils.collections import OrderedDictionary
+from ...utils.names import extract_prefix
+from ...utils.names import extract_index
 from .exceptions import IlluminaError
 
 # Module specific logger
