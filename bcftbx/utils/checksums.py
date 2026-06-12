@@ -1,0 +1,477 @@
+#!/usr/bin/env python3
+#
+#     checksums.py: MD5 checksumming utility functions
+#     Copyright (C) University of Manchester 2026 Peter Briggs
+
+
+"""
+Classes and functions for performing various MD5 checksumming operations.
+
+The core ``md5sum`` function computes the MD5 hash for a file, for example:
+
+>>> md5sum("myfile.txt")
+... eacc9c036025f0e64fb724cacaadd8b4
+
+.. note::
+
+   This module implements two methods for generating the md5 digest of a file:
+   the first uses a method based on the hashlib module, while the second (used
+   as a fallback for pre-2.5 Python) uses the now deprecated md5 module. Note
+   however that the md5sum function determines itself which method to use.
+
+In addition there are two utility classes:
+
+* ``Md5Checker``: provides class methods for checking MD5 sums across all files
+  in a directory;
+* ``Md5Reporter``: wrapper for reporting on ``Md5Checker`` operations.
+"""
+
+
+import sys
+import os
+import logging
+import hashlib
+
+
+BLOCKSIZE = 1024*1024
+
+
+class Md5Checker:
+    """
+    Provides static methods for performing checks using MD5 sums
+
+    The Md5Checker class is a collection of static methods that can
+    be used for performing checks using MD5 sums.
+
+    It also provides a set of constants to indicate the status of
+    checks, and for how to handle symbolic links.
+    """
+    # Class constants representing check results
+    MD5_OK=0
+    MD5_FAILED=1
+    MD5_ERROR=2
+    MISSING_SOURCE=3
+    MISSING_TARGET=4
+    LINKS_SAME=5
+    LINKS_DIFFER=6
+    TYPES_DIFFER=7
+    # Class constants representing link handling
+    FOLLOW_LINKS=0
+    IGNORE_LINKS=1
+
+    @classmethod
+    def walk(self,dirn,links=FOLLOW_LINKS):
+        """
+        Traverse all files found in a directory structure
+
+        Given a directory, traverses the structure underneath (including
+        subdirectories) and yields the path for each file that is
+        found.
+
+        How symbolic links are handled depends on the setting of the
+        'links' option:
+
+        FOLLOW_LINKS: symbolic links to files are treated as files; links
+                      to directories are followed.
+        IGNORE_LINKS: symbolic links to files are ignored; links to
+                      directories are not followed.
+
+        Arguments:
+          dirn (str): name of the top-level directory
+          links (int): (optional) specify how symbolic links are handled
+
+        Yields:
+            String: full path for each file under 'dirn'.
+        """
+        for d in os.walk(dirn):
+            if os.path.islink(d[0]) and links != self.FOLLOW_LINKS:
+                continue
+            for f in d[2]:
+                path = os.path.join(d[0],f)
+                if os.path.islink(path) and links != self.FOLLOW_LINKS:
+                    continue
+                else:
+                    yield os.path.normpath(path)
+
+    @classmethod
+    def md5_walk(self,dirn,links=FOLLOW_LINKS):
+        """
+        Calculate MD5 sums for all files in directory
+
+        Given a directory, traverses the structure underneath (including
+        subdirectories) and yields the path and MD5 sum for each file that
+        is found.
+
+        The 'links' option determines how symbolic links are handled, see
+        the 'walk' function for details.
+
+        Arguments:
+          dirn (str): name of the top-level directory
+          links (int): (optional) specify how symbolic links are handled
+
+        Yields:
+            Tuple: a tuple (f,md5) where f is the path of a file relative to
+            the top-level directory, and md5 is the calculated MD5 sum.
+        """
+        for f in self.walk(dirn,links=links):
+            yield (os.path.relpath(f,dirn),md5sum(f))
+
+    @classmethod
+    def md5cmp_files(self,f1,f2):
+        """
+        Compares the MD5 sums of two files
+
+        Given two file names, attempts to compute and compare their
+        MD5 sums.
+
+        If the MD5s match then returns MD5_OK, if they don't match
+        then returns MD5_FAILED.
+
+        If one or both MD5 sums cannot be computed then returns
+        MD5_ERROR.
+
+        Note that if either file is a link then MD5 sums will be
+        computed for the link target(s), if they exist and can be
+        accessed.
+
+        Arguments:
+          f1 (str): name and path for reference file
+          f2 (str): name and path for file to be checked
+
+        Returns:
+          Integer: Md5Checker constant representing the outcome of the
+          comparison.
+
+        """
+        # Compute and compare MD5 sums
+        try:
+            if md5sum(f1) == md5sum(f2):
+                status = self.MD5_OK
+            else:
+                status = self.MD5_FAILED
+        except IOError as ex:
+            # Error accessing one or both files
+            logging.error("%s: error while generating MD5 sums: '%s'" % (f1,ex))
+            status = self.MD5_ERROR
+        return status
+
+    @classmethod
+    def md5cmp_dirs(self,d1,d2,links=FOLLOW_LINKS):
+        """
+        Compares the contents of one directory with another using MD5 sums
+
+        Given two directory names 'd1' and 'd2', compares the MD5 sum of
+        each file found in 'd1' against that of the equivalent file in 'd2',
+        and yields the result as an Md5checker constant for each file pair,
+        i.e.:
+
+        MD5_OK:     if MD5 sums match;
+        MD5_FAILED: if MD5 sums differ.
+
+        If the equivalent file doesn't exist then yields MISSING_TARGET.
+
+        If one or both MD5 sums cannot be computed then yields MD5_ERROR.
+
+        How symbolic links are handled depends on the setting of the 'links'
+        option:
+
+        FOLLOW_LINKS: (default) MD5 sums are computed and compared for
+                      the targets of symbolic links. Broken links are
+                      treated as if the file was missing.
+        IGNORE_LINKS: MD5 sums are not computed or compared if either file
+                      is a symbolic link, and links to directories are
+                      not followed.
+
+        Arguments:
+          d1 (str): 'reference' directory
+          d2 (str): 'target' directory to be compared with the reference
+          links (int): (optional) specify how symbolic links are handled.
+
+        Yields:
+            Tuple: a tuple (f,status) where f is the relative path of the
+            file pair being compared, and status is the Md5Checker constant
+            representing the outcome of the comparison.
+        """
+        for f1 in self.walk(d1,links=links):
+            f2 = os.path.join(d2,os.path.relpath(f1,d1))
+            if not os.path.exists(f2):
+                result = self.MISSING_TARGET
+            else:
+                try:
+                    result = self.md5cmp_files(f1,f2)
+                except Exception as ex:
+                    logging.debug("Failed to compute one or both checksums:")
+                    logging.debug("Reference file: %s" % f1)
+                    logging.debug("Target file   : %s" % f2)
+                    logging.debug("Exception     : %s" % ex)
+                    result = self.MD5_ERROR
+            yield (os.path.relpath(f1,d1),result)
+
+    @classmethod
+    def compute_md5sums(self,d,links=FOLLOW_LINKS):
+        """
+        Calculate MD5 sums for all files in directory
+
+        Given a directory, traverses the structure underneath (including
+        subdirectories) and yields the path and MD5 sum for each file that
+        is found.
+
+        The 'links' option determines how symbolic links are handled, see
+        the 'walk' function for details.
+
+        Arguments:
+          dirn (str): name of the top-level directory
+          links (int): (optional) specify how symbolic links are handled
+
+        Yields:
+            Tuple: a tuple (f,md5) where f is the path of a file relative to
+            the top-level directory, and md5 is the calculated MD5 sum.
+        """
+        for f in self.walk(d,links=links):
+            try:
+                md5 = md5sum(f)
+                yield (os.path.relpath(f,d),md5)
+            except IOError as ex:
+                logging.error("md5sum: %s: %s" % (f,ex))
+
+    @classmethod
+    def verify_md5sums(self,filen=None,fp=None):
+        """
+        Verify md5sums from a file
+
+        Given a file (or a file-like object opened for reading), reads
+        each line and attempts to interpret as an md5sum line i.e. of
+        the form:
+
+        ::
+
+            <md5 sum>  <path/to/file>
+
+        e.g.
+
+        ::
+
+            66b201ae074c36ae9bffec7fb74ff03a  md5checker.py
+
+        It then attempts to verify the MD5 sum against the file located
+        on the file system, and yields the result as an Md5checker constant
+        for each file line i.e.:
+
+        MD5_OK:     if MD5 sums match;
+        MD5_FAILED: if MD5 sums differ.
+
+        If the file cannot be found then it yields MISSING_TARGET; if
+        there is a problem computing the MD5 sum then it yields
+        MD5_ERROR.
+
+        Arguments:
+          filen (str): name of the file containing md5sum output
+          fp (File): file-like object opened for reading, with md5sum output
+
+        Yields:
+            Tuple: a tuple (f,status) where f is the path of the file being
+            verified (as it appears in the file), and status is the Md5Checker
+            constant representing the outcome.
+        """
+        if fp is not None:
+            filen=None
+        else:
+            fp = io.open(filen,'rt')
+        for line in fp:
+            items = line.strip().split()
+            if len(items) < 2:
+                raise IndexError("Bad MD5 sum line: %s" % line.rstrip('\n'))
+            chksum = items[0]
+            f = line[len(chksum):].strip()
+            try:
+                if not os.path.exists(f):
+                    status = self.MISSING_TARGET
+                elif md5sum(f) == chksum:
+                    status = self.MD5_OK
+                else:
+                    status = self.MD5_FAILED
+            except IOError as ex:
+                # Error accessing file
+                logging.error("%s: error while generating MD5 sum: '%s'" % (f,ex))
+                status = self.MD5_ERROR
+            yield (f,status)
+
+
+class Md5CheckReporter:
+    """
+    Provides a generic reporting class for Md5Checker methods
+
+    Typical usage modes are either:
+
+    >>> r = Md5CheckReporter()
+    >>> for f,s in Md5Checker.md5cmp_dirs(d1,d2):
+    ...    r.add_result(f,s)
+
+    or more concisely:
+
+    >>> r = Md5CheckReporter(Md5Checker.md5cmp_dirs(d1,d2))
+
+    Use the ``summary`` method to generate a summary of all the checks.
+
+    Use the ``status`` method to get a single indicator of success or
+    failure which is consistent with UNIX-style return codes.
+
+    To find out how many results were processed in total, how many
+    failed etc use the following properties:
+
+    - n_files  : total number of results examined
+    - n_ok     : number that passed MD5 checks (MD5_OK)
+    - n_failed : number that failed due to different MD5 sums (MD5_FAILED)
+    - n_missing: number that failed due to a missing target file
+      (MISSING_TARGET)
+    - n_errors : number that had errors calculating their MD5 sums
+      (MD5 ERROR)
+
+    Arguments:
+        results (list): a list or iterable of tuples (f,s) where f is a
+            file name and s is an Md5Checker status code
+        verbose (bool): if True then report the results of all checks;
+            otherwise only report failures (default)
+        fp (File): specify a file-like object to write messages to. Must
+            already be opened for writing (defaults to sys.stdout)
+    """
+    def __init__(self,results=None,verbose=False,fp=sys.stdout):
+        self._verbose = verbose
+        self._fp = fp
+        self._n_files = 0
+        self._md5_failed = []
+        self._md5_error = []
+        self._missing_target = []
+        if results is not None:
+            for result in results:
+                self.add_result(result[0],result[1])
+
+    @property
+    def n_files(self):
+        """
+        Total number of files checked
+        """
+        return self._n_files
+
+    @property
+    def n_ok(self):
+        """
+        Number of passed MD5 sum checks
+        """
+        return self.n_files - self.n_failed - self.n_errors - self.n_missing
+
+    @property
+    def n_failed(self):
+        """
+        Number of failed MD5 sum checks
+        """
+        return len(self._md5_failed)
+
+    @property
+    def n_errors(self):
+        """
+        Number of files with errors checking MD5 sums
+        """
+        return len(self._md5_error)
+
+    @property
+    def n_missing(self):
+        """
+        Number of missing files
+        """
+        return len(self._missing_target)
+
+    def add_result(self,f,status):
+        """
+        Add a result to the reporter
+
+        Takes a file and an Md5Checker status code and adds
+        it to the results.
+
+        If the status code indicates a failed check then the
+        file name is added to a list corresponding to the
+        nature of the failure (e.g. MD5 sums didn't match,
+        target was missing etc).
+
+        Arguments:
+            f (str): file name
+            status (int): status code
+        """
+        self._n_files += 1
+        if status == Md5Checker.MD5_OK:
+            status_msg = "OK"
+            if self._verbose:
+                self._fp.write(u"%s: %s\n" % (f,status_msg))
+        else:
+            if status == Md5Checker.MD5_FAILED:
+                status_msg = "FAILED"
+                self._md5_failed.append(f)
+            elif status == Md5Checker.MISSING_TARGET:
+                status_msg = "MISSING"
+                self._missing_target.append(f)
+            elif status == Md5Checker.MD5_ERROR:
+                status_msg = "ERROR"
+                self._md5_error.append(f)
+            else:
+                # Unrecognised code
+                raise Exception("Unrecognised status: '%s'" % status)
+            self._fp.write(u"%s: %s\n" % (f,status_msg))
+
+    def summary(self):
+        """Write a summary of the results
+
+        Writes a summary of the number of files checked, how many passed
+        or failed MD5 checks and so on, to the specified output stream.
+
+        """
+        self._fp.write(u"Summary:\n")
+        self._fp.write(u"\t%d files checked\n" % self.n_files)
+        self._fp.write(u"\t%d okay\n" % self.n_ok)
+        self._fp.write(u"\t%d failed\n" % self.n_failed)
+        self._fp.write(u"\t%d not found\n" % self.n_missing)
+        self._fp.write(u"\t%d 'bad' files (MD5 computation errors)\n"
+                       % self.n_errors)
+
+    @property
+    def status(self):
+        """Return status code
+
+        Returns 0 if all files that were checked passed the MD5 check, or
+        1 if at least one file failed the check for whatever reason.
+
+        """
+        if self.n_files == self.n_ok:
+            return 0
+        else:
+            return 1
+
+
+def md5sum(f):
+    """
+    Return md5sum digest for a file or stream
+
+    This implements the md5sum checksum generation using the
+    hashlib module.
+
+    Arguments:
+      f (str): name of the file to generate the checksum from, or
+        a file-like object opened for reading in binary mode.
+
+    Returns:
+      String: Md5sum digest for the named file.
+    """
+    chksum = hashlib.md5()
+    close_fp = False
+    try:
+        fp = open(f,"rb")
+        close_fp = True
+    except TypeError:
+        fp = f
+    while True:
+        buf = fp.read(BLOCKSIZE)
+        if not buf:
+            break
+        chksum.update(buf)
+    if close_fp:
+        fp.close()
+    return chksum.hexdigest()
