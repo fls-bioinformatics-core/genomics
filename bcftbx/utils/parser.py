@@ -188,9 +188,12 @@ class CommandParser:
             options = p.parse_args(argv[1:])
             return (cmd, options)
         else:
-            raise NotImplementedError(f"parse_args: unsupported subparser")
-        options, arguments = p.parse_args(argv[1:])
-        return (cmd, options, arguments)
+            try:
+                # Unofficial backwards-compatibility support for optparse
+                options, arguments = p.parse_args(argv[1:])
+                return (cmd,options,arguments)
+            except Exception:
+                raise NotImplementedError(f"parse_args: unsupported subparser")
 
     def error(self, message):
         """
