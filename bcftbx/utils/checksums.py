@@ -266,9 +266,7 @@ class Md5Checker:
             verified (as it appears in the file), and status is the Md5Checker
             constant representing the outcome.
         """
-        if fp is not None:
-            filen=None
-        else:
+        if fp is None:
             fp = open(filen,'rt')
         for line in fp:
             items = line.strip().split()
