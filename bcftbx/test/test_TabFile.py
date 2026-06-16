@@ -175,7 +175,7 @@ chr2\t1234\t5678\t6.8
         line = tabfile.append(tabdataline=tabdataline)
         self.assertEqual(len(tabfile),4)
         # Check new line is correct
-        self.assertTrue(line is tabdataline)
+        self.assertEqual(line, tabdataline)
 
     def test_insert_empty_line(self):
         """Insert a blank line into a TabFile
@@ -220,7 +220,7 @@ chr2\t1234\t5678\t6.8
         line = tabfile.insert(2,tabdataline=tabdataline)
         self.assertEqual(len(tabfile),4)
         # Check new line is correct
-        self.assertTrue(line is tabdataline)
+        self.assertEqual(line, tabdataline)
 
     def test_append_column(self):
         """Append new column to a Tabfile
