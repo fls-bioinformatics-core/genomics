@@ -207,7 +207,7 @@ class TestFastqRead(unittest.TestCase):
         quality = "=@@D;DDFFHDHHIJIIIIIIGIGIGDIHGGEIGICFGIGHIIGII@?FGIGIEI@EHEFFEEBAACD;@ACCDDBDBDDACCC3>CD>:ADCCDDD?C@\n"
         read = FastqRead(header, sequence, optid, quality)
         self.assertTrue(isinstance(read.header, SequenceIdentifier))
-        self.assertEqual(str(read.header), sequence.rstrip('\n'))
+        self.assertEqual(str(read.header), header.rstrip('\n'))
         self.assertEqual(read.raw_header, header.rstrip('\n'))
         self.assertEqual(read.sequence, sequence.rstrip('\n'))
         self.assertEqual(read.optid, optid.rstrip('\n'))
