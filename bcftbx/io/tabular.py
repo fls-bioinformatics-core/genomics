@@ -966,6 +966,17 @@ class TabLine:
             if str(item).strip(): return True
         return False
 
+    def __eq__(self, other):
+        if not isinstance(other, TabLine):
+            return False
+        if self._data != other._data:
+            return False
+        if self._column_names != other._column_names:
+            return False
+        if self._delimiter != other._delimiter:
+            return False
+        return True
+
     def __repr__(self):
         return self._delimiter.join([str(x) for x in self._data])
 
