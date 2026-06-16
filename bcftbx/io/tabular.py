@@ -231,8 +231,6 @@ class TabFile:
         first_line_is_header (bool): (optional) if True then takes
             column names from the first line of the file
             (over-riding 'column_names' argument if specified)
-        tab_line: (optional) class to use for creating data
-            line objects (defaults to TabLine).
         delimiter (str): (optional) delimiter character (defaults to
             tab)
         convert_values (bool): (optional) if True then convert input
@@ -246,9 +244,8 @@ class TabFile:
             remove commented lines
     """
     def __init__(self, filen=None, fp=None, column_names=None, skip_first_line=False,
-                 first_line_is_header=False, tab_line=None, delimiter='\t',
-                 convert_values=True, allow_underscores_in_numeric_literals=False,
-                 keep_commented_lines=False):
+                 first_line_is_header=False, delimiter='\t', convert_values=True,
+                 allow_underscores_in_numeric_literals=False, keep_commented_lines=False):
         # Initialise
         self._filen = filen
         self._ncols = 0
@@ -258,10 +255,6 @@ class TabFile:
         self._convert_values = bool(convert_values)
         self._allow_underscores_in_numbers = bool(allow_underscores_in_numeric_literals)
         self._keep_commented_lines = bool(keep_commented_lines)
-        # Class to use for data lines
-        if tab_line is None:
-            tab_line = TabLine
-        self._tab_line = tab_line
         # Set up column names
         if column_names:
             self._set_header(column_names)
@@ -357,7 +350,7 @@ class TabFile:
         Returns:
             TabLine: the new inserted TabLine object.
         """
-        data_line = self._tab_line(line=line, column_names=self.header())
+        data_line = self._tabline(line=line)
         self._data.insert(idx, data_line)
         return data_line
 
@@ -383,10 +376,7 @@ class TabFile:
         Returns:
           TabLine: appended data line object.
         """
-        line = self._tab_line(line,
-                              column_names=self.header(),
-                              delimiter=self._delimiter,
-                              convert_values=self._convert_values)
+        line = self._tabline(line)
         self._data.append(line)
         return line
 
@@ -416,8 +406,8 @@ class TabFile:
         Returns:
           TabFile: new TabFile object with columns reordered.
         """
-        reordered_tabfile = TabFile(column_names=new_columns,
-                                    delimiter=self._delimiter)
+        reordered_tabfile = self._tabfile(column_names=new_columns,
+                                          delimiter=self._delimiter)
         for data in self._data:
             reordered_tabfile.append(data.subset(*new_columns))
         return reordered_tabfile
@@ -429,7 +419,7 @@ class TabFile:
         Returns:
           TabFile: transposed TabFile object.
         """
-        transposed_tabfile = TabFile(delimiter=self._delimiter)
+        transposed_tabfile = self._tabfile(delimiter=self._delimiter)
         for data in self._data:
             transposed_tabfile.append_column(None)
             for i in range(len(data)):
@@ -599,12 +589,8 @@ class TabFile:
                 # Skip commented line
                 continue
             # Store data
-            data_line = self._tab_line(line,
-                                       column_names=self.header(),
-                                       line_number=line_number,
-                                       delimiter=self._delimiter,
-                                       convert_values=self._convert_values,
-                                       allow_underscores_in_numeric_literals=self._allow_underscores_in_numbers)
+            data_line = self._tabline(line.rstrip("\n"),
+                                      line_number=line_number)
             if self._ncols > 0:
                 if len(data_line) != self._ncols:
                     # Inconsistent lines are an error
@@ -630,6 +616,24 @@ class TabFile:
         for name in column_names:
             self._header.append(name)
         self._ncols = len(self._header)
+
+    def _tabline(self, line, line_number=None):
+        """
+        Internal: wrap data in a TabLine object
+        """
+        return TabLine(line=line,
+                       column_names=self._header,
+                       delimiter=self._delimiter,
+                       convert_values=self._convert_values,
+                       allow_underscores_in_numeric_literals=
+                       self._allow_underscores_in_numbers,
+                       line_number=line_number)
+
+    def _tabfile(self, *args, **kwargs):
+        """
+        Internal: return a TabFile object
+        """
+        return TabFile(*args, **kwargs)
 
     def __getitem__(self,key):
         return self._data[key]
@@ -1001,6 +1005,14 @@ class TabFileIterator(Iterator):
         else:
             self._fp = fp
 
+    def _tabline(self, line):
+        """
+        Internal: wrap data in a TabLine object
+        """
+        return TabLine(line=line,
+                       column_names=self._column_names,
+                       line_number=self._line_number)
+
     def __next__(self):
         """
         Return next record from TSV file as a TabDataLine object
@@ -1008,9 +1020,7 @@ class TabFileIterator(Iterator):
         line = self._fp.readline()
         self._line_number += 1
         if line != "":
-            return TabLine(line=line,
-                           column_names=self._column_names,
-                           line_number=self._line_number)
+            return self._tabline(line=line)
         else:
             # Reached EOF
             if self._close_fp:
