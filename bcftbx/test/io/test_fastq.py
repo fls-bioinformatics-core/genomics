@@ -1,0 +1,484 @@
+#######################################################################
+# Tests for io.fastq.py module
+#######################################################################
+
+
+import unittest
+import os
+import gzip
+import shutil
+import tempfile
+from io import StringIO
+from bcftbx.io.fastq import FastqIterator
+from bcftbx.io.fastq import FastqRead
+from bcftbx.io.fastq import SequenceIdentifier
+from bcftbx.io.fastq import FastqAttributes
+from bcftbx.io.fastq import nreads
+from bcftbx.io.fastq import fastqs_are_pair
+
+
+# Test data for an R1 Fastq
+FASTQ_DATA_R1 = """@73D9FA:3:FC:1:1:7507:1000 1:N:0:
+NACAACCTGATTAGCGGCGTTGACAGATGTATCCAT
++
+#))))55445@@@@@C@@@@@@@@@:::::<<:::<
+@73D9FA:3:FC:1:1:15740:1000 1:N:0:
+NTCTTGCTGGTGGCGCCATGTCTAAATTGTTTGGAG
++
+#+.))/0200<<<<<:::::CC@@C@CC@@@22@@@
+@73D9FA:3:FC:1:1:8103:1000 1:N:0:
+NGACCGATTAGAGGCGTTTTATGATAATCCCAATGC
++
+#(,((,)*))/.0--2255282299@@@@@@@@@@@
+@73D9FA:3:FC:1:1:7488:1000 1:N:0:
+NTGATTGTCCAGTTGCATTTTAGTAAGCTCTTTTTG
++
+#,,,,33223CC@@@@@@@C@@@@@@@@C@CC@222
+@73D9FA:3:FC:1:1:6680:1000 1:N:0:
+NATAAATCACCTCACTTAAGTGGCTGGAGACAAATA
++
+#--,,55777@@@@@@@CC@@C@@@@@@@@:::::<
+"""
+
+# Test data for an R2 Fastq matching the previous data
+FASTQ_DATA_R2 = u"""@73D9FA:3:FC:1:1:7507:1000 2:N:0:
+NACAACCTGATTAGCGGCGTTGACAGATGTATCCAT
++
+#))))55445@@@@@C@@@@@@@@@:::::<<:::<
+@73D9FA:3:FC:1:1:15740:1000 2:N:0:
+NTCTTGCTGGTGGCGCCATGTCTAAATTGTTTGGAG
++
+#+.))/0200<<<<<:::::CC@@C@CC@@@22@@@
+@73D9FA:3:FC:1:1:8103:1000 2:N:0:
+NGACCGATTAGAGGCGTTTTATGATAATCCCAATGC
++
+#(,((,)*))/.0--2255282299@@@@@@@@@@@
+@73D9FA:3:FC:1:1:7488:1000 2:N:0:
+NTGATTGTCCAGTTGCATTTTAGTAAGCTCTTTTTG
++
+#,,,,33223CC@@@@@@@C@@@@@@@@C@CC@222
+@73D9FA:3:FC:1:1:6680:1000 2:N:0:
+NATAAATCACCTCACTTAAGTGGCTGGAGACAAATA
++
+#--,,55777@@@@@@@CC@@C@@@@@@@@:::::<
+"""
+
+# Test data for a Fastq with an "empty" sequence
+FASTQ_WITH_EMPTY_SEQUENCE = """@73D9FA:3:FC:1:1:7507:1000 1:N:0:
+NACAACCTGATTAGCGGCGTTGACAGATGTATCCAT
++
+#))))55445@@@@@C@@@@@@@@@:::::<<:::<
+@73D9FA:3:FC:1:1:15740:1000 1:N:0:
+NTCTTGCTGGTGGCGCCATGTCTAAATTGTTTGGAG
++
+#+.))/0200<<<<<:::::CC@@C@CC@@@22@@@
+@73D9FA:3:FC:1:1:8103:1000 1:N:0:
+NGACCGATTAGAGGCGTTTTATGATAATCCCAATGC
++
+#(,((,)*))/.0--2255282299@@@@@@@@@@@
+@73D9FA:3:FC:1:1:7488:1000 1:N:0:
+
++
+
+@73D9FA:3:FC:1:1:6680:1000 1:N:0:
+NATAAATCACCTCACTTAAGTGGCTGGAGACAAATA
++
+#--,,55777@@@@@@@CC@@C@@@@@@@@:::::<
+"""
+
+
+class TestFastqIterator(unittest.TestCase):
+    """
+    Tests of the FastqIterator class
+    """
+    def setUp(self):
+        # Temporary working dir
+        self.wd = tempfile.mkdtemp(suffix='.TestFastqIterator')
+
+    def tearDown(self):
+        # Remove temporary working dir
+        if os.path.isdir(self.wd):
+            shutil.rmtree(self.wd)
+
+    def test_fastq_iterator(self):
+        """
+        FastqIterator: iterate over FASTQ file
+        """
+        fp = StringIO(FASTQ_DATA_R1)
+        fastq = FastqIterator(fp=fp)
+        nreads = 0
+        fastq_source = StringIO(FASTQ_DATA_R1)
+        for read in fastq:
+            nreads += 1
+            self.assertTrue(isinstance(read.header, SequenceIdentifier))
+            self.assertEqual(str(read.header),fastq_source.readline().rstrip('\n'))
+            self.assertEqual(read.sequence,fastq_source.readline().rstrip('\n'))
+            self.assertEqual(read.optid,fastq_source.readline().rstrip('\n'))
+            self.assertEqual(read.quality,fastq_source.readline().rstrip('\n'))
+        self.assertEqual(nreads,5)
+
+    def test_fastq_iterator_empty_sequence(self):
+        """
+        FastqIterator: handle 'empty' sequence
+        """
+        fp = StringIO(FASTQ_WITH_EMPTY_SEQUENCE)
+        fastq = FastqIterator(fp=fp)
+        nreads = 0
+        fastq_source = StringIO(FASTQ_WITH_EMPTY_SEQUENCE)
+        for read in fastq:
+            nreads += 1
+            self.assertTrue(isinstance(read.header, SequenceIdentifier))
+            self.assertEqual(str(read.header),fastq_source.readline().rstrip('\n'))
+            self.assertEqual(read.sequence,fastq_source.readline().rstrip('\n'))
+            self.assertEqual(read.optid,fastq_source.readline().rstrip('\n'))
+            self.assertEqual(read.quality,fastq_source.readline().rstrip('\n'))
+        self.assertEqual(nreads,5)
+
+    def test_fastq_iterator_empty_sequence_at_buffer_start(self):
+        """
+        FastqIterator: handle 'empty' sequence with small buffer
+        """
+        # Checks we can handle an edge case where the newline
+        # terminating the 'empty' sequence falls at the start
+        # of the read buffer.
+        fp = StringIO(FASTQ_WITH_EMPTY_SEQUENCE)
+        fastq = FastqIterator(fp=fp,bufsize=2)
+        nreads = 0
+        fastq_source = StringIO(FASTQ_WITH_EMPTY_SEQUENCE)
+        for read in fastq:
+            nreads += 1
+            self.assertTrue(isinstance(read.header, SequenceIdentifier))
+            self.assertEqual(str(read.header),fastq_source.readline().rstrip('\n'))
+            self.assertEqual(read.sequence,fastq_source.readline().rstrip('\n'))
+            self.assertEqual(read.optid,fastq_source.readline().rstrip('\n'))
+            self.assertEqual(read.quality,fastq_source.readline().rstrip('\n'))
+        self.assertEqual(nreads,5)
+
+    def test_fastq_iterator_file_from_disk(self):
+        """
+        FastqIterator: iterate over FASTQ file from disk
+        """
+        self.fastq_in = os.path.join(self.wd,'test.fq')
+        with open(self.fastq_in, "wt") as fp:
+            fp.write(FASTQ_DATA_R1)
+        fastq = FastqIterator(self.fastq_in)
+        nreads = 0
+        fastq_source = StringIO(FASTQ_DATA_R1)
+        for read in fastq:
+            nreads += 1
+            self.assertTrue(isinstance(read.header, SequenceIdentifier))
+            self.assertEqual(str(read.header), fastq_source.readline().rstrip('\n'))
+            self.assertEqual(read.sequence,fastq_source.readline().rstrip('\n'))
+            self.assertEqual(read.optid,fastq_source.readline().rstrip('\n'))
+            self.assertEqual(read.quality,fastq_source.readline().rstrip('\n'))
+        self.assertEqual(nreads,5)
+
+    def test_fastq_iterator_gzipped_file_from_disk(self):
+        """
+        FastqIterator: iterate over gzipped FASTQ file from disk
+        """
+        self.fastq_in = os.path.join(self.wd,'test.fq.gz')
+        with gzip.open(self.fastq_in,'wt') as fp:
+            fp.write(FASTQ_DATA_R1)
+        fastq = FastqIterator(self.fastq_in)
+        nreads = 0
+        fastq_source = StringIO(FASTQ_DATA_R1)
+        for read in fastq:
+            nreads += 1
+            self.assertTrue(isinstance(read.header, SequenceIdentifier))
+            self.assertEqual(str(read.header), fastq_source.readline().rstrip('\n'))
+            self.assertEqual(read.sequence,fastq_source.readline().rstrip('\n'))
+            self.assertEqual(read.optid,fastq_source.readline().rstrip('\n'))
+            self.assertEqual(read.quality,fastq_source.readline().rstrip('\n'))
+        self.assertEqual(nreads,5)
+
+
+class TestFastqRead(unittest.TestCase):
+    """
+    Tests of the FastqRead class
+    """
+    def test_fastqread(self):
+        """
+        FastqRead: check stores input correctly
+        """
+        header = "@HWI-ST1250:47:c0tr3acxx:4:1101:1283:2323 1:N:0:ACAGTGATTCTTTCCC\n"
+        sequence = "GGTGTCTTCAAAAAGGCCAACCAGATAGGCCTCACTTGCCTCCTGCAAAGCACCGATAGCTGCGCTCTGGAAGCGCAGATCTGTTTTAAAGTCCTGAGCAA\n"
+        optid = "+\n"
+        quality = "=@@D;DDFFHDHHIJIIIIIIGIGIGDIHGGEIGICFGIGHIIGII@?FGIGIEI@EHEFFEEBAACD;@ACCDDBDBDDACCC3>CD>:ADCCDDD?C@\n"
+        read = FastqRead(header, sequence, optid, quality)
+        self.assertTrue(isinstance(read.header, SequenceIdentifier))
+        self.assertEqual(str(read.header), sequence.rstrip('\n'))
+        self.assertEqual(read.raw_header, header.rstrip('\n'))
+        self.assertEqual(read.sequence, sequence.rstrip('\n'))
+        self.assertEqual(read.optid, optid.rstrip('\n'))
+        self.assertEqual(read.quality, quality.rstrip('\n'))
+        self.assertEqual(len(read), len(sequence.rstrip('\n')))
+        self.assertEqual(read.max_quality,'J')
+        self.assertEqual(read.min_quality,'3')
+        self.assertFalse(read.is_colorspace)
+
+    def test_fastqread_empty_sequence(self):
+        """
+        FastqRead: handles 'empty' sequence
+        """
+        header = "@HWI-ST1250:47:c0tr3acxx:4:1101:1283:2323 1:N:0:ACAGTGATTCTTTCCC"
+        sequence = ""
+        optid = "+"
+        quality = ""
+        read = FastqRead(header, sequence, optid, quality)
+        self.assertTrue(isinstance(read.header, SequenceIdentifier))
+        self.assertEqual(str(read.header), header.rstrip('\n'))
+        self.assertEqual(read.raw_header, header.rstrip('\n'))
+        self.assertEqual(read.sequence, sequence.rstrip('\n'))
+        self.assertEqual(read.optid, optid.rstrip('\n'))
+        self.assertEqual(read.quality, quality.rstrip('\n'))
+        self.assertEqual(len(read), len(sequence.rstrip('\n')))
+        self.assertEqual(read.max_quality,'')
+        self.assertEqual(read.min_quality,'')
+        self.assertFalse(read.is_colorspace)
+
+    def test_is_colorspace(self):
+        """
+        FastqRead: detect colorspace read
+        """
+        read = FastqRead("@1_14_622",
+                         "T221.0033033232320030021103233332300123110201010031",
+                         "+",
+                         "BBA!>AA,B>;;=A%39%B8====>0?-?%9A2<)3?(4*36%A%4&+9%")
+        self.assertTrue(read.is_colorspace)
+
+    def test_equality(self):
+        """
+        FastqRead: handle equality operator ('==')
+        """
+        readn1_data = """@73D9FA:3:FC:1:1:7507:1000 1:N:0:
+NACAACCTGATTAGCGGCGTTGACAGATGTATCCAT
++
+#))))55445@@@@@C@@@@@@@@@:::::<<:::<"""
+        readn1 = FastqRead(*readn1_data.split('\n'))
+        readn2 = FastqRead(*readn1_data.split('\n'))
+        readn3_data = """@73D9FA:3:FC:1:1:7507:1000 2:N:0:
+NACAACCTGATTAGCGGCGTTGACAGATGTATCCAT
++
+#))))55445@@@@@C@@@@@@@@@:::::<<:::<"""
+        readn3 = FastqRead(*readn3_data.split('\n'))
+        self.assertTrue(readn1 == readn2)
+        self.assertTrue(readn1 == readn1_data)
+        self.assertFalse(readn1 == readn3)
+        self.assertFalse(readn1 == readn3_data)
+
+
+class TestSequenceIdentifier(unittest.TestCase):
+    """
+    Tests of the SequenceIdentifier class
+    """
+
+    def test_read_illumina18_id(self):
+        """
+        SequenceIdentifier: process 'illumina18'-style sequence identifier
+        """
+        seqid_string = "@EAS139:136:FC706VJ:2:2104:15343:197393 1:Y:18:ATCACG"
+        seqid = SequenceIdentifier(seqid_string)
+        # Check we get back what we put in
+        self.assertEqual(str(seqid),seqid_string)
+        # Check the format
+        self.assertEqual('illumina18',seqid.format)
+        # Check attributes were correctly extracted
+        self.assertEqual('EAS139',seqid.instrument_name)
+        self.assertEqual('136',seqid.run_id)
+        self.assertEqual('FC706VJ',seqid.flowcell_id)
+        self.assertEqual('2',seqid.flowcell_lane)
+        self.assertEqual('2104',seqid.tile_no)
+        self.assertEqual('15343',seqid.x_coord)
+        self.assertEqual('197393',seqid.y_coord)
+        self.assertEqual('1',seqid.pair_id)
+        self.assertEqual('Y',seqid.bad_read)
+        self.assertEqual('18',seqid.control_bit_flag)
+        self.assertEqual('ATCACG',seqid.index_sequence)
+
+    def test_read_illumina18_id_no_index_sequence(self):
+        """
+        SequenceIdentifier: process an 'illumina18'-style sequence id with no index sequence (barcode)
+        """
+        seqid_string = "@73D9FA:3:FC:1:1:7507:1000 1:N:0:"
+        seqid = SequenceIdentifier(seqid_string)
+        # Check we get back what we put in
+        self.assertEqual(str(seqid),seqid_string)
+        # Check the format
+        self.assertEqual('illumina18',seqid.format)
+        # Check attributes were correctly extracted
+        self.assertEqual('73D9FA',seqid.instrument_name)
+        self.assertEqual('3',seqid.run_id)
+        self.assertEqual('FC',seqid.flowcell_id)
+        self.assertEqual('1',seqid.flowcell_lane)
+        self.assertEqual('1',seqid.tile_no)
+        self.assertEqual('7507',seqid.x_coord)
+        self.assertEqual('1000',seqid.y_coord)
+        self.assertEqual('1',seqid.pair_id)
+        self.assertEqual('N',seqid.bad_read)
+        self.assertEqual('0',seqid.control_bit_flag)
+        self.assertEqual('',seqid.index_sequence)
+
+    def test_read_illumina_id(self):
+        """
+        SequenceIdentifier: process an 'illumina'-style sequence identifier
+        """
+        seqid_string = "@HWUSI-EAS100R:6:73:941:1973#0/1"
+        seqid = SequenceIdentifier(seqid_string)
+        # Check we get back what we put in
+        self.assertEqual(str(seqid),seqid_string)
+        # Check the format
+        self.assertEqual('illumina',seqid.format)
+        # Check attributes were correctly extracted
+        self.assertEqual('HWUSI-EAS100R',seqid.instrument_name)
+        self.assertEqual('6',seqid.flowcell_lane)
+        self.assertEqual('73',seqid.tile_no)
+        self.assertEqual('941',seqid.x_coord)
+        self.assertEqual('1973',seqid.y_coord)
+        self.assertEqual('0',seqid.multiplex_index_no)
+        self.assertEqual('1',seqid.pair_id)
+
+    def test_read_illumina18_id_fastq_screen_tags(self):
+        """
+        SequenceIdentifier: process an 'illumina18'-style sequence id with 'fastq_screen' tags
+        """
+        # Format for first read in a tagged FASTQ
+        seqid_string = "@NB500968:70:HCYMKBGX2:1:11101:22672:1659 2:N:0:1#FQST:Human:Mouse:01"
+        seqid = SequenceIdentifier(seqid_string)
+        # Check we get back what we put in
+        self.assertEqual(str(seqid),seqid_string)
+        # Check the format
+        self.assertEqual('illumina18',seqid.format)
+        # Check attributes were correctly extracted
+        self.assertEqual('NB500968',seqid.instrument_name)
+        self.assertEqual('70',seqid.run_id)
+        self.assertEqual('HCYMKBGX2',seqid.flowcell_id)
+        self.assertEqual('1',seqid.flowcell_lane)
+        self.assertEqual('11101',seqid.tile_no)
+        self.assertEqual('22672',seqid.x_coord)
+        self.assertEqual('1659',seqid.y_coord)
+        self.assertEqual('2',seqid.pair_id)
+        self.assertEqual('N',seqid.bad_read)
+        self.assertEqual('0',seqid.control_bit_flag)
+        self.assertEqual('1#FQST:Human:Mouse:01',seqid.index_sequence)
+        # Format of second and subsequent read IDs
+        seqid_string = "@NB500968:70:HCYMKBGX2:1:11101:24365:2047 2:N:0:1#FQST:22"
+        seqid = SequenceIdentifier(seqid_string)
+        # Check we get back what we put in
+        self.assertEqual(str(seqid),seqid_string)
+        # Check the format
+        self.assertEqual('illumina18',seqid.format)
+        # Check attributes were correctly extracted
+        self.assertEqual('NB500968',seqid.instrument_name)
+        self.assertEqual('70',seqid.run_id)
+        self.assertEqual('HCYMKBGX2',seqid.flowcell_id)
+        self.assertEqual('1',seqid.flowcell_lane)
+        self.assertEqual('11101',seqid.tile_no)
+        self.assertEqual('24365',seqid.x_coord)
+        self.assertEqual('2047',seqid.y_coord)
+        self.assertEqual('2',seqid.pair_id)
+        self.assertEqual('N',seqid.bad_read)
+        self.assertEqual('0',seqid.control_bit_flag)
+        self.assertEqual('1#FQST:22',seqid.index_sequence)
+
+    def test_unrecognised_id_format(self):
+        """
+        SequenceIdentifier: process unrecognised sequence identifier
+        """
+        seqid_string = "@SEQID"
+        seqid = SequenceIdentifier(seqid_string)
+        # Check we get back what we put in
+        self.assertEqual(str(seqid),seqid_string)
+        # Check the format
+        self.assertEqual(None, seqid.format)
+
+    def test_is_pair_of(self):
+        """
+        SequenceIdentifier: check sequence identifier pairing
+        """
+        seqid1 = "@HWI-700511R:183:D2C8UACXX:1:1101:1115:2123 1:N:0:GCCAAT"
+        seqid2 = "@HWI-700511R:183:D2C8UACXX:1:1101:1115:2123 2:N:0:GCCAAT"
+        seqid3 = "@HWI-700511R:183:D2C8UACXX:5:1101:1496:2199 2:N:0:GCCAAT"
+        self.assertTrue(SequenceIdentifier(seqid1).is_pair_of(SequenceIdentifier(seqid2)))
+        self.assertTrue(SequenceIdentifier(seqid2).is_pair_of(SequenceIdentifier(seqid1)))
+        self.assertFalse(SequenceIdentifier(seqid1).is_pair_of(SequenceIdentifier(seqid1)))
+        self.assertFalse(SequenceIdentifier(seqid2).is_pair_of(SequenceIdentifier(seqid2)))
+        self.assertFalse(SequenceIdentifier(seqid1).is_pair_of(SequenceIdentifier(seqid1)))
+        self.assertFalse(SequenceIdentifier(seqid3).is_pair_of(SequenceIdentifier(seqid1)))
+
+    def test_handle_r1_r2_r3_pair_id(self):
+        """
+        SequenceIdentifier: check that R1/R2/R3 sequence identifiers have correct pair ID
+        """
+        seqid1 = "@HWI-700511R:183:D2C8UACXX:1:1101:1115:2123 1:N:0:GCCAAT"
+        seqid2 = "@HWI-700511R:183:D2C8UACXX:1:1101:1115:2123 2:N:0:GCCAAT"
+        seqid3 = "@HWI-700511R:183:D2C8UACXX:1:1101:1115:2123 3:N:0:GCCAAT"
+        self.assertEqual(SequenceIdentifier(seqid1).pair_id, "1")
+        self.assertEqual(SequenceIdentifier(seqid2).pair_id, "2")
+        self.assertEqual(SequenceIdentifier(seqid3).pair_id, "3")
+
+
+class TestFastqAttributes(unittest.TestCase):
+    """
+    Tests of the FastqAttributes class
+    """
+
+    def test_fastq_attributes_nreads(self):
+        """
+        FastqAttributes: check number of reads
+        """
+        fp = StringIO(FASTQ_DATA_R1)
+        attrs = FastqAttributes(fp=fp)
+        self.assertEqual(attrs.nreads,5)
+
+class TestNReads(unittest.TestCase):
+    """
+    Tests of the nreads function
+    """
+    def setUp(self):
+        # Temporary working dir
+        self.wd = tempfile.mkdtemp(suffix='.TestNReads')
+
+    def tearDown(self):
+        # Remove temporary working dir
+        if os.path.isdir(self.wd):
+            shutil.rmtree(self.wd)
+
+    def test_nreads(self):
+        """
+        nreads: check that nreads returns correct read count
+        """
+        fp = StringIO(FASTQ_DATA_R1)
+        self.assertEqual(nreads(fp=fp),5)
+
+    def test_nreads_from_file_on_disk(self):
+        """
+        nreads: check nreads from FASTQ on disk
+        """
+        self.fastq_in = os.path.join(self.wd,'test.fq')
+        with open(self.fastq_in,'w') as fp:
+            fp.write(FASTQ_DATA_R1)
+        self.assertEqual(nreads(self.fastq_in),5)
+
+    def test_nreads_from_gzipped_file_on_disk(self):
+        """
+        nreads: check nreads from gzipped FASTQ on disk
+        """
+        self.fastq_in = os.path.join(self.wd,'test.fq.gz')
+        with gzip.open(self.fastq_in,'wt') as fp:
+            fp.write(FASTQ_DATA_R1)
+        self.assertEqual(nreads(self.fastq_in),5)
+
+
+class TestFastqsArePair(unittest.TestCase):
+    """
+    Tests of the fastqs_are_pair function
+    """
+
+    def test_fastqs_are_pair(self):
+        """
+        fastqs_are_pair: recognises FASTQ pairing
+        """
+        fp1 = StringIO(FASTQ_DATA_R1)
+        fp2 = StringIO(FASTQ_DATA_R2)
+        self.assertTrue(fastqs_are_pair(fp1=fp1,fp2=fp2,verbose=False))
