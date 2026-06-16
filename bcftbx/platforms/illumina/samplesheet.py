@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 #
 #     platforms.illumina.samplesheet.py: handle Illumina sample sheets
-#     Copyright (C) University of Manchester 2011-2025 Peter Briggs
+#     Copyright (C) University of Manchester 2011-2026 Peter Briggs
 #
 ########################################################################
 #
@@ -45,7 +45,7 @@ The module also provides the following utility function:
 import os
 import sys
 import logging
-from ... import TabFile
+from ...io.tabular import TabFile
 from ...utils.collections import OrderedDictionary
 from ...utils.names import extract_prefix
 from ...utils.names import extract_index
@@ -327,13 +327,13 @@ class SampleSheet:
                 if self._data is None:
                     # Initialise TabFile using this first line
                     # to set the header
-                    self._data = TabFile.TabFile(column_names=line.split(','),
-                                                 delimiter=',')
+                    self._data = TabFile(column_names=line.split(','),
+                                         delimiter=',')
                     # If this is the first line then assume CASAVA
                     if i == 0:
                         self._format = 'CASAVA'
                 else:
-                    self._data.append(tabdata=line)
+                    self._data.append(line)
             elif section == 'Header':
                 # Header lines are comma-separated PARAM,VALUE lines
                 self._set_section_param_value(line,self._header)
