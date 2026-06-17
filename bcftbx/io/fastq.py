@@ -15,7 +15,7 @@ Classes for reading FASTQ files and manipulating the data within them:
 Additionally, there are a few utility functions:
 
 * get_fastq_file_handle: return a file handled opened for reading a FASTQ file
-* nreads: return the number of reads in a FASTQ file
+* count_reads: return the number of reads in a FASTQ file
 * fastqs_are_pair: check whether two FASTQs form an R1/R2 pair
 
 Information on the FASTQ file format: http://en.wikipedia.org/wiki/FASTQ_format
@@ -435,8 +435,9 @@ def get_fastq_file_handle(fastq, mode="rt"):
         return open(fastq,mode)
 
 
-def nreads(fastq=None,fp=None):
-    """Return number of reads in a FASTQ file
+def count_reads(fastq=None, fp=None):
+    """
+    Count number of reads in a FASTQ file
 
     Performs a simple-minded read count, by counting the number of lines
     in the file and dividing by 4.
@@ -452,15 +453,15 @@ def nreads(fastq=None,fp=None):
     http://stackoverflow.com/a/850962/579925
 
     Arguments:
-      fastq: fastq(.gz) file
-      fp: open file descriptor for fastq file
+      fastq (str): fastq(.gz) file
+      fp (any): open file descriptor for fastq file
 
     Returns:
-      Number of reads
+      Integer: number of reads in the FASTQ file.
     """
     nlines = 0
     if fp is None:
-        fp = get_fastq_file_handle(fastq)
+        fp = get_fastq_file_handle(os.path.abspath(fastq))
     buf_size = 1024 * 1024
     read_fp = fp.read # optimise the loop
     buf = read_fp(buf_size)

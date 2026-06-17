@@ -12,8 +12,7 @@ from io import StringIO
 from bcftbx.io.fastq import FastqIterator
 from bcftbx.io.fastq import FastqRead
 from bcftbx.io.fastq import SequenceIdentifier
-from bcftbx.io.fastq import FastqAttributes
-from bcftbx.io.fastq import nreads
+from bcftbx.io.fastq import count_reads
 from bcftbx.io.fastq import fastqs_are_pair
 
 
@@ -416,6 +415,19 @@ class TestSequenceIdentifier(unittest.TestCase):
         self.assertEqual(SequenceIdentifier(seqid1).pair_id, "1")
         self.assertEqual(SequenceIdentifier(seqid2).pair_id, "2")
         self.assertEqual(SequenceIdentifier(seqid3).pair_id, "3")
+
+
+class TestCountReads(unittest.TestCase):
+    """
+    Tests of the 'count_reads' function
+    """
+
+    def test_count_reads(self):
+        """
+        count_reads: count reads in FASTQ
+        """
+        fp = StringIO(FASTQ_DATA_R1)
+        self.assertEqual(count_reads(fp=fp), 5)
 
 
 class TestFastqsArePair(unittest.TestCase):
