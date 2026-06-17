@@ -475,13 +475,18 @@ def count_reads(fastq=None, fp=None):
     return nlines/4
 
 
-def fastqs_are_pair(fastq1=None,fastq2=None,verbose=True,fp1=None,fp2=None):
+def fastqs_are_pair(fastq1=None, fastq2=None, fp1=None, fp2=None, verbose=True):
     """
     Check that two FASTQs form an R1/R2 pair
 
     Arguments:
-      fastq1: first FASTQ
-      fastq2: second FASTQ
+        fastq1 (str): first FASTQ
+        fastq2 (str): second FASTQ
+        fp1 (any): file descriptor for first FASTQ (alternative to supplying a
+            file path)
+        fp2 (any): file descriptor for second FASTQ (alternative to supplying a
+            file path)
+        verbose (bool): produce verbose output
 
     Returns:
       Boolean: True if each read in fastq1 forms an R1/R2 pair with the equivalent
