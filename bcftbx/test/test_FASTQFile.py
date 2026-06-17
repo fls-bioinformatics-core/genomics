@@ -1,7 +1,6 @@
 #######################################################################
 # Tests for FASTQFile.py module
 #######################################################################
-from builtins import str
 from bcftbx.FASTQFile import *
 import unittest
 import io
@@ -190,7 +189,7 @@ class TestFastqRead(unittest.TestCase):
         read = FastqRead(seqid,seq,optid,quality)
         self.assertTrue(isinstance(read.seqid,SequenceIdentifier))
         self.assertEqual(str(read.seqid),seqid.rstrip('\n'))
-        self.assertEqual(read.raw_seqid,seqid)
+        self.assertEqual(read.raw_seqid,seqid.rstrip('\n'))
         self.assertEqual(read.sequence,seq.rstrip('\n'))
         self.assertEqual(read.optid,optid.rstrip('\n'))
         self.assertEqual(read.quality,quality.rstrip('\n'))
