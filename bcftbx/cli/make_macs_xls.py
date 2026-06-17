@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #     make_macs_xls.py: Convert MACS output file to XLS spreadsheet
-#     Copyright (C) University of Manchester 2011-2021 Peter Briggs
+#     Copyright (C) University of Manchester 2011-2026 Peter Briggs
 #
 
 
@@ -23,7 +23,6 @@ The program was developed to work with MACS 1.4.
 # Imports
 #######################################################################
 
-from builtins import str
 import os
 import io
 import sys
@@ -32,7 +31,7 @@ import logging
 # Configure logging output
 logging.basicConfig(format="[%(levelname)s] %(message)s")
 
-from ..TabFile import TabFile
+from ..io.tabular import TabFile
 from ..Spreadsheet import Workbook
 from .. import get_version
 
