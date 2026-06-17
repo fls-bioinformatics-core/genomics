@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #     verify_paired.py: check R1 and R2 fastq files are consistent
-#     Copyright (C) University of Manchester 2013-2021 Peter Briggs
+#     Copyright (C) University of Manchester 2013-2026 Peter Briggs
 #
 
 """
@@ -15,13 +15,11 @@ the files form an R1/2 pair.
 # Imports
 #######################################################################
 
-import os
 import sys
-import itertools
 import argparse
 import logging
 logging.basicConfig(format="%(levelname)s %(message)s")
-from ..FASTQFile import fastqs_are_pair
+from ..io.fastq import fastqs_are_pair
 from .. import get_version
 
 #######################################################################
