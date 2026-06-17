@@ -11,7 +11,6 @@ Classes for reading FASTQ files and manipulating the data within them:
 * FastqIterator: enables looping through all read records in FASTQ file
 * FastqRead: provides access to a single FASTQ read record
 * SequenceIdentifier: provides access to sequence identifier info in a read
-* FastqAttributes: provides access to 'gross' attributes of FASTQ file
 
 Additionally, there are a few utility functions:
 
@@ -412,55 +411,6 @@ class SequenceIdentifier:
         else:
             # Return what was put in
             return self._fastq_header
-
-
-class FastqAttributes:
-    """
-    Class to access "gross" attributes of a FASTQ file
-
-    Given a FASTQ file (can be uncompressed or gzipped), enables
-    various attributes to be queried via the following properties:
-
-    - ``nreads``: number of reads in the FASTQ file
-    - ``fsize``:  size of the file (in bytes)
-
-    Arguments:
-        fastq_file (str): name of the FASTQ file
-        fp (any): file pointer to read from
-    """
-    def __init__(self, fastq=None, fp=None):
-        self._fastq = fastq
-        if self._fastq:
-            self._fastq = os.path.abspath(self._fastq)
-        self._fp = fp
-        if self._fp is None:
-            self._fp = get_fastq_file_handle(self._fastq)
-        self._nreads = None
-        self._fsize = None
-
-    @property
-    def nreads(self):
-        """
-        Return number of reads in the FASTQ file
-        """
-        if self._nreads is None:
-            self._nreads = nreads(fastq=self._fastq, fp=self._fp)
-        return self._nreads
-
-    @property
-    def fsize(self):
-        """
-        Return size of the FASTQ file (bytes)
-        """
-        if self._fsize is None:
-            try:
-                self._fsize = os.path.getsize(self._fastq)
-            except Exception as ex:
-                if self._fastq is None:
-                    raise Exception(f"Cannot fetch FASTQ size without a file name")
-                else:
-                    raise ex
-        return self._fsize
 
 
 def get_fastq_file_handle(fastq, mode="rt"):

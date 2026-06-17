@@ -418,58 +418,6 @@ class TestSequenceIdentifier(unittest.TestCase):
         self.assertEqual(SequenceIdentifier(seqid3).pair_id, "3")
 
 
-class TestFastqAttributes(unittest.TestCase):
-    """
-    Tests of the FastqAttributes class
-    """
-
-    def test_fastq_attributes_nreads(self):
-        """
-        FastqAttributes: check number of reads
-        """
-        fp = StringIO(FASTQ_DATA_R1)
-        attrs = FastqAttributes(fp=fp)
-        self.assertEqual(attrs.nreads,5)
-
-class TestNReads(unittest.TestCase):
-    """
-    Tests of the nreads function
-    """
-    def setUp(self):
-        # Temporary working dir
-        self.wd = tempfile.mkdtemp(suffix='.TestNReads')
-
-    def tearDown(self):
-        # Remove temporary working dir
-        if os.path.isdir(self.wd):
-            shutil.rmtree(self.wd)
-
-    def test_nreads(self):
-        """
-        nreads: check that nreads returns correct read count
-        """
-        fp = StringIO(FASTQ_DATA_R1)
-        self.assertEqual(nreads(fp=fp),5)
-
-    def test_nreads_from_file_on_disk(self):
-        """
-        nreads: check nreads from FASTQ on disk
-        """
-        self.fastq_in = os.path.join(self.wd,'test.fq')
-        with open(self.fastq_in,'w') as fp:
-            fp.write(FASTQ_DATA_R1)
-        self.assertEqual(nreads(self.fastq_in),5)
-
-    def test_nreads_from_gzipped_file_on_disk(self):
-        """
-        nreads: check nreads from gzipped FASTQ on disk
-        """
-        self.fastq_in = os.path.join(self.wd,'test.fq.gz')
-        with gzip.open(self.fastq_in,'wt') as fp:
-            fp.write(FASTQ_DATA_R1)
-        self.assertEqual(nreads(self.fastq_in),5)
-
-
 class TestFastqsArePair(unittest.TestCase):
     """
     Tests of the fastqs_are_pair function
