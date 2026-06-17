@@ -70,8 +70,10 @@ class FastqIterator(Iterator):
         bufsize (int): optional integer specifying number of bytes to
             read as a single 'chunk' from disk
     """
-    def __init__(self, fastq_file=None, fp=None, bufsize=CHUNKSIZE):
+    def __init__(self, fastq_file=None, fp=None, bufsize=None):
         self._fastq_file = fastq_file
+        if bufsize is None:
+            bufsize = CHUNKSIZE
         self._bufsize = bufsize
         if fp is None:
             self._fp = get_fastq_file_handle(self._fastq_file, "rt")
@@ -123,6 +125,12 @@ class FastqIterator(Iterator):
         self._lines = lines
         self._buf = buf
         self._ip = ip
+        return self._fastq_read(read)
+
+    def _fastq_read(self, read):
+        # Internal, return an instance of the appropriate class
+        # Subclasses should override this if they're using a
+        # different class
         return FastqRead(*read)
 
 
@@ -175,7 +183,7 @@ class FastqRead:
         try:
             return self._header
         except AttributeError:
-            self._header = SequenceIdentifier(self._raw_header)
+            self._header = self._sequencer_identifier(self._raw_header)
             return self._header
 
     @property
@@ -260,6 +268,12 @@ class FastqRead:
         # Not colorspace
         self._is_colorspace = False
         return self._is_colorspace
+
+    def _sequencer_identifier(self, fastq_header):
+        # Internal, use this to an instance of the appropriate class
+        # Subclasses should override this if they're using a
+        # different class
+        return SequenceIdentifier(fastq_header)
 
     def __repr__(self):
         return '\n'.join((str(self.header),
