@@ -8,6 +8,7 @@ import os
 import tempfile
 import shutil
 import gzip
+import logging
 
 fastq_data = u"""@73D9FA:3:FC:1:1:7507:1000 1:N:0:
 NACAACCTGATTAGCGGCGTTGACAGATGTATCCAT
