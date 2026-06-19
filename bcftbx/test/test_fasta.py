@@ -3,6 +3,7 @@
 #######################################################################
 
 from bcftbx.fasta import *
+from io import StringIO
 import unittest
 
 fasta_data = """>chr2L
@@ -22,7 +23,7 @@ class TestFastaChromIterator(unittest.TestCase):
         """
         FastaChromIterator: iteration over small FASTA file
         """
-        fp = io.StringIO(fasta_data)
+        fp = StringIO(fasta_data)
         fasta = FastaChromIterator(fp=fp)
         expected = (
             ("chr2L","Cgacaatgcacgacagagga\nagcagCTCAAGATAccttct"),
