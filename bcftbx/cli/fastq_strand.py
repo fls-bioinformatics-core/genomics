@@ -1,15 +1,13 @@
 #!/usr/bin/env python
 #
 #     fastq_strand.py: determine strandedness of fastq pair using STAR
-#     Copyright (C) University of Manchester 2017-2022 Peter Briggs
+#     Copyright (C) University of Manchester 2017-2026 Peter Briggs
 #
 
 #######################################################################
 # Imports
 #######################################################################
 
-from builtins import str
-from builtins import range
 import sys
 import os
 import io
@@ -19,9 +17,9 @@ import random
 import subprocess
 import shutil
 import logging
-from ..utils import find_program
-from ..ngsutils import getreads
-from ..ngsutils import getreads_subset
+from ..utils.os import find_program
+from ..utils.ngs import getreads
+from ..utils.ngs import getreads_subset
 from ..qc.report import strip_ngs_extensions
 from .. import get_version
 

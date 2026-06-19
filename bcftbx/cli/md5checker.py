@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #     md5checker.py: check files and directories using md5 checksums
-#     Copyright (C) University of Manchester 2012-2022 Peter Briggs
+#     Copyright (C) University of Manchester 2012-2026 Peter Briggs
 #
 
 """
@@ -20,9 +20,9 @@ import os
 import io
 import argparse
 import logging
-from ..Md5sum import md5sum
-from ..Md5sum import Md5CheckReporter
-from ..Md5sum import Md5Checker
+from ..utils.checksums import md5sum
+from ..utils.checksums import Md5CheckReporter
+from ..utils.checksums import Md5Checker
 from .. import get_version
 
 #######################################################################
