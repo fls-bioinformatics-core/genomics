@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #     split_fasta.py: extract individual chromosome sequences from fasta file
-#     Copyright (C) University of Manchester 2013-2022 Peter Briggs
+#     Copyright (C) University of Manchester 2013-2026 Peter Briggs
 #
 
 """
@@ -19,8 +19,7 @@ import sys
 import os
 import io
 import argparse
-import logging
-from ..fasta import FastaChromIterator
+from ..io.fasta import FastaChromIterator
 from .. import get_version
 
 #######################################################################
@@ -62,5 +61,5 @@ def main():
         print("Outputting '%s' to %s" % (name,fasta))
         if os.path.isfile(fasta):
             sys.stderr.write("WARNING '%s' already exists, overwriting\n" % fasta)
-        with io.open(fasta,'wt') as fp:
+        with open(fasta,'wt') as fp:
             fp.write(">%s\n%s\n" % (name,seq))
