@@ -1679,33 +1679,12 @@ exit $exit_code
             sbatch.extend(self.slurm_extra_args)
         sbatch.append(job_script)
         logger.debug("SlurmRunner: sbatch command: %s" % sbatch)
-        # Run the sbatch job in the current directory
-        cwd = os.getcwd()
-        if not os.path.exists(cwd):
-            logger.error("SlurmRunner: cwd doesn't exist!")
-            return None
-        logger.debug("SlurmRunner: executing in %s" % cwd)
-        p = subprocess.Popen(sbatch, cwd=cwd,
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE,
-                             universal_newlines=True)
-        stdoutdata, stderrdata = p.communicate()
-        logger.debug(f"SlurmRunner: sbatch output: {stdoutdata}")
-        logger.debug(f"SlurmRunner: sbatch error: {stderrdata}")
-        # Check stderr to try and detect error with submission
-        error = stderrdata.strip()
-        if error:
-            # Just echo error message as a warning
-            logger.warning("SlurmRunner: '%s'" % error)
-        # Capture the job id from the output
-        job_id = None
-        for line in stdoutdata.split('\n'):
-            if line.startswith("Submitted batch job"):
-                job_id = line.split()[-1]
-        if job_id is None:
-            logger.error("SlurmRunner: failed to get job ID from "
-                         "sbatch output: %r" % stdoutdata)
-        logger.debug(f"SlurmRunner: done - job id = {job_id}")
+        # Run the sbatch job
+        try:
+            job_id = self._run_sbatch(sbatch)
+        except SlurmException as ex:
+            logger.error(f"SlurmRunner: {ex}")
+            job_id = None
         # Store internal number, name and log dir against job id
         if job_id is not None:
             self._job_number[job_id] = job_number
@@ -1937,7 +1916,12 @@ exit $exit_code
             removed.
         """
         updated_job_list = []
-        squeue_jobs = [j[0] for j in self._run_squeue()]
+        try:
+            squeue_jobs = [j[0] for j in self._run_squeue()]
+        except SlurmException:
+            logger.debug("SlurmRunner: failed to run squeue (Slurm error?)")
+            # FIXME could also flag that Slurm itself appears to be in an error state
+            return [job_id for job_id in job_list]
         for job_id in job_list:
             if job_id not in squeue_jobs:
                 logger.debug(f"SlurmRunner: job {job_id} has gone away?")
@@ -2047,6 +2031,43 @@ exit $exit_code
         # Remove the internally stored job number
         del(self._job_number[job_id])
 
+    def _run_sbatch(self, sbatch_cmd):
+        """
+        Internal: run sbatch command
+        """
+        # Run the sbatch job in the current directory
+        cwd = os.getcwd()
+        if not os.path.exists(cwd):
+            logger.error("SlurmRunner: cwd doesn't exist!")
+            return None
+        logger.debug("SlurmRunner: executing in %s" % cwd)
+        p = subprocess.Popen(sbatch_cmd, cwd=cwd,
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE,
+                             universal_newlines=True)
+        stdoutdata, stderrdata = p.communicate()
+        logger.debug(f"SlurmRunner: sbatch output: {stdoutdata}")
+        logger.debug(f"SlurmRunner: sbatch error: {stderrdata}")
+        # Handle output and extrract job ID
+        job_id = None
+        # Check stderr to try and detect error with submission
+        error = stderrdata.strip()
+        if error:
+            # Just echo error message as a warning
+            logger.warning("SlurmRunner: '%s'" % error)
+        else:
+            # Capture the job id from the output
+            for line in stdoutdata.split('\n'):
+                if line.startswith("Submitted batch job"):
+                    job_id = line.split()[-1]
+            logger.debug(f"SlurmRunner: done - job id = {job_id}")
+        if job_id is None:
+            logger.error("SlurmRunner: failed to get job ID from "
+                         "sbatch output: %r" % stdoutdata)
+            raise SlurmException("'sbatch' job submission failed (Slurm error?)")
+        else:
+            return job_id
+
     def _run_squeue(self):
         """
         Internal: run squeue and return data as a list of lists
@@ -2082,9 +2103,18 @@ exit $exit_code
         # Output has a header line with field names then one
         # line per job
         lines = stdoutdata.rstrip("\n").split("\n")
-        fields = lines[0].split()
-        idx_jobid = fields.index("JOBID")
-        idx_state = fields.index("ST")
+        try:
+            fields = lines[0].split()
+        except Exception as ex:
+            logger.debug(f"SlurmRunner: 'squeue' output is empty")
+            raise SlurmException("'squeue' output is empty")
+        try:
+            idx_jobid = fields.index("JOBID")
+            idx_state = fields.index("ST")
+        except ValueError:
+            logger.debug(f"SlurmRunner: 'squeue' output header doesn't contain "
+                         f"expected fields")
+            raise SlurmException("unexpected header from 'squeue': {lines[0]}")
         for line in lines[1:]:
             # Store tuples of jobid, state
             data = line.split()
@@ -2182,6 +2212,12 @@ exit $exit_code
                 new_args.append(arg)
         # Update the extra arguments
         self._slurm_extra_args = new_args
+
+
+class SlurmException(Exception):
+    """
+    Class for errors from Slurm job submission system
+    """
 
 
 class ResourceLock:

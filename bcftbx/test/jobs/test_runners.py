@@ -1025,8 +1025,111 @@ class TestSlurmRunner(unittest.TestCase):
                         "Stderr file '%s': not a file" %
                         runner.err_file(jobid3))
 
+    def test_slurm_runner_controller_unavailable_fail_to_submit_job(self):
+        """
+        Test SlurmRunner handles job submission when controller is not available
+        """
+        # Create a runner
+        runner = SlurmRunner()
+        self.assertEqual(runner.nslots, 1)
+        self.assertEqual(runner.partition, None)
+        self.assertFalse(runner.join_logs)
+        # Put Slurm into error state
+        self.mock_slurm.set_slurm_error_state(
+            "slurm_load_jobs error: Unable to contact slurm controller (connect failure)")
+        # Execute sleep command
+        jobid = self._run_job(runner,
+                             "slurm_test",
+                              self.working_dir,
+                             'sleep', ('5',))
+        self.assertEqual(jobid, None)
+
+    def test_slurm_runner_controller_unavailable_job_completion(self):
+        """
+        Test SlurmRunner handles job completion when controller is unavailable
+        """
+        # Create a runner
+        runner = SlurmRunner()
+        self.assertEqual(runner.nslots, 1)
+        self.assertEqual(runner.partition, None)
+        self.assertFalse(runner.join_logs)
+        # Execute sleep command
+        jobid = self._run_job(runner,
+                             "slurm_test",
+                              self.working_dir,
+                             'sleep', ('10',))
+        # Put Slurm into error state
+        self.mock_slurm.set_slurm_error_state(
+            "slurm_load_jobs error: Unable to contact slurm controller (connect failure)")
+        time.sleep(5)
+        self.mock_slurm.update_jobs()
+        self.assertTrue(runner.is_running(jobid))
+        # Check job status
+        time.sleep(5)
+        self.mock_slurm.update_jobs()
+        self.assertTrue(runner.is_running(jobid))
+        # Wait for job to complete
+        self._wait_for_jobs(runner, jobid)
+        # Check outputs
+        self.assertEqual(runner.name(jobid),"slurm_test")
+        expected_log = os.path.join(self.working_dir, f"slurm_test.o{jobid}")
+        self.assertEqual(expected_log, runner.log_file(jobid))
+        self.assertTrue(os.path.isfile(runner.log_file(jobid)),
+                        "Stdout file '%s': not a file" %
+                        runner.log_file(jobid))
+        expected_err = os.path.join(self.working_dir, f"slurm_test.e{jobid}")
+        self.assertEqual(expected_err, runner.err_file(jobid))
+        self.assertTrue(os.path.isfile(runner.err_file(jobid)),
+                        "Stderr file '%s': not a file" %
+                        runner.err_file(jobid))
+        # Check exit status of completed job
+        self.assertEqual(runner.exit_status(jobid), 0)
+
+    def test_slurm_runner_controller_temporarily_unavailable_job_completion(self):
+        """
+        Test SlurmRunner handles job completion when controller is temporarily unavailable
+        """
+        # Create a runner
+        runner = SlurmRunner()
+        self.assertEqual(runner.nslots, 1)
+        self.assertEqual(runner.partition, None)
+        self.assertFalse(runner.join_logs)
+        # Execute sleep command
+        jobid = self._run_job(runner,
+                             "slurm_test",
+                              self.working_dir,
+                             'sleep', ('10',))
+        # Put Slurm into error state
+        self.mock_slurm.set_slurm_error_state(
+            "slurm_load_jobs error: Unable to contact slurm controller (connect failure)")
+        time.sleep(5)
+        self.mock_slurm.update_jobs()
+        self.assertTrue(runner.is_running(jobid))
+        # Check job status
+        time.sleep(5)
+        self.mock_slurm.update_jobs()
+        self.assertTrue(runner.is_running(jobid))
+        # Clear Slurm error state
+        self.mock_slurm.clear_slurm_error_state()
+        # Wait for job to complete
+        self._wait_for_jobs(runner, jobid)
+        # Check outputs
+        self.assertEqual(runner.name(jobid),"slurm_test")
+        expected_log = os.path.join(self.working_dir, f"slurm_test.o{jobid}")
+        self.assertEqual(expected_log, runner.log_file(jobid))
+        self.assertTrue(os.path.isfile(runner.log_file(jobid)),
+                        "Stdout file '%s': not a file" %
+                        runner.log_file(jobid))
+        expected_err = os.path.join(self.working_dir, f"slurm_test.e{jobid}")
+        self.assertEqual(expected_err, runner.err_file(jobid))
+        self.assertTrue(os.path.isfile(runner.err_file(jobid)),
+                        "Stderr file '%s': not a file" %
+                        runner.err_file(jobid))
+        # Check exit status of completed job
+        self.assertEqual(runner.exit_status(jobid), 0)
+
     @unittest.skip("don't know what error state looks like for Slurm")
-    def test_slurm_runner_error_state(self):
+    def test_slurm_runner_job_error_state(self):
         """
         Test SlurmRunner detects job in error state
         """
