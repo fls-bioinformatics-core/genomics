@@ -1,5 +1,5 @@
 #     mockslurm.py: mock Slurm functionality for testing
-#     Copyright (C) University of Manchester 2025 Peter Briggs
+#     Copyright (C) University of Manchester 2025-2026 Peter Briggs
 #
 #######################################################################
 
@@ -53,6 +53,11 @@ class MockSlurm:
     NB the 'stop' method should be invoked on the 'MockSlurm'
     instance when it is not longer needed, to ensure that any
     running processes are properly terminated.
+
+    Errors with the Slurm controller can be mimicked using the
+    'set_slurm_error_state' method, which blocks the normal
+    behaviour of the 'sbatch' etc commands. The mock error state
+    can be cleared using the 'clear_slurm_error_state' method.
 
     Arguments:
       max_jobs (int): maximum number of jobs to run at
@@ -110,33 +115,52 @@ class MockSlurm:
         """
         Set up the persistent database
         """
+        sql_tables = [
+            # State of the Slurm controller
+            """
+            CREATE TABLE controller (
+              id            INTEGER PRIMARY KEY,
+              error_state   INTEGER,
+              error_message VARCHAR
+            )
+            """,
+            # Jobs
+            """
+            CREATE TABLE jobs (
+              id          INTEGER PRIMARY KEY,
+              user        CHAR,
+              state       CHAR,
+              name        VARCHAR,
+              command     VARCHAR,
+              working_dir VARCHAR,
+              nslots      INTEGER,
+              partition   VARCHAR,
+              output_tmpl CHAR,
+              error_tmpl  CHAR,
+              export      CHAR,
+              pid         INTEGER,
+              sbatch_time FLOAT,
+              start_time  FLOAT,
+              end_time    FLOAT,
+              exit_code   INTEGER
+            )
+            """
+        ]
+        for sql in sql_tables:
+            try:
+                cu = self._cx.cursor()
+                cu.execute(sql)
+            except sqlite3.Error as ex:
+                print("Failed to set up database: %s" % ex)
+                raise ex
+        # Set initial state of controller
         sql = """
-        CREATE TABLE jobs (
-          id          INTEGER PRIMARY KEY,
-          user        CHAR,
-          state       CHAR,
-          name        VARCHAR,
-          command     VARCHAR,
-          working_dir VARCHAR,
-          nslots      INTEGER,
-          partition   VARCHAR,
-          output_tmpl CHAR,
-          error_tmpl  CHAR,
-          export      CHAR,
-          pid         INTEGER,
-          sbatch_time FLOAT,
-          start_time  FLOAT,
-          end_time    FLOAT,
-          exit_code   INTEGER
-        )
+        INSERT INTO controller (id,error_state,error_message) VALUES (?, ?, ?)
         """
-        try:
-            cu = self._cx.cursor()
-            cu.execute(sql)
-            self._cx.commit()
-        except sqlite3.Error as ex:
-            print("Failed to set up database: %s" % ex)
-            raise ex
+        cu = self._cx.cursor()
+        cu.execute(sql, (0, 0, ""))
+        # Commit changes
+        self._cx.commit()
 
     def _init_job(self, name, command, working_dir, nslots, partition,
                   output_tmpl, error_tmpl, export):
@@ -375,6 +399,43 @@ echo "$exit_code" 1>%s/__exit_code.%d
             else:
                 break
 
+    def set_slurm_error_state(self, message):
+        """
+        Puts the mock Slurm instance into an error state
+
+        When in an error state, commands will issue the supplied message
+        and exit with status 1 without performing the requested action
+        """
+        sql = """
+        UPDATE controller set error_state=?,error_message=? WHERE id==0
+        """
+        cu = self._cx.cursor()
+        cu.execute(sql, (1, str(message)))
+        self._cx.commit()
+
+    def get_slurm_error_state(self):
+        """
+        Retrieve the error state and associated message
+        """
+        sql = """
+        SELECT error_state,error_message FROM controller WHERE id=0
+        """
+        cu = self._cx.cursor()
+        cu.execute(sql)
+        error_state_info = cu.fetchone()
+        return bool(int(error_state_info["error_state"])), error_state_info["error_message"]
+
+    def clear_slurm_error_state(self):
+        """
+        Removes the mock Slurm instance from an error state
+        """
+        sql = """
+        UPDATE controller set error_state=?,error_message=? WHERE id==0
+        """
+        cu = self._cx.cursor()
+        cu.execute(sql, (0, str("")))
+        self._cx.commit()
+
     def _list_jobs(self, user, state=None):
         """
         Get list of the jobs
@@ -481,6 +542,11 @@ echo "$exit_code" 1>%s/__exit_code.%d
         p.add_argument("--export", action="store", default="ALL")
         p.add_argument("--chdir", action="store")
         args,cmd = p.parse_known_args(argv)
+        # Check for error state
+        error_state, error_message = self.get_slurm_error_state()
+        if error_state:
+            print(error_message)
+            return
         # Command
         logging.debug(f"sbatch: cmd: {cmd}")
         if len(cmd) == 1:
@@ -561,6 +627,11 @@ echo "$exit_code" 1>%s/__exit_code.%d
             user = self._user()
         else:
             user = args.user
+        # Check for error state
+        error_state, error_message = self.get_slurm_error_state()
+        if error_state:
+            print(error_message)
+            return
         # Get jobs
         jobs = self._list_jobs(user=user)
         # Print header even if there are no jobs to report
@@ -611,6 +682,11 @@ echo "$exit_code" 1>%s/__exit_code.%d
         p.add_argument("-v", dest="verbose", action="store_true")
         p.add_argument("job_id",action="store",nargs="+")
         args = p.parse_args(argv)
+        # Check for error state
+        error_state, error_message = self.get_slurm_error_state()
+        if error_state:
+            print(error_message)
+            return
         # Loop over job ids
         for job_id in args.job_id:
             job_id = int(job_id)
