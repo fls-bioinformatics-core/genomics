@@ -1444,9 +1444,9 @@ class SlurmRunner(JobRunner):
 
     SlurmRunner submits jobs to a Slurm cluster using the ``sbatch``
     command, determines the status of jobs using ``squeue``, and
-    and terminates them using ``scancel``.
+    terminates them using ``scancel``.
 
-    Additionally the runner can be configured to target a specific
+    Additionally, the runner can be configured to target a specific
     partition and number of cores on initialisation.
 
     Each job run through the SlurmRunner instance creates a temporary
@@ -1960,7 +1960,7 @@ exit $exit_code
         - read and store the exit status/return code from
           this file
         - ensure that the queue is set for the job
-        - call the clean up function to remove all the
+        - call the cleanup function to remove all the
           associated files
         - remove the job from the internal job count
 

@@ -49,7 +49,7 @@ class MockSlurm:
     database accordingly; this method can also be invoked directly.
 
     NB the 'stop' method should be invoked on the 'MockSlurm'
-    instance when it is not longer needed, to ensure that any
+    instance when it is no longer needed, to ensure that any
     running processes are properly terminated.
 
     Errors with the Slurm controller can be mimicked using the
@@ -466,7 +466,7 @@ echo "$exit_code" 1>%s/__exit_code.%d
         Mark a job for termination/deletion
 
         Return None if successfully marked, or error message
-        if there an error.
+        if there is an error.
         """
         # Look up the job and check it can be deleted
         sql = """
