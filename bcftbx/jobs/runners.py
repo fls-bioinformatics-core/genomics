@@ -2417,7 +2417,7 @@ def fetch_runner(definition):
                 elif join_logs in ('false','no','n'):
                     join_logs = False
                 else:
-                    raise Exception("Invalid value for LocalJobRunner "
+                    raise Exception("Invalid value for LocalRunner "
                                     "'join_logs': %s" % join_logs)
                 kw_args["join_logs"] = join_logs
             elif not arg:
