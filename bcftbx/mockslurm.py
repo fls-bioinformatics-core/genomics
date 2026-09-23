@@ -17,13 +17,11 @@ mock versions of those utilities ('sbatch', 'squeue', and 'scancel').
 #######################################################################
 
 import os
-import sys
 import sqlite3
 import argparse
 import subprocess
 import getpass
 import time
-import datetime
 import logging
 import atexit
 
