@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #     best_exons.py: pick 'best' exons for gene symbols and average data
-#     Copyright (C) University of Manchester 2013-2021 Peter Briggs
+#     Copyright (C) University of Manchester 2013-2026 Peter Briggs
 #
 ########################################################################
 
@@ -54,15 +54,14 @@ TSV file with one gene symbol per line plus averaged data.
 # Imports
 #########################################################################
 
-from builtins import str
 import sys
 import os
 import io
 import argparse
 import logging
 from operator import attrgetter
-from bcftbx.TabFile import TabFileIterator
-from bcftbx.utils import OrderedDictionary
+from bcftbx.io.tabular import TabFileIterator
+from bcftbx.utils.collections import OrderedDictionary
 from .. import get_version
 
 ########################################################################

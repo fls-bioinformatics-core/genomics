@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #     analyse_solid_run.py: analyse and report on SOLiD sequencer runs
-#     Copyright (C) University of Manchester 2011-2021 Peter Briggs
+#     Copyright (C) University of Manchester 2011-2026 Peter Briggs
 
 """
 Provides functionality for analysing a SOLiD run, to verify and report data
@@ -22,10 +22,10 @@ import gzip
 import argparse
 import logging
 logging.basicConfig(format="%(levelname)s %(message)s")
-from ..SolidData import SolidRun
-from ..SolidData import list_run_directories
-from ..Experiment import Experiment
-from ..Md5sum import md5sum
+from ..platforms.solid.data import RunDir
+from ..platforms.solid.data import list_run_directories
+from ..platforms.solid.experiment import Experiment
+from ..utils.checksums import md5sum
 from ..Spreadsheet import Spreadsheet
 from .. import get_version
 
@@ -41,7 +41,7 @@ def report_run(solid_runs,report_paths=False):
     etc.
 
     Arguments:
-      solid_runs: a list or tuple of SolidRun objects to report.
+      solid_runs: a list or tuple of 'RunDir' objects to report.
       report_paths: if True then also report the full paths for the
         primary data files for each library.
     """
@@ -104,7 +104,7 @@ def write_spreadsheet(solid_runs,spreadsheet):
     input.
 
     Arguments:
-      solid_runs: a list or tuple of SolidRun objects to report.
+      solid_runs: a list or tuple of 'RunDir' objects to report.
       spreadsheet: the name of the XLS-format spreadsheet to write
         the data
     """
@@ -234,13 +234,13 @@ def write_spreadsheet(solid_runs,spreadsheet):
 def suggest_analysis_layout(solid_runs):
     """Generate a bash script to build the analysis directory scheme
 
-    Given a set of SolidRuns, print a set of script commands for running the
+    Given a set of 'RunDir' instances, print a set of script commands for running the
     build_analysis_dir.py program to create and populate the analysis directories.
 
     The script can be edited before being executed by the user.
 
     Arguments:
-      solid_runs: a list of SolidRun objects.
+      solid_runs: a list of RunDir objects.
     """
     print("#!/bin/sh\n#\n# Script commands to build analysis directory structure")
     for run in solid_runs:
@@ -267,7 +267,7 @@ def suggest_analysis_layout(solid_runs):
 def suggest_rsync_command(solid_runs):
     """Generate a bash script to rsync data to another location
 
-    Given a set of SolidRuns, print a set of script commands for running rsync
+    Given a set of 'RunDir' instances, print a set of script commands for running rsync
     to copy the data directories to another location.
 
     The script should be edited before being executed by the user.
@@ -285,7 +285,7 @@ def suggest_rsync_command(solid_runs):
 def verify_runs(solid_dirs):
     """Do basic verification checks on SOLiD run directories
 
-    For each SOLiD run directory, create a SolidRun object and check for the
+    For each SOLiD run directory, create a 'RunDir' object and check for the
     expected sample and library directories, and that primary data files
     (csfasta and qual) have been assigned and exist.
 
@@ -303,7 +303,7 @@ def verify_runs(solid_dirs):
     for solid_dir in solid_dirs:
         # Initialise
         run_status = 0
-        run = SolidRun(solid_dir)
+        run = RunDir(solid_dir)
         if not run.verify():
             run_status = 1
         print("%s:" % run.run_name,)
@@ -341,7 +341,7 @@ def copy_data(solid_runs,library_defns):
     The files are copied to the current directory.
 
     Arguments:
-      solid_runs: list of populated SolidRun objects
+      solid_runs: list of populated 'RunDir' objects
       library_defns: list of library definition strings (see above
         for syntax/format)
     """
@@ -388,7 +388,7 @@ def gzip_data(solid_runs,library_defns):
     Gzipped copies of the files are made in the current directory.
 
     Arguments:
-      solid_runs: list of populated SolidRun objects
+      solid_runs: list of populated 'RunDir' objects
       library_defns: list of library definition strings (see above
         for syntax/format)
     """
@@ -449,7 +449,7 @@ def md5_checksums(solid_runs,library_defns):
     Md5 sums are calculated and printed for each matching primary data file.
 
     Arguments:
-      solid_runs: list of populated SolidRun objects
+      solid_runs: list of populated 'RunDir' objects
       library_defns: list of library definition strings (see above
         for syntax/format)
     """
@@ -609,7 +609,7 @@ def main():
     # Get the run information
     solid_runs = []
     for solid_dir in solid_dirs:
-        run = SolidRun(solid_dir)
+        run = RunDir(solid_dir)
         if not run:
             logging.error("Error extracting run data for %s" % solid_dir)
             sys.exit(1)

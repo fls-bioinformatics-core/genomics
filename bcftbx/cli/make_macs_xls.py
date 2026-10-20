@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #     make_macs_xls.py: Convert MACS output file to XLS spreadsheet
-#     Copyright (C) University of Manchester 2011-2021 Peter Briggs
+#     Copyright (C) University of Manchester 2011-2026 Peter Briggs
 #
 
 
@@ -23,7 +23,6 @@ The program was developed to work with MACS 1.4.
 # Imports
 #######################################################################
 
-from builtins import str
 import os
 import io
 import sys
@@ -32,7 +31,7 @@ import logging
 # Configure logging output
 logging.basicConfig(format="[%(levelname)s] %(message)s")
 
-from ..TabFile import TabFile
+from ..io.tabular import TabFile
 from ..Spreadsheet import Workbook
 from .. import get_version
 
@@ -84,7 +83,7 @@ def main():
             header.append(line.strip())
         else:
             # Data
-            data.append(tabdata=line.strip())
+            data.append(line.strip())
     fp.close()
 
     # Temporarily remove first line
@@ -114,19 +113,19 @@ def main():
     data.sort(lambda line: line['-10*log10(pvalue)'],reverse=True)
 
     # Restore first line
-    data.insert(0,tabdata=header_line)
+    data.insert(0, header_line)
 
     # Insert "order" column
-    data.appendColumn("order")
+    data.append_column("order")
     # Perhaps confusingly must also insert initial value "#order"
     data[0]['order'] = "#order"
     for i in range(1,len(data)):
         data[i]['order'] = i
     # Reorder columns to put it at the start
-    data = data.reorderColumns(['order','chr','start','end','length','summit','tags',
-                                '-10*log10(pvalue)','fold_enrichment','FDR(%)'])
+    data = data.reorder(['order','chr','start','end','length','summit','tags',
+                         '-10*log10(pvalue)','fold_enrichment','FDR(%)'])
 
-    # Legnds text
+    # Legends text
     legends_text = """order\tSorting order Pvalue and FE
 chr\tChromosome location of binding region
 start\tStart coordinate of binding region
