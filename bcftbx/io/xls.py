@@ -572,39 +572,6 @@ class XLSWorkSheet:
         self.columns = sorted(self.columns, key=lambda x: x[::-1])
         self.rows.sort()
 
-    def insert_column_data_DELETE(self, col, data, start=None, style=None):
-        """
-        Insert list of data into a column
-
-        Data items are supplied as a list, with each item in the list
-        being inserted into the next row in the column.
-
-        By default items are inserted starting from row 1, unless a
-        starting row is explicitly specified via the 'start' argument.
-
-        *** THIS METHOD IS DEPRECATED ***
-
-        Consider using insert_column, append_column or write_data.
-
-        Arguments:
-          col: index of column to insert the data into (e.g. 'A','MZ')
-          data: list of data items
-          start: (optional) first row to insert data into
-          style: (optional) XLSStyle object to be associated with each
-            cell that has data inserted into it
-
-        """
-        # Insert data items from a list into a column in the spreadsheet
-        if start is None:
-            i = 1
-        else:
-            i = int(start)
-        for item in data:
-            self[cell(col, i)] = item
-            if style is not None:
-                self.set_style(style, cell(col, i))
-            i += 1
-
     def rowof(self, s, column='A'):
         """
         Return row index for cell which matches string
@@ -803,45 +770,6 @@ class XLSWorkSheet:
                     self.set_style(style, cell(icol, j))
                 i += 1
             j += 1
-
-    def fill_column_DELETE(self, column, item, start=None, end=None, style=None):
-        """
-        Fill a column with a single repeated data item
-
-        A single data item is inserted into all rows in the specified
-        column which have at least one data item already in any column
-        in the worksheet. A different range of rows can be specified
-        via the 'start' and 'end' arguments.
-
-        *** THIS METHOD IS DEPRECATED ***
-
-        Consider using insert_column, append_column or write_data.
-
-        Arguments:
-          column: index of column to insert the item into  (e.g. 'A','MZ')
-          item: data item to be repeated
-          start: (optional) first row to insert data into
-          end: (optional) last row to insert data into
-          style: (optional) XLSStyle object to be associated with each
-            cell that has data inserted into it
-
-        """
-        # Fill a column with the same data item
-        if (start is None or end is None) and (not self.columns and not self.rows):
-            # Empty sheet, nothing to fill
-            return
-        if start is None:
-            i = 1
-        else:
-            i = int(start)
-        if end is None:
-            j = self.last_row
-        else:
-            j = int(end)
-        for row in range(i, j + 1):
-            self[cell(column, row)] = item
-            if style is not None:
-                self.set_style(style, cell(column, row))
 
     def set_style(self, cell_style, start, end=None):
         """
