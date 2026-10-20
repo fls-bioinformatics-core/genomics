@@ -118,8 +118,15 @@ logger = logging.getLogger(__name__)
 BAD_REF="## !REF ##"
 
 
-# Maximum length for worksheet title
-MAX_LEN_WORKSHEET_TITLE = 31
+# Limits for XLSX file output
+class XLSXLimits:
+    """
+    Limits for XLSX files
+    """
+    MAX_LEN_WORKSHEET_TITLE = 31 # Max worksheet title length
+    MAX_LEN_WORKSHEET_CELL_VALUE = 1024 # Maximum no. of characters in cell
+    MAX_NUMBER_ROWS_PER_WORKSHEET = 1048576 # Max number of rows per worksheet
+    MAX_NUMBER_COLS_PER_WORKSHEET = 16384 # Max nuber of columns per worksheet
 
 
 # Number formats
@@ -181,8 +188,8 @@ class XLSWorkBook:
             raise KeyError(f"Worksheet called '{name}' already exists")
         if title is None:
             title = name
-        if len(title) > MAX_LEN_WORKSHEET_TITLE:
-            title = title[:MAX_LEN_WORKSHEET_TITLE]
+        if len(title) > XLSXLimits.MAX_LEN_WORKSHEET_TITLE:
+            title = title[:XLSXLimits.MAX_LEN_WORKSHEET_TITLE]
         self.worksheet[name] = XLSWorkSheet(title)
         return self.worksheet[name]
 
@@ -328,7 +335,7 @@ class XLSWorkSheet:
         title (str): title string for the worksheet
     """
     def __init__(self, title):
-        if len(title) > MAX_LEN_WORKSHEET_TITLE:
+        if len(title) > XLSXLimits.MAX_LEN_WORKSHEET_TITLE:
             raise XLSException("Worksheet title exceeds maximum length")
         self.title = str(title)
         self.data = {}
