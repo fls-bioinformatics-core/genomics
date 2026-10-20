@@ -366,28 +366,6 @@ class CellIndex(xls.CellIndex):
           idx: cell index e.g. 'A1', 'BZ112'
 
         """
-        self.idx = str(idx)
-        try:
-            r = re.compile(r'^([A-Z]+)([0-9]+)$').match(idx)
-            self.column = r.group(1)
-            self.row = int(r.group(2))
-        except:
-            self.column = None
-            self.row = None
-            if str(idx).isalpha():
-                self.column = idx
-            elif str(idx).isdigit():
-                self.row = int(idx)
-
-    @property
-    def is_full(self):
-        """Return True if index has both column and row information
-
-        """        
-        return not (self.column is None or self.row is None)
-
-    def __repr__(self):
-        """Implement __repr__ built-in; returns cell index
         xls.CellIndex.__init__(self,idx)
 
 class XLSColumn(xls.XLSColumn):
