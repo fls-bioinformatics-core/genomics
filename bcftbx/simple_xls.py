@@ -32,6 +32,21 @@ code; they are likely to be removed in a future release.
 from . import Spreadsheet
 from .io import xls
 
+# Legacy spreadsheet limits
+class XLSLimits:
+    """
+    Limits for XLS files
+    """
+    MAX_LEN_WORKSHEET_TITLE = 31 # Max worksheet title length
+    MAX_LEN_WORKSHEET_CELL_VALUE = 250 # Maximum no. of characters in cell
+    MAX_NUMBER_ROWS_PER_WORKSHEET = 65536 # Max number of rows per worksheet
+    MAX_NUMBER_COLS_PER_WORKSHEET = 256 # Max nuber of columns per worksheet
+
+class Limits(XLSLimits):
+    """
+    Limits for XLS files (kept for backwards compatibility)
+    """
+
 #######################################################################
 # Constants
 #######################################################################
