@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #     htmlpagewriter: programmatic generation of HTML files
-#     Copyright (C) University of Manchester 2012-2020 Peter Briggs
+#     Copyright (C) University of Manchester 2012-2026 Peter Briggs
 #
 ########################################################################
 #
@@ -9,11 +9,17 @@
 #
 #########################################################################
 
-"""htmlpagewriter
+"""
+Legacy module providing utility classes for programmatic HTML document
+generation.
 
-Provides HTMLPageWriter class which provides a simple programmatic
-interface for generating HTML files.
+The core functionality has been moved to the ``io.html`` module, which
+implements the ``HTMLWriter`` (refactored version of ``HTMLPageWriter``)
+and ``PNGBase64Encoder`` classes, and which are used within this module as
+the basis for the backwards-compatible versions.
 
+The classes in this module are now deprecated and should not be used in new
+code; they are likely to be removed in a future release.
 """
 
 #######################################################################
@@ -21,18 +27,15 @@ interface for generating HTML files.
 #######################################################################
 
 from builtins import str
-import os
 import io
-import logging
-import xml.dom.minidom
-import shutil
 import base64
+from .io import html
 
 #######################################################################
 # Classes
 #######################################################################
 
-class HTMLPageWriter:
+class HTMLPageWriter(html.HTMLWriter):
     """Generic HTML generation class
 
     HTMLPageWriter provides basic operations for writing HTML
@@ -51,23 +54,7 @@ class HTMLPageWriter:
         Arguments:
           title: optional title for the HTML document
         """
-        self.__page_title = str(title)
-        self.__content = []
-        self.__css_rules = []
-        self.__javascript = []
-
-    def add(self,content):
-        """Add content to page body
-
-        Note that the supplied content is added to the HTML
-        document as-is; no escaping is performed so the content
-        can include arbitrary HTML tags. Note also that no
-        validation is performed.
-
-        Arguments:
-          content: text to add to the HTML document body
-        """
-        self.__content.append(str(content))
+        super().__init__(title)
 
     def addCSSRule(self,css_rule):
         """Add CSS rule
@@ -86,7 +73,7 @@ class HTMLPageWriter:
         Arguments:
           css_rule: text defining CSS rule
         """
-        self.__css_rules.append(str(css_rule))
+        self.add_css_rule(css_rule)
 
     def addJavaScript(self,javascript):
         """Add JavaScript
@@ -101,53 +88,10 @@ class HTMLPageWriter:
         Arguments:
           javascript: Javascript code
         """
-        self.__javascript.append(str(javascript))
-
-    def write(self,filen=None,fp=None):
-        """Write the HTML document to file
-
-        Generates a HTML document based on the content, styles
-        etc that have been defined by calls to the object's
-        methods.
-
-        Can supply either a filename or a file-like object
-        opened for writing.
-
-        Arguments:
-          filen: name of the file to write the document to.
-          fp   : file-like object opened for writing; if this
-                 is supplied then filen argument will be
-                 ignored even if it is not None.
-
-        """
-        if fp is None and filen is not None:
-            fp = io.open(filen,'wt')
-        fp.write(u"<html>\n")
-        # Header
-        fp.write(u"<head>\n")
-        fp.write(u"<title>%s</title>\n" % self.__page_title)
-        # CSS rules
-        if self.__css_rules:
-            fp.write(u"<style type=\"text/css\">\n")
-            fp.write(u'\n'.join(self.__css_rules))
-            fp.write(u"</style>\n")
-        # JavaScript
-        if self.__javascript:
-            fp.write(u"<script language='javascript' type='text/javascript'><!--\n")
-            fp.write(u'\n'.join(self.__javascript))
-            fp.write(u"\n--></script>\n")
-        fp.write(u"</head>\n")
-        # Body and content
-        fp.write(u"<body>\n")
-        fp.write(u'\n'.join(self.__content))
-        fp.write(u"</body>\n")
-        # Finish
-        fp.write(u"</html>\n")
-        if filen is not None:
-            fp.close()
+        self.add_javascript(javascript)
 
 # Utility class to encode PNGs for embedding in HTML
-class PNGBase64Encoder:
+class PNGBase64Encoder(html.PNGBase64Encoder):
     """Utility class to encode PNG file into a base64 string
 
     Base64 encoded PNGs can be embedded in HTML <img> tags.
@@ -156,9 +100,3 @@ class PNGBase64Encoder:
 
     >>> p = PNGBase64Encoder.encodePNG("image.png")
     """
-
-    def encodePNG(self,pngfile):
-        """Return base64 string encoding a PNG file.
-        """
-        with io.open(pngfile,'rb') as png:
-            return base64.b64encode(png.read()).decode()

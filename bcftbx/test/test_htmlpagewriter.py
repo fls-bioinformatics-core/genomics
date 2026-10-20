@@ -16,7 +16,8 @@ class TestHTMLPageWriter(unittest.TestCase):
         fp = io.StringIO()
         html.write(fp=fp)
         self.assertEqual(fp.getvalue(),
-                         """<html>
+                         """<!DOCTYPE html>
+<html>
 <head>
 <title></title>
 </head>
@@ -31,12 +32,14 @@ class TestHTMLPageWriter(unittest.TestCase):
         fp = io.StringIO()
         html.write(fp=fp)
         self.assertEqual(fp.getvalue(),
-                         """<html>
+                         """<!DOCTYPE html>
+<html>
 <head>
 <title>Test</title>
 </head>
 <body>
-This is a test</body>
+This is a test
+</body>
 </html>
 """)
         
@@ -47,13 +50,15 @@ This is a test</body>
         fp = io.StringIO()
         html.write(fp=fp)
         self.assertEqual(fp.getvalue(),
-                         """<html>
+                         """<!DOCTYPE html>
+<html>
 <head>
 <title>Test</title>
 </head>
 <body>
 <p>This is a test</p>
-<p>We can see how well it works...</p></body>
+<p>We can see how well it works...</p>
+</body>
 </html>
 """)
         
@@ -65,15 +70,18 @@ This is a test</body>
         fp = io.StringIO()
         html.write(fp=fp)
         self.assertEqual(fp.getvalue(),
-                         """<html>
+                         """<!DOCTYPE html>
+<html>
 <head>
 <title>Test</title>
-<style type=\"text/css\">
-body { color: blue; }</style>
+<style type='text/css'>
+body { color: blue; }
+</style>
 </head>
 <body>
 <p>This is a test</p>
-<p>We can see how well it works...</p></body>
+<p>We can see how well it works...</p>
+</body>
 </html>
 """)
         
@@ -85,7 +93,8 @@ body { color: blue; }</style>
         fp = io.StringIO()
         html.write(fp=fp)
         self.assertEqual(fp.getvalue(),
-                         """<html>
+                         """<!DOCTYPE html>
+<html>
 <head>
 <title>Test</title>
 <script language='javascript' type='text/javascript'><!--
@@ -94,7 +103,8 @@ body { color: blue; }</style>
 </head>
 <body>
 <p>This is a test</p>
-<p>We can see how well it works...</p></body>
+<p>We can see how well it works...</p>
+</body>
 </html>
 """)
 
