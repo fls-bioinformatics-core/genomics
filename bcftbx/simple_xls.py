@@ -57,6 +57,9 @@ BAD_REF = xls.BAD_REF
 # Number formats
 NumberFormats = xls.NumberFormats
 
+# XLSX file limits
+XLSXLimits = xls.XLSXLimits
+
 #######################################################################
 # Class definitions
 #######################################################################
