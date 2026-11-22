@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #     extract_reads.py: write random subsets of read records from input files
-#     Copyright (C) University of Manchester 2012-2021 Peter Briggs
+#     Copyright (C) University of Manchester 2012-2026 Peter Briggs
 #
 
 """
@@ -19,18 +19,14 @@ Recognises FASTQ, CSFASTA and QUAL files.
 # Imports
 #######################################################################
 
-from builtins import str
-from builtins import range
 import sys
 import os
 import io
-import gzip
 import argparse
 import random
-import re
-from ..ngsutils import getreads
-from ..ngsutils import getreads_subset
-from ..ngsutils import getreads_regex
+from ..utils.ngs import getreads
+from ..utils.ngs import getreads_subset
+from ..utils.ngs import getreads_regex
 from .. import get_version
 
 #######################################################################

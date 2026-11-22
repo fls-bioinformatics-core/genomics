@@ -1,23 +1,22 @@
 #!/usr/bin/env python
 #
 #     split_fastq.py: split Fastq by lane
-#     Copyright (C) University of Manchester 2018-2025 Peter Briggs
+#     Copyright (C) University of Manchester 2018-2026 Peter Briggs
 #
 
 #######################################################################
 # Imports
 #######################################################################
 
-from builtins import str
 import argparse
 import re
 import os
 import io
 from ..platforms.illumina.utils import IlluminaFastq
 from ..platforms.illumina.exceptions import IlluminaError
-from ..utils import parse_lanes
-from ..ngsutils import getreads
-from ..ngsutils import getreads_regex
+from ..utils.parser import parse_lanes
+from ..utils.ngs import getreads
+from ..utils.ngs import getreads_regex
 from .. import get_version
 
 #######################################################################
