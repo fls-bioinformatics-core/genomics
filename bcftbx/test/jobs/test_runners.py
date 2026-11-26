@@ -7,10 +7,10 @@ from bcftbx.jobs.runners import GridEngineRunner
 from bcftbx.jobs.runners import SlurmRunner
 from bcftbx.jobs.runners import ResourceLock
 from bcftbx.jobs.runners import fetch_runner
-from bcftbx.mockGE import setup_mock_GE
-from bcftbx.mockGE import MockGE
-from bcftbx.mockslurm import setup_mock_slurm
-from bcftbx.mockslurm import MockSlurm
+from bcftbx.mock.gridengine import setup_mock_ge
+from bcftbx.mock.gridengine import MockGE
+from bcftbx.mock.slurm import setup_mock_slurm
+from bcftbx.mock.slurm import MockSlurm
 import unittest
 import tempfile
 import time
@@ -230,7 +230,7 @@ class TestGridEngineRunner(unittest.TestCase):
         self.bin_dir = self._make_tmp_dir()
         self.old_path = os.environ['PATH']
         os.environ['PATH'] = self.bin_dir + os.pathsep + self.old_path
-        setup_mock_GE(bindir=self.bin_dir,
+        setup_mock_ge(bindir=self.bin_dir,
                       database_dir=self.database_dir,
                       qsub_delay=0.4,
                       qacct_delay=15.0,

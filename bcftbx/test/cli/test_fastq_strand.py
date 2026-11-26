@@ -3,12 +3,10 @@
 #######################################################################
 
 import unittest
-import argparse
 import os
 import io
 import tempfile
 import shutil
-from bcftbx.mock import mockSTAR
 from bcftbx.cli.fastq_strand import fastq_strand
 from bcftbx import get_version
 
@@ -91,7 +89,7 @@ class TestFastqStrand(unittest.TestCase):
         with io.open(path,'wt') as fp:
             fp.write(u"""#!/bin/bash
 export PYTHONPATH=%s:$PYTHONPATH
-python -c "import sys ; from bcftbx.mock import mockSTAR ; mockSTAR(sys.argv[1:],unmapped_output=%s)" $@
+python -c "import sys ; from bcftbx.mock.apps import mock_star ; mock_star(sys.argv[1:],unmapped_output=%s)" $@
 exit $?
 """ % (os.path.dirname(__file__),unmapped_output))
         os.chmod(path,0o775)

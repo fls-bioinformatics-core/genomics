@@ -4,10 +4,10 @@
 
 from bcftbx.platforms.illumina.data import *
 from bcftbx.platforms.illumina.samplesheet import SampleSheet
-from bcftbx.mock import MockIlluminaRun
-from bcftbx.mock import MockFastqDir
-from bcftbx.mock import RunInfoXml
-from bcftbx.mock import RunParametersXml
+from bcftbx.mock.illumina import MockRun
+from bcftbx.mock.illumina import MockFastqDir
+from bcftbx.mock.illumina import RunInfoXml
+from bcftbx.mock.illumina import RunParametersXml
 import unittest
 import tempfile
 import shutil
@@ -34,7 +34,7 @@ class TestRunDir(unittest.TestCase):
         RunDir: test for MiSEQ run
         """
         # Make a mock run directory for MISeq format
-        self.mock_illumina_run = MockIlluminaRun(
+        self.mock_illumina_run = MockRun(
             '151125_M00879_0001_000000000-ABCDE1','miseq',
             top_dir=self.top_dir)
         self.mock_illumina_run.create()
@@ -76,7 +76,7 @@ class TestRunDir(unittest.TestCase):
         RunDir: test for HiSEQ run
         """
         # Make a mock run directory for HISeq format
-        self.mock_illumina_run = MockIlluminaRun(
+        self.mock_illumina_run = MockRun(
             '151125_SN700511R_0002_000000000-ABCDE1XX','hiseq',
             top_dir=self.top_dir)
         self.mock_illumina_run.create()
@@ -117,7 +117,7 @@ class TestRunDir(unittest.TestCase):
         RunDir: test for NextSeq run
         """
         # Make a mock run directory for NextSeq format
-        self.mock_illumina_run = MockIlluminaRun(
+        self.mock_illumina_run = MockRun(
             '151125_NB500968_0003_000000000-ABCDE1XX','nextseq',
             top_dir=self.top_dir)
         self.mock_illumina_run.create()
@@ -155,7 +155,7 @@ class TestRunDir(unittest.TestCase):
         RunDir: test for NovaSeq run
         """
         # Make a mock run directory for NovaSeq format
-        self.mock_illumina_run = MockIlluminaRun(
+        self.mock_illumina_run = MockRun(
             '221125_A50096_0038_ABCDE1XX',
             'novaseq',
             top_dir=self.top_dir)

@@ -1,58 +1,46 @@
-#     mock.py: module providing mock Illumina data for testing
-#     Copyright (C) University of Manchester 2012-2025 Peter Briggs
+#!/usr/bin/env python3
+#
+#     mock.illumina.py: mock Illumina data for testing
+#     Copyright (C) University of Manchester 2012-2026 Peter Briggs
 #
 ########################################################################
+#
+# mock.illumina.py
+#
+#########################################################################
 
 """
-mock.py
-
 Provides data and classes for mocking up examples of outputs from
 Illumina-based sequencer pipeline (e.g. GA2x or HiSeq), including example
 directory structures and input and output files, to be used in testing.
 
 These include:
 
-- MockSampleSheet: synthesises a SampleSheet.csv
-- MockIlluminaRun: synthesises the raw data output from a sequencer
-- MockFastqDir: synthesises the output from CASAVA/bcl2fastq run
+* ``MockSampleSheet``: synthesises a SampleSheet.csv
+* ``MockRun``: mimicks raw data output from an Illumina sequencer
+* ``MockFastqDir``: mimicks the output from FASTQ generation software
+  run (``CASAVA``, ``bcl2fastq``/``BCL Convert``)
 
 There are also static classes with example data:
 
-- SampleSheets: has properties with example SampleSheet.csv files
-- RunInfoXml: has static methods for making RunInfo.xml files
-- RunParametersXml: has static methods for making RunParameters.xml file
-
-There is a function for mocking the STAR aligner:
-
-- mockSTAR: driver function for a "mock" STAR executable
-
-The following legacy mocking classes are also provided:
-
-- MockIlluminaData: synthesises the output from CASAVA/bcl2fastq run
-
+* ``SampleSheets``: has properties with example ``SampleSheet.csv`` file
+  content
+* ``RunInfoXml``: has static methods for making ``RunInfo.xml`` files
+* ``RunParametersXml``: has static methods for making ``RunParameters.xml``
+  files
 """
 
-#######################################################################
-# Import modules that this module depends on
-#######################################################################
 
-from builtins import str
-from builtins import range
 import os
-import io
 import shutil
 import gzip
-import argparse
-from .platforms.illumina.utils import IlluminaFastq
-from .platforms.illumina.samplesheet import SampleSheet
-from .platforms import get_run_completion_files
-from .TabFile import TabFile
-from .utils.collections import OrderedDictionary
-from .utils.os import mkdir
+from io import StringIO
+from ..platforms.illumina.utils import IlluminaFastq
+from ..platforms.illumina.samplesheet import SampleSheet
+from ..platforms import get_run_completion_files
+from ..utils.collections import OrderedDictionary
+from ..utils.os import mkdir
 
-#######################################################################
-# Module data
-#######################################################################
 
 class SampleSheets:
     """
@@ -139,6 +127,7 @@ SC1,SC1,,,B,A12,UDP0185,ACGGTCCAAC,UDP0185,TGATGTAAGA,SC,
 SC2,SC2,,,B,B12,UDP0186,GTAACTTGGT,UDP0186,AGGTATGGCG,SC,
 """
 
+
 class RunInfoXml:
     """
     Class with example RunInfo.xml files
@@ -222,6 +211,7 @@ class RunInfoXml:
     @staticmethod
     def nextseq(run_name):
         return RunInfoXml.create(run_name,"y76,I6,y76",4,12)
+
 
 class RunParametersXml:
     """
@@ -528,9 +518,6 @@ class RunParametersXml:
            read_data='\n'.join(read_data))
         return xml
 
-#######################################################################
-# Class definitions
-#######################################################################
 
 class MockSampleSheet(SampleSheet):
     """
@@ -554,7 +541,7 @@ class MockSampleSheet(SampleSheet):
     ...               index="CGTGTAGG",
     ...               I5_Index_ID="D502",
     ...               index2="ATGTAACT")
-    >>> io.open("SampleSheet.csv","wt").write(s.show())
+    >>> open("SampleSheet.csv","wt").write(s.show())
 
     Example making a CASAVA-style sample sheet:
 
@@ -566,7 +553,7 @@ class MockSampleSheet(SampleSheet):
     ...               Index="AGTCAA",
     ...               Description="RNA-seq",
     ...               SampleProject="AR")
-    >>> io.open("SampleSheet.csv","wt").write(s.show())
+    >>> open("SampleSheet.csv","wt").write(s.show())
 
     """
     def __init__(self,fmt='IEM',has_lanes=False,dual_index=True,
@@ -596,7 +583,7 @@ class MockSampleSheet(SampleSheet):
         self.quote_values = quote_values
         self.pad = pad
         # Instantiate the base object
-        SampleSheet.__init__(self,fp=io.StringIO(self._template()))
+        SampleSheet.__init__(self,fp=StringIO(self._template()))
         # Initialise additional sections for IEM
         if self._format == 'IEM':
             self.set_header(IEMFileVersion=4,
@@ -742,9 +729,10 @@ class MockSampleSheet(SampleSheet):
             output = '\n'.join(padded_output)
         return output
 
-class MockIlluminaRun:
+
+class MockRun:
     """
-    Utility class for creating mock Illumina sequencer output dirctories
+    Utility class for creating mock Illumina sequencer output directories
 
     Example usage:
 
@@ -977,43 +965,43 @@ class MockIlluminaRun:
             # .locs files
             mkdir(self._path('Data','Intensities','L%03d' % i))
             for j in range(1101,1101+ntiles):
-                io.open(self._path('Data','Intensities','L%03d' % i,
-                                   's_%d_%d.locs' % (i,j)),'wb+').close()
+                open(self._path('Data','Intensities','L%03d' % i,
+                                's_%d_%d.locs' % (i,j)),'wb+').close()
             # BaseCalls directory
             mkdir(self._path('Data','Intensities','BaseCalls',
                              'L%03d' % i))
             for j in range(1101,1101+ntiles):
                 if self._include_control:
                     # Add .control files
-                    io.open(self._path('Data',
-                                       'Intensities',
-                                       'BaseCalls',
-                                       'L%03d' % i,
-                                       's_%d_%d.control' % (i,j)),'wb+').close()
+                    open(self._path('Data',
+                                    'Intensities',
+                                    'BaseCalls',
+                                    'L%03d' % i,
+                                    's_%d_%d.control' % (i,j)),'wb+').close()
                 if self._include_filter:
                     # Add .filter files
-                    io.open(self._path('Data',
-                                       'Intensities',
-                                       'BaseCalls',
-                                       'L%03d' % i,
-                                       's_%d_%d.filter' % (i,j)),'wb+').close()
+                    open(self._path('Data',
+                                    'Intensities',
+                                    'BaseCalls',
+                                    'L%03d' % i,
+                                    's_%d_%d.filter' % (i,j)),'wb+').close()
                 if not self._include_cycles:
                     # No cycle subdirectores (e.g. 'C121.1')
                     # so put bcl files directory in lane directory
                     # This is the case for NextSeq
                     for j in range(1,ntiles+1):
-                        io.open(self._path('Data',
-                                           'Intensities',
-                                           'BaseCalls',
-                                           'L%03d' % i,
-                                           '%04d%s' % (j,bcl_ext)),'wb+').close()
+                        open(self._path('Data',
+                                        'Intensities',
+                                        'BaseCalls',
+                                        'L%03d' % i,
+                                        '%04d%s' % (j,bcl_ext)),'wb+').close()
                     if self._include_bci:
                         # Add .bci files (e.g. NextSeq)
-                        io.open(self._path('Data',
-                                           'Intensities',
-                                           'BaseCalls',
-                                           'L%03d' % i,
-                                           '%04d%s.bci' % (j,bcl_ext)),'wb+').close()
+                        open(self._path('Data',
+                                        'Intensities',
+                                        'BaseCalls',
+                                        'L%03d' % i,
+                                        '%04d%s.bci' % (j,bcl_ext)),'wb+').close()
             # Cycles subdirectories
             if self._include_cycles:
                 for k in range(1,ncycles+1):
@@ -1024,25 +1012,25 @@ class MockIlluminaRun:
                                      'C%d.1' % k))
                     for j in range(1101,1101+ntiles):
                         # .bcl files
-                        io.open(self._path('Data',
-                                           'Intensities',
-                                           'BaseCalls',
-                                           'L%03d' % i,
-                                           'C%d.1' % k,
-                                           's_%d_%d%s' % (i,j,bcl_ext)),
+                        open(self._path('Data',
+                                        'Intensities',
+                                        'BaseCalls',
+                                        'L%03d' % i,
+                                        'C%d.1' % k,
+                                        's_%d_%d%s' % (i,j,bcl_ext)),
                                 'wb+').close()
                         # .stats files
-                        io.open(self._path('Data',
-                                           'Intensities',
-                                           'BaseCalls',
-                                           'L%03d' % i,
-                                           'C%d.1' % k,
-                                           's_%d_%d.stats' % (i,j)),'wb+').close()
+                        open(self._path('Data',
+                                        'Intensities',
+                                        'BaseCalls',
+                                        'L%03d' % i,
+                                        'C%d.1' % k,
+                                        's_%d_%d.stats' % (i,j)),'wb+').close()
         # RunInfo.xml
         run_info_xml = RunInfoXml.create(self.name,
                                          bases_mask,
                                          nlanes)
-        with io.open(self._path('RunInfo.xml'),'wt') as fp:
+        with open(self._path('RunInfo.xml'),'wt') as fp:
             fp.write(run_info_xml)
         # RunParameters.xml
         run_parameters_xml = RunParametersXml.create(
@@ -1051,23 +1039,23 @@ class MockIlluminaRun:
             nlanes=nlanes,
             flowcell_mode=flowcell_mode,
             rta_version=rta_version)
-        with io.open(self._path('RunParameters.xml'),'wt') as fp:
+        with open(self._path('RunParameters.xml'),'wt') as fp:
             fp.write(run_parameters_xml)
         # SampleSheet.csv
         if self._include_sample_sheet and \
            self._sample_sheet_content is not None:
-            with io.open(self._path('Data','Intensities','BaseCalls',
+            with open(self._path('Data','Intensities','BaseCalls',
                                     'SampleSheet.csv'),'wt') as fp:
                 fp.write(str(self._sample_sheet_content))
         # (Empty) config.xml files
         if self._include_config:
-            io.open(self._path('Data','Intensities','config.xml'),'wb+').close()
-            io.open(self._path('Data','Intensities','BaseCalls','config.xml'),
+            open(self._path('Data','Intensities','config.xml'),'wb+').close()
+            open(self._path('Data','Intensities','BaseCalls','config.xml'),
                     'wb+').close()
         # Run completion files (e.g. 'RTAComplete.txt' etc)
         if self._complete and self._completion_files:
             for f in self._completion_files:
-                io.open(self._path(f),'wb+').close()
+                open(self._path(f),'wb+').close()
 
     def remove(self):
         """
@@ -1080,6 +1068,7 @@ class MockIlluminaRun:
         if self._created:
             shutil.rmtree(self.dirn)
             self._created = False
+
 
 class MockFastqDir:
     """
@@ -1099,7 +1088,7 @@ class MockFastqDir:
     Basic example usage:
 
     >>> mockfastqdir = MockFastqDir("fastqs", "bcl2fastq2")
-    >>> mockfastqdir.add_fastq("PJB", "PJB1", "PJB1_S1_L001_R1_001.fastq.gz')
+    >>> mockfastqdir.add_fastq("PJB", "PJB1", "PJB1_S1_L001_R1_001.fastq.gz")
     >>> ...
     >>> mockfastqdir.create()
 
@@ -1130,7 +1119,7 @@ class MockFastqDir:
 
     Multiple fastqs can be more easily added using e.g.:
 
-    >>> mockfastqdir.add_fastq_batch("PJB", "PJB2", "PJB2_S2',lanes=(1,4,5))
+    >>> mockfastqdir.add_fastq_batch("PJB", "PJB2", "PJB2_S2", lanes=(1,4,5))
 
     which creates 3 fastq entries for sample PJB2, with lane numbers 1, 4
     and 5.
@@ -1557,7 +1546,7 @@ class MockFastqDir:
                 fp.write(b"")
         else:
             # Make regular empty file
-            with io.open(f,'wb') as fp:
+            with open(f,'wb') as fp:
                 fp.write(b"")
 
     def remove(self):
@@ -1574,7 +1563,7 @@ class MockFastqDir:
     def __repr__(self):
         """Implement __repr__ for debug purposes
         """
-        if not self.__created:
+        if not self._created:
             return ("<%s: not created>" % self.path)
         rep = []
         for d in os.walk(self.path):
@@ -1583,273 +1572,3 @@ class MockFastqDir:
             for f in d[2]:
                 rep.append(os.path.join(d[0], f))
         return '\n'.join(sorted(rep))
-
-class MockIlluminaData(MockFastqDir):
-    """Utility class for creating mock Illumina analysis data directories
-
-    The MockIlluminaData class allows artificial Illumina analysis data
-    directories to be defined, created and populated, and then destroyed.
-
-    These artifical directories are intended to be used for testing
-    purposes.
-
-    Two styles of analysis directories can be produced: 'casava'-style
-    aims to mimic that produced from the CASAVA and bcl2fastq 1.8
-    processing software; 'bcl2fastq2' mimics that from the bcl2fastq
-    2.* software.
-
-    Basic example usage:
-
-    >>> mockdata = MockIlluminaData('130904_PJB_XXXXX','casava')
-    >>> mockdata.add_fastq('PJB','PJB1','PJB1_GCCAAT_L001_R1_001.fastq.gz')
-    >>> ...
-    >>> mockdata.create()
-
-    This will make a CASAVA-style directory structure like:
-
-    1130904_PJB_XXXXX/
-        Unaligned/
-            Project_PJB/
-                Sample_PJB1/
-                    PJB1_GCCAAT_L001_R1_001.fastq.gz
-        ...
-
-    Using:
-
-    >>> mockdata = MockIlluminaData('130904_PJB_XXXXX','bcl2fastq2')
-    >>> mockdata.add_fastq('PJB','PJB1','PJB1_S1_L001_R1_001.fastq.gz')
-
-    will make a bcl2fast2-style directory structure like:
-
-    1130904_PJB_XXXXX/
-        Unaligned/
-            PJB/
-               PJB1_S1_L001_R1_001.fastq.gz
-        ...
-
-    NB if the sample name in the fastq file name differs from the supplied
-    sample name then the sample name will be used to create an additional
-    directory level, e.g.:
-
-    >>> mockdata = MockIlluminaData('130904_PJB_XXXXX','bcl2fastq2')
-    >>> mockdata.add_fastq('PJB','PJB2','PJB2_input_S1_L001_R1_001.fastq.gz')
-
-    will create:
-
-    1130904_PJB_XXXXX/
-        Unaligned/
-            PJB/
-               PJB2/
-                   PJB2_input_S1_L001_R1_001.fastq.gz
-        ...
-
-    (this replicates the situation for bcl2fastq v2 where Sample_ID and
-    Sample_Name differ.)
-
-    Multiple fastqs can be more easily added using e.g.:
-
-    >>> mockdata.add_fastq_batch('PJB','PJB2','PJB1_GCCAAT',lanes=(1,4,5))
-
-    which creates 3 fastq entries for sample PJB2, with lane numbers 1, 4
-    and 5.
-
-    Paired-end mock data can be created using the 'paired_end' flag
-    when instantiating the MockIlluminaData object.
-
-    To delete the physical directory structure when finished:
-
-    >>> mockdata.remove()
-
-    """
-    def __init__(self,name,package,
-                 unaligned_dir='Unaligned',
-                 paired_end=False,
-                 no_lane_splitting=False,
-                 top_dir=None):
-        """Create new MockIlluminaData instance
-
-        Makes a new empty MockIlluminaData object.
-
-        Arguments:
-          name: name of the directory for the mock data
-          package: name of the conversion software package to mimic (can
-            be 'casava' or 'bcl2fastq2')
-          unaligned_dir: directory holding the mock projects etc (default is
-            'Unaligned')
-          paired_end: specify whether mock data is paired end (True) or not
-            (False) (default is False)
-          no_lane_splitting: (bcl2fastq2 only) mimick output from bcl2fastq2
-            run with --no-lane-splitting (i.e. fastq names don't contain
-            lane numbers) (default is False)
-          top_dir: specify a parent directory for the mock data (default is
-            the current working directory)
-
-        """
-        self.__name = name
-        self.__unaligned_dir = unaligned_dir
-        if top_dir is not None:
-            self.__top_dir = os.path.abspath(top_dir)
-        else:
-            self.__top_dir = os.getcwd()
-        self.__created = False
-        MockFastqDir.__init__(self, self.unaligned_dir, package,
-                              paired_end=paired_end,
-                              no_lane_splitting=no_lane_splitting)
-        if package not in ('casava','bcl2fastq2'):
-            raise Exception("Unknown package '%s': cannot make mock output dir"
-                            % package)
-
-    @property
-    def name(self):
-        """Name of the mock data
-
-        """
-        return self.__name
-
-    @property
-    def dirn(self):
-        """Full path to the mock data directory
-
-        """
-        return os.path.join(self.__top_dir,self.__name)
-
-    @property
-    def unaligned_dir(self):
-        """Full path to the unaligned directory for the mock data
-
-        """
-        return os.path.join(self.dirn,self.__unaligned_dir)
-
-    def create(self,force_sample_dir=False):
-        """Build and populate the directory structure
-
-        Creates the directory structure on disk which has been defined
-        within the MockIlluminaData object.
-
-        Invoke the 'remove' method to delete the directory structure.
-
-        The contents of the MockIlluminaData object can be modified
-        after the directory structure has been created, but changes will
-        not be reflected on disk. Instead it is necessary to first
-        remove the directory structure, and then re-invoke the create
-        method.
-
-        create raises an OSError exception if any part of the directory
-        structure already exists.
-
-        Arguments:
-          force_sample_dir (bool): if True then for bcl2fastq-style
-            output, always insert a "sample" subdirectory grouping
-            Fastqs for each sample, even if it wouldn't normally be
-            created (default is to only add sample subdirectory if
-            sample name differs from sample ID)
-
-        """
-        # Create top level directory
-        if os.path.exists(self.dirn):
-            raise OSError("%s already exists" % self.dirn)
-        else:
-            mkdir(self.dirn)
-            self.__created = True
-        # "Unaligned" directory
-        MockFastqDir.create(self, force_sample_dir=force_sample_dir)
-
-    def remove(self):
-        """Delete the directory structure and contents
-
-        This removes the directory structure from disk that has
-        previously been created using the create method.
-
-        """
-        if self.__created:
-            shutil.rmtree(self.dirn)
-            self.__created = False
-
-    def __repr__(self):
-        """Implement __repr__ for debug purposes
-        """
-        if not self.__created:
-            return ("<%s: not created>" % self.dirn)
-        rep = []
-        for d in os.walk(self.dirn):
-            for d1 in d[1]:
-                rep.append(os.path.join(d[0],d1))
-            for f in d[2]:
-                rep.append(os.path.join(d[0],f))
-        return '\n'.join(sorted(rep))
-
-def mockSTAR(argv,unmapped_output=False):
-    """
-    Driver function for a "mock" STAR executable
-
-    The mock executable should be a file with the
-    following content:
-
-    ::
-
-        #!/bin/bash
-        export PYTHONPATH=%s:$PYTHONPATH
-        python -c "import sys ; from bcftbx.mock import mockSTAR ; mockSTAR(sys.argv[1:],unmapped_output=%s)" $@
-
-    When executed it produces  a single output
-    (ReadsPerGene.out.tab file).
-
-    Arguments:
-      argv (list): command line to be used as input
-      unmapped_output (bool): if True then produce
-        mock "unmapped" output
-    """
-    p = argparse.ArgumentParser(argv)
-    p.add_argument('--runMode',action="store")
-    p.add_argument('--genomeLoad',action="store")
-    p.add_argument('--genomeDir',action="store")
-    p.add_argument('--readFilesIn',action="store",nargs='+')
-    p.add_argument('--quantMode',action="store")
-    p.add_argument('--outSAMtype',action="store",nargs=2)
-    p.add_argument('--outSAMstrandField',action="store")
-    p.add_argument('--outFileNamePrefix',action="store",dest='prefix')
-    p.add_argument('--runThreadN',action="store")
-    args = p.parse_args(argv)
-    with io.open("%sReadsPerGene.out.tab" % args.prefix,'wt') as fp:
-        if not unmapped_output:
-            fp.write(u"""N_unmapped	2026581	2026581	2026581
-N_multimapping	4020538	4020538	4020538
-N_noFeature	8533504	24725707	8782932
-N_ambiguous	618069	13658	192220
-ENSMUSG00000102592.1	0	0	0
-ENSMUSG00000088333.2	0	0	0
-ENSMUSG00000103265.1	4	0	4
-ENSMUSG00000103922.1	23	23	0
-ENSMUSG00000033845.13	437	0	437
-ENSMUSG00000102275.1	19	0	19
-ENSMUSG00000025903.14	669	2	667
-ENSMUSG00000104217.1	0	0	0
-ENSMUSG00000033813.15	805	0	805
-ENSMUSG00000062588.4	11	11	0
-ENSMUSG00000103280.1	9	9	0
-ENSMUSG00000002459.17	3	3	0
-ENSMUSG00000064363.1	74259	393	73866
-ENSMUSG00000064364.1	0	0	0
-ENSMUSG00000064365.1	0	0	0
-ENSMUSG00000064366.1	0	0	0
-ENSMUSG00000064367.1	148640	7892	152477
-ENSMUSG00000064368.1	44003	42532	13212
-ENSMUSG00000064369.1	6	275	6
-ENSMUSG00000064370.1	122199	199	123042
-""")
-        else:
-            fp.write(u"""N_unmapped	1	1	1
-N_multimapping	0	0	0
-N_noFeature	0	0	0
-N_ambiguous	0	0	0
-ENSG00000223972.5	0	0	0
-ENSG00000227232.5	0	0	0
-ENSG00000278267.1	0	0	0
-ENSG00000243485.3	0	0	0
-ENSG00000274890.1	0	0	0
-ENSG00000237613.2	0	0	0
-ENSG00000268020.3	0	0	0
-ENSG00000240361.1	0	0	0
-ENSG00000186092.4	0	0	0
-ENSG00000238009.6	0	0	0
-""")
