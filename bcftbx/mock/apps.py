@@ -15,14 +15,14 @@ to be used in testing.
 
 There is a function for mocking the STAR aligner:
 
-- mockSTAR: driver function for a "mock" STAR executable
+- mock_star: driver function for a "mock" STAR executable
 """
 
 
 import argparse
 
 
-def mockSTAR(argv,unmapped_output=False):
+def mock_star(argv,unmapped_output=False):
     """
     Driver function for a "mock" STAR executable
 
@@ -33,7 +33,7 @@ def mockSTAR(argv,unmapped_output=False):
 
         #!/bin/bash
         export PYTHONPATH=%s:$PYTHONPATH
-        python -c "import sys ; from bcftbx.mock import mockSTAR ; mockSTAR(sys.argv[1:],unmapped_output=%s)" $@
+        python -c "import sys ; from bcftbx.mock.apps import mock_star ; mock_star(sys.argv[1:],unmapped_output=%s)" $@
 
     When executed it produces  a single output
     (ReadsPerGene.out.tab file).

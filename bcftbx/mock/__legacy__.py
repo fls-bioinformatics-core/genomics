@@ -257,4 +257,4 @@ class MockIlluminaData(MockFastqDir):
 # Functions
 #######################################################################
 
-from .apps import mockSTAR
+from .apps import mock_star as mockSTAR
