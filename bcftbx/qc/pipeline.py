@@ -265,8 +265,7 @@ class Job:
         """
         return self.__runner
 
-# PipelineRunner: class to set up and run multiple jobs
-## FIXME subclassed from SolidPipelineRunner and appears in 'legacy/QC-pipeline/run_qc_pipeline.py'
+
 class PipelineRunner:
     """
     Class to run and manage multiple concurrent jobs.
