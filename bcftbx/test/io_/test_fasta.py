@@ -5,7 +5,7 @@
 
 import unittest
 from io import StringIO
-from bcftbx.fasta import FastaChromIterator
+from bcftbx.io.fasta import FastaChromIterator
 
 
 # Test data
