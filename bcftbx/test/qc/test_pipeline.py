@@ -124,6 +124,30 @@ class TestJobWithLocalRunner(unittest.TestCase):
         self.assertFalse(job.error_state())
         self.assertEqual(job.status(),"Finished")
 
+    def test_job_wait_with_local_runner(self):
+        """
+        qc.pipeline.Job: wait for a running job to finish
+        """
+        job = Job(LocalRunner(),"wait_cmd",self.working_dir,"sleep",("1",))
+        job.start()
+        job.wait()
+        self.assertFalse(job.is_running())
+        self.assertEqual(job.exit_status,0)
+        self.assertEqual(job.status(),"Finished")
+
+    def test_job_terminate_with_local_runner(self):
+        """
+        qc.pipeline.Job: terminate a running job
+        """
+        job = Job(LocalRunner(),"term_cmd",self.working_dir,"sleep",("10",))
+        job.start()
+        self.assertTrue(job.is_running())
+        job.terminate()
+        job.wait()
+        self.assertTrue(job.terminated)
+        self.assertFalse(job.is_running())
+        self.assertEqual(job.status(),"Terminated")
+
 
 class TestPipelineRunner(unittest.TestCase):
 

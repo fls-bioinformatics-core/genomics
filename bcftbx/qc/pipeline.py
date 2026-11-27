@@ -181,7 +181,7 @@ class Job:
         """
         Terminate a running job
         """
-        if self.isRunning():
+        if self.is_running():
             self.__runner.terminate(self.job_id)
             self.terminated = True
             self.update()
@@ -254,7 +254,7 @@ class Job:
 
         Block calling process until the job has finished running.
         """
-        while self.isRunning():
+        while self.is_running():
             time.sleep(1)
         return
 
